@@ -251,7 +251,7 @@ li {
 
     <input id="passwordInput" type="password" placeholder="パスコードを入力">
 
-    <button onclick="checkPassword()">ログイン</button>
+    <button type="button" onclick="checkPassword()">ログイン</button>
 
     <p id="loginError" class="error"></p>
   </div>
@@ -426,7 +426,16 @@ li {
 </div>
 
 <script>
+function checkPassword() {
+  const input = document.getElementById("passwordInput").value;
+  const error = document.getElementById("loginError");
 
+  if (input === "CA2026") {
+    document.getElementById("loginScreen").style.display = "none";
+  } else {
+    error.textContent = "パスコードが違います";
+  }
+}
 function openTab(tabId, button) {
   document.querySelectorAll(".tab-content").forEach(tab => tab.classList.remove("active"));
   document.querySelectorAll(".tab-button").forEach(btn => btn.classList.remove("active"));
