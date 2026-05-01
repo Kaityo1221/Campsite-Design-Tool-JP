@@ -9,6 +9,49 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
 <style>
+  .splash-screen {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(135deg, #0f172a, #111827, #1e1b4b);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9998;
+}
+
+.splash-screen.show {
+  display: flex;
+  animation: splashFade 1.2s ease forwards;
+}
+
+.splash-screen img {
+  width: 140px;
+  height: 140px;
+  border-radius: 28px;
+  animation: iconFloat 1.2s ease forwards;
+}
+
+@keyframes splashFade {
+  0% { opacity: 0; }
+  25% { opacity: 1; }
+  75% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes iconFloat {
+  0% {
+    opacity: 0;
+    transform: scale(0.9) translateY(12px);
+  }
+  35% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.04) translateY(-6px);
+  }
+}
   #passwordInput {
   -webkit-text-security: disc;
 }
@@ -369,7 +412,9 @@ li {
 <p id="loginError" class="error"></p>
   </div>
 </div>
-
+<div id="splashScreen" class="splash-screen">
+  <img src="デザインツールのアイコン.png" alt="Campsite Tool">
+</div>
 <div class="container">
 
   <div class="hero">
@@ -607,6 +652,7 @@ function checkPassword() {
   const input = document.getElementById("passwordInput");
   const error = document.getElementById("loginError");
   const loginScreen = document.getElementById("loginScreen");
+  const splashScreen = document.getElementById("splashScreen");
 
   if (input.value.trim() === "CA2026") {
     error.textContent = "";
@@ -616,7 +662,14 @@ function checkPassword() {
 
     setTimeout(function () {
       loginScreen.remove();
-    }, 600);
+
+      splashScreen.classList.add("show");
+
+      setTimeout(function () {
+        splashScreen.remove();
+      }, 1200);
+
+    }, 500);
   } else {
     error.textContent = "パスコードが違います";
   }
@@ -983,7 +1036,7 @@ await waitForRender();
 // どんな状況でも消す（最強）
 setTimeout(() => {
   document.getElementById("loadingOverlay").style.display = "none";
-}, 500);
+}, 300);
 status.innerHTML =
     `読み込み：${beforeCount}件<br>` +
     `重複削除：${result.duplicateCount}件<br>` +
