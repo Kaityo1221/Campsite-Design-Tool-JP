@@ -58,6 +58,7 @@ body {
   margin-bottom: 12px;
   background: #1e293b;
   color: white;
+  font-size: 16px;
 }
 
 .login-card button {
@@ -519,12 +520,12 @@ function checkPassword() {
   const loginScreen = document.getElementById("loginScreen");
 
   if (input.value.trim() === "CA2026") {
+    input.blur(); // ←入力欄のフォーカスを外す
     loginScreen.style.display = "none";
   } else {
     error.textContent = "パスコードが違います";
   }
 }
-
 document.addEventListener("DOMContentLoaded", function () {
   const passwordInput = document.getElementById("passwordInput");
   const loginButton = document.getElementById("loginButton");
