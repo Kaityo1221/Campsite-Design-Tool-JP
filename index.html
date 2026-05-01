@@ -853,7 +853,8 @@ function waitForRender() {
 }
 
 async function generateKMZ() {
-async function generateKMZ() {
+  document.getElementById("loadingOverlay").style.display = "flex";
+document.getElementById("loadingText").textContent = "読み込み中…";
   const files = Array.from(document.getElementById("fileInput").files);
   const status = document.getElementById("status");
 
@@ -899,7 +900,7 @@ await waitForRender();
     status.textContent = "";
     return;
   }
-
+document.getElementById("loadingText").textContent = "重複削除中…";
  status.innerHTML = `
   <span class="loading">
     <span class="spinner"></span>
@@ -910,7 +911,7 @@ await waitForRender();
 
   const result = removeDuplicate(points);
   points = result.uniquePoints;
-
+document.getElementById("loadingText").textContent = "KMZ生成中…";
   status.innerHTML = `
   <span class="loading">
     <span class="spinner"></span>
@@ -981,6 +982,7 @@ await waitForRender();
     `出力：${points.length}件<br>` +
     `KMZを生成しました。`;
 }
+  document.getElementById("loadingOverlay").style.display = "none";
 </script>
 
 </body>
