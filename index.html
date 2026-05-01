@@ -305,7 +305,7 @@ li {
     <p class="login-sub">アクセスにはパスコードが必要です</p>
 
     <input id="passwordInput" type="password" placeholder="パスコードを入力">
-<button type="button" id="loginButton" onclick="alert('発火'); checkPassword()">ログイン</button>
+<button type="button" id="loginButton" onclick="checkPassword()">ログイン</button>
 <p id="loginError" class="error"></p>
   </div>
 </div>
@@ -540,12 +540,15 @@ li {
 </div>
 
 <script>
- function checkPassword() {
+function checkPassword() {
   const input = document.getElementById("passwordInput");
   const error = document.getElementById("loginError");
   const loginScreen = document.getElementById("loginScreen");
 
+  alert("入力値：" + input.value);
+
   if (input.value.trim() === "CA2026") {
+    alert("ログイン成功");
     error.textContent = "";
     loginScreen.classList.add("fade-out");
 
