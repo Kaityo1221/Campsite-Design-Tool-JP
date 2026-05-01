@@ -9,7 +9,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
 <style>
-  .login-screen.fade-out {
+.login-screen.fade-out {
   animation: fadeOutZoom 0.5s ease forwards;
 }
 
@@ -534,19 +534,25 @@ li {
   const loginScreen = document.getElementById("loginScreen");
 
   if (input.value.trim() === "CA2026") {
-
-    // 演出発火
+    error.textContent = "";
     loginScreen.classList.add("fade-out");
 
-    // ちょっと待ってから消す
-    setTimeout(() => {
+    setTimeout(function () {
       loginScreen.style.display = "none";
     }, 500);
-
   } else {
     error.textContent = "パスコードが違います";
   }
 }
+
+document.addEventListener("DOMContentLoaded", function () {
+  const passwordInput = document.getElementById("passwordInput");
+  const loginButton = document.getElementById("loginButton");
+
+  loginButton.addEventListener("click", function () {
+    checkPassword();
+  });
+
   passwordInput.addEventListener("keydown", function (e) {
     if (e.key === "Enter") {
       e.preventDefault();
