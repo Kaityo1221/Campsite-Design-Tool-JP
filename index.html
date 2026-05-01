@@ -921,10 +921,8 @@ document.getElementById("loadingText").textContent = "KMZ生成中…";
     KMZ生成中…
   </span>
 `;
-  await Promise.all([
-  sleep(3000),
-  zip.generateAsync({ type: "blob" })
-]);
+  await sleep(3000);
+  
 await waitForRender();
   const parser = new DOMParser();
   const outputXml = parser.parseFromString(
