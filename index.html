@@ -352,7 +352,16 @@ li {
     <h2>Campsite Tool</h2>
     <p class="login-sub">アクセスにはパスコードが必要です</p>
 
-    <input id="passwordInput" type="password" placeholder="パスコードを入力">
+    <input
+  id="passwordInput"
+  type="password"
+  inputmode="text"
+  autocomplete="off"
+  autocorrect="off"
+  autocapitalize="off"
+  spellcheck="false"
+  placeholder="パスコードを入力"
+>
 <button type="button" id="loginButton" onclick="checkPassword()">ログイン</button>
 <p id="loginError" class="error"></p>
   </div>
