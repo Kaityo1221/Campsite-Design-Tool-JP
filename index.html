@@ -276,8 +276,12 @@ li {
   <div class="login-card">
     <h2>Campsite Tool</h2>
     <p class="login-sub">アクセスにはパスコードが必要です</p>
-    <input id="passwordInput" type="password" placeholder="パスコードを入力">
-    <button type="button" onclick="checkPassword()">ログイン</button>
+
+    <form id="loginForm">
+      <input id="passwordInput" type="password" placeholder="パスコードを入力">
+      <button type="submit">ログイン</button>
+    </form>
+
     <p id="loginError" class="error"></p>
   </div>
 </div>
@@ -524,10 +528,9 @@ function checkPassword() {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
-  document.getElementById("passwordInput").addEventListener("keydown", function (e) {
-    if (e.key === "Enter") {
-      checkPassword();
-    }
+  document.getElementById("loginForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    checkPassword();
   });
 });
 
