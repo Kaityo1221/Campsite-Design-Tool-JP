@@ -1,7 +1,5 @@
 # Campsite-Design-Tool-JP
 最高の遊び場をつくろう
-# Campsite Design Tool
-
 Pokémon GO Community Ambassador向け  
 キャンプサイト設計支援ツール
 
