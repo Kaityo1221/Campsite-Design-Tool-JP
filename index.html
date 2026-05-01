@@ -547,11 +547,6 @@ li {
 
 document.addEventListener("DOMContentLoaded", function () {
   const passwordInput = document.getElementById("passwordInput");
-  const loginButton = document.getElementById("loginButton");
-
-  loginButton.addEventListener("click", function () {
-    checkPassword();
-  });
 
   passwordInput.addEventListener("keydown", function (e) {
     if (e.key === "Enter") {
