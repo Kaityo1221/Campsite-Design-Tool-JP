@@ -588,6 +588,9 @@ li {
 </div>
 
 <script>
+  function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 function checkPassword() {
   const input = document.getElementById("passwordInput");
   const error = document.getElementById("loginError");
@@ -918,6 +921,10 @@ document.getElementById("loadingText").textContent = "KMZ生成中…";
     KMZ生成中…
   </span>
 `;
+  await Promise.all([
+  sleep(3000),
+  zip.generateAsync({ type: "blob" })
+]);
 await waitForRender();
   const parser = new DOMParser();
   const outputXml = parser.parseFromString(
