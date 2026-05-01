@@ -9,6 +9,20 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
 <style>
+  .login-screen.fade-out {
+  animation: fadeOutZoom 0.5s ease forwards;
+}
+
+@keyframes fadeOutZoom {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.05);
+  }
+}
 * {
   box-sizing: border-box;
 }
@@ -514,21 +528,7 @@ li {
 </div>
 
 <script>
-  .login-screen.fade-out {
-  animation: fadeOutZoom 0.5s ease forwards;
-}
-
-@keyframes fadeOutZoom {
-  0% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(1.05);
-  }
-}
-function checkPassword() {
+ function checkPassword() {
   const input = document.getElementById("passwordInput");
   const error = document.getElementById("loginError");
   const loginScreen = document.getElementById("loginScreen");
