@@ -190,6 +190,18 @@ li {
 </head>
 
 <body>
+  <div id="loginScreen" class="login-screen">
+  <div class="login-card">
+    <h2>Campsite Tool</h2>
+    <p class="login-sub">アクセスにはパスコードが必要です</p>
+
+    <input id="passwordInput" type="password" placeholder="パスコードを入力">
+
+    <button onclick="checkPassword()">ログイン</button>
+
+    <p id="loginError" class="error"></p>
+  </div>
+</div>
 <div class="container">
 
   <div class="hero">
@@ -360,11 +372,7 @@ li {
 </div>
 
 <script>
-  const pass = prompt("パスコードを入力してください");
 
-if (pass !== "CA2026") {
-  document.body.innerHTML = "アクセスできません";
-}
 function openTab(tabId, button) {
   document.querySelectorAll(".tab-content").forEach(tab => tab.classList.remove("active"));
   document.querySelectorAll(".tab-button").forEach(btn => btn.classList.remove("active"));
