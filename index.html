@@ -514,32 +514,39 @@ li {
 </div>
 
 <script>
+  .login-screen.fade-out {
+  animation: fadeOutZoom 0.5s ease forwards;
+}
+
+@keyframes fadeOutZoom {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.05);
+  }
+}
 function checkPassword() {
   const input = document.getElementById("passwordInput");
   const error = document.getElementById("loginError");
   const loginScreen = document.getElementById("loginScreen");
 
   if (input.value.trim() === "CA2026") {
-    input.blur();
 
-    // ）
-    document.body.style.zoom = "1";
+    // 演出発火
+    loginScreen.classList.add("fade-out");
 
-    loginScreen.style.display = "none";
+    // ちょっと待ってから消す
+    setTimeout(() => {
+      loginScreen.style.display = "none";
+    }, 500);
+
   } else {
     error.textContent = "パスコードが違います";
   }
 }
-document.addEventListener("DOMContentLoaded", function () {
-  const passwordInput = document.getElementById("passwordInput");
-  const loginButton = document.getElementById("loginButton");
-
-  loginButton.addEventListener("click", checkPassword);
-  loginButton.addEventListener("touchend", function (e) {
-    e.preventDefault();
-    checkPassword();
-  });
-
   passwordInput.addEventListener("keydown", function (e) {
     if (e.key === "Enter") {
       e.preventDefault();
