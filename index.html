@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Campsite Design Tool</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: linear-gradient(135deg, #0f172a, #111827, #1e1b4b);
+  color: #f8fafc;
+}
+
+.container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 40px 32px;
+}
+
+@media (max-width: 720px) {
+  .container {
+    padding: 24px 16px;
+  }
+}
+
+.hero {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(37, 99, 235, 0.18);
+  color: #93c5fd;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+h1 {
+  font-size: 36px;
+  margin: 0 0 10px;
+}
+
+.lead {
+  color: #cbd5e1;
+  line-height: 1.7;
+  margin: 0;
+}
+
+.tabs {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin: 24px 0;
+}
+
+.tab-button {
+  padding: 14px 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: rgba(15, 23, 42, 0.7);
+  color: #cbd5e1;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.tab-button.active {
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  color: white;
+}
+
+@media (max-width: 720px) {
+  .tabs {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+.panel {
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 22px;
+  padding: 22px;
+  margin-top: 18px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+}
+
+.step {
+  background: rgba(30, 41, 59, 0.72);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 18px;
+  padding: 18px;
+  margin-top: 14px;
+}
+
+.step-no {
+  display: inline-block;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(37, 99, 235, 0.9);
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+input[type="file"] {
+  width: 100%;
+  padding: 16px;
+  border-radius: 14px;
+  border: 1px dashed #93c5fd;
+  background: rgba(30, 41, 59, 0.8);
+  color: white;
+}
+
+.checks {
+  margin-top: 18px;
+  line-height: 1.9;
+}
+
+.note {
+  color: #94a3b8;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+button.generate {
+  width: 100%;
+  padding: 18px;
+  border-radius: 16px;
+  border: none;
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+  margin-top: 18px;
+  cursor: pointer;
+}
+
+button.generate:hover {
+  opacity: 0.92;
+}
+
+#status {
+  margin-top: 16px;
+  color: #a7f3d0;
+  font-weight: bold;
+  line-height: 1.7;
+}
+
+ul {
+  padding-left: 1.2em;
+}
+
+li {
+  margin-bottom: 8px;
+  line-height: 1.7;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+@media (max-width: 720px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+  <div class="hero">
+    <div class="badge">Community Ambassador Support Tool</div>
+    <h1>Campsite Design Tool</h1>
+    <p class="lead">
+      Wayfarer CSV / MyMap KML / KMZ からPOIを読み込み、<br>
+      30m・40m円と既存POIレイヤーを自動生成します。
+    </p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-button active" onclick="openTab('tool', this)">円生成</button>
+    <button class="tab-button" onclick="openTab('guide', this)">設計ガイド</button>
+    <button class="tab-button" onclick="openTab('check', this)">チェックリスト</button>
+    <button class="tab-button" onclick="openTab('howto', this)">使い方</button>
+  </div>
+
+  <section id="tool" class="tab-content active">
+    <div class="panel">
+      <h2>円生成</h2>
+      <p class="note">
+        複数CSVを同時に選択できます。guidが同じPOIは自動で重複削除します。
+      </p>
+
+      <div class="step">
+        <div class="step-no">STEP 1</div>
+        <p>
+          Wayfarer Map（スクリプト導入済み）から「Nearby Wayspots」を押して Export CSV を実行します。
+          広い公園の場合は2〜3回に分けて抽出してください。
+        </p>
+      </div>
+
+      <div class="step">
+        <div class="step-no">STEP 2</div>
+        <p>CSV / KML / KMZ ファイルを選択します。CSVは複数選択できます。</p>
+        <input type="file" id="fileInput" accept=".csv,.kml,.kmz" multiple>
+      </div>
+
+      <div class="step">
+        <div class="step-no">STEP 3</div>
+        <p>生成する円を選択します。</p>
+
+        <div class="checks">
+          <label>
+            <input type="checkbox" name="radius" value="40" checked>
+            40m円（基本距離）
+          </label><br>
+
+          <label>
+            <input type="checkbox" name="radius" value="30" checked>
+            30m円（調整用）
+          </label>
+
+          <p class="note">
+            POI作成時は40mで統一する（管理者側の調整余地を確保するため）。<br>
+            配置が厳しい場合のみ、30mまで調整可能とする。
+          </p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-no">STEP 4</div>
+        <p>
+          KMZを生成します。出力レイヤーは以下の5つです。
+        </p>
+        <ul>
+          <li>既存のポケストップ</li>
+          <li>既存のジム</li>
+          <li>既存のパワースポット</li>
+          <li>40m円（基本距離）</li>
+          <li>30m円（調整用）</li>
+        </ul>
+
+        <button class="generate" onclick="generateKMZ()">KMZを生成</button>
+        <div id="status"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="guide" class="tab-content">
+    <div class="panel">
+      <h2>設計ガイド</h2>
+
+      <div class="grid">
+        <div class="step">
+          <div class="step-no">考え方</div>
+          <h3>MyMapは「地図」ではなく「設計図」</h3>
+          <p class="note">
+            どこに人が集まり、どのように遊び、どこで交流が生まれるかを伝えるための設計図です。
+          </p>
+        </div>
+
+        <div class="step">
+          <div class="step-no">基本距離</div>
+          <h3>40mを基本にする</h3>
+          <p class="note">
+            POI作成時は40mで統一する（管理者側の調整余地を確保するため）。
+            配置が厳しい場合のみ、30mまで調整可能とします。
+          </p>
+        </div>
+
+        <div class="step">
+          <div class="step-no">上限</div>
+          <h3>追加POIは最大25個</h3>
+          <p class="note">
+            25個は上限であり、すべて追加される保証ではありません。
+            体験設計の意図が伝わることが重要です。
+          </p>
+        </div>
+
+        <div class="step">
+          <div class="step-no">レイヤー</div>
+          <h3>レイヤーを分ける</h3>
+          <p class="note">
+            既存POI、追加POI、活動エリアは混在させず、目的ごとに分けて管理します。
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="check" class="tab-content">
+    <div class="panel">
+      <h2>申請前チェックリスト</h2>
+      <ul>
+        <li>□ POI作成時は40mで統一している</li>
+        <li>□ 配置が厳しい箇所のみ30mで調整している</li>
+        <li>□ 追加POIは25個以内に収まっている</li>
+        <li>□ 既存POIと追加POIを分けている</li>
+        <li>□ 活動エリア（ゾーン）を設定している</li>
+        <li>□ 「置ける」より「遊びやすい」を優先している</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="howto" class="tab-content">
+    <div class="panel">
+      <h2>使い方</h2>
+
+      <div class="step">
+        <div class="step-no">1</div>
+        <h3>Wayfarer MapからCSVを出す</h3>
+        <p class="note">
+          Wayfarer Map（スクリプト導入済み）から「Nearby Wayspots」を押して Export CSV を実行します。
+          広い公園の場合は2〜3回に分けて抽出してください。
+        </p>
+      </div>
+
+      <div class="step">
+        <div class="step-no">2</div>
+        <h3>このツールに読み込む</h3>
+        <p class="note">
+          CSV / KML / KMZ に対応しています。複数CSVを入れた場合、guidで重複削除します。
+        </p>
+      </div>
+
+      <div class="step">
+        <div class="step-no">3</div>
+        <h3>KMZをMyMapへインポート</h3>
+        <p class="note">
+          生成されたKMZをGoogle My Mapsにインポートすると、5つのレイヤーで表示されます。
+        </p>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+function openTab(tabId, button) {
+  document.querySelectorAll(".tab-content").forEach(tab => tab.classList.remove("active"));
+  document.querySelectorAll(".tab-button").forEach(btn => btn.classList.remove("active"));
+
+  document.getElementById(tabId).classList.add("active");
+  button.classList.add("active");
+}
+
+function createCircle(lat, lon, radius, points = 72) {
+  const earthRadius = 6378137;
+  const coords = [];
+
+  for (let i = 0; i < points; i++) {
+    const angle = (i * 360 / points) * Math.PI / 180;
+
+    const dLat = (radius * Math.sin(angle)) / earthRadius;
+    const dLon = (radius * Math.cos(angle)) / (earthRadius * Math.cos(lat * Math.PI / 180));
+
+    const newLat = lat + dLat * 180 / Math.PI;
+    const newLon = lon + dLon * 180 / Math.PI;
+
+    coords.push(`${newLon},${newLat},0`);
+  }
+
+  coords.push(coords[0]);
+  return coords.join(" ");
+}
+
+function parseCSVLine(line) {
+  const result = [];
+  let current = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+
+    if (char === '"' && line[i + 1] === '"') {
+      current += '"';
+      i++;
+    } else if (char === '"') {
+      inQuotes = !inQuotes;
+    } else if (char === "," && !inQuotes) {
+      result.push(current);
+      current = "";
+    } else {
+      current += char;
+    }
+  }
+
+  result.push(current);
+  return result;
+}
+
+function normalizeHeader(text) {
+  return (text || "").trim().toLowerCase();
+}
+
+function parseCSV(text) {
+  const lines = text.split(/\r?\n/).filter(line => line.trim() !== "");
+  if (lines.length < 2) return [];
+
+  const headers = parseCSVLine(lines[0]).map(normalizeHeader);
+
+  const latIndex = headers.findIndex(h => h === "lat" || h.includes("latitude"));
+  const lngIndex = headers.findIndex(h => h === "lng" || h === "lon" || h.includes("longitude"));
+  const typeIndex = headers.findIndex(h => h.includes("gameentity"));
+  const guidIndex = headers.findIndex(h => h.includes("guid"));
+  const nameIndex = headers.findIndex(h => h === "title" || h === "name");
+
+  if (latIndex === -1 || lngIndex === -1) {
+    alert("CSVに lat / lng が見つかりません");
+    return [];
+  }
+
+  const points = [];
+
+  for (let i = 1; i < lines.length; i++) {
+    const cols = parseCSVLine(lines[i]);
+
+    const lat = Number(cols[latIndex]);
+    const lng = Number(cols[lngIndex]);
+
+    if (isNaN(lat) || isNaN(lng)) continue;
+
+    points.push({
+      lat,
+      lng,
+      type: typeIndex !== -1 ? (cols[typeIndex] || "").toLowerCase() : "",
+      guid: guidIndex !== -1 ? (cols[guidIndex] || "").trim() : "",
+      name: nameIndex !== -1 && cols[nameIndex] ? cols[nameIndex] : `POI_${i}`
+    });
+  }
+
+  return points;
+}
+
+async function getPointsFromKmlOrKmz(file) {
+  let kmlText = null;
+  const fileName = file.name.toLowerCase();
+
+  if (fileName.endsWith(".kml")) {
+    kmlText = await file.text();
+  } else if (fileName.endsWith(".kmz")) {
+    const zip = await JSZip.loadAsync(file);
+
+    for (const name in zip.files) {
+      if (name.toLowerCase().endsWith(".kml")) {
+        kmlText = await zip.files[name].async("text");
+        break;
+      }
+    }
+  }
+
+  if (!kmlText) return [];
+
+  const parser = new DOMParser();
+  const xml = parser.parseFromString(kmlText, "application/xml");
+  const placemarks = Array.from(xml.getElementsByTagName("Placemark"));
+
+  const points = [];
+
+  placemarks.forEach((pm, index) => {
+    const point = pm.getElementsByTagName("Point")[0];
+    if (!point) return;
+
+    const coordText = point.getElementsByTagName("coordinates")[0]?.textContent.trim();
+    if (!coordText) return;
+
+    const firstCoord = coordText.split(/\s+/)[0];
+    const [lng, lat] = firstCoord.split(",").map(Number);
+
+    if (isNaN(lat) || isNaN(lng)) return;
+
+    const name = pm.getElementsByTagName("name")[0]?.textContent || `POI_${index + 1}`;
+
+    points.push({
+      lat,
+      lng,
+      name,
+      type: "",
+      guid: ""
+    });
+  });
+
+  return points;
+}
+
+function removeDuplicate(points) {
+  const map = new Map();
+  let duplicateCount = 0;
+
+  points.forEach(p => {
+    const key = p.guid
+      ? `guid:${p.guid}`
+      : `coord:${p.lat.toFixed(6)},${p.lng.toFixed(6)}`;
+
+    if (map.has(key)) {
+      duplicateCount++;
+    } else {
+      map.set(key, p);
+    }
+  });
+
+  return {
+    uniquePoints: Array.from(map.values()),
+    duplicateCount
+  };
+}
+
+function createFolder(xml, doc, name) {
+  const folder = xml.createElement("Folder");
+  const folderName = xml.createElement("name");
+  folderName.textContent = name;
+  folder.appendChild(folderName);
+  doc.appendChild(folder);
+  return folder;
+}
+
+function createPointPlacemark(xml, p) {
+  const pm = xml.createElement("Placemark");
+
+  const name = xml.createElement("name");
+  name.textContent = p.name;
+
+  const point = xml.createElement("Point");
+  const coordinates = xml.createElement("coordinates");
+  coordinates.textContent = `${p.lng},${p.lat},0`;
+
+  point.appendChild(coordinates);
+  pm.appendChild(name);
+  pm.appendChild(point);
+
+  return pm;
+}
+
+function createCirclePlacemark(xml, p, radius) {
+  const pm = xml.createElement("Placemark");
+
+  const name = xml.createElement("name");
+  name.textContent = `${p.name}_${radius}m`;
+
+  const polygon = xml.createElement("Polygon");
+  const outer = xml.createElement("outerBoundaryIs");
+  const ring = xml.createElement("LinearRing");
+  const coordinates = xml.createElement("coordinates");
+
+  coordinates.textContent = createCircle(p.lat, p.lng, radius);
+
+  ring.appendChild(coordinates);
+  outer.appendChild(ring);
+  polygon.appendChild(outer);
+
+  pm.appendChild(name);
+  pm.appendChild(polygon);
+
+  return pm;
+}
+
+function classifyType(typeText) {
+  const t = (typeText || "").toLowerCase();
+
+  if (t.includes("gym")) return "gym";
+  if (t.includes("power")) return "power";
+  if (t.includes("pokestop") || t.includes("poke")) return "pokestop";
+
+  return "pokestop";
+}
+
+async function generateKMZ() {
+  const files = Array.from(document.getElementById("fileInput").files);
+  const status = document.getElementById("status");
+
+  const radii = Array.from(
+    document.querySelectorAll('input[name="radius"]:checked')
+  ).map(e => Number(e.value));
+
+  if (files.length === 0) {
+    alert("CSV / KML / KMZ ファイルを選択してください");
+    return;
+  }
+
+  if (radii.length === 0) {
+    alert("30m円または40m円を選択してください");
+    return;
+  }
+
+  status.textContent = "読み込み中…";
+
+  let points = [];
+
+  for (const file of files) {
+    const fileName = file.name.toLowerCase();
+
+    if (fileName.endsWith(".csv")) {
+      const text = await file.text();
+      points.push(...parseCSV(text));
+    } else if (fileName.endsWith(".kml") || fileName.endsWith(".kmz")) {
+      points.push(...await getPointsFromKmlOrKmz(file));
+    }
+  }
+
+  const beforeCount = points.length;
+
+  if (beforeCount === 0) {
+    alert("スポット座標が見つかりませんでした");
+    status.textContent = "";
+    return;
+  }
+
+  status.textContent = "重複削除中…";
+
+  const result = removeDuplicate(points);
+  points = result.uniquePoints;
+
+  status.textContent = "KMZ生成中…";
+
+  const parser = new DOMParser();
+  const outputXml = parser.parseFromString(
+    `<?xml version="1.0" encoding="UTF-8"?>
+    <kml xmlns="http://www.opengis.net/kml/2.2">
+      <Document>
+        <name>Campsite Design Output</name>
+      </Document>
+    </kml>`,
+    "application/xml"
+  );
+
+  const doc = outputXml.getElementsByTagName("Document")[0];
+
+  const folders = {
+    pokestop: createFolder(outputXml, doc, "既存のポケストップ"),
+    gym: createFolder(outputXml, doc, "既存のジム"),
+    power: createFolder(outputXml, doc, "既存のパワースポット"),
+    circle40: createFolder(outputXml, doc, "40m円（基本距離）"),
+    circle30: createFolder(outputXml, doc, "30m円（調整用）")
+  };
+
+  points.forEach(p => {
+    const pointPlacemark = createPointPlacemark(outputXml, p);
+    const kind = classifyType(p.type);
+
+    if (kind === "gym") {
+      folders.gym.appendChild(pointPlacemark);
+    } else if (kind === "power") {
+      folders.power.appendChild(pointPlacemark);
+    } else {
+      folders.pokestop.appendChild(pointPlacemark);
+    }
+
+    radii.forEach(radius => {
+      const circlePlacemark = createCirclePlacemark(outputXml, p, radius);
+
+      if (radius === 40) {
+        folders.circle40.appendChild(circlePlacemark);
+      } else if (radius === 30) {
+        folders.circle30.appendChild(circlePlacemark);
+      }
+    });
+  });
+
+  const serializer = new XMLSerializer();
+  const newKml = serializer.serializeToString(outputXml);
+
+  const zip = new JSZip();
+  zip.file("doc.kml", newKml);
+
+  const blob = await zip.generateAsync({ type: "blob" });
+
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "campsite_design_output.kmz";
+  a.click();
+
+  status.innerHTML =
+    `読み込み：${beforeCount}件<br>` +
+    `重複削除：${result.duplicateCount}件<br>` +
+    `出力：${points.length}件<br>` +
+    `KMZを生成しました。`;
+}
+</script>
+
+</body>
+</html>
