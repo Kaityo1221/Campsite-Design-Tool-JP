@@ -21,38 +21,36 @@
 
 .splash-screen.show {
   display: flex;
-  animation: splashFade 1.2s ease forwards;
+  animation: splashFade 1.4s ease forwards;
 }
 
 .splash-screen img {
   width: 140px;
   height: 140px;
   border-radius: 28px;
-  animation: iconFloat 1.2s ease forwards;
+  animation: iconWarp 1.4s ease forwards;
 }
 
 @keyframes splashFade {
-  0% { opacity: 0; }
-  25% { opacity: 1; }
-  75% { opacity: 1; }
+  0% { opacity: 1; }
+  65% { opacity: 1; }
   100% { opacity: 0; }
 }
 
-@keyframes iconFloat {
+@keyframes iconWarp {
   0% {
-    opacity: 0;
-    transform: scale(0.9) translateY(12px);
-  }
-  35% {
     opacity: 1;
-    transform: scale(1) translateY(0);
+    transform: scale(1);
+  }
+  55% {
+    opacity: 1;
+    transform: scale(1.08);
   }
   100% {
     opacity: 0;
-    transform: scale(1.04) translateY(-6px);
+    transform: scale(1.9);
   }
-}
-  #passwordInput {
+}  #passwordInput {
   -webkit-text-security: disc;
 }
   .loading-overlay {
