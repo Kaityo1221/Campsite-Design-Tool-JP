@@ -278,9 +278,8 @@ li {
     <p class="login-sub">アクセスにはパスコードが必要です</p>
 
     <input id="passwordInput" type="password" placeholder="パスコードを入力">
-    <button type="button" id="loginButton" onclick="checkPassword()">ログイン</button>
-
-    <p id="loginError" class="error"></p>
+<button type="button" id="loginButton">ログイン</button>
+<p id="loginError" class="error"></p>
   </div>
 </div>
 
@@ -515,11 +514,12 @@ li {
 
 <script>
 function checkPassword() {
-  const input = document.getElementById("passwordInput").value;
+  const input = document.getElementById("passwordInput");
   const error = document.getElementById("loginError");
+  const loginScreen = document.getElementById("loginScreen");
 
-  if (input === "CA2026") {
-    document.getElementById("loginScreen").style.display = "none";
+  if (input.value.trim() === "CA2026") {
+    loginScreen.style.display = "none";
   } else {
     error.textContent = "パスコードが違います";
   }
@@ -528,6 +528,12 @@ function checkPassword() {
 document.addEventListener("DOMContentLoaded", function () {
   const passwordInput = document.getElementById("passwordInput");
   const loginButton = document.getElementById("loginButton");
+
+  loginButton.addEventListener("click", checkPassword);
+  loginButton.addEventListener("touchend", function (e) {
+    e.preventDefault();
+    checkPassword();
+  });
 
   passwordInput.addEventListener("keydown", function (e) {
     if (e.key === "Enter") {
