@@ -278,7 +278,7 @@ li {
     <p class="login-sub">アクセスにはパスコードが必要です</p>
 
     <input id="passwordInput" type="password" placeholder="パスコードを入力">
-    <button type="button" id="loginButton">ログイン</button>
+    <button type="button" id="loginButton" onclick="checkPassword()">ログイン</button>
 
     <p id="loginError" class="error"></p>
   </div>
@@ -528,10 +528,6 @@ function checkPassword() {
 document.addEventListener("DOMContentLoaded", function () {
   const passwordInput = document.getElementById("passwordInput");
   const loginButton = document.getElementById("loginButton");
-
-  loginButton.addEventListener("click", function () {
-    checkPassword();
-  });
 
   passwordInput.addEventListener("keydown", function (e) {
     if (e.key === "Enter") {
