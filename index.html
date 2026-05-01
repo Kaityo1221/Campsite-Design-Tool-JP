@@ -869,10 +869,11 @@ async function generateKMZ() {
   document.getElementById("loadingOverlay").style.display = "none";
   return;
 }
-  if (radii.length === 0) {
-    alert("30m円または40m円を選択してください");
-    return;
-  }
+ if (radii.length === 0) {
+  alert("30m円または40m円を選択してください");
+  document.getElementById("loadingOverlay").style.display = "none";
+  return;
+}
 await waitForRender();
 
   let points = [];
@@ -890,11 +891,12 @@ await waitForRender();
 
   const beforeCount = points.length;
 
-  if (beforeCount === 0) {
-    alert("スポット座標が見つかりませんでした");
-    status.textContent = "";
-    return;
-  }
+ if (beforeCount === 0) {
+  alert("スポット座標が見つかりませんでした");
+  status.textContent = "";
+  document.getElementById("loadingOverlay").style.display = "none";
+  return;
+}
 await waitForRender();
 
   const result = removeDuplicate(points);
@@ -965,7 +967,6 @@ await waitForRender();
   a.href = URL.createObjectURL(blob);
   a.download = "campsite_design_output.kmz";
   a.click();
-document.getElementById("loadingOverlay").style.display = "none";
   status.innerHTML =
     `読み込み：${beforeCount}件<br>` +
     `重複削除：${result.duplicateCount}件<br>` +
