@@ -864,13 +864,22 @@ async function generateKMZ() {
     return;
   }
 
-  status.textContent = "重複削除中…";
+  status.innerHTML = `
+  <span class="loading">
+    <span class="spinner"></span>
+    重複削除中…
+  </span>
+`;
 
   const result = removeDuplicate(points);
   points = result.uniquePoints;
 
-  status.textContent = "KMZ生成中…";
-
+  status.innerHTML = `
+  <span class="loading">
+    <span class="spinner"></span>
+    KMZ生成中…
+  </span>
+`;
   const parser = new DOMParser();
   const outputXml = parser.parseFromString(
     `<?xml version="1.0" encoding="UTF-8"?>
