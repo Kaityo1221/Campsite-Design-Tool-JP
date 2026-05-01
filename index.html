@@ -966,8 +966,12 @@ await waitForRender();
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
   a.download = "campsite_design_output.kmz";
-  a.click();
-document.getElementById("loadingOverlay").style.display = "none";
+ a.click();
+
+// どんな状況でも消す（最強）
+setTimeout(() => {
+  document.getElementById("loadingOverlay").style.display = "none";
+}, 500);
 status.innerHTML =
     `読み込み：${beforeCount}件<br>` +
     `重複削除：${result.duplicateCount}件<br>` +
