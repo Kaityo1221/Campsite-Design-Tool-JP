@@ -857,7 +857,6 @@ function waitForRender() {
 
 async function generateKMZ() {
   document.getElementById("loadingOverlay").style.display = "flex";
-document.getElementById("loadingText").textContent = "読み込み中…";
   const files = Array.from(document.getElementById("fileInput").files);
   const status = document.getElementById("status");
 
@@ -874,13 +873,6 @@ document.getElementById("loadingText").textContent = "読み込み中…";
     alert("30m円または40m円を選択してください");
     return;
   }
-
- status.innerHTML = `
-  <span class="loading">
-    <span class="spinner"></span>
-    読み込み中…
-  </span>
-`;
 await waitForRender();
 
   let points = [];
@@ -903,13 +895,6 @@ await waitForRender();
     status.textContent = "";
     return;
   }
-document.getElementById("loadingText").textContent = "重複削除中…";
- status.innerHTML = `
-  <span class="loading">
-    <span class="spinner"></span>
-    重複削除中…
-  </span>
-`;
 await waitForRender();
 
   const result = removeDuplicate(points);
@@ -980,7 +965,7 @@ await waitForRender();
   a.href = URL.createObjectURL(blob);
   a.download = "campsite_design_output.kmz";
   a.click();
-
+document.getElementById("loadingOverlay").style.display = "none";
   status.innerHTML =
     `読み込み：${beforeCount}件<br>` +
     `重複削除：${result.duplicateCount}件<br>` +
