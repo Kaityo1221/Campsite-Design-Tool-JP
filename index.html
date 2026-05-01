@@ -656,18 +656,16 @@ function checkPassword() {
     error.textContent = "";
     input.blur();
 
-    loginScreen.classList.add("fade-out");
+    // ログイン画面をすぐ消す
+    loginScreen.remove();
+
+    // すぐアイコン演出開始
+    splashScreen.classList.add("show");
 
     setTimeout(function () {
-      loginScreen.remove();
+      splashScreen.remove();
+    }, 1400);
 
-      splashScreen.classList.add("show");
-
-      setTimeout(function () {
-        splashScreen.remove();
-      }, 1200);
-
-    }, 500);
   } else {
     error.textContent = "パスコードが違います";
   }
