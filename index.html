@@ -865,10 +865,10 @@ async function generateKMZ() {
   ).map(e => Number(e.value));
 
   if (files.length === 0) {
-    alert("CSV / KML / KMZ ファイルを選択してください");
-    return;
-  }
-
+  alert("CSV / KML / KMZ ファイルを選択してください");
+  document.getElementById("loadingOverlay").style.display = "none";
+  return;
+}
   if (radii.length === 0) {
     alert("30m円または40m円を選択してください");
     return;
@@ -972,7 +972,6 @@ document.getElementById("loadingOverlay").style.display = "none";
     `出力：${points.length}件<br>` +
     `KMZを生成しました。`;
 }
-  document.getElementById("loadingOverlay").style.display = "none";
 </script>
 
 </body>
