@@ -9,6 +9,26 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
 <style>
+  .loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 3px solid #334155;
+  border-top-color: #60a5fa;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
   .login-card {
   position: relative;
   z-index: 10000;
@@ -296,9 +316,6 @@ li {
 </head>
 
 <body>
-<button onclick="alert('テスト発火')" style="position:fixed;top:10px;left:10px;z-index:99999;">
-  TEST
-</button>
 <div id="loginScreen" class="login-screen">
   <div class="login-card">
     <h2>Campsite Tool</h2>
@@ -819,7 +836,12 @@ async function generateKMZ() {
     return;
   }
 
-  status.textContent = "読み込み中…";
+  status.innerHTML = `
+  <span class="loading">
+    <span class="spinner"></span>
+    読み込み中…
+  </span>
+`;
 
   let points = [];
 
