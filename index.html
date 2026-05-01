@@ -269,6 +269,7 @@ li {
 
   <div class="tabs">
     <button class="tab-button active" onclick="openTab('tool', this)">キャンプサイト作成</button>
+    <button class="tab-button" onclick="openTab('script', this)">スクリプト導入方法</button>
     <button class="tab-button" onclick="openTab('guide', this)">設計ガイド</button>
     <button class="tab-button" onclick="openTab('check', this)">チェックリスト</button>
     <button class="tab-button" onclick="openTab('howto', this)">使い方</button>
@@ -335,7 +336,53 @@ li {
       </div>
     </div>
   </section>
+<section id="script" class="tab-content">
+  <div class="panel">
+    <h2>スクリプト導入方法</h2>
 
+    <div class="step">
+      <div class="step-no">STEP 1</div>
+      <h3>Tampermonkeyをインストール</h3>
+      <p class="note">
+        まずブラウザにTampermonkeyをインストールします。
+      </p>
+      <a class="link-btn" href="https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo?hl=ja" target="_blank">
+        Tampermonkeyをインストール
+      </a>
+    </div>
+
+    <div class="step">
+      <div class="step-no">STEP 2</div>
+      <h3>Wayfarer Map Mods - Base を導入</h3>
+      <p class="note">
+        Tampermonkeyを入れた後、Baseスクリプトを追加します。
+      </p>
+      <a class="link-btn" href="https://gitlab.com/Tntnnbltn/wayfarer-addons/-/raw/main/wayfarer-map-mods-base.user.js" target="_blank">
+        Baseスクリプトをインストール
+      </a>
+    </div>
+
+    <div class="step">
+      <div class="step-no">STEP 3</div>
+      <h3>Wayfarer Map Mods - S2 Cells を導入</h3>
+      <p class="note">
+        続けてS2 Cellsを追加します。
+      </p>
+      <a class="link-btn" href="https://gitlab.com/Tntnnbltn/wayfarer-addons/-/raw/main/wayfarer-map-mods-s2-cells.user.js" target="_blank">
+        S2 Cellsをインストール
+      </a>
+    </div>
+
+    <div class="step">
+      <div class="step-no">STEP 4</div>
+      <h3>Wayfarer Mapで確認</h3>
+      <p class="note">
+        Wayfarer Mapを開き、「Nearby Wayspots」が表示されれば成功です。
+      </p>
+    </div>
+
+  </div>
+</section>
   <section id="guide" class="tab-content">
     <div class="panel">
       <h2>設計ガイド</h2>
