@@ -9,6 +9,31 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
 <style>
+  .loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.75);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9998;
+}
+
+.loading-box {
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 18px;
+  padding: 28px;
+  text-align: center;
+  color: white;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+}
+
+.spinner.big {
+  width: 36px;
+  height: 36px;
+  margin: 0 auto 14px;
+}
   .loading {
   display: inline-flex;
   align-items: center;
@@ -316,6 +341,12 @@ li {
 </head>
 
 <body>
+  <div id="loadingOverlay" class="loading-overlay">
+  <div class="loading-box">
+    <div class="spinner big"></div>
+    <div id="loadingText">処理中…</div>
+  </div>
+</div>
 <div id="loginScreen" class="login-screen">
   <div class="login-card">
     <h2>Campsite Tool</h2>
