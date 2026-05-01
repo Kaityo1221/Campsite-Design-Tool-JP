@@ -383,10 +383,11 @@ li {
 }
 </style>
 </head>
-<audio id="loginSound" src="login.mp3"></audio>
-<audio id="successSound" src="sucess.mp3"></audio>
+
   
 <body>
+  <audio id="loginSound" src="login.mp3"></audio>
+<audio id="successSound" src="sucess.mp3"></audio>
   <div id="loadingOverlay" class="loading-overlay">
   <div class="loading-box">
     <div class="spinner big"></div>
@@ -1056,8 +1057,7 @@ status.innerHTML =
     `読み込み：${beforeCount}件<br>` +
     `重複削除：${result.duplicateCount}件<br>` +
     `出力：${points.length}件<br>` +
-status.innerHTML =
-  `✔ KMZを生成しました`;
+    `✔ KMZを生成しました`;
 }
 </script>
 
