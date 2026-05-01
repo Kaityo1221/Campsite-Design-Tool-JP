@@ -9,7 +9,18 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
 <style>
-  .login-screen {
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: linear-gradient(135deg, #0f172a, #111827, #1e1b4b);
+  color: #f8fafc;
+}
+
+.login-screen {
   position: fixed;
   inset: 0;
   background: linear-gradient(135deg, #0f172a, #111827, #1e1b4b);
@@ -20,11 +31,12 @@
 }
 
 .login-card {
-  background: rgba(15,23,42,0.9);
+  background: rgba(15, 23, 42, 0.92);
   padding: 32px;
   border-radius: 20px;
   width: 320px;
   text-align: center;
+  border: 1px solid #334155;
   box-shadow: 0 20px 60px rgba(0,0,0,0.5);
 }
 
@@ -34,7 +46,7 @@
 
 .login-sub {
   font-size: 13px;
-  color: #94a3b8;
+  color: #cbd5e1;
   margin-bottom: 20px;
 }
 
@@ -56,22 +68,13 @@
   background: linear-gradient(135deg, #2563eb, #7c3aed);
   color: white;
   font-weight: bold;
+  cursor: pointer;
 }
 
 .error {
   color: #f87171;
   margin-top: 10px;
   font-size: 13px;
-}
-* {
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: linear-gradient(135deg, #0f172a, #111827, #1e1b4b);
-  color: #f8fafc;
 }
 
 .container {
@@ -106,6 +109,10 @@ h1 {
   margin: 0 0 10px;
 }
 
+h2, h3 {
+  color: #f1f5f9;
+}
+
 .lead {
   color: #cbd5e1;
   line-height: 1.7;
@@ -114,7 +121,7 @@ h1 {
 
 .tabs {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 10px;
   margin: 24px 0;
 }
@@ -149,7 +156,7 @@ h1 {
 }
 
 .panel {
-  background: #1e293b; /* ←ベタにする */
+  background: #1e293b;
   border: 1px solid #334155;
   border-radius: 22px;
   padding: 22px;
@@ -194,6 +201,26 @@ input[type="file"] {
   color: #e2e8f0;
   font-size: 13px;
   line-height: 1.7;
+}
+
+a {
+  color: #60a5fa;
+}
+
+.link-btn {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  text-decoration: none;
+  color: white;
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.link-btn:hover {
+  opacity: 0.9;
 }
 
 button.generate {
@@ -244,18 +271,17 @@ li {
 </head>
 
 <body>
-  <div id="loginScreen" class="login-screen">
+
+<div id="loginScreen" class="login-screen">
   <div class="login-card">
     <h2>Campsite Tool</h2>
     <p class="login-sub">アクセスにはパスコードが必要です</p>
-
     <input id="passwordInput" type="password" placeholder="パスコードを入力">
-
     <button type="button" onclick="checkPassword()">ログイン</button>
-
     <p id="loginError" class="error"></p>
   </div>
 </div>
+
 <div class="container">
 
   <div class="hero">
@@ -279,20 +305,20 @@ li {
     <div class="panel">
       <h2>キャンプサイト作成の手順</h2>
       <p class="note">
-        複数CSVを同時に取り込んで重複したPOIを自動で重複削除します。
+        複数CSVを同時に取り込んで、重複したPOIを自動で削除します。
       </p>
+
       <div class="step">
         <div class="step-no">STEP 1</div>
         <p>
-  Wayfarer Map（スクリプト導入済み）から「Nearby Wayspots」を押して Export CSV を実行します。
-  <br>※広い公園の場合は複数回に分けて抽出してください。
-</p>
-
-<p class="note">
-  スクリプト導入がまだの方は
-  <a href="#" onclick="openTab('script', this)">スクリプト導入方法</a>
-  をご確認ください
-</p>
+          Wayfarer Map（スクリプト導入済み）から「Nearby Wayspots」を押して Export CSV を実行します。<br>
+          ※広い公園の場合は複数回に分けて抽出してください。
+        </p>
+        <p class="note">
+          スクリプト導入がまだの方は
+          <a href="#" onclick="openTab('script', this); return false;">スクリプト導入方法</a>
+          をご確認ください。
+        </p>
       </div>
 
       <div class="step">
@@ -325,9 +351,7 @@ li {
 
       <div class="step">
         <div class="step-no">STEP 4</div>
-        <p>
-          KMZを生成します。出力レイヤーは以下の5つです。
-        </p>
+        <p>KMZを生成します。出力レイヤーは以下の5つです。</p>
         <ul>
           <li>既存のポケストップ</li>
           <li>既存のジム</li>
@@ -339,64 +363,65 @@ li {
         <button class="generate" onclick="generateKMZ()">KMZを生成</button>
         <div id="status"></div>
       </div>
+
+      <div class="step">
+        <div class="step-no">STEP 5</div>
+        <h3>Google My Mapsにインポート</h3>
+        <p class="note">
+          生成されたKMZファイルをGoogle My Mapsにインポートしてください。<br>
+          インポートすると、5つのレイヤー（既存POI・円）が自動で表示されます。
+        </p>
+      </div>
     </div>
   </section>
-<section id="script" class="tab-content">
-  <div class="panel">
-    <h2>スクリプト導入方法</h2>
 
-    <div class="step">
-      <div class="step-no">STEP 1</div>
-      <h3>Tampermonkeyをインストール</h3>
-      <p class="note">
-        まずブラウザにTampermonkeyをインストールします。
-      </p>
-      <a class="link-btn" href="https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo?hl=ja" target="_blank">
-        Tampermonkeyをインストール
-      </a>
-    </div>
+  <section id="script" class="tab-content">
+    <div class="panel">
+      <h2>スクリプト導入方法</h2>
 
-    <div class="step">
-      <div class="step-no">STEP 2</div>
-      <h3>Wayfarer Map Mods - Base を導入</h3>
-      <p class="note">
-        Tampermonkeyを入れた後、Baseスクリプトを追加します。
-        ※事前にTampermonkeyをインストールしていない場合、スクリプトは動作しません
-      </p>
-      <a class="link-btn" href="https://gitlab.com/Tntnnbltn/wayfarer-addons/-/raw/main/wayfarer-map-mods-base.user.js" target="_blank">
-        Baseスクリプトをインストール
-      </a>
-    </div>
+      <div class="step">
+        <div class="step-no">STEP 1</div>
+        <h3>Tampermonkeyをインストール</h3>
+        <p class="note">まずブラウザにTampermonkeyをインストールします。</p>
+        <a class="link-btn" href="https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo?hl=ja" target="_blank">
+          Tampermonkeyをインストール
+        </a>
+      </div>
 
-    <div class="step">
-      <div class="step-no">STEP 3</div>
-      <h3>Wayfarer Map Mods - S2 Cells を導入</h3>
-      <p class="note">
-        続けてS2 Cellsを追加します。
-      </p>
-      <a class="link-btn" href="https://gitlab.com/Tntnnbltn/wayfarer-addons/-/raw/main/wayfarer-map-mods-s2-cells.user.js" target="_blank">
-        S2 Cellsをインストール
-      </a>
-    </div>
+      <div class="step">
+        <div class="step-no">STEP 2</div>
+        <h3>Wayfarer Map Mods - Base を導入</h3>
+        <p class="note">
+          Tampermonkeyを入れた後、Baseスクリプトを追加します。<br>
+          ※事前にTampermonkeyをインストールしていない場合、スクリプトは動作しません。
+        </p>
+        <a class="link-btn" href="https://gitlab.com/Tntnnbltn/wayfarer-addons/-/raw/main/wayfarer-map-mods-base.user.js" target="_blank">
+          Baseスクリプトをインストール
+        </a>
+      </div>
 
-    <div class="step">
-      <div class="step-no">STEP 4</div>
-      <h3>Wayfarer Mapで確認</h3>
-      <p class="note">
-        Wayfarer Mapを開き、「左上にアイコンが2つ」表示されれば成功です。
-      </p>
-      <a class="link-btn" href="https://wayfarer.nianticlabs.com/new/" target="_blank">
-        Wayfarer Mapを開く
+      <div class="step">
+        <div class="step-no">STEP 3</div>
+        <h3>Wayfarer Map Mods - S2 Cells を導入</h3>
+        <p class="note">続けてS2 Cellsを追加します。</p>
+        <a class="link-btn" href="https://gitlab.com/Tntnnbltn/wayfarer-addons/-/raw/main/wayfarer-map-mods-s2-cells.user.js" target="_blank">
+          S2 Cellsをインストール
+        </a>
+      </div>
+
+      <div class="step">
+        <div class="step-no">STEP 4</div>
+        <h3>Wayfarer Mapで確認</h3>
+        <p class="note">
+          Wayfarer Mapを開き、「左上にアイコンが2つ」表示されれば成功です。
+        </p>
+        <a class="link-btn" href="https://wayfarer.nianticlabs.com/new/" target="_blank">
+          Wayfarer Mapを開く
+        </a>
+      </div>
     </div>
-    <div class="step">
-  <div class="step-no">STEP 5</div>
-  <h3>Google My Mapsにインポート</h3>
-  <p class="note">
-    生成されたKMZファイルをGoogle My Mapsにインポートしてください。<br>
-    インポートすると、5つのレイヤー（既存POI・円）が自動で表示されます。
-  </p>
-  </div>
-</section>
+  </section>
+
   <section id="guide" class="tab-content">
     <div class="panel">
       <h2>設計ガイド</h2>
@@ -414,7 +439,7 @@ li {
           <div class="step-no">基本距離</div>
           <h3>40mを基本にする</h3>
           <p class="note">
-            POI作成時は40mで統一する（管理者側の調整余地を確保するため）。
+            POI作成時は40mで統一する（管理者側の調整余地を確保するため）。<br>
             配置が厳しい場合のみ、30mまで調整可能とします。
           </p>
         </div>
@@ -423,7 +448,7 @@ li {
           <div class="step-no">上限</div>
           <h3>追加POIは最大25個</h3>
           <p class="note">
-            25個は上限であり、すべて追加される保証はありません。
+            25個は上限であり、すべて追加される保証はありません。<br>
             体験設計の意図が伝わることが重要です。
           </p>
         </div>
@@ -461,7 +486,7 @@ li {
         <div class="step-no">1</div>
         <h3>Wayfarer MapからCSVを出す</h3>
         <p class="note">
-          Wayfarer Map（スクリプト導入済み）から「Nearby Wayspots」を押して Export CSV を実行します。
+          Wayfarer Map（スクリプト導入済み）から「Nearby Wayspots」を押して Export CSV を実行します。<br>
           広い公園の場合は2〜3回に分けて抽出してください。
         </p>
       </div>
@@ -497,7 +522,7 @@ function checkPassword() {
     error.textContent = "パスコードが違います";
   }
 }
-  // Enter対応
+
 document.addEventListener("DOMContentLoaded", function () {
   document.getElementById("passwordInput").addEventListener("keydown", function (e) {
     if (e.key === "Enter") {
@@ -505,12 +530,21 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 });
+
 function openTab(tabId, button) {
   document.querySelectorAll(".tab-content").forEach(tab => tab.classList.remove("active"));
   document.querySelectorAll(".tab-button").forEach(btn => btn.classList.remove("active"));
 
   document.getElementById(tabId).classList.add("active");
-  button.classList.add("active");
+
+  const targetButton = Array.from(document.querySelectorAll(".tab-button"))
+    .find(btn => btn.getAttribute("onclick") && btn.getAttribute("onclick").includes("'" + tabId + "'"));
+
+  if (targetButton) {
+    targetButton.classList.add("active");
+  } else if (button && button.classList) {
+    button.classList.add("active");
+  }
 }
 
 function createCircle(lat, lon, radius, points = 72) {
@@ -519,13 +553,10 @@ function createCircle(lat, lon, radius, points = 72) {
 
   for (let i = 0; i < points; i++) {
     const angle = (i * 360 / points) * Math.PI / 180;
-
     const dLat = (radius * Math.sin(angle)) / earthRadius;
     const dLon = (radius * Math.cos(angle)) / (earthRadius * Math.cos(lat * Math.PI / 180));
-
     const newLat = lat + dLat * 180 / Math.PI;
     const newLon = lon + dLon * 180 / Math.PI;
-
     coords.push(`${newLon},${newLat},0`);
   }
 
@@ -583,7 +614,6 @@ function parseCSV(text) {
 
   for (let i = 1; i < lines.length; i++) {
     const cols = parseCSVLine(lines[i]);
-
     const lat = Number(cols[latIndex]);
     const lng = Number(cols[lngIndex]);
 
@@ -623,7 +653,6 @@ async function getPointsFromKmlOrKmz(file) {
   const parser = new DOMParser();
   const xml = parser.parseFromString(kmlText, "application/xml");
   const placemarks = Array.from(xml.getElementsByTagName("Placemark"));
-
   const points = [];
 
   placemarks.forEach((pm, index) => {
