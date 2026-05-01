@@ -436,6 +436,14 @@ function checkPassword() {
     error.textContent = "パスコードが違います";
   }
 }
+  // Enter対応
+document.addEventListener("DOMContentLoaded", function () {
+  document.getElementById("passwordInput").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") {
+      checkPassword();
+    }
+  });
+});
 function openTab(tabId, button) {
   document.querySelectorAll(".tab-content").forEach(tab => tab.classList.remove("active"));
   document.querySelectorAll(".tab-button").forEach(btn => btn.classList.remove("active"));
