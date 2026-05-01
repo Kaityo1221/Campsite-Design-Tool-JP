@@ -9,6 +9,28 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 ふ
 <style>
+  .guide-btn {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid #475569;
+  background: #334155;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.rename-guide {
+  display: none;
+  margin-top: 12px;
+  padding: 14px;
+  border-radius: 14px;
+  background: #020617;
+  border: 1px solid #334155;
+  color: #e2e8f0;
+  font-size: 13px;
+  line-height: 1.7;
+}
   button.generate {
   transition: transform 0.08s ease, filter 0.08s ease;
 }
@@ -519,6 +541,22 @@ li {
           生成されたKMZファイルをGoogle My Mapsにインポートしてください。<br>
           インポートすると、5つのレイヤー（既存POI・円）が自動で表示されます。
         </p>
+        <button class="guide-btn" onclick="toggleRenameGuide()">
+  iPhoneでZIPになった場合
+</button>
+
+<div id="renameGuide" class="rename-guide">
+  <p>
+    iPhoneではKMZがZIPとして保存される場合があります。<br>
+    その場合は以下の手順で拡張子を変更してください。
+  </p>
+  <ol>
+    <li>ファイルアプリを開く</li>
+    <li>保存されたZIPファイルを長押し</li>
+    <li>「名称変更」を選択</li>
+    <li>末尾の <strong>.zip</strong> を <strong>.kmz</strong> に変更</li>
+    <li>「完了」を押す</li>
+  </ol>
       </div>
     </div>
   </section>
@@ -670,6 +708,10 @@ Userscriptsをインストール
 </div>
 
 <script>
+  function toggleRenameGuide() {
+  const guide = document.getElementById("renameGuide");
+  guide.style.display = guide.style.display === "block" ? "none" : "block";
+}
   function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
