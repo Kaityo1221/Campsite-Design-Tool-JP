@@ -9,6 +9,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
 <style>
+  button.generate:active {
+  transform: scale(0.96);
+}
   .splash-screen {
   position: fixed;
   inset: 0;
@@ -1038,7 +1041,8 @@ await waitForRender();
 
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = "campsite_design_output.kmz";
+  const now = new Date();
+a.download = `campsite_${now.getFullYear()}${now.getMonth()+1}${now.getDate()}.kmz`;
  a.click();
 
 const success = document.getElementById("successSound");
@@ -1058,6 +1062,10 @@ status.innerHTML =
     `重複削除：${result.duplicateCount}件<br>` +
     `出力：${points.length}件<br>` +
     `✔ KMZを生成しました`;
+  status.style.transform = "scale(1.05)";
+setTimeout(() => {
+  status.style.transform = "scale(1)";
+}, 120);
 }
 </script>
 
