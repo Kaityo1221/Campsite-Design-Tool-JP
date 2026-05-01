@@ -383,7 +383,9 @@ li {
 }
 </style>
 </head>
-
+<audio id="loginSound" src="xx.mp3"></audio>
+<audio id="successSound" src="yy.mp3"></audio>
+  
 <body>
   <div id="loadingOverlay" class="loading-overlay">
   <div class="loading-box">
@@ -662,9 +664,18 @@ function checkPassword() {
     // すぐアイコン演出開始
     splashScreen.classList.add("show");
 
-    setTimeout(function () {
-      splashScreen.remove();
-    }, 1400);
+// 🔊 ログイン音
+const loginSound = document.getElementById("loginSound");
+loginSound.currentTime = 0;
+loginSound.volume = 0.25;
+
+setTimeout(() => {
+  loginSound.play().catch(() => {});
+}, 80);
+
+setTimeout(function () {
+  splashScreen.remove();
+}, 1400);
 
   } else {
     error.textContent = "パスコードが違います";
@@ -1029,6 +1040,14 @@ await waitForRender();
   a.download = "campsite_design_output.kmz";
  a.click();
 
+const success = document.getElementById("successSound");
+success.currentTime = 0;
+success.volume = 0.3;
+
+setTimeout(() => {
+  success.play().catch(() => {});
+}, 100);
+
 // どんな状況でも消す（最強）
 setTimeout(() => {
   document.getElementById("loadingOverlay").style.display = "none";
@@ -1037,7 +1056,8 @@ status.innerHTML =
     `読み込み：${beforeCount}件<br>` +
     `重複削除：${result.duplicateCount}件<br>` +
     `出力：${points.length}件<br>` +
-    `KMZを生成しました。`;
+status.innerHTML =
+  `✔ KMZを生成しました`;
 }
 </script>
 
