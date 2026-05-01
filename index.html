@@ -817,7 +817,11 @@ function classifyType(typeText) {
 
   return "pokestop";
 }
+function waitForRender() {
+  return new Promise(resolve => requestAnimationFrame(resolve));
+}
 
+async function generateKMZ() {
 async function generateKMZ() {
   const files = Array.from(document.getElementById("fileInput").files);
   const status = document.getElementById("status");
@@ -836,12 +840,13 @@ async function generateKMZ() {
     return;
   }
 
-  status.innerHTML = `
+ status.innerHTML = `
   <span class="loading">
     <span class="spinner"></span>
     読み込み中…
   </span>
 `;
+await waitForRender();
 
   let points = [];
 
@@ -864,12 +869,13 @@ async function generateKMZ() {
     return;
   }
 
-  status.innerHTML = `
+ status.innerHTML = `
   <span class="loading">
     <span class="spinner"></span>
     重複削除中…
   </span>
 `;
+await waitForRender();
 
   const result = removeDuplicate(points);
   points = result.uniquePoints;
@@ -880,6 +886,7 @@ async function generateKMZ() {
     KMZ生成中…
   </span>
 `;
+await waitForRender();
   const parser = new DOMParser();
   const outputXml = parser.parseFromString(
     `<?xml version="1.0" encoding="UTF-8"?>
