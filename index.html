@@ -545,16 +545,15 @@ function checkPassword() {
   const error = document.getElementById("loginError");
   const loginScreen = document.getElementById("loginScreen");
 
-  alert("入力値：" + input.value);
-
   if (input.value.trim() === "CA2026") {
-    alert("ログイン成功");
     error.textContent = "";
+    input.blur();
+
     loginScreen.classList.add("fade-out");
 
     setTimeout(function () {
-      loginScreen.style.display = "none";
-    }, 500);
+      loginScreen.remove();
+    }, 600);
   } else {
     error.textContent = "パスコードが違います";
   }
