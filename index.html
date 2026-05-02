@@ -757,7 +757,7 @@ Userscriptsをインストール
     <div class="step">
       <div class="step-no">STEP 1</div>
       <p>距離チェック用のファイルを選択します。</p>
-      <input type="file" id="distanceFile" accept=".csv,.kml,.kmz,.zip" onchange="loadDistanceFile()">
+     <input type="file" id="distanceFile" accept=".csv,.kml,.kmz,.zip" onchange="loadDistanceFile()">
     </div>
 
     <div class="step">
@@ -822,7 +822,10 @@ async function extractLayersFromKML(file) {
 
   if (file.name.toLowerCase().endsWith(".kml")) {
     kmlText = await file.text();
-  } else if (file.name.toLowerCase().endsWith(".kmz")) {
+  } else if (
+  file.name.toLowerCase().endsWith(".kmz") ||
+  file.name.toLowerCase().endsWith(".zip")
+) {
     const zip = await JSZip.loadAsync(file);
 
     for (const name in zip.files) {
