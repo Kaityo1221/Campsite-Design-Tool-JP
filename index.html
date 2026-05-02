@@ -908,15 +908,6 @@ function openTab(tabId, button) {
     top: 0,
     behavior: "smooth"
   });
-  }
-  const targetButton = Array.from(document.querySelectorAll(".tab-button"))
-    .find(btn => btn.getAttribute("onclick") && btn.getAttribute("onclick").includes("'" + tabId + "'"));
-
-  if (targetButton) {
-    targetButton.classList.add("active");
-  } else if (button && button.classList) {
-    button.classList.add("active");
-  }
 }
 
 function createCircle(lat, lon, radius, points = 72) {
