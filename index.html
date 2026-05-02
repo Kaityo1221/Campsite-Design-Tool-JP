@@ -501,7 +501,8 @@ li {
     <button class="tab-button" onclick="openTab('guide', this)">設計ガイド</button>
     <button class="tab-button" onclick="openTab('check', this)">チェックリスト</button>
     <button class="tab-button" onclick="openTab('howto', this)">使い方</button>
-  </div>
+ <button class="tab-btn" onclick="showTab('distance')">距離チェック</button>
+   </div>
 
   <section id="tool" class="tab-content active">
     <div class="panel">
@@ -594,6 +595,18 @@ li {
     <li>保存されたKMZファイルをgoogleドライブに移動する</li>
   </ol>
       </div>
+      <div id="distance" class="tab-content" style="display:none;">
+  <h2>距離チェック</h2>
+  <p class="note">
+    KMZ / KML / CSVを読み込み、40m未満の組み合わせを確認します。
+  </p>
+
+  <input type="file" id="distanceFile" accept=".kmz,.kml,.csv">
+
+  <button onclick="runDistanceCheck()">距離チェック実行</button>
+
+  <div id="distanceResult"></div>
+</div>
     </div>
   </section>
 
@@ -746,6 +759,73 @@ if (radii.length === 1 && radii.includes(30)) {
   alert("30mは最終手段です。基本は40mで設計してください。");
 }
 <script>
+function getDistanceMeters(a, b) {
+  const R = 6378137;
+  const lat1 = a.lat * Math.PI / 180;
+  const lat2 = b.lat * Math.PI / 180;
+  const dLat = (b.lat - a.lat) * Math.PI / 180;
+  const dLng = (b.lng - a.lng) * Math.PI / 180;
+
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1) * Math.cos(lat2) *
+    Math.sin(dLng / 2) ** 2;
+
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+async function runDistanceCheck() {
+  const fileInput = document.getElementById("distanceFile");
+  const result = document.getElementById("distanceResult");
+
+  if (!fileInput.files.length) {
+    alert("ファイルを選択してください");
+    return;
+  }
+
+  const file = fileInput.files[0];
+  const text = await file.text();
+  const points = parseCSV(text);
+
+  if (points.length < 2) {
+    result.innerHTML = "POIが2件以上必要です。";
+    return;
+  }
+
+  const warnings = [];
+
+  for (let i = 0; i < points.length; i++) {
+    for (let j = i + 1; j < points.length; j++) {
+      const distance = getDistanceMeters(points[i], points[j]);
+
+      if (distance < 40) {
+        warnings.push({
+          a: points[i],
+          b: points[j],
+          distance
+        });
+      }
+    }
+  }
+
+  if (warnings.length === 0) {
+    result.innerHTML = `
+      ✅ 40m未満の組み合わせはありません。<br>
+      取得POI数：${points.length}件
+    `;
+    return;
+  }
+
+  result.innerHTML = `
+    ⚠ 40m未満の組み合わせがあります<br>
+    基本は40m以上の間隔を推奨します。<br>
+    ただし、配置よりも「遊びやすさ」を優先して判断してください。<br><br>
+    ${warnings.map(w => `
+      <div>
+        ・${w.a.name} × ${w.b.name}（${w.distance.toFixed(1)}m）
+      </div>
+    `).join("")}
+  `;
+}
 function toggleUpdateLog() {
   const log = document.getElementById("updateLog");
   log.style.display = log.style.display === "block" ? "none" : "block";
