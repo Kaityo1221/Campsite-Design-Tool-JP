@@ -758,6 +758,10 @@ Userscriptsをインストール
       <div class="step-no">STEP 1</div>
       <p>距離チェック用のファイルを選択します。</p>
      <input type="file" id="distanceFile" accept=".csv,.kml,.kmz,.zip" onchange="loadDistanceFile()">
+      const xml = new DOMParser().parseFromString(kmlText, "application/xml");
+const layerPoints = extractPointsByLayer(xml);
+
+window._layerPoints = layerPoints;
     </div>
 
     <div class="step">
@@ -904,31 +908,27 @@ function renderLayerSelector(layers, container) {
 }
   
 async function runDistanceCheck() {
-  const fileInput = document.getElementById("distanceFile");
   const result = document.getElementById("distanceResult");
 
-  if (!fileInput.files.length) {
-    alert("ファイルを選択してください");
-    return;
-  }
+  const selectedExisting = [];
+  const selectedAdd = [];
 
-  const file = fileInput.files[0];
-  let points = [];
+  document.querySelectorAll('#distanceLayerList input[type="checkbox"]').forEach(cb => {
+    if (!cb.checked) return;
 
-  const name = file.name.toLowerCase();
+    const layerName = cb.value;
+    const type = cb.dataset.type;
 
-  // ▼ファイル種類で分岐
-  if (name.endsWith(".csv")) {
-    const text = await file.text();
-    points = parseCSV(text);
+    if (!window._layerPoints[layerName]) return;
 
-  } else if (name.endsWith(".kml") || name.endsWith(".kmz") || name.endsWith(".zip")) {
-    points = await getPointsFromKmlOrKmz(file);
+    if (type === "existing") {
+      selectedExisting.push(...window._layerPoints[layerName]);
+    } else {
+      selectedAdd.push(...window._layerPoints[layerName]);
+    }
+  });
 
-  } else {
-    alert("対応していないファイル形式です");
-    return;
-  }
+  const points = [...selectedExisting, ...selectedAdd];
 
   if (points.length < 2) {
     result.innerHTML = "POIが2件以上必要です。";
@@ -952,21 +952,14 @@ async function runDistanceCheck() {
   }
 
   if (warnings.length === 0) {
-    result.innerHTML = `
-      ✅ 40m未満の組み合わせはありません。<br>
-      取得POI数：${points.length}件
-    `;
+    result.innerHTML = `✅ 問題なし（${points.length}件）`;
     return;
   }
 
   result.innerHTML = `
-    ⚠ 40m未満の組み合わせがあります<br>
-    基本は40m以上の間隔を推奨します。<br>
-    ただし、配置よりも「遊びやすさ」を優先してください。<br><br>
+    ⚠ 40m未満があります<br><br>
     ${warnings.map(w => `
-      <div>
-        ・${w.a.name} × ${w.b.name}（${w.distance.toFixed(1)}m）
-      </div>
+      <div>・${w.a.name} × ${w.b.name}（${w.distance.toFixed(1)}m）</div>
     `).join("")}
   `;
 }
