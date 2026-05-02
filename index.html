@@ -755,8 +755,22 @@ Userscriptsをインストール
 
     <div class="step">
       <div class="step-no">STEP 2</div>
+      <p class="note">
+        読み込んだレイヤーから、既存POI・追加POIを選択します。<br>
+        円レイヤーは判定対象外です。
+      </p>
+      <div id="distanceLayerList"></div>
+    </div>
+
+    <div class="step">
+      <div class="step-no">STEP 3</div>
       <button class="generate" onclick="runDistanceCheck()">距離チェック実行</button>
       <div id="distanceResult"></div>
+    </div>
+
+    <div class="step">
+      <div class="step-no">POI一覧</div>
+      <div id="poiList"></div>
     </div>
   </div>
 </section>
