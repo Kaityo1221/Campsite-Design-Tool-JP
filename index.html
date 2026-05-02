@@ -450,10 +450,10 @@ li {
 
   
 <body>
-  <div class="version-badge" onclick="toggleUpdateLog()">v1.2</div>
+  <div class="version-badge" onclick="toggleUpdateLog()">v1.3</div>
 <div id="updateLog" class="update-log">
   <strong>更新内容</strong><br>
-  ・20260502024距離タブ編集中<br>
+  ・20260502024距離タブ編集中のログインエラー解消<br>
 </div>
   <audio id="loginSound" src="login.mp3"></audio>
 <audio id="successSound" src="sucess.mp3"></audio>
@@ -860,17 +860,7 @@ function renderLayerSelector(layers, container) {
       container.appendChild(div);
     });
 }
-  if (!kmlText) return [];
-
-  const parser = new DOMParser();
-  const xml = parser.parseFromString(kmlText, "application/xml");
-
-  const folders = Array.from(xml.getElementsByTagName("Folder"));
-
-  return folders.map(folder => {
-    return folder.getElementsByTagName("name")[0]?.textContent || "無名レイヤー";
-  });
-}
+  
 async function runDistanceCheck() {
   const fileInput = document.getElementById("distanceFile");
   const result = document.getElementById("distanceResult");
