@@ -871,8 +871,22 @@ async function runDistanceCheck() {
   }
 
   const file = fileInput.files[0];
-  const text = await file.text();
-  const points = parseCSV(text);
+  let points = [];
+
+  const name = file.name.toLowerCase();
+
+  // ▼ファイル種類で分岐
+  if (name.endsWith(".csv")) {
+    const text = await file.text();
+    points = parseCSV(text);
+
+  } else if (name.endsWith(".kml") || name.endsWith(".kmz") || name.endsWith(".zip")) {
+    points = await getPointsFromKmlOrKmz(file);
+
+  } else {
+    alert("対応していないファイル形式です");
+    return;
+  }
 
   if (points.length < 2) {
     result.innerHTML = "POIが2件以上必要です。";
@@ -880,18 +894,6 @@ async function runDistanceCheck() {
   }
 
   const warnings = [];
-  const selectedExisting = [];
-const selectedAdd = [];
-
-document.querySelectorAll('#distanceLayerList input').forEach(input => {
-  if (input.checked) {
-    if (input.dataset.type === "existing") {
-      selectedExisting.push(input.value);
-    } else if (input.dataset.type === "add") {
-      selectedAdd.push(input.value);
-    }
-  }
-});
 
   for (let i = 0; i < points.length; i++) {
     for (let j = i + 1; j < points.length; j++) {
@@ -918,7 +920,7 @@ document.querySelectorAll('#distanceLayerList input').forEach(input => {
   result.innerHTML = `
     ⚠ 40m未満の組み合わせがあります<br>
     基本は40m以上の間隔を推奨します。<br>
-    ただし、配置よりも「遊びやすさ」を優先して判断してください。<br><br>
+    ただし、配置よりも「遊びやすさ」を優先してください。<br><br>
     ${warnings.map(w => `
       <div>
         ・${w.a.name} × ${w.b.name}（${w.distance.toFixed(1)}m）
@@ -1096,7 +1098,7 @@ async function getPointsFromKmlOrKmz(file) {
 
   if (fileName.endsWith(".kml")) {
     kmlText = await file.text();
-  } else if (fileName.endsWith(".kmz")) {
+  } else if (fileName.endsWith(".kmz") || fileName.endsWith(".zip")) {
     const zip = await JSZip.loadAsync(file);
 
     for (const name in zip.files) {
