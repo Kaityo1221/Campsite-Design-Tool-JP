@@ -739,17 +739,25 @@ Userscriptsをインストール
         </p>
       </div>
     </div>
-     <section id="distance" class="tab-content">
-  <h2>距離チェック</h2>
-  <p class="note">
-    KMZ / KML / CSVを読み込み、40m未満の組み合わせを確認します。
-  </p>
+    <section id="distance" class="tab-content">
+  <div class="panel">
+    <h2>距離チェック</h2>
+    <p class="note">
+      CSV / KML / KMZを読み込み、40m未満の組み合わせを確認します。
+    </p>
 
-  <input type="file" id="distanceFile" accept=".kmz,.kml,.csv">
+    <div class="step">
+      <div class="step-no">STEP 1</div>
+      <p>距離チェック用のファイルを選択します。</p>
+      <input type="file" id="distanceFile" accept=".csv,.kml,.kmz">
+    </div>
 
-  <button onclick="runDistanceCheck()">距離チェック実行</button>
-
-  <div id="distanceResult"></div>
+    <div class="step">
+      <div class="step-no">STEP 2</div>
+      <button class="generate" onclick="runDistanceCheck()">距離チェック実行</button>
+      <div id="distanceResult"></div>
+    </div>
+  </div>
 </section>
   </section>
 
