@@ -445,6 +445,22 @@ li {
     grid-template-columns: 1fr;
   }
 }
+.layer-row {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #020617;
+  border: 1px solid #334155;
+}
+
+.distance-warning {
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(248, 113, 113, 0.45);
+  line-height: 1.7;
+}
 </style>
 </head>
 
@@ -905,41 +921,51 @@ function extractPointsByLayer(xml) {
 function renderLayerSelector(layers, container) {
   container.innerHTML = "";
 
-  layers
-    .filter(name =>
-      !name.includes("円") &&
-      !name.includes("30m") &&
-      !name.includes("40m")
-    )
-    .forEach(name => {
-      const div = document.createElement("div");
-      div.className = "layer-row";
-      div.innerHTML = `
-        <p><strong>${name}</strong></p>
+  const targetLayers = layers.filter(name =>
+    !name.includes("円") &&
+    !name.includes("30m") &&
+    !name.includes("40m")
+  );
 
-      `;
-      container.appendChild(div);
-    });
+  if (targetLayers.length === 0) {
+    container.innerHTML = "判定できるPOIレイヤーがありません。";
+    return;
+  }
+
+  container.innerHTML = targetLayers.map(name => `
+    <div class="layer-row">
+      <strong>${cleanLayerName(name)}</strong>
+      <span class="note">（${window._layerPoints[name]?.length || 0}件）</span>
+    </div>
+  `).join("");
 }
-  
+  function cleanLayerName(name) {
+  return name
+    .replace("既存の", "")
+    .replace("既存", "")
+    .trim();
+}
 async function runDistanceCheck() {
   const result = document.getElementById("distanceResult");
 
-  const selectedExisting = [];
-  const selectedAdd = [];
+  const points = [];
 
-  document.querySelectorAll('#distanceLayerList input[type="checkbox"]').forEach(cb => {
-    if (!cb.checked) return;
+  Object.entries(window._layerPoints || {}).forEach(([layerName, layerPoints]) => {
+    if (
+      layerName.includes("円") ||
+      layerName.includes("30m") ||
+      layerName.includes("40m")
+    ) {
+      return;
+    }
 
-    const layerName = cb.value;
-    const type = cb.dataset.type;
-
-    if (!window._layerPoints[layerName]) return;
-
-    selectedExisting.push(...window._layerPoints[layerName]);
+    layerPoints.forEach(p => {
+      points.push({
+        ...p,
+        layer: cleanLayerName(layerName)
+      });
+    });
   });
-
-  const points = [...selectedExisting, ...selectedAdd];
 
   if (points.length < 2) {
     result.innerHTML = "POIが2件以上必要です。";
@@ -970,7 +996,11 @@ async function runDistanceCheck() {
   result.innerHTML = `
     ⚠ 40m未満があります<br><br>
     ${warnings.map(w => `
-      <div>・${w.a.name} × ${w.b.name}（${w.distance.toFixed(1)}m）</div>
+      <div class="distance-warning">
+        ・${w.a.layer}：${w.a.name}<br>
+        　× ${w.b.layer}：${w.b.name}<br>
+        　<strong>${w.distance.toFixed(1)}m</strong>
+      </div>
     `).join("")}
   `;
 }
