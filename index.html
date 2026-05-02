@@ -832,7 +832,34 @@ async function extractLayersFromKML(file) {
       }
     }
   }
+function renderLayerSelector(layers, container) {
+  container.innerHTML = "";
 
+  layers
+    .filter(name =>
+      !name.includes("円") &&
+      !name.includes("30m") &&
+      !name.includes("40m")
+    )
+    .forEach(name => {
+      const div = document.createElement("div");
+      div.className = "layer-row";
+
+      div.innerHTML = `
+        <p><strong>${name}</strong></p>
+        <label>
+          <input type="checkbox" value="${name}" data-type="existing">
+          既存POI
+        </label>
+        <label style="margin-left:12px;">
+          <input type="checkbox" value="${name}" data-type="add">
+          追加POI
+        </label>
+      `;
+
+      container.appendChild(div);
+    });
+}
   if (!kmlText) return [];
 
   const parser = new DOMParser();
