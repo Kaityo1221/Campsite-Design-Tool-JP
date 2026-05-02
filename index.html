@@ -876,11 +876,16 @@ function extractPointsByLayer(xml) {
   const folders = Array.from(xml.getElementsByTagName("Folder"));
 
   folders.forEach(folder => {
-    const name = folder.getElementsByTagName("name")[0]?.textContent;
+    const layerName =
+      folder.getElementsByTagName("name")[0]?.textContent || "無名レイヤー";
+
     const placemarks = Array.from(folder.getElementsByTagName("Placemark"));
 
-    result[name] = placemarks.map(pm => {
-      const coord = pm.getElementsByTagName("coordinates")[0]?.textContent;
+    result[layerName] = placemarks.map(pm => {
+      const point = pm.getElementsByTagName("Point")[0];
+      if (!point) return null;
+
+      const coord = point.getElementsByTagName("coordinates")[0]?.textContent;
       if (!coord) return null;
 
       const [lng, lat] = coord.trim().split(",").map(Number);
@@ -889,7 +894,8 @@ function extractPointsByLayer(xml) {
       return {
         lat,
         lng,
-        name: pm.getElementsByTagName("name")[0]?.textContent || "POI"
+        name: pm.getElementsByTagName("name")[0]?.textContent || "POI",
+        layer: layerName
       };
     }).filter(Boolean);
   });
