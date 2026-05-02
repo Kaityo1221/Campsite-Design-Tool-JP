@@ -805,13 +805,9 @@ async function loadDistanceFile() {
   if (!fileInput.files.length) return;
 
   const file = fileInput.files[0];
-  let points = [];
 
-  if (file.name.endsWith(".csv")) {
-    const text = await file.text();
-    points = parseCSV(text);
+  if (file.name.toLowerCase().endsWith(".csv")) {
     renderLayerSelector(["CSV_POI"], container);
-
   } else {
     const layers = await extractLayersFromKML(file);
     renderLayerSelector(layers, container);
@@ -823,11 +819,10 @@ async function extractLayersFromKML(file) {
   if (file.name.toLowerCase().endsWith(".kml")) {
     kmlText = await file.text();
   } else if (
-  file.name.toLowerCase().endsWith(".kmz") ||
-  file.name.toLowerCase().endsWith(".zip")
-) {
+    file.name.toLowerCase().endsWith(".kmz") ||
+    file.name.toLowerCase().endsWith(".zip")
+  ) {
     const zip = await JSZip.loadAsync(file);
-
     for (const name in zip.files) {
       if (name.toLowerCase().endsWith(".kml")) {
         kmlText = await zip.files[name].async("text");
@@ -835,6 +830,16 @@ async function extractLayersFromKML(file) {
       }
     }
   }
+
+  if (!kmlText) return [];
+
+  const xml = new DOMParser().parseFromString(kmlText, "application/xml");
+  const folders = Array.from(xml.getElementsByTagName("Folder"));
+
+  return folders.map(folder =>
+    folder.getElementsByTagName("name")[0]?.textContent || "無名レイヤー"
+  );
+}
 function renderLayerSelector(layers, container) {
   container.innerHTML = "";
 
@@ -847,19 +852,11 @@ function renderLayerSelector(layers, container) {
     .forEach(name => {
       const div = document.createElement("div");
       div.className = "layer-row";
-
       div.innerHTML = `
         <p><strong>${name}</strong></p>
-        <label>
-          <input type="checkbox" value="${name}" data-type="existing">
-          既存POI
-        </label>
-        <label style="margin-left:12px;">
-          <input type="checkbox" value="${name}" data-type="add">
-          追加POI
-        </label>
+        <label><input type="checkbox" value="${name}" data-type="existing"> 既存POI</label>
+        <label style="margin-left:12px;"><input type="checkbox" value="${name}" data-type="add"> 追加POI</label>
       `;
-
       container.appendChild(div);
     });
 }
