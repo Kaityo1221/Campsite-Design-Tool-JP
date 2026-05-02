@@ -501,7 +501,7 @@ li {
     <button class="tab-button" onclick="openTab('guide', this)">設計ガイド</button>
     <button class="tab-button" onclick="openTab('check', this)">チェックリスト</button>
     <button class="tab-button" onclick="openTab('howto', this)">使い方</button>
- <button class="tab-btn" onclick="showTab('distance')">距離チェック</button>
+<button class="tab-button" onclick="openTab('distance', this)">距離チェック</button>
    </div>
 
   <section id="tool" class="tab-content active">
@@ -595,7 +595,7 @@ li {
     <li>保存されたKMZファイルをgoogleドライブに移動する</li>
   </ol>
       </div>
-      <div id="distance" class="tab-content" style="display:none;">
+      <section id="distance" class="tab-content">
   <h2>距離チェック</h2>
   <p class="note">
     KMZ / KML / CSVを読み込み、40m未満の組み合わせを確認します。
@@ -606,9 +606,7 @@ li {
   <button onclick="runDistanceCheck()">距離チェック実行</button>
 
   <div id="distanceResult"></div>
-</div>
-    </div>
-  </section>
+</section>
 
   <section id="script" class="tab-content">
     <div class="panel">
