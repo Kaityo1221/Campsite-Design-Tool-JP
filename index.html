@@ -893,7 +893,13 @@ function openTab(tabId, button) {
   document.querySelectorAll(".tab-button").forEach(btn => btn.classList.remove("active"));
 
   document.getElementById(tabId).classList.add("active");
+ window.scrollTo({
 
+    top: 0,
+
+    behavior: "smooth"
+    });
+    }
   const targetButton = Array.from(document.querySelectorAll(".tab-button"))
     .find(btn => btn.getAttribute("onclick") && btn.getAttribute("onclick").includes("'" + tabId + "'"));
 
