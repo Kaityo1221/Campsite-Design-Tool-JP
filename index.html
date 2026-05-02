@@ -450,10 +450,10 @@ li {
 
   
 <body>
-  <div class="version-badge" onclick="toggleUpdateLog()">v1.3</div>
+  <div class="version-badge" onclick="toggleUpdateLog()">v1.4</div>
 <div id="updateLog" class="update-log">
   <strong>更新内容</strong><br>
-  ・20260502024距離タブ編集中のログインエラー解消<br>
+  ・202605022037距離タブ機能改修<br>
 </div>
   <audio id="loginSound" src="login.mp3"></audio>
 <audio id="successSound" src="sucess.mp3"></audio>
@@ -880,6 +880,18 @@ async function runDistanceCheck() {
   }
 
   const warnings = [];
+  const selectedExisting = [];
+const selectedAdd = [];
+
+document.querySelectorAll('#distanceLayerList input').forEach(input => {
+  if (input.checked) {
+    if (input.dataset.type === "existing") {
+      selectedExisting.push(input.value);
+    } else if (input.dataset.type === "add") {
+      selectedAdd.push(input.value);
+    }
+  }
+});
 
   for (let i = 0; i < points.length; i++) {
     for (let j = i + 1; j < points.length; j++) {
