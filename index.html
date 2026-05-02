@@ -450,7 +450,7 @@ li {
 
   
 <body>
-  <div class="version-badge" onclick="toggleUpdateLog()">v2.1</div>
+  <div class="version-badge" onclick="toggleUpdateLog()">v2.2</div>
 <div id="updateLog" class="update-log">
   <strong>更新内容</strong><br>
   ・20260503距離タブ周り修正<br>
@@ -910,8 +910,7 @@ function renderLayerSelector(layers, container) {
       div.className = "layer-row";
       div.innerHTML = `
         <p><strong>${name}</strong></p>
-        <label><input type="checkbox" value="${name}" data-type="existing"> 既存POI</label>
-        <label style="margin-left:12px;"><input type="checkbox" value="${name}" data-type="add"> 追加POI</label>
+
       `;
       container.appendChild(div);
     });
@@ -931,11 +930,7 @@ async function runDistanceCheck() {
 
     if (!window._layerPoints[layerName]) return;
 
-    if (type === "existing") {
-      selectedExisting.push(...window._layerPoints[layerName]);
-    } else {
-      selectedAdd.push(...window._layerPoints[layerName]);
-    }
+    selectedExisting.push(...window._layerPoints[layerName]);
   });
 
   const points = [...selectedExisting, ...selectedAdd];
