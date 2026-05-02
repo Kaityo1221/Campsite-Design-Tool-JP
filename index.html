@@ -8,6 +8,33 @@
 <link rel="apple-touch-icon" sizes="180x180" href="デザインツールのアイコン.png">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
+.version-badge {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  font-size: 11px;
+  color: #94a3b8;
+  opacity: 0.65;
+  cursor: pointer;
+}
+
+.update-log {
+  display: none;
+  position: absolute;
+  top: 38px;
+  right: 16px;
+  width: 260px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #020617;
+  border: 1px solid #334155;
+  color: #cbd5e1;
+  font-size: 12px;
+  line-height: 1.7;
+  text-align: left;
+  z-index: 50;
+}
+
   .guide-btn {
   margin-top: 12px;
   padding: 10px 14px;
@@ -239,7 +266,14 @@ body {
   text-align: center;
   margin-bottom: 28px;
 }
+<div class="version-badge" onclick="toggleUpdateLog()">v1.3</div>
 
+<div id="updateLog" class="update-log">
+  <strong>更新内容</strong><br>
+  ・ログイン演出を追加<br>
+  ・KMZ生成時のローディングを調整<br>
+  ・iPhone向けの注意書きを追加
+</div>
 .badge {
   display: inline-block;
   padding: 6px 14px;
@@ -708,6 +742,10 @@ Userscriptsをインストール
 </div>
 
 <script>
+function toggleUpdateLog() {
+  const log = document.getElementById("updateLog");
+  log.style.display = log.style.display === "block" ? "none" : "block";
+}
   function toggleRenameGuide() {
   const guide = document.getElementById("renameGuide");
   guide.style.display = guide.style.display === "block" ? "none" : "block";
