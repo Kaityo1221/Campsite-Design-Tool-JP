@@ -784,6 +784,10 @@ Userscriptsをインストール
 
 </div>
 <script>
+  let distanceData = {
+  existing: [],
+  add: []
+};
 function getDistanceMeters(a, b) {
   const R = 6378137;
   const lat1 = a.lat * Math.PI / 180;
@@ -811,6 +815,10 @@ async function loadDistanceFile() {
   } else {
     const layers = await extractLayersFromKML(file);
     renderLayerSelector(layers, container);
+    distanceData = {
+  existing: [],
+  add: []
+};
   }
 }
 async function extractLayersFromKML(file) {
