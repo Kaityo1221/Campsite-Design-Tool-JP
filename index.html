@@ -856,6 +856,32 @@ async function extractLayersFromKML(file) {
     folder.getElementsByTagName("name")[0]?.textContent || "無名レイヤー"
   );
 }
+function extractPointsByLayer(xml) {
+  const result = {};
+
+  const folders = Array.from(xml.getElementsByTagName("Folder"));
+
+  folders.forEach(folder => {
+    const name = folder.getElementsByTagName("name")[0]?.textContent;
+    const placemarks = Array.from(folder.getElementsByTagName("Placemark"));
+
+    result[name] = placemarks.map(pm => {
+      const coord = pm.getElementsByTagName("coordinates")[0]?.textContent;
+      if (!coord) return null;
+
+      const [lng, lat] = coord.trim().split(",").map(Number);
+      if (isNaN(lat) || isNaN(lng)) return null;
+
+      return {
+        lat,
+        lng,
+        name: pm.getElementsByTagName("name")[0]?.textContent || "POI"
+      };
+    }).filter(Boolean);
+  });
+
+  return result;
+}
 function renderLayerSelector(layers, container) {
   container.innerHTML = "";
 
