@@ -507,6 +507,9 @@ li {
     <div class="panel">
       <h2>キャンプサイト作成の手順</h2>
       <p class="note">
+  このツールは「POIを増やすため」ではなく、安心して集まり、遊びやすいキャンプサイトの設計図を作るためのものです。
+</p>
+      <p class="note">
         複数CSVを同時に取り込んで、重複したPOIを自動で削除します。
       </p>
 
@@ -739,7 +742,9 @@ Userscriptsをインストール
   </section>
 
 </div>
-
+if (radii.length === 1 && radii.includes(30)) {
+  alert("30mは最終手段です。基本は40mで設計してください。");
+}
 <script>
 function toggleUpdateLog() {
   const log = document.getElementById("updateLog");
