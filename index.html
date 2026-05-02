@@ -1094,13 +1094,14 @@ function parseCSV(text) {
 
 async function getPointsFromKmlOrKmz(file) {
   let kmlText = null;
-  const fileName = file.name.toLowerCase();
 
-  if (fileName.endsWith(".kml")) {
+  if (file.name.toLowerCase().endsWith(".kml")) {
     kmlText = await file.text();
-  } else if (fileName.endsWith(".kmz") || fileName.endsWith(".zip")) {
+  } else if (
+    file.name.toLowerCase().endsWith(".kmz") ||
+    file.name.toLowerCase().endsWith(".zip")
+  ) {
     const zip = await JSZip.loadAsync(file);
-
     for (const name in zip.files) {
       if (name.toLowerCase().endsWith(".kml")) {
         kmlText = await zip.files[name].async("text");
@@ -1111,35 +1112,46 @@ async function getPointsFromKmlOrKmz(file) {
 
   if (!kmlText) return [];
 
-  const parser = new DOMParser();
-  const xml = parser.parseFromString(kmlText, "application/xml");
-  const placemarks = Array.from(xml.getElementsByTagName("Placemark"));
-  const points = [];
+  const xml = new DOMParser().parseFromString(kmlText, "application/xml");
 
-  placemarks.forEach((pm, index) => {
-    const point = pm.getElementsByTagName("Point")[0];
-    if (!point) return;
+  const folders = Array.from(xml.getElementsByTagName("Folder"));
 
-    const coordText = point.getElementsByTagName("coordinates")[0]?.textContent.trim();
-    if (!coordText) return;
+  const result = [];
 
-    const firstCoord = coordText.split(/\s+/)[0];
-    const [lng, lat] = firstCoord.split(",").map(Number);
+  folders.forEach(folder => {
+    const layerName =
+      folder.getElementsByTagName("name")[0]?.textContent || "無名レイヤー";
 
-    if (isNaN(lat) || isNaN(lng)) return;
+    const placemarks = Array.from(folder.getElementsByTagName("Placemark"));
 
-    const name = pm.getElementsByTagName("name")[0]?.textContent || `POI_${index + 1}`;
+    placemarks.forEach((pm, index) => {
+      const point = pm.getElementsByTagName("Point")[0];
+      if (!point) return;
 
-    points.push({
-      lat,
-      lng,
-      name,
-      type: "",
-      guid: ""
+      const coordText = point
+        .getElementsByTagName("coordinates")[0]
+        ?.textContent.trim();
+
+      if (!coordText) return;
+
+      const [lng, lat] = coordText.split(",").map(Number);
+
+      if (isNaN(lat) || isNaN(lng)) return;
+
+      const name =
+        pm.getElementsByTagName("name")[0]?.textContent ||
+        `POI_${index + 1}`;
+
+      result.push({
+        lat,
+        lng,
+        name,
+        layer: layerName
+      });
     });
   });
 
-  return points;
+  return result;
 }
 
 function removeDuplicate(points) {
