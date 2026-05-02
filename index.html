@@ -267,11 +267,11 @@ body {
   text-align: center;
   margin-bottom: 28px;
 }
-<div class="version-badge" onclick="toggleUpdateLog()">v1.0</div>
+<div class="version-badge" onclick="toggleUpdateLog()">v1.1</div>
 
 <div id="updateLog" class="update-log">
   <strong>更新内容</strong><br>
-  ・2026/5/2リリース<br>
+  ・202605011622警告追加<br>
 </div>
 .badge {
   display: inline-block;
@@ -1171,6 +1171,12 @@ status.innerHTML =
 setTimeout(() => {
   status.style.transform = "scale(1)";
 }, 120);
+}
+if (beforeCount === 0) {
+  alert("CSVが読み込まれていません。ツール内の「ファイルを選択」から読み込んでください。");
+}
+if (points.length > 25) {
+  alert("追加POIは最大25個までです。");
 }
 </script>
 
