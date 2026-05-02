@@ -816,17 +816,25 @@ async function loadDistanceFile() {
 async function extractLayersFromKML(file) {
   let kmlText = null;
 
-  if (file.name.toLowerCase().endsWith(".kml")) {
-    kmlText = await file.text();
-  } else if (
-    file.name.toLowerCase().endsWith(".kmz") ||
-    file.name.toLowerCase().endsWith(".zip")
-  ) {
-    const zip = await JSZip.loadAsync(file);
-    for (const name in zip.files) {
-      if (name.toLowerCase().endsWith(".kml")) {
-        kmlText = await zip.files[name].async("text");
-        break;
+  const zip = await JSZip.loadAsync(file);
+
+  for (const name in zip.files) {
+    // ① 直接KML
+    if (name.toLowerCase().endsWith(".kml")) {
+      kmlText = await zip.files[name].async("text");
+      break;
+    }
+
+    // ② KMZを見つけた場合（←今回ここ）
+    if (name.toLowerCase().endsWith(".kmz")) {
+      const kmzBlob = await zip.files[name].async("blob");
+      const kmzZip = await JSZip.loadAsync(kmzBlob);
+
+      for (const innerName in kmzZip.files) {
+        if (innerName.toLowerCase().endsWith(".kml")) {
+          kmlText = await kmzZip.files[innerName].async("text");
+          break;
+        }
       }
     }
   }
