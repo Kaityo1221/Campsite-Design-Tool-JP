@@ -1358,7 +1358,12 @@ setTimeout(() => {
   status.style.transform = "scale(1)";
 }, 120);
 }
-document.getElementById("distanceFile").addEventListener("change", loadDistanceFile);
+document.addEventListener("DOMContentLoaded", function () {
+  const input = document.getElementById("distanceFile");
+  if (input) {
+    input.addEventListener("change", loadDistanceFile);
+  }
+});
 </script>
 
 </body>
