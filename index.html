@@ -758,10 +758,6 @@ Userscriptsをインストール
       <div class="step-no">STEP 1</div>
       <p>距離チェック用のファイルを選択します。</p>
      <input type="file" id="distanceFile" accept=".csv,.kml,.kmz,.zip" onchange="loadDistanceFile()">
-      const xml = new DOMParser().parseFromString(kmlText, "application/xml");
-const layerPoints = extractPointsByLayer(xml);
-
-window._layerPoints = layerPoints;
     </div>
 
     <div class="step">
