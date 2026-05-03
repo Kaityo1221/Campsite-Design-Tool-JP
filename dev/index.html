@@ -1,0 +1,1462 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta name="robots" content="noindex, nofollow">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Campsite Design Tool JP</title>
+<link rel="apple-touch-icon" sizes="180x180" href="デザインツールのアイコン.png">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+.version-badge {
+  position: fixed;   /* ←これが重要 */
+  top: 12px;
+  right: 12px;
+  font-size: 11px;
+  color: #94a3b8;
+  opacity: 0.7;
+  cursor: pointer;
+  z-index: 10000;    /* ←これも重要 */
+}
+
+.update-log {
+  display: none;
+  position: absolute;
+  top: 38px;
+  right: 16px;
+  width: 260px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #020617;
+  border: 1px solid #334155;
+  color: #cbd5e1;
+  font-size: 12px;
+  line-height: 1.7;
+  text-align: left;
+  z-index: 50;
+}
+
+  .guide-btn {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid #475569;
+  background: #334155;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.rename-guide {
+  display: none;
+  margin-top: 12px;
+  padding: 14px;
+  border-radius: 14px;
+  background: #020617;
+  border: 1px solid #334155;
+  color: #e2e8f0;
+  font-size: 13px;
+  line-height: 1.7;
+}
+  button.generate {
+  transition: transform 0.08s ease, filter 0.08s ease;
+}
+
+button.generate:active {
+  transform: scale(0.94);
+  filter: brightness(1.25);
+}
+  button.generate:active {
+  transform: scale(0.96);
+}
+  .splash-screen {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(135deg, #0f172a, #111827, #1e1b4b);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9998;
+}
+
+.splash-screen.show {
+  display: flex;
+  animation: splashFade 1.4s ease forwards;
+}
+
+.splash-screen img {
+  width: 140px;
+  height: 140px;
+  border-radius: 28px;
+  animation: iconWarp 1.4s ease forwards;
+}
+
+@keyframes splashFade {
+  0% { opacity: 1; }
+  65% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes iconWarp {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  55% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.9);
+  }
+}  #passwordInput {
+  -webkit-text-security: disc;
+}
+  .loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.75);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9998;
+}
+
+.loading-box {
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 18px;
+  padding: 28px;
+  text-align: center;
+  color: white;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+}
+
+.spinner.big {
+  width: 36px;
+  height: 36px;
+  margin: 0 auto 14px;
+}
+  .loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 3px solid #334155;
+  border-top-color: #60a5fa;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+  .login-card {
+  position: relative;
+  z-index: 10000;
+}
+
+#loginButton {
+  position: relative;
+  z-index: 10001;
+  pointer-events: auto;
+}
+.login-screen.fade-out {
+  animation: fadeOutZoom 0.5s ease forwards;
+}
+
+@keyframes fadeOutZoom {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.05);
+  }
+}
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: linear-gradient(135deg, #0f172a, #111827, #1e1b4b);
+  color: #f8fafc;
+}
+
+.login-screen {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(135deg, #0f172a, #111827, #1e1b4b);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.login-card {
+  background: rgba(15, 23, 42, 0.92);
+  padding: 32px;
+  border-radius: 20px;
+  width: 320px;
+  text-align: center;
+  border: 1px solid #334155;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+
+.login-card h2 {
+  margin-bottom: 10px;
+}
+
+.login-sub {
+  font-size: 13px;
+  color: #cbd5e1;
+  margin-bottom: 20px;
+}
+
+.login-card input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  margin-bottom: 12px;
+  background: #1e293b;
+  color: white;
+  font-size: 16px;
+}
+
+.login-card button {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.error {
+  color: #f87171;
+  margin-top: 10px;
+  font-size: 13px;
+}
+
+.container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 40px 32px;
+}
+
+@media (max-width: 720px) {
+  .container {
+    padding: 24px 16px;
+  }
+}
+
+.hero {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+
+.badge {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(37, 99, 235, 0.18);
+  color: #93c5fd;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+h1 {
+  font-size: 36px;
+  margin: 0 0 10px;
+}
+
+h2, h3 {
+  color: #f1f5f9;
+}
+
+.lead {
+  color: #cbd5e1;
+  line-height: 1.7;
+  margin: 0;
+}
+
+.tabs {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  margin: 24px 0;
+}
+
+.tab-button {
+  padding: 14px 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: #0f172a;
+  color: #94a3b8;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.tab-button.active {
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  color: white;
+}
+
+@media (max-width: 720px) {
+  .tabs {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+.panel {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 22px;
+  padding: 22px;
+  margin-top: 18px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+}
+
+.step {
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 18px;
+  padding: 18px;
+  margin-top: 14px;
+}
+
+.step-no {
+  display: inline-block;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: #3b82f6;
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+input[type="file"] {
+  width: 100%;
+  padding: 16px;
+  border-radius: 14px;
+  border: 1px dashed #93c5fd;
+  background: rgba(30, 41, 59, 0.8);
+  color: white;
+}
+
+.checks {
+  margin-top: 18px;
+  line-height: 1.9;
+}
+
+.note {
+  color: #e2e8f0;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+a {
+  color: #60a5fa;
+}
+
+.link-btn {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  text-decoration: none;
+  color: white;
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.link-btn:hover {
+  opacity: 0.9;
+}
+
+button.generate {
+  width: 100%;
+  padding: 18px;
+  border-radius: 16px;
+  border: none;
+  background: #2563eb;
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+  margin-top: 18px;
+  cursor: pointer;
+}
+button.generate:active {
+  transform: scale(0.92);
+  filter: brightness(1.4);
+}
+button.generate:hover {
+  opacity: 0.92;
+}
+
+#status {
+  margin-top: 16px;
+  color: #a7f3d0;
+  font-weight: bold;
+  line-height: 1.7;
+}
+
+ul {
+  padding-left: 1.2em;
+}
+
+li {
+  margin-bottom: 8px;
+  line-height: 1.7;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+@media (max-width: 720px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+.layer-row {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #020617;
+  border: 1px solid #334155;
+}
+
+.distance-warning {
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(248, 113, 113, 0.45);
+  line-height: 1.7;
+}
+</style>
+</head>
+
+  
+<body>
+  <div class="version-badge" onclick="toggleUpdateLog()">v2.3</div>
+<div id="updateLog" class="update-log">
+  <strong>更新内容</strong><br>
+  ・20260503距離タブ周り修正<br>
+</div>
+  <audio id="loginSound" src="login.mp3"></audio>
+<audio id="successSound" src="sucess.mp3"></audio>
+  <div id="loadingOverlay" class="loading-overlay">
+  <div class="loading-box">
+    <div class="spinner big"></div>
+    <div id="loadingText">処理中…</div>
+  </div>
+</div>
+<div id="loginScreen" class="login-screen">
+  <div class="login-card">
+    <h2>Campsite Tool</h2>
+    <p class="login-sub">アクセスにはパスコードが必要です</p>
+
+    <input
+  id="passwordInput"
+  type="text"
+  inputmode="text"
+  autocomplete="off"
+  autocorrect="off"
+  autocapitalize="off"
+  spellcheck="false"
+  placeholder="パスコードを入力"
+>
+<button type="button" id="loginButton" onclick="checkPassword()">ログイン</button>
+<p id="loginError" class="error"></p>
+  </div>
+</div>
+<div id="splashScreen" class="splash-screen">
+  <img src="デザインツールのアイコン.png" alt="Campsite Tool">
+</div>
+<div class="container">
+
+  <div class="hero">
+    <div class="badge">Community Ambassador Support Tool</div>
+    <h1>Campsite Design Tool</h1>
+    <p class="lead">
+      Wayfarer CSV / MyMap KML / KMZ から<br>POIを読み込み、
+      30m・40m円と既存POIレイヤーを自動生成します。
+    </p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-button active" onclick="openTab('tool', this)">キャンプサイト作成</button>
+    <button class="tab-button" onclick="openTab('script', this)">スクリプト導入方法</button>
+    <button class="tab-button" onclick="openTab('guide', this)">設計ガイド</button>
+    <button class="tab-button" onclick="openTab('check', this)">チェックリスト</button>
+    <button class="tab-button" onclick="openTab('howto', this)">使い方</button>
+<button class="tab-button" onclick="openTab('distance', this)">距離チェック</button>
+   </div>
+
+  <section id="tool" class="tab-content active">
+    <div class="panel">
+      <h2>キャンプサイト作成の手順</h2>
+      <p class="note">
+  このツールは「POIを増やすため」ではなく、安心して集まり、遊びやすいキャンプサイトの設計図を作るためのものです。
+</p>
+      <p class="note">
+        複数CSVを同時に取り込んで、重複したPOIを自動で削除します。
+      </p>
+
+      <div class="step">
+        <div class="step-no">STEP 1</div>
+        <p>
+          Wayfarer Map（スクリプト導入済み）から「Nearby Wayspots」を押して Export CSV を実行します。<br>
+          ※広い公園の場合は複数回に分けて抽出してください。
+        </p>
+        <p class="note">
+          スクリプト導入がまだの方は
+          <a href="#" onclick="openTab('script', this); return false;">スクリプト導入方法</a>
+          をご確認ください。
+        </p>
+      </div>
+
+      <div class="step">
+        <div class="step-no">STEP 2</div>
+        <p>CSV / KML / KMZ ファイルを選択します。CSVは複数選択できます。</p>
+        <input type="file" id="fileInput" accept=".csv,.kml,.kmz" multiple>
+      </div>
+
+      <div class="step">
+        <div class="step-no">STEP 3</div>
+        <p>生成する円を選択します。</p>
+
+        <div class="checks">
+          <label>
+            <input type="checkbox" name="radius" value="40" checked>
+            40m円（基本距離）
+          </label><br>
+
+          <label>
+            <input type="checkbox" name="radius" value="30" checked>
+            30m円（調整用）
+          </label>
+
+          <p class="note">
+            POI作成時は40mで統一する（管理者側の調整余地を確保するため）。<br>
+            配置が厳しい場合のみ、30mまで調整可能とする。
+          </p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-no">STEP 4</div>
+        <p>KMZを生成します。出力レイヤーは以下の5つです。</p>
+        <ul>
+          <li>既存のポケストップ</li>
+          <li>既存のジム</li>
+          <li>既存のパワースポット</li>
+          <li>40m円（基本距離）</li>
+          <li>30m円（調整用）</li>
+        </ul>
+
+        <button class="generate" onclick="generateKMZ()">KMZを生成</button>
+        <div id="status"></div>
+      </div>
+
+      <div class="step">
+        <div class="step-no">STEP 5</div>
+        <h3>Google My Mapsにインポート</h3>
+        <p class="note">
+          生成されたKMZファイルをGoogle My Mapsにインポートしてください。<br>
+          インポートすると、5つのレイヤー（既存POI・円）が自動で作成されます。
+        </p>
+        <button class="guide-btn" onclick="toggleRenameGuide()">
+  iPhoneでZIPになった場合
+</button>
+
+<div id="renameGuide" class="rename-guide">
+  <p>
+    iPhoneではKMZがZIPとして保存されてしまいます。<br>
+    その場合は以下の手順で拡張子を変更してください。<br>
+  </p>
+  <ol>
+    <li>ファイルアプリを開く</li>
+    <li>保存されたZIPファイルを長押し</li>
+    <li>「名称変更」を選択</li>
+    <li>末尾の <strong>.zip</strong> を <strong>.kmz</strong> に変更</li>
+    <li>「完了」を押す</li>
+    <li>保存されたKMZファイルをgoogleドライブに移動する</li>
+  </ol>
+      </div>
+      </div>
+</section>
+
+</div> <!-- renameGuide -->
+</div> <!-- STEP5 -->
+</div> <!-- panel -->
+</section> <!-- tool -->
+  <section id="script" class="tab-content">
+    <div class="panel">
+      <h2>スクリプト導入方法</h2>
+
+      <div class="step">
+        <div class="step-no">STEP 1</div>
+        <h3>スクリプトをインストール</h3>
+        
+        <p class="note">PC → Tampermonkey
+<br>iPhone → Userscripts</p>
+        <a class="link-btn" href="https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo?hl=ja" target="_blank">
+          Tampermonkeyをインストール
+        </a>
+        <a class="link-btn" href="https://apps.apple.com/jp/app/userscripts/id1463298887" target="_blank">
+Userscriptsをインストール
+</a>
+
+      </div>
+
+      <div class="step">
+        <div class="step-no">STEP 2</div>
+        <h3>Wayfarer Map Mods - Base を導入</h3>
+        <p class="note">
+          Baseアドオンを追加します。<br>
+          ※事前にスクリプトをインストールしていない場合、アドオンは動作しません。
+        </p>
+        
+
+
+        
+        <a class="link-btn" href="https://gitlab.com/Tntnnbltn/wayfarer-addons/-/raw/main/wayfarer-map-mods-base.user.js" target="_blank">
+          Baseをインストール
+        </a>
+      </div>
+
+      <div class="step">
+        <div class="step-no">STEP 3</div>
+        <h3>Wayfarer Map Mods - S2 Cells を導入</h3>
+        <p class="note">続けてS2 Cellsアドオンを追加します。</p>
+        <a class="link-btn" href="https://gitlab.com/Tntnnbltn/wayfarer-addons/-/raw/main/wayfarer-map-mods-s2-cells.user.js" target="_blank">
+          S2 Cellsをインストール
+        </a>
+      </div>
+
+      <div class="step">
+        <div class="step-no">STEP 4</div>
+        <h3>Wayfarer Mapで確認</h3>
+        <p class="note">
+          Wayfarer Mapを開き、「左上にアイコンが2つ」表示されれば成功です。
+        </p>
+        <a class="link-btn" href="https://wayfarer.nianticlabs.com/new/" target="_blank">
+          Wayfarer Mapを開く
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section id="guide" class="tab-content">
+    <div class="panel">
+      <h2>設計ガイド</h2>
+
+      <div class="grid">
+        <div class="step">
+          <div class="step-no">考え方</div>
+          <h3>MyMapは「地図」ではなく「設計図」</h3>
+          <p class="note">
+            どこに人が集まり、どのように遊び、どこで交流が生まれるかを伝えるための設計図です。
+          </p>
+        </div>
+
+        <div class="step">
+          <div class="step-no">基本距離</div>
+          <h3>40mを基本にする</h3>
+          <p class="note">
+            POI作成時は40mで統一する（管理者側の調整余地を確保するため）。<br>
+            配置が厳しい場合のみ、30mまで調整可能とします。
+          </p>
+        </div>
+
+        <div class="step">
+          <div class="step-no">上限</div>
+          <h3>追加POIは最大25個</h3>
+          <p class="note">
+            25個は上限であり、すべて追加される保証はありません。<br>
+            体験設計の意図が伝わることが重要です。
+          </p>
+        </div>
+
+        <div class="step">
+          <div class="step-no">レイヤー</div>
+          <h3>レイヤーを分ける</h3>
+          <p class="note">
+            既存POI、追加POI、活動エリアは混在させず、カテゴリごとに分けて管理します。
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="check" class="tab-content">
+    <div class="panel">
+      <h2>申請前チェックリスト</h2>
+      <ul>
+        <li>□ POI作成時は40mで統一している</li>
+        <li>□ 配置が厳しい箇所のみ30mで調整している</li>
+        <li>□ 追加POIは25個以内に収まっている</li>
+        <li>□ 既存POIと追加POIのレイヤーを分けている</li>
+        <li>□ 活動エリア（ゾーン）のレイヤーを設定している</li>
+        <li>□ 「置ける」より「遊びやすい」を優先している</li>
+      </ul>
+    </div>
+  </section>
+
+ <section id="howto" class="tab-content">
+  <div class="panel">
+    <h2>使い方</h2>
+
+    <div class="step">
+      <div class="step-no">1</div>
+      <h3>Wayfarer MapからCSVを出す</h3>
+      <p class="note">
+        Wayfarer Map（スクリプト導入済み）から「Nearby Wayspots」を押して Export CSV を実行します。<br>
+        広い公園の場合は2〜3回に分けて抽出してください。
+      </p>
+    </div>
+
+    <div class="step">
+      <div class="step-no">2</div>
+      <h3>このツールに読み込む</h3>
+      <p class="note">
+        CSV / KML / KMZ に対応しています。複数CSVを入れた場合、guidで重複削除します。
+      </p>
+    </div>
+
+    <div class="step">
+      <div class="step-no">3</div>
+      <h3>KMZをMyMapへインポート</h3>
+      <p class="note">
+        生成されたKMZをGoogle My Mapsにインポートすると、5つのレイヤーで表示されます。
+      </p>
+    </div>
+
+  </div>
+</section>
+     
+    <section id="distance" class="tab-content">
+  <div class="panel">
+    <h2>距離チェック</h2>
+    <p class="note">
+      CSV / KML / KMZを読み込み、40m未満の組み合わせを確認します。
+    </p>
+
+    <div class="step">
+      <div class="step-no">STEP 1</div>
+      <p>距離チェック用のファイルを選択します。</p>
+    <input type="file" id="distanceFile" accept=".csv,.kml,.kmz,.zip">
+    </div>
+
+    <div class="step">
+      <div class="step-no">STEP 2</div>
+      <p class="note">
+        読み込んだレイヤーから、既存POI・追加POIを選択します。<br>
+        円レイヤーは判定対象外です。
+      </p>
+      <div id="distanceLayerList"></div>
+    </div>
+
+    <div class="step">
+      <div class="step-no">STEP 3</div>
+      <button class="generate" onclick="runDistanceCheck()">距離チェック実行</button>
+      <div id="distanceResult"></div>
+    </div>
+
+    <div class="step">
+      <div class="step-no">POI一覧</div>
+      <div id="poiList"></div>
+    </div>
+  </div>
+</section>
+
+</div>
+<script>
+window._layerPoints = {};
+  let distanceData = {
+  existing: [],
+  add: []
+};
+function getDistanceMeters(a, b) {
+  const R = 6378137;
+  const lat1 = a.lat * Math.PI / 180;
+  const lat2 = b.lat * Math.PI / 180;
+  const dLat = (b.lat - a.lat) * Math.PI / 180;
+  const dLng = (b.lng - a.lng) * Math.PI / 180;
+
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1) * Math.cos(lat2) *
+    Math.sin(dLng / 2) ** 2;
+
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+async function loadDistanceFile() {
+  const fileInput = document.getElementById("distanceFile");
+  const container = document.getElementById("distanceLayerList");
+
+  if (!fileInput.files.length) return;
+
+  const file = fileInput.files[0];
+  const fileName = file.name.toLowerCase();
+
+  window._layerPoints = {};
+
+  if (fileName.endsWith(".csv")) {
+    const text = await file.text();
+    const points = parseCSV(text);
+    window._layerPoints["CSV_POI"] = points;
+    renderLayerSelector(["CSV_POI"], container);
+    return;
+  }
+
+  const result = await extractLayersFromKML(file);
+  window._layerPoints = result.pointsByLayer;
+  renderLayerSelector(result.layers, container);
+}
+
+async function extractLayersFromKML(file) {
+  let kmlText = null;
+  const fileName = file.name.toLowerCase();
+
+  if (fileName.endsWith(".kml")) {
+    kmlText = await file.text();
+  } else if (fileName.endsWith(".kmz") || fileName.endsWith(".zip")) {
+    const zip = await JSZip.loadAsync(file);
+
+    for (const name in zip.files) {
+      if (name.toLowerCase().endsWith(".kml")) {
+        kmlText = await zip.files[name].async("text");
+        break;
+      }
+
+      if (name.toLowerCase().endsWith(".kmz")) {
+        const kmzBlob = await zip.files[name].async("blob");
+        const kmzZip = await JSZip.loadAsync(kmzBlob);
+
+        for (const innerName in kmzZip.files) {
+          if (innerName.toLowerCase().endsWith(".kml")) {
+            kmlText = await kmzZip.files[innerName].async("text");
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  if (!kmlText) {
+    return { layers: [], pointsByLayer: {} };
+  }
+
+  const xml = new DOMParser().parseFromString(kmlText, "application/xml");
+  const pointsByLayer = extractPointsByLayer(xml);
+  const layers = Object.keys(pointsByLayer);
+
+  return {
+    layers,
+    pointsByLayer
+  };
+}
+function extractPointsByLayer(xml) {
+  const result = {};
+
+  const folders = Array.from(xml.getElementsByTagName("Folder"));
+
+  folders.forEach(folder => {
+    const layerName =
+      folder.getElementsByTagName("name")[0]?.textContent || "無名レイヤー";
+
+    const placemarks = Array.from(folder.getElementsByTagName("Placemark"));
+
+    result[layerName] = placemarks.map(pm => {
+      const point = pm.getElementsByTagName("Point")[0];
+      if (!point) return null;
+
+      const coord = point.getElementsByTagName("coordinates")[0]?.textContent;
+      if (!coord) return null;
+
+      const [lng, lat] = coord.trim().split(",").map(Number);
+      if (isNaN(lat) || isNaN(lng)) return null;
+
+      return {
+        lat,
+        lng,
+        name: pm.getElementsByTagName("name")[0]?.textContent || "POI",
+        layer: layerName
+      };
+    }).filter(Boolean);
+  });
+
+  return result;
+}
+function renderLayerSelector(layers, container) {
+  container.innerHTML = "";
+
+  const targetLayers = layers.filter(name =>
+    !name.includes("円") &&
+    !name.includes("30m") &&
+    !name.includes("40m")
+  );
+
+  if (targetLayers.length === 0) {
+    container.innerHTML = "判定できるPOIレイヤーがありません。";
+    return;
+  }
+
+  container.innerHTML = targetLayers.map(name => `
+    <div class="layer-row">
+      <strong>${cleanLayerName(name)}</strong>
+      <span class="note">（${window._layerPoints[name]?.length || 0}件）</span>
+    </div>
+  `).join("");
+}
+  function cleanLayerName(name) {
+  return name
+    .replace("既存の", "")
+    .replace("既存", "")
+    .trim();
+}
+async function runDistanceCheck() {
+  const result = document.getElementById("distanceResult");
+
+  const points = [];
+
+  Object.entries(window._layerPoints || {}).forEach(([layerName, layerPoints]) => {
+    if (
+      layerName.includes("円") ||
+      layerName.includes("30m") ||
+      layerName.includes("40m")
+    ) {
+      return;
+    }
+
+    layerPoints.forEach(p => {
+      points.push({
+        ...p,
+        layer: cleanLayerName(layerName)
+      });
+    });
+  });
+
+  if (points.length < 2) {
+    result.innerHTML = "POIが2件以上必要です。";
+    return;
+  }
+
+  const warnings = [];
+
+  for (let i = 0; i < points.length; i++) {
+    for (let j = i + 1; j < points.length; j++) {
+      const distance = getDistanceMeters(points[i], points[j]);
+
+      if (distance < 40) {
+        warnings.push({
+          a: points[i],
+          b: points[j],
+          distance
+        });
+      }
+    }
+  }
+
+  if (warnings.length === 0) {
+    result.innerHTML = `✅ 問題なし（${points.length}件）`;
+    return;
+  }
+
+  result.innerHTML = `
+    ⚠ 40m未満があります<br><br>
+    ${warnings.map(w => `
+      <div class="distance-warning">
+        ・${w.a.layer}：${w.a.name}<br>
+        　× ${w.b.layer}：${w.b.name}<br>
+        　<strong>${w.distance.toFixed(1)}m</strong>
+      </div>
+    `).join("")}
+  `;
+}
+function toggleUpdateLog() {
+  const log = document.getElementById("updateLog");
+  log.style.display = log.style.display === "block" ? "none" : "block";
+}
+  function toggleRenameGuide() {
+  const guide = document.getElementById("renameGuide");
+  guide.style.display = guide.style.display === "block" ? "none" : "block";
+}
+  function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+function checkPassword() {
+  const input = document.getElementById("passwordInput");
+  const error = document.getElementById("loginError");
+  const loginScreen = document.getElementById("loginScreen");
+  const splashScreen = document.getElementById("splashScreen");
+
+  if (input.value.trim() === "CA2026") {
+    error.textContent = "";
+    input.blur();
+
+    // ログイン画面をすぐ消す
+    loginScreen.remove();
+
+    // すぐアイコン演出開始
+    splashScreen.classList.add("show");
+
+// 🔊 ログイン音
+const loginSound = document.getElementById("loginSound");
+loginSound.currentTime = 0;
+loginSound.volume = 0.25;
+
+setTimeout(() => {
+  loginSound.play().catch(() => {});
+}, 80);
+
+setTimeout(function () {
+  splashScreen.remove();
+}, 1400);
+
+  } else {
+    error.textContent = "パスコードが違います";
+  }
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+  const passwordInput = document.getElementById("passwordInput");
+
+  passwordInput.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      checkPassword();
+    }
+  });
+});
+
+function openTab(tabId, button) {
+  document.querySelectorAll(".tab-content").forEach(tab => {
+    tab.classList.remove("active");
+  });
+
+  document.querySelectorAll(".tab-button").forEach(btn => {
+    btn.classList.remove("active");
+  });
+
+  const targetTab = document.getElementById(tabId);
+  if (targetTab) {
+    targetTab.classList.add("active");
+  }
+
+  if (button && button.classList) {
+    button.classList.add("active");
+  }
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+}
+
+function createCircle(lat, lon, radius, points = 72) {
+  const earthRadius = 6378137;
+  const coords = [];
+
+  for (let i = 0; i < points; i++) {
+    const angle = (i * 360 / points) * Math.PI / 180;
+    const dLat = (radius * Math.sin(angle)) / earthRadius;
+    const dLon = (radius * Math.cos(angle)) / (earthRadius * Math.cos(lat * Math.PI / 180));
+    const newLat = lat + dLat * 180 / Math.PI;
+    const newLon = lon + dLon * 180 / Math.PI;
+    coords.push(`${newLon},${newLat},0`);
+  }
+
+  coords.push(coords[0]);
+  return coords.join(" ");
+}
+
+function parseCSVLine(line) {
+  const result = [];
+  let current = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+
+    if (char === '"' && line[i + 1] === '"') {
+      current += '"';
+      i++;
+    } else if (char === '"') {
+      inQuotes = !inQuotes;
+    } else if (char === "," && !inQuotes) {
+      result.push(current);
+      current = "";
+    } else {
+      current += char;
+    }
+  }
+
+  result.push(current);
+  return result;
+}
+
+function normalizeHeader(text) {
+  return (text || "").trim().toLowerCase();
+}
+
+function parseCSV(text) {
+  const lines = text.split(/\r?\n/).filter(line => line.trim() !== "");
+  if (lines.length < 2) return [];
+
+  const headers = parseCSVLine(lines[0]).map(normalizeHeader);
+
+  const latIndex = headers.findIndex(h => h === "lat" || h.includes("latitude"));
+  const lngIndex = headers.findIndex(h => h === "lng" || h === "lon" || h.includes("longitude"));
+  const typeIndex = headers.findIndex(h => h.includes("gameentity"));
+  const guidIndex = headers.findIndex(h => h.includes("guid"));
+  const nameIndex = headers.findIndex(h => h === "title" || h === "name");
+
+  if (latIndex === -1 || lngIndex === -1) {
+    alert("CSVに lat / lng が見つかりません");
+    return [];
+  }
+
+  const points = [];
+
+  for (let i = 1; i < lines.length; i++) {
+    const cols = parseCSVLine(lines[i]);
+    const lat = Number(cols[latIndex]);
+    const lng = Number(cols[lngIndex]);
+
+    if (isNaN(lat) || isNaN(lng)) continue;
+
+    points.push({
+      lat,
+      lng,
+      type: typeIndex !== -1 ? (cols[typeIndex] || "").toLowerCase() : "",
+      guid: guidIndex !== -1 ? (cols[guidIndex] || "").trim() : "",
+      name: nameIndex !== -1 && cols[nameIndex] ? cols[nameIndex] : `POI_${i}`
+    });
+  }
+
+  return points;
+}
+
+async function getPointsFromKmlOrKmz(file) {
+  let kmlText = null;
+
+  if (file.name.toLowerCase().endsWith(".kml")) {
+    kmlText = await file.text();
+  } else if (
+    file.name.toLowerCase().endsWith(".kmz") ||
+    file.name.toLowerCase().endsWith(".zip")
+  ) {
+    const zip = await JSZip.loadAsync(file);
+    for (const name in zip.files) {
+      if (name.toLowerCase().endsWith(".kml")) {
+        kmlText = await zip.files[name].async("text");
+        break;
+      }
+    }
+  }
+
+  if (!kmlText) return [];
+
+  const xml = new DOMParser().parseFromString(kmlText, "application/xml");
+
+  const folders = Array.from(xml.getElementsByTagName("Folder"));
+
+  const result = [];
+
+  folders.forEach(folder => {
+    const layerName =
+      folder.getElementsByTagName("name")[0]?.textContent || "無名レイヤー";
+
+    const placemarks = Array.from(folder.getElementsByTagName("Placemark"));
+
+    placemarks.forEach((pm, index) => {
+      const point = pm.getElementsByTagName("Point")[0];
+      if (!point) return;
+
+      const coordText = point
+        .getElementsByTagName("coordinates")[0]
+        ?.textContent.trim();
+
+      if (!coordText) return;
+
+      const [lng, lat] = coordText.split(",").map(Number);
+
+      if (isNaN(lat) || isNaN(lng)) return;
+
+      const name =
+        pm.getElementsByTagName("name")[0]?.textContent ||
+        `POI_${index + 1}`;
+
+      result.push({
+        lat,
+        lng,
+        name,
+        layer: layerName
+      });
+    });
+  });
+
+  return result;
+}
+
+function removeDuplicate(points) {
+  const map = new Map();
+  let duplicateCount = 0;
+
+  points.forEach(p => {
+    const key = p.guid
+      ? `guid:${p.guid}`
+      : `coord:${p.lat.toFixed(6)},${p.lng.toFixed(6)}`;
+
+    if (map.has(key)) {
+      duplicateCount++;
+    } else {
+      map.set(key, p);
+    }
+  });
+
+  return {
+    uniquePoints: Array.from(map.values()),
+    duplicateCount
+  };
+}
+
+function createFolder(xml, doc, name) {
+  const folder = xml.createElement("Folder");
+  const folderName = xml.createElement("name");
+  folderName.textContent = name;
+  folder.appendChild(folderName);
+  doc.appendChild(folder);
+  return folder;
+}
+
+function createPointPlacemark(xml, p) {
+  const pm = xml.createElement("Placemark");
+
+  const name = xml.createElement("name");
+  name.textContent = p.name;
+
+  const point = xml.createElement("Point");
+  const coordinates = xml.createElement("coordinates");
+  coordinates.textContent = `${p.lng},${p.lat},0`;
+
+  point.appendChild(coordinates);
+  pm.appendChild(name);
+  pm.appendChild(point);
+
+  return pm;
+}
+
+function createCirclePlacemark(xml, p, radius) {
+  const pm = xml.createElement("Placemark");
+
+  const name = xml.createElement("name");
+  name.textContent = `${p.name}_${radius}m`;
+
+  const polygon = xml.createElement("Polygon");
+  const outer = xml.createElement("outerBoundaryIs");
+  const ring = xml.createElement("LinearRing");
+  const coordinates = xml.createElement("coordinates");
+
+  coordinates.textContent = createCircle(p.lat, p.lng, radius);
+
+  ring.appendChild(coordinates);
+  outer.appendChild(ring);
+  polygon.appendChild(outer);
+
+  pm.appendChild(name);
+  pm.appendChild(polygon);
+
+  return pm;
+}
+
+function classifyType(typeText) {
+  const t = (typeText || "").toLowerCase();
+
+  if (t.includes("gym")) return "gym";
+  if (t.includes("power")) return "power";
+  if (t.includes("pokestop") || t.includes("poke")) return "pokestop";
+
+  return "pokestop";
+}
+function waitForRender() {
+  return new Promise(resolve => requestAnimationFrame(resolve));
+}
+
+async function generateKMZ() {
+  document.getElementById("loadingOverlay").style.display = "flex";
+  const files = Array.from(document.getElementById("fileInput").files);
+  const status = document.getElementById("status");
+
+  const radii = Array.from(
+    document.querySelectorAll('input[name="radius"]:checked')
+  ).map(e => Number(e.value));
+
+  if (files.length === 0) {
+  alert("CSV / KML / KMZ ファイルを選択してください");
+  document.getElementById("loadingOverlay").style.display = "none";
+  return;
+}
+ if (radii.length === 0) {
+  alert("30m円または40m円を選択してください");
+  document.getElementById("loadingOverlay").style.display = "none";
+  return;
+}
+await waitForRender();
+
+  let points = [];
+
+  for (const file of files) {
+    const fileName = file.name.toLowerCase();
+
+    if (fileName.endsWith(".csv")) {
+      const text = await file.text();
+      points.push(...parseCSV(text));
+    } else if (fileName.endsWith(".kml") || fileName.endsWith(".kmz")) {
+      points.push(...await getPointsFromKmlOrKmz(file));
+    }
+  }
+
+  const beforeCount = points.length;
+
+ if (beforeCount === 0) {
+  alert("スポット座標が見つかりませんでした");
+  status.textContent = "";
+  document.getElementById("loadingOverlay").style.display = "none";
+  return;
+}
+await waitForRender();
+
+  const result = removeDuplicate(points);
+  points = result.uniquePoints;
+document.getElementById("loadingText").textContent = "KMZ生成中…";
+  status.innerHTML = `
+  <span class="loading">
+    <span class="spinner"></span>
+    KMZ生成中…
+  </span>
+`;
+  await sleep(3000);
+  
+await waitForRender();
+  const parser = new DOMParser();
+  const outputXml = parser.parseFromString(
+    `<?xml version="1.0" encoding="UTF-8"?>
+    <kml xmlns="http://www.opengis.net/kml/2.2">
+      <Document>
+        <name>Campsite Design Output</name>
+      </Document>
+    </kml>`,
+    "application/xml"
+  );
+
+  const doc = outputXml.getElementsByTagName("Document")[0];
+
+  const folders = {
+    pokestop: createFolder(outputXml, doc, "既存のポケストップ"),
+    gym: createFolder(outputXml, doc, "既存のジム"),
+    power: createFolder(outputXml, doc, "既存のパワースポット"),
+    circle40: createFolder(outputXml, doc, "40m円（基本距離）"),
+    circle30: createFolder(outputXml, doc, "30m円（調整用）")
+  };
+
+  points.forEach(p => {
+    const pointPlacemark = createPointPlacemark(outputXml, p);
+    const kind = classifyType(p.type);
+
+    if (kind === "gym") {
+      folders.gym.appendChild(pointPlacemark);
+    } else if (kind === "power") {
+      folders.power.appendChild(pointPlacemark);
+    } else {
+      folders.pokestop.appendChild(pointPlacemark);
+    }
+
+    radii.forEach(radius => {
+      const circlePlacemark = createCirclePlacemark(outputXml, p, radius);
+
+      if (radius === 40) {
+        folders.circle40.appendChild(circlePlacemark);
+      } else if (radius === 30) {
+        folders.circle30.appendChild(circlePlacemark);
+      }
+    });
+  });
+
+  const serializer = new XMLSerializer();
+  const newKml = serializer.serializeToString(outputXml);
+
+  const zip = new JSZip();
+  zip.file("doc.kml", newKml);
+
+  const blob = await zip.generateAsync({ type: "blob" });
+
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  const now = new Date();
+a.download = `campsite_${now.getFullYear()}${now.getMonth()+1}${now.getDate()}.kmz`;
+ a.click();
+
+const success = document.getElementById("successSound");
+success.currentTime = 0;
+success.volume = 0.3;
+
+setTimeout(() => {
+  success.play().catch(() => {});
+}, 100);
+
+// どんな状況でも消す（最強）
+setTimeout(() => {
+  document.getElementById("loadingOverlay").style.display = "none";
+}, 300);
+status.innerHTML =
+    `読み込み：${beforeCount}件<br>` +
+    `重複削除：${result.duplicateCount}件<br>` +
+    `出力：${points.length}件<br>` +
+    `✔ KMZを生成しました`;
+  status.style.transform = "scale(1.05)";
+setTimeout(() => {
+  status.style.transform = "scale(1)";
+}, 120);
+}
+document.addEventListener("DOMContentLoaded", function () {
+  const input = document.getElementById("distanceFile");
+  if (input) {
+    input.addEventListener("change", loadDistanceFile);
+  }
+});
+</script>
+
+</body>
+</html>
