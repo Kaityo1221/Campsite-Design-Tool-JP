@@ -2,10 +2,11 @@
 <html lang="ja">
 <head>
 <meta name="robots" content="noindex, nofollow">
+<meta name="googlebot" content="noindex, nofollow">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Campsite Design Tool JP</title>
-<link rel="apple-touch-icon" sizes="180x180" href="デザインツールのアイコン.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/Campsite-Design-Tool-JP/デザインツールのアイコン.png">
 <link rel="manifest" href="/Campsite-Design-Tool-JP/manifest.json">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
@@ -446,16 +447,35 @@ li {
     grid-template-columns: 1fr;
   }
 }
+.layer-row {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #020617;
+  border: 1px solid #334155;
+}
+
+.distance-warning {
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(248, 113, 113, 0.45);
+  line-height: 1.7;
+}
 </style>
 </head>
 
   
 <body>
-  <div class="version-badge" onclick="toggleUpdateLog()">v1.9</div>
-<div id="updateLog" class="update-log">
-  <strong>更新内容</strong><br>
-  ・202605022037zip読み込み可<br>
-</div>
+  <div class="version-badge" onclick="toggleUpdateLog()">v2.6</div>
+<strong>更新内容</strong><br>
+・v2.6 距離チェック結果を近い順に表示<br>
+・30m未満を「要注意」として表示<br>
+・30〜40m未満を「40m未満」として表示<br>
+・件数サマリーを追加<br>
+・レイヤー自動判定に対応<br>
+・KMZ読み込み可能
   <audio id="loginSound" src="login.mp3"></audio>
 <audio id="successSound" src="sucess.mp3"></audio>
   <div id="loadingOverlay" class="loading-overlay">
@@ -484,7 +504,7 @@ li {
   </div>
 </div>
 <div id="splashScreen" class="splash-screen">
-  <img src="デザインツールのアイコン.png" alt="Campsite Tool">
+ <img src="/Campsite-Design-Tool-JP/デザインツールのアイコン.png" alt="Campsite Tool">
 </div>
 <div class="container">
 
@@ -532,7 +552,7 @@ li {
       <div class="step">
         <div class="step-no">STEP 2</div>
         <p>CSV / KML / KMZ ファイルを選択します。CSVは複数選択できます。</p>
-        <input type="file" id="fileInput" accept=".csv,.kml,.kmz" multiple>
+        <input type="file" id="fileInput" multiple>
       </div>
 
       <div class="step">
@@ -717,37 +737,38 @@ Userscriptsをインストール
     </div>
   </section>
 
-  <section id="howto" class="tab-content">
-    <div class="panel">
-      <h2>使い方</h2>
+ <section id="howto" class="tab-content">
+  <div class="panel">
+    <h2>使い方</h2>
 
-      <div class="step">
-        <div class="step-no">1</div>
-        <h3>Wayfarer MapからCSVを出す</h3>
-        <p class="note">
-          Wayfarer Map（スクリプト導入済み）から「Nearby Wayspots」を押して Export CSV を実行します。<br>
-          広い公園の場合は2〜3回に分けて抽出してください。
-        </p>
-      </div>
+    <div class="step">
+      <div class="step-no">1</div>
+      <h3>Wayfarer MapからCSVを出す</h3>
+      <p class="note">
+        Wayfarer Map（スクリプト導入済み）から「Nearby Wayspots」を押して Export CSV を実行します。<br>
+        広い公園の場合は2〜3回に分けて抽出してください。
+      </p>
+    </div>
 
-      <div class="step">
-        <div class="step-no">2</div>
-        <h3>このツールに読み込む</h3>
-        <p class="note">
-          CSV / KML / KMZ に対応しています。複数CSVを入れた場合、guidで重複削除します。
-        </p>
-      </div>
+    <div class="step">
+      <div class="step-no">2</div>
+      <h3>このツールに読み込む</h3>
+      <p class="note">
+        CSV / KML / KMZ に対応しています。複数CSVを入れた場合、guidで重複削除します。
+      </p>
+    </div>
 
-      <div class="step">
-        <div class="step-no">3</div>
-        <h3>KMZをMyMapへインポート</h3>
-        <p class="note">
-          生成されたKMZをGoogle My Mapsにインポートすると、5つのレイヤーで表示されます。
-        </p>
-      </div>
-      </section> 
-      </div>
+    <div class="step">
+      <div class="step-no">3</div>
+      <h3>KMZをMyMapへインポート</h3>
+      <p class="note">
+        生成されたKMZをGoogle My Mapsにインポートすると、5つのレイヤーで表示されます。
+      </p>
+    </div>
+
+  </div>
 </section>
+     
     <section id="distance" class="tab-content">
   <div class="panel">
     <h2>距離チェック</h2>
@@ -758,7 +779,7 @@ Userscriptsをインストール
     <div class="step">
       <div class="step-no">STEP 1</div>
       <p>距離チェック用のファイルを選択します。</p>
-     <input type="file" id="distanceFile" accept=".csv,.kml,.kmz,.zip" onchange="loadDistanceFile()">
+    <input type="file" id="distanceFile">
     </div>
 
     <div class="step">
@@ -785,6 +806,7 @@ Userscriptsをインストール
 
 </div>
 <script>
+window._layerPoints = {};
   let distanceData = {
   existing: [],
   add: []
@@ -810,52 +832,64 @@ async function loadDistanceFile() {
   if (!fileInput.files.length) return;
 
   const file = fileInput.files[0];
+  const fileName = file.name.toLowerCase();
 
-  if (file.name.toLowerCase().endsWith(".csv")) {
+  window._layerPoints = {};
+
+  if (fileName.endsWith(".csv")) {
+    const text = await file.text();
+    const points = parseCSV(text);
+    window._layerPoints["CSV_POI"] = points;
     renderLayerSelector(["CSV_POI"], container);
-  } else {
-    const layers = await extractLayersFromKML(file);
-    renderLayerSelector(layers, container);
-    distanceData = {
-  existing: [],
-  add: []
-};
+    return;
   }
+
+  const result = await extractLayersFromKML(file);
+  window._layerPoints = result.pointsByLayer;
+  renderLayerSelector(result.layers, container);
 }
+
 async function extractLayersFromKML(file) {
   let kmlText = null;
+  const fileName = file.name.toLowerCase();
 
-  const zip = await JSZip.loadAsync(file);
+  if (fileName.endsWith(".kml")) {
+    kmlText = await file.text();
+  } else if (fileName.endsWith(".kmz") || fileName.endsWith(".zip")) {
+    const zip = await JSZip.loadAsync(file);
 
-  for (const name in zip.files) {
-    // ① 直接KML
-    if (name.toLowerCase().endsWith(".kml")) {
-      kmlText = await zip.files[name].async("text");
-      break;
-    }
+    for (const name in zip.files) {
+      if (name.toLowerCase().endsWith(".kml")) {
+        kmlText = await zip.files[name].async("text");
+        break;
+      }
 
-    // ② KMZを見つけた場合（←今回ここ）
-    if (name.toLowerCase().endsWith(".kmz")) {
-      const kmzBlob = await zip.files[name].async("blob");
-      const kmzZip = await JSZip.loadAsync(kmzBlob);
+      if (name.toLowerCase().endsWith(".kmz")) {
+        const kmzBlob = await zip.files[name].async("blob");
+        const kmzZip = await JSZip.loadAsync(kmzBlob);
 
-      for (const innerName in kmzZip.files) {
-        if (innerName.toLowerCase().endsWith(".kml")) {
-          kmlText = await kmzZip.files[innerName].async("text");
-          break;
+        for (const innerName in kmzZip.files) {
+          if (innerName.toLowerCase().endsWith(".kml")) {
+            kmlText = await kmzZip.files[innerName].async("text");
+            break;
+          }
         }
       }
     }
   }
 
-  if (!kmlText) return [];
+  if (!kmlText) {
+    return { layers: [], pointsByLayer: {} };
+  }
 
   const xml = new DOMParser().parseFromString(kmlText, "application/xml");
-  const folders = Array.from(xml.getElementsByTagName("Folder"));
+  const pointsByLayer = extractPointsByLayer(xml);
+  const layers = Object.keys(pointsByLayer);
 
-  return folders.map(folder =>
-    folder.getElementsByTagName("name")[0]?.textContent || "無名レイヤー"
-  );
+  return {
+    layers,
+    pointsByLayer
+  };
 }
 function extractPointsByLayer(xml) {
   const result = {};
@@ -863,11 +897,16 @@ function extractPointsByLayer(xml) {
   const folders = Array.from(xml.getElementsByTagName("Folder"));
 
   folders.forEach(folder => {
-    const name = folder.getElementsByTagName("name")[0]?.textContent;
+    const layerName =
+      folder.getElementsByTagName("name")[0]?.textContent || "無名レイヤー";
+
     const placemarks = Array.from(folder.getElementsByTagName("Placemark"));
 
-    result[name] = placemarks.map(pm => {
-      const coord = pm.getElementsByTagName("coordinates")[0]?.textContent;
+    result[layerName] = placemarks.map(pm => {
+      const point = pm.getElementsByTagName("Point")[0];
+      if (!point) return null;
+
+      const coord = point.getElementsByTagName("coordinates")[0]?.textContent;
       if (!coord) return null;
 
       const [lng, lat] = coord.trim().split(",").map(Number);
@@ -876,7 +915,8 @@ function extractPointsByLayer(xml) {
       return {
         lat,
         lng,
-        name: pm.getElementsByTagName("name")[0]?.textContent || "POI"
+        name: pm.getElementsByTagName("name")[0]?.textContent || "POI",
+        layer: layerName
       };
     }).filter(Boolean);
   });
@@ -886,46 +926,49 @@ function extractPointsByLayer(xml) {
 function renderLayerSelector(layers, container) {
   container.innerHTML = "";
 
-  layers
-    .filter(name =>
-      !name.includes("円") &&
-      !name.includes("30m") &&
-      !name.includes("40m")
-    )
-    .forEach(name => {
-      const div = document.createElement("div");
-      div.className = "layer-row";
-      div.innerHTML = `
-        <p><strong>${name}</strong></p>
-        <label><input type="checkbox" value="${name}" data-type="existing"> 既存POI</label>
-        <label style="margin-left:12px;"><input type="checkbox" value="${name}" data-type="add"> 追加POI</label>
-      `;
-      container.appendChild(div);
-    });
+  const targetLayers = layers.filter(name =>
+    !name.includes("円") &&
+    !name.includes("30m") &&
+    !name.includes("40m")
+  );
+
+  if (targetLayers.length === 0) {
+    container.innerHTML = "判定できるPOIレイヤーがありません。";
+    return;
+  }
+
+  container.innerHTML = targetLayers.map(name => `
+    <div class="layer-row">
+      <strong>${cleanLayerName(name)}</strong>
+      <span class="note">（${window._layerPoints[name]?.length || 0}件）</span>
+    </div>
+  `).join("");
 }
-  
+  function cleanLayerName(name) {
+  return name
+    .replace("既存の", "")
+    .replace("既存", "")
+    .trim();
+}
 async function runDistanceCheck() {
   const result = document.getElementById("distanceResult");
 
-  const selectedExisting = [];
-  const selectedAdd = [];
+  const points = [];
 
-  document.querySelectorAll('#distanceLayerList input[type="checkbox"]').forEach(cb => {
-    if (!cb.checked) return;
+  Object.entries(window._layerPoints || {}).forEach(([layerName, layerPoints]) => {
+    if (
+      layerName.includes("円") ||
+      layerName.includes("30m") ||
+      layerName.includes("40m")
+    ) return;
 
-    const layerName = cb.value;
-    const type = cb.dataset.type;
-
-    if (!window._layerPoints[layerName]) return;
-
-    if (type === "existing") {
-      selectedExisting.push(...window._layerPoints[layerName]);
-    } else {
-      selectedAdd.push(...window._layerPoints[layerName]);
-    }
+    layerPoints.forEach(p => {
+      points.push({
+        ...p,
+        layer: cleanLayerName(layerName)
+      });
+    });
   });
-
-  const points = [...selectedExisting, ...selectedAdd];
 
   if (points.length < 2) {
     result.innerHTML = "POIが2件以上必要です。";
@@ -948,6 +991,13 @@ async function runDistanceCheck() {
     }
   }
 
+  // ✔ 近い順
+  warnings.sort((a, b) => a.distance - b.distance);
+
+  // ✔ サマリー
+  const warning = warnings.filter(w => w.distance < 30).length;
+  const caution = warnings.filter(w => w.distance >= 30 && w.distance < 40).length;
+
   if (warnings.length === 0) {
     result.innerHTML = `✅ 問題なし（${points.length}件）`;
     return;
@@ -955,9 +1005,29 @@ async function runDistanceCheck() {
 
   result.innerHTML = `
     ⚠ 40m未満があります<br><br>
-    ${warnings.map(w => `
-      <div>・${w.a.name} × ${w.b.name}（${w.distance.toFixed(1)}m）</div>
-    `).join("")}
+    ⚠ 要注意：${warning}件 / △ 40m未満：${caution}件
+    <br><br>
+    ${warnings.map(w => {
+      let label = "";
+      let message = "";
+
+      if (w.distance < 30) {
+        label = "⚠ 要注意";
+        message = "30m未満です。採用されない可能性があります。";
+      } else {
+        label = "△ 40m未満";
+        message = "40m未満です。調整される場合があります。";
+      }
+
+      return `
+        <div class="distance-warning">
+          <strong>${label}（${w.distance.toFixed(1)}m）</strong><br>
+          ${w.a.layer}：${w.a.name}<br>
+          × ${w.b.layer}：${w.b.name}<br>
+          → ${message}
+        </div>
+      `;
+    }).join("")}
   `;
 }
 function toggleUpdateLog() {
