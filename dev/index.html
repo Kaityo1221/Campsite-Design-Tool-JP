@@ -1084,7 +1084,7 @@ function checkPassword() {
 // 🔊 ログイン音
 const loginSound = document.getElementById("loginSound");
 loginSound.currentTime = 0;
-loginSound.volume = 0.25;
+loginSound.volume = 0.08;
 
 setTimeout(() => {
   loginSound.play().catch(() => {});
@@ -1484,7 +1484,7 @@ a.download = `campsite_${now.getFullYear()}${now.getMonth()+1}${now.getDate()}.k
 
 const success = document.getElementById("successSound");
 success.currentTime = 0;
-success.volume = 0.3;
+success.volume = 0.12;
 
 setTimeout(() => {
   success.play().catch(() => {});
