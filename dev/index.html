@@ -942,7 +942,7 @@ function checkQuiz() {
   if (q1 === "40" && q2 === "hard" && q3 === "25") {
     localStorage.setItem("quizPassed", QUIZ_VERSION);
     document.getElementById("quizModal").style.display = "none";
-    alert("✔ 基本ルールOKです");
+    alert("✔ 利用準備OK！ツールを使えます");
   } else {
     alert("もう一度確認してください\nヒント：基本距離は40mです");
   }
@@ -1531,7 +1531,7 @@ document.addEventListener("DOMContentLoaded", function () {
   overflow-y:auto;
   color:white;
 ">
-    <h3>📘 利用前チェック</h3>
+    <h3>📘 利用前チェック（必須）</h3>
     <p class="note">
       最低限のルール確認です。詳細はガイドをご覧ください。
     </p>
