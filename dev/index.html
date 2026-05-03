@@ -806,6 +806,8 @@ Userscriptsをインストール
 
 </div>
 <script>
+const ENABLE_QUIZ = true;
+const QUIZ_VERSION = "beta1";
 window._layerPoints = {};
   let distanceData = {
   existing: [],
@@ -922,6 +924,28 @@ function extractPointsByLayer(xml) {
   });
 
   return result;
+}
+function showQuiz() {
+  document.getElementById("quizModal").style.display = "flex";
+}
+
+function checkQuiz() {
+  const q1 = document.querySelector('input[name="q1"]:checked')?.value;
+  const q2 = document.querySelector('input[name="q2"]:checked')?.value;
+  const q3 = document.querySelector('input[name="q3"]:checked')?.value;
+
+  if (!q1 || !q2 || !q3) {
+    alert("すべて選択してください");
+    return;
+  }
+
+  if (q1 === "40" && q2 === "hard" && q3 === "25") {
+    localStorage.setItem("quizPassed", QUIZ_VERSION);
+    document.getElementById("quizModal").style.display = "none";
+    alert("✔ 基本ルールOKです");
+  } else {
+    alert("もう一度確認してください\nヒント：基本距離は40mです");
+  }
 }
 function renderLayerSelector(layers, container) {
   container.innerHTML = "";
@@ -1341,6 +1365,10 @@ function waitForRender() {
 }
 
 async function generateKMZ() {
+  if (ENABLE_QUIZ && localStorage.getItem("quizPassed") !== QUIZ_VERSION) {
+  showQuiz();
+  return;
+}
   document.getElementById("loadingOverlay").style.display = "flex";
   const files = Array.from(document.getElementById("fileInput").files);
   const status = document.getElementById("status");
@@ -1483,6 +1511,64 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 });
 </script>
+<div id="quizModal" style="
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.8);
+  z-index:99999;
+  align-items:center;
+  justify-content:center;
+">
+  <div style="
+    background:#0f172a;
+    padding:24px;
+    border-radius:16px;
+    width:90%;
+    max-width:400px;
+    color:white;
+  ">
 
+    <h3>📘 利用前チェック</h3>
+    <p class="note">
+      最低限のルール確認です。詳細はガイドをご覧ください。
+    </p>
+
+    <!-- Q1 -->
+    <p>Q1. 基本距離は？</p>
+    <label><input type="radio" name="q1" value="20">20m</label><br>
+    <label><input type="radio" name="q1" value="30">30m</label><br>
+    <label><input type="radio" name="q1" value="40">40m</label><br>
+    <label><input type="radio" name="q1" value="100">100m</label>
+
+    <br><br>
+
+    <!-- Q2 -->
+    <p>Q2. 30mはいつ使う？</p>
+    <label><input type="radio" name="q2" value="always">常に使う</label><br>
+    <label><input type="radio" name="q2" value="hard">配置が厳しい時のみ</label><br>
+    <label><input type="radio" name="q2" value="dense">密集させたい時</label><br>
+
+    <br><br>
+
+    <!-- Q3 -->
+    <p>Q3. 追加POIの上限は？</p>
+    <label><input type="radio" name="q3" value="10">10</label><br>
+    <label><input type="radio" name="q3" value="20">20</label><br>
+    <label><input type="radio" name="q3" value="25">25</label><br>
+    <label><input type="radio" name="q3" value="40">40</label>
+
+    <br><br>
+
+    <a href="campsite-guide.pdf" target="_blank" class="link-btn">
+      📘 ガイドPDFを開く
+    </a>
+
+    <br><br>
+
+    <button class="generate" onclick="checkQuiz()">回答する</button>
+
+  </div>
+</div>
 </body>
 </html>
