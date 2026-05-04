@@ -1155,6 +1155,7 @@ const campsite = calculateCampsiteScore(points, warnings);
 const scoreHtml = `
 <div class="distance-warning">
 <strong>拠点充実度：${campsite.rank}（${campsite.label}）</strong><br>
+拠点タイプ：${campsite.type}<br>
 スコア：${campsite.score}点<br><br>
 
 密集：${campsite.under20}件<br>
