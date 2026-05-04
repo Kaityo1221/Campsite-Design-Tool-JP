@@ -1085,11 +1085,23 @@ function calculateCampsiteScore(points, warnings) {
   }
 
   const comments = [];
-  if (under20 > 0) comments.push("密集あり");
-  if (under30 > 0) comments.push("滞留あり");
-  if (!trafficOk) comments.push("通行注意");
-  if (env >= 10) comments.push("環境良好");
+if (under20 > 0) comments.push("密集あり");
+if (under30 > 0) comments.push("滞留あり");
+if (!trafficOk) comments.push("通行注意");
+if (env >= 10) comments.push("環境良好");
 
+// 👇ここに追加
+let summary = "バランスの取れた拠点です";
+
+if (under20 > 0) {
+  summary = "密集があり、配置調整が必要です";
+} else if (under30 > 3) {
+  summary = "やや滞留が発生しやすい配置です";
+} else if (!trafficOk) {
+  summary = "通行面に注意が必要な拠点です";
+} else if (env >= 10) {
+  summary = "非常に遊びやすい理想的な拠点です";
+}
   return {
     score,
     rank,
@@ -1100,6 +1112,7 @@ function calculateCampsiteScore(points, warnings) {
     under40,
     trafficOk,
     comments
+    summary
   };
 }
 async function runDistanceCheck() {
