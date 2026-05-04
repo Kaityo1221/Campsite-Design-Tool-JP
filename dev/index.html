@@ -468,9 +468,11 @@ li {
 
   
 <body>
-  <div class="version-badge" onclick="toggleUpdateLog()">v3.0</div>
-<strong>更新内容</strong><br>
-・v3.0拠点充実度判定機能を追加
+ <div class="version-badge" onclick="toggleUpdateLog()">v3.0</div>
+<div id="updateLog" class="update-log">
+  <strong>更新内容</strong><br>
+  ・v3.0 拠点充実度判定機能を追加<br>
+</div>
   <audio id="loginSound" src="login.mp3"></audio>
 <audio id="successSound" src="sucess.mp3"></audio>
   <div id="loadingOverlay" class="loading-overlay">
@@ -1007,16 +1009,16 @@ async function runDistanceCheck() {
     layerPoints.forEach(p => {
       points.push({
         ...p,
-        layer: cleanLayerName(layerName)
+        layer: cleanLayerName(layerName),
+originalLayer: layerName
       });
     });
   });
 
   if (points.length < 2) {
-    result.innerHTML = scoreHtml+"POIが2件以上必要です。";
-    return;
-  }
-
+  result.innerHTML = "POIが2件以上必要です。";
+  return;
+}
   const warnings = [];
 
   for (let i = 0; i < points.length; i++) {
@@ -1026,8 +1028,8 @@ async function runDistanceCheck() {
     const b = points[j];
 
     // ★ここ追加★
-    const isExistingA = (a.layer || "").includes("既存");
-    const isExistingB = (b.layer || "").includes("既存");
+    const isExistingA = (a.originalLayer || "").includes("既存");
+const isExistingB = (b.originalLayer || "").includes("既存");
 
     // 既存×既存はスキップ
     if (isExistingA && isExistingB) continue;
