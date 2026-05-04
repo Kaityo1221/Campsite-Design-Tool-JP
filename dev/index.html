@@ -1131,52 +1131,41 @@ async function runDistanceCheck() {
       points.push({
         ...p,
         layer: cleanLayerName(layerName),
-originalLayer: layerName
+        originalLayer: layerName
       });
     });
   });
 
   if (points.length < 2) {
-  result.innerHTML = "POIが2件以上必要です。";
-  return;
-}
+    result.innerHTML = "POIが2件以上必要です。";
+    return;
+  }
+
   const warnings = [];
 
   for (let i = 0; i < points.length; i++) {
-  for (let j = i + 1; j < points.length; j++) {
+    for (let j = i + 1; j < points.length; j++) {
+      const a = points[i];
+      const b = points[j];
 
-    const a = points[i];
-    const b = points[j];
+      const distance = getDistanceMeters(a, b);
 
-    // ★ここ追加★
-    const isExistingA = (w.a.originalLayer || "").includes("既存");
-const isExistingB = (w.b.originalLayer || "").includes("既存");
+      if (distance < 40) {
+        warnings.push({ a, b, distance });
+      }
+    }
+  }
 
-let label = "";
-let message = "";
+  const campsite = calculateCampsiteScore(points, warnings);
 
-// ▼ 既存×既存（参考情報）
-if (isExistingA && isExistingB) {
-  label = "ℹ 参考";
-  message = "既存POI同士が近接しています（調整不可）";
-}
-
-// ▼ 追加が絡む（調整対象）
-else if (w.distance < 30) {
-  label = "⚠ 要注意";
-  message = "30m未満です。配置調整を推奨します。";
-} else {
-  label = "△ 40m未満";
-  message = "40m未満です。調整される場合があります。";
-}
-const campsite = calculateCampsiteScore(points, warnings);
-  // ✔ 近い順
   warnings.sort((a, b) => a.distance - b.distance);
-const scoreHtml = `
+
+  const scoreHtml = `
 <div class="distance-warning">
 <strong>拠点充実度：${campsite.rank}（${campsite.label}）</strong><br>
 拠点タイプ：${campsite.type}<br>
 スコア：${campsite.score}点<br><br>
+
 <strong>総評</strong><br>
 ${campsite.summary}<br><br>
 
@@ -1195,26 +1184,32 @@ ${campsite.summary}<br><br>
 ${campsite.comments.map(c => "・" + c).join("<br>")}
 </div><br>
 `;
-  // ✔ サマリー
+
   const warning = warnings.filter(w => w.distance < 30).length;
   const caution = warnings.filter(w => w.distance >= 30 && w.distance < 40).length;
 
   if (warnings.length === 0) {
-    result.innerHTML = scoreHtml+`✅ 問題なし（${points.length}件）`;
+    result.innerHTML = scoreHtml + `✅ 問題なし（${points.length}件）`;
     return;
   }
 
-  result.innerHTML = scoreHtml+`
+  result.innerHTML = scoreHtml + `
     ⚠ 40m未満があります<br><br>
     ⚠ 要注意：${warning}件 / △ 40m未満：${caution}件
     <br><br>
     ${warnings.map(w => {
+      const isExistingA = (w.a.originalLayer || "").includes("既存");
+      const isExistingB = (w.b.originalLayer || "").includes("既存");
+
       let label = "";
       let message = "";
 
-      if (w.distance < 30) {
+      if (isExistingA && isExistingB) {
+        label = "ℹ 参考";
+        message = "既存POI同士が近接しています（調整不可）";
+      } else if (w.distance < 30) {
         label = "⚠ 要注意";
-        message = "30m未満です。採用されない可能性があります。";
+        message = "30m未満です。配置調整を推奨します。";
       } else {
         label = "△ 40m未満";
         message = "40m未満です。調整される場合があります。";
