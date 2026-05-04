@@ -1193,7 +1193,9 @@ async function runDistanceCheck() {
   const campsite = calculateCampsiteScore(points, warnings);
 
   warnings.sort((a, b) => a.distance - b.distance);
-
+const stars = getStars(campsite.score);
+const color = getRankColor(campsite.rank);
+const bar = getScoreBar(campsite.score, color);
   const scoreHtml = `
 <div class="distance-warning">
 <strong>拠点充実度：${campsite.rank}（${campsite.label}）</strong><br>
