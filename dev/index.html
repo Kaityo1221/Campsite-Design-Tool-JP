@@ -995,7 +995,7 @@ async function runDistanceCheck() {
   });
 
   if (points.length < 2) {
-    result.innerHTML = "POIが2件以上必要です。";
+    result.innerHTML = scoreHtml+"POIが2件以上必要です。";
     return;
   }
 
@@ -1014,20 +1014,99 @@ async function runDistanceCheck() {
       }
     }
   }
-
+const campsite = calculateCampsiteScore(points, warnings);
   // ✔ 近い順
   warnings.sort((a, b) => a.distance - b.distance);
+const scoreHtml = `
+<div class="distance-warning">
+<strong>拠点充実度：${campsite.rank}（${campsite.label}）</strong><br>
+スコア：${campsite.score}点<br><br>
 
+密集：${campsite.under20}件<br>
+滞留：${campsite.under30}件<br>
+
+通行：${campsite.trafficOk ? "良好" : "注意"}<br><br>
+
+${campsite.comments.map(c => "・" + c).join("<br>")}
+</div><br>
+`;
   // ✔ サマリー
   const warning = warnings.filter(w => w.distance < 30).length;
   const caution = warnings.filter(w => w.distance >= 30 && w.distance < 40).length;
 
   if (warnings.length === 0) {
-    result.innerHTML = `✅ 問題なし（${points.length}件）`;
+    result.innerHTML = scoreHtml+`✅ 問題なし（${points.length}件）`;
     return;
   }
+function calculateCampsiteScore(points, warnings) {
+  let score = 100;
 
-  result.innerHTML = `
+  let under20 = 0;
+  let under30 = 0;
+  let under40 = 0;
+
+  warnings.forEach(w => {
+    const d = w.distance;
+    if (d < 20) { score -= 8; under20++; }
+    else if (d < 30) { score -= 5; under30++; }
+    else if (d < 40) { score -= 2; under40++; }
+  });
+
+  let stayPenalty = 0;
+
+  warnings.forEach(w => {
+    const d = w.distance;
+    const a = (w.a.layer || "").toLowerCase();
+    const b = (w.b.layer || "").toLowerCase();
+
+    const aPower = a.includes("power") || a.includes("パワ");
+    const bPower = b.includes("power") || b.includes("パワ");
+    const aGym = a.includes("gym") || a.includes("ジム");
+    const bGym = b.includes("gym") || b.includes("ジム");
+
+    if (aPower && bPower) {
+      if (d < 20) stayPenalty += 8;
+      else if (d < 30) stayPenalty += 5;
+    }
+
+    if (aGym && bGym) {
+      if (d < 20) stayPenalty += 4;
+      else if (d < 30) stayPenalty += 2;
+    }
+
+    if ((aGym && bPower) || (aPower && bGym)) {
+      if (d < 30) stayPenalty += 6;
+    }
+  });
+
+  score -= stayPenalty;
+
+  const trafficOk = document.getElementById("trafficOk")?.checked;
+  score += trafficOk ? 3 : -5;
+
+  let env = 0;
+  if (document.getElementById("hasOpenSpace")?.checked) env += 6;
+  if (document.getElementById("hasLoopRoute")?.checked) env += 5;
+  if (document.getElementById("hasWaitingSpace")?.checked) env += 4;
+
+  score += Math.min(env, 15);
+
+  score = Math.max(0, Math.min(100, score));
+
+  let rank = "C", label = "調整あり";
+  if (score >= 85) { rank = "S"; label = "理想"; }
+  else if (score >= 70) { rank = "A"; label = "かなり良い"; }
+  else if (score >= 50) { rank = "B"; label = "良好"; }
+
+  const comments = [];
+  if (under20 > 0) comments.push("密集あり");
+  if (under30 > 0) comments.push("滞留あり");
+  if (!trafficOk) comments.push("通行注意");
+  if (env >= 10) comments.push("環境良好");
+
+  return { score, rank, label, under20, under30, under40, trafficOk, comments };
+}
+  result.innerHTML = scoreHtml+`
     ⚠ 40m未満があります<br><br>
     ⚠ 要注意：${warning}件 / △ 40m未満：${caution}件
     <br><br>
