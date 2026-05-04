@@ -468,10 +468,10 @@ li {
 
   
 <body>
- <div class="version-badge" onclick="toggleUpdateLog()">v3.7</div>
+ <div class="version-badge" onclick="toggleUpdateLog()">v3.8</div>
 <div id="updateLog" class="update-log">
   <strong>更新内容</strong><br>
-  v3.7<br>
+  v3.8<br>
    ・密集、滞留、軽微、通行にあたるPOIを表示<br>
 </div>
   <audio id="loginSound" src="login.mp3"></audio>
@@ -1069,6 +1069,67 @@ function getRiskStyle(type) {
   if (type === "通行") return { icon: "🔵", color: "#3b82f6" };
   return { icon: "⚪", color: "#94a3b8" };
 }
+function getRiskAccordionHtml(warnings) {
+  const groups = {
+    "密集": [],
+    "滞留": [],
+    "通行": [],
+    "軽微": []
+  };
+
+  warnings.forEach(w => {
+    const type = w.type || "軽微";
+    groups[type].push(w);
+  });
+
+  const settings = {
+    "密集": { icon: "🔴", color: "#ef4444", open: true },
+    "滞留": { icon: "🟠", color: "#f97316", open: false },
+    "通行": { icon: "🔵", color: "#3b82f6", open: false },
+    "軽微": { icon: "⚪", color: "#94a3b8", open: false }
+  };
+
+  return `
+  <div class="distance-warning">
+    <strong>分類別チェック</strong><br><br>
+
+    ${Object.keys(groups).map(type => {
+      const s = settings[type];
+
+      return `
+        <details ${s.open ? "open" : ""} style="margin-bottom:12px;">
+          <summary style="
+            cursor:pointer;
+            font-weight:bold;
+            color:${s.color};
+            font-size:16px;
+          ">
+            ${s.icon} ${type}（${groups[type].length}件）
+          </summary>
+
+          <div style="margin-top:10px;">
+            ${groups[type].length === 0 ? `
+              <div style="opacity:0.7;">該当なし</div>
+            ` : groups[type].map(w => `
+              <div style="
+                margin:10px 0;
+                padding:10px;
+                border-radius:10px;
+                background:rgba(15,23,42,0.65);
+                border:1px solid rgba(148,163,184,0.25);
+              ">
+                <strong>${w.distance.toFixed(1)}m</strong><br>
+                ${w.a.layer}：${w.a.name}<br>
+                × ${w.b.layer}：${w.b.name}
+              </div>
+            `).join("")}
+          </div>
+        </details>
+      `;
+    }).join("")}
+  </div><br>
+  `;
+}
 function calculateCampsiteScore(points, warnings) {
   let score = 100;
 
@@ -1236,9 +1297,7 @@ async function runDistanceCheck() {
   const campsite = calculateCampsiteScore(points, warnings);
 
   warnings.sort((a, b) => a.distance - b.distance);
-const poiRiskSummary = getPoiRiskSummary(warnings);
-
-const poiRiskHtml = poiRiskSummary.length ? `
+const riskAccordionHtml = getRiskAccordionHtml(warnings);
 <div class="distance-warning">
 <strong>問題になりやすいPOI</strong><br><br>
 ${poiRiskSummary.map(p => {
@@ -1308,7 +1367,7 @@ ${campsite.comments.map(c => "・" + c).join("<br>")}
     return;
   }
 
-  result.innerHTML = scoreHtml + poiRiskHtml + `
+  result.innerHTML = scoreHtml + riskAccordionHtml + `
     ⚠ 40m未満があります<br><br>
     ⚠ 要注意：${warning}件 / △ 40m未満：${caution}件
     <br><br>
