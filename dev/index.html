@@ -1531,7 +1531,21 @@ function addDummyPlacemark(xml, folder, name) {
   const n = xml.createElement("name");
   n.textContent = name;
 
+  const styleUrl = xml.createElement("styleUrl");
+  styleUrl.textContent = "#hiddenStyle";
+
+  const point = xml.createElement("Point");
+  const coord = xml.createElement("coordinates");
+
+  // 海上ダミー
+  coord.textContent = "0,0,0";
+
+  point.appendChild(coord);
+
   pm.appendChild(n);
+  pm.appendChild(styleUrl);
+  pm.appendChild(point);
+
   folder.appendChild(pm);
 }
 function classifyType(typeText) {
@@ -1619,7 +1633,16 @@ await waitForRender();
   );
 
   const doc = outputXml.getElementsByTagName("Document")[0];
+const hiddenStyle = outputXml.createElement("Style");
+hiddenStyle.setAttribute("id", "hiddenStyle");
 
+const iconStyle = outputXml.createElement("IconStyle");
+const scale = outputXml.createElement("scale");
+scale.textContent = "0";
+
+iconStyle.appendChild(scale);
+hiddenStyle.appendChild(iconStyle);
+doc.appendChild(hiddenStyle);
   const folders = {
   pokestop: createFolder(outputXml, doc, "既存のポケストップ"),
   gym: createFolder(outputXml, doc, "既存のジム"),
