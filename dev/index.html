@@ -1196,16 +1196,15 @@ async function runDistanceCheck() {
 const stars = getStars(campsite.score);
 const color = getRankColor(campsite.rank);
 const bar = getScoreBar(campsite.score, color);
-  const scoreHtml = `
+
+const scoreHtml = `
 <div class="distance-warning">
 
 <strong style="color:${color}; font-size:20px;">
 拠点充実度：${campsite.rank} ${stars}
 </strong><br>
 
-<span style="opacity:0.85;">
-${campsite.label}
-</span>
+<span style="opacity:0.85;">${campsite.label}</span>
 
 ${bar}
 
@@ -1216,7 +1215,7 @@ ${bar}
 <br>
 <strong>総評</strong><br>
 ${campsite.summary}<br><br>
-`;
+
 密集：${campsite.under20}件<br>
 滞留：${campsite.under30}件<br>
 軽微：${campsite.under40}件<br>
