@@ -1522,7 +1522,17 @@ function createCirclePlacemark(xml, p, radius) {
 
   return pm;
 }
+function addDummyPlacemark(xml, folder, name) {
+  const pm = xml.createElement("Placemark");
 
+  const n = xml.createElement("name");
+  n.textContent = name;
+
+  // 👇 座標なし（これが重要）
+  pm.appendChild(n);
+
+  folder.appendChild(pm);
+}
 function classifyType(typeText) {
   const t = (typeText || "").toLowerCase();
 
@@ -1616,7 +1626,11 @@ await waitForRender();
     circle40: createFolder(outputXml, doc, "40m円（基本距離）"),
     circle30: createFolder(outputXml, doc, "30m円（調整用）")
   };
+addDummyPlacemark(outputXml, folders.addPokestop, "ここに追加ポケストを配置");
 
+addDummyPlacemark(outputXml, folders.addGym, "ここに追加ジムを配置");
+
+addDummyPlacemark(outputXml, folders.addPower, "ここに追加パワスポを配置");
   points.forEach(p => {
     const pointPlacemark = createPointPlacemark(outputXml, p);
     const kind = classifyType(p.type);
