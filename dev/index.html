@@ -468,11 +468,11 @@ li {
 
   
 <body>
- <div class="version-badge" onclick="toggleUpdateLog()">v3.6</div>
+ <div class="version-badge" onclick="toggleUpdateLog()">v3.7</div>
 <div id="updateLog" class="update-log">
   <strong>更新内容</strong><br>
-  v3.6<br>
-   ・KMZ生成時に選択するファイルをCSVを推奨<br>
+  v3.7<br>
+   ・密集、滞留、軽微、通行にあたるPOIを表示<br>
 </div>
   <audio id="loginSound" src="login.mp3"></audio>
 <audio id="successSound" src="sucess.mp3"></audio>
@@ -1026,6 +1026,49 @@ function getScoreBar(score, color) {
   </div>
   `;
 }
+function getPoiRiskSummary(warnings) {
+  const riskMap = new Map();
+
+  const priority = {
+    "密集": 4,
+    "滞留": 3,
+    "通行": 2,
+    "軽微": 1
+  };
+
+  warnings.forEach(w => {
+    [w.a, w.b].forEach(p => {
+      const key = `${p.layer}:${p.name}`;
+
+      if (!riskMap.has(key)) {
+        riskMap.set(key, {
+          name: p.name,
+          layer: p.layer,
+          maxType: "軽微",
+          counts: { 密集: 0, 滞留: 0, 通行: 0, 軽微: 0 }
+        });
+      }
+
+      const item = riskMap.get(key);
+      item.counts[w.type || "軽微"]++;
+
+      if (priority[w.type || "軽微"] > priority[item.maxType]) {
+        item.maxType = w.type || "軽微";
+      }
+    });
+  });
+
+  return Array.from(riskMap.values()).sort((a, b) => {
+    return priority[b.maxType] - priority[a.maxType];
+  });
+}
+
+function getRiskStyle(type) {
+  if (type === "密集") return { icon: "🔴", color: "#ef4444" };
+  if (type === "滞留") return { icon: "🟠", color: "#f97316" };
+  if (type === "通行") return { icon: "🔵", color: "#3b82f6" };
+  return { icon: "⚪", color: "#94a3b8" };
+}
 function calculateCampsiteScore(points, warnings) {
   let score = 100;
 
@@ -1193,6 +1236,31 @@ async function runDistanceCheck() {
   const campsite = calculateCampsiteScore(points, warnings);
 
   warnings.sort((a, b) => a.distance - b.distance);
+const poiRiskSummary = getPoiRiskSummary(warnings);
+
+const poiRiskHtml = poiRiskSummary.length ? `
+<div class="distance-warning">
+<strong>問題になりやすいPOI</strong><br><br>
+${poiRiskSummary.map(p => {
+  const style = getRiskStyle(p.maxType);
+
+  return `
+    <div style="margin-bottom:10px;">
+      <strong style="color:${style.color};">
+        ${style.icon} ${p.name}
+      </strong><br>
+      <span style="opacity:0.8;">
+        ${p.layer}<br>
+        密集:${p.counts.密集}件 /
+        滞留:${p.counts.滞留}件 /
+        通行:${p.counts.通行}件 /
+        軽微:${p.counts.軽微}件
+      </span>
+    </div>
+  `;
+}).join("")}
+</div><br>
+` : "";
 const stars = getStars(campsite.score);
 const color = getRankColor(campsite.rank);
 const bar = getScoreBar(campsite.score, color);
@@ -1240,7 +1308,7 @@ ${campsite.comments.map(c => "・" + c).join("<br>")}
     return;
   }
 
-  result.innerHTML = scoreHtml + `
+  result.innerHTML = scoreHtml + poiRiskHtml + `
     ⚠ 40m未満があります<br><br>
     ⚠ 要注意：${warning}件 / △ 40m未満：${caution}件
     <br><br>
