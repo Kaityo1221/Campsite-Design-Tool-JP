@@ -1548,12 +1548,16 @@ function addDummyPlacemark(xml, folder, name) {
 
   folder.appendChild(pm);
 }
-function classifyType(typeText) {
+function classifyType(typeText, name = "") {
   const t = (typeText || "").toLowerCase();
+  const n = (name || "").toLowerCase();
 
   if (t.includes("gym")) return "gym";
   if (t.includes("power")) return "power";
   if (t.includes("pokestop") || t.includes("poke")) return "pokestop";
+
+  if (n.includes("ジム")) return "gym";
+  if (n.includes("パワ")) return "power";
 
   return "pokestop";
 }
