@@ -685,7 +685,7 @@ Userscriptsをインストール
       <div class="grid">
         <div class="step">
           <div class="step-no">考え方</div>
-          <h3>MyMapは「地図」ではなくbr>「設計図」</h3>
+         <h3>MyMapは「地図」ではなく<br>「設計図」</h3>
           <p class="note">
             どこに人が集まり、どのように遊び、どこで交流が生まれるかを伝えるための設計図です。
           </p>
@@ -1298,28 +1298,7 @@ async function runDistanceCheck() {
 
   warnings.sort((a, b) => a.distance - b.distance);
 const riskAccordionHtml = getRiskAccordionHtml(warnings);
-<div class="distance-warning">
-<strong>問題になりやすいPOI</strong><br><br>
-${poiRiskSummary.map(p => {
-  const style = getRiskStyle(p.maxType);
 
-  return `
-    <div style="margin-bottom:10px;">
-      <strong style="color:${style.color};">
-        ${style.icon} ${p.name}
-      </strong><br>
-      <span style="opacity:0.8;">
-        ${p.layer}<br>
-        密集:${p.counts.密集}件 /
-        滞留:${p.counts.滞留}件 /
-        通行:${p.counts.通行}件 /
-        軽微:${p.counts.軽微}件
-      </span>
-    </div>
-  `;
-}).join("")}
-</div><br>
-` : "";
 const stars = getStars(campsite.score);
 const color = getRankColor(campsite.rank);
 const bar = getScoreBar(campsite.score, color);
