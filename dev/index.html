@@ -1000,13 +1000,25 @@ function calculateCampsiteScore(points, warnings) {
   let under20 = 0;
   let under30 = 0;
   let under40 = 0;
+  let distancePenalty = 0;
 
   warnings.forEach(w => {
     const d = w.distance;
-    if (d < 20) { score -= 8; under20++; }
-    else if (d < 30) { score -= 5; under30++; }
-    else if (d < 40) { score -= 2; under40++; }
+
+    if (d < 20) {
+      distancePenalty += 4;
+      under20++;
+    } else if (d < 30) {
+      distancePenalty += 2;
+      under30++;
+    } else if (d < 40) {
+      distancePenalty += 0.5;
+      under40++;
+    }
   });
+
+  distancePenalty = Math.min(distancePenalty, 25);
+  score -= distancePenalty;
 
   let stayPenalty = 0;
 
@@ -1021,20 +1033,21 @@ function calculateCampsiteScore(points, warnings) {
     const bGym = b.includes("gym") || b.includes("ジム");
 
     if (aPower && bPower) {
-      if (d < 20) stayPenalty += 8;
-      else if (d < 30) stayPenalty += 5;
-    }
-
-    if (aGym && bGym) {
       if (d < 20) stayPenalty += 4;
       else if (d < 30) stayPenalty += 2;
     }
 
+    if (aGym && bGym) {
+      if (d < 20) stayPenalty += 2;
+      else if (d < 30) stayPenalty += 1;
+    }
+
     if ((aGym && bPower) || (aPower && bGym)) {
-      if (d < 30) stayPenalty += 6;
+      if (d < 30) stayPenalty += 3;
     }
   });
 
+  stayPenalty = Math.min(stayPenalty, 20);
   score -= stayPenalty;
 
   const trafficOk = document.getElementById("trafficOk")?.checked;
@@ -1045,30 +1058,51 @@ function calculateCampsiteScore(points, warnings) {
   if (document.getElementById("hasLoopRoute")?.checked) env += 5;
   if (document.getElementById("hasWaitingSpace")?.checked) env += 4;
 
-  score += Math.min(env, 15);
+  env = Math.min(env, 15);
+  score += env;
 
-  score = Math.max(0, Math.min(100, score));
+  score = Math.round(Math.max(0, Math.min(100, score)));
 
-  let rank = "C", label = "調整あり";
-  if (score >= 85) { rank = "S"; label = "理想"; }
-  else if (score >= 70) { rank = "A"; label = "かなり良い"; }
-  else if (score >= 50) { rank = "B"; label = "良好"; }
+  let rank = "C";
+  let label = "調整あり";
+
+  if (score >= 85) {
+    rank = "S";
+    label = "理想";
+  } else if (score >= 70) {
+    rank = "A";
+    label = "かなり良い";
+  } else if (score >= 50) {
+    rank = "B";
+    label = "良好";
+  }
+
+  let type = "バランス型";
+  if (under20 > 0 || under30 >= 5) {
+    type = "密集注意型";
+  } else if (!trafficOk) {
+    type = "通行注意型";
+  } else if (trafficOk && env >= 10) {
+    type = "回遊・滞留向き";
+  }
 
   const comments = [];
   if (under20 > 0) comments.push("密集あり");
   if (under30 > 0) comments.push("滞留あり");
   if (!trafficOk) comments.push("通行注意");
   if (env >= 10) comments.push("環境良好");
-let type = "バランス型";
 
-if (under20 > 0 || under30 >= 5) {
-  type = "密集注意型";
-} else if (trafficOk && env >= 10) {
-  type = "回遊・滞留向き";
-} else if (!trafficOk) {
-  type = "通行注意型";
-}
-  return { score, rank, type, label, under20, under30, under40, trafficOk, comments };
+  return {
+    score,
+    rank,
+    type,
+    label,
+    under20,
+    under30,
+    under40,
+    trafficOk,
+    comments
+  };
 }
 async function runDistanceCheck() {
   const result = document.getElementById("distanceResult");
