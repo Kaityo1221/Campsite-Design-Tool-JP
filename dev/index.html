@@ -994,6 +994,38 @@ function renderLayerSelector(layers, container) {
     .replace("既存", "")
     .trim();
 }
+function getStars(score) {
+  if (score >= 85) return "⭐⭐⭐⭐⭐";
+  if (score >= 70) return "⭐⭐⭐⭐☆";
+  if (score >= 50) return "⭐⭐⭐☆☆";
+  return "⭐⭐☆☆☆";
+}
+function getRankColor(rank) {
+  if (rank === "S") return "#a855f7";
+  if (rank === "A") return "#3b82f6";
+  if (rank === "B") return "#22c55e";
+  return "#ef4444";
+}
+
+function getScoreBar(score, color) {
+  return `
+  <div style="margin-top:6px;">
+    <div style="
+      width:100%;
+      height:10px;
+      background:#1e293b;
+      border-radius:6px;
+      overflow:hidden;
+    ">
+      <div style="
+        width:${score}%;
+        height:100%;
+        background:${color};
+      "></div>
+    </div>
+  </div>
+  `;
+}
 function calculateCampsiteScore(points, warnings) {
   let score = 100;
 
