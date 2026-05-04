@@ -1020,18 +1020,25 @@ async function runDistanceCheck() {
   const warnings = [];
 
   for (let i = 0; i < points.length; i++) {
-    for (let j = i + 1; j < points.length; j++) {
-      const distance = getDistanceMeters(points[i], points[j]);
+  for (let j = i + 1; j < points.length; j++) {
 
-      if (distance < 40) {
-        warnings.push({
-          a: points[i],
-          b: points[j],
-          distance
-        });
-      }
+    const a = points[i];
+    const b = points[j];
+
+    // ★ここ追加★
+    const isExistingA = (a.layer || "").includes("既存");
+    const isExistingB = (b.layer || "").includes("既存");
+
+    // 既存×既存はスキップ
+    if (isExistingA && isExistingB) continue;
+
+    const distance = getDistance(a, b);
+
+    if (distance < 40) {
+      warnings.push({ a, b, distance });
     }
   }
+}
 const campsite = calculateCampsiteScore(points, warnings);
   // ✔ 近い順
   warnings.sort((a, b) => a.distance - b.distance);
