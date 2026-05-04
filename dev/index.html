@@ -1198,13 +1198,25 @@ const color = getRankColor(campsite.rank);
 const bar = getScoreBar(campsite.score, color);
   const scoreHtml = `
 <div class="distance-warning">
-<strong>拠点充実度：${campsite.rank}（${campsite.label}）</strong><br>
-拠点タイプ：${campsite.type}<br>
-スコア：${campsite.score}点<br><br>
 
+<strong style="color:${color}; font-size:20px;">
+拠点充実度：${campsite.rank} ${stars}
+</strong><br>
+
+<span style="opacity:0.85;">
+${campsite.label}
+</span>
+
+${bar}
+
+<div style="margin-top:6px; font-size:13px; opacity:0.8;">
+スコア：${campsite.score}点
+</div>
+
+<br>
 <strong>総評</strong><br>
 ${campsite.summary}<br><br>
-
+`;
 密集：${campsite.under20}件<br>
 滞留：${campsite.under30}件<br>
 軽微：${campsite.under40}件<br>
