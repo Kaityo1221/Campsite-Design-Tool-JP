@@ -1024,9 +1024,16 @@ const scoreHtml = `
 
 密集：${campsite.under20}件<br>
 滞留：${campsite.under30}件<br>
-
+軽微：${campsite.under40}件<br>
 通行：${campsite.trafficOk ? "良好" : "注意"}<br><br>
 
+<strong>CA所感</strong><br>
+・通行：${document.getElementById("trafficOk")?.checked ? "スムーズに通れる" : "注意が必要"}<br>
+・広場：${document.getElementById("hasOpenSpace")?.checked ? "あり" : "なし"}<br>
+・回遊：${document.getElementById("hasLoopRoute")?.checked ? "できる" : "弱い"}<br>
+・待機場所：${document.getElementById("hasWaitingSpace")?.checked ? "あり" : "なし"}<br><br>
+
+<strong>判定コメント</strong><br>
 ${campsite.comments.map(c => "・" + c).join("<br>")}
 </div><br>
 `;
@@ -1103,8 +1110,16 @@ function calculateCampsiteScore(points, warnings) {
   if (under30 > 0) comments.push("滞留あり");
   if (!trafficOk) comments.push("通行注意");
   if (env >= 10) comments.push("環境良好");
+let type = "バランス型";
 
-  return { score, rank, label, under20, under30, under40, trafficOk, comments };
+if (under20 > 0 || under30 >= 5) {
+  type = "密集注意型";
+} else if (trafficOk && env >= 10) {
+  type = "回遊・滞留向き";
+} else if (!trafficOk) {
+  type = "通行注意型";
+}
+  return { score, rank, type, label, under20, under30, under40, trafficOk, comments };
 }
   result.innerHTML = scoreHtml+`
     ⚠ 40m未満があります<br><br>
