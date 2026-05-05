@@ -1389,7 +1389,10 @@ if (label.includes("要注意")) {
 }
 
 return `
-  <div class="distance-warning">
+  <div class="distance-warning" style="
+    border: 1px solid ${color};
+    background: ${color}20;
+  ">
     <strong style="color:${color}">
       ${label}（${w.distance.toFixed(1)}m）
     </strong><br>
