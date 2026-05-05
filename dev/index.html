@@ -1380,8 +1380,19 @@ ${campsite.comments.map(c => "・" + c).join("<br>")}
       }
 
       return `
-        <div class="distance-warning">
-          <strong>${label}（${w.distance.toFixed(1)}m）</strong><br>
+      let color = "#94a3b8"; // デフォルト（参考）
+
+if (label.includes("要注意")) {
+  color = "#ef4444"; // 赤
+} else if (label.includes("40m未満")) {
+  color = "#f97316"; // オレンジ
+}
+
+return `
+  <div class="distance-warning">
+    <strong style="color:${color}">
+      ${label}（${w.distance.toFixed(1)}m）
+    </strong><br>
           ${w.a.layer}：${w.a.name}<br>
           × ${w.b.layer}：${w.b.name}<br>
           → ${message}
