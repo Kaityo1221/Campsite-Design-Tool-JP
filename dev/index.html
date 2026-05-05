@@ -847,6 +847,12 @@ function getDistanceMeters(a, b) {
 
   return 2 * R * Math.asin(Math.sqrt(h));
 }
+function classifyDistanceRisk(distance) {
+  if (distance < 20) return "密集";
+  if (distance < 30) return "滞留";
+  if (distance < 40) return "軽微";
+  return null;
+}
 async function loadDistanceFile() {
   const fileInput = document.getElementById("distanceFile");
   const container = document.getElementById("distanceLayerList");
@@ -1282,17 +1288,22 @@ async function runDistanceCheck() {
   const warnings = [];
 
   for (let i = 0; i < points.length; i++) {
-    for (let j = i + 1; j < points.length; j++) {
-      const a = points[i];
-      const b = points[j];
+  for (let j = i + 1; j < points.length; j++) {
+    const a = points[i];
+    const b = points[j];
 
-      const distance = getDistanceMeters(a, b);
+    const distance = getDistanceMeters(a, b);
 
-      if (distance < 40) {
-        warnings.push({ a, b, distance });
-      }
+    if (distance < 40) {
+      warnings.push({
+        a,
+        b,
+        distance,
+        type: classifyDistanceRisk(distance)
+      });
     }
   }
+}
 
   const campsite = calculateCampsiteScore(points, warnings);
 
