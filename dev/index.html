@@ -1362,48 +1362,47 @@ ${campsite.comments.map(c => "・" + c).join("<br>")}
     ⚠ 要注意：${warning}件 / △ 40m未満：${caution}件
     <br><br>
     ${warnings.map(w => {
-      const isExistingA = (w.a.originalLayer || "").includes("既存");
-      const isExistingB = (w.b.originalLayer || "").includes("既存");
 
-      let label = "";
-      let message = "";
+  const isExistingA = (w.a.originalLayer || "").includes("既存");
+  const isExistingB = (w.b.originalLayer || "").includes("既存");
 
-      if (isExistingA && isExistingB) {
-        label = "ℹ 参考";
-        message = "既存POI同士が近接しています（調整不可）";
-      } else if (w.distance < 30) {
-        label = "⚠ 要注意";
-        message = "30m未満です。配置調整を推奨します。";
-      } else {
-        label = "△ 40m未満";
-        message = "40m未満です。調整される場合があります。";
-      }
+  let label = "";
+  let message = "";
 
-      return `
-      let color = "#94a3b8"; // デフォルト（参考）
+  if (isExistingA && isExistingB) {
+    label = "ℹ 参考";
+    message = "既存POI同士が近接しています（調整不可）";
+  } else if (w.distance < 30) {
+    label = "⚠ 要注意";
+    message = "30m未満です。配置調整を推奨します。";
+  } else {
+    label = "△ 40m未満";
+    message = "40m未満です。調整される場合があります。";
+  }
 
-if (label.includes("要注意")) {
-  color = "#ef4444"; // 赤
-} else if (label.includes("40m未満")) {
-  color = "#f97316"; // オレンジ
-}
+  // 👇 ここは return の外に書く
+  let color = "#94a3b8";
 
-return `
-  <div class="distance-warning" style="
-    border: 1px solid ${color};
-    background: ${color}20;
-  ">
-    <strong style="color:${color}">
-      ${label}（${w.distance.toFixed(1)}m）
-    </strong><br>
-          ${w.a.layer}：${w.a.name}<br>
-          × ${w.b.layer}：${w.b.name}<br>
-          → ${message}
-        </div>
-      `;
-    }).join("")}
+  if (label.includes("要注意")) {
+    color = "#ef4444";
+  } else if (label.includes("40m未満")) {
+    color = "#f97316";
+  }
+
+  return `
+    <div class="distance-warning" style="
+      border: 1px solid ${color};
+      background: ${color}20;
+    ">
+      <strong style="color:${color}">
+        ${label}（${w.distance.toFixed(1)}m）
+      </strong><br>
+      ${w.a.layer}：${w.a.name}<br>
+      × ${w.b.layer}：${w.b.name}<br>
+      → ${message}
+    </div>
   `;
-}
+}).join("")}
 function toggleUpdateLog() {
   const log = document.getElementById("updateLog");
   log.style.display = log.style.display === "block" ? "none" : "block";
