@@ -1363,6 +1363,8 @@ ${campsite.comments.map(c => "・" + c).join("<br>")}
     <br><br>
     ${warnings.map(w => {
 
+  ${warnings.map(w => {
+
   const isExistingA = (w.a.originalLayer || "").includes("既存");
   const isExistingB = (w.b.originalLayer || "").includes("既存");
 
@@ -1380,7 +1382,6 @@ ${campsite.comments.map(c => "・" + c).join("<br>")}
     message = "40m未満です。調整される場合があります。";
   }
 
-  // 👇 ここは return の外に書く
   let color = "#94a3b8";
 
   if (label.includes("要注意")) {
