@@ -468,13 +468,13 @@ li {
 
   
 <body>
- <div class="version-badge" onclick="toggleUpdateLog()">v4.2</div>
+ <div class="version-badge" onclick="toggleUpdateLog()">v4.3</div>
 <div id="updateLog" class="update-log">
   <strong>更新内容</strong><br>
-   v4.2<br>
-・分類別チェックの表示構造を変更<br>
-・密集／滞留／軽微の各カテゴリ内に「調整対象」と「参考」を分離表示<br>
-・既存POI同士の近接が、距離分類と参考表示で重複して見える問題を改善<br>
+   v4.3<br>
+・距離チェック結果の下部一覧を、追加・変更対象の近接のみ表示する形に変更<br>
+・既存POI同士の参考近接が全件一覧表示される問題を改善<br>
+・参考近接は分類別チェック内で確認する構成に整理<br>
 </div>
   <audio id="loginSound" src="login.mp3"></audio>
 <audio id="successSound" src="sucess.mp3"></audio>
@@ -1449,49 +1449,60 @@ warnings.forEach(w => {
     return;
   }
 
-    const warningListHtml = warnings.map(w => {
-    const isExistingA = (w.a.originalLayer || "").includes("既存");
-    const isExistingB = (w.b.originalLayer || "").includes("既存");
+    const targetWarnings = warnings.filter(w => {
+  const isExistingA = (w.a.originalLayer || "").includes("既存");
+  const isExistingB = (w.b.originalLayer || "").includes("既存");
 
-    let label = "";
-    let message = "";
-    let cardColor = "#94a3b8";
+  return !(isExistingA && isExistingB);
+});
 
-    if (isExistingA && isExistingB) {
-      label = "ℹ 既存POI参考";
-message = "既存POI同士の近接です。追加POIの調整対象には含めません。";
-    } else if (w.distance < 30) {
-      label = "⚠ 要注意";
-      message = "30m未満です。配置調整を推奨します。";
-      cardColor = "#ef4444";
-    } else {
-      label = "△ 40m未満";
-      message = "40m未満です。調整される場合があります。";
-      cardColor = "#f97316";
-    }
+const targetWarningListHtml = targetWarnings.length === 0 ? `
+  <div class="distance-warning" style="
+    border:1px solid rgba(34,197,94,0.45);
+    background:rgba(34,197,94,0.12);
+  ">
+    ✅ 追加・変更対象の近接はありません。<br>
+    既存POI同士の参考近接は、上の分類別チェック内で確認できます。
+  </div>
+` : targetWarnings.map(w => {
+  let label = "";
+  let message = "";
+  let cardColor = "";
+  let cardBg = "";
 
-    return `
-      <div class="distance-warning" style="
-        border: 1px solid ${cardColor};
-        background: ${cardColor}20;
-      ">
-        <strong style="color:${cardColor}">
-          ${label}（${w.distance.toFixed(1)}m）
-        </strong><br>
-        ${w.a.layer}：${w.a.name}<br>
-        × ${w.b.layer}：${w.b.name}<br>
-        → ${message}
-      </div>
-    `;
-  }).join("");
+  if (w.distance < 30) {
+    label = "⚠ 要注意";
+    message = "30m未満です。配置調整を推奨します。";
+    cardColor = "#ef4444";
+    cardBg = "rgba(239, 68, 68, 0.14)";
+  } else {
+    label = "△ 40m未満";
+    message = "40m未満です。調整される場合があります。";
+    cardColor = "#f97316";
+    cardBg = "rgba(249, 115, 22, 0.14)";
+  }
 
+  return `
+    <div class="distance-warning" style="
+      border:1px solid ${cardColor};
+      background:${cardBg};
+    ">
+      <strong style="color:${cardColor};">
+        ${label}（${w.distance.toFixed(1)}m）
+      </strong><br>
+      ${w.a.layer}：${w.a.name}<br>
+      × ${w.b.layer}：${w.b.name}<br>
+      → ${message}
+    </div>
+  `;
+}).join("");
   result.innerHTML = scoreHtml + riskAccordionHtml + `
     ⚠ 40m未満があります<br><br>
     ⚠ 要注意：${displayCounts.danger}件 / 
 △ 40m未満：${displayCounts.caution}件 / 
 ℹ 参考：${displayCounts.reference}件
     <br><br>
-    ${warningListHtml}
+    ${targetWarningListHtml}
   `;
 }
 function toggleUpdateLog() {
