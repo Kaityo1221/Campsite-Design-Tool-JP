@@ -472,8 +472,9 @@ li {
 <div id="updateLog" class="update-log">
   <strong>更新内容</strong><br>
    v4.2<br>
-・距離チェックの分類名に距離条件を追加<br>
-・通行判定を分類別チェックからCA所感へ整理<br>
+・分類別チェックの表示構造を変更<br>
+・密集／滞留／軽微の各カテゴリ内に「調整対象」と「参考」を分離表示<br>
+・既存POI同士の近接が、距離分類と参考表示で重複して見える問題を改善<br>
 </div>
   <audio id="loginSound" src="login.mp3"></audio>
 <audio id="successSound" src="sucess.mp3"></audio>
@@ -1078,75 +1079,137 @@ function getRiskStyle(type) {
 }
 function getRiskAccordionHtml(warnings) {
   const groups = {
-  "密集": [],
-  "滞留": [],
-  "軽微": []
-};
+    "密集": {
+      target: [],
+      reference: []
+    },
+    "滞留": {
+      target: [],
+      reference: []
+    },
+    "軽微": {
+      target: [],
+      reference: []
+    }
+  };
 
   warnings.forEach(w => {
     const type = w.type || "軽微";
-    groups[type].push(w);
+
+    const isExistingA = (w.a.originalLayer || "").includes("既存");
+    const isExistingB = (w.b.originalLayer || "").includes("既存");
+    const isReference = isExistingA && isExistingB;
+
+    if (!groups[type]) return;
+
+    if (isReference) {
+      groups[type].reference.push(w);
+    } else {
+      groups[type].target.push(w);
+    }
   });
 
   const settings = {
-  "密集": {
-    icon: "🔴",
-    color: "#ef4444",
-    open: true,
-    label: "密集（20m未満）"
-  },
-  "滞留": {
-    icon: "🟠",
-    color: "#f97316",
-    open: false,
-    label: "滞留（20m以上30m未満）"
-  },
-  "軽微": {
-    icon: "⚪",
-    color: "#94a3b8",
-    open: false,
-    label: "軽微（30m以上40m未満）"
+    "密集": {
+      icon: "🔴",
+      color: "#ef4444",
+      open: true,
+      label: "密集（20m未満）"
+    },
+    "滞留": {
+      icon: "🟠",
+      color: "#f97316",
+      open: false,
+      label: "滞留（20m以上30m未満）"
+    },
+    "軽微": {
+      icon: "⚪",
+      color: "#94a3b8",
+      open: false,
+      label: "軽微（30m以上40m未満）"
+    }
+  };
+
+  function renderWarningCard(w, isReference) {
+    const cardColor = isReference ? "#94a3b8" : "#ef4444";
+    const message = isReference
+      ? "既存POI同士の近接です。追加POIの調整対象には含めません。"
+      : "追加・変更対象の近接です。配置調整を確認してください。";
+
+    return `
+      <div style="
+        margin:10px 0;
+        padding:10px;
+        border-radius:10px;
+        background:rgba(15,23,42,0.65);
+        border:1px solid rgba(148,163,184,0.25);
+      ">
+        <strong style="color:${cardColor};">
+          ${isReference ? "ℹ 参考" : "⚠ 調整対象"}（${w.distance.toFixed(1)}m）
+        </strong><br>
+        ${w.a.layer}：${w.a.name}<br>
+        × ${w.b.layer}：${w.b.name}<br>
+        → ${message}
+      </div>
+    `;
   }
-};
+
   return `
-  <div class="distance-warning">
-    <strong>分類別チェック</strong><br><br>
+    <div class="distance-warning">
+      <strong>分類別チェック</strong><br><br>
 
-    ${Object.keys(groups).map(type => {
-      const s = settings[type];
+      ${Object.keys(groups).map(type => {
+        const s = settings[type];
+        const targetList = groups[type].target;
+        const referenceList = groups[type].reference;
+        const totalCount = targetList.length + referenceList.length;
 
-      return `
-        <details ${s.open ? "open" : ""} style="margin-bottom:12px;">
-          <summary style="
-            cursor:pointer;
-            font-weight:bold;
-            color:${s.color};
-            font-size:16px;
-          ">
-            ${s.icon} ${s.label}（${groups[type].length}件））
-          </summary>
+        return `
+          <details ${s.open ? "open" : ""} style="margin-bottom:12px;">
+            <summary style="
+              cursor:pointer;
+              font-weight:bold;
+              color:${s.color};
+              font-size:16px;
+            ">
+              ${s.icon} ${s.label}（${totalCount}件）
+            </summary>
 
-          <div style="margin-top:10px;">
-            ${groups[type].length === 0 ? `
-              <div style="opacity:0.7;">該当なし</div>
-            ` : groups[type].map(w => `
+            <div style="margin-top:10px;">
               <div style="
-                margin:10px 0;
-                padding:10px;
-                border-radius:10px;
-                background:rgba(15,23,42,0.65);
-                border:1px solid rgba(148,163,184,0.25);
+                margin-bottom:8px;
+                font-size:13px;
+                opacity:0.85;
               ">
-                <strong>${w.distance.toFixed(1)}m</strong><br>
-                ${w.a.layer}：${w.a.name}<br>
-                × ${w.b.layer}：${w.b.name}
+                調整対象：${targetList.length}件 / 参考：${referenceList.length}件
               </div>
-            `).join("")}
-          </div>
-        </details>
-      `;
-    }).join("")}
-  </div><br>
+
+              <details ${targetList.length > 0 ? "open" : ""} style="margin-bottom:10px;">
+                <summary style="cursor:pointer; font-weight:bold; color:#fca5a5;">
+                  ⚠ 調整対象（${targetList.length}件）
+                </summary>
+                <div style="margin-top:8px;">
+                  ${targetList.length === 0 ? `
+                    <div style="opacity:0.7;">該当なし</div>
+                  ` : targetList.map(w => renderWarningCard(w, false)).join("")}
+                </div>
+              </details>
+
+              <details style="margin-bottom:10px;">
+                <summary style="cursor:pointer; font-weight:bold; color:#cbd5e1;">
+                  ℹ 参考：既存POI同士（${referenceList.length}件）
+                </summary>
+                <div style="margin-top:8px;">
+                  ${referenceList.length === 0 ? `
+                    <div style="opacity:0.7;">該当なし</div>
+                  ` : referenceList.map(w => renderWarningCard(w, true)).join("")}
+                </div>
+              </details>
+            </div>
+          </details>
+        `;
+      }).join("")}
+    </div><br>
   `;
 }
 function calculateCampsiteScore(points, warnings) {
