@@ -468,13 +468,15 @@ li {
 
   
 <body>
- <div class="version-badge" onclick="toggleUpdateLog()">v5.1</div>
+ <div class="version-badge" onclick="toggleUpdateLog()">v5.2</div>
 <div id="updateLog" class="update-log">
   <strong>更新内容</strong><br>
-v5.1<br>
-・既にMy Mapsを作成済みのユーザー向けに「個別ツール」タブを追加<br>
-・個別機能を1つのタブ内に集約し、今後の機能追加に対応しやすい構成へ整理<br>
-・円だけ生成などの補助機能を、個別ツール内の機能カードとして追加できる設計に変更<br>
+v5.2<br>
+・個別ツールに「円だけ生成」機能を追加<br>
+・CSV／KML／KMZから30m円・40m円のみを生成できるよう対応<br>
+・既存のMy Mapsに円レイヤーだけ追加インポートしやすい構成へ改善<br>
+・追加希望レイヤー用のダミーポイントを円作成対象から除外する処理を追加<br>
+・円レイヤー重複防止のため、既存の30m円・40m円レイヤー削除を促す注意文を追加<br>
 </div>
   <audio id="loginSound" src="login.mp3"></audio>
 <audio id="successSound" src="sucess.mp3"></audio>
@@ -637,14 +639,41 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
     </p>
 
     <div class="step">
-      <div class="step-no">準備中</div>
-      <h3>円だけ生成</h3>
-      <p class="note">
-        CSV / KML / KMZから、30m円・40m円だけを生成する機能を追加予定です。<br>
-        既存のMy Mapsに円レイヤーだけ追加したい場合に使います。
-      </p>
-    </div>
+  <div class="step-no">個別機能</div>
+  <h3>円だけ生成</h3>
 
+  <p class="note">
+    CSV / KML / KMZから、30m円・40m円だけを生成します。<br>
+    既存のMy Mapsに円レイヤーだけ追加したい場合に使います。
+  </p>
+<p class="note" style="
+  padding:12px;
+  border-radius:12px;
+  background:rgba(249,115,22,0.12);
+  border:1px solid rgba(249,115,22,0.35);
+  color:#fed7aa;
+">
+  ⚠ すでにMy Mapsに30m円・40m円レイヤーがある場合は、先に既存の円レイヤーを削除してからインポートしてください。<br>
+  削除せずに追加すると、円レイヤーが重複して表示される場合があります。
+</p>
+  <p>円を作成したいファイルを選択します。</p>
+  <input type="file" id="circleOnlyFileInput" multiple>
+
+  <div class="checks">
+    <label>
+      <input type="checkbox" name="circleOnlyRadius" value="40" checked>
+      40m円（基本距離）
+    </label><br>
+
+    <label>
+      <input type="checkbox" name="circleOnlyRadius" value="30" checked>
+      30m円（調整用）
+    </label>
+  </div>
+
+  <button class="generate" onclick="generateCircleOnlyKMZ()">円だけKMZを生成</button>
+  <div id="circleOnlyStatus"></div>
+</div>
     <div class="step">
       <div class="step-no">準備中</div>
       <h3>追加希望レイヤーだけ生成</h3>
@@ -1936,7 +1965,136 @@ function classifyType(typeText = "", name = "", layerName = "") {
 function waitForRender() {
   return new Promise(resolve => requestAnimationFrame(resolve));
 }
+function isDummyPoint(p) {
+  const name = p.name || "";
 
+  if (Number(p.lat) === 0 && Number(p.lng) === 0) return true;
+  if (name.includes("ここに追加")) return true;
+  if (name.includes("レイヤー保持用")) return true;
+
+  return false;
+}
+
+async function generateCircleOnlyKMZ() {
+  const files = Array.from(document.getElementById("circleOnlyFileInput").files);
+  const status = document.getElementById("circleOnlyStatus");
+
+  const radii = Array.from(
+    document.querySelectorAll('input[name="circleOnlyRadius"]:checked')
+  ).map(e => Number(e.value));
+
+  if (files.length === 0) {
+    alert("CSV / KML / KMZ ファイルを選択してください");
+    return;
+  }
+
+  if (radii.length === 0) {
+    alert("30m円または40m円を選択してください");
+    return;
+  }
+
+  document.getElementById("loadingOverlay").style.display = "flex";
+  document.getElementById("loadingText").textContent = "円だけKMZ生成中…";
+
+  try {
+    let points = [];
+
+    for (const file of files) {
+      const fileName = file.name.toLowerCase();
+
+      if (fileName.endsWith(".csv")) {
+        const text = await file.text();
+        points.push(...parseCSV(text));
+      } else if (
+        fileName.endsWith(".kml") ||
+        fileName.endsWith(".kmz") ||
+        fileName.endsWith(".zip")
+      ) {
+        points.push(...await getPointsFromKmlOrKmz(file));
+      }
+    }
+
+    points = points.filter(p => !isDummyPoint(p));
+
+    const beforeCount = points.length;
+
+    if (beforeCount === 0) {
+      alert("円を作成できるスポット座標が見つかりませんでした");
+      status.textContent = "";
+      return;
+    }
+
+    const result = removeDuplicate(points);
+    points = result.uniquePoints;
+
+    const parser = new DOMParser();
+    const outputXml = parser.parseFromString(
+      `<?xml version="1.0" encoding="UTF-8"?>
+      <kml xmlns="http://www.opengis.net/kml/2.2">
+        <Document>
+          <name>Campsite Circle Only Output</name>
+        </Document>
+      </kml>`,
+      "application/xml"
+    );
+
+    const doc = outputXml.getElementsByTagName("Document")[0];
+
+    const folders = {
+      circle40: createFolder(outputXml, doc, "40m円（基本距離）"),
+      circle30: createFolder(outputXml, doc, "30m円（調整用）")
+    };
+
+    points.forEach(p => {
+      radii.forEach(radius => {
+        const circlePlacemark = createCirclePlacemark(outputXml, p, radius);
+
+        if (radius === 40) {
+          folders.circle40.appendChild(circlePlacemark);
+        } else if (radius === 30) {
+          folders.circle30.appendChild(circlePlacemark);
+        }
+      });
+    });
+
+    const serializer = new XMLSerializer();
+    const newKml = serializer.serializeToString(outputXml);
+
+    const zip = new JSZip();
+    zip.file("doc.kml", newKml);
+
+    const blob = await zip.generateAsync({ type: "blob" });
+
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+
+    const now = new Date();
+    a.download = `campsite_circles_${now.getFullYear()}${now.getMonth() + 1}${now.getDate()}.kmz`;
+    a.click();
+
+    status.innerHTML =
+      `読み込み：${beforeCount}件<br>` +
+      `重複削除：${result.duplicateCount}件<br>` +
+      `円作成対象：${points.length}件<br>` +
+      `✔ 円だけKMZを生成しました`;
+
+    const success = document.getElementById("successSound");
+    if (success) {
+      success.currentTime = 0;
+      success.volume = 0.12;
+      setTimeout(() => {
+        success.play().catch(() => {});
+      }, 100);
+    }
+
+  } catch (error) {
+    console.error(error);
+    alert("円だけKMZの生成中にエラーが発生しました");
+    status.textContent = "";
+  } finally {
+    document.getElementById("loadingOverlay").style.display = "none";
+  }
+}
 async function generateKMZ() {
   if (ENABLE_QUIZ && localStorage.getItem("quizPassed") !== QUIZ_VERSION) {
   showQuiz();
