@@ -1724,16 +1724,19 @@ setTimeout(function () {
   }
 }
 
-document.addEventListener("DOMContentLoaded", function () {
-  const passwordInput = document.getElementById("passwordInput");
+document.addEventListener("click", function (event) {
+  const log = document.getElementById("updateLog");
+  const badge = document.querySelector(".version-badge");
 
-  if (passwordInput) {
-    passwordInput.addEventListener("keydown", function (e) {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        checkPassword();
-      }
-    });
+  if (!log || log.style.display !== "block") return;
+
+  const clickedInsideLog = log.contains(event.target);
+  const clickedBadge = badge && badge.contains(event.target);
+
+  if (!clickedInsideLog && !clickedBadge) {
+    log.style.display = "none";
+  }
+});
   }
 
   const adminPasswordInput = document.getElementById("adminPasswordInput");
