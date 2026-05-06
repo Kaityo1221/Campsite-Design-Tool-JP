@@ -1352,8 +1352,9 @@ function getRiskAccordionHtml(warnings) {
           ${label}（${w.distance.toFixed(1)}m）
         </strong><br>
         ${w.a.layer}：${w.a.name}<br>
-        × ${w.b.layer}：${w.b.name}<br>
-        → ${message}
+× ${w.b.layer}：${w.b.name}<br>
+周辺密度：半径100m以内 ${w.nearbyCount || "-"}件<br>
+→ ${message}
       </div>
     `;
   }
@@ -1608,14 +1609,19 @@ async function runDistanceCheck() {
 
     const distance = getDistanceMeters(a, b);
 
-    if (distance < 40) {
-      warnings.push({
-        a,
-        b,
-        distance,
-        type: classifyDistanceRisk(distance)
-      });
-    }
+   if (distance < 40) {
+  const nearbyA = getNearbyCount(a, points, 100);
+  const nearbyB = getNearbyCount(b, points, 100);
+  const nearbyCount = Math.max(nearbyA, nearbyB);
+
+  warnings.push({
+    a,
+    b,
+    distance,
+    nearbyCount,
+    type: classifyDistanceRiskWithDensity(distance, nearbyCount)
+  });
+}
   }
 }
 
