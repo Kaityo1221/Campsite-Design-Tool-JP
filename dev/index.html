@@ -2193,7 +2193,7 @@ function getDensityRank(count) {
       label: "高密度",
       icon: "🔴",
       color: "#ef4444",
-      message: "POIがかなり集中しています。集合・滞留の発生に注意してください。"
+      message: "message: "既存POIと追加希望POIを含めて、かなり集中しています。集合・滞留の発生に注意してください。""
     };
   }
 
@@ -2202,7 +2202,7 @@ function getDensityRank(count) {
       label: "中密度",
       icon: "🟠",
       color: "#f97316",
-      message: "POIがまとまっています。遊びやすい一方で、人の流れに注意が必要です。"
+      message: message: "既存POIと追加希望POIを含めて、まとまりがあります。遊びやすい一方で、人の流れに注意が必要です。"
     };
   }
 
@@ -2333,9 +2333,27 @@ async function runAdminDensityCheck() {
     }
 
     const areaHtml = topAreas.map((area, index) => {
-      const rank = getDensityRank(area.count);
+  const rank = getDensityRank(area.count);
 
-      const nearbyNames = area.nearby
+  const layerTypeCounts = {
+    existing: 0,
+    add: 0,
+    other: 0
+  };
+
+  area.nearby.forEach(p => {
+    const info = getAdminLayerInfo(p.layer || "");
+
+    if (info.isAdd) {
+      layerTypeCounts.add++;
+    } else if (info.isExisting) {
+      layerTypeCounts.existing++;
+    } else {
+      layerTypeCounts.other++;
+    }
+  });
+
+  const nearbyNames = area.nearby
         .slice(0, 8)
         .map(p => `・${escapeAdminHtml(p.name)} <span style="opacity:0.7;">(${escapeAdminHtml(p.layer)})</span>`)
         .join("<br>");
@@ -2358,9 +2376,9 @@ async function runAdminDensityCheck() {
           </strong><br>
 
           中心候補：${escapeAdminHtml(area.center.name)}<br>
-          半径${radius}m以内：${area.count}件<br>
-          レイヤー：${escapeAdminHtml(area.center.layer)}<br><br>
-
+半径${radius}m以内：${area.count}件<br>
+中心レイヤー：${escapeAdminHtml(area.center.layer)}<br>
+内訳：既存 ${layerTypeCounts.existing}件 / 追加希望 ${layerTypeCounts.add}件 / その他 ${layerTypeCounts.other}件<br><br>
           <span style="color:#cbd5e1;">${rank.message}</span>
 
           <details style="margin-top:10px;">
