@@ -468,7 +468,9 @@ li {
 
   
 <body>
- <div class="version-badge" onclick="toggleUpdateLog()">v5.41</div>
+ <div class="version-badge" onclick="toggleUpdateLog()">v5.4
+  
+</div>
 <div id="updateLog" class="update-log">
   <strong>更新内容</strong><br>
 v5.4<br>
@@ -2308,10 +2310,13 @@ await waitForRender();
     if (fileName.endsWith(".csv")) {
       const text = await file.text();
       points.push(...parseCSV(text));
-    } else if (fileName.endsWith(".kml") || fileName.endsWith(".kmz")) {
-      points.push(...await getPointsFromKmlOrKmz(file));
-    }
-  }
+    } else if (
+  fileName.endsWith(".kml") ||
+  fileName.endsWith(".kmz") ||
+  fileName.endsWith(".zip")
+) {
+  points.push(...await getPointsFromKmlOrKmz(file));
+}  }
 
   const beforeCount = points.length;
 
