@@ -2019,19 +2019,19 @@ async function generateCircleOnlyKMZ() {
     let points = [];
 
     for (const file of files) {
-      const fileName = file.name.toLowerCase();
+  const fileName = file.name.toLowerCase();
 
-      if (fileName.endsWith(".csv")) {
-        const text = await file.text();
-        points.push(...parseCSV(text));
-      } else if (
-        fileName.endsWith(".kml") ||
-        fileName.endsWith(".kmz") ||
-        fileName.endsWith(".zip")
-      ) {
-        points.push(...await getPointsFromKmlOrKmz(file));
-      }
-
+  if (fileName.endsWith(".csv")) {
+    const text = await file.text();
+    points.push(...parseCSV(text));
+  } else if (
+    fileName.endsWith(".kml") ||
+    fileName.endsWith(".kmz") ||
+    fileName.endsWith(".zip")
+  ) {
+    points.push(...await getPointsFromKmlOrKmz(file));
+  }
+}
    points = points.filter(p => {
   if (isDummyPoint(p)) return false;
 
