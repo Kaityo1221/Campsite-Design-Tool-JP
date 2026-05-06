@@ -468,13 +468,13 @@ li {
 
   
 <body>
- <div class="version-badge" onclick="toggleUpdateLog()">v4.9</div>
+ <div class="version-badge" onclick="toggleUpdateLog()">v5.0</div>
 <div id="updateLog" class="update-log">
   <strong>更新内容</strong><br>
-v4.9<br>
-・KMZ生成処理内で消えていたpoints.forEach処理を復旧<br>
-・POI分類後に既存ポケストップ／既存ジム／既存パワースポットへ振り分ける処理を修正<br>
-・p未定義によるJavaScript構文エラーを解消し、ログイン不能になる問題を修正<br>
+v5.0<br>
+・KMZ生成画面の出力レイヤー説明を現在の仕様に合わせて更新<br>
+・追加希望ポケスト／追加希望ジム／追加希望パワスポの説明を追加<br>
+・出力レイヤー数の固定表記をやめ、今後の仕様変更にも対応しやすい文章へ修正<br>
 </div>
   <audio id="loginSound" src="login.mp3"></audio>
 <audio id="successSound" src="sucess.mp3"></audio>
@@ -580,14 +580,17 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
 
       <div class="step">
         <div class="step-no">STEP 4</div>
-        <p>KMZを生成します。出力レイヤーは以下の5つです。</p>
-        <ul>
-          <li>既存のポケストップ</li>
-          <li>既存のジム</li>
-          <li>既存のパワースポット</li>
-          <li>40m円（基本距離）</li>
-          <li>30m円（調整用）</li>
-        </ul>
+        <p>KMZを生成します。出力レイヤーは以下の構成です。</p>
+<ul>
+  <li>既存のポケストップ</li>
+  <li>既存のジム</li>
+  <li>既存のパワースポット</li>
+  <li>追加希望ポケスト</li>
+  <li>追加希望ジム</li>
+  <li>追加希望パワスポ</li>
+  <li>40m円（基本距離）</li>
+  <li>30m円（調整用）</li>
+</ul>
 
         <button class="generate" onclick="generateKMZ()">KMZを生成</button>
         <div id="status"></div>
