@@ -779,12 +779,15 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
         color:white;
         border:1px solid #475569;
       ">
-        <option value="50">50m</option>
-        <option value="100" selected>100m</option>
-        <option value="150">150m</option>
-        <option value="200">200m</option>
+       <option value="50">50m</option>
+<option value="100" selected>100m</option>
+<option value="200">200m</option>
       </select>
     </label>
+    <p class="note">
+  判定半径を広げるほど、1エリアに含まれるPOI数は増えやすくなります。<br>
+  50mは近接密集、100mは標準確認、200mは広域のまとまりを見る目安です。
+</p>
   </div>
 
   <button class="generate" onclick="runAdminDensityCheck()">
