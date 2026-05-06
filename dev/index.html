@@ -1953,23 +1953,28 @@ async function runAdminFileCheck() {
 
     const usablePoints = allPoints.filter(p => !isDummyPoint(p));
 
-    const counts = {
-      pokestop: 0,
-      gym: 0,
-      power: 0
-    };
+const existingPoints = usablePoints.filter(p => {
+  const info = getAdminLayerInfo(p.layer);
+  return info.isExisting;
+});
 
-    usablePoints.forEach(p => {
-      const kind = classifyType(p.type, p.name, p.layer);
+const counts = {
+  pokestop: 0,
+  gym: 0,
+  power: 0
+};
 
-      if (kind === "gym") {
-        counts.gym++;
-      } else if (kind === "power") {
-        counts.power++;
-      } else {
-        counts.pokestop++;
-      }
-    });
+existingPoints.forEach(p => {
+  const kind = classifyType(p.type, p.name, p.layer);
+
+  if (kind === "gym") {
+    counts.gym++;
+  } else if (kind === "power") {
+    counts.power++;
+  } else {
+    counts.pokestop++;
+  }
+});
 
     const layerListHtml = layerSummary.length === 0 ? `
       <div style="opacity:0.75;">レイヤー情報が見つかりませんでした。</div>
