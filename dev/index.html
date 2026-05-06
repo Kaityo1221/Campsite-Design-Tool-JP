@@ -1724,19 +1724,16 @@ setTimeout(function () {
   }
 }
 
-document.addEventListener("click", function (event) {
-  const log = document.getElementById("updateLog");
-  const badge = document.querySelector(".version-badge");
+document.addEventListener("DOMContentLoaded", function () {
+  const passwordInput = document.getElementById("passwordInput");
 
-  if (!log || log.style.display !== "block") return;
-
-  const clickedInsideLog = log.contains(event.target);
-  const clickedBadge = badge && badge.contains(event.target);
-
-  if (!clickedInsideLog && !clickedBadge) {
-    log.style.display = "none";
-  }
-});
+  if (passwordInput) {
+    passwordInput.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        checkPassword();
+      }
+    });
   }
 
   const adminPasswordInput = document.getElementById("adminPasswordInput");
@@ -1748,6 +1745,26 @@ document.addEventListener("click", function (event) {
         checkAdminPassword();
       }
     });
+  }
+
+  const distanceInput = document.getElementById("distanceFile");
+
+  if (distanceInput) {
+    distanceInput.addEventListener("change", loadDistanceFile);
+  }
+});
+
+document.addEventListener("click", function (event) {
+  const log = document.getElementById("updateLog");
+  const badge = document.querySelector(".version-badge");
+
+  if (!log || log.style.display !== "block") return;
+
+  const clickedInsideLog = log.contains(event.target);
+  const clickedBadge = badge && badge.contains(event.target);
+
+  if (!clickedInsideLog && !clickedBadge) {
+    log.style.display = "none";
   }
 });
 
@@ -2845,12 +2862,7 @@ setTimeout(() => {
   status.style.transform = "scale(1)";
 }, 120);
 }
-document.addEventListener("DOMContentLoaded", function () {
-  const input = document.getElementById("distanceFile");
-  if (input) {
-    input.addEventListener("change", loadDistanceFile);
-  }
-});
+
 </script>
 <div id="adminLoginModal" style="
   display:none;
