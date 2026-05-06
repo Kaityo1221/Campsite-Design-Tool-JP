@@ -471,11 +471,10 @@ li {
  <div class="version-badge" onclick="toggleUpdateLog()">v5.6</div>
 <div id="updateLog" class="update-log">
   <strong>更新内容</strong><br>
-v5.6<br>
-・管理者ツールに「KMZ内容チェック」機能を追加<br>
-・CSV／KML／KMZのレイヤー数、全ポイント数、有効POI数、ダミーポイント数を確認できるよう対応<br>
-・既存POI、追加希望レイヤー、円レイヤーの有無を管理者画面で確認できるよう対応<br>
-・他CAから受け取ったMy Maps／KMZの構成をレビューしやすいサマリー表示を追加<br>
+vv5.6<br>
+・管理者ツールの想定利用をKML／KMZレビュー用に整理<br>
+・管理者ツール内の説明文と警告文からCSV表記を削除<br>
+・他CAから受け取ったMy Maps／KMZの構成確認に用途を明確化<br>
 </div>
   <audio id="loginSound" src="login.mp3"></audio>
 <audio id="successSound" src="sucess.mp3"></audio>
@@ -733,7 +732,7 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
   <h3>KMZ内容チェック</h3>
 
   <p class="note">
-    他CAから受け取ったCSV / KML / KMZの中身を確認します。<br>
+    他CAから受け取ったKML / KMZの中身を確認します。<br>
     POI件数、レイヤー構成、円レイヤー有無、追加希望レイヤー有無、ダミーポイント混入をチェックできます。
   </p>
 
@@ -1872,7 +1871,7 @@ async function runAdminFileCheck() {
   const result = document.getElementById("adminCheckResult");
 
   if (!input || !input.files.length) {
-    alert("CSV / KML / KMZ ファイルを選択してください");
+    alert("KML / KMZ ファイルを選択してください");
     return;
   }
 
@@ -1914,7 +1913,7 @@ async function runAdminFileCheck() {
     } else {
       result.innerHTML = `
         <div class="distance-warning">
-          対応していないファイル形式です。CSV / KML / KMZ を選択してください。
+          対応していないファイル形式です。KML / KMZ を選択してください。
         </div>
       `;
       return;
