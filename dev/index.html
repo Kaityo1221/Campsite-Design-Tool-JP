@@ -468,14 +468,14 @@ li {
 
   
 <body>
- <div class="version-badge" onclick="toggleUpdateLog()">v4.8</div>
+ <div class="version-badge" onclick="toggleUpdateLog()">v4.9</div>
 <div id="updateLog" class="update-log">
   <strong>更新内容</strong><br>
-v4.8<br>
-・KMZ生成時のPOIスタイル指定を追加<br>
-・既存ポケストップ／既存ジム／既存パワースポットごとに共通styleUrlを付与<br>
-・My Maps読み込み後に各レイヤーが均一スタイルとして扱いやすくなるよう改善<br>
-・既存ジム／既存パワースポットの実POIがある場合、レイヤー保持用ダミーを混在させない方針に整理<br>
+v4.9<br>
+・My Maps読み込み時に個別スタイル扱いになる問題を改善<br>
+・既存POIの各PlacemarkにstyleUrlを付けない方式へ変更<br>
+・ポケストップ／ジム／パワースポットの分類は維持しつつ、レイヤー単位で均一スタイルに寄せる構成へ整理<br>
+・前回追加したPOI用アイコンスタイル定義を削除<br>
 </div>
   <audio id="loginSound" src="login.mp3"></audio>
 <audio id="successSound" src="sucess.mp3"></audio>
@@ -1798,17 +1798,11 @@ function createFolder(xml, doc, name) {
   return folder;
 }
 
-function createPointPlacemark(xml, p, styleId = "") {
+function createPointPlacemark(xml, p) {
   const pm = xml.createElement("Placemark");
 
   const name = xml.createElement("name");
   name.textContent = p.name;
-
-  if (styleId) {
-    const styleUrl = xml.createElement("styleUrl");
-    styleUrl.textContent = `#${styleId}`;
-    pm.appendChild(styleUrl);
-  }
 
   const point = xml.createElement("Point");
   const coordinates = xml.createElement("coordinates");
@@ -1843,26 +1837,7 @@ function createCirclePlacemark(xml, p, radius) {
 
   return pm;
 }
-  function addIconStyle(xml, doc, styleId, iconHref) {
-  const style = xml.createElement("Style");
-  style.setAttribute("id", styleId);
 
-  const iconStyle = xml.createElement("IconStyle");
-
-  const scale = xml.createElement("scale");
-  scale.textContent = "1.1";
-
-  const icon = xml.createElement("Icon");
-  const href = xml.createElement("href");
-  href.textContent = iconHref;
-
-  icon.appendChild(href);
-  iconStyle.appendChild(scale);
-  iconStyle.appendChild(icon);
-  style.appendChild(iconStyle);
-
-  doc.appendChild(style);
-}
 function addDummyPlacemark(xml, folder, name) {
   if (!folder) return;
 
@@ -2022,18 +1997,7 @@ doc.appendChild(hiddenStyle);
 addDummyPlacemark(outputXml, folders.addPokestop, "ここに追加ポケストを配置");
 addDummyPlacemark(outputXml, folders.addGym, "ここに追加ジムを配置");
 addDummyPlacemark(outputXml, folders.addPower, "ここに追加パワスポを配置");
-  points.forEach(p => {
-    const pointPlacemark = createPointPlacemark(outputXml, p);
-    const kind = classifyType(p.type, p.name, p.layer);
-
-    if (kind === "gym") {
-      folders.gym.appendChild(pointPlacemark);
-    } else if (kind === "power") {
-      folders.power.appendChild(pointPlacemark);
-    } else {
-      folders.pokestop.appendChild(pointPlacemark);
-    }
-
+  
     radii.forEach(radius => {
       const circlePlacemark = createCirclePlacemark(outputXml, p, radius);
 
