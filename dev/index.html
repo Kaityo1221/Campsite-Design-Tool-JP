@@ -761,10 +761,9 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
   <h3>密集エリアチェック</h3>
 
   <p class="note">
-    KML / KMZ内の有効POIをもとに、半径内にPOIが集中している場所を確認します。<br>
-    円レイヤー、ダミーポイントは判定対象から除外します。<br>
-既存POIと追加希望POIをまたいで、密集状況を確認します。
-  </p>
+  KML / KMZ内の有効POIをもとに、半径内にPOIが集中している場所を確認します。<br>
+  既存POIと追加希望POIをまたいで確認し、円レイヤーとダミーポイントは判定対象から除外します。
+</p>
 
   <p>チェックしたいKML / KMZファイルを選択します。</p>
   <input type="file" id="adminDensityFile">
@@ -950,11 +949,16 @@ Userscriptsをインストール
   </div>
 </section>
      
-    <section id="distance" class="tab-content">
+   <section id="distance" class="tab-content">
   <div class="panel">
     <h2>距離チェック</h2>
     <p class="note">
       CSV / KML / KMZを読み込み、40m未満の組み合わせを確認します。
+    </p>
+
+    <p class="note">
+      距離チェックは、POI同士が40m未満になっていないかを確認する機能です。<br>
+      判定距離は設計基準として固定し、現地の広さや人の流れは下の「CA所感」で補足してください。
     </p>
 
     <div class="step">
@@ -1025,12 +1029,35 @@ function getDistanceMeters(a, b) {
 
   return 2 * R * Math.asin(Math.sqrt(h));
 }
+
+
 function classifyDistanceRisk(distance) {
   if (distance < 20) return "密集";
   if (distance < 30) return "滞留";
   if (distance < 40) return "軽微";
   return null;
 }
+function getNearbyCount(center, points, radius = 100) {
+  return points.filter(p => getDistanceMeters(center, p) <= radius).length;
+}
+
+function classifyDistanceRiskWithDensity(distance, nearbyCount) {
+  if (distance < 20) return "密集";
+
+  if (distance < 30) {
+    if (nearbyCount >= 8) return "密集";
+    return "滞留";
+  }
+
+  if (distance < 40) {
+    if (nearbyCount >= 10) return "滞留";
+    if (nearbyCount >= 6) return "軽微";
+    return "軽微";
+  }
+
+  return null;
+}
+
 async function loadDistanceFile() {
   const fileInput = document.getElementById("distanceFile");
   const container = document.getElementById("distanceLayerList");
