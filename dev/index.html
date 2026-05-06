@@ -1395,8 +1395,8 @@ warnings.forEach(w => {
     let cardColor = "#94a3b8";
 
     if (isExistingA && isExistingB) {
-      label = "ℹ 参考";
-      message = "既存POI同士が近接しています（調整不可）";
+      label = "ℹ 既存POI参考";
+message = "既存POI同士の近接です。追加POIの調整対象には含めません。";
     } else if (w.distance < 30) {
       label = "⚠ 要注意";
       message = "30m未満です。配置調整を推奨します。";
