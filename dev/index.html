@@ -1816,26 +1816,54 @@ function escapeAdminHtml(text) {
 
 function getAdminLayerInfo(layerName) {
   const name = layerName || "";
+  const lower = name.toLowerCase();
+
+  const isCircle =
+    name.includes("円") ||
+    name.includes("30m") ||
+    name.includes("40m");
+
+  const isAdd =
+    name.includes("追加希望") ||
+    name.includes("追加") ||
+    name.includes("新規") ||
+    name.includes("CA Pokestop") ||
+    name.includes("CA Pokéstop") ||
+    lower.includes("add");
+
+  const isPokestop =
+    name.includes("ポケスト") ||
+    name.includes("ポケストップ") ||
+    lower.includes("pokestop") ||
+    lower.includes("poke stop");
+
+  const isGym =
+    name.includes("ジム") ||
+    lower.includes("gym");
+
+  const isPower =
+    name.includes("パワ") ||
+    name.includes("パワースポット") ||
+    name.includes("パワスポ") ||
+    lower.includes("power");
+
+  const isExisting =
+    !isCircle &&
+    !isAdd &&
+    (
+      name.includes("既存") ||
+      isPokestop ||
+      isGym ||
+      isPower
+    );
 
   return {
-    isCircle:
-      name.includes("円") ||
-      name.includes("30m") ||
-      name.includes("40m"),
-    isAdd:
-      name.includes("追加希望") ||
-      name.includes("追加"),
-    isExisting:
-      name.includes("既存"),
-    isPokestop:
-      name.includes("ポケスト") ||
-      name.toLowerCase().includes("pokestop"),
-    isGym:
-      name.includes("ジム") ||
-      name.toLowerCase().includes("gym"),
-    isPower:
-      name.includes("パワ") ||
-      name.toLowerCase().includes("power")
+    isCircle,
+    isAdd,
+    isExisting,
+    isPokestop,
+    isGym,
+    isPower
   };
 }
 
@@ -2015,8 +2043,9 @@ async function runAdminFileCheck() {
         ファイル名：${escapeAdminHtml(file.name)}<br>
         レイヤー数：${layers.length}件<br>
         全ポイント数：${allPoints.length}件<br>
-        有効POI数：${usablePoints.length}件<br>
-        ダミーポイント：${dummyCount}件<br><br>
+有効POI数：${usablePoints.length}件<br>
+既存POI判定数：${existingPoints.length}件<br>
+ダミーポイント：${dummyCount}件<br><br>
 
         <strong>推定分類</strong><br>
         既存ポケストップ相当：${counts.pokestop}件<br>
