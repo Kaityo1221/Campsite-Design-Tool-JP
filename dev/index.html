@@ -470,10 +470,10 @@ li {
 
   
 <body>
- <div class="version-badge" onclick="toggleUpdateLog(event)">v5.7</div>
+ <div class="version-badge" onclick="toggleUpdateLog(event)">v5.8</div>
 <div id="updateLog" class="update-log">
   <strong>更新内容</strong><br>
-v5.7<br>
+v5.8<br>
 ・開発環境で作成した内容を本番環境へ反映<br>
 ・個別ツールに「円だけ生成」「既存POI分類だけ生成」機能を追加<br>
 ・既存POI、追加希望レイヤー、30m／40m円レイヤーを分けて出力できる構成に改善<br>
@@ -486,6 +486,7 @@ v5.7<br>
 ・利用前チェッククイズとガイドPDF導線を追加<br>
 ・iPhone保存時のZIP→KMZ名称変更案内を追加<br>
 ・My Maps／KMZレビュー時に他CAの作成データを確認しやすい構成へ改善<br>
+  
 </div>
   <audio id="loginSound" src="login.mp3"></audio>
 <audio id="successSound" src="sucess.mp3"></audio>
@@ -761,8 +762,9 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
   <h3>密集エリアチェック</h3>
 
   <p class="note">
-  KML / KMZ内の有効POIをもとに、半径内にPOIが集中している場所を確認します。<br>
-  既存POIと追加希望POIをまたいで確認し、円レイヤーとダミーポイントは判定対象から除外します。
+  KML / KMZ内の有効POIをもとに、100m以内にPOIが集中している場所を確認します。<br>
+  円レイヤー、ダミーポイントは判定対象から除外します。<br>
+  追加希望レイヤーは既存POIとあわせて判定します。
 </p>
 
   <p>チェックしたいKML / KMZファイルを選択します。</p>
@@ -788,6 +790,178 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
   </button>
 
   <div id="adminDensityResult"></div>
+  <button class="generate" onclick="generateHighDensityZoneKMZ()">
+  高密度ゾーンKMZを生成
+</button>
+
+<div id="adminDensityZoneStatus"></div>
+async function generateHighDensityZoneKMZ() {
+  const input = document.getElementById("adminDensityFile");
+  const status = document.getElementById("adminDensityZoneStatus");
+  const radius = 100;
+  const highDensityThreshold = 10;
+
+  if (!input || !input.files.length) {
+    alert("KML / KMZ ファイルを選択してください");
+    return;
+  }
+
+  const file = input.files[0];
+  const fileName = file.name.toLowerCase();
+
+  if (
+    !fileName.endsWith(".kml") &&
+    !fileName.endsWith(".kmz") &&
+    !fileName.endsWith(".zip")
+  ) {
+    alert("KML / KMZ ファイルを選択してください");
+    return;
+  }
+
+  status.innerHTML = `
+    <span class="loading">
+      <span class="spinner"></span>
+      高密度ゾーンKMZを生成中…
+    </span>
+  `;
+
+  try {
+    const extracted = await extractLayersFromKML(file);
+    const layers = extracted.layers;
+    const pointsByLayer = extracted.pointsByLayer;
+
+    let allPoints = [];
+
+    layers.forEach(layerName => {
+      const points = pointsByLayer[layerName] || [];
+
+      points.forEach(p => {
+        allPoints.push({
+          ...p,
+          layer: layerName
+        });
+      });
+    });
+
+    const usablePoints = allPoints.filter(p => !isIgnoredForDensityCheck(p));
+
+    if (usablePoints.length < 2) {
+      status.innerHTML = `
+        <div class="distance-warning">
+          高密度ゾーンを作成できる有効POIが不足しています。
+        </div>
+      `;
+      return;
+    }
+
+    const densityList = usablePoints.map(center => {
+      const nearby = usablePoints.filter(p => {
+        return getDistanceMeters(center, p) <= radius;
+      });
+
+      return {
+        center,
+        count: nearby.length,
+        nearby
+      };
+    });
+
+    densityList.sort((a, b) => b.count - a.count);
+
+    const pickedAreas = [];
+
+    densityList.forEach(item => {
+      if (item.count < highDensityThreshold) return;
+
+      const tooClose = pickedAreas.some(area => {
+        return getDistanceMeters(area.center, item.center) <= radius;
+      });
+
+      if (!tooClose) {
+        pickedAreas.push(item);
+      }
+    });
+
+    if (pickedAreas.length === 0) {
+      status.innerHTML = `
+        <div class="distance-warning" style="
+          background:rgba(34,197,94,0.12);
+          border:1px solid rgba(34,197,94,0.35);
+          color:#bbf7d0;
+        ">
+          ✅ 高密度ゾーンは見つかりませんでした。<br>
+          判定条件：100m以内に${highDensityThreshold}件以上
+        </div>
+      `;
+      return;
+    }
+
+    const parser = new DOMParser();
+    const outputXml = parser.parseFromString(
+      `<?xml version="1.0" encoding="UTF-8"?>
+      <kml xmlns="http://www.opengis.net/kml/2.2">
+        <Document>
+          <name>High Density Zone Output</name>
+        </Document>
+      </kml>`,
+      "application/xml"
+    );
+
+    const doc = outputXml.getElementsByTagName("Document")[0];
+
+    const folder = createFolder(outputXml, doc, "高密度ゾーン（100m）");
+
+    pickedAreas.forEach((area, index) => {
+      const zonePoint = {
+        lat: area.center.lat,
+        lng: area.center.lng,
+        name: `高密度ゾーン_${index + 1}_${area.count}件`
+      };
+
+      const circlePlacemark = createCirclePlacemark(outputXml, zonePoint, radius);
+      folder.appendChild(circlePlacemark);
+    });
+
+    const serializer = new XMLSerializer();
+    const newKml = serializer.serializeToString(outputXml);
+
+    const zip = new JSZip();
+    zip.file("doc.kml", newKml);
+
+    const blob = await zip.generateAsync({ type: "blob" });
+
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+
+    const now = new Date();
+    a.download = `high_density_zones_${now.getFullYear()}${now.getMonth() + 1}${now.getDate()}.kmz`;
+    a.click();
+
+    status.innerHTML = `
+      高密度ゾーン：${pickedAreas.length}件<br>
+      判定条件：100m以内に${highDensityThreshold}件以上<br>
+      ✔ 高密度ゾーンKMZを生成しました
+    `;
+
+    const success = document.getElementById("successSound");
+    if (success) {
+      success.currentTime = 0;
+      success.volume = 0.12;
+      setTimeout(() => {
+        success.play().catch(() => {});
+      }, 100);
+    }
+
+  } catch (error) {
+    console.error(error);
+    status.innerHTML = `
+      <div class="distance-warning">
+        高密度ゾーンKMZの生成中にエラーが発生しました。<br>
+        ファイル形式またはKMZ内のKML構成を確認してください。
+      </div>
+    `;
+  }
+}
 </div>
   </div>
 </section>
