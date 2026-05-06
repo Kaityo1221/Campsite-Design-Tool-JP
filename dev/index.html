@@ -756,6 +756,42 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
 
   <div id="adminCheckResult"></div>
 </div>
+<div class="step">
+  <div class="step-no">管理者機能</div>
+  <h3>密集エリアチェック</h3>
+
+  <p class="note">
+    KML / KMZ内の有効POIをもとに、半径内にPOIが集中している場所を確認します。<br>
+    円レイヤー、追加希望レイヤー、ダミーポイントは判定対象から除外します。
+  </p>
+
+  <p>チェックしたいKML / KMZファイルを選択します。</p>
+  <input type="file" id="adminDensityFile">
+
+  <div class="checks">
+    <label>
+      判定半径：
+      <select id="adminDensityRadius" style="
+        padding:8px 10px;
+        border-radius:8px;
+        background:#1e293b;
+        color:white;
+        border:1px solid #475569;
+      ">
+        <option value="50">50m</option>
+        <option value="100" selected>100m</option>
+        <option value="150">150m</option>
+        <option value="200">200m</option>
+      </select>
+    </label>
+  </div>
+
+  <button class="generate" onclick="runAdminDensityCheck()">
+    密集エリアをチェック
+  </button>
+
+  <div id="adminDensityResult"></div>
+</div>
   </div>
 </section>
   <section id="script" class="tab-content">
@@ -2127,6 +2163,242 @@ existingPoints.forEach(p => {
   }
 }
 
+function isIgnoredForDensityCheck(p) {
+  const info = getAdminLayerInfo(p.layer || "");
+  const layerName = p.layer || "";
+
+  if (isDummyPoint(p)) return true;
+  if (info.isCircle) return true;
+  if (info.isAdd) return true;
+
+  if (
+    layerName.includes("円") ||
+    layerName.includes("30m") ||
+    layerName.includes("40m")
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+function getDensityRank(count) {
+  if (count >= 10) {
+    return {
+      label: "高密度",
+      icon: "🔴",
+      color: "#ef4444",
+      message: "POIがかなり集中しています。集合・滞留の発生に注意してください。"
+    };
+  }
+
+  if (count >= 6) {
+    return {
+      label: "中密度",
+      icon: "🟠",
+      color: "#f97316",
+      message: "POIがまとまっています。遊びやすい一方で、人の流れに注意が必要です。"
+    };
+  }
+
+  if (count >= 3) {
+    return {
+      label: "低密度",
+      icon: "🟢",
+      color: "#22c55e",
+      message: "軽いまとまりがあります。回遊ポイント候補として確認できます。"
+    };
+  }
+
+  return {
+    label: "通常",
+    icon: "⚪",
+    color: "#94a3b8",
+    message: "大きな密集はありません。"
+  };
+}
+
+async function runAdminDensityCheck() {
+  const input = document.getElementById("adminDensityFile");
+  const result = document.getElementById("adminDensityResult");
+  const radius = Number(document.getElementById("adminDensityRadius")?.value || 100);
+
+  if (!input || !input.files.length) {
+    alert("KML / KMZ ファイルを選択してください");
+    return;
+  }
+
+  const file = input.files[0];
+  const fileName = file.name.toLowerCase();
+
+  if (
+    !fileName.endsWith(".kml") &&
+    !fileName.endsWith(".kmz") &&
+    !fileName.endsWith(".zip")
+  ) {
+    alert("KML / KMZ ファイルを選択してください");
+    return;
+  }
+
+  result.innerHTML = `
+    <div class="distance-warning" style="
+      background:rgba(59,130,246,0.12);
+      border:1px solid rgba(96,165,250,0.35);
+    ">
+      <span class="loading">
+        <span class="spinner"></span>
+        密集エリアをチェック中…
+      </span>
+    </div>
+  `;
+
+  try {
+    const extracted = await extractLayersFromKML(file);
+    const layers = extracted.layers;
+    const pointsByLayer = extracted.pointsByLayer;
+
+    let allPoints = [];
+
+    layers.forEach(layerName => {
+      const points = pointsByLayer[layerName] || [];
+
+      points.forEach(p => {
+        allPoints.push({
+          ...p,
+          layer: layerName
+        });
+      });
+    });
+
+    const usablePoints = allPoints.filter(p => !isIgnoredForDensityCheck(p));
+
+    if (usablePoints.length < 2) {
+      result.innerHTML = `
+        <div class="distance-warning">
+          密集チェックには有効POIが2件以上必要です。<br>
+          円レイヤー、追加希望レイヤー、ダミーポイントを除外した結果、判定対象が不足しています。
+        </div>
+      `;
+      return;
+    }
+
+    const densityList = usablePoints.map(center => {
+      const nearby = usablePoints.filter(p => {
+        return getDistanceMeters(center, p) <= radius;
+      });
+
+      return {
+        center,
+        count: nearby.length,
+        nearby
+      };
+    });
+
+    densityList.sort((a, b) => b.count - a.count);
+
+    const pickedAreas = [];
+
+    densityList.forEach(item => {
+      if (item.count < 3) return;
+
+      const tooClose = pickedAreas.some(area => {
+        return getDistanceMeters(area.center, item.center) <= radius;
+      });
+
+      if (!tooClose) {
+        pickedAreas.push(item);
+      }
+    });
+
+    const topAreas = pickedAreas.slice(0, 10);
+
+    if (topAreas.length === 0) {
+      result.innerHTML = `
+        <div class="distance-warning" style="
+          background:rgba(34,197,94,0.12);
+          border:1px solid rgba(34,197,94,0.35);
+          color:#bbf7d0;
+        ">
+          ✅ 目立つ密集エリアは見つかりませんでした。<br><br>
+          判定対象POI：${usablePoints.length}件<br>
+          判定半径：${radius}m
+        </div>
+      `;
+      return;
+    }
+
+    const areaHtml = topAreas.map((area, index) => {
+      const rank = getDensityRank(area.count);
+
+      const nearbyNames = area.nearby
+        .slice(0, 8)
+        .map(p => `・${escapeAdminHtml(p.name)} <span style="opacity:0.7;">(${escapeAdminHtml(p.layer)})</span>`)
+        .join("<br>");
+
+      const moreCount = area.nearby.length > 8
+        ? `<br><span style="opacity:0.75;">ほか ${area.nearby.length - 8}件</span>`
+        : "";
+
+      return `
+        <div style="
+          margin:12px 0;
+          padding:14px;
+          border-radius:14px;
+          background:rgba(15,23,42,0.65);
+          border:1px solid rgba(148,163,184,0.25);
+          border-left:6px solid ${rank.color};
+        ">
+          <strong style="color:${rank.color}; font-size:16px;">
+            ${rank.icon} エリア${index + 1}：${rank.label}
+          </strong><br>
+
+          中心候補：${escapeAdminHtml(area.center.name)}<br>
+          半径${radius}m以内：${area.count}件<br>
+          レイヤー：${escapeAdminHtml(area.center.layer)}<br><br>
+
+          <span style="color:#cbd5e1;">${rank.message}</span>
+
+          <details style="margin-top:10px;">
+            <summary style="cursor:pointer; font-weight:bold;">
+              周辺POIを見る
+            </summary>
+            <div style="margin-top:8px; line-height:1.7;">
+              ${nearbyNames}
+              ${moreCount}
+            </div>
+          </details>
+        </div>
+      `;
+    }).join("");
+
+    result.innerHTML = `
+      <div class="distance-warning" style="
+        background:rgba(59,130,246,0.10);
+        border:1px solid rgba(96,165,250,0.35);
+      ">
+        <strong>密集エリアチェック結果</strong><br><br>
+
+        ファイル名：${escapeAdminHtml(file.name)}<br>
+        レイヤー数：${layers.length}件<br>
+        全ポイント数：${allPoints.length}件<br>
+        判定対象POI：${usablePoints.length}件<br>
+        判定半径：${radius}m<br>
+        密集エリア候補：${topAreas.length}件<br><br>
+
+        ${areaHtml}
+      </div>
+    `;
+
+  } catch (error) {
+    console.error(error);
+    result.innerHTML = `
+      <div class="distance-warning">
+        密集エリアチェック中にエラーが発生しました。<br>
+        ファイル形式またはKMZ内のKML構成を確認してください。
+      </div>
+    `;
+  }
+}
 function createCircle(lat, lon, radius, points = 72) {
   const earthRadius = 6378137;
   const coords = [];
