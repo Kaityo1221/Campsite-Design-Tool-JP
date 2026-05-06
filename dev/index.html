@@ -471,12 +471,10 @@ li {
  <div class="version-badge" onclick="toggleUpdateLog()">v5.2</div>
 <div id="updateLog" class="update-log">
   <strong>更新内容</strong><br>
-v5.2<br>
-・個別ツールに「円だけ生成」機能を追加<br>
-・CSV／KML／KMZから30m円・40m円のみを生成できるよう対応<br>
-・既存のMy Mapsに円レイヤーだけ追加インポートしやすい構成へ改善<br>
-・追加希望レイヤー用のダミーポイントを円作成対象から除外する処理を追加<br>
-・円レイヤー重複防止のため、既存の30m円・40m円レイヤー削除を促す注意文を追加<br>
+v5.21<br>・個別ツールに「円だけ生成」機能を追加<br>
+  ・既に作成済みのMy Mapsから書き出したKMZを読み込み、既存POIを元に30m円・40m円だけを再生成できるよう対応<br>
+  ・既存KMZ内の30m円／40m円レイヤーを読み込み対象から除外する処理を追加<br>
+  ・My Maps上の古い円レイヤーは自動削除できないため、事前削除を促す注意文を追加<br>>
 </div>
   <audio id="loginSound" src="login.mp3"></audio>
 <audio id="successSound" src="sucess.mp3"></audio>
@@ -653,8 +651,8 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
   border:1px solid rgba(249,115,22,0.35);
   color:#fed7aa;
 ">
-  ⚠ すでにMy Mapsに30m円・40m円レイヤーがある場合は、先に既存の円レイヤーを削除してからインポートしてください。<br>
-  削除せずに追加すると、円レイヤーが重複して表示される場合があります。
+  ⚠ 既に作成済みのMy Mapsから書き出したKMZを読み込む場合、既存の30m円・40m円レイヤーは自動で読み込み対象から除外します。<br>
+  ただし、My Maps上の古い円レイヤーは自動削除できないため、新しい円KMZをインポートする前に、My Maps側で古い円レイヤーを削除してください。
 </p>
   <p>円を作成したいファイルを選択します。</p>
   <input type="file" id="circleOnlyFileInput" multiple>
@@ -2014,8 +2012,20 @@ async function generateCircleOnlyKMZ() {
       }
     }
 
-    points = points.filter(p => !isDummyPoint(p));
+   points = points.filter(p => {
+  if (isDummyPoint(p)) return false;
 
+  const layerName = p.layer || "";
+  if (
+    layerName.includes("円") ||
+    layerName.includes("30m") ||
+    layerName.includes("40m")
+  ) {
+    return false;
+  }
+
+  return true;
+});
     const beforeCount = points.length;
 
     if (beforeCount === 0) {
