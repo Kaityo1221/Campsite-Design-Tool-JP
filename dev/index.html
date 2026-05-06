@@ -768,33 +768,20 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
   <p>チェックしたいKML / KMZファイルを選択します。</p>
   <input type="file" id="adminDensityFile">
 
-  <div class="checks">
-    <label>
-      判定範囲：
-      <select id="adminDensityRadius" style="
-        padding:8px 10px;
-        border-radius:8px;
-        background:#1e293b;
-        color:white;
-        border:1px solid #475569;
-      ">
-       <option value="50">50m</option>
-<option value="100" selected>100m</option>
-<option value="200">200m</option>
-      </select>
-    </label>
-    <p class="note">
-  判定範囲を広げるほど、1エリアに含まれるPOI数は増えやすくなります。<br>
-  50mは近接密集、100mは標準確認、200mは広域のまとまりを見る目安です。
+  <p class="note" style="
+  padding:12px;
+  border-radius:12px;
+  background:rgba(59,130,246,0.12);
+  border:1px solid rgba(96,165,250,0.35);
+  color:#bfdbfe;
+">
+  判定範囲：100m固定<br>
+  他CAのMy Mapsを同じ基準で確認するため、密集エリアチェックは100mで統一します。
 </p>
+
 <p class="note">
-  判定範囲は、現地の広さや人の流れによって変わります。<br>
-  迷った場合は100mを基準にしてください。<br>
-  狭い場所は50m、広い公園や回遊エリアは200mで確認すると見やすくなります。
-</p>
-  </div>
-<p class="note">
-  ※この判定は「正解を出す機能」ではなく、現地を知るCAが密集しやすい場所を見つけるための補助機能です。
+  ※この判定は「正解を出す機能」ではなく、現地を知るCAが密集しやすい場所を見つけるための補助機能です。<br>
+  既存POIと追加希望POIをあわせて確認し、集合・滞留しやすい場所の目安として使います。
 </p>
   <button class="generate" onclick="runAdminDensityCheck()">
     密集エリアをチェック
@@ -2270,7 +2257,7 @@ function getDensityRank(count) {
 async function runAdminDensityCheck() {
   const input = document.getElementById("adminDensityFile");
   const result = document.getElementById("adminDensityResult");
-  const radius = Number(document.getElementById("adminDensityRadius")?.value || 100);
+  const radius = 100;
 
   if (!input || !input.files.length) {
     alert("KML / KMZ ファイルを選択してください");
