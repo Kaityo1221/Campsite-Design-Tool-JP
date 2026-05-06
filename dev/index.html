@@ -469,7 +469,6 @@ li {
   
 <body>
  <div class="version-badge" onclick="toggleUpdateLog()">v5.4
-  
 </div>
 <div id="updateLog" class="update-log">
   <strong>更新内容</strong><br>
@@ -477,7 +476,8 @@ v5.4<br>
 ・個別ツールに「既存POI分類だけ生成」機能を追加<br>
 ・CSV／KML／KMZから既存POIをポケストップ／ジム／パワースポットに分類して出力できるよう対応<br>
 ・円レイヤー、追加希望レイヤー、レイヤー保持用ダミーポイントを除外する処理を追加<br>
-・他CAが作成したMy Maps／KMZをレビューしやすい既存POI整理用KMZとして再生成できるよう改善<br>
+・通常のKMZ生成でもZIP形式のKMZファイルを読み込めるよう対応<br>
+・画面内に残っていた古いレイヤー説明と反映確認用テキストを整理<br>
 </div>
   <audio id="loginSound" src="login.mp3"></audio>
 <audio id="successSound" src="sucess.mp3"></audio>
@@ -489,7 +489,7 @@ v5.4<br>
 </div>
 <div id="loginScreen" class="login-screen">
   <div class="login-card">
-    <h2>Campsite Design Tool</h2>v5.3 反映確認中<br>
+    <h2>Campsite Design Tool</h2>
     <p class="login-sub">アクセスにはパスコードが必要です</p>
 
     <input
@@ -2032,7 +2032,6 @@ async function generateCircleOnlyKMZ() {
       ) {
         points.push(...await getPointsFromKmlOrKmz(file));
       }
-    }
 
    points = points.filter(p => {
   if (isDummyPoint(p)) return false;
