@@ -468,11 +468,12 @@ li {
 
   
 <body>
- <div class="version-badge" onclick="toggleUpdateLog()">v4.1</div>
+ <div class="version-badge" onclick="toggleUpdateLog()">v4.2</div>
 <div id="updateLog" class="update-log">
   <strong>更新内容</strong><br>
-  v4.1<br>
-   ・密集、滞留、軽微、通行にあたるPOIを表示<br>
+   v4.2<br>
+・距離チェックの分類名に距離条件を追加<br>
+・通行判定を分類別チェックからCA所感へ整理<br>
 </div>
   <audio id="loginSound" src="login.mp3"></audio>
 <audio id="successSound" src="sucess.mp3"></audio>
@@ -1077,11 +1078,10 @@ function getRiskStyle(type) {
 }
 function getRiskAccordionHtml(warnings) {
   const groups = {
-    "密集": [],
-    "滞留": [],
-    "通行": [],
-    "軽微": []
-  };
+  "密集": [],
+  "滞留": [],
+  "軽微": []
+};
 
   warnings.forEach(w => {
     const type = w.type || "軽微";
@@ -1089,12 +1089,25 @@ function getRiskAccordionHtml(warnings) {
   });
 
   const settings = {
-    "密集": { icon: "🔴", color: "#ef4444", open: true },
-    "滞留": { icon: "🟠", color: "#f97316", open: false },
-    "通行": { icon: "🔵", color: "#3b82f6", open: false },
-    "軽微": { icon: "⚪", color: "#94a3b8", open: false }
-  };
-
+  "密集": {
+    icon: "🔴",
+    color: "#ef4444",
+    open: true,
+    label: "密集（20m未満）"
+  },
+  "滞留": {
+    icon: "🟠",
+    color: "#f97316",
+    open: false,
+    label: "滞留（20m以上30m未満）"
+  },
+  "軽微": {
+    icon: "⚪",
+    color: "#94a3b8",
+    open: false,
+    label: "軽微（30m以上40m未満）"
+  }
+};
   return `
   <div class="distance-warning">
     <strong>分類別チェック</strong><br><br>
@@ -1110,7 +1123,7 @@ function getRiskAccordionHtml(warnings) {
             color:${s.color};
             font-size:16px;
           ">
-            ${s.icon} ${type}（${groups[type].length}件）
+            ${s.icon} ${s.label}（${groups[type].length}件））
           </summary>
 
           <div style="margin-top:10px;">
