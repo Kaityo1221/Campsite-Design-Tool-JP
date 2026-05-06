@@ -470,7 +470,7 @@ li {
 
   
 <body>
- <div class="version-badge" onclick="toggleUpdateLog()">v5.6</div>
+ <div class="version-badge" onclick="toggleUpdateLog(event)">v5.6</div>
 <div id="updateLog" class="update-log">
   <strong>更新内容</strong><br>
 v5.6<br>
@@ -1669,7 +1669,11 @@ const targetWarningListHtml = targetWarnings.length === 0 ? `
     ${targetWarningListHtml}
   `;
 }
-function toggleUpdateLog() {
+function toggleUpdateLog(event) {
+  if (event) {
+    event.stopPropagation();
+  }
+
   const log = document.getElementById("updateLog");
 
   if (!log) {
