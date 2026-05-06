@@ -468,15 +468,14 @@ li {
 
   
 <body>
- <div class="version-badge" onclick="toggleUpdateLog()">v5.4</div>
+ <div class="version-badge" onclick="toggleUpdateLog()">v5.5</div>
 <div id="updateLog" class="update-log">
   <strong>更新内容</strong><br>
-v5.4<br>
-・個別ツールに「既存POI分類だけ生成」機能を追加<br>
-・CSV／KML／KMZから既存POIをポケストップ／ジム／パワースポットに分類して出力できるよう対応<br>
-・円レイヤー、追加希望レイヤー、レイヤー保持用ダミーポイントを除外する処理を追加<br>
-・通常のKMZ生成でもZIP形式のKMZファイルを読み込めるよう対応<br>
-・画面内に残っていた古いレイヤー説明と反映確認用テキストを整理<br>
+v5.5<br>
+・会長専用の管理者入口を追加<br>
+・管理者パスコード入力モーダルを追加<br>
+・パスコード認証後のみ管理者ツール画面を開けるよう対応<br>
+・KMZ内容チェックなどのレビュー補助機能を管理者専用で追加できる構成を準備<br>
 </div>
   <audio id="loginSound" src="login.mp3"></audio>
 <audio id="successSound" src="sucess.mp3"></audio>
@@ -529,6 +528,16 @@ v5.4<br>
   <button class="tab-button" onclick="openTab('distance', this)">距離チェック</button>
 </div>
 
+<div style="text-align:right; margin-top:-10px; margin-bottom:18px;">
+  <button type="button" class="guide-btn" onclick="openAdminLogin()" style="
+    width:auto;
+    padding:8px 12px;
+    font-size:12px;
+    opacity:0.65;
+  ">
+    管理者
+  </button>
+</div>
   <section id="tool" class="tab-content active">
     <div class="panel">
       <h2>キャンプサイト作成の手順</h2>
@@ -708,6 +717,24 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
   <button class="generate" onclick="generateExistingOnlyKMZ()">既存POI分類KMZを生成</button>
   <div id="existingOnlyStatus"></div>
 </div>
+  </div>
+</section>
+<section id="admin" class="tab-content">
+  <div class="panel">
+    <h2>管理者ツール</h2>
+
+    <p class="note">
+      会長専用の確認・レビュー補助機能です。<br>
+      他CAから受け取ったMy Maps / KMZの内容確認や、レビュー前の整理に使います。
+    </p>
+
+    <div class="step">
+      <div class="step-no">準備中</div>
+      <h3>KMZ内容チェック</h3>
+      <p class="note">
+        読み込んだKMZ / KML / CSVのPOI件数、分類状況、円レイヤー有無、追加希望レイヤー有無を確認する機能を追加予定です。
+      </p>
+    </div>
   </div>
 </section>
   <section id="script" class="tab-content">
@@ -1669,12 +1696,25 @@ setTimeout(function () {
 document.addEventListener("DOMContentLoaded", function () {
   const passwordInput = document.getElementById("passwordInput");
 
-  passwordInput.addEventListener("keydown", function (e) {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      checkPassword();
-    }
-  });
+  if (passwordInput) {
+    passwordInput.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        checkPassword();
+      }
+    });
+  }
+
+  const adminPasswordInput = document.getElementById("adminPasswordInput");
+
+  if (adminPasswordInput) {
+    adminPasswordInput.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        checkAdminPassword();
+      }
+    });
+  }
 });
 
 function openTab(tabId, button) {
@@ -1685,7 +1725,56 @@ function openTab(tabId, button) {
   document.querySelectorAll(".tab-button").forEach(btn => {
     btn.classList.remove("active");
   });
+const ADMIN_PASSWORD = "she1ep";
 
+function openAdminLogin() {
+  const modal = document.getElementById("adminLoginModal");
+  const input = document.getElementById("adminPasswordInput");
+  const error = document.getElementById("adminLoginError");
+
+  if (!modal) return;
+
+  if (error) error.textContent = "";
+  if (input) input.value = "";
+
+  modal.style.display = "flex";
+
+  setTimeout(() => {
+    if (input) input.focus();
+  }, 100);
+}
+
+function closeAdminLogin() {
+  const modal = document.getElementById("adminLoginModal");
+  if (modal) {
+    modal.style.display = "none";
+  }
+}
+
+function checkAdminPassword() {
+  const input = document.getElementById("adminPasswordInput");
+  const error = document.getElementById("adminLoginError");
+
+  if (!input) return;
+
+  if (input.value.trim() === ADMIN_PASSWORD) {
+    if (error) error.textContent = "";
+    closeAdminLogin();
+
+    openTab("admin", null);
+
+    document.querySelectorAll(".tab-button").forEach(btn => {
+      btn.classList.remove("active");
+    });
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+  } else {
+    if (error) error.textContent = "管理者パスコードが違います";
+  }
+}
   const targetTab = document.getElementById(tabId);
   if (targetTab) {
     targetTab.classList.add("active");
@@ -2443,6 +2532,63 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 });
 </script>
+<div id="adminLoginModal" style="
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.8);
+  z-index:99999;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+">
+  <div style="
+    background:#0f172a;
+    padding:24px;
+    border-radius:16px;
+    width:90%;
+    max-width:360px;
+    color:white;
+    border:1px solid #334155;
+  ">
+    <h3>管理者ログイン</h3>
+    <p class="note">
+      管理者専用機能を開くには、パスコードを入力してください。
+    </p>
+
+    <input
+      id="adminPasswordInput"
+      type="text"
+      inputmode="text"
+      autocomplete="off"
+      autocorrect="off"
+      autocapitalize="off"
+      spellcheck="false"
+      placeholder="管理者パスコード"
+      style="
+        width:100%;
+        padding:12px;
+        border-radius:10px;
+        border:none;
+        margin:12px 0;
+        background:#1e293b;
+        color:white;
+        font-size:16px;
+        -webkit-text-security:disc;
+      "
+    >
+
+    <button type="button" class="generate" onclick="checkAdminPassword()">
+      管理者画面を開く
+    </button>
+
+    <button type="button" class="guide-btn" onclick="closeAdminLogin()" style="width:100%;">
+      閉じる
+    </button>
+
+    <p id="adminLoginError" class="error"></p>
+  </div>
+</div>
 <div id="quizModal" style="
   display:none;
   position:fixed;
