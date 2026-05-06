@@ -1792,9 +1792,7 @@ function checkAdminPassword() {
   } else {
     if (error) error.textContent = "管理者パスコードが違います";
   }
-}
-
-function createCircle(lat, lon, radius, points = 72) {
+}function createCircle(lat, lon, radius, points = 72) {
   const earthRadius = 6378137;
   const coords = [];
 
