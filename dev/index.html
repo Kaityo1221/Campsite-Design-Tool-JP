@@ -472,10 +472,9 @@ li {
 <div id="updateLog" class="update-log">
   <strong>更新内容</strong><br>
 v5.5<br>
-・会長専用の管理者入口を追加<br>
-・管理者パスコード入力モーダルを追加<br>
-・パスコード認証後のみ管理者ツール画面を開けるよう対応<br>
-・KMZ内容チェックなどのレビュー補助機能を管理者専用で追加できる構成を準備<br>
+・管理者ログイン処理の配置を修正<br>
+・openAdminLogin()／closeAdminLogin()／checkAdminPassword() をグローバル関数として呼び出せるよう修正<br>
+・管理者ボタンを押しても反応しない問題を改善<br>
 </div>
   <audio id="loginSound" src="login.mp3"></audio>
 <audio id="successSound" src="sucess.mp3"></audio>
@@ -1725,6 +1724,22 @@ function openTab(tabId, button) {
   document.querySelectorAll(".tab-button").forEach(btn => {
     btn.classList.remove("active");
   });
+
+  const targetTab = document.getElementById(tabId);
+  if (targetTab) {
+    targetTab.classList.add("active");
+  }
+
+  if (button && button.classList) {
+    button.classList.add("active");
+  }
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+}
+
 const ADMIN_PASSWORD = "she1ep";
 
 function openAdminLogin() {
@@ -1732,7 +1747,10 @@ function openAdminLogin() {
   const input = document.getElementById("adminPasswordInput");
   const error = document.getElementById("adminLoginError");
 
-  if (!modal) return;
+  if (!modal) {
+    alert("管理者ログイン画面が見つかりません");
+    return;
+  }
 
   if (error) error.textContent = "";
   if (input) input.value = "";
@@ -1774,20 +1792,6 @@ function checkAdminPassword() {
   } else {
     if (error) error.textContent = "管理者パスコードが違います";
   }
-}
-  const targetTab = document.getElementById(tabId);
-  if (targetTab) {
-    targetTab.classList.add("active");
-  }
-
-  if (button && button.classList) {
-    button.classList.add("active");
-  }
-
-  window.scrollTo({
-    top: 0,
-    behavior: "smooth"
-  });
 }
 
 function createCircle(lat, lon, radius, points = 72) {
