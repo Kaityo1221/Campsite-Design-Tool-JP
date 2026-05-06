@@ -23,10 +23,11 @@
 
 .update-log {
   display: none;
-  position: absolute;
+  position: fixed;
   top: 38px;
   right: 16px;
-  width: 260px;
+  width: 280px;
+  max-width: calc(100vw - 32px);
   padding: 12px;
   border-radius: 12px;
   background: #020617;
@@ -35,7 +36,8 @@
   font-size: 12px;
   line-height: 1.7;
   text-align: left;
-  z-index: 50;
+  z-index: 10002;
+  box-shadow: 0 16px 40px rgba(0,0,0,0.45);
 }
 
   .guide-btn {
@@ -471,10 +473,19 @@ li {
  <div class="version-badge" onclick="toggleUpdateLog()">v5.6</div>
 <div id="updateLog" class="update-log">
   <strong>更新内容</strong><br>
-vv5.6<br>
-・管理者ツールの想定利用をKML／KMZレビュー用に整理<br>
-・管理者ツール内の説明文と警告文からCSV表記を削除<br>
-・他CAから受け取ったMy Maps／KMZの構成確認に用途を明確化<br>
+v5.6<br>
+・開発環境で作成した内容を本番環境へ反映<br>
+・個別ツールに「円だけ生成」「既存POI分類だけ生成」機能を追加<br>
+・既存POI、追加希望レイヤー、30m／40m円レイヤーを分けて出力できる構成に改善<br>
+・管理者専用入口と管理者パスコード認証を追加<br>
+・管理者ツールに「KMZ内容チェック」機能を追加<br>
+・KML／KMZのレイヤー数、全ポイント数、有効POI数、ダミーポイント数を確認できるよう対応<br>
+・既存POI系レイヤー、追加希望系レイヤー、円レイヤーの有無を確認できるよう対応<br>
+・既存ポケストップ相当／既存ジム相当／既存パワースポット相当の推定分類を表示<br>
+・距離チェックに拠点充実度、CA所感、分類別チェック、既存POI同士の参考判定を追加<br>
+・利用前チェッククイズとガイドPDF導線を追加<br>
+・iPhone保存時のZIP→KMZ名称変更案内を追加<br>
+・My Maps／KMZレビュー時に他CAの作成データを確認しやすい構成へ改善<br>
 </div>
   <audio id="loginSound" src="login.mp3"></audio>
 <audio id="successSound" src="sucess.mp3"></audio>
