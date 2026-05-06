@@ -468,13 +468,14 @@ li {
 
   
 <body>
- <div class="version-badge" onclick="toggleUpdateLog()">v4.5</div>
+ <div class="version-badge" onclick="toggleUpdateLog()">v4.6</div>
 <div id="updateLog" class="update-log">
   <strong>更新内容</strong><br>
 v4.6<br>
 ・分類別チェックの各カテゴリに左線付きカードデザインを追加<br>
 ・密集／滞留／軽微の区切りが分かりやすくなるよう表示を改善<br>
 ・調整対象と参考の表示エリアに背景色と枠線を追加し、階層構造を見やすく整理<br>
+・分類別チェックの初期表示をすべて折りたたみ状態に変更<br>
 </div>
   <audio id="loginSound" src="login.mp3"></audio>
 <audio id="successSound" src="sucess.mp3"></audio>
@@ -1110,12 +1111,12 @@ function getRiskAccordionHtml(warnings) {
   });
 
   const settings = {
-  "密集": {
-  icon: "🔴",
-  color: "#ef4444",
-  open: false,
-  label: "密集（20m未満）"
-},
+    "密集": {
+      icon: "🔴",
+      color: "#ef4444",
+      open: false,
+      label: "密集（20m未満）"
+    },
     "滞留": {
       icon: "🟠",
       color: "#f97316",
@@ -1132,6 +1133,7 @@ function getRiskAccordionHtml(warnings) {
 
   function renderWarningCard(w, isReference) {
     const cardColor = isReference ? "#94a3b8" : "#ef4444";
+    const label = isReference ? "ℹ 参考" : "⚠ 調整対象";
     const message = isReference
       ? "既存POI同士の近接です。追加POIの調整対象には含めません。"
       : "追加・変更対象の近接です。配置調整を確認してください。";
@@ -1145,7 +1147,7 @@ function getRiskAccordionHtml(warnings) {
         border:1px solid rgba(148,163,184,0.25);
       ">
         <strong style="color:${cardColor};">
-          ${isReference ? "ℹ 参考" : "⚠ 調整対象"}（${w.distance.toFixed(1)}m）
+          ${label}（${w.distance.toFixed(1)}m）
         </strong><br>
         ${w.a.layer}：${w.a.name}<br>
         × ${w.b.layer}：${w.b.name}<br>
@@ -1165,83 +1167,87 @@ function getRiskAccordionHtml(warnings) {
         const totalCount = targetList.length + referenceList.length;
 
         return `
-  <details ${s.open ? "open" : ""} style="
-    margin-bottom:16px;
-    padding:14px 14px 12px 16px;
-    border-radius:14px;
-    background:rgba(15,23,42,0.45);
-    border:1px solid rgba(148,163,184,0.22);
-    border-left:6px solid ${s.color};
-  ">
-    <summary style="
-      cursor:pointer;
-      font-weight:bold;
-      color:${s.color};
-      font-size:16px;
-      line-height:1.7;
-    ">
-      ${s.icon} ${s.label}（${totalCount}件）
-    </summary>
+          <details ${s.open ? "open" : ""} style="
+            margin-bottom:16px;
+            padding:14px 14px 12px 16px;
+            border-radius:14px;
+            background:rgba(15,23,42,0.45);
+            border:1px solid rgba(148,163,184,0.22);
+            border-left:6px solid ${s.color};
+          ">
+            <summary style="
+              cursor:pointer;
+              font-weight:bold;
+              color:${s.color};
+              font-size:16px;
+              line-height:1.7;
+            ">
+              ${s.icon} ${s.label}（${totalCount}件）
+            </summary>
 
-    <div style="
-      margin-top:10px;
-      padding:8px 0 0 2px;
-      border-top:1px solid rgba(148,163,184,0.18);
-    ">
-      <div style="
-        margin-bottom:10px;
-        font-size:13px;
-        color:#cbd5e1;
-      ">
-        調整対象：${targetList.length}件 / 参考：${referenceList.length}件
-      </div>
+            <div style="
+              margin-top:10px;
+              padding:8px 0 0 2px;
+              border-top:1px solid rgba(148,163,184,0.18);
+            ">
+              <div style="
+                margin-bottom:10px;
+                font-size:13px;
+                color:#cbd5e1;
+              ">
+                調整対象：${targetList.length}件 / 参考：${referenceList.length}件
+              </div>
 
-      <details ${targetList.length > 0 ? "open" : ""} style="
-        margin-bottom:10px;
-        padding:10px 12px;
-        border-radius:12px;
-        background:rgba(239,68,68,0.08);
-        border:1px solid rgba(239,68,68,0.22);
-      ">
-        <summary style="
-          cursor:pointer;
-          font-weight:bold;
-          color:#fca5a5;
-        ">
-          ⚠ 調整対象（${targetList.length}件）
-        </summary>
+              <details style="
+                margin-bottom:10px;
+                padding:10px 12px;
+                border-radius:12px;
+                background:rgba(239,68,68,0.08);
+                border:1px solid rgba(239,68,68,0.22);
+              ">
+                <summary style="
+                  cursor:pointer;
+                  font-weight:bold;
+                  color:#fca5a5;
+                ">
+                  ⚠ 調整対象（${targetList.length}件）
+                </summary>
 
-        <div style="margin-top:8px;">
-          ${targetList.length === 0 ? `
-            <div style="opacity:0.7;">該当なし</div>
-          ` : targetList.map(w => renderWarningCard(w, false)).join("")}
-        </div>
-      </details>
+                <div style="margin-top:8px;">
+                  ${targetList.length === 0 ? `
+                    <div style="opacity:0.7;">該当なし</div>
+                  ` : targetList.map(w => renderWarningCard(w, false)).join("")}
+                </div>
+              </details>
 
-      <details style="
-        margin-bottom:4px;
-        padding:10px 12px;
-        border-radius:12px;
-        background:rgba(148,163,184,0.08);
-        border:1px solid rgba(148,163,184,0.18);
-      ">
-        <summary style="
-          cursor:pointer;
-          font-weight:bold;
-          color:#cbd5e1;
-        ">
-          ℹ 参考：既存POI同士（${referenceList.length}件）
-        </summary>
+              <details style="
+                margin-bottom:4px;
+                padding:10px 12px;
+                border-radius:12px;
+                background:rgba(148,163,184,0.08);
+                border:1px solid rgba(148,163,184,0.18);
+              ">
+                <summary style="
+                  cursor:pointer;
+                  font-weight:bold;
+                  color:#cbd5e1;
+                ">
+                  ℹ 参考：既存POI同士（${referenceList.length}件）
+                </summary>
 
-        <div style="margin-top:8px;">
-          ${referenceList.length === 0 ? `
-            <div style="opacity:0.7;">該当なし</div>
-          ` : referenceList.map(w => renderWarningCard(w, true)).join("")}
-        </div>
-      </details>
-    </div>
-  </details>
-`;
+                <div style="margin-top:8px;">
+                  ${referenceList.length === 0 ? `
+                    <div style="opacity:0.7;">該当なし</div>
+                  ` : referenceList.map(w => renderWarningCard(w, true)).join("")}
+                </div>
+              </details>
+            </div>
+          </details>
+        `;
+      }).join("")}
+    </div><br>
+  `;
+}
 function calculateCampsiteScore(points, warnings) {
   let score = 100;
 
