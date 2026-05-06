@@ -468,14 +468,14 @@ li {
 
   
 <body>
- <div class="version-badge" onclick="toggleUpdateLog()">v4.6</div>
+ <div class="version-badge" onclick="toggleUpdateLog()">v4.7</div>
 <div id="updateLog" class="update-log">
   <strong>更新内容</strong><br>
-v4.6<br>
-・分類別チェックの各カテゴリに左線付きカードデザインを追加<br>
-・密集／滞留／軽微の区切りが分かりやすくなるよう表示を改善<br>
-・調整対象と参考の表示エリアに背景色と枠線を追加し、階層構造を見やすく整理<br>
-・分類別チェックの初期表示をすべて折りたたみ状態に変更<br>
+v4.7<br>
+・KMZ生成時の既存POI分類処理を改善<br>
+・CSVのtype情報だけでなく、POI名やレイヤー名からもポケストップ／ジム／パワースポットを判定するよう変更<br>
+・CSV列名の違いに対応し、gameEntity／type／category系の列を拾いやすく改善<br>
+・My Mapsで既存ジム／既存パワースポットの空レイヤーが消えにくいよう、レイヤー保持用ダミーを追加<br>
 </div>
   <audio id="loginSound" src="login.mp3"></audio>
 <audio id="successSound" src="sucess.mp3"></audio>
@@ -1669,7 +1669,13 @@ function parseCSV(text) {
 
   const latIndex = headers.findIndex(h => h === "lat" || h.includes("latitude"));
   const lngIndex = headers.findIndex(h => h === "lng" || h === "lon" || h.includes("longitude"));
-  const typeIndex = headers.findIndex(h => h.includes("gameentity"));
+ const typeIndex = headers.findIndex(h =>
+  h.includes("gameentity") ||
+  h.includes("game_entity") ||
+  h.includes("entity") ||
+  h.includes("type") ||
+  h.includes("category")
+);
   const guidIndex = headers.findIndex(h => h.includes("guid"));
   const nameIndex = headers.findIndex(h => h === "title" || h === "name");
 
@@ -1856,16 +1862,35 @@ function addDummyPlacemark(xml, folder, name) {
 
   folder.appendChild(pm);
 }
-function classifyType(typeText, name = "") {
-  const t = (typeText || "").toLowerCase();
-  const n = (name || "").toLowerCase();
+function classifyType(typeText = "", name = "", layerName = "") {
+  const text = `${typeText} ${name} ${layerName}`.toLowerCase();
 
-  if (t.includes("gym")) return "gym";
-  if (t.includes("power")) return "power";
-  if (t.includes("pokestop") || t.includes("poke")) return "pokestop";
+  if (
+    text.includes("power") ||
+    text.includes("powerspot") ||
+    text.includes("power spot") ||
+    text.includes("パワ") ||
+    text.includes("パワースポット") ||
+    text.includes("パワスポ")
+  ) {
+    return "power";
+  }
 
-  if (n.includes("ジム")) return "gym";
-  if (n.includes("パワ")) return "power";
+  if (
+    text.includes("gym") ||
+    text.includes("ジム")
+  ) {
+    return "gym";
+  }
+
+  if (
+    text.includes("pokestop") ||
+    text.includes("poke stop") ||
+    text.includes("ポケスト") ||
+    text.includes("ポケストップ")
+  ) {
+    return "pokestop";
+  }
 
   return "pokestop";
 }
@@ -1971,9 +1996,11 @@ doc.appendChild(hiddenStyle);
 addDummyPlacemark(outputXml, folders.addPokestop, "ここに追加ポケストを配置");
 addDummyPlacemark(outputXml, folders.addGym, "ここに追加ジムを配置");
 addDummyPlacemark(outputXml, folders.addPower, "ここに追加パワスポを配置");
+addDummyPlacemark(outputXml, folders.gym, "既存ジムなし（レイヤー保持用）");
+addDummyPlacemark(outputXml, folders.power, "既存パワースポットなし（レイヤー保持用）");
   points.forEach(p => {
     const pointPlacemark = createPointPlacemark(outputXml, p);
-    const kind = classifyType(p.type);
+    const kind = classifyType(p.type, p.name, p.layer);
 
     if (kind === "gym") {
       folders.gym.appendChild(pointPlacemark);
