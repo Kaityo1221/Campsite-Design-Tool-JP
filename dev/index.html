@@ -298,7 +298,7 @@ h2, h3 {
 
 .tabs {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 10px;
   margin: 24px 0;
 }
@@ -468,13 +468,13 @@ li {
 
   
 <body>
- <div class="version-badge" onclick="toggleUpdateLog()">v5.0</div>
+ <div class="version-badge" onclick="toggleUpdateLog()">v5.1</div>
 <div id="updateLog" class="update-log">
   <strong>更新内容</strong><br>
-v5.0<br>
-・KMZ生成画面の出力レイヤー説明を現在の仕様に合わせて更新<br>
-・追加希望ポケスト／追加希望ジム／追加希望パワスポの説明を追加<br>
-・出力レイヤー数の固定表記をやめ、今後の仕様変更にも対応しやすい文章へ修正<br>
+v5.1<br>
+・既にMy Mapsを作成済みのユーザー向けに「個別ツール」タブを追加<br>
+・個別機能を1つのタブ内に集約し、今後の機能追加に対応しやすい構成へ整理<br>
+・円だけ生成などの補助機能を、個別ツール内の機能カードとして追加できる設計に変更<br>
 </div>
   <audio id="loginSound" src="login.mp3"></audio>
 <audio id="successSound" src="sucess.mp3"></audio>
@@ -518,13 +518,14 @@ v5.0<br>
   </div>
 
   <div class="tabs">
-    <button class="tab-button active" onclick="openTab('tool', this)">キャンプサイト作成</button>
-    <button class="tab-button" onclick="openTab('script', this)">スクリプト導入方法</button>
-    <button class="tab-button" onclick="openTab('guide', this)">設計ガイド</button>
-    <button class="tab-button" onclick="openTab('check', this)">チェックリスト</button>
-    <button class="tab-button" onclick="openTab('howto', this)">使い方</button>
-<button class="tab-button" onclick="openTab('distance', this)">距離チェック</button>
-   </div>
+  <button class="tab-button active" onclick="openTab('tool', this)">キャンプサイト作成</button>
+  <button class="tab-button" onclick="openTab('parts', this)">個別ツール</button>
+  <button class="tab-button" onclick="openTab('script', this)">スクリプト導入方法</button>
+  <button class="tab-button" onclick="openTab('guide', this)">設計ガイド</button>
+  <button class="tab-button" onclick="openTab('check', this)">チェックリスト</button>
+  <button class="tab-button" onclick="openTab('howto', this)">使い方</button>
+  <button class="tab-button" onclick="openTab('distance', this)">距離チェック</button>
+</div>
 
   <section id="tool" class="tab-content active">
     <div class="panel">
@@ -626,6 +627,41 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
 </div> <!-- STEP5 -->
 </div> <!-- panel -->
 </section> <!-- tool -->
+  <section id="parts" class="tab-content">
+  <div class="panel">
+    <h2>個別ツール</h2>
+
+    <p class="note">
+      すでにMy Mapsを作成済みの方向けに、必要なパーツだけを追加生成するための機能です。<br>
+      まずは「円だけ生成」など、個別機能を順次追加予定です。
+    </p>
+
+    <div class="step">
+      <div class="step-no">準備中</div>
+      <h3>円だけ生成</h3>
+      <p class="note">
+        CSV / KML / KMZから、30m円・40m円だけを生成する機能を追加予定です。<br>
+        既存のMy Mapsに円レイヤーだけ追加したい場合に使います。
+      </p>
+    </div>
+
+    <div class="step">
+      <div class="step-no">準備中</div>
+      <h3>追加希望レイヤーだけ生成</h3>
+      <p class="note">
+        追加希望ポケスト／追加希望ジム／追加希望パワスポの空レイヤーだけを生成する機能を追加予定です。
+      </p>
+    </div>
+
+    <div class="step">
+      <div class="step-no">準備中</div>
+      <h3>既存POI分類だけ生成</h3>
+      <p class="note">
+        既存POIをポケストップ／ジム／パワースポットに分類したKMZだけを生成する機能を追加予定です。
+      </p>
+    </div>
+  </div>
+</section>
   <section id="script" class="tab-content">
     <div class="panel">
       <h2>スクリプト導入方法</h2>
