@@ -472,10 +472,9 @@ li {
 <div id="updateLog" class="update-log">
   <strong>更新内容</strong><br>
 v4.9<br>
-・My Maps読み込み時に個別スタイル扱いになる問題を改善<br>
-・既存POIの各PlacemarkにstyleUrlを付けない方式へ変更<br>
-・ポケストップ／ジム／パワースポットの分類は維持しつつ、レイヤー単位で均一スタイルに寄せる構成へ整理<br>
-・前回追加したPOI用アイコンスタイル定義を削除<br>
+・KMZ生成処理内で消えていたpoints.forEach処理を復旧<br>
+・POI分類後に既存ポケストップ／既存ジム／既存パワースポットへ振り分ける処理を修正<br>
+・p未定義によるJavaScript構文エラーを解消し、ログイン不能になる問題を修正<br>
 </div>
   <audio id="loginSound" src="login.mp3"></audio>
 <audio id="successSound" src="sucess.mp3"></audio>
@@ -1997,17 +1996,29 @@ doc.appendChild(hiddenStyle);
 addDummyPlacemark(outputXml, folders.addPokestop, "ここに追加ポケストを配置");
 addDummyPlacemark(outputXml, folders.addGym, "ここに追加ジムを配置");
 addDummyPlacemark(outputXml, folders.addPower, "ここに追加パワスポを配置");
-  
-    radii.forEach(radius => {
-      const circlePlacemark = createCirclePlacemark(outputXml, p, radius);
 
-      if (radius === 40) {
-        folders.circle40.appendChild(circlePlacemark);
-      } else if (radius === 30) {
-        folders.circle30.appendChild(circlePlacemark);
-      }
-    });
+points.forEach(p => {
+  const kind = classifyType(p.type, p.name, p.layer);
+  const pointPlacemark = createPointPlacemark(outputXml, p);
+
+  if (kind === "gym") {
+    folders.gym.appendChild(pointPlacemark);
+  } else if (kind === "power") {
+    folders.power.appendChild(pointPlacemark);
+  } else {
+    folders.pokestop.appendChild(pointPlacemark);
+  }
+
+  radii.forEach(radius => {
+    const circlePlacemark = createCirclePlacemark(outputXml, p, radius);
+
+    if (radius === 40) {
+      folders.circle40.appendChild(circlePlacemark);
+    } else if (radius === 30) {
+      folders.circle30.appendChild(circlePlacemark);
+    }
   });
+});
 
   const serializer = new XMLSerializer();
   const newKml = serializer.serializeToString(outputXml);
