@@ -771,7 +771,7 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
 
   <div class="checks">
     <label>
-      判定半径：
+      判定範囲：
       <select id="adminDensityRadius" style="
         padding:8px 10px;
         border-radius:8px;
@@ -785,7 +785,7 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
       </select>
     </label>
     <p class="note">
-  判定半径を広げるほど、1エリアに含まれるPOI数は増えやすくなります。<br>
+  判定範囲を広げるほど、1エリアに含まれるPOI数は増えやすくなります。<br>
   50mは近接密集、100mは標準確認、200mは広域のまとまりを見る目安です。
 </p>
 <p class="note">
@@ -2337,7 +2337,7 @@ async function runAdminDensityCheck() {
         ">
           ✅ 目立つ密集エリアは見つかりませんでした。<br><br>
           判定対象POI：${usablePoints.length}件<br>
-          判定半径：${radius}m
+          判定範囲：${radius}m
         </div>
       `;
       return;
