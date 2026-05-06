@@ -2167,9 +2167,11 @@ function isIgnoredForDensityCheck(p) {
   const info = getAdminLayerInfo(p.layer || "");
   const layerName = p.layer || "";
 
+  // ダミーポイントは除外
   if (isDummyPoint(p)) return true;
+
+  // 円レイヤーは除外
   if (info.isCircle) return true;
-  if (info.isAdd) return true;
 
   if (
     layerName.includes("円") ||
@@ -2178,6 +2180,9 @@ function isIgnoredForDensityCheck(p) {
   ) {
     return true;
   }
+
+  // 追加希望レイヤーは除外しない
+  // 密集チェックでは、既存POIと追加希望POIをまたいで判定する
 
   return false;
 }
