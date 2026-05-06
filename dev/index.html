@@ -1349,8 +1349,24 @@ ${campsite.comments.map(c => "・" + c).join("<br>")}
 </div><br>
 `;
 
-  const warning = warnings.filter(w => w.distance < 30).length;
-  const caution = warnings.filter(w => w.distance >= 30 && w.distance < 40).length;
+  const displayCounts = {
+  danger: 0,
+  caution: 0,
+  reference: 0
+};
+
+warnings.forEach(w => {
+  const isExistingA = (w.a.originalLayer || "").includes("既存");
+  const isExistingB = (w.b.originalLayer || "").includes("既存");
+
+  if (isExistingA && isExistingB) {
+    displayCounts.reference++;
+  } else if (w.distance < 30) {
+    displayCounts.danger++;
+  } else {
+    displayCounts.caution++;
+  }
+});
 
   if (warnings.length === 0) {
     result.innerHTML = scoreHtml + `✅ 問題なし（${points.length}件）`;
@@ -1395,7 +1411,9 @@ ${campsite.comments.map(c => "・" + c).join("<br>")}
 
   result.innerHTML = scoreHtml + riskAccordionHtml + `
     ⚠ 40m未満があります<br><br>
-    ⚠ 要注意：${warning}件 / △ 40m未満：${caution}件
+    ⚠ 要注意：${displayCounts.danger}件 / 
+△ 40m未満：${displayCounts.caution}件 / 
+ℹ 参考：${displayCounts.reference}件
     <br><br>
     ${warningListHtml}
   `;
