@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Campsite Design Tool JP</title>
 <link rel="apple-touch-icon" sizes="180x180" href="/Campsite-Design-Tool-JP/デザインツールのアイコン.png">
-<link rel="manifest" href="/Campsite-Design-Tool-JP/manifest.json">
+<link rel="manifest" href="/Campsite-Design-Tool-JP/manifest-dev.json">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
 .version-badge {
@@ -298,7 +298,7 @@ h2, h3 {
 
 .tabs {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 10px;
   margin: 24px 0;
 }
@@ -468,14 +468,14 @@ li {
 
   
 <body>
-  <div class="version-badge" onclick="toggleUpdateLog()">v2.6</div>
-<strong>更新内容</strong><br>
-・v2.6 距離チェック結果を近い順に表示<br>
-・30m未満を「要注意」として表示<br>
-・30〜40m未満を「40m未満」として表示<br>
-・件数サマリーを追加<br>
-・レイヤー自動判定に対応<br>
-・KMZ読み込み可能
+ <div class="version-badge" onclick="toggleUpdateLog()">v5.6</div>
+<div id="updateLog" class="update-log">
+  <strong>更新内容</strong><br>
+vv5.6<br>
+・管理者ツールの想定利用をKML／KMZレビュー用に整理<br>
+・管理者ツール内の説明文と警告文からCSV表記を削除<br>
+・他CAから受け取ったMy Maps／KMZの構成確認に用途を明確化<br>
+</div>
   <audio id="loginSound" src="login.mp3"></audio>
 <audio id="successSound" src="sucess.mp3"></audio>
   <div id="loadingOverlay" class="loading-overlay">
@@ -512,20 +512,31 @@ li {
     <div class="badge">Community Ambassador Support Tool</div>
     <h1>Campsite Design Tool</h1>
     <p class="lead">
-      Wayfarer CSV / MyMap KML / KMZ から<br>POIを読み込み、
+      Wayfarer CSV / My Maps KML / KMZ から<br>POIを読み込み、
       30m・40m円と既存POIレイヤーを自動生成します。
     </p>
   </div>
 
   <div class="tabs">
-    <button class="tab-button active" onclick="openTab('tool', this)">キャンプサイト作成</button>
-    <button class="tab-button" onclick="openTab('script', this)">スクリプト導入方法</button>
-    <button class="tab-button" onclick="openTab('guide', this)">設計ガイド</button>
-    <button class="tab-button" onclick="openTab('check', this)">チェックリスト</button>
-    <button class="tab-button" onclick="openTab('howto', this)">使い方</button>
-<button class="tab-button" onclick="openTab('distance', this)">距離チェック</button>
-   </div>
+  <button class="tab-button active" onclick="openTab('tool', this)">キャンプサイト作成</button>
+  <button class="tab-button" onclick="openTab('parts', this)">個別ツール</button>
+  <button class="tab-button" onclick="openTab('script', this)">スクリプト導入方法</button>
+  <button class="tab-button" onclick="openTab('guide', this)">設計ガイド</button>
+  <button class="tab-button" onclick="openTab('check', this)">チェックリスト</button>
+  <button class="tab-button" onclick="openTab('howto', this)">使い方</button>
+  <button class="tab-button" onclick="openTab('distance', this)">距離チェック</button>
+</div>
 
+<div style="text-align:right; margin-top:-10px; margin-bottom:18px;">
+  <button type="button" class="guide-btn" onclick="openAdminLogin()" style="
+    width:auto;
+    padding:8px 12px;
+    font-size:12px;
+    opacity:0.65;
+  ">
+    管理者
+  </button>
+</div>
   <section id="tool" class="tab-content active">
     <div class="panel">
       <h2>キャンプサイト作成の手順</h2>
@@ -551,7 +562,8 @@ li {
 
       <div class="step">
         <div class="step-no">STEP 2</div>
-        <p>CSV / KML / KMZ ファイルを選択します。CSVは複数選択できます。</p>
+        <p>CSV ファイルを選択します。<br>※正しくポケストップ・ジム・パワースポットを分類するため、
+CSVの使用を推奨します。KML / KMZでは分類できない場合があります。</p>
         <input type="file" id="fileInput" multiple>
       </div>
 
@@ -579,14 +591,17 @@ li {
 
       <div class="step">
         <div class="step-no">STEP 4</div>
-        <p>KMZを生成します。出力レイヤーは以下の5つです。</p>
-        <ul>
-          <li>既存のポケストップ</li>
-          <li>既存のジム</li>
-          <li>既存のパワースポット</li>
-          <li>40m円（基本距離）</li>
-          <li>30m円（調整用）</li>
-        </ul>
+        <p>KMZを生成します。出力されるレイヤーは以下の構成です。</p>
+<ul>
+  <li>既存のポケストップ</li>
+  <li>既存のジム</li>
+  <li>既存のパワースポット</li>
+  <li>追加希望ポケスト</li>
+  <li>追加希望ジム</li>
+  <li>追加希望パワスポ</li>
+  <li>40m円（基本距離）</li>
+  <li>30m円（調整用）</li>
+</ul>
 
         <button class="generate" onclick="generateKMZ()">KMZを生成</button>
         <div id="status"></div>
@@ -597,7 +612,7 @@ li {
         <h3>Google My Mapsにインポート</h3>
         <p class="note">
           生成されたKMZファイルをGoogle My Mapsにインポートしてください。<br>
-          インポートすると、5つのレイヤー（既存POI・円）が自動で作成されます。
+          出力構成に応じたレイヤーで表示されます
         </p>
         <button class="guide-btn" onclick="toggleRenameGuide()">
   iPhoneでZIPになった場合
@@ -618,12 +633,120 @@ li {
   </ol>
       </div>
       </div>
-</section>
 
-</div> <!-- renameGuide -->
 </div> <!-- STEP5 -->
 </div> <!-- panel -->
 </section> <!-- tool -->
+  <section id="parts" class="tab-content">
+  <div class="panel">
+    <h2>個別ツール</h2>
+
+    <p class="note">
+      すでにMy Mapsを作成済みの方向けに、必要なパーツだけを追加生成するための機能です。<br>
+      円だけ生成や既存POI分類だけ生成など、作成済みのMy Mapsを調整・整理するための機能を利用できます。
+    </p>
+
+    <div class="step">
+  <div class="step-no">個別機能</div>
+  <h3>円だけ生成</h3>
+
+  <p class="note">
+    CSV / KML / KMZから、30m円・40m円だけを生成します。<br>
+    既存のMy Mapsに円レイヤーだけ追加したい場合に使います。
+  </p>
+<p class="note" style="
+  padding:12px;
+  border-radius:12px;
+  background:rgba(249,115,22,0.12);
+  border:1px solid rgba(249,115,22,0.35);
+  color:#fed7aa;
+">
+  ⚠ 既に作成済みのMy Mapsから書き出したKMZを読み込む場合、既存の30m円・40m円レイヤーは自動で読み込み対象から除外します。<br>
+  ただし、My Maps上の古い円レイヤーは自動削除できないため、新しい円KMZをインポートする前に、My Maps側で古い円レイヤーを削除してください。
+</p>
+  <p>円を作成したいファイルを選択します。</p>
+  <input type="file" id="circleOnlyFileInput" multiple>
+
+  <div class="checks">
+    <label>
+      <input type="checkbox" name="circleOnlyRadius" value="40" checked>
+      40m円（基本距離）
+    </label><br>
+
+    <label>
+      <input type="checkbox" name="circleOnlyRadius" value="30" checked>
+      30m円（調整用）
+    </label>
+  </div>
+
+  <button class="generate" onclick="generateCircleOnlyKMZ()">円だけKMZを生成</button>
+  <div id="circleOnlyStatus"></div>
+</div>
+    <div class="step">
+      <div class="step-no">準備中</div>
+      <h3>追加希望レイヤーだけ生成</h3>
+      <p class="note">
+        追加希望ポケスト／追加希望ジム／追加希望パワスポの空レイヤーだけを生成する機能を追加予定です。
+      </p>
+    </div>
+
+    <div class="step">
+  <div class="step-no">個別機能</div>
+  <h3>既存POI分類だけ生成</h3>
+
+  <p class="note">
+    CSV / KML / KMZから、既存POIだけをポケストップ／ジム／パワースポットに分類して生成します。<br>
+    他CAが作成したMy Mapsや、未整理のKMZを確認しやすく整理したい場合に使います。
+  </p>
+
+  <p class="note" style="
+    padding:12px;
+    border-radius:12px;
+    background:rgba(59,130,246,0.12);
+    border:1px solid rgba(96,165,250,0.35);
+    color:#bfdbfe;
+  ">
+    ℹ 円レイヤー、追加希望レイヤー、レイヤー保持用のダミーポイントは自動で除外します。<br>
+    出力されるのは、既存POI分類用のレイヤーだけです。
+  </p>
+
+  <p>分類したいCSV / KML / KMZファイルを選択します。</p>
+  <input type="file" id="existingOnlyFileInput" multiple>
+
+  <button class="generate" onclick="generateExistingOnlyKMZ()">既存POI分類KMZを生成</button>
+  <div id="existingOnlyStatus"></div>
+</div>
+  </div>
+</section>
+<section id="admin" class="tab-content">
+  <div class="panel">
+    <h2>管理者ツール</h2>
+
+    <p class="note">
+      会長専用の確認・レビュー補助機能です。<br>
+      他CAから受け取ったMy Maps / KMZの内容確認や、レビュー前の整理に使います。
+    </p>
+
+    <div class="step">
+  <div class="step-no">管理者機能</div>
+  <h3>KMZ内容チェック</h3>
+
+  <p class="note">
+    他CAから受け取ったKML / KMZの中身を確認します。<br>
+    POI件数、レイヤー構成、円レイヤー有無、追加希望レイヤー有無、ダミーポイント混入をチェックできます。
+  </p>
+
+  <p>チェックしたいファイルを選択します。</p>
+  <input type="file" id="adminCheckFile">
+
+  <button class="generate" onclick="runAdminFileCheck()">
+    内容をチェック
+  </button>
+
+  <div id="adminCheckResult"></div>
+</div>
+  </div>
+</section>
   <section id="script" class="tab-content">
     <div class="panel">
       <h2>スクリプト導入方法</h2>
@@ -688,7 +811,7 @@ Userscriptsをインストール
       <div class="grid">
         <div class="step">
           <div class="step-no">考え方</div>
-          <h3>MyMapは「地図」ではなく「設計図」</h3>
+         <h3>My Mapsは「地図」ではなく<br>「設計図」</h3>
           <p class="note">
             どこに人が集まり、どのように遊び、どこで交流が生まれるかを伝えるための設計図です。
           </p>
@@ -716,7 +839,7 @@ Userscriptsをインストール
           <div class="step-no">レイヤー</div>
           <h3>レイヤーを分ける</h3>
           <p class="note">
-            既存POI、追加POI、活動エリアは混在させず、カテゴリごとに分けて管理します。
+            既存POI、追加POI、活動エリアは混在させず、<br>カテゴリごとに分けて管理します。
           </p>
         </div>
       </div>
@@ -760,9 +883,9 @@ Userscriptsをインストール
 
     <div class="step">
       <div class="step-no">3</div>
-      <h3>KMZをMyMapへインポート</h3>
+      <h3>KMZをMy Mapsへインポート</h3>
       <p class="note">
-        生成されたKMZをGoogle My Mapsにインポートすると、5つのレイヤーで表示されます。
+        出力構成に応じたレイヤーで表示されます
       </p>
     </div>
 
@@ -790,22 +913,41 @@ Userscriptsをインストール
       </p>
       <div id="distanceLayerList"></div>
     </div>
+<div class="step">
+  <div class="step-no">CA所感</div>
+  <p class="note">現地の状況を選択してください。</p>
 
+  <label>
+    <input type="checkbox" id="trafficOk">
+    ここで立ち止まっても、後ろの人はスムーズに通れる
+  </label><br>
+
+  <label>
+    <input type="checkbox" id="hasOpenSpace">
+    広場・開けた空間がある
+  </label><br>
+
+  <label>
+    <input type="checkbox" id="hasLoopRoute">
+    回遊できる（複数ルートがある）
+  </label><br>
+
+  <label>
+    <input type="checkbox" id="hasWaitingSpace">
+    待機・集合しやすいスペースがある
+  </label>
+</div>
     <div class="step">
       <div class="step-no">STEP 3</div>
       <button class="generate" onclick="runDistanceCheck()">距離チェック実行</button>
       <div id="distanceResult"></div>
     </div>
-
-    <div class="step">
-      <div class="step-no">POI一覧</div>
-      <div id="poiList"></div>
-    </div>
-  </div>
 </section>
 
 </div>
 <script>
+const ENABLE_QUIZ = true;
+const QUIZ_VERSION = "beta1";
 window._layerPoints = {};
   let distanceData = {
   existing: [],
@@ -824,6 +966,12 @@ function getDistanceMeters(a, b) {
     Math.sin(dLng / 2) ** 2;
 
   return 2 * R * Math.asin(Math.sqrt(h));
+}
+function classifyDistanceRisk(distance) {
+  if (distance < 20) return "密集";
+  if (distance < 30) return "滞留";
+  if (distance < 40) return "軽微";
+  return null;
 }
 async function loadDistanceFile() {
   const fileInput = document.getElementById("distanceFile");
@@ -923,6 +1071,28 @@ function extractPointsByLayer(xml) {
 
   return result;
 }
+function showQuiz() {
+  document.getElementById("quizModal").style.display = "flex";
+}
+
+function checkQuiz() {
+  const q1 = document.querySelector('input[name="q1"]:checked')?.value;
+  const q2 = document.querySelector('input[name="q2"]:checked')?.value;
+  const q3 = document.querySelector('input[name="q3"]:checked')?.value;
+
+  if (!q1 || !q2 || !q3) {
+    alert("すべて選択してください");
+    return;
+  }
+
+  if (q1 === "40" && q2 === "hard" && q3 === "25") {
+    localStorage.setItem("quizPassed", QUIZ_VERSION);
+    document.getElementById("quizModal").style.display = "none";
+    alert("✔ 利用準備OK！ツールを使えます");
+  } else {
+    alert("もう一度確認してください\nヒント：基本距離は40mです");
+  }
+}
 function renderLayerSelector(layers, container) {
   container.innerHTML = "";
 
@@ -950,6 +1120,374 @@ function renderLayerSelector(layers, container) {
     .replace("既存", "")
     .trim();
 }
+function getStars(score) {
+  if (score >= 85) return "⭐⭐⭐⭐⭐";
+  if (score >= 70) return "⭐⭐⭐⭐☆";
+  if (score >= 50) return "⭐⭐⭐☆☆";
+  return "⭐⭐☆☆☆";
+}
+function getRankColor(rank) {
+  if (rank === "S") return "#a855f7";
+  if (rank === "A") return "#3b82f6";
+  if (rank === "B") return "#22c55e";
+  return "#ef4444";
+}
+
+function getScoreBar(score, color) {
+  return `
+  <div style="margin-top:6px;">
+    <div style="
+      width:100%;
+      height:10px;
+      background:#1e293b;
+      border-radius:6px;
+      overflow:hidden;
+    ">
+      <div style="
+        width:${score}%;
+        height:100%;
+        background:${color};
+      "></div>
+    </div>
+  </div>
+  `;
+}
+function getPoiRiskSummary(warnings) {
+  const riskMap = new Map();
+
+  const priority = {
+    "密集": 4,
+    "滞留": 3,
+    "通行": 2,
+    "軽微": 1
+  };
+
+  warnings.forEach(w => {
+    [w.a, w.b].forEach(p => {
+      const key = `${p.layer}:${p.name}`;
+
+      if (!riskMap.has(key)) {
+        riskMap.set(key, {
+          name: p.name,
+          layer: p.layer,
+          maxType: "軽微",
+          counts: { 密集: 0, 滞留: 0, 通行: 0, 軽微: 0 }
+        });
+      }
+
+      const item = riskMap.get(key);
+      item.counts[w.type || "軽微"]++;
+
+      if (priority[w.type || "軽微"] > priority[item.maxType]) {
+        item.maxType = w.type || "軽微";
+      }
+    });
+  });
+
+  return Array.from(riskMap.values()).sort((a, b) => {
+    return priority[b.maxType] - priority[a.maxType];
+  });
+}
+
+function getRiskStyle(type) {
+  if (type === "密集") return { icon: "🔴", color: "#ef4444" };
+  if (type === "滞留") return { icon: "🟠", color: "#f97316" };
+  if (type === "通行") return { icon: "🔵", color: "#3b82f6" };
+  return { icon: "⚪", color: "#94a3b8" };
+}
+function getRiskAccordionHtml(warnings) {
+  const groups = {
+    "密集": {
+      target: [],
+      reference: []
+    },
+    "滞留": {
+      target: [],
+      reference: []
+    },
+    "軽微": {
+      target: [],
+      reference: []
+    }
+  };
+
+  warnings.forEach(w => {
+    const type = w.type || "軽微";
+
+    const isExistingA = (w.a.originalLayer || "").includes("既存");
+    const isExistingB = (w.b.originalLayer || "").includes("既存");
+    const isReference = isExistingA && isExistingB;
+
+    if (!groups[type]) return;
+
+    if (isReference) {
+      groups[type].reference.push(w);
+    } else {
+      groups[type].target.push(w);
+    }
+  });
+
+  const settings = {
+    "密集": {
+      icon: "🔴",
+      color: "#ef4444",
+      open: false,
+      label: "密集（20m未満）"
+    },
+    "滞留": {
+      icon: "🟠",
+      color: "#f97316",
+      open: false,
+      label: "滞留（20m以上30m未満）"
+    },
+    "軽微": {
+      icon: "⚪",
+      color: "#94a3b8",
+      open: false,
+      label: "軽微（30m以上40m未満）"
+    }
+  };
+
+  function renderWarningCard(w, isReference) {
+    const cardColor = isReference ? "#94a3b8" : "#ef4444";
+    const label = isReference ? "ℹ 参考" : "⚠ 調整対象";
+    const message = isReference
+      ? "既存POI同士の近接です。追加POIの調整対象には含めません。"
+      : "追加・変更対象の近接です。配置調整を確認してください。";
+
+    return `
+      <div style="
+        margin:10px 0;
+        padding:10px;
+        border-radius:10px;
+        background:rgba(15,23,42,0.65);
+        border:1px solid rgba(148,163,184,0.25);
+      ">
+        <strong style="color:${cardColor};">
+          ${label}（${w.distance.toFixed(1)}m）
+        </strong><br>
+        ${w.a.layer}：${w.a.name}<br>
+        × ${w.b.layer}：${w.b.name}<br>
+        → ${message}
+      </div>
+    `;
+  }
+
+  return `
+    <div class="distance-warning">
+      <strong>分類別チェック</strong><br><br>
+
+      ${Object.keys(groups).map(type => {
+        const s = settings[type];
+        const targetList = groups[type].target;
+        const referenceList = groups[type].reference;
+        const totalCount = targetList.length + referenceList.length;
+
+        return `
+          <details ${s.open ? "open" : ""} style="
+            margin-bottom:16px;
+            padding:14px 14px 12px 16px;
+            border-radius:14px;
+            background:rgba(15,23,42,0.45);
+            border:1px solid rgba(148,163,184,0.22);
+            border-left:6px solid ${s.color};
+          ">
+            <summary style="
+              cursor:pointer;
+              font-weight:bold;
+              color:${s.color};
+              font-size:16px;
+              line-height:1.7;
+            ">
+              ${s.icon} ${s.label}（${totalCount}件）
+            </summary>
+
+            <div style="
+              margin-top:10px;
+              padding:8px 0 0 2px;
+              border-top:1px solid rgba(148,163,184,0.18);
+            ">
+              <div style="
+                margin-bottom:10px;
+                font-size:13px;
+                color:#cbd5e1;
+              ">
+                調整対象：${targetList.length}件 / 参考：${referenceList.length}件
+              </div>
+
+              <details style="
+                margin-bottom:10px;
+                padding:10px 12px;
+                border-radius:12px;
+                background:rgba(239,68,68,0.08);
+                border:1px solid rgba(239,68,68,0.22);
+              ">
+                <summary style="
+                  cursor:pointer;
+                  font-weight:bold;
+                  color:#fca5a5;
+                ">
+                  ⚠ 調整対象（${targetList.length}件）
+                </summary>
+
+                <div style="margin-top:8px;">
+                  ${targetList.length === 0 ? `
+                    <div style="opacity:0.7;">該当なし</div>
+                  ` : targetList.map(w => renderWarningCard(w, false)).join("")}
+                </div>
+              </details>
+
+              <details style="
+                margin-bottom:4px;
+                padding:10px 12px;
+                border-radius:12px;
+                background:rgba(148,163,184,0.08);
+                border:1px solid rgba(148,163,184,0.18);
+              ">
+                <summary style="
+                  cursor:pointer;
+                  font-weight:bold;
+                  color:#cbd5e1;
+                ">
+                  ℹ 参考：既存POI同士（${referenceList.length}件）
+                </summary>
+
+                <div style="margin-top:8px;">
+                  ${referenceList.length === 0 ? `
+                    <div style="opacity:0.7;">該当なし</div>
+                  ` : referenceList.map(w => renderWarningCard(w, true)).join("")}
+                </div>
+              </details>
+            </div>
+          </details>
+        `;
+      }).join("")}
+    </div><br>
+  `;
+}
+function calculateCampsiteScore(points, warnings) {
+  let score = 100;
+
+  let under20 = 0;
+  let under30 = 0;
+  let under40 = 0;
+  let distancePenalty = 0;
+
+  warnings.forEach(w => {
+    const d = w.distance;
+
+    if (d < 20) {
+      distancePenalty += 4;
+      under20++;
+    } else if (d < 30) {
+      distancePenalty += 2;
+      under30++;
+    } else if (d < 40) {
+      distancePenalty += 0.5;
+      under40++;
+    }
+  });
+
+  distancePenalty = Math.min(distancePenalty, 25);
+  score -= distancePenalty;
+
+  let stayPenalty = 0;
+
+  warnings.forEach(w => {
+    const d = w.distance;
+    const a = (w.a.layer || "").toLowerCase();
+    const b = (w.b.layer || "").toLowerCase();
+
+    const aPower = a.includes("power") || a.includes("パワ");
+    const bPower = b.includes("power") || b.includes("パワ");
+    const aGym = a.includes("gym") || a.includes("ジム");
+    const bGym = b.includes("gym") || b.includes("ジム");
+
+    if (aPower && bPower) {
+      if (d < 20) stayPenalty += 4;
+      else if (d < 30) stayPenalty += 2;
+    }
+
+    if (aGym && bGym) {
+      if (d < 20) stayPenalty += 2;
+      else if (d < 30) stayPenalty += 1;
+    }
+
+    if ((aGym && bPower) || (aPower && bGym)) {
+      if (d < 30) stayPenalty += 3;
+    }
+  });
+
+  stayPenalty = Math.min(stayPenalty, 20);
+  score -= stayPenalty;
+
+  const trafficOk = document.getElementById("trafficOk")?.checked;
+  score += trafficOk ? 3 : -5;
+
+  let env = 0;
+  if (document.getElementById("hasOpenSpace")?.checked) env += 6;
+  if (document.getElementById("hasLoopRoute")?.checked) env += 5;
+  if (document.getElementById("hasWaitingSpace")?.checked) env += 4;
+
+  env = Math.min(env, 15);
+  score += env;
+
+  score = Math.round(Math.max(0, Math.min(100, score)));
+
+  let rank = "C";
+  let label = "調整あり";
+
+  if (score >= 85) {
+    rank = "S";
+    label = "理想";
+  } else if (score >= 70) {
+    rank = "A";
+    label = "かなり良い";
+  } else if (score >= 50) {
+    rank = "B";
+    label = "良好";
+  }
+
+  let type = "バランス型";
+  if (under20 > 0 || under30 >= 5) {
+    type = "密集注意型";
+  } else if (!trafficOk) {
+    type = "通行注意型";
+  } else if (trafficOk && env >= 10) {
+    type = "回遊・滞留向き";
+  }
+
+  const comments = [];
+if (under20 > 0) comments.push("密集あり");
+if (under30 > 0) comments.push("滞留あり");
+if (!trafficOk) comments.push("通行注意");
+if (env >= 10) comments.push("環境良好");
+
+// 👇ここに追加
+let summary = "バランスの取れた拠点です";
+
+if (under20 > 0) {
+  summary = "密集があり、配置調整が必要です";
+} else if (under30 > 3) {
+  summary = "やや滞留が発生しやすい配置です";
+} else if (!trafficOk) {
+  summary = "通行面に注意が必要な拠点です";
+} else if (env >= 10) {
+  summary = "非常に遊びやすい理想的な拠点です";
+}
+  return {
+    score,
+    rank,
+    type,
+    label,
+    under20,
+    under30,
+    under40,
+    trafficOk,
+    comments,
+    summary
+  };
+}
 async function runDistanceCheck() {
   const result = document.getElementById("distanceResult");
 
@@ -965,7 +1503,8 @@ async function runDistanceCheck() {
     layerPoints.forEach(p => {
       points.push({
         ...p,
-        layer: cleanLayerName(layerName)
+        layer: cleanLayerName(layerName),
+        originalLayer: layerName
       });
     });
   });
@@ -978,56 +1517,145 @@ async function runDistanceCheck() {
   const warnings = [];
 
   for (let i = 0; i < points.length; i++) {
-    for (let j = i + 1; j < points.length; j++) {
-      const distance = getDistanceMeters(points[i], points[j]);
+  for (let j = i + 1; j < points.length; j++) {
+    const a = points[i];
+    const b = points[j];
 
-      if (distance < 40) {
-        warnings.push({
-          a: points[i],
-          b: points[j],
-          distance
-        });
-      }
+    const distance = getDistanceMeters(a, b);
+
+    if (distance < 40) {
+      warnings.push({
+        a,
+        b,
+        distance,
+        type: classifyDistanceRisk(distance)
+      });
     }
   }
+}
 
-  // ✔ 近い順
+  const campsite = calculateCampsiteScore(points, warnings);
+
   warnings.sort((a, b) => a.distance - b.distance);
+const riskAccordionHtml = getRiskAccordionHtml(warnings);
 
-  // ✔ サマリー
-  const warning = warnings.filter(w => w.distance < 30).length;
-  const caution = warnings.filter(w => w.distance >= 30 && w.distance < 40).length;
+const stars = getStars(campsite.score);
+const color = getRankColor(campsite.rank);
+const bar = getScoreBar(campsite.score, color);
+
+const scoreHtml = `
+<div class="distance-warning">
+
+<strong style="color:${color}; font-size:20px;">
+拠点充実度：${campsite.rank} ${stars}
+</strong><br>
+
+<span style="opacity:0.85;">${campsite.label}</span>
+
+${bar}
+
+<div style="margin-top:6px; font-size:13px; opacity:0.8;">
+スコア：${campsite.score}点
+</div>
+
+<br>
+<strong>総評</strong><br>
+${campsite.summary}<br><br>
+
+密集：${campsite.under20}件<br>
+滞留：${campsite.under30}件<br>
+軽微：${campsite.under40}件<br>
+通行：${campsite.trafficOk ? "良好" : "注意"}<br><br>
+
+<strong>CA所感</strong><br>
+・通行：${document.getElementById("trafficOk")?.checked ? "スムーズに通れる" : "注意が必要"}<br>
+・広場：${document.getElementById("hasOpenSpace")?.checked ? "あり" : "なし"}<br>
+・回遊：${document.getElementById("hasLoopRoute")?.checked ? "できる" : "弱い"}<br>
+・待機場所：${document.getElementById("hasWaitingSpace")?.checked ? "あり" : "なし"}<br><br>
+
+<strong>判定コメント</strong><br>
+${campsite.comments.map(c => "・" + c).join("<br>")}
+</div><br>
+`;
+
+  const displayCounts = {
+  danger: 0,
+  caution: 0,
+  reference: 0
+};
+
+warnings.forEach(w => {
+  const isExistingA = (w.a.originalLayer || "").includes("既存");
+  const isExistingB = (w.b.originalLayer || "").includes("既存");
+
+  if (isExistingA && isExistingB) {
+    displayCounts.reference++;
+  } else if (w.distance < 30) {
+    displayCounts.danger++;
+  } else {
+    displayCounts.caution++;
+  }
+});
 
   if (warnings.length === 0) {
-    result.innerHTML = `✅ 問題なし（${points.length}件）`;
+    result.innerHTML = scoreHtml + `✅ 問題なし（${points.length}件）`;
     return;
   }
 
-  result.innerHTML = `
+    const targetWarnings = warnings.filter(w => {
+  const isExistingA = (w.a.originalLayer || "").includes("既存");
+  const isExistingB = (w.b.originalLayer || "").includes("既存");
+
+  return !(isExistingA && isExistingB);
+});
+
+const targetWarningListHtml = targetWarnings.length === 0 ? `
+  <div class="distance-warning" style="
+    border:1px solid rgba(34,197,94,0.45);
+    background:rgba(34,197,94,0.12);
+  ">
+    ✅ 追加・変更対象の近接はありません。<br>
+    既存POI同士の参考近接は、上の分類別チェック内で確認できます。
+  </div>
+` : targetWarnings.map(w => {
+  let label = "";
+  let message = "";
+  let cardColor = "";
+  let cardBg = "";
+
+  if (w.distance < 30) {
+    label = "⚠ 要注意";
+    message = "30m未満です。配置調整を推奨します。";
+    cardColor = "#ef4444";
+    cardBg = "rgba(239, 68, 68, 0.14)";
+  } else {
+    label = "△ 40m未満";
+    message = "40m未満です。調整される場合があります。";
+    cardColor = "#f97316";
+    cardBg = "rgba(249, 115, 22, 0.14)";
+  }
+
+  return `
+    <div class="distance-warning" style="
+      border:1px solid ${cardColor};
+      background:${cardBg};
+    ">
+      <strong style="color:${cardColor};">
+        ${label}（${w.distance.toFixed(1)}m）
+      </strong><br>
+      ${w.a.layer}：${w.a.name}<br>
+      × ${w.b.layer}：${w.b.name}<br>
+      → ${message}
+    </div>
+  `;
+}).join("");
+  result.innerHTML = scoreHtml + riskAccordionHtml + `
     ⚠ 40m未満があります<br><br>
-    ⚠ 要注意：${warning}件 / △ 40m未満：${caution}件
+    ⚠ 要注意：${displayCounts.danger}件 / 
+△ 40m未満：${displayCounts.caution}件 / 
+ℹ 参考：${displayCounts.reference}件
     <br><br>
-    ${warnings.map(w => {
-      let label = "";
-      let message = "";
-
-      if (w.distance < 30) {
-        label = "⚠ 要注意";
-        message = "30m未満です。採用されない可能性があります。";
-      } else {
-        label = "△ 40m未満";
-        message = "40m未満です。調整される場合があります。";
-      }
-
-      return `
-        <div class="distance-warning">
-          <strong>${label}（${w.distance.toFixed(1)}m）</strong><br>
-          ${w.a.layer}：${w.a.name}<br>
-          × ${w.b.layer}：${w.b.name}<br>
-          → ${message}
-        </div>
-      `;
-    }).join("")}
+    ${targetWarningListHtml}
   `;
 }
 function toggleUpdateLog() {
@@ -1060,7 +1688,7 @@ function checkPassword() {
 // 🔊 ログイン音
 const loginSound = document.getElementById("loginSound");
 loginSound.currentTime = 0;
-loginSound.volume = 0.25;
+loginSound.volume = 0.08;
 
 setTimeout(() => {
   loginSound.play().catch(() => {});
@@ -1078,12 +1706,25 @@ setTimeout(function () {
 document.addEventListener("DOMContentLoaded", function () {
   const passwordInput = document.getElementById("passwordInput");
 
-  passwordInput.addEventListener("keydown", function (e) {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      checkPassword();
-    }
-  });
+  if (passwordInput) {
+    passwordInput.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        checkPassword();
+      }
+    });
+  }
+
+  const adminPasswordInput = document.getElementById("adminPasswordInput");
+
+  if (adminPasswordInput) {
+    adminPasswordInput.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        checkAdminPassword();
+      }
+    });
+  }
 });
 
 function openTab(tabId, button) {
@@ -1108,6 +1749,341 @@ function openTab(tabId, button) {
     top: 0,
     behavior: "smooth"
   });
+}
+
+const ADMIN_PASSWORD = "she1ep";
+
+function openAdminLogin() {
+  const modal = document.getElementById("adminLoginModal");
+  const input = document.getElementById("adminPasswordInput");
+  const error = document.getElementById("adminLoginError");
+
+  if (!modal) {
+    alert("管理者ログイン画面が見つかりません");
+    return;
+  }
+
+  if (error) error.textContent = "";
+  if (input) input.value = "";
+
+  modal.style.display = "flex";
+
+  setTimeout(() => {
+    if (input) input.focus();
+  }, 100);
+}
+
+function closeAdminLogin() {
+  const modal = document.getElementById("adminLoginModal");
+  if (modal) {
+    modal.style.display = "none";
+  }
+}
+
+function checkAdminPassword() {
+  const input = document.getElementById("adminPasswordInput");
+  const error = document.getElementById("adminLoginError");
+
+  if (!input) return;
+
+  if (input.value.trim() === ADMIN_PASSWORD) {
+    if (error) error.textContent = "";
+    closeAdminLogin();
+
+    openTab("admin", null);
+
+    document.querySelectorAll(".tab-button").forEach(btn => {
+      btn.classList.remove("active");
+    });
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+  } else {
+    if (error) error.textContent = "管理者パスコードが違います";
+  }
+}
+function escapeAdminHtml(text) {
+  return String(text || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function getAdminLayerInfo(layerName) {
+  const name = layerName || "";
+  const lower = name.toLowerCase();
+
+  const isCircle =
+    name.includes("円") ||
+    name.includes("30m") ||
+    name.includes("40m");
+
+  const isAdd =
+    name.includes("追加希望") ||
+    name.includes("追加") ||
+    name.includes("新規") ||
+    name.includes("CA Pokestop") ||
+    name.includes("CA Pokéstop") ||
+    lower.includes("add");
+
+  const isPokestop =
+    name.includes("ポケスト") ||
+    name.includes("ポケストップ") ||
+    lower.includes("pokestop") ||
+    lower.includes("poke stop");
+
+  const isGym =
+    name.includes("ジム") ||
+    lower.includes("gym");
+
+  const isPower =
+    name.includes("パワ") ||
+    name.includes("パワースポット") ||
+    name.includes("パワスポ") ||
+    lower.includes("power");
+
+  const isExisting =
+    !isCircle &&
+    !isAdd &&
+    (
+      name.includes("既存") ||
+      isPokestop ||
+      isGym ||
+      isPower
+    );
+
+  return {
+    isCircle,
+    isAdd,
+    isExisting,
+    isPokestop,
+    isGym,
+    isPower
+  };
+}
+
+async function runAdminFileCheck() {
+  const input = document.getElementById("adminCheckFile");
+  const result = document.getElementById("adminCheckResult");
+
+  if (!input || !input.files.length) {
+    alert("KML / KMZ ファイルを選択してください");
+    return;
+  }
+
+  const file = input.files[0];
+  const fileName = file.name.toLowerCase();
+
+  result.innerHTML = `
+    <div class="distance-warning" style="
+      background:rgba(59,130,246,0.12);
+      border:1px solid rgba(96,165,250,0.35);
+    ">
+      <span class="loading">
+        <span class="spinner"></span>
+        内容チェック中…
+      </span>
+    </div>
+  `;
+
+  try {
+    let layers = [];
+    let pointsByLayer = {};
+
+    if (fileName.endsWith(".csv")) {
+      const text = await file.text();
+      const points = parseCSV(text);
+      layers = ["CSV_POI"];
+      pointsByLayer["CSV_POI"] = points.map(p => ({
+        ...p,
+        layer: "CSV_POI"
+      }));
+    } else if (
+      fileName.endsWith(".kml") ||
+      fileName.endsWith(".kmz") ||
+      fileName.endsWith(".zip")
+    ) {
+      const extracted = await extractLayersFromKML(file);
+      layers = extracted.layers;
+      pointsByLayer = extracted.pointsByLayer;
+    } else {
+      result.innerHTML = `
+        <div class="distance-warning">
+          対応していないファイル形式です。KML / KMZ を選択してください。
+        </div>
+      `;
+      return;
+    }
+
+    const allPoints = [];
+    let dummyCount = 0;
+
+    const layerSummary = layers.map(layerName => {
+      const points = pointsByLayer[layerName] || [];
+      const info = getAdminLayerInfo(layerName);
+
+      points.forEach(p => {
+        const point = {
+          ...p,
+          layer: layerName
+        };
+
+        if (isDummyPoint(point)) {
+          dummyCount++;
+        }
+
+        allPoints.push(point);
+      });
+
+      return {
+        name: layerName,
+        count: points.length,
+        ...info
+      };
+    });
+
+    const circleLayers = layerSummary.filter(l => l.isCircle);
+    const addLayers = layerSummary.filter(l => l.isAdd);
+    const existingLayers = layerSummary.filter(l => l.isExisting);
+
+    const usablePoints = allPoints.filter(p => !isDummyPoint(p));
+
+const existingPoints = usablePoints.filter(p => {
+  const info = getAdminLayerInfo(p.layer);
+  return info.isExisting;
+});
+
+const counts = {
+  pokestop: 0,
+  gym: 0,
+  power: 0
+};
+
+existingPoints.forEach(p => {
+  const kind = classifyType(p.type, p.name, p.layer);
+
+  if (kind === "gym") {
+    counts.gym++;
+  } else if (kind === "power") {
+    counts.power++;
+  } else {
+    counts.pokestop++;
+  }
+});
+
+    const layerListHtml = layerSummary.length === 0 ? `
+      <div style="opacity:0.75;">レイヤー情報が見つかりませんでした。</div>
+    ` : layerSummary.map(layer => {
+      let badge = "通常";
+
+      if (layer.isCircle) badge = "円";
+      else if (layer.isAdd) badge = "追加希望";
+      else if (layer.isExisting) badge = "既存POI";
+
+      return `
+        <div style="
+          margin:8px 0;
+          padding:10px;
+          border-radius:10px;
+          background:rgba(15,23,42,0.65);
+          border:1px solid rgba(148,163,184,0.22);
+        ">
+          <strong>${escapeAdminHtml(layer.name)}</strong><br>
+          件数：${layer.count}件 / 種別：${badge}
+        </div>
+      `;
+    }).join("");
+
+    const cautionMessages = [];
+
+    if (circleLayers.length > 0) {
+      cautionMessages.push("円レイヤーあり：再生成時は古い円レイヤーの扱いに注意");
+    }
+
+    if (addLayers.length === 0) {
+  cautionMessages.push("追加希望レイヤーなし：既存POI確認用データの可能性あり");
+}
+
+    if (dummyCount > 0) {
+      cautionMessages.push(`ダミーポイントあり：${dummyCount}件`);
+    }
+
+    const cautionHtml = cautionMessages.length === 0 ? `
+      <div style="
+        margin-top:12px;
+        padding:12px;
+        border-radius:12px;
+        background:rgba(34,197,94,0.12);
+        border:1px solid rgba(34,197,94,0.35);
+        color:#bbf7d0;
+      ">
+        ✅ 大きな注意点は見つかりませんでした。
+      </div>
+    ` : `
+      <div style="
+        margin-top:12px;
+        padding:12px;
+        border-radius:12px;
+        background:rgba(249,115,22,0.12);
+        border:1px solid rgba(249,115,22,0.35);
+        color:#fed7aa;
+      ">
+        <strong>確認ポイント</strong><br>
+        ${cautionMessages.map(m => "・" + escapeAdminHtml(m)).join("<br>")}
+      </div>
+    `;
+
+    result.innerHTML = `
+      <div class="distance-warning" style="
+        background:rgba(59,130,246,0.10);
+        border:1px solid rgba(96,165,250,0.35);
+      ">
+        <strong>KMZ内容チェック結果</strong><br><br>
+
+        ファイル名：${escapeAdminHtml(file.name)}<br>
+        レイヤー数：${layers.length}件<br>
+        全ポイント数：${allPoints.length}件<br>
+有効POI数：${usablePoints.length}件<br>
+既存POI判定数：${existingPoints.length}件<br>
+ダミーポイント：${dummyCount}件<br><br>
+
+        <strong>推定分類</strong><br>
+        既存ポケストップ相当：${counts.pokestop}件<br>
+        既存ジム相当：${counts.gym}件<br>
+        既存パワースポット相当：${counts.power}件<br><br>
+
+        <strong>レイヤー構成</strong><br>
+        既存POI系レイヤー：${existingLayers.length}件<br>
+        追加希望系レイヤー：${addLayers.length}件<br>
+        円レイヤー：${circleLayers.length}件<br>
+
+        ${cautionHtml}
+
+        <br>
+        <details>
+          <summary style="cursor:pointer; font-weight:bold;">
+            レイヤー一覧を開く
+          </summary>
+          <div style="margin-top:10px;">
+            ${layerListHtml}
+          </div>
+        </details>
+      </div>
+    `;
+
+  } catch (error) {
+    console.error(error);
+    result.innerHTML = `
+      <div class="distance-warning">
+        内容チェック中にエラーが発生しました。<br>
+        ファイル形式またはKMZ内のKML構成を確認してください。
+      </div>
+    `;
+  }
 }
 
 function createCircle(lat, lon, radius, points = 72) {
@@ -1164,7 +2140,13 @@ function parseCSV(text) {
 
   const latIndex = headers.findIndex(h => h === "lat" || h.includes("latitude"));
   const lngIndex = headers.findIndex(h => h === "lng" || h === "lon" || h.includes("longitude"));
-  const typeIndex = headers.findIndex(h => h.includes("gameentity"));
+ const typeIndex = headers.findIndex(h =>
+  h.includes("gameentity") ||
+  h.includes("game_entity") ||
+  h.includes("entity") ||
+  h.includes("type") ||
+  h.includes("category")
+);
   const guidIndex = headers.findIndex(h => h.includes("guid"));
   const nameIndex = headers.findIndex(h => h === "title" || h === "name");
 
@@ -1327,20 +2309,362 @@ function createCirclePlacemark(xml, p, radius) {
   return pm;
 }
 
-function classifyType(typeText) {
-  const t = (typeText || "").toLowerCase();
+function addDummyPlacemark(xml, folder, name) {
+  if (!folder) return;
 
-  if (t.includes("gym")) return "gym";
-  if (t.includes("power")) return "power";
-  if (t.includes("pokestop") || t.includes("poke")) return "pokestop";
+  const pm = xml.createElement("Placemark");
+
+  const n = xml.createElement("name");
+  n.textContent = name;
+
+  const styleUrl = xml.createElement("styleUrl");
+  styleUrl.textContent = "#hiddenStyle";
+
+  const point = xml.createElement("Point");
+  const coord = xml.createElement("coordinates");
+
+  // 海上ダミー
+  coord.textContent = "0,0,0";
+
+  point.appendChild(coord);
+
+  pm.appendChild(n);
+  pm.appendChild(styleUrl);
+  pm.appendChild(point);
+
+  folder.appendChild(pm);
+}
+function classifyType(typeText = "", name = "", layerName = "") {
+  const text = `${typeText} ${name} ${layerName}`.toLowerCase();
+
+  if (
+    text.includes("power") ||
+    text.includes("powerspot") ||
+    text.includes("power spot") ||
+    text.includes("パワ") ||
+    text.includes("パワースポット") ||
+    text.includes("パワスポ")
+  ) {
+    return "power";
+  }
+
+  if (
+    text.includes("gym") ||
+    text.includes("ジム")
+  ) {
+    return "gym";
+  }
+
+  if (
+    text.includes("pokestop") ||
+    text.includes("poke stop") ||
+    text.includes("ポケスト") ||
+    text.includes("ポケストップ")
+  ) {
+    return "pokestop";
+  }
 
   return "pokestop";
 }
 function waitForRender() {
   return new Promise(resolve => requestAnimationFrame(resolve));
 }
+function isDummyPoint(p) {
+  const name = p.name || "";
 
+  if (Number(p.lat) === 0 && Number(p.lng) === 0) return true;
+  if (name.includes("ここに追加")) return true;
+  if (name.includes("レイヤー保持用")) return true;
+
+  return false;
+}
+
+async function generateCircleOnlyKMZ() {
+  const files = Array.from(document.getElementById("circleOnlyFileInput").files);
+  const status = document.getElementById("circleOnlyStatus");
+
+  const radii = Array.from(
+    document.querySelectorAll('input[name="circleOnlyRadius"]:checked')
+  ).map(e => Number(e.value));
+
+  if (files.length === 0) {
+    alert("CSV / KML / KMZ ファイルを選択してください");
+    return;
+  }
+
+  if (radii.length === 0) {
+    alert("30m円または40m円を選択してください");
+    return;
+  }
+
+  document.getElementById("loadingOverlay").style.display = "flex";
+  document.getElementById("loadingText").textContent = "円だけKMZ生成中…";
+
+  try {
+    let points = [];
+
+    for (const file of files) {
+  const fileName = file.name.toLowerCase();
+
+  if (fileName.endsWith(".csv")) {
+    const text = await file.text();
+    points.push(...parseCSV(text));
+  } else if (
+    fileName.endsWith(".kml") ||
+    fileName.endsWith(".kmz") ||
+    fileName.endsWith(".zip")
+  ) {
+    points.push(...await getPointsFromKmlOrKmz(file));
+  }
+}
+   points = points.filter(p => {
+  if (isDummyPoint(p)) return false;
+
+  const layerName = p.layer || "";
+  if (
+    layerName.includes("円") ||
+    layerName.includes("30m") ||
+    layerName.includes("40m")
+  ) {
+    return false;
+  }
+
+  return true;
+});
+    const beforeCount = points.length;
+
+    if (beforeCount === 0) {
+      alert("円を作成できるスポット座標が見つかりませんでした");
+      status.textContent = "";
+      return;
+    }
+
+    const result = removeDuplicate(points);
+    points = result.uniquePoints;
+
+    const parser = new DOMParser();
+    const outputXml = parser.parseFromString(
+      `<?xml version="1.0" encoding="UTF-8"?>
+      <kml xmlns="http://www.opengis.net/kml/2.2">
+        <Document>
+          <name>Campsite Circle Only Output</name>
+        </Document>
+      </kml>`,
+      "application/xml"
+    );
+
+    const doc = outputXml.getElementsByTagName("Document")[0];
+
+    const folders = {
+      circle40: createFolder(outputXml, doc, "40m円（基本距離）"),
+      circle30: createFolder(outputXml, doc, "30m円（調整用）")
+    };
+
+    points.forEach(p => {
+      radii.forEach(radius => {
+        const circlePlacemark = createCirclePlacemark(outputXml, p, radius);
+
+        if (radius === 40) {
+          folders.circle40.appendChild(circlePlacemark);
+        } else if (radius === 30) {
+          folders.circle30.appendChild(circlePlacemark);
+        }
+      });
+    });
+
+    const serializer = new XMLSerializer();
+    const newKml = serializer.serializeToString(outputXml);
+
+    const zip = new JSZip();
+    zip.file("doc.kml", newKml);
+
+    const blob = await zip.generateAsync({ type: "blob" });
+
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+
+    const now = new Date();
+    a.download = `campsite_circles_${now.getFullYear()}${now.getMonth() + 1}${now.getDate()}.kmz`;
+    a.click();
+
+    status.innerHTML =
+      `読み込み：${beforeCount}件<br>` +
+      `重複削除：${result.duplicateCount}件<br>` +
+      `円作成対象：${points.length}件<br>` +
+      `✔ 円だけKMZを生成しました`;
+
+    const success = document.getElementById("successSound");
+    if (success) {
+      success.currentTime = 0;
+      success.volume = 0.12;
+      setTimeout(() => {
+        success.play().catch(() => {});
+      }, 100);
+    }
+
+  } catch (error) {
+    console.error(error);
+    alert("円だけKMZの生成中にエラーが発生しました");
+    status.textContent = "";
+  } finally {
+    document.getElementById("loadingOverlay").style.display = "none";
+  }
+}
+  function isIgnoredLayerForExistingOnly(p) {
+  const layerName = p.layer || "";
+  const name = p.name || "";
+
+  if (typeof isDummyPoint === "function" && isDummyPoint(p)) return true;
+
+  if (
+    layerName.includes("円") ||
+    layerName.includes("30m") ||
+    layerName.includes("40m")
+  ) {
+    return true;
+  }
+
+  if (
+    layerName.includes("追加希望") ||
+    layerName.includes("追加") ||
+    name.includes("ここに追加") ||
+    name.includes("レイヤー保持用")
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+async function generateExistingOnlyKMZ() {
+  const files = Array.from(document.getElementById("existingOnlyFileInput").files);
+  const status = document.getElementById("existingOnlyStatus");
+
+  if (files.length === 0) {
+    alert("CSV / KML / KMZ ファイルを選択してください");
+    return;
+  }
+
+  document.getElementById("loadingOverlay").style.display = "flex";
+  document.getElementById("loadingText").textContent = "既存POI分類KMZ生成中…";
+
+  try {
+    let points = [];
+
+    for (const file of files) {
+      const fileName = file.name.toLowerCase();
+
+      if (fileName.endsWith(".csv")) {
+        const text = await file.text();
+        points.push(...parseCSV(text));
+      } else if (
+        fileName.endsWith(".kml") ||
+        fileName.endsWith(".kmz") ||
+        fileName.endsWith(".zip")
+      ) {
+        points.push(...await getPointsFromKmlOrKmz(file));
+      }
+    }
+
+    points = points.filter(p => !isIgnoredLayerForExistingOnly(p));
+
+    const beforeCount = points.length;
+
+    if (beforeCount === 0) {
+      alert("分類できる既存POIが見つかりませんでした");
+      status.textContent = "";
+      return;
+    }
+
+    const duplicateResult = removeDuplicate(points);
+    points = duplicateResult.uniquePoints;
+
+    const parser = new DOMParser();
+    const outputXml = parser.parseFromString(
+      `<?xml version="1.0" encoding="UTF-8"?>
+      <kml xmlns="http://www.opengis.net/kml/2.2">
+        <Document>
+          <name>Campsite Existing POI Output</name>
+        </Document>
+      </kml>`,
+      "application/xml"
+    );
+
+    const doc = outputXml.getElementsByTagName("Document")[0];
+
+    const folders = {
+      pokestop: createFolder(outputXml, doc, "既存のポケストップ"),
+      gym: createFolder(outputXml, doc, "既存のジム"),
+      power: createFolder(outputXml, doc, "既存のパワースポット")
+    };
+
+    const counts = {
+      pokestop: 0,
+      gym: 0,
+      power: 0
+    };
+
+    points.forEach(p => {
+      const kind = classifyType(p.type, p.name, p.layer);
+      const pointPlacemark = createPointPlacemark(outputXml, p);
+
+      if (kind === "gym") {
+        folders.gym.appendChild(pointPlacemark);
+        counts.gym++;
+      } else if (kind === "power") {
+        folders.power.appendChild(pointPlacemark);
+        counts.power++;
+      } else {
+        folders.pokestop.appendChild(pointPlacemark);
+        counts.pokestop++;
+      }
+    });
+
+    const serializer = new XMLSerializer();
+    const newKml = serializer.serializeToString(outputXml);
+
+    const zip = new JSZip();
+    zip.file("doc.kml", newKml);
+
+    const blob = await zip.generateAsync({ type: "blob" });
+
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+
+    const now = new Date();
+    a.download = `campsite_existing_poi_${now.getFullYear()}${now.getMonth() + 1}${now.getDate()}.kmz`;
+    a.click();
+
+    status.innerHTML =
+      `読み込み：${beforeCount}件<br>` +
+      `重複削除：${duplicateResult.duplicateCount}件<br>` +
+      `既存ポケストップ：${counts.pokestop}件<br>` +
+      `既存ジム：${counts.gym}件<br>` +
+      `既存パワースポット：${counts.power}件<br>` +
+      `✔ 既存POI分類KMZを生成しました`;
+
+    const success = document.getElementById("successSound");
+    if (success) {
+      success.currentTime = 0;
+      success.volume = 0.12;
+      setTimeout(() => {
+        success.play().catch(() => {});
+      }, 100);
+    }
+
+  } catch (error) {
+    console.error(error);
+    alert("既存POI分類KMZの生成中にエラーが発生しました");
+    status.textContent = "";
+  } finally {
+    document.getElementById("loadingOverlay").style.display = "none";
+  }
+}
 async function generateKMZ() {
+  if (ENABLE_QUIZ && localStorage.getItem("quizPassed") !== QUIZ_VERSION) {
+  showQuiz();
+  return;
+}
   document.getElementById("loadingOverlay").style.display = "flex";
   const files = Array.from(document.getElementById("fileInput").files);
   const status = document.getElementById("status");
@@ -1369,10 +2693,13 @@ await waitForRender();
     if (fileName.endsWith(".csv")) {
       const text = await file.text();
       points.push(...parseCSV(text));
-    } else if (fileName.endsWith(".kml") || fileName.endsWith(".kmz")) {
-      points.push(...await getPointsFromKmlOrKmz(file));
-    }
-  }
+    } else if (
+  fileName.endsWith(".kml") ||
+  fileName.endsWith(".kmz") ||
+  fileName.endsWith(".zip")
+) {
+  points.push(...await getPointsFromKmlOrKmz(file));
+}  }
 
   const beforeCount = points.length;
 
@@ -1408,37 +2735,55 @@ await waitForRender();
   );
 
   const doc = outputXml.getElementsByTagName("Document")[0];
+const hiddenStyle = outputXml.createElement("Style");
+hiddenStyle.setAttribute("id", "hiddenStyle");
 
+const iconStyle = outputXml.createElement("IconStyle");
+const scale = outputXml.createElement("scale");
+scale.textContent = "0";
+
+iconStyle.appendChild(scale);
+hiddenStyle.appendChild(iconStyle);
+doc.appendChild(hiddenStyle);
   const folders = {
-    pokestop: createFolder(outputXml, doc, "既存のポケストップ"),
-    gym: createFolder(outputXml, doc, "既存のジム"),
-    power: createFolder(outputXml, doc, "既存のパワースポット"),
-    circle40: createFolder(outputXml, doc, "40m円（基本距離）"),
-    circle30: createFolder(outputXml, doc, "30m円（調整用）")
-  };
+  pokestop: createFolder(outputXml, doc, "既存のポケストップ"),
+  gym: createFolder(outputXml, doc, "既存のジム"),
+  power: createFolder(outputXml, doc, "既存のパワースポット"),
 
-  points.forEach(p => {
-    const pointPlacemark = createPointPlacemark(outputXml, p);
-    const kind = classifyType(p.type);
+  addPokestop: createFolder(outputXml, doc, "追加希望ポケスト"),
+  addGym: createFolder(outputXml, doc, "追加希望ジム"),
+  addPower: createFolder(outputXml, doc, "追加希望パワスポ"),
 
-    if (kind === "gym") {
-      folders.gym.appendChild(pointPlacemark);
-    } else if (kind === "power") {
-      folders.power.appendChild(pointPlacemark);
-    } else {
-      folders.pokestop.appendChild(pointPlacemark);
+  circle40: createFolder(outputXml, doc, "40m円（基本距離）"),
+  circle30: createFolder(outputXml, doc, "30m円（調整用）")
+};
+
+addDummyPlacemark(outputXml, folders.addPokestop, "ここに追加ポケストを配置");
+addDummyPlacemark(outputXml, folders.addGym, "ここに追加ジムを配置");
+addDummyPlacemark(outputXml, folders.addPower, "ここに追加パワスポを配置");
+
+points.forEach(p => {
+  const kind = classifyType(p.type, p.name, p.layer);
+  const pointPlacemark = createPointPlacemark(outputXml, p);
+
+  if (kind === "gym") {
+    folders.gym.appendChild(pointPlacemark);
+  } else if (kind === "power") {
+    folders.power.appendChild(pointPlacemark);
+  } else {
+    folders.pokestop.appendChild(pointPlacemark);
+  }
+
+  radii.forEach(radius => {
+    const circlePlacemark = createCirclePlacemark(outputXml, p, radius);
+
+    if (radius === 40) {
+      folders.circle40.appendChild(circlePlacemark);
+    } else if (radius === 30) {
+      folders.circle30.appendChild(circlePlacemark);
     }
-
-    radii.forEach(radius => {
-      const circlePlacemark = createCirclePlacemark(outputXml, p, radius);
-
-      if (radius === 40) {
-        folders.circle40.appendChild(circlePlacemark);
-      } else if (radius === 30) {
-        folders.circle30.appendChild(circlePlacemark);
-      }
-    });
   });
+});
 
   const serializer = new XMLSerializer();
   const newKml = serializer.serializeToString(outputXml);
@@ -1456,7 +2801,7 @@ a.download = `campsite_${now.getFullYear()}${now.getMonth()+1}${now.getDate()}.k
 
 const success = document.getElementById("successSound");
 success.currentTime = 0;
-success.volume = 0.3;
+success.volume = 0.12;
 
 setTimeout(() => {
   success.play().catch(() => {});
@@ -1483,6 +2828,123 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 });
 </script>
+<div id="adminLoginModal" style="
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.8);
+  z-index:99999;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+">
+  <div style="
+    background:#0f172a;
+    padding:24px;
+    border-radius:16px;
+    width:90%;
+    max-width:360px;
+    color:white;
+    border:1px solid #334155;
+  ">
+    <h3>管理者ログイン</h3>
+    <p class="note">
+      管理者専用機能を開くには、パスコードを入力してください。
+    </p>
 
+    <input
+      id="adminPasswordInput"
+      type="text"
+      inputmode="text"
+      autocomplete="off"
+      autocorrect="off"
+      autocapitalize="off"
+      spellcheck="false"
+      placeholder="管理者パスコード"
+      style="
+        width:100%;
+        padding:12px;
+        border-radius:10px;
+        border:none;
+        margin:12px 0;
+        background:#1e293b;
+        color:white;
+        font-size:16px;
+        -webkit-text-security:disc;
+      "
+    >
+
+    <button type="button" class="generate" onclick="checkAdminPassword()">
+      管理者画面を開く
+    </button>
+
+    <button type="button" class="guide-btn" onclick="closeAdminLogin()" style="width:100%;">
+      閉じる
+    </button>
+
+    <p id="adminLoginError" class="error"></p>
+  </div>
+</div>
+<div id="quizModal" style="
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.8);
+  z-index:99999;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+">
+ <div style="
+  background:#0f172a;
+  padding:24px;
+  border-radius:16px;
+  width:90%;
+  max-width:400px;
+  max-height:80vh;
+  overflow-y:auto;
+  color:white;
+">
+    <h3>📘 利用前チェック（必須）</h3>
+    <p class="note">
+      最低限のルール確認です。詳細はガイドをご覧ください。
+    </p>
+
+    <!-- Q1 -->
+    <p>Q1. 基本距離は？</p>
+    <label><input type="radio" name="q1" value="20">20m</label><br>
+    <label><input type="radio" name="q1" value="30">30m</label><br>
+    <label><input type="radio" name="q1" value="40">40m</label><br>
+    <label><input type="radio" name="q1" value="100">100m</label>
+
+    <br><br>
+
+    <!-- Q2 -->
+    <p>Q2. 30mはいつ使う？</p>
+    <label><input type="radio" name="q2" value="always">常に使う</label><br>
+    <label><input type="radio" name="q2" value="hard">配置が厳しい時のみ</label><br>
+    <label><input type="radio" name="q2" value="dense">密集させたい時</label><br>
+
+    <br><br>
+
+    <!-- Q3 -->
+    <p>Q3. 追加POIの上限は？</p>
+    <label><input type="radio" name="q3" value="10">10</label><br>
+    <label><input type="radio" name="q3" value="20">20</label><br>
+    <label><input type="radio" name="q3" value="25">25</label><br>
+    <label><input type="radio" name="q3" value="40">40</label>
+
+    <br><br>
+
+    <a href="/Campsite-Design-Tool-JP/campsite-guide.pdf" target="_blank" class="link-btn">
+  📘 ガイドPDFを開く
+</a>
+
+    <br><br>
+
+    <button class="generate" onclick="checkQuiz()">回答する</button>
+
+  </div>
+</div>
 </body>
 </html>
