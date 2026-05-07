@@ -2228,6 +2228,98 @@ function getDensityRank(count) {
 
   return null;
 }
+function analyzeDensityArea(area, allPoints, layerTypeCounts) {
+
+  const count = area.count;
+
+  const lats = area.nearby.map(p => p.lat);
+  const lngs = area.nearby.map(p => p.lng);
+
+  const latRange = Math.max(...lats) - Math.min(...lats);
+  const lngRange = Math.max(...lngs) - Math.min(...lngs);
+
+  const latMeters = latRange * 111320;
+  const lngMeters = lngRange * 111320 * Math.cos(area.center.lat * Math.PI / 180);
+
+  const longSide = Math.max(latMeters, lngMeters);
+  const shortSide = Math.max(1, Math.min(latMeters, lngMeters));
+
+  const shapeRatio = longSide / shortSide;
+
+  const lineDense = shapeRatio >= 2.2;
+
+  // 超高密度
+  if (count >= 14) {
+    return {
+      type: "superHigh",
+      display: {
+        icon: "🚨",
+        label: "超高密度",
+        color: "#dc2626",
+        message: "POIが非常に集中しています。長時間滞留・通信混雑・通行干渉に注意してください。"
+      }
+    };
+  }
+
+  // 追加偏重
+  if (layerTypeCounts.add >= 6) {
+    return {
+      type: "addHeavy",
+      display: {
+        icon: "⚠",
+        label: "追加偏重",
+        color: "#f97316",
+        message: "追加希望POIが密集しています。調整される可能性があります。"
+      }
+    };
+  }
+
+  // 導線型
+  if (lineDense && count >= 6) {
+    return {
+      type: "line",
+      display: {
+        icon: "🟣",
+        label: "導線密集",
+        color: "#a855f7",
+        message: "一本道・園路・駅導線のように、細長い範囲でPOIが集中しています。移動中の滞留に注意してください。"
+      }
+    };
+  }
+
+  // 広場型
+  if (!lineDense && count >= 10) {
+    return {
+      type: "plaza",
+      display: {
+        icon: "🔵",
+        label: "広場集中",
+        color: "#3b82f6",
+        message: "広場・中心エリアにPOIが集まっています。集合地点として優秀です。"
+      }
+    };
+  }
+
+  // 回遊型
+  if (!lineDense && count >= 6) {
+    return {
+      type: "loop",
+      display: {
+        icon: "🟢",
+        label: "回遊型",
+        color: "#22c55e",
+        message: "周回しながら遊びやすい配置です。大人数でも分散しやすい構造です。"
+      }
+    };
+  }
+
+  return {
+    type: "none",
+    display: null
+  };
+}
+
+
 function isLineDense(center, points) {
   const nearby = points.filter(p => {
     return getDistanceMeters(center, p) <= 80;
@@ -2372,7 +2464,8 @@ async function runAdminDensityCheck() {
 
   const rankType = lineDense ? "line" : "high";
 
-  const display = rankType === "line"
+  const analysis = analyzeDensityArea(area, usablePoints, layerTypeCounts);
+  const display = analysis.display;
     ? {
         icon: "🟣",
         label: "導線密集",
