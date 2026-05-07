@@ -2349,8 +2349,8 @@ async function runAdminDensityCheck() {
       if (item.count < 3) return;
 
       const tooClose = pickedAreas.some(area => {
-        return getDistanceMeters(area.center, item.center) <= radius;
-      });
+  return getDistanceMeters(area.center, item.center) <= radius * 0.45;
+});
 
       if (!tooClose) {
         pickedAreas.push(item);
