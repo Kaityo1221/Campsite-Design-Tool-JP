@@ -788,11 +788,16 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
   <button class="generate" onclick="runAdminDensityCheck()">
     密集エリアをチェック
   </button>
-
   <div id="adminDensityResult"></div>
+  <button class="generate" onclick="generateDensityZoneKMZ()">
+  密集ゾーンKMZを生成
+</button>
+<div id="adminDensityZoneStatus"></div>
+</div>
+  </div>
+</section>
 
-  
-  <div id="adminDensityResult"></div>
+<section id="script" class="tab-content">
 </div>
   </div>
 </section>
@@ -2459,7 +2464,166 @@ async function runAdminDensityCheck() {
     `;
   }
 }
+async function generateDensityZoneKMZ() {
+  const input = document.getElementById("adminDensityFile");
+  const status = document.getElementById("adminDensityZoneStatus");
+  const radius = 100;
 
+  if (!input || !input.files.length) {
+    alert("KML / KMZ ファイルを選択してください");
+    return;
+  }
+
+  status.innerHTML = `
+    <span class="loading">
+      <span class="spinner"></span>
+      密集ゾーンKMZを生成中…
+    </span>
+  `;
+
+  try {
+    const file = input.files[0];
+    const extracted = await extractLayersFromKML(file);
+    const layers = extracted.layers;
+    const pointsByLayer = extracted.pointsByLayer;
+
+    let allPoints = [];
+
+    layers.forEach(layerName => {
+      const points = pointsByLayer[layerName] || [];
+      points.forEach(p => {
+        allPoints.push({
+          ...p,
+          layer: layerName
+        });
+      });
+    });
+
+    const usablePoints = allPoints.filter(p => !isIgnoredForDensityCheck(p));
+
+    if (usablePoints.length < 2) {
+      status.innerHTML = `
+        <div class="distance-warning">
+          密集ゾーンを作成できる有効POIが不足しています。
+        </div>
+      `;
+      return;
+    }
+
+    const densityList = usablePoints.map(center => {
+      const nearby = usablePoints.filter(p => {
+        return getDistanceMeters(center, p) <= radius;
+      });
+
+      return {
+        center,
+        count: nearby.length,
+        nearby
+      };
+    });
+
+    densityList.sort((a, b) => b.count - a.count);
+
+    const pickedAreas = [];
+
+    densityList.forEach(item => {
+      if (item.count < 3) return;
+
+      const tooClose = pickedAreas.some(area => {
+        return getDistanceMeters(area.center, item.center) <= radius;
+      });
+
+      if (!tooClose) {
+        pickedAreas.push(item);
+      }
+    });
+
+    const topAreas = pickedAreas.slice(0, 10);
+
+    if (topAreas.length === 0) {
+      status.innerHTML = `
+        <div class="distance-warning">
+          密集ゾーン候補は見つかりませんでした。
+        </div>
+      `;
+      return;
+    }
+
+    const parser = new DOMParser();
+    const outputXml = parser.parseFromString(
+      `<?xml version="1.0" encoding="UTF-8"?>
+      <kml xmlns="http://www.opengis.net/kml/2.2">
+        <Document>
+          <name>Density Zones</name>
+        </Document>
+      </kml>`,
+      "application/xml"
+    );
+
+    const doc = outputXml.getElementsByTagName("Document")[0];
+
+    addDensityStyles(outputXml, doc);
+
+    const highFolder = createFolder(outputXml, doc, "🔴 高密度ゾーン");
+    const midFolder = createFolder(outputXml, doc, "🟠 中密度ゾーン");
+    const lowFolder = createFolder(outputXml, doc, "🟡 低密度ゾーン");
+
+    topAreas.forEach((area, index) => {
+      let styleId = "densityLow";
+      let label = `低密度ゾーン_${index + 1}_${area.count}件`;
+      let folder = lowFolder;
+
+      if (area.count >= 10) {
+        styleId = "densityHigh";
+        label = `高密度ゾーン_${index + 1}_${area.count}件`;
+        folder = highFolder;
+      } else if (area.count >= 6) {
+        styleId = "densityMid";
+        label = `中密度ゾーン_${index + 1}_${area.count}件`;
+        folder = midFolder;
+      }
+
+      const zone = createDensityZonePlacemark(
+        outputXml,
+        area.center,
+        radius,
+        styleId,
+        label
+      );
+
+      folder.appendChild(zone);
+    });
+
+    const serializer = new XMLSerializer();
+    const newKml = serializer.serializeToString(outputXml);
+
+    const zip = new JSZip();
+    zip.file("doc.kml", newKml);
+
+    const blob = await zip.generateAsync({ type: "blob" });
+
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+
+    const now = new Date();
+    a.download = `density_zones_${now.getFullYear()}${now.getMonth() + 1}${now.getDate()}.kmz`;
+    a.click();
+
+    status.innerHTML = `
+      密集ゾーン：${topAreas.length}件<br>
+      判定範囲：100m<br>
+      ✔ 密集ゾーンKMZを生成しました
+    `;
+
+  } catch (error) {
+    console.error(error);
+    status.innerHTML = `
+      <div class="distance-warning">
+        密集ゾーンKMZの生成中にエラーが発生しました。
+      </div>
+    `;
+  }
+}
 function createCircle(lat, lon, radius, points = 72) {
   const earthRadius = 6378137;
   const coords = [];
@@ -2678,6 +2842,53 @@ function createCirclePlacemark(xml, p, radius) {
   polygon.appendChild(outer);
 
   pm.appendChild(name);
+  pm.appendChild(polygon);
+
+  return pm;
+}
+function addDensityStyles(xml, doc) {
+  const styles = [
+    { id: "densityHigh", color: "7d0000ff" },
+    { id: "densityMid", color: "7d00a5ff" },
+    { id: "densityLow", color: "7d00ffff" }
+  ];
+
+  styles.forEach(s => {
+    const style = xml.createElement("Style");
+    style.setAttribute("id", s.id);
+
+    const poly = xml.createElement("PolyStyle");
+    const color = xml.createElement("color");
+    color.textContent = s.color;
+
+    poly.appendChild(color);
+    style.appendChild(poly);
+    doc.appendChild(style);
+  });
+}
+
+function createDensityZonePlacemark(xml, p, radius, styleId, label) {
+  const pm = xml.createElement("Placemark");
+
+  const name = xml.createElement("name");
+  name.textContent = label;
+
+  const styleUrl = xml.createElement("styleUrl");
+  styleUrl.textContent = "#" + styleId;
+
+  const polygon = xml.createElement("Polygon");
+  const outer = xml.createElement("outerBoundaryIs");
+  const ring = xml.createElement("LinearRing");
+  const coordinates = xml.createElement("coordinates");
+
+  coordinates.textContent = createCircle(p.lat, p.lng, radius);
+
+  ring.appendChild(coordinates);
+  outer.appendChild(ring);
+  polygon.appendChild(outer);
+
+  pm.appendChild(name);
+  pm.appendChild(styleUrl);
   pm.appendChild(polygon);
 
   return pm;
