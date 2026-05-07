@@ -2256,11 +2256,29 @@ function getDensityRank(count) {
   };
 }
 function isLineDense(center, points) {
-  const nearby50 = points.filter(p => {
-    return getDistanceMeters(center, p) <= 50;
+  const nearby = points.filter(p => {
+    return getDistanceMeters(center, p) <= 80;
   });
 
-  return nearby50.length >= 6;
+  if (nearby.length < 6) return false;
+
+  const lats = nearby.map(p => p.lat);
+  const lngs = nearby.map(p => p.lng);
+
+  const latRange = Math.max(...lats) - Math.min(...lats);
+  const lngRange = Math.max(...lngs) - Math.min(...lngs);
+
+  const latMeters = latRange * 111320;
+  const lngMeters = lngRange * 111320 * Math.cos(center.lat * Math.PI / 180);
+
+  const longSide = Math.max(latMeters, lngMeters);
+  const shortSide = Math.min(latMeters, lngMeters);
+
+  if (shortSide === 0) return false;
+
+  const shapeRatio = longSide / shortSide;
+
+  return shapeRatio >= 2.2;
 }
 async function runAdminDensityCheck() {
   const input = document.getElementById("adminDensityFile");
