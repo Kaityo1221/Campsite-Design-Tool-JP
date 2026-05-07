@@ -470,22 +470,13 @@ li {
 
   
 <body>
- <div class="version-badge" onclick="toggleUpdateLog(event)">v5.8</div>
+ <div class="version-badge" onclick="toggleUpdateLog(event)">v5.9</div>
 <div id="updateLog" class="update-log">
   <strong>更新内容</strong><br>
-v5.8<br>
-・開発環境で作成した内容を本番環境へ反映<br>
-・個別ツールに「円だけ生成」「既存POI分類だけ生成」機能を追加<br>
-・既存POI、追加希望レイヤー、30m／40m円レイヤーを分けて出力できる構成に改善<br>
-・管理者専用入口と管理者パスコード認証を追加<br>
-・管理者ツールに「KMZ内容チェック」機能を追加<br>
-・KML／KMZのレイヤー数、全ポイント数、有効POI数、ダミーポイント数を確認できるよう対応<br>
-・既存POI系レイヤー、追加希望系レイヤー、円レイヤーの有無を確認できるよう対応<br>
-・既存ポケストップ相当／既存ジム相当／既存パワースポット相当の推定分類を表示<br>
-・距離チェックに拠点充実度、CA所感、分類別チェック、既存POI同士の参考判定を追加<br>
-・利用前チェッククイズとガイドPDF導線を追加<br>
-・iPhone保存時のZIP→KMZ名称変更案内を追加<br>
-・My Maps／KMZレビュー時に他CAの作成データを確認しやすい構成へ改善<br>
+v5.9<br>
+・密集エリアチェックの判定半径を100m→80mへ調整<br>
+・導線型のPOI集中を検出する「導線密集エリア」判定を追加<br>
+・駅導線、公園園路、一本道型の滞留ポイントを確認しやすく改善<br>
   
 </div>
   <audio id="loginSound" src="login.mp3"></audio>
@@ -2264,7 +2255,13 @@ function getDensityRank(count) {
     message: "大きな密集はありません。"
   };
 }
+function isLineDense(center, points) {
+  const nearby50 = points.filter(p => {
+    return getDistanceMeters(center, p) <= 50;
+  });
 
+  return nearby50.length >= 6;
+}
 async function runAdminDensityCheck() {
   const input = document.getElementById("adminDensityFile");
   const result = document.getElementById("adminDensityResult");
@@ -2376,7 +2373,7 @@ async function runAdminDensityCheck() {
 
     const areaHtml = topAreas.map((area, index) => {
   const rank = getDensityRank(area.count);
-
+const lineDense = isLineDense(area.center, usablePoints);
   const layerTypeCounts = {
     existing: 0,
     add: 0,
@@ -2422,6 +2419,20 @@ async function runAdminDensityCheck() {
 中心レイヤー：${escapeAdminHtml(area.center.layer)}<br>
 内訳：既存 ${layerTypeCounts.existing}件 / 追加希望 ${layerTypeCounts.add}件 / その他 ${layerTypeCounts.other}件<br><br>
           <span style="color:#cbd5e1;">${rank.message}</span>
+${lineDense ? `
+  <br><span style="
+    display:inline-block;
+    margin-top:8px;
+    padding:4px 10px;
+    border-radius:999px;
+    background:rgba(249,115,22,0.18);
+    color:#fdba74;
+    font-size:12px;
+    font-weight:bold;
+  ">
+    導線密集エリア
+  </span>
+` : ""}
 
           <details style="margin-top:10px;">
             <summary style="cursor:pointer; font-weight:bold;">
@@ -2467,7 +2478,7 @@ async function runAdminDensityCheck() {
 async function generateDensityZoneKMZ() {
   const input = document.getElementById("adminDensityFile");
   const status = document.getElementById("adminDensityZoneStatus");
-  const radius = 100;
+  const radius = 80;
 
   if (!input || !input.files.length) {
     alert("KML / KMZ ファイルを選択してください");
