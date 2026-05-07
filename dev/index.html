@@ -790,11 +790,6 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
   </button>
 
   <div id="adminDensityResult"></div>
-  <button class="generate" onclick="generateHighDensityZoneKMZ()">
-  高密度ゾーンKMZを生成
-</button>
-
-<div id="adminDensityZoneStatus"></div>
 
   const file = input.files[0];
   const fileName = file.name.toLowerCase();
@@ -2617,16 +2612,7 @@ async function runAdminDensityCheck() {
     `;
   }
 }
-async function generateHighDensityZoneKMZ() {
-  const input = document.getElementById("adminDensityFile");
-  const status = document.getElementById("adminDensityZoneStatus");
-  const radius = 100;
-  const highDensityThreshold = 10;
 
-  if (!input || !input.files.length) {
-    alert("KML / KMZ ファイルを選択してください");
-    return;
-  }
 function createCircle(lat, lon, radius, points = 72) {
   const earthRadius = 6378137;
   const coords = [];
