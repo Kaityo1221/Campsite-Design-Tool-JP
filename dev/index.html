@@ -753,7 +753,7 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
   <h3>密集エリアチェック</h3>
 
   <p class="note">
-  KML / KMZ内の有効POIをもとに、100m以内にPOIが集中している場所を確認します。<br>
+  KML / KMZ内の有効POIをもとに、80m以内にPOIが集中している場所を確認します。<br>
   円レイヤー、ダミーポイントは判定対象から除外します。<br>
   追加希望レイヤーは既存POIとあわせて判定します。
 </p>
@@ -768,8 +768,8 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
   border:1px solid rgba(96,165,250,0.35);
   color:#bfdbfe;
 ">
-  判定範囲：100m固定<br>
-  他CAのMy Mapsを同じ基準で確認するため、密集エリアチェックは100mで統一します。
+  判定範囲：80m固定<br>
+  他CAのMy Mapsを同じ基準で確認するため、密集エリアチェックは80mで統一します。
 </p>
 
 <p class="note">
@@ -2640,7 +2640,7 @@ async function generateDensityZoneKMZ() {
 
     status.innerHTML = `
       密集ゾーン：${topAreas.length}件<br>
-      判定範囲：100m<br>
+      判定範囲：80m<br>
       ✔ 密集ゾーンKMZを生成しました
     `;
 
