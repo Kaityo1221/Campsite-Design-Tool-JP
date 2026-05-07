@@ -2221,39 +2221,17 @@ function isIgnoredForDensityCheck(p) {
 }
 
 function getDensityRank(count) {
+
   if (count >= 10) {
     return {
       label: "高密度",
       icon: "🔴",
       color: "#ef4444",
-      message: "既存POIと追加希望POIを含めて、かなり集中しています。集合・滞留の発生に注意してください。"
+      message: "POIが集中しています。集合・滞留に注意してください。"
     };
   }
 
-  if (count >= 6) {
-    return {
-      label: "中密度",
-      icon: "🟠",
-      color: "#f97316",
-      message: "既存POIと追加希望POIを含めて、まとまりがあります。遊びやすい一方で、人の流れに注意が必要です。"
-    };
-  }
-
-  if (count >= 3) {
-    return {
-      label: "低密度",
-      icon: "🟢",
-      color: "#22c55e",
-      message: "軽いまとまりがあります。回遊ポイント候補として確認できます。"
-    };
-  }
-
-  return {
-    label: "通常",
-    icon: "⚪",
-    color: "#94a3b8",
-    message: "大きな密集はありません。"
-  };
+  return null;
 }
 function isLineDense(center, points) {
   const nearby = points.filter(p => {
@@ -2391,12 +2369,26 @@ async function runAdminDensityCheck() {
 
     const areaHtml = topAreas.map((area, index) => {
   const rank = getDensityRank(area.count);
-const lineDense = isLineDense(area.center, usablePoints);
-  const layerTypeCounts = {
-    existing: 0,
-    add: 0,
-    other: 0
-  };
+
+let rankType = "none";
+
+if (rank?.label === "高密度") {
+  rankType = "high";
+}
+
+if (isLineDense(area.center, usablePoints)) {
+  rankType = "line";
+}
+
+if (!rank && rankType !== "line") {
+  return "";
+}
+
+const layerTypeCounts = {
+  existing: 0,
+  add: 0,
+  other: 0
+};
 
   area.nearby.forEach(p => {
     const info = getAdminLayerInfo(p.layer || "");
