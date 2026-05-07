@@ -2455,42 +2455,36 @@ async function runAdminDensityCheck() {
     }
 
     const areaHtml = topAreas.map((area, index) => {
-  const rank = getDensityRank(area.count);
-  const lineDense = isLineDense(area.center, usablePoints);
-
-  if (!rank && !lineDense) {
-    return "";
-  }
-
-  const rankType = lineDense ? "line" : "high";
-
-  const analysis = analyzeDensityArea(area, usablePoints, layerTypeCounts);
-  const display = analysis.display;
-    ? {
-        icon: "🟣",
-        label: "導線密集",
-        color: "#a855f7",
-        message: "一本道・園路・駅導線のように、細長い範囲でPOIが集中しています。移動中の滞留に注意してください。"
-      }
-    : rank;
-
+  
   const layerTypeCounts = {
-    existing: 0,
-    add: 0,
-    other: 0
-  };
+  existing: 0,
+  add: 0,
+  other: 0
+};
 
-  area.nearby.forEach(p => {
-    const info = getAdminLayerInfo(p.layer || "");
+area.nearby.forEach(p => {
+  const info = getAdminLayerInfo(p.layer || "");
 
-    if (info.isAdd) {
-      layerTypeCounts.add++;
-    } else if (info.isExisting) {
-      layerTypeCounts.existing++;
-    } else {
-      layerTypeCounts.other++;
-    }
-  });
+  if (info.isAdd) {
+    layerTypeCounts.add++;
+  } else if (info.isExisting) {
+    layerTypeCounts.existing++;
+  } else {
+    layerTypeCounts.other++;
+  }
+});
+
+const analysis = analyzeDensityArea(
+  area,
+  usablePoints,
+  layerTypeCounts
+);
+
+const display = analysis.display;
+
+if (!display) {
+  return "";
+}
 
   const nearbyNames = area.nearby
     .slice(0, 8)
