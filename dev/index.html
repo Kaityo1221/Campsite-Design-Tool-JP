@@ -789,11 +789,6 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
 </section>
 
 <section id="script" class="tab-content">
-</div>
-  </div>
-</section>
-
-<section id="script" class="tab-content">
     <div class="panel">
       <h2>スクリプト導入方法</h2>
 
@@ -2261,7 +2256,7 @@ function isLineDense(center, points) {
 async function runAdminDensityCheck() {
   const input = document.getElementById("adminDensityFile");
   const result = document.getElementById("adminDensityResult");
-  const radius = 100;
+  const radius = 80;
 
   if (!input || !input.files.length) {
     alert("KML / KMZ ファイルを選択してください");
@@ -2369,26 +2364,28 @@ async function runAdminDensityCheck() {
 
     const areaHtml = topAreas.map((area, index) => {
   const rank = getDensityRank(area.count);
+  const lineDense = isLineDense(area.center, usablePoints);
 
-let rankType = "none";
+  if (!rank && !lineDense) {
+    return "";
+  }
 
-if (rank?.label === "高密度") {
-  rankType = "high";
-}
+  const rankType = lineDense ? "line" : "high";
 
-if (isLineDense(area.center, usablePoints)) {
-  rankType = "line";
-}
+  const display = rankType === "line"
+    ? {
+        icon: "🟣",
+        label: "導線密集",
+        color: "#a855f7",
+        message: "一本道・園路・駅導線のように、細長い範囲でPOIが集中しています。移動中の滞留に注意してください。"
+      }
+    : rank;
 
-if (!rank && rankType !== "line") {
-  return "";
-}
-
-const layerTypeCounts = {
-  existing: 0,
-  add: 0,
-  other: 0
-};
+  const layerTypeCounts = {
+    existing: 0,
+    add: 0,
+    other: 0
+  };
 
   area.nearby.forEach(p => {
     const info = getAdminLayerInfo(p.layer || "");
@@ -2403,60 +2400,46 @@ const layerTypeCounts = {
   });
 
   const nearbyNames = area.nearby
-        .slice(0, 8)
-        .map(p => `・${escapeAdminHtml(p.name)} <span style="opacity:0.7;">(${escapeAdminHtml(p.layer)})</span>`)
-        .join("<br>");
+    .slice(0, 8)
+    .map(p => `・${escapeAdminHtml(p.name)} <span style="opacity:0.7;">(${escapeAdminHtml(p.layer)})</span>`)
+    .join("<br>");
 
-      const moreCount = area.nearby.length > 8
-        ? `<br><span style="opacity:0.75;">ほか ${area.nearby.length - 8}件</span>`
-        : "";
+  const moreCount = area.nearby.length > 8
+    ? `<br><span style="opacity:0.75;">ほか ${area.nearby.length - 8}件</span>`
+    : "";
 
-      return `
-        <div style="
-          margin:12px 0;
-          padding:14px;
-          border-radius:14px;
-          background:rgba(15,23,42,0.65);
-          border:1px solid rgba(148,163,184,0.25);
-          border-left:6px solid ${rank.color};
-        ">
-          <strong style="color:${rank.color}; font-size:16px;">
-            ${rank.icon} エリア${index + 1}：${rank.label}
-          </strong><br>
+  return `
+    <div style="
+      margin:12px 0;
+      padding:14px;
+      border-radius:14px;
+      background:rgba(15,23,42,0.65);
+      border:1px solid rgba(148,163,184,0.25);
+      border-left:6px solid ${display.color};
+    ">
+      <strong style="color:${display.color}; font-size:16px;">
+        ${display.icon} エリア${index + 1}：${display.label}
+      </strong><br>
 
-          中心候補：${escapeAdminHtml(area.center.name)}<br>
-半径${radius}m以内：${area.count}件<br>
-中心レイヤー：${escapeAdminHtml(area.center.layer)}<br>
-内訳：既存 ${layerTypeCounts.existing}件 / 追加希望 ${layerTypeCounts.add}件 / その他 ${layerTypeCounts.other}件<br><br>
-          <span style="color:#cbd5e1;">${rank.message}</span>
-${lineDense ? `
-  <br><span style="
-    display:inline-block;
-    margin-top:8px;
-    padding:4px 10px;
-    border-radius:999px;
-    background:rgba(249,115,22,0.18);
-    color:#fdba74;
-    font-size:12px;
-    font-weight:bold;
-  ">
-    導線密集エリア
-  </span>
-` : ""}
+      中心候補：${escapeAdminHtml(area.center.name)}<br>
+      半径${radius}m以内：${area.count}件<br>
+      中心レイヤー：${escapeAdminHtml(area.center.layer)}<br>
+      内訳：既存 ${layerTypeCounts.existing}件 / 追加希望 ${layerTypeCounts.add}件 / その他 ${layerTypeCounts.other}件<br><br>
 
-          <details style="margin-top:10px;">
-            <summary style="cursor:pointer; font-weight:bold;">
-              周辺POIを見る
-            </summary>
-            <div style="margin-top:8px; line-height:1.7;">
-              ${nearbyNames}
-              ${moreCount}
-            </div>
-          </details>
+      <span style="color:#cbd5e1;">${display.message}</span>
+
+      <details style="margin-top:10px;">
+        <summary style="cursor:pointer; font-weight:bold;">
+          周辺POIを見る
+        </summary>
+        <div style="margin-top:8px; line-height:1.7;">
+          ${nearbyNames}
+          ${moreCount}
         </div>
-      `;
-    }).join("");
-
+      </details>
+    </div>
+  `;
+}).join("");
     result.innerHTML = `
       <div class="distance-warning" style="
         background:rgba(59,130,246,0.10);
