@@ -2959,19 +2959,6 @@ function addDensityStyles(xml, doc) {
     doc.appendChild(style);
   });
 }
-  styles.forEach(s => {
-    const style = xml.createElement("Style");
-    style.setAttribute("id", s.id);
-
-    const poly = xml.createElement("PolyStyle");
-    const color = xml.createElement("color");
-    color.textContent = s.color;
-
-    poly.appendChild(color);
-    style.appendChild(poly);
-    doc.appendChild(style);
-  });
-}
 
 function createDensityZonePlacemark(xml, p, radius, styleId, label) {
   const pm = xml.createElement("Placemark");
