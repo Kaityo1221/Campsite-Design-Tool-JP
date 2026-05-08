@@ -1504,19 +1504,25 @@ function calculateCampsiteScore(points, warnings) {
 
   score = Math.round(Math.max(0, Math.min(100, score)));
 
-  let rank = "C";
-  let label = "調整あり";
+  let rank = "B";
+let label = "良好";
 
-  if (score >= 85) {
-    rank = "S";
-    label = "理想";
-  } else if (score >= 70) {
-    rank = "A";
-    label = "かなり良い";
-  } else if (score >= 50) {
-    rank = "B";
-    label = "良好";
-  }
+if (score >= 85) {
+  rank = "S";
+  label = "理想";
+} else if (score >= 70) {
+  rank = "A";
+  label = "かなり良い";
+} else if (score >= 50) {
+  rank = "B";
+  label = "良好";
+}
+
+// POI数が少ない場合だけ、C評価にする
+if (points.length < 8) {
+  rank = "C";
+  label = "発展余地あり";
+}
 
   let type = "バランス型";
   if (under20 > 0 || under30 >= 5) {
