@@ -470,13 +470,14 @@ li {
 
   
 <body>
- <div class="version-badge" onclick="toggleUpdateLog(event)">v5.9</div>
+ <div class="version-badge" onclick="toggleUpdateLog(event)">v6.0</div>
 <div id="updateLog" class="update-log">
   <strong>更新内容</strong><br>
-v5.9<br>
-・密集エリアチェックの判定半径を100m→80mへ調整<br>
-・導線型のPOI集中を検出する「導線密集エリア」判定を追加<br>
-・駅導線、公園園路、一本道型の滞留ポイントを確認しやすく改善<br>
+v6.0<br>
+・距離チェック画面のpanel閉じタグ不足を修正<br>
+・高密度ゾーンKMZ生成時の表示件数を、実際の高密度ゾーン件数に修正<br>
+・密集エリアチェックと密集ゾーンKMZ生成の重複判定基準を統一<br>
+・密集ゾーン出力を高密度ゾーン専用に整理<br>
   
 </div>
   <audio id="loginSound" src="login.mp3"></audio>
@@ -983,11 +984,12 @@ Userscriptsをインストール
     待機・集合しやすいスペースがある
   </label>
 </div>
-    <div class="step">
+        <div class="step">
       <div class="step-no">STEP 3</div>
       <button class="generate" onclick="runDistanceCheck()">距離チェック実行</button>
       <div id="distanceResult"></div>
     </div>
+  </div> <!-- panel -->
 </section>
 
 </div>
@@ -1021,7 +1023,7 @@ function classifyDistanceRisk(distance) {
   if (distance < 40) return "軽微";
   return null;
 }
-function getNearbyCount(center, points, radius = 100) {
+function getNearbyCount(center, points, radius = 80) {
   return points.filter(p => getDistanceMeters(center, p) <= radius).length;
 }
 
@@ -1337,7 +1339,7 @@ function getRiskAccordionHtml(warnings) {
         </strong><br>
         ${w.a.layer}：${w.a.name}<br>
 × ${w.b.layer}：${w.b.name}<br>
-周辺密度：半径100m以内 ${w.nearbyCount || "-"}件<br>
+周辺密度：半径80m以内 ${w.nearbyCount || "-"}件<br>
 → ${message}
       </div>
     `;
@@ -1600,8 +1602,8 @@ async function runDistanceCheck() {
     const distance = getDistanceMeters(a, b);
 
    if (distance < 40) {
-  const nearbyA = getNearbyCount(a, points, 100);
-  const nearbyB = getNearbyCount(b, points, 100);
+  const nearbyA = getNearbyCount(a, points, 80);
+  const nearbyB = getNearbyCount(b, points, 80);
   const nearbyCount = Math.max(nearbyA, nearbyB);
 
   warnings.push({
@@ -2627,8 +2629,8 @@ async function generateDensityZoneKMZ() {
       if (item.count < 3) return;
 
       const tooClose = pickedAreas.some(area => {
-        return getDistanceMeters(area.center, item.center) <= radius;
-      });
+  return getDistanceMeters(area.center, item.center) <= radius * 0.45;
+});
 
       if (!tooClose) {
         pickedAreas.push(item);
@@ -2636,7 +2638,18 @@ async function generateDensityZoneKMZ() {
     });
 
     const topAreas = pickedAreas.slice(0, 10);
+const highDensityAreas = topAreas.filter(area => area.count >= 10);
 
+if (highDensityAreas.length === 0) {
+  status.innerHTML = `
+    <div class="distance-warning">
+      高密度ゾーン候補は見つかりませんでした。<br>
+      判定範囲：80m<br>
+      高密度判定：80m以内に10件以上
+    </div>
+  `;
+  return;
+}
     if (topAreas.length === 0) {
       status.innerHTML = `
         <div class="distance-warning">
@@ -2662,34 +2675,18 @@ async function generateDensityZoneKMZ() {
     addDensityStyles(outputXml, doc);
 
     const highFolder = createFolder(outputXml, doc, "🔴 高密度ゾーン");
-    const midFolder = createFolder(outputXml, doc, "🟠 中密度ゾーン");
-    const lowFolder = createFolder(outputXml, doc, "🟡 低密度ゾーン");
 
-    topAreas.forEach((area, index) => {
-      let styleId = "densityLow";
-      let label = `低密度ゾーン_${index + 1}_${area.count}件`;
-      let folder = lowFolder;
+    highDensityAreas.forEach((area, index) => {
+  const zone = createDensityZonePlacemark(
+    outputXml,
+    area.center,
+    radius,
+    "densityHigh",
+    `高密度ゾーン_${index + 1}_${area.count}件`
+  );
 
-      if (area.count >= 10) {
-        styleId = "densityHigh";
-        label = `高密度ゾーン_${index + 1}_${area.count}件`;
-        folder = highFolder;
-      } else if (area.count >= 6) {
-        styleId = "densityMid";
-        label = `中密度ゾーン_${index + 1}_${area.count}件`;
-        folder = midFolder;
-      }
-
-      const zone = createDensityZonePlacemark(
-        outputXml,
-        area.center,
-        radius,
-        styleId,
-        label
-      );
-
-      folder.appendChild(zone);
-    });
+  highFolder.appendChild(zone);
+});
 
     const serializer = new XMLSerializer();
     const newKml = serializer.serializeToString(outputXml);
@@ -2707,10 +2704,11 @@ async function generateDensityZoneKMZ() {
     a.click();
 
     status.innerHTML = `
-      密集ゾーン：${topAreas.length}件<br>
-      判定範囲：80m<br>
-      ✔ 密集ゾーンKMZを生成しました
-    `;
+  高密度ゾーン：${highDensityAreas.length}件<br>
+  判定範囲：80m<br>
+  高密度判定：80m以内に10件以上<br>
+  ✔ 高密度ゾーンKMZを生成しました
+`;
 
   } catch (error) {
     console.error(error);
@@ -2945,11 +2943,22 @@ function createCirclePlacemark(xml, p, radius) {
 }
 function addDensityStyles(xml, doc) {
   const styles = [
-    { id: "densityHigh", color: "7d0000ff" },
-    { id: "densityMid", color: "7d00a5ff" },
-    { id: "densityLow", color: "7d00ffff" }
+    { id: "densityHigh", color: "7d0000ff" }
   ];
 
+  styles.forEach(s => {
+    const style = xml.createElement("Style");
+    style.setAttribute("id", s.id);
+
+    const poly = xml.createElement("PolyStyle");
+    const color = xml.createElement("color");
+    color.textContent = s.color;
+
+    poly.appendChild(color);
+    style.appendChild(poly);
+    doc.appendChild(style);
+  });
+}
   styles.forEach(s => {
     const style = xml.createElement("Style");
     style.setAttribute("id", s.id);
