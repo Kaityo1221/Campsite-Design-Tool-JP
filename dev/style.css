@@ -307,6 +307,15 @@ h2, h3 {
   background: linear-gradient(135deg, #2563eb, #7c3aed);
   color: white;
 }
+.admin-tab-button {
+  opacity: 0.72;
+  background: #1e293b;
+  color: #cbd5e1;
+}
+
+.admin-tab-button:hover {
+  opacity: 1;
+}
 
 @media (max-width: 720px) {
   .tabs {
