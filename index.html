@@ -2345,23 +2345,20 @@ async function generateExistingOnlyKMZ() {
   }
 }
 async function generateKMZ() {
-  if (window.ENABLE_QUIZ && localStorage.getItem("quizPassed") !== window.QUIZ_VERSION) {
-  window.showQuiz();
-  return;
-}
-  document.getElementById("loadingOverlay").style.display = "flex";
-  const files = Array.from(document.getElementById("fileInput").files);
-  const status = document.getElementById("status");
 
-  const radii = Array.from(
-    document.querySelectorAll('input[name="radius"]:checked')
-  ).map(e => Number(e.value));
+  if (
+    window.ENABLE_QUIZ &&
+    localStorage.getItem("quizPassed") !== window.QUIZ_VERSION
+  ) {
+    window.showQuiz();
+    return;
+  }
 
-  if (files.length === 0) {
-  alert("CSV / KML / KMZ ファイルを選択してください");
-  document.getElementById("loadingOverlay").style.display = "none";
-  return;
-}
+  showLoading("読み込み中…");
+
+  const files = Array.from(
+    document.getElementById("fileInput").files
+  );
  if (radii.length === 0) {
   alert("30m円または40m円を選択してください");
   document.getElementById("loadingOverlay").style.display = "none";
