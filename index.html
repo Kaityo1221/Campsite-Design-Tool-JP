@@ -2073,9 +2073,7 @@ function classifyType(typeText = "", name = "", layerName = "") {
 
   return "pokestop";
 }
-function waitForRender() {
-  return new Promise(resolve => requestAnimationFrame(resolve));
-}
+
 function isDummyPoint(p) {
   const name = p.name || "";
 
