@@ -2345,8 +2345,8 @@ async function generateExistingOnlyKMZ() {
   }
 }
 async function generateKMZ() {
-  if (ENABLE_QUIZ && localStorage.getItem("quizPassed") !== QUIZ_VERSION) {
-  showQuiz();
+  if (window.ENABLE_QUIZ && localStorage.getItem("quizPassed") !== window.QUIZ_VERSION) {
+  window.showQuiz();
   return;
 }
   document.getElementById("loadingOverlay").style.display = "flex";
