@@ -86,6 +86,10 @@ function checkPassword() {
   }
 }
 
+function sleep(ms) {
+return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 function openAdminLogin() {
   const modal = document.getElementById("adminLoginModal");
   const input = document.getElementById("adminPasswordInput");
