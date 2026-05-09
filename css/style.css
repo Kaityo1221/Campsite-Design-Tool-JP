@@ -353,11 +353,4 @@ li {
     grid-template-columns: 1fr;
   }
 }
-.layer-row {
-  margin-top: 12px;
-  padding: 12px;
-  border-radius: 12px;
-  background: #020617;
-  border: 1px solid #334155;
-}
 
