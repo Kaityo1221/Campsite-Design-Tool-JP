@@ -85,6 +85,58 @@ function checkPassword() {
     error.textContent = "パスコードが違います";
   }
 }
+
+function openAdminLogin() {
+  const modal = document.getElementById("adminLoginModal");
+  const input = document.getElementById("adminPasswordInput");
+  const error = document.getElementById("adminLoginError");
+
+  if (!modal) {
+    alert("管理者ログイン画面が見つかりません");
+    return;
+  }
+
+  if (error) error.textContent = "";
+  if (input) input.value = "";
+
+  modal.style.display = "flex";
+
+  setTimeout(() => {
+    if (input) input.focus();
+  }, 100);
+}
+
+function closeAdminLogin() {
+  const modal = document.getElementById("adminLoginModal");
+  if (modal) {
+    modal.style.display = "none";
+  }
+}
+
+function checkAdminPassword() {
+  const input = document.getElementById("adminPasswordInput");
+  const error = document.getElementById("adminLoginError");
+
+  if (!input) return;
+
+  if (input.value.trim() === ADMIN_PASSWORD) {
+    if (error) error.textContent = "";
+    closeAdminLogin();
+
+    openTab("admin", null);
+
+    document.querySelectorAll(".tab-button").forEach(btn => {
+      btn.classList.remove("active");
+    });
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+  } else {
+    if (error) error.textContent = "管理者パスコードが違います";
+  }
+}
 document.addEventListener("DOMContentLoaded", function () {
 
   const passwordInput =
