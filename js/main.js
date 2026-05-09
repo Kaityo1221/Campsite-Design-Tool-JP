@@ -70,3 +70,17 @@ document.addEventListener("DOMContentLoaded", function () {
     distanceInput.addEventListener("change", loadDistanceFile);
   }
 });
+document.addEventListener("click", function (event) {
+  const log = document.getElementById("updateLog");
+  const badge = document.querySelector(".version-badge");
+
+  if (!log || log.style.display !== "block") return;
+
+  const clickedInsideLog = log.contains(event.target);
+  const clickedBadge = badge && badge.contains(event.target);
+
+  if (!clickedInsideLog && !clickedBadge) {
+    log.style.display = "none";
+  }
+});
+
