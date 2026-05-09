@@ -1,1 +1,29 @@
+.version-badge {
+  position: fixed;   /* ←これが重要 */
+  top: 12px;
+  right: 12px;
+  font-size: 11px;
+  color: #94a3b8;
+  opacity: 0.7;
+  cursor: pointer;
+  z-index: 10000;    /* ←これも重要 */
+}
 
+.update-log {
+  display: none;
+  position: fixed;
+  top: 38px;
+  right: 16px;
+  width: 280px;
+  max-width: calc(100vw - 32px);
+  padding: 12px;
+  border-radius: 12px;
+  background: #020617;
+  border: 1px solid #334155;
+  color: #cbd5e1;
+  font-size: 12px;
+  line-height: 1.7;
+  text-align: left;
+  z-index: 10002;
+  box-shadow: 0 16px 40px rgba(0,0,0,0.45);
+}
