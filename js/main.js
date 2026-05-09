@@ -66,24 +66,20 @@ function checkPassword() {
     error.textContent = "";
     input.blur();
 
-    // ログイン画面をすぐ消す
     loginScreen.remove();
-
-    // すぐアイコン演出開始
     splashScreen.classList.add("show");
 
-// 🔊 ログイン音
-const loginSound = document.getElementById("loginSound");
-loginSound.currentTime = 0;
-loginSound.volume = 0.08;
+    const loginSound = document.getElementById("loginSound");
+    loginSound.currentTime = 0;
+    loginSound.volume = 0.08;
 
-setTimeout(() => {
-  loginSound.play().catch(() => {});
-}, 80);
+    setTimeout(() => {
+      loginSound.play().catch(() => {});
+    }, 80);
 
-setTimeout(function () {
-  splashScreen.remove();
-}, 1400);
+    setTimeout(function () {
+      splashScreen.remove();
+    }, 1400);
 
   } else {
     error.textContent = "パスコードが違います";
