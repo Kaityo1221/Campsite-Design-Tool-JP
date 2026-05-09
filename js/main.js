@@ -89,6 +89,9 @@ function checkPassword() {
 function sleep(ms) {
 return new Promise(resolve => setTimeout(resolve, ms));
 }
+function waitForRender() {
+  return new Promise(resolve => requestAnimationFrame(resolve));
+}
 
 function openAdminLogin() {
   const modal = document.getElementById("adminLoginModal");
