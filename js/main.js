@@ -1,3 +1,11 @@
+const ENABLE_QUIZ = true;
+const QUIZ_VERSION = "beta1";
+window._layerPoints = {};
+  let distanceData = {
+  existing: [],
+  add: []
+};
+
 function toggleUpdateLog(event) {
   if (event) {
     event.stopPropagation();
