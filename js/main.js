@@ -1,7 +1,10 @@
 const ENABLE_QUIZ = true;
 const QUIZ_VERSION = "beta1";
+const ADMIN_PASSWORD = "she1ep";
+
 window._layerPoints = {};
-  let distanceData = {
+
+let distanceData = {
   existing: [],
   add: []
 };
@@ -18,11 +21,15 @@ function toggleUpdateLog(event) {
     return;
   }
 
-  log.style.display = log.style.display === "block" ? "none" : "block";
+  log.style.display =
+    log.style.display === "block" ? "none" : "block";
 }
-  function toggleRenameGuide() {
+
+function toggleRenameGuide() {
   const guide = document.getElementById("renameGuide");
-  guide.style.display = guide.style.display === "block" ? "none" : "block";
+
+  guide.style.display =
+    guide.style.display === "block" ? "none" : "block";
 }
 
 function openTab(tabId, button) {
@@ -35,6 +42,7 @@ function openTab(tabId, button) {
   });
 
   const targetTab = document.getElementById(tabId);
+
   if (targetTab) {
     targetTab.classList.add("active");
   }
@@ -49,46 +57,66 @@ function openTab(tabId, button) {
   });
 }
 
-const ADMIN_PASSWORD = "she1ep";
 document.addEventListener("DOMContentLoaded", function () {
-  const passwordInput = document.getElementById("passwordInput");
+
+  const passwordInput =
+    document.getElementById("passwordInput");
 
   if (passwordInput) {
     passwordInput.addEventListener("keydown", function (e) {
+
       if (e.key === "Enter") {
         e.preventDefault();
         checkPassword();
       }
+
     });
   }
 
-  const adminPasswordInput = document.getElementById("adminPasswordInput");
+  const adminPasswordInput =
+    document.getElementById("adminPasswordInput");
 
   if (adminPasswordInput) {
     adminPasswordInput.addEventListener("keydown", function (e) {
+
       if (e.key === "Enter") {
         e.preventDefault();
         checkAdminPassword();
       }
+
     });
   }
- const distanceInput = document.getElementById("distanceFile");
+
+  const distanceInput =
+    document.getElementById("distanceFile");
 
   if (distanceInput) {
-    distanceInput.addEventListener("change", loadDistanceFile);
+    distanceInput.addEventListener(
+      "change",
+      loadDistanceFile
+    );
   }
+
 });
+
 document.addEventListener("click", function (event) {
-  const log = document.getElementById("updateLog");
-  const badge = document.querySelector(".version-badge");
+
+  const log =
+    document.getElementById("updateLog");
+
+  const badge =
+    document.querySelector(".version-badge");
 
   if (!log || log.style.display !== "block") return;
 
-  const clickedInsideLog = log.contains(event.target);
-  const clickedBadge = badge && badge.contains(event.target);
+  const clickedInsideLog =
+    log.contains(event.target);
+
+  const clickedBadge =
+    badge && badge.contains(event.target);
 
   if (!clickedInsideLog && !clickedBadge) {
     log.style.display = "none";
   }
-});
 
+});
