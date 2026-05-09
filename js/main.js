@@ -133,7 +133,42 @@ function openAdminLogin() {
     if (input) input.focus();
   }, 100);
 }
+function showLoading(text = "読み込み中…") {
 
+  const overlay =
+    document.getElementById("loadingOverlay");
+
+  const loadingText =
+    document.getElementById("loadingText");
+
+  if (overlay) {
+    overlay.style.display = "flex";
+  }
+
+  if (loadingText) {
+    loadingText.textContent = text;
+  }
+}
+
+function hideLoading() {
+
+  const overlay =
+    document.getElementById("loadingOverlay");
+
+  if (overlay) {
+    overlay.style.display = "none";
+  }
+}
+
+function setLoadingText(text) {
+
+  const loadingText =
+    document.getElementById("loadingText");
+
+  if (loadingText) {
+    loadingText.textContent = text;
+  }
+}
 function closeAdminLogin() {
   const modal = document.getElementById("adminLoginModal");
   if (modal) {
