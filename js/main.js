@@ -1,5 +1,5 @@
-const ENABLE_QUIZ = true;
-const QUIZ_VERSION = "beta1";
+window.ENABLE_QUIZ = true;
+window.QUIZ_VERSION = "beta2";
 const ADMIN_PASSWORD = "she1ep";
 
 window._layerPoints = {};
@@ -107,7 +107,7 @@ window.checkQuiz = function () {
   }
 
   if (q1 === "40" && q2 === "hard" && q3 === "25") {
-    localStorage.setItem("quizPassed", QUIZ_VERSION);
+    localStorage.setItem("quizPassed", window.QUIZ_VERSION);
     document.getElementById("quizModal").style.display = "none";
     alert("✔ 利用準備OK！ツールを使えます");
   } else {
