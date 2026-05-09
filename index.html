@@ -2341,7 +2341,7 @@ async function generateExistingOnlyKMZ() {
     alert("既存POI分類KMZの生成中にエラーが発生しました");
     status.textContent = "";
   } finally {
-    document.getElementById("loadingOverlay").style.display = "none";
+    hideLoading();
   }
 }
 async function generateKMZ() {
@@ -2356,15 +2356,26 @@ async function generateKMZ() {
 
   showLoading("読み込み中…");
 
-  const files = Array.from(
-    document.getElementById("fileInput").files
-  );
- if (radii.length === 0) {
-  alert("30m円または40m円を選択してください");
-  document.getElementById("loadingOverlay").style.display = "none";
-  return;
-}
-await waitForRender();
+  const files = Array.from(document.getElementById("fileInput").files);
+  const status = document.getElementById("status");
+
+  const radii = Array.from(
+    document.querySelectorAll('input[name="radius"]:checked')
+  ).map(e => Number(e.value));
+
+  if (files.length === 0) {
+    alert("CSV / KML / KMZ ファイルを選択してください");
+    hideLoading();
+    return;
+  }
+
+  if (radii.length === 0) {
+    alert("30m円または40m円を選択してください");
+    hideLoading();
+    return;
+  }
+
+  await waitForRender();
 
   let points = [];
 
@@ -2387,7 +2398,7 @@ await waitForRender();
  if (beforeCount === 0) {
   alert("スポット座標が見つかりませんでした");
   status.textContent = "";
-  document.getElementById("loadingOverlay").style.display = "none";
+  hideLoading();
   return;
 }
 await waitForRender();
@@ -2490,7 +2501,7 @@ setTimeout(() => {
 
 // どんな状況でも消す（最強）
 setTimeout(() => {
-  document.getElementById("loadingOverlay").style.display = "none";
+  hideLoading();
 }, 300);
 status.innerHTML =
     `読み込み：${beforeCount}件<br>` +
