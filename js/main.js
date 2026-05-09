@@ -64,3 +64,9 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     });
   }
+ const distanceInput = document.getElementById("distanceFile");
+
+  if (distanceInput) {
+    distanceInput.addEventListener("change", loadDistanceFile);
+  }
+});
