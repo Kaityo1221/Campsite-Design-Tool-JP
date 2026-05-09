@@ -92,11 +92,11 @@ return new Promise(resolve => setTimeout(resolve, ms));
 function waitForRender() {
   return new Promise(resolve => requestAnimationFrame(resolve));
 }
-function showQuiz() {
+window.showQuiz = function () {
   document.getElementById("quizModal").style.display = "flex";
 }
 
-function checkQuiz() {
+window.checkQuiz = function () {
   const q1 = document.querySelector('input[name="q1"]:checked')?.value;
   const q2 = document.querySelector('input[name="q2"]:checked')?.value;
   const q3 = document.querySelector('input[name="q3"]:checked')?.value;
