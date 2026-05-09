@@ -42,3 +42,25 @@ function openTab(tabId, button) {
 }
 
 const ADMIN_PASSWORD = "she1ep";
+document.addEventListener("DOMContentLoaded", function () {
+  const passwordInput = document.getElementById("passwordInput");
+
+  if (passwordInput) {
+    passwordInput.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        checkPassword();
+      }
+    });
+  }
+
+  const adminPasswordInput = document.getElementById("adminPasswordInput");
+
+  if (adminPasswordInput) {
+    adminPasswordInput.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        checkAdminPassword();
+      }
+    });
+  }
