@@ -2191,7 +2191,7 @@ async function generateCircleOnlyKMZ() {
     alert("円だけKMZの生成中にエラーが発生しました");
     status.textContent = "";
   } finally {
-    document.getElementById("loadingOverlay").style.display = "none";
+    hideLoading();
   }
 }
   function isIgnoredLayerForExistingOnly(p) {
@@ -2394,7 +2394,7 @@ await waitForRender();
 
   const result = removeDuplicate(points);
   points = result.uniquePoints;
-document.getElementById("loadingText").textContent = "KMZ生成中…";
+setLoadingText("KMZ生成中…");
   status.innerHTML = `
   <span class="loading">
     <span class="spinner"></span>
