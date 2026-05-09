@@ -1292,29 +1292,6 @@ setTimeout(function () {
   }
 }
 
-document.addEventListener("DOMContentLoaded", function () {
-  const passwordInput = document.getElementById("passwordInput");
-
-  if (passwordInput) {
-    passwordInput.addEventListener("keydown", function (e) {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        checkPassword();
-      }
-    });
-  }
-
-  const adminPasswordInput = document.getElementById("adminPasswordInput");
-
-  if (adminPasswordInput) {
-    adminPasswordInput.addEventListener("keydown", function (e) {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        checkAdminPassword();
-      }
-    });
-  }
-
   const distanceInput = document.getElementById("distanceFile");
 
   if (distanceInput) {
