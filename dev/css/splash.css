@@ -114,5 +114,5 @@ body.opening-mode .container {
   }
 }
 body.opening-mode .container {
-  display: none;
+  display: none !important;
 }
