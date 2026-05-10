@@ -110,10 +110,37 @@ body.opening-mode .container {
 }
 
 .opening-card button {
-  padding: 10px 20px;
-  border-radius: 999px;
-  border: none;
-  font-weight: 800;
+
+  padding: 16px 34px;
+
+  border-radius: 18px;
+
+  border:
+    1px solid rgba(96,165,250,0.45);
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(37,99,235,0.95),
+      rgba(124,58,237,0.95)
+    );
+
+  color: white;
+
+  font-size: 18px;
+  font-weight: 900;
+
+  letter-spacing: 0.04em;
+
+  box-shadow:
+    0 0 24px rgba(96,165,250,0.35);
+
+  backdrop-filter: blur(6px);
+
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.2s ease,
+    opacity 0.2s ease;
 }
 
 .guide-link {
@@ -130,7 +157,14 @@ body.opening-mode .container {
 }
 
 .opening-card button:active {
-  transform: scale(0.96);
+
+  transform:
+    scale(0.95)
+    translateY(2px);
+
+  box-shadow:
+    0 0 42px rgba(96,165,250,0.75);
+}
 
   box-shadow:
     0 0 24px rgba(96,165,250,0.6);
