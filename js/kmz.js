@@ -1,3 +1,134 @@
+async function generateCircleOnlyKMZ() {
+  const files = Array.from(document.getElementById("circleOnlyFileInput").files);
+  const status = document.getElementById("circleOnlyStatus");
+
+  const radii = Array.from(
+    document.querySelectorAll('input[name="circleOnlyRadius"]:checked')
+  ).map(e => Number(e.value));
+
+  if (files.length === 0) {
+    alert("CSV / KML / KMZ ファイルを選択してください");
+    return;
+  }
+
+  if (radii.length === 0) {
+    alert("30m円または40m円を選択してください");
+    return;
+  }
+
+  showLoading("円だけKMZ生成中…");
+
+  try {
+    let points = [];
+
+    for (const file of files) {
+  const fileName = file.name.toLowerCase();
+
+  if (fileName.endsWith(".csv")) {
+    const text = await file.text();
+    points.push(...parseCSV(text));
+  } else if (
+    fileName.endsWith(".kml") ||
+    fileName.endsWith(".kmz") ||
+    fileName.endsWith(".zip")
+  ) {
+    points.push(...await getPointsFromKmlOrKmz(file));
+  }
+}
+   points = points.filter(p => {
+  if (isDummyPoint(p)) return false;
+
+  const layerName = p.layer || "";
+  if (
+    layerName.includes("円") ||
+    layerName.includes("30m") ||
+    layerName.includes("40m")
+  ) {
+    return false;
+  }
+
+  return true;
+});
+    const beforeCount = points.length;
+
+    if (beforeCount === 0) {
+      alert("円を作成できるスポット座標が見つかりませんでした");
+      status.textContent = "";
+      return;
+    }
+
+    const result = removeDuplicate(points);
+    points = result.uniquePoints;
+
+    const parser = new DOMParser();
+    const outputXml = parser.parseFromString(
+      `<?xml version="1.0" encoding="UTF-8"?>
+      <kml xmlns="http://www.opengis.net/kml/2.2">
+        <Document>
+          <name>Campsite Circle Only Output</name>
+        </Document>
+      </kml>`,
+      "application/xml"
+    );
+
+    const doc = outputXml.getElementsByTagName("Document")[0];
+
+    const folders = {
+      circle40: createFolder(outputXml, doc, "40m円（基本距離）"),
+      circle30: createFolder(outputXml, doc, "30m円（調整用）")
+    };
+
+    points.forEach(p => {
+      radii.forEach(radius => {
+        const circlePlacemark = createCirclePlacemark(outputXml, p, radius);
+
+        if (radius === 40) {
+          folders.circle40.appendChild(circlePlacemark);
+        } else if (radius === 30) {
+          folders.circle30.appendChild(circlePlacemark);
+        }
+      });
+    });
+
+    const serializer = new XMLSerializer();
+    const newKml = serializer.serializeToString(outputXml);
+
+    const zip = new JSZip();
+    zip.file("doc.kml", newKml);
+
+    const blob = await zip.generateAsync({ type: "blob" });
+
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+
+    const now = new Date();
+    a.download = `campsite_circles_${now.getFullYear()}${now.getMonth() + 1}${now.getDate()}.kmz`;
+    a.click();
+
+    status.innerHTML =
+      `読み込み：${beforeCount}件<br>` +
+      `重複削除：${result.duplicateCount}件<br>` +
+      `円作成対象：${points.length}件<br>` +
+      `✔ 円だけKMZを生成しました`;
+
+    const success = document.getElementById("successSound");
+    if (success) {
+      success.currentTime = 0;
+      success.volume = 0.12;
+      setTimeout(() => {
+        success.play().catch(() => {});
+      }, 100);
+    }
+
+  } catch (error) {
+    console.error(error);
+    alert("円だけKMZの生成中にエラーが発生しました");
+    status.textContent = "";
+  } finally {
+    hideLoading();
+  }
+}
+
 async function generateKMZ() {
 
   if (
