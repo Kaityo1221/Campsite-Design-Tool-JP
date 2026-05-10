@@ -119,3 +119,16 @@ body.opening-mode .container {
   color: #60a5fa;
   font-weight: 700;
 }
+
+.opening-card button {
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.2s ease;
+}
+
+.opening-card button:active {
+  transform: scale(0.96);
+
+  box-shadow:
+    0 0 24px rgba(96,165,250,0.6);
+}
