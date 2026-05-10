@@ -172,39 +172,32 @@ body.opening-mode .container {
 .walker {
   position: absolute;
 
-  bottom: 60px;
+  bottom: 70px;
   right: -220px;
 
   width: 220px;
 
-  opacity: 1;
+  opacity: 0;
 
-  z-index: 1;
+  z-index: 0;
 
   pointer-events: none;
 
-  animation:
-    walkerMove 4.5s linear forwards;
+  animation: walkerMove 4.5s linear forwards;
 }
 @keyframes walkerMove {
-
   0% {
     right: -220px;
     opacity: 0;
     transform: scale(0.9);
   }
 
-  15% {
-    opacity: 0.85;
+  20% {
+    opacity: 0.45;
   }
 
-  45% {
-    opacity: 1;
-    transform: scale(1);
-  }
-
-  75% {
-    opacity: 0.5;
+  60% {
+    opacity: 0.35;
   }
 
   100% {
