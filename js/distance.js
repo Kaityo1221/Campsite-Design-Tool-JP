@@ -12,12 +12,14 @@ function getDistanceMeters(a, b) {
 
   return 2 * R * Math.asin(Math.sqrt(h));
 }
+
 function classifyDistanceRisk(distance) {
   if (distance < 20) return "密集";
   if (distance < 30) return "滞留";
   if (distance < 40) return "軽微";
   return null;
 }
+
 async function loadDistanceFile() {
   const fileInput = document.getElementById("distanceFile");
   const container = document.getElementById("distanceLayerList");
@@ -84,6 +86,7 @@ async function extractLayersFromKML(file) {
     pointsByLayer
   };
 }
+
 function extractPointsByLayer(xml) {
   const result = {};
 
@@ -113,6 +116,10 @@ function extractPointsByLayer(xml) {
       };
     }).filter(Boolean);
   });
+
+  return result;
+}
+
 function renderLayerSelector(layers, container) {
   container.innerHTML = "";
 
@@ -134,18 +141,17 @@ function renderLayerSelector(layers, container) {
     </div>
   `).join("");
 }
-  function cleanLayerName(name) {
+
+function cleanLayerName(name) {
   return name
     .replace("既存の", "")
     .replace("既存", "")
     .trim();
 }
+
 function getStars(score) {
   if (score >= 85) return "⭐⭐⭐⭐⭐";
   if (score >= 70) return "⭐⭐⭐⭐☆";
   if (score >= 50) return "⭐⭐⭐☆☆";
   return "⭐⭐☆☆☆";
-}
-
-  return result;
 }
