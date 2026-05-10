@@ -19,3 +19,29 @@
   border-radius: 28px;
   animation: iconWarp 1.4s ease forwards;
 }
+@keyframes splashFade {
+  0% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes iconWarp {
+  0% {
+    transform: scale(0.7) rotate(-8deg);
+    opacity: 0;
+  }
+
+  40% {
+    transform: scale(1.08) rotate(2deg);
+    opacity: 1;
+  }
+
+  70% {
+    transform: scale(1);
+  }
+
+  100% {
+    transform: scale(0.92);
+    opacity: 1;
+  }
+}
