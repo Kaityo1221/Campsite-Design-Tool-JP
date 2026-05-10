@@ -19,3 +19,21 @@
   border-radius: 28px;
   animation: iconWarp 1.4s ease forwards;
 }
+.splash-screen {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 99998;
+  align-items: center;
+  justify-content: center;
+  background: #020617;
+}
+
+.splash-screen.show {
+  display: flex;
+}
+
+.splash-screen img {
+  width: 180px;
+  max-width: 70vw;
+}
