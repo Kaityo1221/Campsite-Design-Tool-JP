@@ -158,6 +158,8 @@ document.addEventListener("click", function (event) {
 function showOpeningScreen() {
   const opening = document.getElementById("openingScreen");
 
+  document.body.classList.add("opening-mode");
+
   if (opening) {
     opening.classList.add("show");
   }
@@ -169,4 +171,6 @@ function startAdventure() {
   if (opening) {
     opening.classList.remove("show");
   }
+
+  document.body.classList.remove("opening-mode");
 }
