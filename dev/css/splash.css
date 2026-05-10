@@ -14,11 +14,12 @@
 }
 
 .splash-screen img {
-  width: 140px;
-  height: 140px;
-  border-radius: 28px;
+  width: 180px;
+  height: 180px;
+  border-radius: 36px;
 
-  animation: iconZoom 1.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation:
+    iconZoom 1.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 @keyframes splashFade {
   0% { opacity: 1; }
@@ -29,30 +30,40 @@
 @keyframes iconZoom {
 
   0% {
-    transform: scale(0.45);
+    transform: scale(0.15);
+    opacity: 0;
+
+    filter:
+      blur(18px)
+      brightness(2);
+  }
+
+  20% {
+    opacity: 1;
+  }
+
+  45% {
+    transform: scale(1);
+    filter:
+      blur(0px)
+      brightness(1);
+  }
+
+  75% {
+    transform: scale(6);
+    opacity: 1;
+
+    filter:
+      blur(4px)
+      brightness(1.4);
+  }
+
+  100% {
+    transform: scale(9);
     opacity: 0;
 
     filter:
       blur(12px)
-      brightness(1.8);
+      brightness(2.2);
   }
-
-  35% {
-    transform: scale(1.18);
-    opacity: 1;
-
-    filter:
-      blur(0px)
-      brightness(1.15);
-  }
-
-  65% {
-    transform: scale(1.02);
-  }
-
-  100% {
-    transform: scale(0.92);
-    opacity: 0;
-  }
-
 }
