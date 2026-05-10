@@ -67,3 +67,25 @@
       brightness(2.2);
   }
 }
+.opening-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 9997;
+
+  display: none;
+  align-items: center;
+  justify-content: center;
+
+  background:
+    radial-gradient(circle at top, rgba(59,130,246,0.3), transparent 36%),
+    linear-gradient(135deg, #020617, #0f172a, #1e1b4b);
+
+  color: white;
+}
+
+.opening-screen.show {
+  display: flex;
+  animation: openingFadeIn 0.8s ease forwards;
+}
+
+/* 以下、opening-card から @keyframes まで全部 */
