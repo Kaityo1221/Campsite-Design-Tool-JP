@@ -54,3 +54,6 @@
     opacity: 1;
   }
 }
+body.opening-mode .container {
+  display: none;
+}
