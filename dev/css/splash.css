@@ -158,8 +158,7 @@ body.opening-mode .container {
     0 0 42px rgba(96,165,250,0.75);
 }
 
-.opening-screen.show 
-.walker {
+.opening-screen.show .walker {
   position: absolute;
   bottom: 90px;
   left: 100vw;
@@ -170,11 +169,9 @@ body.opening-mode .container {
 
   z-index: 3;
   pointer-events: none;
+animation: walkerSlide 8s linear forwards;
 }
 
-.opening-screen.show .walker {
-  animation: walkerSlide 8s linear forwards;
-}
 
 @keyframes walkerSlide {
   0% {
