@@ -147,3 +147,23 @@ body.opening-mode .container {
   animation:
     walkerMove 4.5s linear forwards;
 }
+@keyframes walkerMove {
+
+  0% {
+    right: -220px;
+    opacity: 0;
+  }
+
+  10% {
+    opacity: 0.12;
+  }
+
+  50% {
+    opacity: 0.22;
+  }
+
+  100% {
+    right: calc(50% - 90px);
+    opacity: 0.08;
+  }
+}
