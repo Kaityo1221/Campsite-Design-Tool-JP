@@ -89,3 +89,28 @@
 }
 
 /* 以下、opening-card から @keyframes まで全部 */
+
+.opening-card {
+  box-sizing: border-box;
+  width: calc(100vw - 40px);
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.opening-card h1 {
+  font-size: clamp(28px, 9vw, 44px);
+  line-height: 1.05;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.opening-screen {
+  overflow: hidden;
+  padding: 0 20px;
+  box-sizing: border-box;
+}
+
+.opening-card button,
+.guide-link {
+  max-width: 100%;
+}
