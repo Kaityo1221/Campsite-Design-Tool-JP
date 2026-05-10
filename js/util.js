@@ -52,3 +52,12 @@ function hideLoading() {
     overlay.style.display = "none";
   }
 }
+function setLoadingText(text) {
+
+  const loadingText =
+    document.getElementById("loadingText");
+
+  if (loadingText) {
+    loadingText.textContent = text;
+  }
+}
