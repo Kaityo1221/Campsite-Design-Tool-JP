@@ -198,7 +198,8 @@ body.opening-mode .container {
   }
 }
 
-.opening-screen.show .walker {
+.opening-screen.show 
+.walker {
   position: absolute !important;
   bottom: 90px !important;
   left: 100vw !important;
@@ -227,19 +228,38 @@ body.opening-mode .container {
   }
 }
 
+.opening-screen.show 
+.walker {
+  position: absolute;
+  bottom: 90px;
+  left: 100vw;
+  right: auto;
+
+  width: 260px;
+  opacity: 0;
+
+  z-index: 3;
+  pointer-events: none;
+}
+
 .opening-screen.show .walker {
-  position: fixed !important;
-  top: 45vh !important;
-  left: 100vw !important;
-  bottom: auto !important;
+  animation: walkerSlide 8s linear forwards;
+}
 
-  width: 260px !important;
-  opacity: 1 !important;
+@keyframes walkerSlide {
+  0% {
+    left: 100vw;
+    opacity: 1;
+  }
 
-  z-index: 999999 !important;
-  pointer-events: none !important;
+  80% {
+    opacity: 1;
+  }
 
-  animation: walkerDebugMove 8s linear forwards !important;
+  100% {
+    left: -300px;
+    opacity: 0;
+  }
 }
 
 @keyframes walkerDebugMove {
