@@ -32,9 +32,9 @@ function checkPassword() {
     }, 80);
 
     setTimeout(function () {
-      splashScreen.remove();
-    }, 1400);
-
+  splashScreen.remove();
+  showOpeningScreen();
+}, 1600);
   } else {
     error.textContent = "パスコードが違います";
   }
