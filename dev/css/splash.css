@@ -206,3 +206,40 @@ body.opening-mode .container {
     transform: scale(1.04);
   }
 }
+.opening-screen.show .walker {
+  position: absolute !important;
+  bottom: 70px !important;
+  left: 100vw !important;
+
+  width: 220px !important;
+
+  opacity: 0 !important;
+
+  z-index: 0 !important;
+  pointer-events: none !important;
+
+  animation: walkerSlide 4.5s ease-out forwards !important;
+}
+
+@keyframes walkerSlide {
+
+  0% {
+    left: 100vw;
+    opacity: 0;
+    transform: scale(0.9);
+  }
+
+  20% {
+    opacity: 0.45;
+  }
+
+  60% {
+    opacity: 0.35;
+  }
+
+  100% {
+    left: calc(50% - 110px);
+    opacity: 0;
+    transform: scale(1.04);
+  }
+}
