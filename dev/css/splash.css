@@ -197,3 +197,32 @@ body.opening-mode .container {
     transform: scale(1.04);
   }
 }
+
+.opening-screen.show .walker {
+  position: absolute !important;
+  bottom: 90px !important;
+  left: 100vw !important;
+
+  width: 220px !important;
+  opacity: 1 !important;
+  z-index: 1 !important;
+  pointer-events: none !important;
+
+  animation: walkerSlideVisible 8s linear forwards !important;
+}
+
+@keyframes walkerSlideVisible {
+  0% {
+    left: 100vw;
+    opacity: 1;
+  }
+
+  80% {
+    opacity: 1;
+  }
+
+  100% {
+    left: -260px;
+    opacity: 0;
+  }
+}
