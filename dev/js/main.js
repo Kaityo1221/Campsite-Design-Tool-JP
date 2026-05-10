@@ -155,3 +155,18 @@ document.addEventListener("click", function (event) {
   }
 
 });
+function showOpeningScreen() {
+  const opening = document.getElementById("openingScreen");
+
+  if (opening) {
+    opening.classList.add("show");
+  }
+}
+
+function startAdventure() {
+  const opening = document.getElementById("openingScreen");
+
+  if (opening) {
+    opening.classList.remove("show");
+  }
+}
