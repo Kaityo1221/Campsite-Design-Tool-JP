@@ -75,10 +75,6 @@ body.opening-mode .container {
   color: white;
 }
 
-.opening-screen.show {
-  display: flex;
-}
-
 .opening-card {
   width: min(100%, 420px);
   margin: auto;
@@ -158,74 +154,6 @@ body.opening-mode .container {
 
   box-shadow:
     0 0 42px rgba(96,165,250,0.75);
-}
-
-.opening-screen.show .walker {
-  position: absolute !important;
-  bottom: 70px !important;
-  left: 100vw !important;
-
-  width: 220px !important;
-
-  opacity: 0 !important;
-
-  z-index: 0 !important;
-  pointer-events: none !important;
-
-  animation: walkerSlide 4.5s ease-out forwards !important;
-}
-
-@keyframes walkerSlide {
-
-  0% {
-    left: 100vw;
-    opacity: 0;
-    transform: scale(0.9);
-  }
-
-  20% {
-    opacity: 0.45;
-  }
-
-  60% {
-    opacity: 0.35;
-  }
-
-  100% {
-    left: calc(50% - 110px);
-    opacity: 0;
-    transform: scale(1.04);
-  }
-}
-
-.opening-screen.show 
-.walker {
-  position: absolute !important;
-  bottom: 90px !important;
-  left: 100vw !important;
-
-  width: 220px !important;
-  opacity: 1 !important;
-  z-index: 1 !important;
-  pointer-events: none !important;
-
-  animation: walkerSlideVisible 8s linear forwards !important;
-}
-
-@keyframes walkerSlideVisible {
-  0% {
-    left: 100vw;
-    opacity: 1;
-  }
-
-  80% {
-    opacity: 1;
-  }
-
-  100% {
-    left: -260px;
-    opacity: 0;
-  }
 }
 
 .opening-screen.show 
