@@ -84,6 +84,9 @@ body.opening-mode .container {
   margin: auto;
   text-align: center;
   box-sizing: border-box;
+
+  position: relative;
+  z-index: 2;
 }
 
 .opening-badge {
@@ -135,12 +138,14 @@ body.opening-mode .container {
 .walker {
   position: absolute;
 
-  bottom: 40px;
+  bottom: 60px;
   right: -220px;
 
-  width: 180px;
+  width: 220px;
 
-  opacity: 0.18;
+  opacity: 1;
+
+  z-index: 1;
 
   pointer-events: none;
 
@@ -154,16 +159,16 @@ body.opening-mode .container {
     opacity: 0;
   }
 
-  10% {
-    opacity: 0.12;
+  15% {
+    opacity: 0.8;
   }
 
   50% {
-    opacity: 0.22;
+    opacity: 1;
   }
 
   100% {
-    right: calc(50% - 90px);
-    opacity: 0.08;
+    right: calc(50% - 110px);
+    opacity: 0.35;
   }
 }
