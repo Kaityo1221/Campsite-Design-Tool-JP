@@ -54,6 +54,77 @@
     opacity: 1;
   }
 }
+body.opening-mode {
+  overflow: hidden;
+}
+
 body.opening-mode .container {
+  display: none !important;
+}
+
+.opening-screen {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100dvh;
+  z-index: 99997;
+
   display: none;
+  align-items: center;
+  justify-content: center;
+
+  padding: 24px;
+  box-sizing: border-box;
+  overflow: hidden;
+
+  background:
+    radial-gradient(circle at top, rgba(59,130,246,0.22), transparent 36%),
+    linear-gradient(135deg, #020617, #0f172a, #1e1b4b);
+
+  color: white;
+}
+
+.opening-screen.show {
+  display: flex;
+}
+
+.opening-card {
+  width: min(100%, 420px);
+  margin: auto;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.opening-badge {
+  margin-bottom: 14px;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  color: #bfdbfe;
+}
+
+.opening-card h1 {
+  margin: 0;
+  font-size: clamp(30px, 9vw, 44px);
+  line-height: 1.08;
+  overflow-wrap: anywhere;
+}
+
+.opening-sub {
+  margin: 18px 0 24px;
+  font-size: 18px;
+  color: #cbd5e1;
+}
+
+.opening-card button {
+  padding: 10px 20px;
+  border-radius: 999px;
+  border: none;
+  font-weight: 800;
+}
+
+.guide-link {
+  display: inline-block;
+  margin-left: 12px;
+  color: #60a5fa;
+  font-weight: 700;
 }
