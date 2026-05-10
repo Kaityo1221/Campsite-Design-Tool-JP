@@ -18,8 +18,7 @@
   height: 140px;
   border-radius: 28px;
 
-  animation: iconZoom 1.4s ease forwards;
-}
+  animation: iconZoom 1.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 @keyframes splashFade {
   0% { opacity: 1; }
   80% { opacity: 1; }
