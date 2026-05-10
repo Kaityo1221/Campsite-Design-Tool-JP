@@ -166,11 +166,25 @@ function showOpeningScreen() {
 }
 
 function startAdventure() {
-  const opening = document.getElementById("openingScreen");
+
+  const opening =
+    document.getElementById("openingScreen");
 
   if (opening) {
-    opening.classList.remove("show");
+
+    opening.style.opacity = "0";
+
+    opening.style.transition =
+      "opacity 0.4s ease";
   }
 
-  document.body.classList.remove("opening-mode");
+  setTimeout(() => {
+
+    if (opening) {
+      opening.classList.remove("show");
+    }
+
+    document.body.classList.remove("opening-mode");
+
+  }, 400);
 }
