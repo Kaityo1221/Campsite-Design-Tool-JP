@@ -128,3 +128,7 @@ body.opening-mode .container {
   color: #60a5fa;
   font-weight: 700;
 }
+
+body {
+  outline: 6px solid red !important;
+}
