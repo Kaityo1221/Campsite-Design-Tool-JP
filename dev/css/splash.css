@@ -101,7 +101,7 @@ body.opening-mode .container {
   width: 0;
 
   animation:
-    typingMission 1.8s steps(13,end) forwards,
+    typingMission 1.8s steps(14,end) forwards,
     blinkCursor 0.7s step-end infinite;
 }
 
