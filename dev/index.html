@@ -6,29 +6,36 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Campsite Design Tool JP</title>
-<link rel="apple-touch-icon" sizes="180x180" href="assets/icon.png">
-<link rel="manifest" href="manifest-dev.json">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<link rel="stylesheet" href="css/style.css?v=1">
-<link rel="stylesheet" href="css/splash.css?v=1">
+<link rel="stylesheet" href="css/style.css?v=6">
+<link rel="stylesheet" href="css/splash.css?v=6">
 <link rel="stylesheet" href="css/tabs.css?v=1">
 <link rel="stylesheet" href="css/admin.css?v=1">
 <link rel="stylesheet" href="css/distance.css?v=1">
+<link rel="apple-touch-icon" sizes="180x180" href="/Campsite-Design-Tool-JP/assets/icon.png">
+<link rel="manifest" href="/Campsite-Design-Tool-JP/manifest.json">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 
   
 <body>
- <div class="version-badge" onclick="toggleUpdateLog(event)">v6.0</div>
+ <div class="version-badge" onclick="toggleUpdateLog(event)">v5.7</div>
 <div id="updateLog" class="update-log">
   <strong>更新内容</strong><br>
-v6.0<br>
-・距離チェック画面のpanel閉じタグ不足を修正<br>
-・高密度ゾーンKMZ生成時の表示件数を、実際の高密度ゾーン件数に修正<br>
-・密集エリアチェックと密集ゾーンKMZ生成の重複判定基準を統一<br>
-・密集ゾーン出力を高密度ゾーン専用に整理<br>
-  
+v5.7<br>
+・開発環境で作成した内容を本番環境へ反映<br>
+・個別ツールに「円だけ生成」「既存POI分類だけ生成」機能を追加<br>
+・既存POI、追加希望レイヤー、30m／40m円レイヤーを分けて出力できる構成に改善<br>
+・管理者専用入口と管理者パスコード認証を追加<br>
+・管理者ツールに「KMZ内容チェック」機能を追加<br>
+・KML／KMZのレイヤー数、全ポイント数、有効POI数、ダミーポイント数を確認できるよう対応<br>
+・既存POI系レイヤー、追加希望系レイヤー、円レイヤーの有無を確認できるよう対応<br>
+・既存ポケストップ相当／既存ジム相当／既存パワースポット相当の推定分類を表示<br>
+・距離チェックに拠点充実度、CA所感、分類別チェック、既存POI同士の参考判定を追加<br>
+・利用前チェッククイズとガイドPDF導線を追加<br>
+・iPhone保存時のZIP→KMZ名称変更案内を追加<br>
+・My Maps／KMZレビュー時に他CAの作成データを確認しやすい構成へ改善<br>
 </div>
- <audio id="loginSound" src="assets/login.mp3"></audio>
+<audio id="loginSound" src="assets/login.mp3"></audio>
 <audio id="successSound" src="assets/success.mp3"></audio>
   <div id="loadingOverlay" class="loading-overlay">
   <div class="loading-box">
@@ -56,7 +63,7 @@ v6.0<br>
   </div>
 </div>
 <div id="splashScreen" class="splash-screen">
- <img src="assets/icon.png" alt="Campsite Tool">
+<img src="assets/icon.png" alt="Campsite Tool Icon">
 </div>
 <div class="container">
 
@@ -77,9 +84,18 @@ v6.0<br>
   <button class="tab-button" onclick="openTab('check', this)">チェックリスト</button>
   <button class="tab-button" onclick="openTab('howto', this)">使い方</button>
   <button class="tab-button" onclick="openTab('distance', this)">距離チェック</button>
-  <button type="button" class="tab-button admin-tab-button" onclick="openAdminLogin()">管理者</button>
 </div>
 
+<div style="text-align:right; margin-top:-10px; margin-bottom:18px;">
+  <button type="button" class="guide-btn" onclick="openAdminLogin()" style="
+    width:auto;
+    padding:8px 12px;
+    font-size:12px;
+    opacity:0.65;
+  ">
+    管理者
+  </button>
+</div>
   <section id="tool" class="tab-content active">
     <div class="panel">
       <h2>キャンプサイト作成の手順</h2>
@@ -293,42 +309,41 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
   <h3>密集エリアチェック</h3>
 
   <p class="note">
-  KML / KMZ内の有効POIをもとに、80m以内にPOIが集中している場所を確認します。<br>
-  円レイヤー、ダミーポイントは判定対象から除外します。<br>
-  追加希望レイヤーは既存POIとあわせて判定します。
-</p>
+    KML / KMZ内の有効POIをもとに、半径内にPOIが集中している場所を確認します。<br>
+    円レイヤー、ダミーポイントは判定対象から除外します。<br>
+既存POIと追加希望POIをまたいで、密集状況を確認します。
+  </p>
 
   <p>チェックしたいKML / KMZファイルを選択します。</p>
   <input type="file" id="adminDensityFile">
 
-  <p class="note" style="
-  padding:12px;
-  border-radius:12px;
-  background:rgba(59,130,246,0.12);
-  border:1px solid rgba(96,165,250,0.35);
-  color:#bfdbfe;
-">
-  判定範囲：80m固定<br>
-  他CAのMy Mapsを同じ基準で確認するため、密集エリアチェックは80mで統一します。
-</p>
+  <div class="checks">
+    <label>
+      判定半径：
+      <select id="adminDensityRadius" style="
+        padding:8px 10px;
+        border-radius:8px;
+        background:#1e293b;
+        color:white;
+        border:1px solid #475569;
+      ">
+        <option value="50">50m</option>
+        <option value="100" selected>100m</option>
+        <option value="150">150m</option>
+        <option value="200">200m</option>
+      </select>
+    </label>
+  </div>
 
-<p class="note">
-  ※この判定は「正解を出す機能」ではなく、現地を知るCAが密集しやすい場所を見つけるための補助機能です。<br>
-  既存POIと追加希望POIをあわせて確認し、集合・滞留しやすい場所の目安として使います。
-</p>
   <button class="generate" onclick="runAdminDensityCheck()">
     密集エリアをチェック
   </button>
+
   <div id="adminDensityResult"></div>
-  <button class="generate" onclick="generateDensityZoneKMZ()">
-  密集ゾーンKMZを生成
-</button>
-<div id="adminDensityZoneStatus"></div>
 </div>
   </div>
 </section>
-
-<section id="script" class="tab-content">
+  <section id="script" class="tab-content">
     <div class="panel">
       <h2>スクリプト導入方法</h2>
 
@@ -473,16 +488,11 @@ Userscriptsをインストール
   </div>
 </section>
      
-   <section id="distance" class="tab-content">
+    <section id="distance" class="tab-content">
   <div class="panel">
     <h2>距離チェック</h2>
     <p class="note">
       CSV / KML / KMZを読み込み、40m未満の組み合わせを確認します。
-    </p>
-
-    <p class="note">
-      距離チェックは、POI同士が40m未満になっていないかを確認する機能です。<br>
-      判定距離は設計基準として固定し、現地の広さや人の流れは下の「CA所感」で補足してください。
     </p>
 
     <div class="step">
@@ -523,16 +533,22 @@ Userscriptsをインストール
     待機・集合しやすいスペースがある
   </label>
 </div>
-        <div class="step">
+    <div class="step">
       <div class="step-no">STEP 3</div>
       <button class="generate" onclick="runDistanceCheck()">距離チェック実行</button>
       <div id="distanceResult"></div>
     </div>
-  </div> <!-- panel -->
 </section>
 
 </div>
+<script>
 
+}
+
+
+
+
+</script>
 <div id="adminLoginModal" style="
   display:none;
   position:fixed;
@@ -641,7 +657,7 @@ Userscriptsをインストール
 
     <br><br>
 
-    <a href="/Campsite-Design-Tool-JP/campsite-guide.pdf" target="_blank" class="link-btn">
+    <a href="/Campsite-Design-Tool-JP/docs/campsite-guide.pdf" target="_blank" class="link-btn">
   📘 ガイドPDFを開く
 </a>
 
@@ -651,12 +667,11 @@ Userscriptsをインストール
 
   </div>
 </div>
-<script src="js/util.js?v=1"></script>
-<script src="js/tabs.js?v=1"></script>
-<script src="js/distance.js?v=1"></script>
-<script src="js/admin.js?v=1"></script>
-<script src="js/main.js?v=1"></script>
-<script src="js/kmz.js?v=1"></script>
-
+<script src="js/util.js"></script>
+<script src="js/tabs.js"></script>
+<script src="js/distance.js"></script>
+<script src="js/admin.js"></script>
+<script src="js/main.js"></script>
+<script src="js/kmz.js"></script>
 </body>
 </html>
