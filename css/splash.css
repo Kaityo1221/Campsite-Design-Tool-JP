@@ -5,7 +5,7 @@
   display: none;
   align-items: center;
   justify-content: center;
-  z-index: 9998;
+  z-index: 99998;
 }
 
 .splash-screen.show {
@@ -19,21 +19,38 @@
   border-radius: 28px;
   animation: iconWarp 1.4s ease forwards;
 }
-.splash-screen {
-  display: none;
-  position: fixed;
-  inset: 0;
-  z-index: 99998;
-  align-items: center;
-  justify-content: center;
-  background: #020617;
+
+@keyframes splashFade {
+  0% {
+    opacity: 1;
+  }
+
+  80% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
 }
 
-.splash-screen.show {
-  display: flex;
-}
+@keyframes iconWarp {
+  0% {
+    transform: scale(0.7) rotate(-8deg);
+    opacity: 0;
+  }
 
-.splash-screen img {
-  width: 180px;
-  max-width: 70vw;
+  40% {
+    transform: scale(1.08) rotate(2deg);
+    opacity: 1;
+  }
+
+  70% {
+    transform: scale(1);
+  }
+
+  100% {
+    transform: scale(0.92);
+    opacity: 1;
+  }
 }
