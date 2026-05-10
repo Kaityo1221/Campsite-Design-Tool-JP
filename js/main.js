@@ -20,9 +20,9 @@ function checkPassword() {
     error.textContent = "";
     input.blur();
 
-    loginScreen.remove();
+    document.body.classList.add("opening-mode");
 
-document.body.classList.add("opening-mode");
+loginScreen.remove();
 
 splashScreen.classList.add("show");
 
