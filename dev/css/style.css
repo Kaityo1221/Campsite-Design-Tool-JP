@@ -33,26 +33,7 @@ button.generate:active {
 }
   
 
-@keyframes splashFade {
-  0% { opacity: 1; }
-  65% { opacity: 1; }
-  100% { opacity: 0; }
-}
-
-@keyframes iconWarp {
-  0% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  55% {
-    opacity: 1;
-    transform: scale(1.08);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(1.9);
-  }
-}  #passwordInput {
+ #passwordInput {
   -webkit-text-security: disc;
 }
   .loading-overlay {
