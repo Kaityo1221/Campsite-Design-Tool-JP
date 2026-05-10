@@ -35,8 +35,9 @@ splashScreen.classList.add("show");
     }, 80);
 
     setTimeout(function () {
-      splashScreen.remove();
-    }, 1400);
+  splashScreen.remove();
+  showOpeningScreen();
+}, 1600);
 
   } else {
     error.textContent = "パスコードが違います";
@@ -158,3 +159,21 @@ document.addEventListener("click", function (event) {
   }
 
 });
+
+function showOpeningScreen() {
+  const opening = document.getElementById("openingScreen");
+
+  if (opening) {
+    opening.classList.add("show");
+  }
+}
+
+function startAdventure() {
+  const opening = document.getElementById("openingScreen");
+
+  if (opening) {
+    opening.classList.remove("show");
+  }
+
+  document.body.classList.remove("opening-mode");
+}
