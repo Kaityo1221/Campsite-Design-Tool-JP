@@ -128,6 +128,129 @@ async function generateCircleOnlyKMZ() {
     hideLoading();
   }
 }
+async function generateExistingOnlyKMZ() {
+  const files = Array.from(document.getElementById("existingOnlyFileInput").files);
+  const status = document.getElementById("existingOnlyStatus");
+
+  if (files.length === 0) {
+    alert("CSV / KML / KMZ ファイルを選択してください");
+    return;
+  }
+
+  showLoading("既存POI分類KMZ生成中…");
+
+  try {
+    let points = [];
+
+    for (const file of files) {
+      const fileName = file.name.toLowerCase();
+
+      if (fileName.endsWith(".csv")) {
+        const text = await file.text();
+        points.push(...parseCSV(text));
+      } else if (
+        fileName.endsWith(".kml") ||
+        fileName.endsWith(".kmz") ||
+        fileName.endsWith(".zip")
+      ) {
+        points.push(...await getPointsFromKmlOrKmz(file));
+      }
+    }
+
+    points = points.filter(p => !isIgnoredLayerForExistingOnly(p));
+
+    const beforeCount = points.length;
+
+    if (beforeCount === 0) {
+      alert("分類できる既存POIが見つかりませんでした");
+      status.textContent = "";
+      return;
+    }
+
+    const duplicateResult = removeDuplicate(points);
+    points = duplicateResult.uniquePoints;
+
+    const parser = new DOMParser();
+    const outputXml = parser.parseFromString(
+      `<?xml version="1.0" encoding="UTF-8"?>
+      <kml xmlns="http://www.opengis.net/kml/2.2">
+        <Document>
+          <name>Campsite Existing POI Output</name>
+        </Document>
+      </kml>`,
+      "application/xml"
+    );
+
+    const doc = outputXml.getElementsByTagName("Document")[0];
+
+    const folders = {
+      pokestop: createFolder(outputXml, doc, "既存のポケストップ"),
+      gym: createFolder(outputXml, doc, "既存のジム"),
+      power: createFolder(outputXml, doc, "既存のパワースポット")
+    };
+
+    const counts = {
+      pokestop: 0,
+      gym: 0,
+      power: 0
+    };
+
+    points.forEach(p => {
+      const kind = classifyType(p.type, p.name, p.layer);
+      const pointPlacemark = createPointPlacemark(outputXml, p);
+
+      if (kind === "gym") {
+        folders.gym.appendChild(pointPlacemark);
+        counts.gym++;
+      } else if (kind === "power") {
+        folders.power.appendChild(pointPlacemark);
+        counts.power++;
+      } else {
+        folders.pokestop.appendChild(pointPlacemark);
+        counts.pokestop++;
+      }
+    });
+
+    const serializer = new XMLSerializer();
+    const newKml = serializer.serializeToString(outputXml);
+
+    const zip = new JSZip();
+    zip.file("doc.kml", newKml);
+
+    const blob = await zip.generateAsync({ type: "blob" });
+
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+
+    const now = new Date();
+    a.download = `campsite_existing_poi_${now.getFullYear()}${now.getMonth() + 1}${now.getDate()}.kmz`;
+    a.click();
+
+    status.innerHTML =
+      `読み込み：${beforeCount}件<br>` +
+      `重複削除：${duplicateResult.duplicateCount}件<br>` +
+      `既存ポケストップ：${counts.pokestop}件<br>` +
+      `既存ジム：${counts.gym}件<br>` +
+      `既存パワースポット：${counts.power}件<br>` +
+      `✔ 既存POI分類KMZを生成しました`;
+
+    const success = document.getElementById("successSound");
+    if (success) {
+      success.currentTime = 0;
+      success.volume = 0.12;
+      setTimeout(() => {
+        success.play().catch(() => {});
+      }, 100);
+    }
+
+  } catch (error) {
+    console.error(error);
+    alert("既存POI分類KMZの生成中にエラーが発生しました");
+    status.textContent = "";
+  } finally {
+    hideLoading();
+  }
+}
 
 async function generateKMZ() {
 
