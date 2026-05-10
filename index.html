@@ -2081,8 +2081,7 @@ async function generateCircleOnlyKMZ() {
     return;
   }
 
-  document.getElementById("loadingOverlay").style.display = "flex";
-  document.getElementById("loadingText").textContent = "円だけKMZ生成中…";
+  showLoading("円だけKMZ生成中…");
 
   try {
     let points = [];
@@ -2229,8 +2228,7 @@ async function generateExistingOnlyKMZ() {
     return;
   }
 
-  document.getElementById("loadingOverlay").style.display = "flex";
-  document.getElementById("loadingText").textContent = "既存POI分類KMZ生成中…";
+  showLoading("既存POI分類KMZ生成中…");
 
   try {
     let points = [];
