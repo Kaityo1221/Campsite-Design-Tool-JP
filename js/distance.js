@@ -113,6 +113,39 @@ function extractPointsByLayer(xml) {
       };
     }).filter(Boolean);
   });
+function renderLayerSelector(layers, container) {
+  container.innerHTML = "";
+
+  const targetLayers = layers.filter(name =>
+    !name.includes("円") &&
+    !name.includes("30m") &&
+    !name.includes("40m")
+  );
+
+  if (targetLayers.length === 0) {
+    container.innerHTML = "判定できるPOIレイヤーがありません。";
+    return;
+  }
+
+  container.innerHTML = targetLayers.map(name => `
+    <div class="layer-row">
+      <strong>${cleanLayerName(name)}</strong>
+      <span class="note">（${window._layerPoints[name]?.length || 0}件）</span>
+    </div>
+  `).join("");
+}
+  function cleanLayerName(name) {
+  return name
+    .replace("既存の", "")
+    .replace("既存", "")
+    .trim();
+}
+function getStars(score) {
+  if (score >= 85) return "⭐⭐⭐⭐⭐";
+  if (score >= 70) return "⭐⭐⭐⭐☆";
+  if (score >= 50) return "⭐⭐⭐☆☆";
+  return "⭐⭐☆☆☆";
+}
 
   return result;
 }
