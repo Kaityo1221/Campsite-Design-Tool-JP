@@ -226,3 +226,30 @@ body.opening-mode .container {
     opacity: 0;
   }
 }
+
+.opening-screen.show .walker {
+  position: fixed !important;
+  top: 45vh !important;
+  left: 100vw !important;
+  bottom: auto !important;
+
+  width: 260px !important;
+  opacity: 1 !important;
+
+  z-index: 999999 !important;
+  pointer-events: none !important;
+
+  animation: walkerDebugMove 8s linear forwards !important;
+}
+
+@keyframes walkerDebugMove {
+  0% {
+    left: 100vw;
+    opacity: 1;
+  }
+
+  100% {
+    left: -300px;
+    opacity: 1;
+  }
+}
