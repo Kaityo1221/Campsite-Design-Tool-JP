@@ -21,7 +21,10 @@ function checkPassword() {
     input.blur();
 
     loginScreen.remove();
-    splashScreen.classList.add("show");
+
+document.body.classList.add("opening-mode");
+
+splashScreen.classList.add("show");
 
     const loginSound = document.getElementById("loginSound");
     loginSound.currentTime = 0;
