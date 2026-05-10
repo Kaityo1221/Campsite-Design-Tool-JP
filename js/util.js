@@ -26,3 +26,29 @@ window.checkQuiz = function () {
     alert("もう一度確認してください\nヒント：基本距離は40mです");
   }
 }
+function showLoading(text = "読み込み中…") {
+
+  const overlay =
+    document.getElementById("loadingOverlay");
+
+  const loadingText =
+    document.getElementById("loadingText");
+
+  if (overlay) {
+    overlay.style.display = "flex";
+  }
+
+  if (loadingText) {
+    loadingText.textContent = text;
+  }
+}
+
+function hideLoading() {
+
+  const overlay =
+    document.getElementById("loadingOverlay");
+
+  if (overlay) {
+    overlay.style.display = "none";
+  }
+}
