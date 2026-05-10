@@ -1,317 +1,423 @@
+async function generateCircleOnlyKMZ() {
+  const files = Array.from(document.getElementById("circleOnlyFileInput").files);
+  const status = document.getElementById("circleOnlyStatus");
 
-function createCircle(lat, lon, radius, points = 72) {
-  const earthRadius = 6378137;
-  const coords = [];
+  const radii = Array.from(
+    document.querySelectorAll('input[name="circleOnlyRadius"]:checked')
+  ).map(e => Number(e.value));
 
-  for (let i = 0; i < points; i++) {
-    const angle = (i * 360 / points) * Math.PI / 180;
-    const dLat = (radius * Math.sin(angle)) / earthRadius;
-    const dLon = (radius * Math.cos(angle)) / (earthRadius * Math.cos(lat * Math.PI / 180));
-    const newLat = lat + dLat * 180 / Math.PI;
-    const newLon = lon + dLon * 180 / Math.PI;
-    coords.push(`${newLon},${newLat},0`);
+  if (files.length === 0) {
+    alert("CSV / KML / KMZ ファイルを選択してください");
+    return;
   }
 
-  coords.push(coords[0]);
-  return coords.join(" ");
-}
-
-function parseCSVLine(line) {
-  const result = [];
-  let current = "";
-  let inQuotes = false;
-
-  for (let i = 0; i < line.length; i++) {
-    const char = line[i];
-
-    if (char === '"' && line[i + 1] === '"') {
-      current += '"';
-      i++;
-    } else if (char === '"') {
-      inQuotes = !inQuotes;
-    } else if (char === "," && !inQuotes) {
-      result.push(current);
-      current = "";
-    } else {
-      current += char;
-    }
+  if (radii.length === 0) {
+    alert("30m円または40m円を選択してください");
+    return;
   }
 
-  result.push(current);
-  return result;
-}
+  showLoading("円だけKMZ生成中…");
 
-function normalizeHeader(text) {
-  return (text || "").trim().toLowerCase();
-}
+  try {
+    let points = [];
 
-function parseCSV(text) {
-  const lines = text.split(/\r?\n/).filter(line => line.trim() !== "");
-  if (lines.length < 2) return [];
+    for (const file of files) {
+  const fileName = file.name.toLowerCase();
 
-  const headers = parseCSVLine(lines[0]).map(normalizeHeader);
-
-  const latIndex = headers.findIndex(h => h === "lat" || h.includes("latitude"));
-  const lngIndex = headers.findIndex(h => h === "lng" || h === "lon" || h.includes("longitude"));
- const typeIndex = headers.findIndex(h =>
-  h.includes("gameentity") ||
-  h.includes("game_entity") ||
-  h.includes("entity") ||
-  h.includes("type") ||
-  h.includes("category")
-);
-  const guidIndex = headers.findIndex(h => h.includes("guid"));
-  const nameIndex = headers.findIndex(h => h === "title" || h === "name");
-
-  if (latIndex === -1 || lngIndex === -1) {
-    alert("CSVに lat / lng が見つかりません");
-    return [];
-  }
-
-  const points = [];
-
-  for (let i = 1; i < lines.length; i++) {
-    const cols = parseCSVLine(lines[i]);
-    const lat = Number(cols[latIndex]);
-    const lng = Number(cols[lngIndex]);
-
-    if (isNaN(lat) || isNaN(lng)) continue;
-
-    points.push({
-      lat,
-      lng,
-      type: typeIndex !== -1 ? (cols[typeIndex] || "").toLowerCase() : "",
-      guid: guidIndex !== -1 ? (cols[guidIndex] || "").trim() : "",
-      name: nameIndex !== -1 && cols[nameIndex] ? cols[nameIndex] : `POI_${i}`
-    });
-  }
-
-  return points;
-}
-
-async function getPointsFromKmlOrKmz(file) {
-  let kmlText = null;
-
-  if (file.name.toLowerCase().endsWith(".kml")) {
-    kmlText = await file.text();
+  if (fileName.endsWith(".csv")) {
+    const text = await file.text();
+    points.push(...parseCSV(text));
   } else if (
-    file.name.toLowerCase().endsWith(".kmz") ||
-    file.name.toLowerCase().endsWith(".zip")
+    fileName.endsWith(".kml") ||
+    fileName.endsWith(".kmz") ||
+    fileName.endsWith(".zip")
   ) {
-    const zip = await JSZip.loadAsync(file);
-    for (const name in zip.files) {
-      if (name.toLowerCase().endsWith(".kml")) {
-        kmlText = await zip.files[name].async("text");
-        break;
-      }
-    }
+    points.push(...await getPointsFromKmlOrKmz(file));
   }
-
-  if (!kmlText) return [];
-
-  const xml = new DOMParser().parseFromString(kmlText, "application/xml");
-
-  const folders = Array.from(xml.getElementsByTagName("Folder"));
-
-  const result = [];
-
-  folders.forEach(folder => {
-    const layerName =
-      folder.getElementsByTagName("name")[0]?.textContent || "無名レイヤー";
-
-    const placemarks = Array.from(folder.getElementsByTagName("Placemark"));
-
-    placemarks.forEach((pm, index) => {
-      const point = pm.getElementsByTagName("Point")[0];
-      if (!point) return;
-
-      const coordText = point
-        .getElementsByTagName("coordinates")[0]
-        ?.textContent.trim();
-
-      if (!coordText) return;
-
-      const [lng, lat] = coordText.split(",").map(Number);
-
-      if (isNaN(lat) || isNaN(lng)) return;
-
-      const name =
-        pm.getElementsByTagName("name")[0]?.textContent ||
-        `POI_${index + 1}`;
-
-      result.push({
-        lat,
-        lng,
-        name,
-        layer: layerName
-      });
-    });
-  });
-
-  return result;
 }
+   points = points.filter(p => {
+  if (isDummyPoint(p)) return false;
 
-function removeDuplicate(points) {
-  const map = new Map();
-  let duplicateCount = 0;
-
-  points.forEach(p => {
-    const key = p.guid
-      ? `guid:${p.guid}`
-      : `coord:${p.lat.toFixed(6)},${p.lng.toFixed(6)}`;
-
-    if (map.has(key)) {
-      duplicateCount++;
-    } else {
-      map.set(key, p);
-    }
-  });
-
-  return {
-    uniquePoints: Array.from(map.values()),
-    duplicateCount
-  };
-}
-
-function createFolder(xml, doc, name) {
-  const folder = xml.createElement("Folder");
-  const folderName = xml.createElement("name");
-  folderName.textContent = name;
-  folder.appendChild(folderName);
-  doc.appendChild(folder);
-  return folder;
-}
-
-function createPointPlacemark(xml, p) {
-  const pm = xml.createElement("Placemark");
-
-  const name = xml.createElement("name");
-  name.textContent = p.name;
-
-  const point = xml.createElement("Point");
-  const coordinates = xml.createElement("coordinates");
-  coordinates.textContent = `${p.lng},${p.lat},0`;
-
-  point.appendChild(coordinates);
-  pm.appendChild(name);
-  pm.appendChild(point);
-
-  return pm;
-}
-
-function createCirclePlacemark(xml, p, radius) {
-  const pm = xml.createElement("Placemark");
-
-  const name = xml.createElement("name");
-  name.textContent = `${p.name}_${radius}m`;
-
-  const polygon = xml.createElement("Polygon");
-  const outer = xml.createElement("outerBoundaryIs");
-  const ring = xml.createElement("LinearRing");
-  const coordinates = xml.createElement("coordinates");
-
-  coordinates.textContent = createCircle(p.lat, p.lng, radius);
-
-  ring.appendChild(coordinates);
-  outer.appendChild(ring);
-  polygon.appendChild(outer);
-
-  pm.appendChild(name);
-  pm.appendChild(polygon);
-
-  return pm;
-}
-
-function addDummyPlacemark(xml, folder, name) {
-  if (!folder) return;
-
-  const pm = xml.createElement("Placemark");
-
-  const n = xml.createElement("name");
-  n.textContent = name;
-
-  const styleUrl = xml.createElement("styleUrl");
-  styleUrl.textContent = "#hiddenStyle";
-
-  const point = xml.createElement("Point");
-  const coord = xml.createElement("coordinates");
-
-  // 海上ダミー
-  coord.textContent = "0,0,0";
-
-  point.appendChild(coord);
-
-  pm.appendChild(n);
-  pm.appendChild(styleUrl);
-  pm.appendChild(point);
-
-  folder.appendChild(pm);
-}
-function classifyType(typeText = "", name = "", layerName = "") {
-  const text = `${typeText} ${name} ${layerName}`.toLowerCase();
-
-  if (
-    text.includes("power") ||
-    text.includes("powerspot") ||
-    text.includes("power spot") ||
-    text.includes("パワ") ||
-    text.includes("パワースポット") ||
-    text.includes("パワスポ")
-  ) {
-    return "power";
-  }
-
-  if (
-    text.includes("gym") ||
-    text.includes("ジム")
-  ) {
-    return "gym";
-  }
-
-  if (
-    text.includes("pokestop") ||
-    text.includes("poke stop") ||
-    text.includes("ポケスト") ||
-    text.includes("ポケストップ")
-  ) {
-    return "pokestop";
-  }
-
-  return "pokestop";
-}
-
-function isDummyPoint(p) {
-  const name = p.name || "";
-
-  if (Number(p.lat) === 0 && Number(p.lng) === 0) return true;
-  if (name.includes("ここに追加")) return true;
-  if (name.includes("レイヤー保持用")) return true;
-
-  return false;
-}
-
-
-  function isIgnoredLayerForExistingOnly(p) {
   const layerName = p.layer || "";
-  const name = p.name || "";
-
-  if (typeof isDummyPoint === "function" && isDummyPoint(p)) return true;
-
   if (
     layerName.includes("円") ||
     layerName.includes("30m") ||
     layerName.includes("40m")
   ) {
-    return true;
+    return false;
   }
+
+  return true;
+});
+    const beforeCount = points.length;
+
+    if (beforeCount === 0) {
+      alert("円を作成できるスポット座標が見つかりませんでした");
+      status.textContent = "";
+      return;
+    }
+
+    const result = removeDuplicate(points);
+    points = result.uniquePoints;
+
+    const parser = new DOMParser();
+    const outputXml = parser.parseFromString(
+      `<?xml version="1.0" encoding="UTF-8"?>
+      <kml xmlns="http://www.opengis.net/kml/2.2">
+        <Document>
+          <name>Campsite Circle Only Output</name>
+        </Document>
+      </kml>`,
+      "application/xml"
+    );
+
+    const doc = outputXml.getElementsByTagName("Document")[0];
+
+    const folders = {
+      circle40: createFolder(outputXml, doc, "40m円（基本距離）"),
+      circle30: createFolder(outputXml, doc, "30m円（調整用）")
+    };
+
+    points.forEach(p => {
+      radii.forEach(radius => {
+        const circlePlacemark = createCirclePlacemark(outputXml, p, radius);
+
+        if (radius === 40) {
+          folders.circle40.appendChild(circlePlacemark);
+        } else if (radius === 30) {
+          folders.circle30.appendChild(circlePlacemark);
+        }
+      });
+    });
+
+    const serializer = new XMLSerializer();
+    const newKml = serializer.serializeToString(outputXml);
+
+    const zip = new JSZip();
+    zip.file("doc.kml", newKml);
+
+    const blob = await zip.generateAsync({ type: "blob" });
+
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+
+    const now = new Date();
+    a.download = `campsite_circles_${now.getFullYear()}${now.getMonth() + 1}${now.getDate()}.kmz`;
+    a.click();
+
+    status.innerHTML =
+      `読み込み：${beforeCount}件<br>` +
+      `重複削除：${result.duplicateCount}件<br>` +
+      `円作成対象：${points.length}件<br>` +
+      `✔ 円だけKMZを生成しました`;
+
+    const success = document.getElementById("successSound");
+    if (success) {
+      success.currentTime = 0;
+      success.volume = 0.12;
+      setTimeout(() => {
+        success.play().catch(() => {});
+      }, 100);
+    }
+
+  } catch (error) {
+    console.error(error);
+    alert("円だけKMZの生成中にエラーが発生しました");
+    status.textContent = "";
+  } finally {
+    hideLoading();
+  }
+}
+async function generateExistingOnlyKMZ() {
+  const files = Array.from(document.getElementById("existingOnlyFileInput").files);
+  const status = document.getElementById("existingOnlyStatus");
+
+  if (files.length === 0) {
+    alert("CSV / KML / KMZ ファイルを選択してください");
+    return;
+  }
+
+  showLoading("既存POI分類KMZ生成中…");
+
+  try {
+    let points = [];
+
+    for (const file of files) {
+      const fileName = file.name.toLowerCase();
+
+      if (fileName.endsWith(".csv")) {
+        const text = await file.text();
+        points.push(...parseCSV(text));
+      } else if (
+        fileName.endsWith(".kml") ||
+        fileName.endsWith(".kmz") ||
+        fileName.endsWith(".zip")
+      ) {
+        points.push(...await getPointsFromKmlOrKmz(file));
+      }
+    }
+
+    points = points.filter(p => !isIgnoredLayerForExistingOnly(p));
+
+    const beforeCount = points.length;
+
+    if (beforeCount === 0) {
+      alert("分類できる既存POIが見つかりませんでした");
+      status.textContent = "";
+      return;
+    }
+
+    const duplicateResult = removeDuplicate(points);
+    points = duplicateResult.uniquePoints;
+
+    const parser = new DOMParser();
+    const outputXml = parser.parseFromString(
+      `<?xml version="1.0" encoding="UTF-8"?>
+      <kml xmlns="http://www.opengis.net/kml/2.2">
+        <Document>
+          <name>Campsite Existing POI Output</name>
+        </Document>
+      </kml>`,
+      "application/xml"
+    );
+
+    const doc = outputXml.getElementsByTagName("Document")[0];
+
+    const folders = {
+      pokestop: createFolder(outputXml, doc, "既存のポケストップ"),
+      gym: createFolder(outputXml, doc, "既存のジム"),
+      power: createFolder(outputXml, doc, "既存のパワースポット")
+    };
+
+    const counts = {
+      pokestop: 0,
+      gym: 0,
+      power: 0
+    };
+
+    points.forEach(p => {
+      const kind = classifyType(p.type, p.name, p.layer);
+      const pointPlacemark = createPointPlacemark(outputXml, p);
+
+      if (kind === "gym") {
+        folders.gym.appendChild(pointPlacemark);
+        counts.gym++;
+      } else if (kind === "power") {
+        folders.power.appendChild(pointPlacemark);
+        counts.power++;
+      } else {
+        folders.pokestop.appendChild(pointPlacemark);
+        counts.pokestop++;
+      }
+    });
+
+    const serializer = new XMLSerializer();
+    const newKml = serializer.serializeToString(outputXml);
+
+    const zip = new JSZip();
+    zip.file("doc.kml", newKml);
+
+    const blob = await zip.generateAsync({ type: "blob" });
+
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+
+    const now = new Date();
+    a.download = `campsite_existing_poi_${now.getFullYear()}${now.getMonth() + 1}${now.getDate()}.kmz`;
+    a.click();
+
+    status.innerHTML =
+      `読み込み：${beforeCount}件<br>` +
+      `重複削除：${duplicateResult.duplicateCount}件<br>` +
+      `既存ポケストップ：${counts.pokestop}件<br>` +
+      `既存ジム：${counts.gym}件<br>` +
+      `既存パワースポット：${counts.power}件<br>` +
+      `✔ 既存POI分類KMZを生成しました`;
+
+    const success = document.getElementById("successSound");
+    if (success) {
+      success.currentTime = 0;
+      success.volume = 0.12;
+      setTimeout(() => {
+        success.play().catch(() => {});
+      }, 100);
+    }
+
+  } catch (error) {
+    console.error(error);
+    alert("既存POI分類KMZの生成中にエラーが発生しました");
+    status.textContent = "";
+  } finally {
+    hideLoading();
+  }
+}
+
+async function generateKMZ() {
 
   if (
-    layerName.includes("追加希望") ||
-    layerName.includes("追加") ||
-    name.includes("ここに追加") ||
-    name.includes("レイヤー保持用")
+    window.ENABLE_QUIZ &&
+    localStorage.getItem("quizPassed") !== window.QUIZ_VERSION
   ) {
-    return true;
+    window.showQuiz();
+    return;
   }
 
-  return false;
+  showLoading("読み込み中…");
+
+  const files = Array.from(document.getElementById("fileInput").files);
+  const status = document.getElementById("status");
+
+  const radii = Array.from(
+    document.querySelectorAll('input[name="radius"]:checked')
+  ).map(e => Number(e.value));
+
+  if (files.length === 0) {
+    alert("CSV / KML / KMZ ファイルを選択してください");
+    hideLoading();
+    return;
+  }
+
+  if (radii.length === 0) {
+    alert("30m円または40m円を選択してください");
+    hideLoading();
+    return;
+  }
+
+  await waitForRender();
+
+  let points = [];
+
+  for (const file of files) {
+    const fileName = file.name.toLowerCase();
+
+    if (fileName.endsWith(".csv")) {
+      const text = await file.text();
+      points.push(...parseCSV(text));
+    } else if (
+  fileName.endsWith(".kml") ||
+  fileName.endsWith(".kmz") ||
+  fileName.endsWith(".zip")
+) {
+  points.push(...await getPointsFromKmlOrKmz(file));
+}  }
+
+  const beforeCount = points.length;
+
+ if (beforeCount === 0) {
+  alert("スポット座標が見つかりませんでした");
+  status.textContent = "";
+  hideLoading();
+  return;
+}
+await waitForRender();
+
+  const result = removeDuplicate(points);
+  points = result.uniquePoints;
+setLoadingText("KMZ生成中…");
+  // status.innerHTML = `
+//   <span class="loading">
+//     <span class="spinner"></span>
+//     KMZ生成中…
+//   </span>
+// `;
+  await sleep(3000);
+  
+await waitForRender();
+  const parser = new DOMParser();
+  const outputXml = parser.parseFromString(
+    `<?xml version="1.0" encoding="UTF-8"?>
+    <kml xmlns="http://www.opengis.net/kml/2.2">
+      <Document>
+        <name>Campsite Design Output</name>
+      </Document>
+    </kml>`,
+    "application/xml"
+  );
+
+  const doc = outputXml.getElementsByTagName("Document")[0];
+const hiddenStyle = outputXml.createElement("Style");
+hiddenStyle.setAttribute("id", "hiddenStyle");
+
+const iconStyle = outputXml.createElement("IconStyle");
+const scale = outputXml.createElement("scale");
+scale.textContent = "0";
+
+iconStyle.appendChild(scale);
+hiddenStyle.appendChild(iconStyle);
+doc.appendChild(hiddenStyle);
+  const folders = {
+  pokestop: createFolder(outputXml, doc, "既存のポケストップ"),
+  gym: createFolder(outputXml, doc, "既存のジム"),
+  power: createFolder(outputXml, doc, "既存のパワースポット"),
+
+  addPokestop: createFolder(outputXml, doc, "追加希望ポケスト"),
+  addGym: createFolder(outputXml, doc, "追加希望ジム"),
+  addPower: createFolder(outputXml, doc, "追加希望パワスポ"),
+
+  circle40: createFolder(outputXml, doc, "40m円（基本距離）"),
+  circle30: createFolder(outputXml, doc, "30m円（調整用）")
+};
+
+addDummyPlacemark(outputXml, folders.addPokestop, "ここに追加ポケストを配置");
+addDummyPlacemark(outputXml, folders.addGym, "ここに追加ジムを配置");
+addDummyPlacemark(outputXml, folders.addPower, "ここに追加パワスポを配置");
+
+points.forEach(p => {
+  const kind = classifyType(p.type, p.name, p.layer);
+  const pointPlacemark = createPointPlacemark(outputXml, p);
+
+  if (kind === "gym") {
+    folders.gym.appendChild(pointPlacemark);
+  } else if (kind === "power") {
+    folders.power.appendChild(pointPlacemark);
+  } else {
+    folders.pokestop.appendChild(pointPlacemark);
+  }
+
+  radii.forEach(radius => {
+    const circlePlacemark = createCirclePlacemark(outputXml, p, radius);
+
+    if (radius === 40) {
+      folders.circle40.appendChild(circlePlacemark);
+    } else if (radius === 30) {
+      folders.circle30.appendChild(circlePlacemark);
+    }
+  });
+});
+
+  const serializer = new XMLSerializer();
+  const newKml = serializer.serializeToString(outputXml);
+
+  const zip = new JSZip();
+  zip.file("doc.kml", newKml);
+
+  const blob = await zip.generateAsync({ type: "blob" });
+
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  const now = new Date();
+a.download = `campsite_${now.getFullYear()}${now.getMonth()+1}${now.getDate()}.kmz`;
+ a.click();
+
+const success = document.getElementById("successSound");
+success.currentTime = 0;
+success.volume = 0.12;
+
+setTimeout(() => {
+  success.play().catch(() => {});
+}, 100);
+
+// どんな状況でも消す（最強）
+setTimeout(() => {
+  hideLoading();
+}, 300);
+status.innerHTML =
+    `読み込み：${beforeCount}件<br>` +
+    `重複削除：${result.duplicateCount}件<br>` +
+    `出力：${points.length}件<br>` +
+    `✔ KMZを生成しました`;
+  status.style.transform = "scale(1.05)";
+setTimeout(() => {
+  status.style.transform = "scale(1)";
+}, 120);
+}
