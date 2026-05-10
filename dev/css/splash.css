@@ -74,7 +74,9 @@ body.opening-mode .container {
 
   color: white;
 }
-
+.opening-screen.show {
+  display: flex;
+}
 .opening-card {
   width: min(100%, 420px);
   margin: auto;
@@ -187,17 +189,5 @@ body.opening-mode .container {
   100% {
     left: -300px;
     opacity: 0;
-  }
-}
-
-@keyframes walkerDebugMove {
-  0% {
-    left: 100vw;
-    opacity: 1;
-  }
-
-  100% {
-    left: -300px;
-    opacity: 1;
   }
 }
