@@ -17,7 +17,8 @@
   width: 140px;
   height: 140px;
   border-radius: 28px;
-  animation: iconWarp 1.4s ease forwards;
+
+  animation: iconZoom 1.4s ease forwards;
 }
 @keyframes splashFade {
   0% { opacity: 1; }
@@ -25,23 +26,32 @@
   100% { opacity: 0; }
 }
 
-@keyframes iconWarp {
+@keyframes iconZoom {
+
   0% {
-    transform: scale(0.7) rotate(-8deg);
+    transform: scale(0.45);
     opacity: 0;
+
+    filter:
+      blur(12px)
+      brightness(1.8);
   }
 
-  40% {
-    transform: scale(1.08) rotate(2deg);
+  35% {
+    transform: scale(1.18);
     opacity: 1;
+
+    filter:
+      blur(0px)
+      brightness(1.15);
   }
 
-  70% {
-    transform: scale(1);
+  65% {
+    transform: scale(1.02);
   }
 
   100% {
-    transform: scale(0.92);
+    transform: scale(1);
     opacity: 1;
   }
 }
