@@ -107,16 +107,6 @@ function openAdminLogin() {
   }, 100);
 }
 
-
-function setLoadingText(text) {
-
-  const loadingText =
-    document.getElementById("loadingText");
-
-  if (loadingText) {
-    loadingText.textContent = text;
-  }
-}
 function closeAdminLogin() {
   const modal = document.getElementById("adminLoginModal");
   if (modal) {
