@@ -20,8 +20,10 @@ function checkPassword() {
     error.textContent = "";
     input.blur();
 
-    loginScreen.remove();
-    splashScreen.classList.add("show");
+    document.body.classList.add("opening-mode");
+
+loginScreen.remove();
+splashScreen.classList.add("show");
 
     const loginSound = document.getElementById("loginSound");
     loginSound.currentTime = 0;
@@ -157,8 +159,6 @@ document.addEventListener("click", function (event) {
 });
 function showOpeningScreen() {
   const opening = document.getElementById("openingScreen");
-
-  document.body.classList.add("opening-mode");
 
   if (opening) {
     opening.classList.add("show");
