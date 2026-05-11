@@ -218,3 +218,24 @@ function changeOpeningScene() {
     sheepTapArea.style.display = "none";
   }
 }
+function backToOpening() {
+  const opening = document.getElementById("openingScreen");
+  const left = document.getElementById("openingSceneLeft");
+  const right = document.getElementById("openingSceneRight");
+  const sheepTapArea = document.getElementById("sheepTapArea");
+
+  if (!opening) return;
+
+  openingSceneChanged = false;
+
+  if (left) left.classList.add("active");
+  if (right) right.classList.remove("active");
+  if (sheepTapArea) sheepTapArea.style.display = "block";
+
+  document.body.classList.add("opening-mode");
+
+  opening.style.opacity = "1";
+  opening.style.transition = "opacity 0.4s ease";
+
+  opening.classList.add("show");
+}
