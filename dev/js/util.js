@@ -130,13 +130,17 @@ function parseCSV(text) {
         ]);
 
       const type =
-        pickValue(obj, [
-          "type",
-          "Type",
-          "category",
-          "Category",
-          "種類"
-        ]) || "";
+  pickValue(obj, [
+    "gameEntity",
+    "GameEntity",
+    "game_entity",
+    "Game Entity",
+    "type",
+    "Type",
+    "category",
+    "Category",
+    "種類"
+  ]) || "";
 
       const guid =
         pickValue(obj, [
@@ -155,14 +159,25 @@ function parseCSV(text) {
         return null;
       }
 
-      return {
-        name: String(name || "名称未設定"),
-        lat: nLat,
-        lng: nLng,
-        type: String(type || ""),
-        guid: String(guid || ""),
-        layer: "CSV"
-      };
+     const gameStatus =
+  pickValue(obj, [
+    "gameStatus",
+    "GameStatus",
+    "game_status",
+    "Game Status",
+    "status",
+    "Status"
+  ]) || "";
+
+return {
+  name: String(name || "名称未設定"),
+  lat: nLat,
+  lng: nLng,
+  type: String(type || ""),
+  gameStatus: String(gameStatus || ""),
+  guid: String(guid || ""),
+  layer: "CSV"
+};
     })
     .filter(Boolean);
 }
