@@ -203,3 +203,24 @@ function escapeKmlText(value) {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&apos;");
 }
+/* =========================
+   Dummy Placemark Builder
+========================= */
+
+function addDummyPlacemark(layerName) {
+  const safeName = escapeKmlText(layerName || "ダミーポイント");
+
+  return `
+<Placemark>
+  <name>${safeName}_レイヤー保持用</name>
+  <description>このポイントはレイヤー保持用のダミーポイントです。My Maps上で必要に応じて削除してください。</description>
+  <Style>
+    <IconStyle>
+      <scale>0.1</scale>
+    </IconStyle>
+  </Style>
+  <Point>
+    <coordinates>139.000000,35.000000,0</coordinates>
+  </Point>
+</Placemark>`;
+}
