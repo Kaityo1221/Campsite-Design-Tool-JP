@@ -151,10 +151,12 @@ body.opening-mode .container {
 /* 設計を始める */
 .opening-start-area {
   position: absolute;
-  left: 25%;
-  bottom: 9.5%;
-  width: 50%;
-  height: 7.5%;
+
+  left: 21%;
+  bottom: 7.8%;
+
+  width: 58%;
+  height: 9.2%;
 
   border: none;
   background: transparent;
