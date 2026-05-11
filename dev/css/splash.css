@@ -231,7 +231,7 @@ body.opening-mode .container {
   height: 5.0%;
 
   border: none;
-  background: rgba(255, 0, 0, 0.22);
+  background: transparent;
 
   z-index: 35;
   cursor: pointer;
