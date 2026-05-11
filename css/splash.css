@@ -10,50 +10,42 @@
 
 .splash-screen.show {
   display: flex;
-  animation: splashFade 1.4s ease forwards;
+  animation:
+    splashFade 1.4s ease forwards;
 }
 
 .splash-screen img {
   width: 140px;
   height: 140px;
   border-radius: 28px;
-  animation: iconWarp 1.4s ease forwards;
+  animation:
+    iconWarp 1.4s ease forwards;
 }
 
 @keyframes splashFade {
-  0% {
-    opacity: 1;
-  }
-
-  80% {
-    opacity: 1;
-  }
-
-  100% {
-    opacity: 0;
-  }
+  0% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
 }
 
 @keyframes iconWarp {
   0% {
-    transform: scale(0.7) rotate(-8deg);
+    transform: scale(0.7);
     opacity: 0;
   }
 
-  40% {
-    transform: scale(1.08) rotate(2deg);
+  45% {
+    transform: scale(1.1);
     opacity: 1;
-  }
-
-  70% {
-    transform: scale(1);
   }
 
   100% {
-    transform: scale(0.92);
+    transform: scale(1);
     opacity: 1;
   }
 }
+
+/* オープニング中はメイン画面を隠す */
 body.opening-mode {
   overflow: hidden;
 }
@@ -62,6 +54,7 @@ body.opening-mode .container {
   display: none !important;
 }
 
+/* オープニング画面 */
 .opening-screen {
   position: fixed;
   inset: 0;
@@ -82,24 +75,38 @@ body.opening-mode .container {
     linear-gradient(135deg, #020617, #0f172a, #1e1b4b);
 
   color: white;
+  animation:
+    openingBreath 6s ease-in-out infinite;
 }
-
 .opening-screen.show {
   display: flex;
 }
-
 .opening-card {
   width: min(100%, 420px);
   margin: auto;
   text-align: center;
   box-sizing: border-box;
+
+  position: relative;
+  z-index: 2;
 }
 
 .opening-badge {
+  display: inline-block;
   margin-bottom: 14px;
   font-size: 12px;
   letter-spacing: 0.12em;
   color: #bfdbfe;
+
+  overflow: hidden;
+  white-space: nowrap;
+  border-right: 2px solid rgba(191,219,254,0.9);
+
+  width: 0;
+
+  animation:
+    typingMission 1.8s steps(14,end) forwards,
+    blinkCursor 0.7s step-end infinite;
 }
 
 .opening-card h1 {
@@ -116,10 +123,39 @@ body.opening-mode .container {
 }
 
 .opening-card button {
-  padding: 10px 20px;
-  border-radius: 999px;
-  border: none;
-  font-weight: 800;
+
+  padding: 16px 34px;
+
+  border-radius: 18px;
+
+  border:
+    1px solid rgba(96,165,250,0.45);
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(37,99,235,0.95),
+      rgba(124,58,237,0.95)
+    );
+
+  color: white;
+
+  font-size: 18px;
+  font-weight: 900;
+
+  letter-spacing: 0.04em;
+
+  box-shadow:
+    0 0 24px rgba(96,165,250,0.35);
+
+  backdrop-filter: blur(6px);
+
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.2s ease,
+    opacity 0.2s ease;
+    animation:
+      startButtonGlow 2.4s ease-in-out infinite;
 }
 
 .guide-link {
@@ -128,19 +164,35 @@ body.opening-mode .container {
   color: #60a5fa;
   font-weight: 700;
 }
-.opening-screen.show .walker {
-  position: absolute !important;
-  bottom: 70px !important;
-  right: auto !important;
-  left: 100vw !important;
 
-  width: 220px !important;
-  opacity: 1 !important;
-  z-index: 0 !important;
-  pointer-events: none !important;
+.opening-card button:active {
 
-  animation: walkerSlide 4.5s ease-out forwards !important;
+  transform:
+    scale(0.95)
+    translateY(2px);
+
+  box-shadow:
+    0 0 42px rgba(96,165,250,0.75);
 }
+
+.opening-screen.show .walker {
+  position: absolute;
+
+  bottom: 90px;
+  left: 0;
+
+  width: 260px;
+
+  opacity: 1;
+
+  z-index: 3;
+  pointer-events: none;
+
+  transform: translateX(100vw);
+
+  animation: walkerSlide 8s linear forwards;
+}
+
 
 @keyframes walkerSlide {
 
@@ -155,7 +207,7 @@ body.opening-mode .container {
   }
 
   82% {
-    transform: translateX(-160px);
+    transform: translateX(-130px);
     opacity: 1;
   }
 
@@ -164,3 +216,49 @@ body.opening-mode .container {
     opacity: 0;
   }
 }
+@keyframes typingMission {
+  from {
+    width: 0;
+  }
+
+  to {
+    width: 15ch;
+  }
+}
+
+@keyframes blinkCursor {
+  50% {
+    border-color: transparent;
+  }
+}
+@keyframes startButtonGlow {
+  0% {
+    box-shadow:
+      0 0 18px rgba(96,165,250,0.28);
+  }
+
+  50% {
+    box-shadow:
+      0 0 38px rgba(96,165,250,0.65);
+  }
+
+  100% {
+    box-shadow:
+      0 0 18px rgba(96,165,250,0.28);
+  }
+}
+@keyframes openingBreath {
+
+  0% {
+    filter: brightness(1);
+  }
+
+  50% {
+    filter: brightness(1.08);
+  }
+
+  100% {
+    filter: brightness(1);
+  }
+}
+
