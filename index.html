@@ -6,38 +6,33 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Campsite Design Tool JP</title>
-<link rel="stylesheet" href="/Campsite-Design-Tool-JP/css/style.css?v=20">
-<link rel="stylesheet" href="/Campsite-Design-Tool-JP/css/splash.css?v=68">
-<link rel="stylesheet" href="/Campsite-Design-Tool-JP/css/tabs.css?v=21">
-<link rel="stylesheet" href="/Campsite-Design-Tool-JP/css/admin.css?v=20">
-<link rel="stylesheet" href="/Campsite-Design-Tool-JP/css/distance.css?v=20">
-<link rel="apple-touch-icon" sizes="180x180" href="/Campsite-Design-Tool-JP/dev/assets/icon.png">
-<link rel="manifest" href="/Campsite-Design-Tool-JP/dev/manifest-dev.json">
+<link rel="stylesheet" href="/Campsite-Design-Tool-JP/dev/css/style.css?v=20">
+<link rel="stylesheet" href="/Campsite-Design-Tool-JP/dev/css/splash.css?v=67">
+<link rel="stylesheet" href="/Campsite-Design-Tool-JP/dev/css/tabs.css?v=21">
+<link rel="stylesheet" href="/Campsite-Design-Tool-JP/dev/css/admin.css?v=20">
+<link rel="stylesheet" href="/Campsite-Design-Tool-JP/dev/css/distance.css?v=20">
+<link rel="apple-touch-icon" sizes="180x180" href="/Campsite-Design-Tool-JP/assets/icon.png">
+<link rel="manifest" href="/Campsite-Design-Tool-JP/manifest.json">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 
   
 <body>
-  
- <div class="version-badge" onclick="toggleUpdateLog(event)">v5.7</div>
+ <div class="version-badge" onclick="toggleUpdateLog(event)">v5.8</div>
 <div id="updateLog" class="update-log">
   <strong>更新内容</strong><br>
-v5.7<br>
-・開発環境で作成した内容を本番環境へ反映<br>
-・個別ツールに「円だけ生成」「既存POI分類だけ生成」機能を追加<br>
-・既存POI、追加希望レイヤー、30m／40m円レイヤーを分けて出力できる構成に改善<br>
-・管理者専用入口と管理者パスコード認証を追加<br>
-・管理者ツールに「KMZ内容チェック」機能を追加<br>
-・KML／KMZのレイヤー数、全ポイント数、有効POI数、ダミーポイント数を確認できるよう対応<br>
-・既存POI系レイヤー、追加希望系レイヤー、円レイヤーの有無を確認できるよう対応<br>
-・既存ポケストップ相当／既存ジム相当／既存パワースポット相当の推定分類を表示<br>
-・距離チェックに拠点充実度、CA所感、分類別チェック、既存POI同士の参考判定を追加<br>
-・利用前チェッククイズとガイドPDF導線を追加<br>
-・iPhone保存時のZIP→KMZ名称変更案内を追加<br>
-・My Maps／KMZレビュー時に他CAの作成データを確認しやすい構成へ改善<br>
+v5.8<br>
+・ログイン後のオープニング画面を2枚画像式に変更しました。<br>
+・羊をタップすると、左シーンから右シーンへ切り替わる演出を追加しました。<br>
+・オープニング画面の看板から各機能タブへ直接移動できるショートカットを追加しました。<br>
+・TOOLS看板から個別ツールへ移動できるようにしました。<br>
+・メイン画面のタブに「オープニング」を追加し、いつでも入口画面へ戻れるようにしました。<br>
+・オープニング画面のスマホ表示、タップ判定、画面遷移を調整しました。<br>
+・看板ショートカット押下時に、前回開いていたタブが一瞬見えないよう遷移処理を改善しました。<br>
+<br>
 </div>
-<audio id="loginSound" src="/Campsite-Design-Tool-JP/assets/login.mp3"></audio>
-<audio id="successSound" src="/Campsite-Design-Tool-JP/assets/success.mp3"></audio>
+<audio id="loginSound" src="assets/login.mp3"></audio>
+<audio id="successSound" src="assets/success.mp3"></audio>
   <div id="loadingOverlay" class="loading-overlay">
   <div class="loading-box">
     <div class="spinner big"></div>
@@ -64,34 +59,97 @@ v5.7<br>
   </div>
 </div>
 <div id="splashScreen" class="splash-screen">
-<img src="/Campsite-Design-Tool-JP/assets/icon.png" alt="Campsite Tool">
+<img src="assets/icon.png" alt="Campsite Tool Icon">
 </div>
 <div id="openingScreen" class="opening-screen">
 
-  <img
-    src="/Campsite-Design-Tool-JP/assets/walker.png"
-    class="walker"
-    alt=""
-  >
+  <div class="opening-scene-wrap">
 
-  <div class="opening-card">
-    <div class="opening-badge">MISSION START</div>
+    <img
+  id="openingSceneLeft"
+  class="opening-scene active"
+  src="assets/story-left.PNG"
+  alt="Campsite Design Tool opening"
+>
 
-    <h1>Campsite Design Tool JP</h1>
+<img
+  id="openingSceneRight"
+  class="opening-scene"
+  src="assets/story-right.PNG"
+  alt="Campsite Design Tool campfire"
+>
+    <!-- 羊タップ範囲 -->
+    <button
+      type="button"
+      id="sheepTapArea"
+      class="sheep-tap-area"
+      aria-label="羊をタップして次のシーンへ"
+      onclick="changeOpeningScene()"
+    ></button>
+<!-- 看板ショートカット -->
+<button
+  type="button"
+  class="opening-sign-area sign-howto"
+  aria-label="使い方へ"
+  onclick="goOpeningTab('howto')"
+></button>
 
-    <p class="opening-sub">
-      設計を始める
-    </p>
+<button
+  type="button"
+  class="opening-sign-area sign-script"
+  aria-label="スクリプト導入方法へ"
+  onclick="goOpeningTab('script')"
+></button>
 
-    <button onclick="startAdventure()">
-      START
-    </button>
+<button
+  type="button"
+  class="opening-sign-area sign-campsite"
+  aria-label="キャンプサイト作成へ"
+  onclick="goOpeningTab('tool')"
+></button>
 
-    <a class="guide-link" href="guide.pdf" target="_blank">
-      ガイドPDFを見る
-    </a>
+<button
+  type="button"
+  class="opening-sign-area sign-distance"
+  aria-label="距離チェックへ"
+  onclick="goOpeningTab('distance')"
+></button>
+
+<button
+  type="button"
+  class="opening-sign-area sign-check"
+  aria-label="チェックリストへ"
+  onclick="goOpeningTab('check')"
+></button>
+<button
+  type="button"
+  class="opening-sign-area sign-tools"
+  aria-label="個別ツールへ"
+  onclick="goOpeningTab('parts')"
+></button>
+    <!-- 設計を始める -->
+    <button
+      type="button"
+      class="opening-start-area"
+      aria-label="設計を始める"
+      onclick="startAdventure()"
+    ></button>
+
+    <!-- ガイドPDFを見る -->
+    <a
+      class="opening-guide-area"
+      aria-label="ガイドPDFを見る"
+      href="/Campsite-Design-Tool-JP/docs/campsite-guide.pdf"
+      target="_blank"
+    ></a>
+
+    <!-- 幻想的な光 -->
+    <div id="sceneMagicGlow" class="scene-magic-glow"></div>
+
   </div>
+
 </div>
+
 <div class="container">
 
   <div class="hero">
@@ -111,8 +169,15 @@ v5.7<br>
   <button class="tab-button" onclick="openTab('check', this)">チェックリスト</button>
   <button class="tab-button" onclick="openTab('howto', this)">使い方</button>
   <button class="tab-button" onclick="openTab('distance', this)">距離チェック</button>
-</div>
 
+  <button
+    type="button"
+    class="tab-button opening-tab-button"
+    onclick="backToOpening()"
+  >
+    オープニング
+  </button>
+</div>
 <div style="text-align:right; margin-top:-10px; margin-bottom:18px;">
   <button type="button" class="guide-btn" onclick="openAdminLogin()" style="
     width:auto;
@@ -568,14 +633,6 @@ Userscriptsをインストール
 </section>
 
 </div>
-<script>
-
-}
-
-
-
-
-</script>
 <div id="adminLoginModal" style="
   display:none;
   position:fixed;
@@ -694,11 +751,11 @@ Userscriptsをインストール
 
   </div>
 </div>
-<script src="/Campsite-Design-Tool-JP/dev/js/util.js?v=10"></script>
-<script src="/Campsite-Design-Tool-JP/dev/js/tabs.js?v=10"></script>
-<script src="/Campsite-Design-Tool-JP/dev/js/distance.js?v=10"></script>
-<script src="/Campsite-Design-Tool-JP/dev/js/admin.js?v=10"></script>
-<script src="/Campsite-Design-Tool-JP/js/main.js?v=20"></script>
-<script src="/Campsite-Design-Tool-JP/dev/js/kmz.js?v=10"></script>
+<script src="js/util.js"></script>
+<script src="js/tabs.js"></script>
+<script src="js/distance.js"></script>
+<script src="js/admin.js"></script>
+<script src="js/main.js?v=35"></script>
+<script src="js/kmz.js"></script>
 </body>
 </html>
