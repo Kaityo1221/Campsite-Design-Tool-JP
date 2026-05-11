@@ -33,4 +33,24 @@
 .tab-content.active {
   display: block;
 }
+/* オープニングへ戻るタブ */
+.opening-tab-button {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(30, 41, 59, 0.98),
+      rgba(49, 46, 129, 0.98)
+    ) !important;
 
+  border-color: rgba(129, 140, 248, 0.55) !important;
+  color: #dbeafe !important;
+
+  box-shadow:
+    0 0 18px rgba(59, 130, 246, 0.18),
+    inset 0 0 18px rgba(15, 23, 42, 0.35);
+}
+
+.opening-tab-button:active {
+  transform: scale(0.96);
+  filter: brightness(1.15);
+}
