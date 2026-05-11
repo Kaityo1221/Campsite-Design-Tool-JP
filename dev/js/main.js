@@ -213,7 +213,7 @@ function changeOpeningScene() {
   const right = document.getElementById("openingSceneRight");
   const glow = document.getElementById("sceneMagicGlow");
   const sheepTapArea = document.getElementById("sheepTapArea");
-
+  const toolsArea = document.querySelector(".sign-tools");
   if (!left || !right) return;
 
   if (glow) {
@@ -225,8 +225,12 @@ function changeOpeningScene() {
   left.classList.remove("active");
 
   setTimeout(() => {
-    right.classList.add("active");
-  }, 250);
+  right.classList.add("active");
+
+  if (toolsArea) {
+    toolsArea.style.display = "block";
+  }
+}, 250);
 
   if (sheepTapArea) {
     sheepTapArea.style.display = "none";
@@ -238,6 +242,7 @@ function backToOpening() {
   const left = document.getElementById("openingSceneLeft");
   const right = document.getElementById("openingSceneRight");
   const sheepTapArea = document.getElementById("sheepTapArea");
+  const toolsArea = document.querySelector(".sign-tools");
   const glow = document.getElementById("sceneMagicGlow");
 
   if (!opening) return;
@@ -247,7 +252,7 @@ function backToOpening() {
   if (left) left.classList.add("active");
   if (right) right.classList.remove("active");
   if (sheepTapArea) sheepTapArea.style.display = "block";
-
+  if (toolsArea) toolsArea.style.display = "none";
   /* オープニングタブで戻った時は光演出を消す */
   if (glow) glow.classList.remove("play");
 
