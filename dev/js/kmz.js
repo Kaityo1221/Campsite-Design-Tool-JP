@@ -426,6 +426,7 @@ setTimeout(() => {
 ========================= */
 
 (function () {
+console.log("KMZ wrapper loaded v3");
   if (typeof generateKMZ !== "function") {
     console.warn("generateKMZ が見つかりません");
     return;
