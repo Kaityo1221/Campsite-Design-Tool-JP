@@ -133,3 +133,51 @@ function parseCSV(text) {
 
   return rows;
 }
+/* =========================
+   Duplicate Remover
+========================= */
+
+function removeDuplicate(points) {
+  if (!Array.isArray(points)) {
+    return [];
+  }
+
+  const seen = new Set();
+  const result = [];
+
+  points.forEach(point => {
+    if (!point) return;
+
+    let key = "";
+
+    // Wayfarer CSV由来のGUIDがある場合は最優先
+    if (point.guid) {
+      key = `guid:${String(point.guid).trim()}`;
+    }
+
+    // id がある場合
+    else if (point.id) {
+      key = `id:${String(point.id).trim()}`;
+    }
+
+    // lat / lng がある場合
+    else if (point.lat !== undefined && point.lng !== undefined) {
+      const lat = Number(point.lat).toFixed(7);
+      const lng = Number(point.lng).toFixed(7);
+      const name = point.name ? String(point.name).trim() : "";
+      key = `pos:${lat},${lng},${name}`;
+    }
+
+    // それ以外は中身を文字列化
+    else {
+      key = JSON.stringify(point);
+    }
+
+    if (seen.has(key)) return;
+
+    seen.add(key);
+    result.push(point);
+  });
+
+  return result;
+}
