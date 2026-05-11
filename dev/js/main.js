@@ -224,6 +224,7 @@ function backToOpening() {
   const left = document.getElementById("openingSceneLeft");
   const right = document.getElementById("openingSceneRight");
   const sheepTapArea = document.getElementById("sheepTapArea");
+  const glow = document.getElementById("sceneMagicGlow");
 
   if (!opening) return;
 
@@ -232,6 +233,9 @@ function backToOpening() {
   if (left) left.classList.add("active");
   if (right) right.classList.remove("active");
   if (sheepTapArea) sheepTapArea.style.display = "block";
+
+  /* オープニングタブで戻った時は光演出を消す */
+  if (glow) glow.classList.remove("play");
 
   document.body.classList.add("opening-mode");
 
