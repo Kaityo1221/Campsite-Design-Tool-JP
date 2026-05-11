@@ -325,3 +325,100 @@ li {
     grid-template-columns: 1fr;
   }
 }
+/* =========================
+   Main Theme - Campsite Night
+========================= */
+
+body {
+  background:
+    radial-gradient(circle at 18% 12%, rgba(56, 189, 248, 0.18), transparent 30%),
+    radial-gradient(circle at 82% 18%, rgba(236, 72, 153, 0.14), transparent 28%),
+    radial-gradient(circle at 50% 92%, rgba(124, 58, 237, 0.16), transparent 36%),
+    linear-gradient(135deg, #020617, #0f172a, #1e1b4b);
+}
+
+/* メイン看板風ヒーロー */
+.hero {
+  position: relative;
+  padding: 28px 22px 30px;
+  border-radius: 26px;
+  background:
+    linear-gradient(180deg, rgba(15, 23, 42, 0.88), rgba(30, 41, 59, 0.62));
+  border: 1px solid rgba(147, 197, 253, 0.22);
+  box-shadow:
+    0 24px 70px rgba(0, 0, 0, 0.28),
+    0 0 34px rgba(59, 130, 246, 0.12);
+  overflow: hidden;
+}
+
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 20% 0%, rgba(56, 189, 248, 0.18), transparent 30%),
+    radial-gradient(circle at 82% 14%, rgba(236, 72, 153, 0.14), transparent 28%);
+  pointer-events: none;
+}
+
+.hero::after {
+  content: "";
+  position: absolute;
+  left: 18%;
+  right: 18%;
+  bottom: 0;
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #38bdf8, #818cf8, #ec4899);
+  box-shadow: 0 0 18px rgba(129, 140, 248, 0.65);
+}
+
+.hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+.hero h1 {
+  background: linear-gradient(90deg, #bae6fd, #c4b5fd, #f9a8d4);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.badge {
+  background: rgba(59, 130, 246, 0.18);
+  border: 1px solid rgba(147, 197, 253, 0.26);
+  box-shadow: 0 0 18px rgba(59, 130, 246, 0.16);
+}
+
+/* パネルをキャンプ本部カード風に */
+.panel {
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(30, 41, 59, 0.96), rgba(15, 23, 42, 0.96));
+  border-color: rgba(148, 163, 184, 0.28);
+}
+
+.panel::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 22px;
+  right: 22px;
+  height: 3px;
+  border-radius: 0 0 999px 999px;
+  background: linear-gradient(90deg, #38bdf8, #818cf8, #ec4899);
+  opacity: 0.82;
+}
+
+.step {
+  background:
+    linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(2, 6, 23, 0.88));
+  border-color: rgba(148, 163, 184, 0.24);
+}
+
+.step-no {
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  box-shadow: 0 0 14px rgba(96, 165, 250, 0.28);
+}
