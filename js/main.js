@@ -20,8 +20,9 @@ function checkPassword() {
     error.textContent = "";
     input.blur();
 
-loginScreen.remove();
+    document.body.classList.add("opening-mode");
 
+loginScreen.remove();
 splashScreen.classList.add("show");
 
     const loginSound = document.getElementById("loginSound");
@@ -36,7 +37,6 @@ splashScreen.classList.add("show");
   splashScreen.remove();
   showOpeningScreen();
 }, 1600);
-
   } else {
     error.textContent = "パスコードが違います";
   }
@@ -157,7 +157,6 @@ document.addEventListener("click", function (event) {
   }
 
 });
-
 function showOpeningScreen() {
   const opening = document.getElementById("openingScreen");
 
@@ -169,11 +168,73 @@ function showOpeningScreen() {
 function startAdventure() {
   const opening = document.getElementById("openingScreen");
 
+  let targetButton = null;
+
+  document.querySelectorAll(".tab-button").forEach(button => {
+    const onclick = button.getAttribute("onclick") || "";
+
+    if (onclick.includes("openTab('tool'")) {
+      targetButton = button;
+    }
+  });
+
+  openTab("tool", targetButton);
+
+  window.scrollTo({
+    top: 0,
+    behavior: "auto"
+  });
+
   if (opening) {
-    opening.classList.remove("show");
+    opening.style.opacity = "0";
+    opening.style.transition = "opacity 0.4s ease";
   }
 
-  document.body.classList.remove("opening-mode");
+  setTimeout(() => {
+    if (opening) {
+      opening.classList.remove("show");
+    }
+
+    document.body.classList.remove("opening-mode");
+
+    if (opening) {
+      opening.style.opacity = "1";
+    }
+  }, 400);
+}
+let openingSceneChanged = false;
+
+function changeOpeningScene() {
+  if (openingSceneChanged) return;
+
+  openingSceneChanged = true;
+
+  const left = document.getElementById("openingSceneLeft");
+  const right = document.getElementById("openingSceneRight");
+  const glow = document.getElementById("sceneMagicGlow");
+  const sheepTapArea = document.getElementById("sheepTapArea");
+  const toolsArea = document.querySelector(".sign-tools");
+  if (!left || !right) return;
+
+  if (glow) {
+    glow.classList.remove("play");
+    void glow.offsetWidth;
+    glow.classList.add("play");
+  }
+
+  left.classList.remove("active");
+
+  setTimeout(() => {
+  right.classList.add("active");
+
+  if (toolsArea) {
+    toolsArea.style.display = "block";
+  }
+}, 250);
+
+  if (sheepTapArea) {
+    sheepTapArea.style.display = "none";
+  }
 }
 
 function backToOpening() {
@@ -181,6 +242,8 @@ function backToOpening() {
   const left = document.getElementById("openingSceneLeft");
   const right = document.getElementById("openingSceneRight");
   const sheepTapArea = document.getElementById("sheepTapArea");
+  const toolsArea = document.querySelector(".sign-tools");
+  const glow = document.getElementById("sceneMagicGlow");
 
   if (!opening) return;
 
@@ -189,6 +252,9 @@ function backToOpening() {
   if (left) left.classList.add("active");
   if (right) right.classList.remove("active");
   if (sheepTapArea) sheepTapArea.style.display = "block";
+  if (toolsArea) toolsArea.style.display = "none";
+  /* オープニングタブで戻った時は光演出を消す */
+  if (glow) glow.classList.remove("play");
 
   document.body.classList.add("opening-mode");
 
@@ -196,4 +262,50 @@ function backToOpening() {
   opening.style.transition = "opacity 0.4s ease";
 
   opening.classList.add("show");
+}
+function goOpeningTab(tabId) {
+  const opening = document.getElementById("openingScreen");
+
+  let targetButton = null;
+
+  document.querySelectorAll(".tab-button").forEach(button => {
+    const onclick = button.getAttribute("onclick") || "";
+
+    if (onclick.includes(`openTab('${tabId}'`)) {
+      targetButton = button;
+    }
+  });
+
+  /*
+    オープニングを表示したまま、先に裏側のタブを切り替える。
+    opening-mode中は .container が非表示なので、前のタブは見えない。
+  */
+  document.body.classList.add("opening-mode");
+
+  if (opening) {
+    opening.classList.add("show");
+    opening.style.opacity = "1";
+    opening.style.transition = "none";
+  }
+
+  openTab(tabId, targetButton);
+
+  window.scrollTo({
+    top: 0,
+    behavior: "auto"
+  });
+
+  /*
+    フェードさせずに閉じる。
+    これで前回のタブが一瞬見える現象を防ぐ。
+  */
+  setTimeout(() => {
+    if (opening) {
+      opening.classList.remove("show");
+      opening.style.opacity = "1";
+      opening.style.transition = "none";
+    }
+
+    document.body.classList.remove("opening-mode");
+  }, 120);
 }
