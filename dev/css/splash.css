@@ -265,3 +265,7 @@ body.opening-mode .container {
 #openingSceneRight.active ~ .sign-tools {
   display: block;
 }
+.sign-tools {
+  top: 71.3%;
+  display: none;
+}
