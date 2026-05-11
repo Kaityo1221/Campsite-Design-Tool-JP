@@ -485,7 +485,7 @@ body {
     0 0 14px rgba(56, 189, 248, 0.26),
     0 0 28px rgba(236, 72, 153, 0.16);
 
-  animation: titleTextGloss 5.5s ease-in-out infinite;
+  animation: titleTextGloss 8s ease-in-out infinite;
 }
 
 @keyframes titleTextGloss {
