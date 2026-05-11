@@ -150,6 +150,8 @@ body.opening-mode .container {
     transform 0.15s ease,
     box-shadow 0.2s ease,
     opacity 0.2s ease;
+    animation:
+  startButtonGlow 2.4s ease-in-out infinite;
 }
 
 .guide-link {
@@ -212,5 +214,21 @@ animation: walkerSlide 8s linear forwards;
 @keyframes blinkCursor {
   50% {
     border-color: transparent;
+  }
+}
+@keyframes startButtonGlow {
+  0% {
+    box-shadow:
+      0 0 18px rgba(96,165,250,0.28);
+  }
+
+  50% {
+    box-shadow:
+      0 0 38px rgba(96,165,250,0.65);
+  }
+
+  100% {
+    box-shadow:
+      0 0 18px rgba(96,165,250,0.28);
   }
 }
