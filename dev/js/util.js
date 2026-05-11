@@ -520,7 +520,23 @@ function addDummyPlacemark(outputXml, folder, label) {
 ========================= */
 
 function classifyType(type = "", name = "", layer = "") {
-  const text = `${type} ${name} ${layer}`.toLowerCase();
+  const typeText = String(type || "").toUpperCase();
+
+  // CSVの gameEntity を最優先
+  if (typeText === "GYM") {
+    return "gym";
+  }
+
+  if (typeText === "POWERSPOT" || typeText === "POWER_SPOT") {
+    return "power";
+  }
+
+  if (typeText === "POKESTOP" || typeText === "POKE_STOP") {
+    return "pokestop";
+  }
+
+  // KML / KMZなど、typeが取れない場合だけ名前・レイヤーで補助判定
+  const text = `${name} ${layer}`.toLowerCase();
 
   if (
     text.includes("gym") ||
