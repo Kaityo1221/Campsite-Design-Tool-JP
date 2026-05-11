@@ -188,3 +188,33 @@ function startAdventure() {
 
   }, 400);
 }
+let openingSceneChanged = false;
+
+function changeOpeningScene() {
+  if (openingSceneChanged) return;
+
+  openingSceneChanged = true;
+
+  const left = document.getElementById("openingSceneLeft");
+  const right = document.getElementById("openingSceneRight");
+  const glow = document.getElementById("sceneMagicGlow");
+  const sheepTapArea = document.getElementById("sheepTapArea");
+
+  if (!left || !right) return;
+
+  if (glow) {
+    glow.classList.remove("play");
+    void glow.offsetWidth;
+    glow.classList.add("play");
+  }
+
+  left.classList.remove("active");
+
+  setTimeout(() => {
+    right.classList.add("active");
+  }, 250);
+
+  if (sheepTapArea) {
+    sheepTapArea.style.display = "none";
+  }
+}
