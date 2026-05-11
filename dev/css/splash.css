@@ -10,14 +10,16 @@
 
 .splash-screen.show {
   display: flex;
-  animation: splashFade 1.4s ease forwards;
+  animation:
+    splashFade 1.4s ease forwards;
 }
 
 .splash-screen img {
   width: 140px;
   height: 140px;
   border-radius: 28px;
-  animation: iconWarp 1.4s ease forwards;
+  animation:
+    iconWarp 1.4s ease forwards;
 }
 
 @keyframes splashFade {
@@ -73,6 +75,8 @@ body.opening-mode .container {
     linear-gradient(135deg, #020617, #0f172a, #1e1b4b);
 
   color: white;
+  animation:
+    openingBreath 6s ease-in-out infinite;
 }
 .opening-screen.show {
   display: flex;
@@ -151,7 +155,7 @@ body.opening-mode .container {
     box-shadow 0.2s ease,
     opacity 0.2s ease;
     animation:
-  startButtonGlow 2.4s ease-in-out infinite;
+      startButtonGlow 2.4s ease-in-out infinite;
 }
 
 .guide-link {
@@ -232,3 +236,18 @@ animation: walkerSlide 8s linear forwards;
       0 0 18px rgba(96,165,250,0.28);
   }
 }
+@keyframes openingBreath {
+
+  0% {
+    filter: brightness(1);
+  }
+
+  50% {
+    filter: brightness(1.08);
+  }
+
+  100% {
+    filter: brightness(1);
+  }
+}
+
