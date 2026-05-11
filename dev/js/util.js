@@ -80,6 +80,94 @@ function getDistanceMeters(a, b) {
 ========================= */
 
 function parseCSV(text) {
+  const rows = parseCSVRows(text);
+
+  if (rows.length < 2) {
+    return [];
+  }
+
+  const headers = rows[0].map(h => String(h || "").trim());
+  const dataRows = rows.slice(1);
+
+  return dataRows
+    .map(row => {
+      const obj = {};
+
+      headers.forEach((header, index) => {
+        obj[header] = row[index] ?? "";
+      });
+
+      const name =
+        pickValue(obj, [
+          "title",
+          "Title",
+          "name",
+          "Name",
+          "wayspotTitle",
+          "Wayspot Title",
+          "タイトル",
+          "名前"
+        ]) || row[0] || "名称未設定";
+
+      const lat =
+        pickValue(obj, [
+          "lat",
+          "Lat",
+          "latitude",
+          "Latitude",
+          "緯度"
+        ]);
+
+      const lng =
+        pickValue(obj, [
+          "lng",
+          "Lng",
+          "lon",
+          "Lon",
+          "longitude",
+          "Longitude",
+          "経度"
+        ]);
+
+      const type =
+        pickValue(obj, [
+          "type",
+          "Type",
+          "category",
+          "Category",
+          "種類"
+        ]) || "";
+
+      const guid =
+        pickValue(obj, [
+          "guid",
+          "GUID",
+          "id",
+          "ID",
+          "wayspotId",
+          "Wayspot ID"
+        ]) || "";
+
+      const nLat = Number(lat);
+      const nLng = Number(lng);
+
+      if (!Number.isFinite(nLat) || !Number.isFinite(nLng)) {
+        return null;
+      }
+
+      return {
+        name: String(name || "名称未設定"),
+        lat: nLat,
+        lng: nLng,
+        type: String(type || ""),
+        guid: String(guid || ""),
+        layer: "CSV"
+      };
+    })
+    .filter(Boolean);
+}
+
+function parseCSVRows(text) {
   const rows = [];
   let row = [];
   let value = "";
@@ -113,7 +201,7 @@ function parseCSV(text) {
 
       row.push(value);
 
-      if (row.some(cell => cell.trim() !== "")) {
+      if (row.some(cell => String(cell).trim() !== "")) {
         rows.push(row);
       }
 
@@ -127,217 +215,223 @@ function parseCSV(text) {
 
   row.push(value);
 
-  if (row.some(cell => cell.trim() !== "")) {
+  if (row.some(cell => String(cell).trim() !== "")) {
     rows.push(row);
   }
 
   return rows;
 }
+
+function pickValue(obj, keys) {
+  for (const key of keys) {
+    if (obj[key] !== undefined && obj[key] !== null && String(obj[key]).trim() !== "") {
+      return obj[key];
+    }
+  }
+
+  return "";
+}
+
 /* =========================
    Duplicate Remover
 ========================= */
 
 function removeDuplicate(points) {
   if (!Array.isArray(points)) {
-    return [];
+    return {
+      uniquePoints: [],
+      duplicateCount: 0
+    };
   }
 
   const seen = new Set();
-  const result = [];
+  const uniquePoints = [];
+  let duplicateCount = 0;
 
   points.forEach(point => {
     if (!point) return;
 
     let key = "";
 
-    // Wayfarer CSV由来のGUIDがある場合は最優先
     if (point.guid) {
       key = `guid:${String(point.guid).trim()}`;
-    }
-
-    // id がある場合
-    else if (point.id) {
+    } else if (point.id) {
       key = `id:${String(point.id).trim()}`;
-    }
-
-    // lat / lng がある場合
-    else if (point.lat !== undefined && point.lng !== undefined) {
+    } else if (point.lat !== undefined && point.lng !== undefined) {
       const lat = Number(point.lat).toFixed(7);
       const lng = Number(point.lng).toFixed(7);
       const name = point.name ? String(point.name).trim() : "";
       key = `pos:${lat},${lng},${name}`;
-    }
-
-    // それ以外は中身を文字列化
-    else {
+    } else {
       key = JSON.stringify(point);
     }
 
-    if (seen.has(key)) return;
+    if (seen.has(key)) {
+      duplicateCount++;
+      return;
+    }
 
     seen.add(key);
-    result.push(point);
+    uniquePoints.push(point);
   });
 
-  return result;
-}
-/* =========================
-   KML Folder Builder
-========================= */
-
-function createFolder(name, content) {
-  const safeName = escapeKmlText(name);
-
-  return `
-<Folder>
-  <name>${safeName}</name>
-  ${content || ""}
-</Folder>`;
-}
-
-function escapeKmlText(value) {
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
-}
-/* =========================
-   Dummy Placemark Builder
-========================= */
-
-function addDummyPlacemark(layerName) {
-  const safeName = escapeKmlText(layerName || "ダミーポイント");
-
-  return `
-<Placemark>
-  <name>${safeName}_レイヤー保持用</name>
-  <description>このポイントはレイヤー保持用のダミーポイントです。My Maps上で必要に応じて削除してください。</description>
-  <Style>
-    <IconStyle>
-      <scale>0.1</scale>
-    </IconStyle>
-  </Style>
-  <Point>
-    <coordinates>139.000000,35.000000,0</coordinates>
-  </Point>
-</Placemark>`;
-}
-/* =========================
-   KMZ / KML Utility Pack
-   kmz.js 補助関数まとめ
-========================= */
-
-function normalizePoint(point) {
-  if (!point) return null;
-
-  const lat =
-    point.lat ??
-    point.latitude ??
-    point.Latitude ??
-    point["lat"] ??
-    point["Latitude"];
-
-  const lng =
-    point.lng ??
-    point.lon ??
-    point.longitude ??
-    point.Longitude ??
-    point["lng"] ??
-    point["lon"] ??
-    point["Longitude"];
-
-  const name =
-    point.name ??
-    point.title ??
-    point.Name ??
-    point["name"] ??
-    point["Name"] ??
-    "名称未設定";
-
-  const type =
-    point.type ??
-    point.category ??
-    point.kind ??
-    point["type"] ??
-    "";
-
-  const guid =
-    point.guid ??
-    point.id ??
-    point["guid"] ??
-    point["id"] ??
-    "";
-
-  const nLat = Number(lat);
-  const nLng = Number(lng);
-
-  if (!Number.isFinite(nLat) || !Number.isFinite(nLng)) {
-    return null;
-  }
-
   return {
-    ...point,
-    lat: nLat,
-    lng: nLng,
-    name: String(name || "名称未設定"),
-    type: String(type || ""),
-    guid: String(guid || "")
+    uniquePoints,
+    duplicateCount
   };
 }
 
-function normalizePoints(points) {
-  if (!Array.isArray(points)) return [];
+/* =========================
+   KML / KMZ Reader
+========================= */
 
-  return points
-    .map(normalizePoint)
+async function getPointsFromKmlOrKmz(file) {
+  const fileName = file.name.toLowerCase();
+
+  if (fileName.endsWith(".kmz") || fileName.endsWith(".zip")) {
+    const zip = await JSZip.loadAsync(file);
+    const kmlFileName = Object.keys(zip.files).find(name =>
+      name.toLowerCase().endsWith(".kml")
+    );
+
+    if (!kmlFileName) {
+      return [];
+    }
+
+    const kmlText = await zip.files[kmlFileName].async("text");
+    return parseKmlPoints(kmlText);
+  }
+
+  const text = await file.text();
+  return parseKmlPoints(text);
+}
+
+function parseKmlPoints(kmlText) {
+  const parser = new DOMParser();
+  const xml = parser.parseFromString(kmlText, "application/xml");
+  const placemarks = Array.from(xml.getElementsByTagName("Placemark"));
+
+  return placemarks
+    .map(placemark => {
+      const name =
+        placemark.getElementsByTagName("name")[0]?.textContent?.trim() ||
+        "名称未設定";
+
+      const description =
+        placemark.getElementsByTagName("description")[0]?.textContent?.trim() ||
+        "";
+
+      const coordinatesText =
+        placemark.getElementsByTagName("coordinates")[0]?.textContent?.trim();
+
+      if (!coordinatesText) {
+        return null;
+      }
+
+      const firstCoordinate = coordinatesText.split(/\s+/)[0];
+      const parts = firstCoordinate.split(",");
+
+      const lng = Number(parts[0]);
+      const lat = Number(parts[1]);
+
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+        return null;
+      }
+
+      const layer = getParentFolderName(placemark);
+
+      return {
+        name,
+        description,
+        lat,
+        lng,
+        layer,
+        type: classifyType(description, name, layer)
+      };
+    })
     .filter(Boolean);
 }
 
-function getSelectedRadii() {
-  return Array.from(
-    document.querySelectorAll('input[name="radius"]:checked')
-  ).map(input => Number(input.value))
-   .filter(value => Number.isFinite(value));
+function getParentFolderName(element) {
+  let current = element.parentElement;
+
+  while (current) {
+    if (current.tagName === "Folder") {
+      const name = current.getElementsByTagName("name")[0]?.textContent?.trim();
+      return name || "";
+    }
+
+    current = current.parentElement;
+  }
+
+  return "";
 }
 
-function getSelectedCircleOnlyRadii() {
-  return Array.from(
-    document.querySelectorAll('input[name="circleOnlyRadius"]:checked')
-  ).map(input => Number(input.value))
-   .filter(value => Number.isFinite(value));
+/* =========================
+   KML Element Builders
+========================= */
+
+function createFolder(outputXml, doc, name) {
+  const folder = outputXml.createElement("Folder");
+
+  const nameNode = outputXml.createElement("name");
+  nameNode.textContent = name || "無題レイヤー";
+
+  folder.appendChild(nameNode);
+  doc.appendChild(folder);
+
+  return folder;
 }
 
-function createPlacemark(point, options = {}) {
-  const p = normalizePoint(point);
-  if (!p) return "";
+function createPointPlacemark(outputXml, point) {
+  const placemark = outputXml.createElement("Placemark");
 
-  const name = escapeKmlText(options.name || p.name || "名称未設定");
-  const description = escapeKmlText(
-    options.description ||
-    p.description ||
-    p.type ||
-    ""
+  const name = outputXml.createElement("name");
+  name.textContent = point.name || "名称未設定";
+  placemark.appendChild(name);
+
+  const description = outputXml.createElement("description");
+  description.textContent =
+    point.description ||
+    point.type ||
+    point.layer ||
+    "";
+  placemark.appendChild(description);
+
+  const pointNode = outputXml.createElement("Point");
+  const coordinates = outputXml.createElement("coordinates");
+  coordinates.textContent = `${point.lng},${point.lat},0`;
+
+  pointNode.appendChild(coordinates);
+  placemark.appendChild(pointNode);
+
+  return placemark;
+}
+
+function createCirclePlacemark(outputXml, point, radius) {
+  const placemark = outputXml.createElement("Placemark");
+
+  const name = outputXml.createElement("name");
+  name.textContent = `${point.name || "名称未設定"}_${radius}m円`;
+  placemark.appendChild(name);
+
+  const polygon = outputXml.createElement("Polygon");
+  const outer = outputXml.createElement("outerBoundaryIs");
+  const ring = outputXml.createElement("LinearRing");
+  const coordinates = outputXml.createElement("coordinates");
+
+  coordinates.textContent = createCircleCoordinates(
+    point.lat,
+    point.lng,
+    radius
   );
 
-  const styleUrl = options.styleUrl
-    ? `<styleUrl>${escapeKmlText(options.styleUrl)}</styleUrl>`
-    : "";
+  ring.appendChild(coordinates);
+  outer.appendChild(ring);
+  polygon.appendChild(outer);
+  placemark.appendChild(polygon);
 
-  return `
-<Placemark>
-  <name>${name}</name>
-  ${description ? `<description>${description}</description>` : ""}
-  ${styleUrl}
-  <Point>
-    <coordinates>${p.lng},${p.lat},0</coordinates>
-  </Point>
-</Placemark>`;
-}
-
-function createPointPlacemark(point, options = {}) {
-  return createPlacemark(point, options);
+  return placemark;
 }
 
 function createCircleCoordinates(lat, lng, radiusMeters, steps = 72) {
@@ -348,7 +442,11 @@ function createCircleCoordinates(lat, lng, radiusMeters, steps = 72) {
   const centerLng = Number(lng) * Math.PI / 180;
   const radius = Number(radiusMeters);
 
-  if (!Number.isFinite(centerLat) || !Number.isFinite(centerLng) || !Number.isFinite(radius)) {
+  if (
+    !Number.isFinite(centerLat) ||
+    !Number.isFinite(centerLng) ||
+    !Number.isFinite(radius)
+  ) {
     return "";
   }
 
@@ -375,108 +473,39 @@ function createCircleCoordinates(lat, lng, radiusMeters, steps = 72) {
   return coordinates.join(" ");
 }
 
-function createCirclePlacemark(point, radiusMeters, options = {}) {
-  const p = normalizePoint(point);
-  if (!p) return "";
+function addDummyPlacemark(outputXml, folder, label) {
+  const placemark = outputXml.createElement("Placemark");
 
-  const radius = Number(radiusMeters);
-  if (!Number.isFinite(radius)) return "";
+  const name = outputXml.createElement("name");
+  name.textContent = label || "レイヤー保持用";
+  placemark.appendChild(name);
 
-  const name = escapeKmlText(
-    options.name ||
-    `${p.name || "名称未設定"}_${radius}m円`
-  );
+  const styleUrl = outputXml.createElement("styleUrl");
+  styleUrl.textContent = "#hiddenStyle";
+  placemark.appendChild(styleUrl);
 
-  const coordinates = createCircleCoordinates(p.lat, p.lng, radius);
+  const description = outputXml.createElement("description");
+  description.textContent = "このポイントはレイヤー保持用のダミーポイントです。";
+  placemark.appendChild(description);
 
-  if (!coordinates) return "";
+  const point = outputXml.createElement("Point");
+  const coordinates = outputXml.createElement("coordinates");
+  coordinates.textContent = "139.000000,35.000000,0";
 
-  const styleUrl = options.styleUrl
-    ? `<styleUrl>${escapeKmlText(options.styleUrl)}</styleUrl>`
-    : "";
+  point.appendChild(coordinates);
+  placemark.appendChild(point);
 
-  return `
-<Placemark>
-  <name>${name}</name>
-  ${styleUrl}
-  <Polygon>
-    <outerBoundaryIs>
-      <LinearRing>
-        <coordinates>
-          ${coordinates}
-        </coordinates>
-      </LinearRing>
-    </outerBoundaryIs>
-  </Polygon>
-</Placemark>`;
+  folder.appendChild(placemark);
+
+  return placemark;
 }
 
-function createKmlDocument(content) {
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<kml xmlns="http://www.opengis.net/kml/2.2">
-<Document>
-${content || ""}
-</Document>
-</kml>`;
-}
+/* =========================
+   Type / Layer Helpers
+========================= */
 
-function createKmlStyle(id, color = "7dff0000", width = 2, fill = "1") {
-  const safeId = escapeKmlText(id || "defaultStyle");
-
-  return `
-<Style id="${safeId}">
-  <LineStyle>
-    <color>${color}</color>
-    <width>${width}</width>
-  </LineStyle>
-  <PolyStyle>
-    <color>${color}</color>
-    <fill>${fill}</fill>
-    <outline>1</outline>
-  </PolyStyle>
-</Style>`;
-}
-
-function safeArray(value) {
-  return Array.isArray(value) ? value : [];
-}
-
-function safeForEach(value, callback) {
-  if (!Array.isArray(value)) return;
-
-  value.forEach(callback);
-}
-
-function textToBlob(text, type = "application/vnd.google-earth.kml+xml") {
-  return new Blob([text], { type });
-}
-
-function downloadBlob(blob, filename) {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-
-  a.href = url;
-  a.download = filename || "download.kmz";
-
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-
-  setTimeout(() => {
-    URL.revokeObjectURL(url);
-  }, 1000);
-}
-
-function guessPoiType(point) {
-  const p = point || {};
-  const text = [
-    p.name,
-    p.type,
-    p.category,
-    p.kind,
-    p.description,
-    p.layerName
-  ].filter(Boolean).join(" ").toLowerCase();
+function classifyType(type = "", name = "", layer = "") {
+  const text = `${type} ${name} ${layer}`.toLowerCase();
 
   if (
     text.includes("gym") ||
@@ -487,9 +516,10 @@ function guessPoiType(point) {
 
   if (
     text.includes("power") ||
-    text.includes("パワ") ||
     text.includes("powerspot") ||
-    text.includes("power spot")
+    text.includes("power spot") ||
+    text.includes("パワー") ||
+    text.includes("パワスポ")
   ) {
     return "power";
   }
@@ -497,42 +527,25 @@ function guessPoiType(point) {
   return "pokestop";
 }
 
-function splitPoiByType(points) {
-  const result = {
-    pokestop: [],
-    gym: [],
-    power: []
-  };
+function isDummyPoint(point) {
+  const text = `${point?.name || ""} ${point?.description || ""} ${point?.layer || ""}`;
 
-  safeArray(points).forEach(point => {
-    const type = guessPoiType(point);
-
-    if (type === "gym") {
-      result.gym.push(point);
-    } else if (type === "power") {
-      result.power.push(point);
-    } else {
-      result.pokestop.push(point);
-    }
-  });
-
-  return result;
+  return (
+    text.includes("ダミー") ||
+    text.includes("レイヤー保持用") ||
+    text.includes("ここに追加")
+  );
 }
 
-/* グローバル明示 */
-window.normalizePoint = normalizePoint;
-window.normalizePoints = normalizePoints;
-window.getSelectedRadii = getSelectedRadii;
-window.getSelectedCircleOnlyRadii = getSelectedCircleOnlyRadii;
-window.createPlacemark = createPlacemark;
-window.createPointPlacemark = createPointPlacemark;
-window.createCircleCoordinates = createCircleCoordinates;
-window.createCirclePlacemark = createCirclePlacemark;
-window.createKmlDocument = createKmlDocument;
-window.createKmlStyle = createKmlStyle;
-window.safeArray = safeArray;
-window.safeForEach = safeForEach;
-window.textToBlob = textToBlob;
-window.downloadBlob = downloadBlob;
-window.guessPoiType = guessPoiType;
-window.splitPoiByType = splitPoiByType;
+function isIgnoredLayerForExistingOnly(point) {
+  if (isDummyPoint(point)) return true;
+
+  const layer = point?.layer || "";
+
+  return (
+    layer.includes("円") ||
+    layer.includes("30m") ||
+    layer.includes("40m") ||
+    layer.includes("追加希望")
+  );
+}
