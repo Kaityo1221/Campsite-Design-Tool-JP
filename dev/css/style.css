@@ -451,35 +451,44 @@ body {
 
   animation: titleGradientFlow 7s ease-in-out infinite;
 }
+/* =========================
+   Main Title Gloss Effect
+   文字だけに光沢をかける
+========================= */
 
-.hero h1::after {
-  content: "";
-  position: absolute;
-  top: 8%;
-  left: -35%;
-
-  width: 34%;
-  height: 84%;
+.hero h1 {
+  position: relative;
+  display: inline-block;
 
   background:
     linear-gradient(
-      115deg,
-      transparent 0%,
-      rgba(255, 255, 255, 0.06) 22%,
-      rgba(255, 255, 255, 0.72) 48%,
-      rgba(255, 255, 255, 0.08) 72%,
-      transparent 100%
+      100deg,
+      #7dd3fc 0%,
+      #bae6fd 18%,
+      #ffffff 28%,
+      #c4b5fd 38%,
+      #f9a8d4 58%,
+      #ffffff 68%,
+      #bae6fd 78%,
+      #7dd3fc 100%
     );
 
-  transform: skewX(-18deg);
-  filter: blur(0.5px);
-  opacity: 0;
+  background-size: 260% auto;
 
-  animation: titleGlossSweep 4.8s ease-in-out infinite;
-  pointer-events: none;
+  -webkit-background-clip: text;
+  background-clip: text;
+
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+
+  text-shadow:
+    0 0 14px rgba(56, 189, 248, 0.26),
+    0 0 28px rgba(236, 72, 153, 0.16);
+
+  animation: titleTextGloss 5.5s ease-in-out infinite;
 }
 
-@keyframes titleGradientFlow {
+@keyframes titleTextGloss {
   0% {
     background-position: 0% center;
   }
@@ -490,30 +499,5 @@ body {
 
   100% {
     background-position: 0% center;
-  }
-}
-
-@keyframes titleGlossSweep {
-  0% {
-    left: -42%;
-    opacity: 0;
-  }
-
-  18% {
-    opacity: 0;
-  }
-
-  34% {
-    opacity: 0.9;
-  }
-
-  52% {
-    left: 108%;
-    opacity: 0;
-  }
-
-  100% {
-    left: 108%;
-    opacity: 0;
   }
 }
