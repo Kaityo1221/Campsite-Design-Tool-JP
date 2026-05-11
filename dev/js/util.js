@@ -224,3 +224,315 @@ function addDummyPlacemark(layerName) {
   </Point>
 </Placemark>`;
 }
+/* =========================
+   KMZ / KML Utility Pack
+   kmz.js 補助関数まとめ
+========================= */
+
+function normalizePoint(point) {
+  if (!point) return null;
+
+  const lat =
+    point.lat ??
+    point.latitude ??
+    point.Latitude ??
+    point["lat"] ??
+    point["Latitude"];
+
+  const lng =
+    point.lng ??
+    point.lon ??
+    point.longitude ??
+    point.Longitude ??
+    point["lng"] ??
+    point["lon"] ??
+    point["Longitude"];
+
+  const name =
+    point.name ??
+    point.title ??
+    point.Name ??
+    point["name"] ??
+    point["Name"] ??
+    "名称未設定";
+
+  const type =
+    point.type ??
+    point.category ??
+    point.kind ??
+    point["type"] ??
+    "";
+
+  const guid =
+    point.guid ??
+    point.id ??
+    point["guid"] ??
+    point["id"] ??
+    "";
+
+  const nLat = Number(lat);
+  const nLng = Number(lng);
+
+  if (!Number.isFinite(nLat) || !Number.isFinite(nLng)) {
+    return null;
+  }
+
+  return {
+    ...point,
+    lat: nLat,
+    lng: nLng,
+    name: String(name || "名称未設定"),
+    type: String(type || ""),
+    guid: String(guid || "")
+  };
+}
+
+function normalizePoints(points) {
+  if (!Array.isArray(points)) return [];
+
+  return points
+    .map(normalizePoint)
+    .filter(Boolean);
+}
+
+function getSelectedRadii() {
+  return Array.from(
+    document.querySelectorAll('input[name="radius"]:checked')
+  ).map(input => Number(input.value))
+   .filter(value => Number.isFinite(value));
+}
+
+function getSelectedCircleOnlyRadii() {
+  return Array.from(
+    document.querySelectorAll('input[name="circleOnlyRadius"]:checked')
+  ).map(input => Number(input.value))
+   .filter(value => Number.isFinite(value));
+}
+
+function createPlacemark(point, options = {}) {
+  const p = normalizePoint(point);
+  if (!p) return "";
+
+  const name = escapeKmlText(options.name || p.name || "名称未設定");
+  const description = escapeKmlText(
+    options.description ||
+    p.description ||
+    p.type ||
+    ""
+  );
+
+  const styleUrl = options.styleUrl
+    ? `<styleUrl>${escapeKmlText(options.styleUrl)}</styleUrl>`
+    : "";
+
+  return `
+<Placemark>
+  <name>${name}</name>
+  ${description ? `<description>${description}</description>` : ""}
+  ${styleUrl}
+  <Point>
+    <coordinates>${p.lng},${p.lat},0</coordinates>
+  </Point>
+</Placemark>`;
+}
+
+function createPointPlacemark(point, options = {}) {
+  return createPlacemark(point, options);
+}
+
+function createCircleCoordinates(lat, lng, radiusMeters, steps = 72) {
+  const coordinates = [];
+  const earthRadius = 6378137;
+
+  const centerLat = Number(lat) * Math.PI / 180;
+  const centerLng = Number(lng) * Math.PI / 180;
+  const radius = Number(radiusMeters);
+
+  if (!Number.isFinite(centerLat) || !Number.isFinite(centerLng) || !Number.isFinite(radius)) {
+    return "";
+  }
+
+  for (let i = 0; i <= steps; i++) {
+    const angle = (i / steps) * 2 * Math.PI;
+
+    const pointLat = Math.asin(
+      Math.sin(centerLat) * Math.cos(radius / earthRadius) +
+      Math.cos(centerLat) * Math.sin(radius / earthRadius) * Math.cos(angle)
+    );
+
+    const pointLng =
+      centerLng +
+      Math.atan2(
+        Math.sin(angle) * Math.sin(radius / earthRadius) * Math.cos(centerLat),
+        Math.cos(radius / earthRadius) - Math.sin(centerLat) * Math.sin(pointLat)
+      );
+
+    coordinates.push(
+      `${pointLng * 180 / Math.PI},${pointLat * 180 / Math.PI},0`
+    );
+  }
+
+  return coordinates.join(" ");
+}
+
+function createCirclePlacemark(point, radiusMeters, options = {}) {
+  const p = normalizePoint(point);
+  if (!p) return "";
+
+  const radius = Number(radiusMeters);
+  if (!Number.isFinite(radius)) return "";
+
+  const name = escapeKmlText(
+    options.name ||
+    `${p.name || "名称未設定"}_${radius}m円`
+  );
+
+  const coordinates = createCircleCoordinates(p.lat, p.lng, radius);
+
+  if (!coordinates) return "";
+
+  const styleUrl = options.styleUrl
+    ? `<styleUrl>${escapeKmlText(options.styleUrl)}</styleUrl>`
+    : "";
+
+  return `
+<Placemark>
+  <name>${name}</name>
+  ${styleUrl}
+  <Polygon>
+    <outerBoundaryIs>
+      <LinearRing>
+        <coordinates>
+          ${coordinates}
+        </coordinates>
+      </LinearRing>
+    </outerBoundaryIs>
+  </Polygon>
+</Placemark>`;
+}
+
+function createKmlDocument(content) {
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+<Document>
+${content || ""}
+</Document>
+</kml>`;
+}
+
+function createKmlStyle(id, color = "7dff0000", width = 2, fill = "1") {
+  const safeId = escapeKmlText(id || "defaultStyle");
+
+  return `
+<Style id="${safeId}">
+  <LineStyle>
+    <color>${color}</color>
+    <width>${width}</width>
+  </LineStyle>
+  <PolyStyle>
+    <color>${color}</color>
+    <fill>${fill}</fill>
+    <outline>1</outline>
+  </PolyStyle>
+</Style>`;
+}
+
+function safeArray(value) {
+  return Array.isArray(value) ? value : [];
+}
+
+function safeForEach(value, callback) {
+  if (!Array.isArray(value)) return;
+
+  value.forEach(callback);
+}
+
+function textToBlob(text, type = "application/vnd.google-earth.kml+xml") {
+  return new Blob([text], { type });
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+
+  a.href = url;
+  a.download = filename || "download.kmz";
+
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+
+  setTimeout(() => {
+    URL.revokeObjectURL(url);
+  }, 1000);
+}
+
+function guessPoiType(point) {
+  const p = point || {};
+  const text = [
+    p.name,
+    p.type,
+    p.category,
+    p.kind,
+    p.description,
+    p.layerName
+  ].filter(Boolean).join(" ").toLowerCase();
+
+  if (
+    text.includes("gym") ||
+    text.includes("ジム")
+  ) {
+    return "gym";
+  }
+
+  if (
+    text.includes("power") ||
+    text.includes("パワ") ||
+    text.includes("powerspot") ||
+    text.includes("power spot")
+  ) {
+    return "power";
+  }
+
+  return "pokestop";
+}
+
+function splitPoiByType(points) {
+  const result = {
+    pokestop: [],
+    gym: [],
+    power: []
+  };
+
+  safeArray(points).forEach(point => {
+    const type = guessPoiType(point);
+
+    if (type === "gym") {
+      result.gym.push(point);
+    } else if (type === "power") {
+      result.power.push(point);
+    } else {
+      result.pokestop.push(point);
+    }
+  });
+
+  return result;
+}
+
+/* グローバル明示 */
+window.normalizePoint = normalizePoint;
+window.normalizePoints = normalizePoints;
+window.getSelectedRadii = getSelectedRadii;
+window.getSelectedCircleOnlyRadii = getSelectedCircleOnlyRadii;
+window.createPlacemark = createPlacemark;
+window.createPointPlacemark = createPointPlacemark;
+window.createCircleCoordinates = createCircleCoordinates;
+window.createCirclePlacemark = createCirclePlacemark;
+window.createKmlDocument = createKmlDocument;
+window.createKmlStyle = createKmlStyle;
+window.safeArray = safeArray;
+window.safeForEach = safeForEach;
+window.textToBlob = textToBlob;
+window.downloadBlob = downloadBlob;
+window.guessPoiType = guessPoiType;
+window.splitPoiByType = splitPoiByType;
