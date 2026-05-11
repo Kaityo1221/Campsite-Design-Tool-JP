@@ -258,3 +258,10 @@ body.opening-mode .container {
 .sign-check {
   top: 63.5%;
 }
+.sign-tools {
+  top: 71.3%;
+  display: none;
+}
+#openingSceneRight.active ~ .sign-tools {
+  display: block;
+}
