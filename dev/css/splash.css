@@ -81,186 +81,9 @@ body.opening-mode .container {
 .opening-screen.show {
   display: flex;
 }
-.opening-card {
-  width: min(100%, 420px);
-  margin: auto;
-  text-align: center;
-  box-sizing: border-box;
-
-  position: relative;
-  z-index: 2;
-}
-
-.opening-badge {
-  display: inline-block;
-  margin-bottom: 14px;
-  font-size: 12px;
-  letter-spacing: 0.12em;
-  color: #bfdbfe;
-
-  overflow: hidden;
-  white-space: nowrap;
-  border-right: 2px solid rgba(191,219,254,0.9);
-
-  width: 0;
-
-  animation:
-    typingMission 1.8s steps(14,end) forwards,
-    blinkCursor 0.7s step-end infinite;
-}
-
-.opening-card h1 {
-  margin: 0;
-  font-size: clamp(30px, 9vw, 44px);
-  line-height: 1.08;
-  overflow-wrap: anywhere;
-}
-
-.opening-sub {
-  margin: 18px 0 24px;
-  font-size: 18px;
-  color: #cbd5e1;
-}
-
-.opening-card button {
-
-  padding: 16px 34px;
-
-  border-radius: 18px;
-
-  border:
-    1px solid rgba(96,165,250,0.45);
-
-  background:
-    linear-gradient(
-      135deg,
-      rgba(37,99,235,0.95),
-      rgba(124,58,237,0.95)
-    );
-
-  color: white;
-
-  font-size: 18px;
-  font-weight: 900;
-
-  letter-spacing: 0.04em;
-
-  box-shadow:
-    0 0 24px rgba(96,165,250,0.35);
-
-  backdrop-filter: blur(6px);
-
-  transition:
-    transform 0.15s ease,
-    box-shadow 0.2s ease,
-    opacity 0.2s ease;
-    animation:
-      startButtonGlow 2.4s ease-in-out infinite;
-}
-
-.guide-link {
-  display: inline-block;
-  margin-left: 12px;
-  color: #60a5fa;
-  font-weight: 700;
-}
-
-.opening-card button:active {
-
-  transform:
-    scale(0.95)
-    translateY(2px);
-
-  box-shadow:
-    0 0 42px rgba(96,165,250,0.75);
-}
-
-.opening-screen.show .walker {
-  position: absolute;
-
-  bottom: 90px;
-  left: 0;
-
-  width: 260px;
-
-  opacity: 1;
-
-  z-index: 3;
-  pointer-events: none;
-
-  transform: translateX(100vw);
-
-  animation: walkerSlide 8s linear forwards;
-}
 
 
-@keyframes walkerSlide {
 
-  0% {
-    transform: translateX(100vw);
-    opacity: 1;
-  }
-
-  68% {
-    transform: translateX(-180px);
-    opacity: 1;
-  }
-
-  82% {
-  transform: translateX(-165px);
-  opacity: 1;
-}
-
-  100% {
-    transform: translateX(-260px);
-    opacity: 0;
-  }
-}
-@keyframes typingMission {
-  from {
-    width: 0;
-  }
-
-  to {
-    width: 15ch;
-  }
-}
-
-@keyframes blinkCursor {
-  50% {
-    border-color: transparent;
-  }
-}
-@keyframes startButtonGlow {
-  0% {
-    box-shadow:
-      0 0 18px rgba(96,165,250,0.28);
-  }
-
-  50% {
-    box-shadow:
-      0 0 38px rgba(96,165,250,0.65);
-  }
-
-  100% {
-    box-shadow:
-      0 0 18px rgba(96,165,250,0.28);
-  }
-}
-@keyframes openingBreath {
-
-  0% {
-    filter: brightness(1);
-  }
-
-  50% {
-    filter: brightness(1.08);
-  }
-
-  100% {
-    filter: brightness(1);
-  }
-}
 /* =========================
    Opening Scene
 ========================= */
@@ -403,33 +226,52 @@ body.opening-mode .container {
 }
 
 /* =========================
-   Opening Scene - Full Screen Fix
+   Opening Scene - Full Image Fit
 ========================= */
 
 body.opening-mode {
   overflow: hidden;
 }
 
+body.opening-mode .container {
+  display: none !important;
+}
+
 .opening-screen {
   position: fixed !important;
   inset: 0 !important;
+
   width: 100vw !important;
   height: 100vh !important;
-  display: none;
+  height: 100dvh !important;
+
+  display: none !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  padding: 0 !important;
+  margin: 0 !important;
+
   background: #020617;
   z-index: 9997;
   overflow: hidden;
 }
 
 .opening-screen.show {
-  display: block !important;
+  display: flex !important;
 }
 
 .opening-scene-wrap {
   position: relative;
-  width: 100%;
-  height: 100%;
+
+  width: min(100vw, calc(100dvh * 2 / 3));
+  height: min(100dvh, calc(100vw * 3 / 2));
+
+  max-width: 100vw;
+  max-height: 100dvh;
+
   overflow: hidden;
+  background: #020617;
 }
 
 .opening-scene {
@@ -439,19 +281,94 @@ body.opening-mode {
   width: 100% !important;
   height: 100% !important;
 
-  object-fit: cover !important;
+  object-fit: contain !important;
   object-position: center center;
 
   opacity: 0;
-  transform: scale(1.025);
+  transform: scale(1.01);
 
   transition:
     opacity 1.8s ease,
     transform 2.6s ease,
     filter 2s ease;
+
+  filter: brightness(0.96) saturate(1.05);
 }
 
 .opening-scene.active {
   opacity: 1;
   transform: scale(1);
+  filter: brightness(1) saturate(1.08);
+}
+
+/* 羊タップ範囲 */
+.sheep-tap-area {
+  position: absolute;
+  left: 36%;
+  bottom: 23%;
+  width: 38%;
+  height: 35%;
+
+  border: none;
+  background: transparent;
+  z-index: 25;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 設計を始める */
+.opening-start-area {
+  position: absolute;
+  left: 25%;
+  bottom: 8.7%;
+  width: 50%;
+  height: 7.2%;
+
+  border: none;
+  background: transparent;
+  z-index: 30;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ガイドPDFを見る */
+.opening-guide-area {
+  position: absolute;
+  left: 25%;
+  bottom: 2.9%;
+  width: 50%;
+  height: 5.6%;
+
+  display: block;
+  background: transparent;
+  z-index: 30;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 幻想的な光 */
+.scene-magic-glow {
+  position: absolute;
+  left: 52%;
+  bottom: 34%;
+  width: 240px;
+  height: 240px;
+  border-radius: 999px;
+
+  transform: translate(-50%, 50%) scale(0.3);
+
+  background:
+    radial-gradient(circle,
+      rgba(147, 197, 253, 0.9) 0%,
+      rgba(168, 85, 247, 0.5) 34%,
+      rgba(59, 130, 246, 0.22) 58%,
+      transparent 74%
+    );
+
+  opacity: 0;
+  pointer-events: none;
+  z-index: 18;
+}
+
+.scene-magic-glow.play {
+  animation: magicGlow 1.5s ease forwards;
 }
