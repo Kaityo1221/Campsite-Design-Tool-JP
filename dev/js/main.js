@@ -166,26 +166,40 @@ function showOpeningScreen() {
 }
 
 function startAdventure() {
+  const opening = document.getElementById("openingScreen");
 
-  const opening =
-    document.getElementById("openingScreen");
+  let targetButton = null;
+
+  document.querySelectorAll(".tab-button").forEach(button => {
+    const onclick = button.getAttribute("onclick") || "";
+
+    if (onclick.includes("openTab('tool'")) {
+      targetButton = button;
+    }
+  });
+
+  openTab("tool", targetButton);
+
+  window.scrollTo({
+    top: 0,
+    behavior: "auto"
+  });
 
   if (opening) {
-
     opening.style.opacity = "0";
-
-    opening.style.transition =
-      "opacity 0.4s ease";
+    opening.style.transition = "opacity 0.4s ease";
   }
 
   setTimeout(() => {
-
     if (opening) {
       opening.classList.remove("show");
     }
 
     document.body.classList.remove("opening-mode");
 
+    if (opening) {
+      opening.style.opacity = "1";
+    }
   }, 400);
 }
 let openingSceneChanged = false;
