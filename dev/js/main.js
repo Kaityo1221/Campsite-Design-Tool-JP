@@ -277,16 +277,16 @@ function goOpeningTab(tabId) {
   });
 
   /*
-    オープニングを完全に表示した状態に戻してから、
-    裏側のタブを切り替える。
+    オープニングを表示したまま、先に裏側のタブを切り替える。
+    opening-mode中は .container が非表示なので、前のタブは見えない。
   */
+  document.body.classList.add("opening-mode");
+
   if (opening) {
     opening.classList.add("show");
-    opening.style.transition = "none";
     opening.style.opacity = "1";
+    opening.style.transition = "none";
   }
-
-  document.body.classList.add("opening-mode");
 
   openTab(tabId, targetButton);
 
@@ -296,25 +296,16 @@ function goOpeningTab(tabId) {
   });
 
   /*
-    1テンポ待ってからフェードアウト。
-    これで前のタブや切替中の画面が一瞬見えにくくなる。
+    フェードさせずに閉じる。
+    これで前回のタブが一瞬見える現象を防ぐ。
   */
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      if (opening) {
-        opening.style.transition = "opacity 0.35s ease";
-        opening.style.opacity = "0";
-      }
+  setTimeout(() => {
+    if (opening) {
+      opening.classList.remove("show");
+      opening.style.opacity = "1";
+      opening.style.transition = "none";
+    }
 
-      setTimeout(() => {
-        if (opening) {
-          opening.classList.remove("show");
-          opening.style.opacity = "1";
-          opening.style.transition = "none";
-        }
-
-        document.body.classList.remove("opening-mode");
-      }, 350);
-    });
-  });
+    document.body.classList.remove("opening-mode");
+  }, 120);
 }
