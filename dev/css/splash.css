@@ -191,17 +191,24 @@ animation: walkerSlide 8s linear forwards;
 
 
 @keyframes walkerSlide {
+
   0% {
     left: 100vw;
     opacity: 1;
   }
 
-  80% {
+  70% {
+    left: -300px;
     opacity: 1;
   }
 
+  82% {
+    left: -220px;
+    opacity: 0.9;
+  }
+
   100% {
-    left: -300px;
+    left: -260px;
     opacity: 0;
   }
 }
