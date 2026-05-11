@@ -245,24 +245,43 @@ function backToOpening() {
   opening.classList.add("show");
 }
 function goOpeningTab(tabId) {
-  startAdventure();
+  const opening = document.getElementById("openingScreen");
+
+  let targetButton = null;
+
+  document.querySelectorAll(".tab-button").forEach(button => {
+    const onclick = button.getAttribute("onclick") || "";
+
+    if (onclick.includes(`openTab('${tabId}'`)) {
+      targetButton = button;
+    }
+  });
+
+  /*
+    先に裏側のタブを切り替える。
+    opening-mode中は.containerが非表示なので、切り替え途中は見えない。
+  */
+  openTab(tabId, targetButton);
+
+  window.scrollTo({
+    top: 0,
+    behavior: "auto"
+  });
+
+  if (opening) {
+    opening.style.opacity = "0";
+    opening.style.transition = "opacity 0.35s ease";
+  }
 
   setTimeout(() => {
-    let targetButton = null;
+    if (opening) {
+      opening.classList.remove("show");
+    }
 
-    document.querySelectorAll(".tab-button").forEach(button => {
-      const onclick = button.getAttribute("onclick") || "";
+    document.body.classList.remove("opening-mode");
 
-      if (onclick.includes(`openTab('${tabId}'`)) {
-        targetButton = button;
-      }
-    });
-
-    openTab(tabId, targetButton);
-
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth"
-    });
-  }, 420);
+    if (opening) {
+      opening.style.opacity = "1";
+    }
+  }, 350);
 }
