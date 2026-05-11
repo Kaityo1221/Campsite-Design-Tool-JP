@@ -401,3 +401,57 @@ body.opening-mode .container {
     filter: blur(18px);
   }
 }
+
+/* =========================
+   Opening Scene - Full Screen Fix
+========================= */
+
+body.opening-mode {
+  overflow: hidden;
+}
+
+.opening-screen {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  display: none;
+  background: #020617;
+  z-index: 9997;
+  overflow: hidden;
+}
+
+.opening-screen.show {
+  display: block !important;
+}
+
+.opening-scene-wrap {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.opening-scene {
+  position: absolute !important;
+  inset: 0 !important;
+
+  width: 100% !important;
+  height: 100% !important;
+
+  object-fit: cover !important;
+  object-position: center center;
+
+  opacity: 0;
+  transform: scale(1.025);
+
+  transition:
+    opacity 1.8s ease,
+    transform 2.6s ease,
+    filter 2s ease;
+}
+
+.opening-scene.active {
+  opacity: 1;
+  transform: scale(1);
+}
