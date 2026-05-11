@@ -420,4 +420,52 @@ status.innerHTML =
 setTimeout(() => {
   status.style.transform = "scale(1)";
 }, 120);
-}
+ } 
+/* =========================
+   KMZ生成ローディング停止保険
+   ========================= */
+
+(function () {
+  if (typeof generateKMZ !== "function") {
+    console.warn("generateKMZ が見つかりません");
+    return;
+  }
+
+  const originalGenerateKMZ = generateKMZ;
+
+  generateKMZ = async function () {
+    const loadingOverlay = document.getElementById("loadingOverlay");
+    const loadingText = document.getElementById("loadingText");
+
+    if (loadingOverlay) {
+      loadingOverlay.style.display = "flex";
+    }
+
+    if (loadingText) {
+      loadingText.textContent = "読み込み中…";
+    }
+
+    try {
+      await originalGenerateKMZ.apply(this, arguments);
+
+    } catch (error) {
+      console.error("KMZ生成エラー:", error);
+
+      alert(
+        "KMZ生成中にエラーが発生しました。\n" +
+        "ファイル形式、読み込み内容、CSV/KML/KMZの中身を確認してください。"
+      );
+
+    } finally {
+      setTimeout(() => {
+        if (loadingOverlay) {
+          loadingOverlay.style.display = "none";
+        }
+
+        if (loadingText) {
+          loadingText.textContent = "処理中…";
+        }
+      }, 600);
+    }
+  };
+})();
