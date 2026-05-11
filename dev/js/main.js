@@ -244,3 +244,25 @@ function backToOpening() {
 
   opening.classList.add("show");
 }
+function goOpeningTab(tabId) {
+  startAdventure();
+
+  setTimeout(() => {
+    let targetButton = null;
+
+    document.querySelectorAll(".tab-button").forEach(button => {
+      const onclick = button.getAttribute("onclick") || "";
+
+      if (onclick.includes(`openTab('${tabId}'`)) {
+        targetButton = button;
+      }
+    });
+
+    openTab(tabId, targetButton);
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+  }, 420);
+}
