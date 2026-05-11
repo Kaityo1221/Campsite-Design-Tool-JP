@@ -277,9 +277,17 @@ function goOpeningTab(tabId) {
   });
 
   /*
-    先に裏側のタブを切り替える。
-    opening-mode中は.containerが非表示なので、切り替え途中は見えない。
+    オープニングを完全に表示した状態に戻してから、
+    裏側のタブを切り替える。
   */
+  if (opening) {
+    opening.classList.add("show");
+    opening.style.transition = "none";
+    opening.style.opacity = "1";
+  }
+
+  document.body.classList.add("opening-mode");
+
   openTab(tabId, targetButton);
 
   window.scrollTo({
@@ -287,20 +295,26 @@ function goOpeningTab(tabId) {
     behavior: "auto"
   });
 
-  if (opening) {
-    opening.style.opacity = "0";
-    opening.style.transition = "opacity 0.35s ease";
-  }
+  /*
+    1テンポ待ってからフェードアウト。
+    これで前のタブや切替中の画面が一瞬見えにくくなる。
+  */
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      if (opening) {
+        opening.style.transition = "opacity 0.35s ease";
+        opening.style.opacity = "0";
+      }
 
-  setTimeout(() => {
-    if (opening) {
-      opening.classList.remove("show");
-    }
+      setTimeout(() => {
+        if (opening) {
+          opening.classList.remove("show");
+          opening.style.opacity = "1";
+          opening.style.transition = "none";
+        }
 
-    document.body.classList.remove("opening-mode");
-
-    if (opening) {
-      opening.style.opacity = "1";
-    }
-  }, 350);
+        document.body.classList.remove("opening-mode");
+      }, 350);
+    });
+  });
 }
