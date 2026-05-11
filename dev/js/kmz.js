@@ -423,7 +423,7 @@ setTimeout(() => {
  } 
 /* =========================
    KMZ生成ローディング停止保険
-   ========================= */
+========================= */
 
 (function () {
   if (typeof generateKMZ !== "function") {
@@ -451,21 +451,34 @@ setTimeout(() => {
     } catch (error) {
       console.error("KMZ生成エラー:", error);
 
+      // alertより先にローディングを消す
+      if (loadingOverlay) {
+        loadingOverlay.style.display = "none";
+      }
+
+      if (loadingText) {
+        loadingText.textContent = "処理中…";
+      }
+
+      const message =
+        error && error.message
+          ? error.message
+          : String(error);
+
       alert(
-        "KMZ生成中にエラーが発生しました。\n" +
-        "ファイル形式、読み込み内容、CSV/KML/KMZの中身を確認してください。"
+        "KMZ生成中にエラーが発生しました。\n\n" +
+        "エラー内容：\n" +
+        message
       );
 
     } finally {
-      setTimeout(() => {
-        if (loadingOverlay) {
-          loadingOverlay.style.display = "none";
-        }
+      if (loadingOverlay) {
+        loadingOverlay.style.display = "none";
+      }
 
-        if (loadingText) {
-          loadingText.textContent = "処理中…";
-        }
-      }, 600);
+      if (loadingText) {
+        loadingText.textContent = "処理中…";
+      }
     }
   };
 })();
