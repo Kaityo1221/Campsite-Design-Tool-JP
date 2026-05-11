@@ -135,7 +135,7 @@ body.opening-mode .container {
   left: 100vw !important;
 
   width: 220px !important;
-  opacity: 0 !important;
+  opacity: 1 !important;
   z-index: 0 !important;
   pointer-events: none !important;
 
@@ -143,25 +143,24 @@ body.opening-mode .container {
 }
 
 @keyframes walkerSlide {
+
   0% {
-    left: 100vw;
-    opacity: 0;
-    transform: scale(0.9);
+    transform: translateX(100vw);
+    opacity: 1;
   }
 
-  15% {
-    opacity: 0.55;
+  55% {
+    transform: translateX(-340px);
+    opacity: 1;
   }
 
-  50% {
-    left: calc(50% - 110px);
-    opacity: 0.45;
-    transform: scale(1);
+  72% {
+    transform: translateX(-40px);
+    opacity: 1;
   }
 
   100% {
-    left: -260px;
+    transform: translateX(-260px);
     opacity: 0;
-    transform: scale(1.04);
   }
 }
