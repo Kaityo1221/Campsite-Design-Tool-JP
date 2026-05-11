@@ -611,6 +611,55 @@ warnings.forEach(w => {
     displayCounts.caution++;
   }
 });
+const targetWarningCount =
+  displayCounts.danger + displayCounts.caution;
+
+const nearestWarning =
+  warnings.length > 0
+    ? [...warnings].sort((a, b) => a.distance - b.distance)[0]
+    : null;
+
+let resultStatus = "問題なし";
+let resultStatusColor = "#22c55e";
+let resultStatusIcon = "✅";
+
+if (targetWarningCount > 0) {
+  resultStatus = "調整あり";
+  resultStatusColor = "#ef4444";
+  resultStatusIcon = "⚠";
+} else if (displayCounts.reference > 0) {
+  resultStatus = "参考近接あり";
+  resultStatusColor = "#94a3b8";
+  resultStatusIcon = "ℹ";
+}
+
+const resultHeaderHtml = `
+  <div class="distance-warning" style="
+    margin-bottom:16px;
+    border:1px solid ${resultStatusColor};
+    background:rgba(15,23,42,0.72);
+  ">
+    <strong style="color:${resultStatusColor}; font-size:20px;">
+      ${resultStatusIcon} 判定結果：${resultStatus}
+    </strong><br><br>
+
+    調整対象：${targetWarningCount}件<br>
+    参考：${displayCounts.reference}件<br>
+    40m未満合計：${warnings.length}件<br><br>
+
+    ${
+      nearestWarning ? `
+        <strong>最短距離ペア</strong><br>
+        ${nearestWarning.distance.toFixed(1)}m<br>
+        ${nearestWarning.a.layer}：${nearestWarning.a.name}<br>
+        × ${nearestWarning.b.layer}：${nearestWarning.b.name}<br>
+      ` : `
+        <strong>最短距離ペア</strong><br>
+        40m未満の組み合わせはありません。<br>
+      `
+    }
+  </div>
+`;
 
   if (warnings.length === 0) {
     result.innerHTML = scoreHtml + `✅ 問題なし（${points.length}件）`;
