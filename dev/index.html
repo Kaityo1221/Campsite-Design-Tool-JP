@@ -66,33 +66,55 @@ v5.7<br>
 <img src="assets/icon.png" alt="Campsite Tool Icon">
 </div>
 <div id="openingScreen" class="opening-screen">
-<img
-  src="/Campsite-Design-Tool-JP/dev/assets/walker.png"
-  class="walker"
-  alt=""
->
-   <div class="opening-card">
 
-    <div class="opening-badge">
-      MISSION START
-    </div>
+  <div class="opening-scene-wrap">
 
-    <h1>Campsite Design Tool JP</h1>
+    <img
+      id="openingSceneLeft"
+      class="opening-scene active"
+      src="/Campsite-Design-Tool-JP/dev/assets/opening-left.jpg"
+      alt="Campsite Design Tool opening"
+    >
 
-    <button onclick="startAdventure()">
-  ▶ 設計を始める
-</button>
+    <img
+      id="openingSceneRight"
+      class="opening-scene"
+      src="/Campsite-Design-Tool-JP/dev/assets/opening-right.jpg"
+      alt="Campsite Design Tool campfire"
+    >
 
+    <!-- 羊タップ範囲 -->
+    <button
+      type="button"
+      id="sheepTapArea"
+      class="sheep-tap-area"
+      aria-label="羊をタップして次のシーンへ"
+      onclick="changeOpeningScene()"
+    ></button>
+
+    <!-- 設計を始める -->
+    <button
+      type="button"
+      class="opening-start-area"
+      aria-label="設計を始める"
+      onclick="startAdventure()"
+    ></button>
+
+    <!-- ガイドPDFを見る -->
     <a
-      class="guide-link"
+      class="opening-guide-area"
+      aria-label="ガイドPDFを見る"
       href="/Campsite-Design-Tool-JP/docs/campsite-guide.pdf"
       target="_blank"
-    >
-      📘 ガイドPDFを見る
-    </a>
+    ></a>
+
+    <!-- 幻想的な光 -->
+    <div id="sceneMagicGlow" class="scene-magic-glow"></div>
 
   </div>
+
 </div>
+
 <div class="container">
 
   <div class="hero">
