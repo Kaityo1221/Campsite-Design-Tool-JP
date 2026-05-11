@@ -323,6 +323,17 @@ setLoadingText("KMZ生成中…");
   await sleep(3000);
   
 await waitForRender();
+  const selectedRadii = Array.from(
+  document.querySelectorAll('input[name="radius"]:checked')
+)
+.map(input => Number(input.value))
+.filter(value => Number.isFinite(value));
+
+if (selectedRadii.length === 0) {
+  alert("生成する円を選択してください");
+  hideLoading();
+  return;
+}
   const parser = new DOMParser();
   const outputXml = parser.parseFromString(
     `<?xml version="1.0" encoding="UTF-8"?>
@@ -374,7 +385,7 @@ points.forEach(p => {
     folders.pokestop.appendChild(pointPlacemark);
   }
 
-  radii.forEach(radius => {
+  selectedRadii.forEach(radius => {
     const circlePlacemark = createCirclePlacemark(outputXml, p, radius);
 
     if (radius === 40) {
@@ -400,12 +411,15 @@ a.download = `campsite_${now.getFullYear()}${now.getMonth()+1}${now.getDate()}.k
  a.click();
 
 const success = document.getElementById("successSound");
-success.currentTime = 0;
-success.volume = 0.12;
 
-setTimeout(() => {
-  success.play().catch(() => {});
-}, 100);
+if (success) {
+  success.currentTime = 0;
+  success.volume = 0.12;
+
+  setTimeout(() => {
+    success.play().catch(() => {});
+  }, 100);
+}
 
 // どんな状況でも消す（最強）
 setTimeout(() => {
@@ -420,4 +434,66 @@ status.innerHTML =
 setTimeout(() => {
   status.style.transform = "scale(1)";
 }, 120);
-}
+ } 
+/* =========================
+   KMZ生成ローディング停止保険
+========================= */
+
+(function () {
+console.log("KMZ wrapper loaded v3");
+  if (typeof generateKMZ !== "function") {
+    console.warn("generateKMZ が見つかりません");
+    return;
+  }
+
+  const originalGenerateKMZ = generateKMZ;
+
+  generateKMZ = async function () {
+    const loadingOverlay = document.getElementById("loadingOverlay");
+    const loadingText = document.getElementById("loadingText");
+
+    if (loadingOverlay) {
+      loadingOverlay.style.display = "flex";
+    }
+
+    if (loadingText) {
+      loadingText.textContent = "読み込み中…";
+    }
+
+    try {
+      await originalGenerateKMZ.apply(this, arguments);
+
+    } catch (error) {
+      console.error("KMZ生成エラー:", error);
+
+      // alertより先にローディングを消す
+      if (loadingOverlay) {
+        loadingOverlay.style.display = "none";
+      }
+
+      if (loadingText) {
+        loadingText.textContent = "処理中…";
+      }
+
+      const message =
+        error && error.message
+          ? error.message
+          : String(error);
+
+      alert(
+        "KMZ生成中にエラーが発生しました。\n\n" +
+        "エラー内容：\n" +
+        message
+      );
+
+    } finally {
+      if (loadingOverlay) {
+        loadingOverlay.style.display = "none";
+      }
+
+      if (loadingText) {
+        loadingText.textContent = "処理中…";
+      }
+    }
+  };
+})();
