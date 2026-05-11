@@ -177,38 +177,42 @@ body.opening-mode .container {
 
 .opening-screen.show .walker {
   position: absolute;
+
   bottom: 90px;
-  left: 100vw;
-  right: auto;
+  left: 0;
 
   width: 260px;
-  opacity: 0;
+
+  opacity: 1;
 
   z-index: 3;
   pointer-events: none;
-animation: walkerSlide 8s linear forwards;
+
+  transform: translateX(100vw);
+
+  animation: walkerSlide 8s linear forwards;
 }
 
 
 @keyframes walkerSlide {
 
   0% {
-    left: 100vw;
+    transform: translateX(100vw);
     opacity: 1;
   }
 
   68% {
-    left: -300px;
+    transform: translateX(-300px);
     opacity: 1;
   }
 
   82% {
-    left: -80px;
+    transform: translateX(-80px);
     opacity: 1;
   }
 
   100% {
-    left: -260px;
+    transform: translateX(-260px);
     opacity: 0;
   }
 }
