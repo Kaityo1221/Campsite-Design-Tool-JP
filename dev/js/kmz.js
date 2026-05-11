@@ -323,6 +323,17 @@ setLoadingText("KMZ生成中…");
   await sleep(3000);
   
 await waitForRender();
+  const selectedRadii = Array.from(
+  document.querySelectorAll('input[name="radius"]:checked')
+)
+.map(input => Number(input.value))
+.filter(value => Number.isFinite(value));
+
+if (selectedRadii.length === 0) {
+  alert("生成する円を選択してください");
+  hideLoading();
+  return;
+}
   const parser = new DOMParser();
   const outputXml = parser.parseFromString(
     `<?xml version="1.0" encoding="UTF-8"?>
@@ -374,7 +385,7 @@ points.forEach(p => {
     folders.pokestop.appendChild(pointPlacemark);
   }
 
-  radii.forEach(radius => {
+  selectedRadii.forEach(radius => {
     const circlePlacemark = createCirclePlacemark(outputXml, p, radius);
 
     if (radius === 40) {
