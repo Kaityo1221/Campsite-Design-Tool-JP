@@ -221,3 +221,38 @@ body.opening-mode .container {
     filter: blur(18px);
   }
 }
+/* 左看板ショートカット */
+.opening-sign-area {
+  position: absolute;
+  left: 0;
+  width: 40%;
+  height: 6.5%;
+
+  border: none;
+  background: transparent;
+
+  z-index: 35;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 位置調整 */
+.sign-howto {
+  top: 34.5%;
+}
+
+.sign-script {
+  top: 42.2%;
+}
+
+.sign-campsite {
+  top: 50.2%;
+}
+
+.sign-distance {
+  top: 58.2%;
+}
+
+.sign-check {
+  top: 66.3%;
+}
