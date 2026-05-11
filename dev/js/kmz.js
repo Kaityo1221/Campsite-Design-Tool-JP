@@ -411,12 +411,15 @@ a.download = `campsite_${now.getFullYear()}${now.getMonth()+1}${now.getDate()}.k
  a.click();
 
 const success = document.getElementById("successSound");
-success.currentTime = 0;
-success.volume = 0.12;
 
-setTimeout(() => {
-  success.play().catch(() => {});
-}, 100);
+if (success) {
+  success.currentTime = 0;
+  success.volume = 0.12;
+
+  setTimeout(() => {
+    success.play().catch(() => {});
+  }, 100);
+}
 
 // どんな状況でも消す（最強）
 setTimeout(() => {
