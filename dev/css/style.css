@@ -20,18 +20,6 @@
   font-size: 13px;
   line-height: 1.7;
 }
-  button.generate {
-  transition: transform 0.08s ease, filter 0.08s ease;
-}
-
-button.generate:active {
-  transform: scale(0.94);
-  filter: brightness(1.25);
-}
-  button.generate:active {
-  transform: scale(0.96);
-}
-  
 
  #passwordInput {
   -webkit-text-security: disc;
@@ -298,13 +286,16 @@ button.generate {
   font-weight: bold;
   margin-top: 18px;
   cursor: pointer;
+  transition: transform 0.08s ease, filter 0.08s ease, opacity 0.08s ease;
 }
-button.generate:active {
-  transform: scale(0.92);
-  filter: brightness(1.4);
-}
+
 button.generate:hover {
   opacity: 0.92;
+}
+
+button.generate:active {
+  transform: scale(0.94);
+  filter: brightness(1.25);
 }
 
 #status {
