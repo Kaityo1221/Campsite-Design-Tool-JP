@@ -231,7 +231,7 @@ body.opening-mode .container {
   height: 5.4%;
 
   border: none;
-  background: transparent;
+  background: rgba(255, 0, 0, 0.22);
 
   z-index: 35;
   cursor: pointer;
@@ -241,6 +241,7 @@ body.opening-mode .container {
 /* 位置調整 */
 .sign-howto {
   top: 33.4%;
+  height: 5.0%;
 }
 
 .sign-script {
