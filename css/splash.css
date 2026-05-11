@@ -149,13 +149,13 @@ body.opening-mode .container {
     opacity: 1;
   }
 
-  55% {
-    transform: translateX(-340px);
+  68% {
+    transform: translateX(-180px);
     opacity: 1;
   }
 
-  72% {
-    transform: translateX(-40px);
+  82% {
+    transform: translateX(-160px);
     opacity: 1;
   }
 
