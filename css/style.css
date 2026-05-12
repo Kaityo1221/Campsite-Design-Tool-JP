@@ -20,18 +20,6 @@
   font-size: 13px;
   line-height: 1.7;
 }
-  button.generate {
-  transition: transform 0.08s ease, filter 0.08s ease;
-}
-
-button.generate:active {
-  transform: scale(0.94);
-  filter: brightness(1.25);
-}
-  button.generate:active {
-  transform: scale(0.96);
-}
-  
 
  #passwordInput {
   -webkit-text-security: disc;
@@ -287,26 +275,112 @@ a {
   opacity: 0.9;
 }
 
+/* =========================
+   Generate Button - Deep Woody Sign
+========================= */
+
 button.generate {
   width: 100%;
   padding: 18px;
   border-radius: 16px;
-  border: none;
-  background: #2563eb;
-  color: white;
+
+  position: relative;
+  overflow: hidden;
+
+  border: 1px solid rgba(201, 156, 110, 0.55);
+
+  background:
+    linear-gradient(
+      180deg,
+      #8a5a2b 0%,
+      #6b4226 38%,
+      #4a2d1c 72%,
+      #2f1b12 100%
+    );
+
+  color: #fff8f1;
   font-size: 18px;
   font-weight: bold;
   margin-top: 18px;
   cursor: pointer;
-}
-button.generate:active {
-  transform: scale(0.92);
-  filter: brightness(1.4);
-}
-button.generate:hover {
-  opacity: 0.92;
+
+  text-shadow:
+    0 1px 0 rgba(34, 20, 12, 0.9),
+    0 0 8px rgba(255, 231, 205, 0.10);
+
+  box-shadow:
+    inset 0 2px 0 rgba(255, 228, 196, 0.16),
+    inset 0 -5px 0 rgba(28, 15, 9, 0.55),
+    inset 0 0 28px rgba(20, 10, 6, 0.18),
+    0 10px 24px rgba(0, 0, 0, 0.34);
+
+  transition:
+    transform 0.08s ease,
+    filter 0.08s ease,
+    box-shadow 0.08s ease;
 }
 
+/* 木目 */
+button.generate::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+
+  background:
+    repeating-linear-gradient(
+      12deg,
+      rgba(255, 220, 170, 0.05) 0px,
+      rgba(255, 220, 170, 0.05) 2px,
+      transparent 2px,
+      transparent 10px
+    );
+
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* 上の光 */
+button.generate::after {
+  content: "";
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  top: 6px;
+  height: 2px;
+  border-radius: 999px;
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 239, 220, 0.55),
+      transparent
+    );
+
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+button.generate:hover {
+  opacity: 1;
+  filter: brightness(1.04);
+
+  box-shadow:
+    inset 0 2px 0 rgba(255, 228, 196, 0.20),
+    inset 0 -5px 0 rgba(28, 15, 9, 0.60),
+    inset 0 0 30px rgba(20, 10, 6, 0.20),
+    0 12px 28px rgba(0, 0, 0, 0.38);
+}
+
+button.generate:active {
+  transform: scale(0.96) translateY(1px);
+  filter: brightness(0.97);
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 228, 196, 0.10),
+    inset 0 4px 10px rgba(28, 15, 9, 0.55),
+    0 6px 14px rgba(0, 0, 0, 0.28);
+}
 #status {
   margin-top: 16px;
   color: #a7f3d0;
