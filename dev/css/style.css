@@ -162,15 +162,38 @@ body {
   font-size: 13px;
 }
 
+/* =========================
+   Responsive Container
+========================= */
+
+/* PC */
 .container {
+  width: 100%;
   max-width: 960px;
   margin: 0 auto;
   padding: 40px 32px;
 }
 
+/* タブレット・小さめPC */
+@media (max-width: 1024px) {
+  .container {
+    max-width: 860px;
+    padding: 34px 24px;
+  }
+}
+
+/* スマホ */
 @media (max-width: 720px) {
   .container {
-    padding: 24px 16px;
+    max-width: none;
+    padding: 20px 12px;
+  }
+}
+
+/* 小さいスマホ */
+@media (max-width: 390px) {
+  .container {
+    padding: 18px 10px;
   }
 }
 
