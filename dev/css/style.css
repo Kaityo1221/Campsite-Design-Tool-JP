@@ -288,113 +288,7 @@ button.generate {
   cursor: pointer;
   transition: transform 0.08s ease, filter 0.08s ease, opacity 0.08s ease;
 }
-/* =========================
-   Generate Button - Woody Sign
-========================= */
 
-button.generate {
-  position: relative;
-  overflow: hidden;
-
-  background:
-    linear-gradient(
-      180deg,
-      #b7793a 0%,
-      #8b5a2b 44%,
-      #5f3b1f 100%
-    );
-
-  border: 1px solid rgba(255, 214, 153, 0.55);
-  color: #fff7ed;
-
-  text-shadow:
-    0 1px 0 rgba(70, 35, 10, 0.65),
-    0 0 10px rgba(255, 214, 153, 0.22);
-
-  box-shadow:
-    inset 0 2px 0 rgba(255, 236, 179, 0.28),
-    inset 0 -4px 0 rgba(61, 34, 16, 0.42),
-    0 10px 24px rgba(0, 0, 0, 0.32),
-    0 0 22px rgba(180, 112, 42, 0.18);
-}
-
-/* 木目っぽい細いライン */
-button.generate::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-
-  background:
-    repeating-linear-gradient(
-      12deg,
-      rgba(255, 236, 179, 0.10) 0px,
-      rgba(255, 236, 179, 0.10) 2px,
-      transparent 2px,
-      transparent 9px
-    );
-
-  opacity: 0.42;
-  pointer-events: none;
-}
-
-/* ボタン文字を木目より前に出す */
-button.generate {
-  z-index: 1;
-}
-
-button.generate::before {
-  z-index: 0;
-}
-
-button.generate {
-  isolation: isolate;
-}
-
-/* 上側の光沢 */
-button.generate::after {
-  content: "";
-  position: absolute;
-
-  left: 8%;
-  right: 8%;
-  top: 6px;
-
-  height: 2px;
-  border-radius: 999px;
-
-  background:
-    linear-gradient(
-      90deg,
-      transparent,
-      rgba(255, 244, 214, 0.75),
-      transparent
-    );
-
-  opacity: 0.72;
-  pointer-events: none;
-  z-index: 0;
-}
-
-button.generate:hover {
-  opacity: 1;
-  filter: brightness(1.08);
-
-  box-shadow:
-    inset 0 2px 0 rgba(255, 236, 179, 0.34),
-    inset 0 -4px 0 rgba(61, 34, 16, 0.48),
-    0 12px 28px rgba(0, 0, 0, 0.36),
-    0 0 26px rgba(217, 139, 55, 0.24);
-}
-
-button.generate:active {
-  transform: scale(0.96) translateY(1px);
-  filter: brightness(0.98);
-
-  box-shadow:
-    inset 0 1px 0 rgba(255, 236, 179, 0.22),
-    inset 0 3px 8px rgba(61, 34, 16, 0.55),
-    0 6px 16px rgba(0, 0, 0, 0.28);
-}
 button.generate:hover {
   opacity: 0.92;
 }
@@ -773,4 +667,111 @@ body {
 .step > * {
   position: relative;
   z-index: 1;
+}
+/* =========================
+   Generate Button - Woody Sign
+========================= */
+
+button.generate {
+  position: relative;
+  overflow: hidden;
+
+  background:
+    linear-gradient(
+      180deg,
+      #b7793a 0%,
+      #8b5a2b 44%,
+      #5f3b1f 100%
+    );
+
+  border: 1px solid rgba(255, 214, 153, 0.55);
+  color: #fff7ed;
+
+  text-shadow:
+    0 1px 0 rgba(70, 35, 10, 0.65),
+    0 0 10px rgba(255, 214, 153, 0.22);
+
+  box-shadow:
+    inset 0 2px 0 rgba(255, 236, 179, 0.28),
+    inset 0 -4px 0 rgba(61, 34, 16, 0.42),
+    0 10px 24px rgba(0, 0, 0, 0.32),
+    0 0 22px rgba(180, 112, 42, 0.18);
+}
+
+/* 木目っぽい細いライン */
+button.generate::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+
+  background:
+    repeating-linear-gradient(
+      12deg,
+      rgba(255, 236, 179, 0.10) 0px,
+      rgba(255, 236, 179, 0.10) 2px,
+      transparent 2px,
+      transparent 9px
+    );
+
+  opacity: 0.42;
+  pointer-events: none;
+}
+
+/* ボタン文字を木目より前に出す */
+button.generate {
+  z-index: 1;
+}
+
+button.generate::before {
+  z-index: 0;
+}
+
+button.generate {
+  isolation: isolate;
+}
+
+/* 上側の光沢 */
+button.generate::after {
+  content: "";
+  position: absolute;
+
+  left: 8%;
+  right: 8%;
+  top: 6px;
+
+  height: 2px;
+  border-radius: 999px;
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 244, 214, 0.75),
+      transparent
+    );
+
+  opacity: 0.72;
+  pointer-events: none;
+  z-index: 0;
+}
+
+button.generate:hover {
+  opacity: 1;
+  filter: brightness(1.08);
+
+  box-shadow:
+    inset 0 2px 0 rgba(255, 236, 179, 0.34),
+    inset 0 -4px 0 rgba(61, 34, 16, 0.48),
+    0 12px 28px rgba(0, 0, 0, 0.36),
+    0 0 26px rgba(217, 139, 55, 0.24);
+}
+
+button.generate:active {
+  transform: scale(0.96) translateY(1px);
+  filter: brightness(0.98);
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 236, 179, 0.22),
+    inset 0 3px 8px rgba(61, 34, 16, 0.55),
+    0 6px 16px rgba(0, 0, 0, 0.28);
 }
