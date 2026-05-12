@@ -581,3 +581,62 @@ body {
     width: 100%;
   }
 }
+/* =========================
+   Step Card Readability
+========================= */
+
+.step {
+  padding: 22px;
+  border-radius: 22px;
+}
+
+.step p {
+  margin-top: 14px;
+  margin-bottom: 0;
+
+  font-size: 16px;
+  line-height: 1.85;
+  letter-spacing: 0.02em;
+
+  color: #e5e7eb;
+}
+
+.step .note {
+  color: #cbd5e1;
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.step a {
+  font-weight: bold;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+
+.step-no {
+  margin-bottom: 14px;
+  letter-spacing: 0.08em;
+}
+
+/* スマホ用 */
+@media (max-width: 720px) {
+  .step {
+    padding: 18px;
+    border-radius: 20px;
+  }
+
+  .step p {
+    font-size: 15px;
+    line-height: 1.75;
+    letter-spacing: 0.01em;
+  }
+
+  .step .note {
+    font-size: 13px;
+    line-height: 1.75;
+  }
+
+  .step-no {
+    margin-bottom: 12px;
+  }
+}
