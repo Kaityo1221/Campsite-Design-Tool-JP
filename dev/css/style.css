@@ -425,34 +425,6 @@ body {
 
 /* =========================
    Main Title Gloss Effect
-========================= */
-
-.hero h1 {
-  position: relative;
-  display: inline-block;
-
-  background:
-    linear-gradient(
-      90deg,
-      #bae6fd 0%,
-      #c4b5fd 35%,
-      #f9a8d4 70%,
-      #bae6fd 100%
-    );
-  background-size: 220% auto;
-
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-
-  text-shadow:
-    0 0 18px rgba(56, 189, 248, 0.28),
-    0 0 32px rgba(236, 72, 153, 0.18);
-
-  animation: titleGradientFlow 7s ease-in-out infinite;
-}
-/* =========================
-   Main Title Gloss Effect
    文字だけに光沢をかける
 ========================= */
 
@@ -626,28 +598,17 @@ body {
   }
 
   .step p {
-    font-size: 15px;
-    line-height: 1.75;
+    font-size: 14px;
+    line-height: 1.7;
     letter-spacing: 0.01em;
   }
 
   .step .note {
     font-size: 13px;
-    line-height: 1.75;
+    line-height: 1.7;
   }
 
   .step-no {
     margin-bottom: 12px;
-  }
-}
-@media (max-width: 720px) {
-  .step p {
-    font-size: 14px;
-    line-height: 1.7;
-  }
-
-  .step .note {
-    font-size: 13px;
-    line-height: 1.7;
   }
 }
