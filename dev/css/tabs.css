@@ -137,17 +137,30 @@
 .tab-button.active {
   background:
     linear-gradient(
-      135deg,
-      rgba(37, 99, 235, 0.96),
-      rgba(124, 58, 237, 0.96),
-      rgba(236, 72, 153, 0.82)
+      180deg,
+      rgba(49, 46, 129, 0.96),
+      rgba(30, 41, 59, 0.98)
     );
 
-  color: #ffffff;
-  border-color: rgba(191, 219, 254, 0.55);
+  color: #f8fafc;
+  border-color: rgba(196, 181, 253, 0.62);
 
   box-shadow:
-    0 0 24px rgba(96, 165, 250, 0.28),
-    0 0 36px rgba(236, 72, 153, 0.16),
-    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    0 0 20px rgba(129, 140, 248, 0.24),
+    0 0 30px rgba(236, 72, 153, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.tab-button.active::before {
+  opacity: 1;
+  height: 3px;
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgba(125, 211, 252, 0.75),
+      rgba(196, 181, 253, 0.95),
+      rgba(249, 168, 212, 0.75),
+      transparent
+    );
 }
