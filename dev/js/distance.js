@@ -598,12 +598,26 @@ ${campsite.comments.map(c => "・" + c).join("<br>")}
   caution: 0,
   reference: 0
 };
+
+warnings.forEach(w => {
+  const isExistingA = (w.a.originalLayer || "").includes("既存");
+  const isExistingB = (w.b.originalLayer || "").includes("既存");
+
+  if (isExistingA && isExistingB) {
+    displayCounts.reference++;
+  } else if (w.distance < 30) {
+    displayCounts.danger++;
+  } else {
+    displayCounts.caution++;
+  }
+});
+
 const targetWarningCount =
   displayCounts.danger + displayCounts.caution;
 
 const nearestWarning =
   warnings.length > 0
-    ? [...warnings].sort((a, b) => a.distance - b.distance)[0]
+    ? warnings[0]
     : null;
 
 let resultStatus = "問題なし";
