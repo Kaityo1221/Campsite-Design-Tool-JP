@@ -264,29 +264,41 @@ function getRiskAccordionHtml(warnings) {
   };
 
   function renderWarningCard(w, isReference) {
-    const cardColor = isReference ? "#94a3b8" : "#ef4444";
-    const label = isReference ? "ℹ 参考" : "⚠ 調整対象";
-    const message = isReference
-      ? "既存POI同士の近接です。追加POIの調整対象には含めません。"
-      : "追加・変更対象の近接です。配置調整を確認してください。";
+  const isLight = w.type === "軽微";
 
-    return `
-      <div style="
-        margin:10px 0;
-        padding:10px;
-        border-radius:10px;
-        background:rgba(15,23,42,0.65);
-        border:1px solid rgba(148,163,184,0.25);
-      ">
-        <strong style="color:${cardColor};">
-          ${label}（${w.distance.toFixed(1)}m）
-        </strong><br>
-        ${w.a.layer}：${w.a.name}<br>
-        × ${w.b.layer}：${w.b.name}<br>
-        → ${message}
-      </div>
-    `;
+  let cardColor = "#ef4444";
+  let label = "⚠ 調整対象";
+  let message = "30m未満です。配置調整を確認してください。";
+
+  if (isLight) {
+    cardColor = "#94a3b8";
+    label = "△ 調整可能距離";
+    message = "30m以上40m未満です。40m基本には届きませんが、30m調整圏内として確認します。";
   }
+
+  if (isReference) {
+    cardColor = "#94a3b8";
+    label = "ℹ 参考";
+    message = "既存POI同士の近接です。追加POIの調整対象には含めません。";
+  }
+
+  return `
+    <div style="
+      margin:10px 0;
+      padding:10px;
+      border-radius:10px;
+      background:rgba(15,23,42,0.65);
+      border:1px solid rgba(148,163,184,0.25);
+    ">
+      <strong style="color:${cardColor};">
+        ${label}（${w.distance.toFixed(1)}m）
+      </strong><br>
+      ${w.a.layer}：${w.a.name}<br>
+      × ${w.b.layer}：${w.b.name}<br>
+      → ${message}
+    </div>
+  `;
+}
 
   return `
     <div class="distance-warning">
@@ -327,7 +339,7 @@ function getRiskAccordionHtml(warnings) {
                 font-size:13px;
                 color:#cbd5e1;
               ">
-                調整対象：${targetList.length}件 / 参考：${referenceList.length}件
+                ${type === "軽微" ? "調整可能距離" : "調整対象"}：${targetList.length}件 / 参考：${referenceList.length}件
               </div>
 
               <details style="
@@ -337,14 +349,13 @@ function getRiskAccordionHtml(warnings) {
                 background:rgba(239,68,68,0.08);
                 border:1px solid rgba(239,68,68,0.22);
               ">
-                <summary style="
-                  cursor:pointer;
-                  font-weight:bold;
-                  color:#fca5a5;
-                ">
-                  ⚠ 調整対象（${targetList.length}件）
-                </summary>
-
+              <summary style="
+  cursor:pointer;
+  font-weight:bold;
+  color:${type === "軽微" ? "#cbd5e1" : "#fca5a5"};
+">
+  ${type === "軽微" ? "△ 調整可能距離" : "⚠ 調整対象"}（${targetList.length}件）
+</summary>
                 <div style="margin-top:8px;">
                   ${targetList.length === 0 ? `
                     <div style="opacity:0.7;">該当なし</div>
@@ -612,8 +623,8 @@ async function runDistanceCheck() {
     }
   });
 
-  const targetWarningCount =
-    displayCounts.danger + displayCounts.caution;
+const targetWarningCount = displayCounts.danger;
+const adjustableCount = displayCounts.caution;
 
   const nearestWarning =
     warnings.length > 0 ? warnings[0] : null;
@@ -623,14 +634,18 @@ async function runDistanceCheck() {
   let resultStatusIcon = "✅";
 
   if (targetWarningCount > 0) {
-    resultStatus = "調整あり";
-    resultStatusColor = "#ef4444";
-    resultStatusIcon = "⚠";
-  } else if (displayCounts.reference > 0) {
-    resultStatus = "参考近接あり";
-    resultStatusColor = "#94a3b8";
-    resultStatusIcon = "ℹ";
-  }
+  resultStatus = "調整あり";
+  resultStatusColor = "#ef4444";
+  resultStatusIcon = "⚠";
+} else if (adjustableCount > 0) {
+  resultStatus = "調整可能距離あり";
+  resultStatusColor = "#94a3b8";
+  resultStatusIcon = "△";
+} else if (displayCounts.reference > 0) {
+  resultStatus = "参考近接あり";
+  resultStatusColor = "#94a3b8";
+  resultStatusIcon = "ℹ";
+}
 
   const resultHeaderHtml = `
     <div class="distance-warning" style="
@@ -643,9 +658,9 @@ async function runDistanceCheck() {
       </strong><br><br>
 
       調整対象：${targetWarningCount}件<br>
-      参考：${displayCounts.reference}件<br>
-      40m未満合計：${warnings.length}件<br><br>
-
+調整可能距離：${adjustableCount}件<br>
+参考：${displayCounts.reference}件<br>
+40m未満合計：${warnings.length}件<br><br>
       ${
         nearestWarning ? `
           <strong>最短距離ペア</strong><br>
@@ -669,11 +684,11 @@ async function runDistanceCheck() {
   }
 
   const targetWarnings = warnings.filter(w => {
-    const isExistingA = (w.a.originalLayer || "").includes("既存");
-    const isExistingB = (w.b.originalLayer || "").includes("既存");
+  const isExistingA = (w.a.originalLayer || "").includes("既存");
+  const isExistingB = (w.b.originalLayer || "").includes("既存");
 
-    return !(isExistingA && isExistingB);
-  });
+  return !(isExistingA && isExistingB) && w.distance < 30;
+});
 
   const targetWarningListHtml = targetWarnings.length === 0 ? `
     <div class="distance-warning" style="
@@ -721,9 +736,9 @@ async function runDistanceCheck() {
     resultHeaderHtml +
     riskAccordionHtml + `
       ⚠ 40m未満があります<br><br>
-      ⚠ 要注意：${displayCounts.danger}件 / 
-      △ 40m未満：${displayCounts.caution}件 / 
-      ℹ 参考：${displayCounts.reference}件
+      ⚠ 調整対象：${displayCounts.danger}件 / 
+△ 調整可能距離：${displayCounts.caution}件 / 
+ℹ 参考：${displayCounts.reference}件
       <br><br>
       ${targetWarningListHtml}
     `;
