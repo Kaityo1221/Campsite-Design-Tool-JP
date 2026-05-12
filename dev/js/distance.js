@@ -532,259 +532,199 @@ async function runDistanceCheck() {
   const warnings = [];
 
   for (let i = 0; i < points.length; i++) {
-  for (let j = i + 1; j < points.length; j++) {
-    const a = points[i];
-    const b = points[j];
+    for (let j = i + 1; j < points.length; j++) {
+      const a = points[i];
+      const b = points[j];
 
-    const distance = getDistanceMeters(a, b);
+      const distance = getDistanceMeters(a, b);
 
-    if (distance < 40) {
-      warnings.push({
-        a,
-        b,
-        distance,
-        type: classifyDistanceRisk(distance)
-      });
+      if (distance < 40) {
+        warnings.push({
+          a,
+          b,
+          distance,
+          type: classifyDistanceRisk(distance)
+        });
+      }
     }
   }
-}
-
-  const campsite = calculateCampsiteScore(points, warnings);
 
   warnings.sort((a, b) => a.distance - b.distance);
-const riskAccordionHtml = getRiskAccordionHtml(warnings);
 
-const stars = getStars(campsite.score);
-const color = getRankColor(campsite.rank);
-const bar = getScoreBar(campsite.score, color);
+  const campsite = calculateCampsiteScore(points, warnings);
+  const riskAccordionHtml = getRiskAccordionHtml(warnings);
 
-const scoreHtml = `
-<div class="distance-warning">
+  const stars = getStars(campsite.score);
+  const color = getRankColor(campsite.rank);
+  const bar = getScoreBar(campsite.score, color);
 
-<strong style="color:${color}; font-size:20px;">
-拠点充実度：${campsite.rank} ${stars}
-</strong><br>
+  const scoreHtml = `
+    <div class="distance-warning">
 
-<span style="opacity:0.85;">${campsite.label}</span>
+      <strong style="color:${color}; font-size:20px;">
+        拠点充実度：${campsite.rank} ${stars}
+      </strong><br>
 
-${bar}
+      <span style="opacity:0.85;">${campsite.label}</span>
 
-<div style="margin-top:6px; font-size:13px; opacity:0.8;">
-スコア：${campsite.score}点
-</div>
+      ${bar}
 
-<br>
-<strong>総評</strong><br>
-${campsite.summary}<br><br>
+      <div style="margin-top:6px; font-size:13px; opacity:0.8;">
+        スコア：${campsite.score}点
+      </div>
 
-密集：${campsite.under20}件<br>
-滞留：${campsite.under30}件<br>
-軽微：${campsite.under40}件<br>
-通行：${campsite.trafficOk ? "良好" : "注意"}<br><br>
+      <br>
+      <strong>総評</strong><br>
+      ${campsite.summary}<br><br>
 
-<strong>CA所感</strong><br>
-・通行：${document.getElementById("trafficOk")?.checked ? "スムーズに通れる" : "注意が必要"}<br>
-・広場：${document.getElementById("hasOpenSpace")?.checked ? "あり" : "なし"}<br>
-・回遊：${document.getElementById("hasLoopRoute")?.checked ? "できる" : "弱い"}<br>
-・待機場所：${document.getElementById("hasWaitingSpace")?.checked ? "あり" : "なし"}<br><br>
+      密集：${campsite.under20}件<br>
+      滞留：${campsite.under30}件<br>
+      軽微：${campsite.under40}件<br>
+      通行：${campsite.trafficOk ? "良好" : "注意"}<br><br>
 
-<strong>判定コメント</strong><br>
-${campsite.comments.map(c => "・" + c).join("<br>")}
-</div><br>
-`;
+      <strong>CA所感</strong><br>
+      ・通行：${document.getElementById("trafficOk")?.checked ? "スムーズに通れる" : "注意が必要"}<br>
+      ・広場：${document.getElementById("hasOpenSpace")?.checked ? "あり" : "なし"}<br>
+      ・回遊：${document.getElementById("hasLoopRoute")?.checked ? "できる" : "弱い"}<br>
+      ・待機場所：${document.getElementById("hasWaitingSpace")?.checked ? "あり" : "なし"}<br><br>
+
+      <strong>判定コメント</strong><br>
+      ${campsite.comments.map(c => "・" + c).join("<br>")}
+    </div><br>
+  `;
 
   const displayCounts = {
-  danger: 0,
-  caution: 0,
-  reference: 0
-};
+    danger: 0,
+    caution: 0,
+    reference: 0
+  };
 
-warnings.forEach(w => {
-  const isExistingA = (w.a.originalLayer || "").includes("既存");
-  const isExistingB = (w.b.originalLayer || "").includes("既存");
+  warnings.forEach(w => {
+    const isExistingA = (w.a.originalLayer || "").includes("既存");
+    const isExistingB = (w.b.originalLayer || "").includes("既存");
 
-  if (isExistingA && isExistingB) {
-    displayCounts.reference++;
-  } else if (w.distance < 30) {
-    displayCounts.danger++;
-  } else {
-    displayCounts.caution++;
-  }
-});
-
-const targetWarningCount =
-  displayCounts.danger + displayCounts.caution;
-
-const nearestWarning =
-  warnings.length > 0
-    ? warnings[0]
-    : null;
-
-let resultStatus = "問題なし";
-let resultStatusColor = "#22c55e";
-let resultStatusIcon = "✅";
-
-if (targetWarningCount > 0) {
-  resultStatus = "調整あり";
-  resultStatusColor = "#ef4444";
-  resultStatusIcon = "⚠";
-} else if (displayCounts.reference > 0) {
-  resultStatus = "参考近接あり";
-  resultStatusColor = "#94a3b8";
-  resultStatusIcon = "ℹ";
-}
-
-const resultHeaderHtml = `
-  <div class="distance-warning" style="
-    margin-bottom:16px;
-    border:1px solid ${resultStatusColor};
-    background:rgba(15,23,42,0.72);
-  ">
-    <strong style="color:${resultStatusColor}; font-size:20px;">
-      ${resultStatusIcon} 判定結果：${resultStatus}
-    </strong><br><br>
-
-    調整対象：${targetWarningCount}件<br>
-    参考：${displayCounts.reference}件<br>
-    40m未満合計：${warnings.length}件<br><br>
-
-    ${
-      nearestWarning ? `
-        <strong>最短距離ペア</strong><br>
-        ${nearestWarning.distance.toFixed(1)}m<br>
-        ${nearestWarning.a.layer}：${nearestWarning.a.name}<br>
-        × ${nearestWarning.b.layer}：${nearestWarning.b.name}<br>
-      ` : `
-        <strong>最短距離ペア</strong><br>
-        40m未満の組み合わせはありません。<br>
-      `
+    if (isExistingA && isExistingB) {
+      displayCounts.reference++;
+    } else if (w.distance < 30) {
+      displayCounts.danger++;
+    } else {
+      displayCounts.caution++;
     }
-  </div>
-`;
-warnings.forEach(w => {
-  const isExistingA = (w.a.originalLayer || "").includes("既存");
-  const isExistingB = (w.b.originalLayer || "").includes("既存");
+  });
 
-  if (isExistingA && isExistingB) {
-    displayCounts.reference++;
-  } else if (w.distance < 30) {
-    displayCounts.danger++;
-  } else {
-    displayCounts.caution++;
+  const targetWarningCount =
+    displayCounts.danger + displayCounts.caution;
+
+  const nearestWarning =
+    warnings.length > 0 ? warnings[0] : null;
+
+  let resultStatus = "問題なし";
+  let resultStatusColor = "#22c55e";
+  let resultStatusIcon = "✅";
+
+  if (targetWarningCount > 0) {
+    resultStatus = "調整あり";
+    resultStatusColor = "#ef4444";
+    resultStatusIcon = "⚠";
+  } else if (displayCounts.reference > 0) {
+    resultStatus = "参考近接あり";
+    resultStatusColor = "#94a3b8";
+    resultStatusIcon = "ℹ";
   }
-});
-const targetWarningCount =
-  displayCounts.danger + displayCounts.caution;
 
-const nearestWarning =
-  warnings.length > 0
-    ? [...warnings].sort((a, b) => a.distance - b.distance)[0]
-    : null;
+  const resultHeaderHtml = `
+    <div class="distance-warning" style="
+      margin-bottom:16px;
+      border:1px solid ${resultStatusColor};
+      background:rgba(15,23,42,0.72);
+    ">
+      <strong style="color:${resultStatusColor}; font-size:20px;">
+        ${resultStatusIcon} 判定結果：${resultStatus}
+      </strong><br><br>
 
-let resultStatus = "問題なし";
-let resultStatusColor = "#22c55e";
-let resultStatusIcon = "✅";
+      調整対象：${targetWarningCount}件<br>
+      参考：${displayCounts.reference}件<br>
+      40m未満合計：${warnings.length}件<br><br>
 
-if (targetWarningCount > 0) {
-  resultStatus = "調整あり";
-  resultStatusColor = "#ef4444";
-  resultStatusIcon = "⚠";
-} else if (displayCounts.reference > 0) {
-  resultStatus = "参考近接あり";
-  resultStatusColor = "#94a3b8";
-  resultStatusIcon = "ℹ";
-}
-
-const resultHeaderHtml = `
-  <div class="distance-warning" style="
-    margin-bottom:16px;
-    border:1px solid ${resultStatusColor};
-    background:rgba(15,23,42,0.72);
-  ">
-    <strong style="color:${resultStatusColor}; font-size:20px;">
-      ${resultStatusIcon} 判定結果：${resultStatus}
-    </strong><br><br>
-
-    調整対象：${targetWarningCount}件<br>
-    参考：${displayCounts.reference}件<br>
-    40m未満合計：${warnings.length}件<br><br>
-
-    ${
-      nearestWarning ? `
-        <strong>最短距離ペア</strong><br>
-        ${nearestWarning.distance.toFixed(1)}m<br>
-        ${nearestWarning.a.layer}：${nearestWarning.a.name}<br>
-        × ${nearestWarning.b.layer}：${nearestWarning.b.name}<br>
-      ` : `
-        <strong>最短距離ペア</strong><br>
-        40m未満の組み合わせはありません。<br>
-      `
-    }
-  </div>
-`;
+      ${
+        nearestWarning ? `
+          <strong>最短距離ペア</strong><br>
+          ${nearestWarning.distance.toFixed(1)}m<br>
+          ${nearestWarning.a.layer}：${nearestWarning.a.name}<br>
+          × ${nearestWarning.b.layer}：${nearestWarning.b.name}<br>
+        ` : `
+          <strong>最短距離ペア</strong><br>
+          40m未満の組み合わせはありません。<br>
+        `
+      }
+    </div>
+  `;
 
   if (warnings.length === 0) {
+    result.innerHTML =
+      scoreHtml +
+      resultHeaderHtml +
+      `✅ 問題なし（${points.length}件）`;
+    return;
+  }
+
+  const targetWarnings = warnings.filter(w => {
+    const isExistingA = (w.a.originalLayer || "").includes("既存");
+    const isExistingB = (w.b.originalLayer || "").includes("既存");
+
+    return !(isExistingA && isExistingB);
+  });
+
+  const targetWarningListHtml = targetWarnings.length === 0 ? `
+    <div class="distance-warning" style="
+      border:1px solid rgba(34,197,94,0.45);
+      background:rgba(34,197,94,0.12);
+    ">
+      ✅ 追加・変更対象の近接はありません。<br>
+      既存POI同士の参考近接は、上の分類別チェック内で確認できます。
+    </div>
+  ` : targetWarnings.map(w => {
+    let label = "";
+    let message = "";
+    let cardColor = "";
+    let cardBg = "";
+
+    if (w.distance < 30) {
+      label = "⚠ 要注意";
+      message = "30m未満です。配置調整を推奨します。";
+      cardColor = "#ef4444";
+      cardBg = "rgba(239, 68, 68, 0.14)";
+    } else {
+      label = "△ 40m未満";
+      message = "40m未満です。調整される場合があります。";
+      cardColor = "#f97316";
+      cardBg = "rgba(249, 115, 22, 0.14)";
+    }
+
+    return `
+      <div class="distance-warning" style="
+        border:1px solid ${cardColor};
+        background:${cardBg};
+      ">
+        <strong style="color:${cardColor};">
+          ${label}（${w.distance.toFixed(1)}m）
+        </strong><br>
+        ${w.a.layer}：${w.a.name}<br>
+        × ${w.b.layer}：${w.b.name}<br>
+        → ${message}
+      </div>
+    `;
+  }).join("");
+
   result.innerHTML =
     scoreHtml +
     resultHeaderHtml +
-    `✅ 問題なし（${points.length}件）`;
-  return;
+    riskAccordionHtml + `
+      ⚠ 40m未満があります<br><br>
+      ⚠ 要注意：${displayCounts.danger}件 / 
+      △ 40m未満：${displayCounts.caution}件 / 
+      ℹ 参考：${displayCounts.reference}件
+      <br><br>
+      ${targetWarningListHtml}
+    `;
 }
-    const targetWarnings = warnings.filter(w => {
-  const isExistingA = (w.a.originalLayer || "").includes("既存");
-  const isExistingB = (w.b.originalLayer || "").includes("既存");
-
-  return !(isExistingA && isExistingB);
-});
-
-const targetWarningListHtml = targetWarnings.length === 0 ? `
-  <div class="distance-warning" style="
-    border:1px solid rgba(34,197,94,0.45);
-    background:rgba(34,197,94,0.12);
-  ">
-    ✅ 追加・変更対象の近接はありません。<br>
-    既存POI同士の参考近接は、上の分類別チェック内で確認できます。
-  </div>
-` : targetWarnings.map(w => {
-  let label = "";
-  let message = "";
-  let cardColor = "";
-  let cardBg = "";
-
-  if (w.distance < 30) {
-    label = "⚠ 要注意";
-    message = "30m未満です。配置調整を推奨します。";
-    cardColor = "#ef4444";
-    cardBg = "rgba(239, 68, 68, 0.14)";
-  } else {
-    label = "△ 40m未満";
-    message = "40m未満です。調整される場合があります。";
-    cardColor = "#f97316";
-    cardBg = "rgba(249, 115, 22, 0.14)";
-  }
-
-  return `
-    <div class="distance-warning" style="
-      border:1px solid ${cardColor};
-      background:${cardBg};
-    ">
-      <strong style="color:${cardColor};">
-        ${label}（${w.distance.toFixed(1)}m）
-      </strong><br>
-      ${w.a.layer}：${w.a.name}<br>
-      × ${w.b.layer}：${w.b.name}<br>
-      → ${message}
-    </div>
-  `;
-}).join("");
-  result.innerHTML =
-  scoreHtml +
-  resultHeaderHtml +
-  riskAccordionHtml + `
-    ⚠ 40m未満があります<br><br>
-    ⚠ 要注意：${displayCounts.danger}件 / 
-△ 40m未満：${displayCounts.caution}件 / 
-ℹ 参考：${displayCounts.reference}件
-    <br><br>
-    ${targetWarningListHtml}
-  `;}
