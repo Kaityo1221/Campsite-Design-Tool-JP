@@ -6,11 +6,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Campsite Design Tool JP</title>
-<link rel="stylesheet" href="/Campsite-Design-Tool-JP/css/style.css?v=20">
-<link rel="stylesheet" href="/Campsite-Design-Tool-JP/css/splash.css?v=68">
-<link rel="stylesheet" href="/Campsite-Design-Tool-JP/css/tabs.css?v=21">
-<link rel="stylesheet" href="/Campsite-Design-Tool-JP/css/admin.css?v=20">
-<link rel="stylesheet" href="/Campsite-Design-Tool-JP/css/distance.css?v=20">
+<link rel="stylesheet" href="/Campsite-Design-Tool-JP/dev/css/style.css?v=31">
+<link rel="stylesheet" href="/Campsite-Design-Tool-JP/dev/css/splash.css?v=68">
+<link rel="stylesheet" href="/Campsite-Design-Tool-JP/dev/css/tabs.css?v=24">
+<link rel="stylesheet" href="/Campsite-Design-Tool-JP/dev/css/admin.css?v=20">
+<link rel="stylesheet" href="/Campsite-Design-Tool-JP/dev/css/distance.css?v=20">
 <link rel="apple-touch-icon" sizes="180x180" href="/Campsite-Design-Tool-JP/assets/icon.png">
 <link rel="manifest" href="/Campsite-Design-Tool-JP/manifest.json">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -25,7 +25,7 @@ v5.8<br>
 ・ログイン後のオープニング画面を2枚画像式に変更しました。<br>
 ・羊をタップすると、左シーンから右シーンへ切り替わる演出を追加しました。<br>
 ・オープニング画面の看板から各機能タブへ直接移動できるショートカットを追加しました。<br>
-・TOOLS看板から個別ツールへ移動できるようにしました。<br>
+・TOOLSからツール集へ移動できるようにしました。<br>
 ・メイン画面のタブに「オープニング」を追加し、いつでも入口画面へ戻れるようにしました。<br>
 ・オープニング画面のスマホ表示、タップ判定、画面遷移を調整しました。<br>
 ・看板ショートカット押下時に、前回開いていたタブが一瞬見えないよう遷移処理を改善しました。<br>
@@ -163,7 +163,7 @@ v5.8<br>
 
   <div class="tabs">
   <button class="tab-button active" onclick="openTab('tool', this)">キャンプサイト作成</button>
-  <button class="tab-button" onclick="openTab('parts', this)">個別ツール</button>
+  <button class="tab-button" onclick="openTab('parts', this)">ツール集</button>
   <button class="tab-button" onclick="openTab('script', this)">スクリプト導入方法</button>
   <button class="tab-button" onclick="openTab('guide', this)">設計ガイド</button>
   <button class="tab-button" onclick="openTab('check', this)">チェックリスト</button>
@@ -282,10 +282,9 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
     <li>「完了」を押す</li>
     <li>保存されたKMZファイルをgoogleドライブに移動する</li>
   </ol>
-      </div>
-      </div>
+          </div> <!-- renameGuide -->
+      </div> <!-- STEP5 -->
 
-</div> <!-- STEP5 -->
 </div> <!-- panel -->
 </section> <!-- tool -->
   <section id="parts" class="tab-content">
@@ -554,7 +553,7 @@ Userscriptsをインストール
 
     <div class="step">
       <div class="step-no">1</div>
-      <h3>Wayfarer MapからCSVを出す</h3>
+      <h3>Wayfarer MapからCSVを抽出する</h3>
       <p class="note">
         Wayfarer Map（スクリプト導入済み）から「Nearby Wayspots」を押して Export CSV を実行します。<br>
         広い公園の場合は2〜3回に分けて抽出してください。
@@ -565,7 +564,7 @@ Userscriptsをインストール
       <div class="step-no">2</div>
       <h3>このツールに読み込む</h3>
       <p class="note">
-        CSV / KML / KMZ に対応しています。複数CSVを入れた場合、guidで重複削除します。
+        CSV / KML / KMZ に対応しています。複数CSVを入れた場合、自動で重複削除されます。
       </p>
     </div>
 
@@ -630,9 +629,11 @@ Userscriptsをインストール
       <button class="generate" onclick="runDistanceCheck()">距離チェック実行</button>
       <div id="distanceResult"></div>
     </div>
+
+  </div> <!-- panel -->
 </section>
 
-</div>
+</div> <!-- container -->
 <div id="adminLoginModal" style="
   display:none;
   position:fixed;
