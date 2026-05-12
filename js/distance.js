@@ -1,8 +1,8 @@
-function function classifyDistanceRisk(distance) {
+function classifyDistanceRisk(distance) {
   if (distance < 20) return "密集";
   if (distance < 30) return "滞留";
   if (distance < 40) return "軽微";
-  return null;
+    return null;
 }
 
 async function loadDistanceFile() {
@@ -742,52 +742,7 @@ const adjustableCount = displayCounts.caution;
       <br><br>
       ${targetWarningListHtml}
     `;
-}classifyDistanceRisk(distance) {
-  if (.distance-warning {
-  margin-top: 12px;
-  padding: 14px;
-  border-radius: 14px;
-
-  background:
-    linear-gradient(
-      180deg,
-      rgba(15, 23, 42, 0.92),
-      rgba(2, 6, 23, 0.82)
-    );
-
-  border: 1px solid rgba(148, 163, 184, 0.28);
-
-  color: #e5e7eb;
-  line-height: 1.75;
-
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.04),
-    0 10px 24px rgba(0, 0, 0, 0.20);
-}
-
-.layer-row {
-  margin-top: 12px;
-  padding: 13px 14px;
-  border-radius: 14px;
-
-  background:
-    linear-gradient(
-      180deg,
-      rgba(15, 23, 42, 0.96),
-      rgba(2, 6, 23, 0.88)
-    );
-
-  border: 1px solid rgba(147, 197, 253, 0.22);
-
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.04),
-    0 8px 20px rgba(0, 0, 0, 0.18);
-}distance < 20) return "密集";
-  if (distance < 30) return "滞留";
-  if (distance < 40) return "軽微";
-  return null;
-}
-
+す
 async function loadDistanceFile() {
   const fileInput = document.getElementById("distanceFile");
   const container = document.getElementById("distanceLayerList");
