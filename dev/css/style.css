@@ -640,3 +640,14 @@ body {
     margin-bottom: 12px;
   }
 }
+@media (max-width: 720px) {
+  .step p {
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  .step .note {
+    font-size: 13px;
+    line-height: 1.7;
+  }
+}
