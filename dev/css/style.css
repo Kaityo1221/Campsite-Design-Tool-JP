@@ -612,3 +612,59 @@ body {
     margin-bottom: 12px;
   }
 }
+/* =========================
+   Step Card Accent Glow
+========================= */
+
+.step {
+  position: relative;
+  overflow: hidden;
+}
+
+.step::before {
+  content: "";
+  position: absolute;
+
+  top: 0;
+  left: 0;
+
+  width: 120px;
+  height: 120px;
+
+  background:
+    radial-gradient(
+      circle at top left,
+      rgba(96, 165, 250, 0.22),
+      rgba(124, 58, 237, 0.12) 38%,
+      transparent 70%
+    );
+
+  pointer-events: none;
+}
+
+.step::after {
+  content: "";
+  position: absolute;
+
+  top: 0;
+  left: 22px;
+  right: 22px;
+
+  height: 2px;
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(125, 211, 252, 0.75),
+      rgba(196, 181, 253, 0.45),
+      transparent
+    );
+
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+.step > * {
+  position: relative;
+  z-index: 1;
+}
