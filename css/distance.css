@@ -303,8 +303,8 @@
   }
 
   .distance-map-label {
-  display: none;
-}
+    display: none;
+  }
 
   .distance-map-legend {
     font-size: 11px;
