@@ -226,7 +226,10 @@ function changeOpeningScene() {
 
   setTimeout(() => {
   right.classList.add("active");
-
+  
+document
+  .querySelector(".opening-scene-wrap")
+  .classList.add("is-right");
   if (toolsArea) {
     toolsArea.style.display = "block";
   }
