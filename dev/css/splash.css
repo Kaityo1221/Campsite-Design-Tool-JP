@@ -410,41 +410,38 @@ body.opening-mode .container {
     rgba(96,165,250,0.9),
     transparent
   );
-
-  box-shadow:
-    0 0 12px rgba(147,197,253,0.9),
-    0 0 24px rgba(59,130,246,0.6);
-
-  opacity: 0;
-
-  animation:
-    shootingStar 5s ease-in-out infinite;
-}
-
-  box-shadow:
-    0 0 12px rgba(147,197,253,0.9),
-    0 0 24px rgba(59,130,246,0.6);
-
-  transform: rotate(-18deg);
-  animation: shootingStar 5s ease-in-out infinite;
-}
-
 @keyframes shootingStar {
   0% {
     opacity: 0;
-    transform: translateX(0) translateY(0) rotate(-18deg);
+
+    transform:
+      translateX(0)
+      translateY(0)
+      rotate(22deg)
+      scaleX(0.4);
   }
 
   8% {
     opacity: 1;
   }
 
-  22% {
+  24% {
     opacity: 0;
-    transform: translateX(120vw) translateY(26vh) rotate(-18deg);
+
+    transform:
+      translateX(-180px)
+      translateY(70px)
+      rotate(22deg)
+      scaleX(1);
   }
 
   100% {
     opacity: 0;
+
+    transform:
+      translateX(-180px)
+      translateY(70px)
+      rotate(22deg)
+      scaleX(1);
   }
 }
