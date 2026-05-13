@@ -676,12 +676,15 @@ const adjustableCount = displayCounts.caution;
   `;
 
   if (warnings.length === 0) {
-    result.innerHTML =
-      scoreHtml +
-      resultHeaderHtml +
-      `✅ 問題なし（${points.length}件）`;
-    return;
-  }
+  result.innerHTML =
+    scoreHtml +
+    resultHeaderHtml +
+    `✅ 問題なし（${points.length}件）`;
+
+  renderDistanceMap(points, []);
+
+  return;
+}
 
   const targetWarnings = warnings.filter(w => {
   const isExistingA = (w.a.originalLayer || "").includes("既存");
@@ -742,6 +745,7 @@ const adjustableCount = displayCounts.caution;
       <br><br>
       ${targetWarningListHtml}
     `;
+    renderDistanceMap(points, []);
 }
 function renderDistanceMap(existingPoints = [], addPoints = []) {
   const map = document.getElementById("distanceMap");
@@ -824,7 +828,3 @@ function renderDistanceMap(existingPoints = [], addPoints = []) {
     map.appendChild(dot);
   });
 }
-renderDistanceMap(
-  distanceData.existing,
-  distanceData.add
-);

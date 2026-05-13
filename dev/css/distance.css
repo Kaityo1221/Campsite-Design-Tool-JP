@@ -44,7 +44,12 @@
   height: 420px;
   margin-top: 18px;
   border-radius: 18px;
-  background: #020617;
+  background:
+  linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+  linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px),
+  #020617;
+
+background-size: 40px 40px;
   border: 1px solid rgba(148,163,184,0.35);
   overflow: hidden;
 }
