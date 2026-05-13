@@ -99,8 +99,13 @@ body.opening-mode .container {
 
   overflow: hidden;
   background: #020617;
-}
 
+  border-radius: 28px;
+
+  box-shadow:
+    0 30px 80px rgba(0,0,0,0.55),
+    0 0 40px rgba(59,130,246,0.12);
+}
 .opening-scene {
   position: absolute !important;
   inset: 0 !important;
@@ -124,8 +129,16 @@ body.opening-mode .container {
 
 .opening-scene.active {
   opacity: 1;
-  transform: scale(1);
-  filter: brightness(1) saturate(1.08);
+
+  transform:
+    scale(1.02)
+    perspective(1200px)
+    rotateX(1deg);
+
+  filter:
+    brightness(1.02)
+    saturate(1.08)
+    drop-shadow(0 30px 60px rgba(0,0,0,0.45));
 }
 
 /* 羊タップ範囲 */
@@ -236,6 +249,19 @@ body.opening-mode .container {
   z-index: 35;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+
+  transition:
+    transform 0.2s ease,
+    filter 0.2s ease;
+}
+
+.opening-sign-area:hover {
+  transform:
+    translateX(6px)
+    scale(1.02);
+
+  filter:
+    drop-shadow(0 0 12px rgba(251,191,36,0.35));
 }
 
 /* 位置調整 */
@@ -265,17 +291,25 @@ body.opening-mode .container {
 #openingSceneRight.active ~ .sign-tools {
   display: block;
 }
-.camp-secret-button{
-  position:absolute;
-  left:41%;
-  top:67%;
-  width:52px;
-  height:52px;
-  border:none;
-  border-radius:50%;
-  background:rgba(255,255,255,0.02);
-  cursor:pointer;
-  z-index:20;
+.camp-secret-button {
+  position: absolute;
+  left: 41%;
+  top: 67%;
+  width: 52px;
+  height: 52px;
+
+  display: none;
+
+  border: none;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.02);
+
+  cursor: pointer;
+  z-index: 20;
+}
+
+.opening-scene-wrap.is-right .camp-secret-button {
+  display: block;
 }
 
 .soul-icon{
@@ -294,9 +328,6 @@ body.opening-mode .container {
 .soul-icon.show{
   opacity:1;
   transform:scale(1) rotate(0deg);
-}
-.camp-secret-button{
-  display:none;
 }
 
 .opening-scene-wrap.is-right .camp-secret-button{
