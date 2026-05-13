@@ -784,31 +784,61 @@ function renderDistanceMap(existingPoints = [], addPoints = []) {
   `;
   map.appendChild(legend);
 
-  const lats = points.map(p => p.lat);
-  const lngs = points.map(p => p.lng);
-
-  const minLat = Math.min(...lats);
-  const maxLat = Math.max(...lats);
-  const minLng = Math.min(...lngs);
-  const maxLng = Math.max(...lngs);
-
   const padding = 42;
-  const width = map.clientWidth;
-  const height = map.clientHeight;
+const width = map.clientWidth;
+const height = map.clientHeight;
 
-  function toXY(p) {
-    const x =
-      padding +
-      ((p.lng - minLng) / ((maxLng - minLng) || 1)) *
-      (width - padding * 2);
+// 緯度経度をざっくりメートル座標へ変換する
+const meanLat =
+  points.reduce((sum, p) => sum + p.lat, 0) / points.length;
 
-    const y =
-      padding +
-      (1 - ((p.lat - minLat) / ((maxLat - minLat) || 1))) *
-      (height - padding * 2);
+const metersPerLat = 111320;
+const metersPerLng =
+  111320 * Math.cos(meanLat * Math.PI / 180);
 
-    return { x, y };
-  }
+const projected = points.map(p => ({
+  ...p,
+  mx: p.lng * metersPerLng,
+  my: p.lat * metersPerLat
+}));
+
+const minX = Math.min(...projected.map(p => p.mx));
+const maxX = Math.max(...projected.map(p => p.mx));
+const minY = Math.min(...projected.map(p => p.my));
+const maxY = Math.max(...projected.map(p => p.my));
+
+const rangeX = maxX - minX || 1;
+const rangeY = maxY - minY || 1;
+
+// 縦横比を維持して、スマホでも引き伸ばさない
+const scale = Math.min(
+  (width - padding * 2) / rangeX,
+  (height - padding * 2) / rangeY
+);
+
+const mapContentWidth = rangeX * scale;
+const mapContentHeight = rangeY * scale;
+
+const offsetX = (width - mapContentWidth) / 2;
+const offsetY = (height - mapContentHeight) / 2;
+
+function toXY(p) {
+  const projectedPoint = {
+    mx: p.lng * metersPerLng,
+    my: p.lat * metersPerLat
+  };
+
+  const x =
+    offsetX +
+    (projectedPoint.mx - minX) * scale;
+
+  const y =
+    offsetY +
+    mapContentHeight -
+    (projectedPoint.my - minY) * scale;
+
+  return { x, y };
+}
 
   points.forEach(p => {
     p.xy = toXY(p);
