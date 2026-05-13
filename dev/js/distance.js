@@ -808,7 +808,17 @@ function renderDistanceMap(existingPoints = [], addPoints = []) {
       const angle = Math.atan2(dy, dx) * 180 / Math.PI;
 
       const line = document.createElement("div");
-      line.className = "distance-map-line";
+      let riskClass = "light";
+
+if(distance < 20){
+  riskClass = "dense";
+}
+else if(distance < 30){
+  riskClass = "stay";
+}
+
+line.className =
+  `distance-map-line ${riskClass}`;
       line.style.left = `${a.xy.x}px`;
       line.style.top = `${a.xy.y}px`;
       line.style.width = `${length}px`;

@@ -99,30 +99,38 @@ document.addEventListener("DOMContentLoaded", function () {
   const passwordInput =
     document.getElementById("passwordInput");
 
-  if (passwordInput) {
-    passwordInput.addEventListener("keydown", function (e) {
+ if (passwordInput) {
+  passwordInput.addEventListener("keydown", function (e) {
 
-      if (e.key === "Enter") {
-        e.preventDefault();
-        checkPassword();
-      }
+    if (e.isComposing || e.keyCode === 229) {
+      return;
+    }
 
-    });
-  }
+    if (e.key === "Enter") {
+      e.preventDefault();
+      checkPassword();
+    }
 
-  const adminPasswordInput =
-    document.getElementById("adminPasswordInput");
+  });
+}
 
-  if (adminPasswordInput) {
-    adminPasswordInput.addEventListener("keydown", function (e) {
+const adminPasswordInput =
+  document.getElementById("adminPasswordInput");
 
-      if (e.key === "Enter") {
-        e.preventDefault();
-        checkAdminPassword();
-      }
+if (adminPasswordInput) {
+  adminPasswordInput.addEventListener("keydown", function (e) {
 
-    });
-  }
+    if (e.isComposing || e.keyCode === 229) {
+      return;
+    }
+
+    if (e.key === "Enter") {
+      e.preventDefault();
+      checkAdminPassword();
+    }
+
+  });
+}
 
   const distanceInput =
     document.getElementById("distanceFile");

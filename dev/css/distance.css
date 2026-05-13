@@ -86,3 +86,23 @@ background-size: 40px 40px;
   padding: 18px;
   color: #94a3b8;
 }
+.distance-map-line.dense {
+  background: rgba(239,68,68,0.95);
+
+  box-shadow:
+    0 0 14px rgba(239,68,68,0.95);
+}
+
+.distance-map-line.stay {
+  background: rgba(249,115,22,0.92);
+
+  box-shadow:
+    0 0 12px rgba(249,115,22,0.9);
+}
+
+.distance-map-line.light {
+  background: rgba(255,255,255,0.72);
+
+  box-shadow:
+    0 0 10px rgba(255,255,255,0.5);
+}
