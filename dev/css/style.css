@@ -774,3 +774,97 @@ button.generate:active {
     inset 0 4px 10px rgba(28, 15, 9, 0.55),
     0 6px 14px rgba(0, 0, 0, 0.28);
 }
+/* =========================
+   3D Depth Upgrade
+========================= */
+
+body {
+  background:
+    radial-gradient(circle at top, rgba(56,189,248,0.16), transparent 34%),
+    linear-gradient(180deg, #020617 0%, #0f172a 45%, #111827 100%);
+}
+
+.container {
+  perspective: 1200px;
+}
+
+.hero {
+  transform: translateZ(0);
+  border-radius: 28px;
+  background:
+    linear-gradient(145deg, rgba(30,41,59,0.92), rgba(15,23,42,0.96));
+  box-shadow:
+    0 22px 55px rgba(0,0,0,0.42),
+    inset 0 1px 0 rgba(255,255,255,0.16);
+}
+
+.panel {
+  border-radius: 28px;
+  background:
+    linear-gradient(145deg, rgba(30,41,59,0.92), rgba(15,23,42,0.98));
+  box-shadow:
+    0 20px 50px rgba(0,0,0,0.36),
+    inset 0 1px 0 rgba(255,255,255,0.12);
+  transform: translateY(0);
+}
+
+.step {
+  border-radius: 22px;
+  background:
+    linear-gradient(145deg, rgba(51,65,85,0.82), rgba(15,23,42,0.9));
+  box-shadow:
+    0 14px 30px rgba(0,0,0,0.28),
+    inset 0 1px 0 rgba(255,255,255,0.12);
+  transition:
+    transform 0.22s ease,
+    box-shadow 0.22s ease,
+    border-color 0.22s ease;
+}
+
+.step:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    0 22px 45px rgba(0,0,0,0.38),
+    0 0 18px rgba(56,189,248,0.16),
+    inset 0 1px 0 rgba(255,255,255,0.16);
+}
+
+.tab-button,
+.generate,
+.guide-btn,
+.link-btn {
+  box-shadow:
+    0 10px 22px rgba(0,0,0,0.28),
+    inset 0 1px 0 rgba(255,255,255,0.18);
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    filter 0.18s ease;
+}
+
+.tab-button:hover,
+.generate:hover,
+.guide-btn:hover,
+.link-btn:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 16px 30px rgba(0,0,0,0.36),
+    0 0 18px rgba(59,130,246,0.18),
+    inset 0 1px 0 rgba(255,255,255,0.22);
+  filter: brightness(1.06);
+}
+
+input,
+select,
+textarea {
+  box-shadow:
+    inset 0 2px 8px rgba(0,0,0,0.35),
+    0 1px 0 rgba(255,255,255,0.08);
+}
+
+.loading-box,
+.login-card {
+  box-shadow:
+    0 24px 60px rgba(0,0,0,0.48),
+    inset 0 1px 0 rgba(255,255,255,0.16);
+}

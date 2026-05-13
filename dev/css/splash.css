@@ -99,8 +99,13 @@ body.opening-mode .container {
 
   overflow: hidden;
   background: #020617;
-}
 
+  border-radius: 28px;
+
+  box-shadow:
+    0 30px 80px rgba(0,0,0,0.55),
+    0 0 40px rgba(59,130,246,0.12);
+}
 .opening-scene {
   position: absolute !important;
   inset: 0 !important;
@@ -124,8 +129,31 @@ body.opening-mode .container {
 
 .opening-scene.active {
   opacity: 1;
-  transform: scale(1);
-  filter: brightness(1) saturate(1.08);
+
+  animation:
+    openingFloat 8s ease-in-out infinite alternate;
+
+  filter:
+    brightness(1.02)
+    saturate(1.08)
+    drop-shadow(0 30px 60px rgba(0,0,0,0.45));
+}
+@keyframes openingFloat {
+  0% {
+    transform:
+      scale(1.02)
+      perspective(1200px)
+      rotateX(1deg)
+      translateY(0px);
+  }
+
+  100% {
+    transform:
+      scale(1.05)
+      perspective(1200px)
+      rotateX(1deg)
+      translateY(-10px);
+  }
 }
 
 /* 羊タップ範囲 */
@@ -236,6 +264,19 @@ body.opening-mode .container {
   z-index: 35;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+
+  transition:
+    transform 0.2s ease,
+    filter 0.2s ease;
+}
+
+.opening-sign-area:hover {
+  transform:
+    translateX(6px)
+    scale(1.02);
+
+  filter:
+    drop-shadow(0 0 12px rgba(251,191,36,0.35));
 }
 
 /* 位置調整 */
@@ -264,4 +305,98 @@ body.opening-mode .container {
 }
 #openingSceneRight.active ~ .sign-tools {
   display: block;
+}
+.camp-secret-button {
+  position: absolute;
+  left: 41%;
+  top: 67%;
+  width: 52px;
+  height: 52px;
+
+  display: none;
+
+  border: none;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.02);
+
+  cursor: pointer;
+  z-index: 20;
+}
+
+.opening-scene-wrap.is-right .camp-secret-button {
+  display: block;
+}
+
+.soul-icon{
+  position:absolute;
+  left:44%;
+  top:58%;
+  width:72px;
+  opacity:0;
+  transform:scale(0.5) rotate(-10deg);
+  transition:0.45s ease;
+  pointer-events:none;
+  z-index:25;
+  filter:drop-shadow(0 0 12px #7dd3fc);
+}
+
+.soul-icon.show{
+  opacity:1;
+  transform:scale(1) rotate(0deg);
+}
+.opening-scene-wrap::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+
+  pointer-events: none;
+  z-index: 12;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255,255,255,0.16) 0%,
+      rgba(255,255,255,0.04) 18%,
+      transparent 42%
+    ),
+    radial-gradient(
+      circle at 50% 42%,
+      rgba(96,165,250,0.18),
+      transparent 36%
+    ),
+    linear-gradient(
+      180deg,
+      transparent 62%,
+      rgba(0,0,0,0.28) 100%
+    );
+}
+.opening-scene-wrap::before {
+  content: "";
+  position: absolute;
+  inset: 12px;
+
+  pointer-events: none;
+  z-index: 13;
+
+  border: 1px solid rgba(255,255,255,0.16);
+  border-radius: 22px;
+
+  box-shadow:
+    inset 0 0 32px rgba(255,255,255,0.08),
+    inset 0 -40px 80px rgba(0,0,0,0.22);
+}
+.opening-scene-wrap::after{
+  animation:fogGlow 6s ease-in-out infinite alternate;
+}
+
+@keyframes fogGlow{
+  0%{
+    opacity:0.82;
+    filter:blur(0px);
+  }
+
+  100%{
+    opacity:1;
+    filter:blur(1.5px);
+  }
 }
