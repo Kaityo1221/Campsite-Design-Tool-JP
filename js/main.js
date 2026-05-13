@@ -226,7 +226,10 @@ function changeOpeningScene() {
 
   setTimeout(() => {
   right.classList.add("active");
-
+  
+document
+  .querySelector(".opening-scene-wrap")
+  .classList.add("is-right");
   if (toolsArea) {
     toolsArea.style.display = "block";
   }
@@ -308,4 +311,14 @@ function goOpeningTab(tabId) {
 
     document.body.classList.remove("opening-mode");
   }, 120);
+}
+function showSoulIcon(){
+  const icon = document.getElementById("soulIcon");
+  if (!icon) return;
+
+  icon.classList.add("show");
+
+  setTimeout(() => {
+    icon.classList.remove("show");
+  }, 2500);
 }

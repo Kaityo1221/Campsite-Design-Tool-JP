@@ -8,6 +8,8 @@
 <title>Campsite Design Tool JP</title>
 <link rel="stylesheet" href="/Campsite-Design-Tool-JP/css/style.css?v=30">
 <link rel="stylesheet" href="/Campsite-Design-Tool-JP/css/splash.css?v=69">
+<link rel="stylesheet" href="/Campsite-Design-Tool-JP/css/style.css?v=31">
+<link rel="stylesheet" href="/Campsite-Design-Tool-JP/css/splash.css?v=71">
 <link rel="stylesheet" href="/Campsite-Design-Tool-JP/css/tabs.css?v=25">
 <link rel="stylesheet" href="/Campsite-Design-Tool-JP/css/admin.css?v=20">
 <link rel="stylesheet" href="/Campsite-Design-Tool-JP/css/distance.css?v=21">
@@ -77,6 +79,22 @@ v5.8<br>
   class="opening-scene"
   src="assets/story-right.PNG"
   alt="Campsite Design Tool campfire"
+>
+<!-- CAMP隠しボタン -->
+<button
+  type="button"
+  id="campSecretButton"
+  class="camp-secret-button"
+  aria-label="CAMP"
+  onclick="showSoulIcon()"
+></button>
+
+<!-- SOULアイコン -->
+<img
+  src="/Campsite-Design-Tool-JP/assets/soul-icon.PNG"
+  id="soulIcon"
+  class="soul-icon"
+  alt=""
 >
     <!-- 羊タップ範囲 -->
     <button
@@ -756,7 +774,7 @@ Userscriptsをインストール
 <script src="js/tabs.js"></script>
 <script src="js/distance.js?v=10"></script>
 <script src="js/admin.js"></script>
-<script src="js/main.js?v=35"></script>
+<script src="js/main.js?v=37"></script>
 <script src="js/kmz.js?v=11"></script>
 </body>
 </html>
