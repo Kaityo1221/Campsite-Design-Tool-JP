@@ -138,6 +138,23 @@ body.opening-mode .container {
     saturate(1.08)
     drop-shadow(0 30px 60px rgba(0,0,0,0.45));
 }
+@keyframes openingFloat {
+  0% {
+    transform:
+      scale(1.02)
+      perspective(1200px)
+      rotateX(1deg)
+      translateY(0px);
+  }
+
+  100% {
+    transform:
+      scale(1.05)
+      perspective(1200px)
+      rotateX(1deg)
+      translateY(-10px);
+  }
+}
 
 /* 羊タップ範囲 */
 .sheep-tap-area {
@@ -327,10 +344,6 @@ body.opening-mode .container {
   opacity:1;
   transform:scale(1) rotate(0deg);
 }
-
-.opening-scene-wrap.is-right .camp-secret-button{
-  display:block;
-}
 .opening-scene-wrap::after {
   content: "";
   position: absolute;
@@ -357,15 +370,29 @@ body.opening-mode .container {
       rgba(0,0,0,0.28) 100%
     );
 }
+.opening-scene-wrap::before {
+  content: "";
+  position: absolute;
+  inset: 12px;
 
+  pointer-events: none;
+  z-index: 13;
+
+  border: 1px solid rgba(255,255,255,0.16);
+  border-radius: 22px;
+
+  box-shadow:
+    inset 0 0 32px rgba(255,255,255,0.08),
+    inset 0 -40px 80px rgba(0,0,0,0.22);
+}
 .opening-scene-wrap .star-trail {
   position: absolute;
 
   right: 12%;
   top: 14%;
 
-  width: 120px;
-  height: 2px;
+width: 180px;
+height: 3px;
 
   pointer-events: none;
   z-index: 40;
