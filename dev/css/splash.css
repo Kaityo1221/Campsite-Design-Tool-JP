@@ -375,3 +375,21 @@ body.opening-mode .container {
     inset 0 0 32px rgba(255,255,255,0.08),
     inset 0 -40px 80px rgba(0,0,0,0.22);
 }
+.opening-scene.active {
+  animation:
+    openingFloat 8s ease-in-out infinite alternate;
+}
+
+@keyframes openingFloat {
+  0% {
+    transform:
+      scale(1.02)
+      translateY(0px);
+  }
+
+  100% {
+    transform:
+      scale(1.05)
+      translateY(-10px);
+  }
+}
