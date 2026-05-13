@@ -841,9 +841,12 @@ function toXY(p) {
 }
 
   points.forEach(p => {
-    p.xy = toXY(p);
-  });
+  p.xy = toXY(p);
+});
 
+const isMobileMap = map.clientWidth <= 600;
+
+if (!isMobileMap) {
   for (let i = 0; i < points.length; i++) {
     for (let j = i + 1; j < points.length; j++) {
       const a = points[i];
@@ -887,14 +890,45 @@ function toXY(p) {
       map.appendChild(label);
     }
   }
+}
 
+if (isMobileMap) {
   points.forEach(p => {
-    const dot = document.createElement("div");
-    dot.className = `distance-map-point ${p.type}`;
-    dot.style.left = `${p.xy.x}px`;
-    dot.style.top = `${p.xy.y}px`;
-    dot.title = `${p.layer || ""}\n${p.name || ""}`;
+    let riskClass = "light";
 
-    map.appendChild(dot);
+    for (const other of points) {
+      if (p === other) continue;
+
+      const distance = getDistanceMeters(p, other);
+
+      if (distance < 20) {
+        riskClass = "dense";
+        break;
+      } else if (distance < 30 && riskClass !== "dense") {
+        riskClass = "stay";
+      }
+    }
+
+    const radius = document.createElement("div");
+    radius.className = `distance-map-radius ${riskClass}`;
+
+    const size = 90;
+
+    radius.style.width = size + "px";
+    radius.style.height = size + "px";
+    radius.style.left = p.xy.x + "px";
+    radius.style.top = p.xy.y + "px";
+
+    map.appendChild(radius);
   });
 }
+
+points.forEach(p => {
+  const dot = document.createElement("div");
+  dot.className = `distance-map-point ${p.type}`;
+  dot.style.left = `${p.xy.x}px`;
+  dot.style.top = `${p.xy.y}px`;
+  dot.title = `${p.layer || ""}\n${p.name || ""}`;
+
+  map.appendChild(dot);
+});
