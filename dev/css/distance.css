@@ -330,3 +330,50 @@
     padding: 8px 10px;
   }
 }
+.distance-map-radius {
+  position: absolute;
+  border-radius: 999px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 1;
+  border: 1px solid rgba(96,165,250,0.28);
+  background: rgba(59,130,246,0.08);
+}
+
+.distance-map-radius.dense {
+  border: 1px solid rgba(239,68,68,0.55);
+  background: rgba(239,68,68,0.16);
+  box-shadow: 0 0 18px rgba(239,68,68,0.55);
+}
+
+.distance-map-radius.stay {
+  border: 1px solid rgba(249,115,22,0.50);
+  background: rgba(249,115,22,0.14);
+  box-shadow: 0 0 16px rgba(249,115,22,0.45);
+}
+
+.distance-map-radius.light {
+  border: 1px solid rgba(226,232,240,0.35);
+  background: rgba(226,232,240,0.08);
+  box-shadow: 0 0 12px rgba(226,232,240,0.25);
+}
+
+@media (max-width: 600px) {
+  #distanceMap {
+    height: 360px;
+  }
+
+  .distance-map-line {
+    display: none;
+  }
+
+  .distance-map-label {
+    font-size: 9px;
+    opacity: 0.9;
+  }
+
+  .distance-map-legend {
+    font-size: 11px;
+    padding: 8px 10px;
+  }
+}
