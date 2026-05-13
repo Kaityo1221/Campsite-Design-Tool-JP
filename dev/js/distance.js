@@ -743,3 +743,88 @@ const adjustableCount = displayCounts.caution;
       ${targetWarningListHtml}
     `;
 }
+function renderDistanceMap(existingPoints = [], addPoints = []) {
+  const map = document.getElementById("distanceMap");
+  if (!map) return;
+
+  map.innerHTML = "";
+
+  const points = [
+    ...existingPoints.map(p => ({ ...p, type: "existing" })),
+    ...addPoints.map(p => ({ ...p, type: "add" }))
+  ].filter(p => typeof p.lat === "number" && typeof p.lng === "number");
+
+  if (!points.length) {
+    map.innerHTML = `<div class="distance-map-empty">表示できるPOIがありません。</div>`;
+    return;
+  }
+
+  const lats = points.map(p => p.lat);
+  const lngs = points.map(p => p.lng);
+
+  const minLat = Math.min(...lats);
+  const maxLat = Math.max(...lats);
+  const minLng = Math.min(...lngs);
+  const maxLng = Math.max(...lngs);
+
+  const padding = 34;
+  const width = map.clientWidth;
+  const height = map.clientHeight;
+
+  function toXY(p) {
+    const x =
+      padding +
+      ((p.lng - minLng) / ((maxLng - minLng) || 1)) *
+      (width - padding * 2);
+
+    const y =
+      padding +
+      (1 - ((p.lat - minLat) / ((maxLat - minLat) || 1))) *
+      (height - padding * 2);
+
+    return { x, y };
+  }
+
+  points.forEach(p => {
+    p.xy = toXY(p);
+  });
+
+  for (let i = 0; i < points.length; i++) {
+    for (let j = i + 1; j < points.length; j++) {
+      const a = points[i];
+      const b = points[j];
+
+      const distance = getDistanceMeters(a, b);
+
+      if (distance >= 40) continue;
+
+      const dx = b.xy.x - a.xy.x;
+      const dy = b.xy.y - a.xy.y;
+      const length = Math.sqrt(dx * dx + dy * dy);
+      const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+
+      const line = document.createElement("div");
+      line.className = "distance-map-line";
+      line.style.left = `${a.xy.x}px`;
+      line.style.top = `${a.xy.y}px`;
+      line.style.width = `${length}px`;
+      line.style.transform = `rotate(${angle}deg)`;
+
+      map.appendChild(line);
+    }
+  }
+
+  points.forEach(p => {
+    const dot = document.createElement("div");
+    dot.className = `distance-map-point ${p.type}`;
+    dot.style.left = `${p.xy.x}px`;
+    dot.style.top = `${p.xy.y}px`;
+    dot.title = p.name || "";
+
+    map.appendChild(dot);
+  });
+}
+renderDistanceMap(
+  distanceData.existing,
+  distanceData.add
+);
