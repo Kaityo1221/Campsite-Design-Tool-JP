@@ -604,27 +604,33 @@ async function runDistanceCheck() {
     </div><br>
   `;
 
-  const displayCounts = {
-    danger: 0,
-    caution: 0,
-    reference: 0
-  };
+ const displayCounts = {
+  dense: 0,      // 20m未満
+  stay: 0,       // 20〜30m
+  light: 0,      // 30〜40m
+  reference: 0   // 既存POI同士
+};
 
-  warnings.forEach(w => {
-    const isExistingA = (w.a.originalLayer || "").includes("既存");
-    const isExistingB = (w.b.originalLayer || "").includes("既存");
+warnings.forEach(w => {
+  const isExistingA = (w.a.originalLayer || "").includes("既存");
+  const isExistingB = (w.b.originalLayer || "").includes("既存");
 
-    if (isExistingA && isExistingB) {
-      displayCounts.reference++;
-    } else if (w.distance < 30) {
-      displayCounts.danger++;
-    } else {
-      displayCounts.caution++;
-    }
-  });
+  if (isExistingA && isExistingB) {
+    displayCounts.reference++;
+    return;
+  }
 
-const targetWarningCount = displayCounts.danger;
-const adjustableCount = displayCounts.caution;
+  if (w.distance < 20) {
+    displayCounts.dense++;
+  } else if (w.distance < 30) {
+    displayCounts.stay++;
+  } else {
+    displayCounts.light++;
+  }
+});
+
+const targetWarningCount = displayCounts.dense + displayCounts.stay;
+const adjustableCount = displayCounts.light;
 
   const nearestWarning =
     warnings.length > 0 ? warnings[0] : null;
@@ -657,8 +663,9 @@ const adjustableCount = displayCounts.caution;
         ${resultStatusIcon} 判定結果：${resultStatus}
       </strong><br><br>
 
-      調整対象：${targetWarningCount}件<br>
-調整可能距離：${adjustableCount}件<br>
+      20m未満（密集）：${displayCounts.dense}件<br>
+20〜30m（滞留）：${displayCounts.stay}件<br>
+30〜40m（軽微）：${displayCounts.light}件<br>
 参考：${displayCounts.reference}件<br>
 40m未満合計：${warnings.length}件<br><br>
       ${
@@ -676,12 +683,15 @@ const adjustableCount = displayCounts.caution;
   `;
 
   if (warnings.length === 0) {
-    result.innerHTML =
-      scoreHtml +
-      resultHeaderHtml +
-      `✅ 問題なし（${points.length}件）`;
-    return;
-  }
+  result.innerHTML =
+    scoreHtml +
+    resultHeaderHtml +
+    `✅ 問題なし（${points.length}件）`;
+
+  renderDistanceMap(points, []);
+
+  return;
+}
 
   const targetWarnings = warnings.filter(w => {
   const isExistingA = (w.a.originalLayer || "").includes("既存");
@@ -736,10 +746,190 @@ const adjustableCount = displayCounts.caution;
     resultHeaderHtml +
     riskAccordionHtml + `
       ⚠ 40m未満があります<br><br>
-      ⚠ 調整対象：${displayCounts.danger}件 / 
-△ 調整可能距離：${displayCounts.caution}件 / 
+      🔴 20m未満：${displayCounts.dense}件 / 
+🟠 20〜30m：${displayCounts.stay}件 / 
+⚪ 30〜40m：${displayCounts.light}件 / 
 ℹ 参考：${displayCounts.reference}件
       <br><br>
       ${targetWarningListHtml}
     `;
+    renderDistanceMap(points, []);
+}
+function renderDistanceMap(existingPoints = [], addPoints = []) {
+  const map = document.getElementById("distanceMap");
+  if (!map) return;
+
+  map.innerHTML = "";
+
+  const points = [
+    ...existingPoints.map(p => ({ ...p, type: "existing" })),
+    ...addPoints.map(p => ({ ...p, type: "add" }))
+  ].filter(p => typeof p.lat === "number" && typeof p.lng === "number");
+
+  if (!points.length) {
+    map.innerHTML = `
+      <div class="distance-map-empty">
+        表示できるPOIがありません。
+      </div>
+    `;
+    return;
+  }
+
+  const legend = document.createElement("div");
+  legend.className = "distance-map-legend";
+  legend.innerHTML = `
+    <div><span class="legend-line dense"></span>20m未満（密集）</div>
+    <div><span class="legend-line stay"></span>20〜30m（滞留）</div>
+    <div><span class="legend-line light"></span>30〜40m（軽微）</div>
+  `;
+  map.appendChild(legend);
+
+  const padding = 42;
+const width = map.clientWidth;
+const height = map.clientHeight;
+
+// 緯度経度をざっくりメートル座標へ変換する
+const meanLat =
+  points.reduce((sum, p) => sum + p.lat, 0) / points.length;
+
+const metersPerLat = 111320;
+const metersPerLng =
+  111320 * Math.cos(meanLat * Math.PI / 180);
+
+const projected = points.map(p => ({
+  ...p,
+  mx: p.lng * metersPerLng,
+  my: p.lat * metersPerLat
+}));
+
+const minX = Math.min(...projected.map(p => p.mx));
+const maxX = Math.max(...projected.map(p => p.mx));
+const minY = Math.min(...projected.map(p => p.my));
+const maxY = Math.max(...projected.map(p => p.my));
+
+const rangeX = maxX - minX || 1;
+const rangeY = maxY - minY || 1;
+
+// 縦横比を維持して、スマホでも引き伸ばさない
+const scale = Math.min(
+  (width - padding * 2) / rangeX,
+  (height - padding * 2) / rangeY
+);
+
+const mapContentWidth = rangeX * scale;
+const mapContentHeight = rangeY * scale;
+
+const offsetX = (width - mapContentWidth) / 2;
+const offsetY = (height - mapContentHeight) / 2;
+
+function toXY(p) {
+  const projectedPoint = {
+    mx: p.lng * metersPerLng,
+    my: p.lat * metersPerLat
+  };
+
+  const x =
+    offsetX +
+    (projectedPoint.mx - minX) * scale;
+
+  const y =
+    offsetY +
+    mapContentHeight -
+    (projectedPoint.my - minY) * scale;
+
+  return { x, y };
+}
+
+  points.forEach(p => {
+  p.xy = toXY(p);
+});
+
+const isMobileMap = map.clientWidth <= 600;
+
+if (!isMobileMap) {
+  for (let i = 0; i < points.length; i++) {
+    for (let j = i + 1; j < points.length; j++) {
+      const a = points[i];
+      const b = points[j];
+
+      const distance = getDistanceMeters(a, b);
+
+      if (distance >= 40) continue;
+
+      let riskClass = "light";
+      let labelText = "40m";
+
+      if (distance < 20) {
+        riskClass = "dense";
+        labelText = "20m";
+      } else if (distance < 30) {
+        riskClass = "stay";
+        labelText = "30m";
+      }
+
+      const dx = b.xy.x - a.xy.x;
+      const dy = b.xy.y - a.xy.y;
+      const length = Math.sqrt(dx * dx + dy * dy);
+      const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+
+      const line = document.createElement("div");
+      line.className = `distance-map-line ${riskClass}`;
+      line.style.left = `${a.xy.x}px`;
+      line.style.top = `${a.xy.y}px`;
+      line.style.width = `${length}px`;
+      line.style.transform = `rotate(${angle}deg)`;
+
+      map.appendChild(line);
+
+      const label = document.createElement("div");
+      label.className = `distance-map-label ${riskClass}`;
+      label.textContent = labelText;
+      label.style.left = `${(a.xy.x + b.xy.x) / 2}px`;
+      label.style.top = `${(a.xy.y + b.xy.y) / 2}px`;
+
+      map.appendChild(label);
+    }
+  }
+}
+
+if (isMobileMap) {
+  points.forEach(p => {
+    let riskClass = "light";
+
+    for (const other of points) {
+      if (p === other) continue;
+
+      const distance = getDistanceMeters(p, other);
+
+      if (distance < 20) {
+        riskClass = "dense";
+        break;
+      } else if (distance < 30 && riskClass !== "dense") {
+        riskClass = "stay";
+      }
+    }
+
+    const radius = document.createElement("div");
+    radius.className = `distance-map-radius ${riskClass}`;
+
+    const size = 90;
+
+    radius.style.width = size + "px";
+    radius.style.height = size + "px";
+    radius.style.left = p.xy.x + "px";
+    radius.style.top = p.xy.y + "px";
+
+    map.appendChild(radius);
+  });
+}
+
+points.forEach(p => {
+  const dot = document.createElement("div");
+  dot.className = `distance-map-point ${p.type}`;
+  dot.style.left = `${p.xy.x}px`;
+  dot.style.top = `${p.xy.y}px`;
+  dot.title = `${p.layer || ""}\n${p.name || ""}`;
+
+  map.appendChild(dot);
+});
 }
