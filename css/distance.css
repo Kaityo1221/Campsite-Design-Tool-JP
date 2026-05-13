@@ -295,19 +295,6 @@
 
 @media (max-width: 600px) {
   #distanceMap {
-    height: 360px;
-  }
-
-  .distance-map-line {
     display: none;
-  }
-
-  .distance-map-label {
-    display: none;
-  }
-
-  .distance-map-legend {
-    font-size: 11px;
-    padding: 8px 10px;
   }
 }
