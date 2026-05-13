@@ -757,10 +757,13 @@ const adjustableCount = displayCounts.light;
 }
 function renderDistanceMap(existingPoints = [], addPoints = []) {
   const map = document.getElementById("distanceMap");
-  if (!map) return;
+if (!map) return;
 
-  map.innerHTML = "";
+map.innerHTML = "";
 
+if (map.clientWidth <= 600) {
+  return;
+}
   const points = [
     ...existingPoints.map(p => ({ ...p, type: "existing" })),
     ...addPoints.map(p => ({ ...p, type: "add" }))
@@ -890,37 +893,6 @@ if (!isMobileMap) {
       map.appendChild(label);
     }
   }
-}
-
-if (isMobileMap) {
-  points.forEach(p => {
-    let riskClass = "light";
-
-    for (const other of points) {
-      if (p === other) continue;
-
-      const distance = getDistanceMeters(p, other);
-
-      if (distance < 20) {
-        riskClass = "dense";
-        break;
-      } else if (distance < 30 && riskClass !== "dense") {
-        riskClass = "stay";
-      }
-    }
-
-    const radius = document.createElement("div");
-    radius.className = `distance-map-radius ${riskClass}`;
-
-    const size = 90;
-
-    radius.style.width = size + "px";
-    radius.style.height = size + "px";
-    radius.style.left = p.xy.x + "px";
-    radius.style.top = p.xy.y + "px";
-
-    map.appendChild(radius);
-  });
 }
 
 points.forEach(p => {
