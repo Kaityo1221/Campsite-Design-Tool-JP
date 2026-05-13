@@ -6,11 +6,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Campsite Design Tool JP</title>
-<link rel="stylesheet" href="/Campsite-Design-Tool-JP/dev/css/style.css?v=32">
-<link rel="stylesheet" href="/Campsite-Design-Tool-JP/dev/css/splash.css?v=68">
-<link rel="stylesheet" href="/Campsite-Design-Tool-JP/dev/css/tabs.css?v=24">
-<link rel="stylesheet" href="/Campsite-Design-Tool-JP/dev/css/admin.css?v=20">
-<link rel="stylesheet" href="/Campsite-Design-Tool-JP/dev/css/distance.css?v=21">
+<link rel="stylesheet" href="/Campsite-Design-Tool-JP/css/style.css?v=30">
+<link rel="stylesheet" href="/Campsite-Design-Tool-JP/css/splash.css?v=69">
+<link rel="stylesheet" href="/Campsite-Design-Tool-JP/css/style.css?v=31">
+<link rel="stylesheet" href="/Campsite-Design-Tool-JP/css/splash.css?v=71">
+<link rel="stylesheet" href="/Campsite-Design-Tool-JP/css/tabs.css?v=25">
+<link rel="stylesheet" href="/Campsite-Design-Tool-JP/css/admin.css?v=20">
+<link rel="stylesheet" href="/Campsite-Design-Tool-JP/css/distance.css?v=21">
 <link rel="apple-touch-icon" sizes="180x180" href="/Campsite-Design-Tool-JP/assets/icon.png">
 <link rel="manifest" href="/Campsite-Design-Tool-JP/manifest.json">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -77,6 +79,22 @@ v5.8<br>
   class="opening-scene"
   src="assets/story-right.PNG"
   alt="Campsite Design Tool campfire"
+>
+<!-- CAMP隠しボタン -->
+<button
+  type="button"
+  id="campSecretButton"
+  class="camp-secret-button"
+  aria-label="CAMP"
+  onclick="showSoulIcon()"
+></button>
+
+<!-- SOULアイコン -->
+<img
+  src="/Campsite-Design-Tool-JP/assets/soul-icon.PNG"
+  id="soulIcon"
+  class="soul-icon"
+  alt=""
 >
     <!-- 羊タップ範囲 -->
     <button
@@ -754,9 +772,9 @@ Userscriptsをインストール
 </div>
 <script src="js/util.js?v=8"></script>
 <script src="js/tabs.js"></script>
-<script src="js/distance.js?=3"></script>
+<script src="js/distance.js?v=10"></script>
 <script src="js/admin.js"></script>
-<script src="js/main.js?v=34"></script>
+<script src="js/main.js?v=37"></script>
 <script src="js/kmz.js?v=11"></script>
 </body>
 </html>
