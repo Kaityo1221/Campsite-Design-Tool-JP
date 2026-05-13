@@ -295,3 +295,10 @@ body.opening-mode .container {
   opacity:1;
   transform:scale(1) rotate(0deg);
 }
+.camp-secret-button{
+  display:none;
+}
+
+.opening-scene-wrap.is-right .camp-secret-button{
+  display:block;
+}
