@@ -358,39 +358,6 @@ body.opening-mode .container {
     );
 }
 
-.opening-scene-wrap::before {
-  content: "";
-  position: absolute;
-  inset: 12px;
-
-  pointer-events: none;
-  z-index: 13;
-
-  border: 1px solid rgba(255,255,255,0.16);
-  border-radius: 22px;
-
-  box-shadow:
-    inset 0 0 32px rgba(255,255,255,0.08),
-    inset 0 -40px 80px rgba(0,0,0,0.22);
-}
-
-@keyframes openingFloat {
-  0% {
-    transform:
-      scale(1.02)
-      perspective(1200px)
-      rotateX(1deg)
-      translateY(0px);
-  }
-
-  100% {
-    transform:
-      scale(1.05)
-      perspective(1200px)
-      rotateX(1deg)
-      translateY(-10px);
-  }
-}
 .opening-scene-wrap .star-trail {
   position: absolute;
 
@@ -410,6 +377,19 @@ body.opening-mode .container {
     rgba(96,165,250,0.9),
     transparent
   );
+
+  box-shadow:
+    0 0 12px rgba(147,197,253,0.9),
+    0 0 24px rgba(59,130,246,0.6);
+
+  opacity: 0;
+
+  transform: rotate(22deg);
+
+  animation:
+    shootingStar 5s ease-in-out infinite;
+}
+
 @keyframes shootingStar {
   0% {
     opacity: 0;
