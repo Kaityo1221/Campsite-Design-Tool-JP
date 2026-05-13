@@ -130,10 +130,8 @@ body.opening-mode .container {
 .opening-scene.active {
   opacity: 1;
 
-  transform:
-    scale(1.02)
-    perspective(1200px)
-    rotateX(1deg);
+  animation:
+    openingFloat 8s ease-in-out infinite alternate;
 
   filter:
     brightness(1.02)
@@ -375,21 +373,21 @@ body.opening-mode .container {
     inset 0 0 32px rgba(255,255,255,0.08),
     inset 0 -40px 80px rgba(0,0,0,0.22);
 }
-.opening-scene.active {
-  animation:
-    openingFloat 8s ease-in-out infinite alternate;
-}
 
 @keyframes openingFloat {
   0% {
     transform:
       scale(1.02)
+      perspective(1200px)
+      rotateX(1deg)
       translateY(0px);
   }
 
   100% {
     transform:
       scale(1.05)
+      perspective(1200px)
+      rotateX(1deg)
       translateY(-10px);
   }
 }
