@@ -309,3 +309,13 @@ function goOpeningTab(tabId) {
     document.body.classList.remove("opening-mode");
   }, 120);
 }
+function showSoulIcon(){
+  const icon = document.getElementById("soulIcon");
+  if (!icon) return;
+
+  icon.classList.add("show");
+
+  setTimeout(() => {
+    icon.classList.remove("show");
+  }, 2500);
+}
