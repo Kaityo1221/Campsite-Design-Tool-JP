@@ -932,3 +932,4 @@ points.forEach(p => {
 
   map.appendChild(dot);
 });
+}
