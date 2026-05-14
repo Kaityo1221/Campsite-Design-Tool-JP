@@ -688,9 +688,10 @@ const adjustableCount = displayCounts.light;
     resultHeaderHtml +
     `✅ 問題なし（${points.length}件）`;
 
-    return;
-}
+  renderSimpleDistanceMap(points);
 
+  return;
+}
   const targetWarnings = warnings.filter(w => {
   const isExistingA = (w.a.originalLayer || "").includes("既存");
   const isExistingB = (w.b.originalLayer || "").includes("既存");
@@ -751,4 +752,92 @@ const adjustableCount = displayCounts.light;
       <br><br>
       ${targetWarningListHtml}
     `;
+    renderSimpleDistanceMap(points);
+}
+function renderSimpleDistanceMap(points = []) {
+  const map = document.getElementById("distanceMap");
+  if (!map) return;
+
+  map.innerHTML = "";
+
+  // スマホでは描画しない
+  if (window.innerWidth <= 720) {
+    return;
+  }
+
+  const validPoints = points.filter(p =>
+    typeof p.lat === "number" &&
+    typeof p.lng === "number"
+  );
+
+  if (!validPoints.length) {
+    map.innerHTML = `
+      <div class="distance-map-empty">
+        表示できるPOIがありません。
+      </div>
+    `;
+    return;
+  }
+
+  const padding = 42;
+  const width = map.clientWidth;
+  const height = map.clientHeight;
+
+  const meanLat =
+    validPoints.reduce((sum, p) => sum + p.lat, 0) / validPoints.length;
+
+  const metersPerLat = 111320;
+  const metersPerLng =
+    111320 * Math.cos(meanLat * Math.PI / 180);
+
+  const projected = validPoints.map(p => ({
+    ...p,
+    mx: p.lng * metersPerLng,
+    my: p.lat * metersPerLat
+  }));
+
+  const minX = Math.min(...projected.map(p => p.mx));
+  const maxX = Math.max(...projected.map(p => p.mx));
+  const minY = Math.min(...projected.map(p => p.my));
+  const maxY = Math.max(...projected.map(p => p.my));
+
+  const rangeX = maxX - minX || 1;
+  const rangeY = maxY - minY || 1;
+
+  const scale = Math.min(
+    (width - padding * 2) / rangeX,
+    (height - padding * 2) / rangeY
+  );
+
+  const mapContentWidth = rangeX * scale;
+  const mapContentHeight = rangeY * scale;
+
+  const offsetX = (width - mapContentWidth) / 2;
+  const offsetY = (height - mapContentHeight) / 2;
+
+  projected.forEach(p => {
+    const x =
+      offsetX +
+      (p.mx - minX) * scale;
+
+    const y =
+      offsetY +
+      mapContentHeight -
+      (p.my - minY) * scale;
+
+    const dot = document.createElement("div");
+
+    const isAdd =
+      (p.originalLayer || p.layer || "").includes("追加");
+
+    dot.className =
+      `distance-map-point ${isAdd ? "add" : "existing"}`;
+
+    dot.style.left = `${x}px`;
+    dot.style.top = `${y}px`;
+
+    dot.title = `${p.layer || ""}\n${p.name || ""}`;
+
+    map.appendChild(dot);
+  });
 }
