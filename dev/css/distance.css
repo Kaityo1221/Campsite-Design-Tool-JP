@@ -136,3 +136,49 @@
 .distance-map-tooltip strong {
   color: #38bdf8;
 }
+.distance-map-legend {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 18;
+
+  padding: 9px 11px;
+  border-radius: 12px;
+
+  background: rgba(2, 6, 23, 0.78);
+  border: 1px solid rgba(148, 163, 184, 0.30);
+
+  color: #e5e7eb;
+  font-size: 12px;
+  line-height: 1.7;
+
+  box-shadow:
+    0 10px 24px rgba(0,0,0,0.32);
+}
+
+.distance-map-legend-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.distance-map-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  display: inline-block;
+  flex: 0 0 auto;
+}
+
+.distance-map-legend-dot.existing {
+  background: #38bdf8;
+  box-shadow:
+    0 0 8px rgba(56,189,248,0.9);
+}
+
+.distance-map-legend-dot.add {
+  background: #f97316;
+  box-shadow:
+    0 0 8px rgba(249,115,22,0.9);
+}
