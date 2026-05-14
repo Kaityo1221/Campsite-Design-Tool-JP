@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="css/admin.css?v=20">
 <link rel="stylesheet" href="css/distance.css?v=25">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/icon.png">
-<link rel="manifest" href="manifest.json">
+<link rel="manifest" href="manifest-dev.json">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 
@@ -55,7 +55,6 @@ v5.8<br>
   spellcheck="false"
   placeholder="パスコードを入力"
 >
-
 <button type="button" id="loginButton" onclick="checkPassword()">ログイン</button>
 <p id="loginError" class="error"></p>
   </div>
@@ -644,10 +643,9 @@ Userscriptsをインストール
 </div>
     <div class="step">
       <div class="step-no">STEP 3</div>
-     <button class="generate" onclick="runDistanceCheck()">距離チェック実行</button>
-<div id="distanceResult"></div>
-<div id="distanceMap"></div>
-      
+      <button class="generate" onclick="runDistanceCheck()">距離チェック実行</button>
+      <div id="distanceResult"></div>
+      <div id="distanceMap"></div>
     </div>
 
   </div> <!-- panel -->
@@ -774,9 +772,9 @@ Userscriptsをインストール
 </div>
 <script src="js/util.js?v=8"></script>
 <script src="js/tabs.js"></script>
-<script src="js/distance.js?v=16"></script>
+<script src="js/distance.js?v=17"></script>
 <script src="js/admin.js"></script>
-<script src="js/main.js?v=37"></script>
+<script src="js/main.js?v=38"></script>
 <script src="js/kmz.js?v=11"></script>
 </body>
 </html>
