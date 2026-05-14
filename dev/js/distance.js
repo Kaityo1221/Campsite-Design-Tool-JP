@@ -268,7 +268,7 @@ function getRiskAccordionHtml(warnings) {
 
   let cardColor = "#ef4444";
   let label = "⚠ 調整対象";
-  let message = "30m未満です。配置調整を確認してください。";
+  let message = "30m未満です。再確認をお願いします。";
 
   if (isLight) {
     cardColor = "#94a3b8";
@@ -743,7 +743,7 @@ const simpleMapGuideHtml = `
 
     if (w.distance < 30) {
       label = "⚠ 要注意";
-      message = "30m未満です。配置調整を推奨します。";
+      message = "30m未満です。再確認をお願いします。";
       cardColor = "#ef4444";
       cardBg = "rgba(239, 68, 68, 0.14)";
     } else {
