@@ -45,10 +45,11 @@ v5.8<br>
     <p class="login-sub">アクセスにはパスコードが必要です</p>
 
    <input
+  <input
   id="passwordInput"
-  type="password"
-  inputmode="latin"
-  lang="en"
+  type="text"
+  inputmode="text"
+  name="campsite-passcode"
   autocomplete="off"
   autocorrect="off"
   autocapitalize="off"
@@ -677,14 +678,16 @@ Userscriptsをインストール
     </p>
 
     <input
-      id="adminPasswordInput"
-      type="text"
-      inputmode="text"
-      autocomplete="off"
-      autocorrect="off"
-      autocapitalize="off"
-      spellcheck="false"
-      placeholder="管理者パスコード"
+  id="adminPasswordInput"
+  type="text"
+  inputmode="text"
+  name="admin-passcode"
+  autocomplete="off"
+  autocorrect="off"
+  autocapitalize="off"
+  spellcheck="false"
+  placeholder="管理者パスコード"
+>
       style="
         width:100%;
         padding:12px;
