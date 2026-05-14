@@ -568,7 +568,27 @@ async function runDistanceCheck() {
   const stars = getStars(campsite.score);
   const color = getRankColor(campsite.rank);
   const bar = getScoreBar(campsite.score, color);
-
+const sectionTitleHtml = (title, sub = "") => `
+  <div style="
+    margin:22px 0 10px;
+    padding:10px 14px;
+    border-left:5px solid #38bdf8;
+    border-radius:10px;
+    background:rgba(15,23,42,0.58);
+    color:#e5e7eb;
+    font-weight:800;
+    letter-spacing:0.02em;
+  ">
+    ${title}
+    ${sub ? `<div style="
+      margin-top:4px;
+      font-size:12px;
+      font-weight:500;
+      color:#94a3b8;
+      line-height:1.5;
+    ">${sub}</div>` : ""}
+  </div>
+`;
   const scoreHtml = `
     <div class="distance-warning">
 
@@ -683,15 +703,17 @@ const adjustableCount = displayCounts.light;
   `;
 const simpleMapGuideHtml = `
   <div class="distance-warning">
-    PC版のみ、読み込んだPOIの分布を簡易マップとして表示しています。<br>
-    青：既存POI ／ オレンジ：追加希望POI
+    ※簡易マップはPC版で表示されます。
   </div><br>
 `;
   if (warnings.length === 0) {
   result.innerHTML =
+    sectionTitleHtml("拠点充実度", "距離・通行・広場・回遊性などをもとにした総合評価です。") +
     scoreHtml +
+    sectionTitleHtml("判定結果", "20m未満／20〜30m／30〜40mの近接件数を確認します。") +
     resultHeaderHtml +
     `✅ 問題なし（${points.length}件）<br><br>` +
+    sectionTitleHtml("PC版簡易マップ", "読み込んだPOIの分布を点で確認できます。") +
     simpleMapGuideHtml;
 
   renderSimpleDistanceMap(points);
@@ -747,21 +769,27 @@ const simpleMapGuideHtml = `
   }).join("");
 
   result.innerHTML =
+  sectionTitleHtml("拠点充実度", "距離・通行・広場・回遊性などをもとにした総合評価です。") +
   scoreHtml +
+  sectionTitleHtml("判定結果", "20m未満／20〜30m／30〜40mの近接件数を確認します。") +
   resultHeaderHtml +
+  sectionTitleHtml("分類別チェック", "近接内容を密集・滞留・軽微に分けて確認します。") +
   riskAccordionHtml + `
-    ⚠ 40m未満があります<br><br>
+    40m未満の組み合わせがあります。<br><br>
     🔴 20m未満：${displayCounts.dense}件 / 
     🟠 20〜30m：${displayCounts.stay}件 / 
     ⚪ 30〜40m：${displayCounts.light}件 / 
     ℹ 参考：${displayCounts.reference}件
     <br><br>
-    ${targetWarningListHtml}
   ` +
+  sectionTitleHtml("追加・変更対象の近接", "既存POI同士ではなく、追加・変更対象に関係する近接を確認します。") +
+  targetWarningListHtml +
+  sectionTitleHtml("PC版簡易マップ", "読み込んだPOIの分布を点で確認できます。") +
   simpleMapGuideHtml;
 
-renderSimpleDistanceMap(points);
+  renderSimpleDistanceMap(points);
 }
+
 function renderSimpleDistanceMap(points = []) {
   const map = document.getElementById("distanceMap");
   if (!map) return;
@@ -772,7 +800,19 @@ function renderSimpleDistanceMap(points = []) {
   if (window.innerWidth <= 720) {
     return;
   }
-
+  const legend = document.createElement("div");
+  legend.className = "distance-map-legend";
+  legend.innerHTML = `
+    <div class="distance-map-legend-row">
+      <span class="distance-map-legend-dot existing"></span>
+      既存POI
+    </div>
+    <div class="distance-map-legend-row">
+      <span class="distance-map-legend-dot add"></span>
+      追加希望POI
+    </div>
+  `;
+  map.appendChild(legend);
 function pickNumber(p, keys) {
   for (const key of keys) {
     if (p[key] !== undefined && p[key] !== null && p[key] !== "") {
@@ -834,12 +874,6 @@ if (!validPoints.length) {
     my: p.lat * metersPerLat
   }));
 
-  function percentile(values, rate) {
-  const sorted = [...values].sort((a, b) => a - b);
-  const index = Math.floor((sorted.length - 1) * rate);
-  return sorted[index];
-}
-
 const xs = projected.map(p => p.mx);
 const ys = projected.map(p => p.my);
 
@@ -876,7 +910,8 @@ maxY += marginY;
 const tooltip = document.createElement("div");
 tooltip.className = "distance-map-tooltip";
 map.appendChild(tooltip);
-  projected.forEach(p => {
+
+projected.forEach(p => {
     const rawX =
   offsetX +
   (p.mx - minX) * scale;
