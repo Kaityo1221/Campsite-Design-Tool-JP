@@ -681,12 +681,18 @@ const adjustableCount = displayCounts.light;
       }
     </div>
   `;
-
+const simpleMapGuideHtml = `
+  <div class="distance-warning">
+    PC版では、読み込んだPOIの分布を簡易マップとして表示します。<br>
+    青：既存POI ／ オレンジ：追加希望POI
+  </div><br>
+`;
   if (warnings.length === 0) {
   result.innerHTML =
     scoreHtml +
     resultHeaderHtml +
-    `✅ 問題なし（${points.length}件）`;
+    `✅ 問題なし（${points.length}件）<br><br>` +
+    simpleMapGuideHtml;
 
   renderSimpleDistanceMap(points);
 
@@ -741,18 +747,20 @@ const adjustableCount = displayCounts.light;
   }).join("");
 
   result.innerHTML =
-    scoreHtml +
-    resultHeaderHtml +
-    riskAccordionHtml + `
-      ⚠ 40m未満があります<br><br>
-      🔴 20m未満：${displayCounts.dense}件 / 
-🟠 20〜30m：${displayCounts.stay}件 / 
-⚪ 30〜40m：${displayCounts.light}件 / 
-ℹ 参考：${displayCounts.reference}件
-      <br><br>
-      ${targetWarningListHtml}
-    `;
-    renderSimpleDistanceMap(points);
+  scoreHtml +
+  resultHeaderHtml +
+  riskAccordionHtml + `
+    ⚠ 40m未満があります<br><br>
+    🔴 20m未満：${displayCounts.dense}件 / 
+    🟠 20〜30m：${displayCounts.stay}件 / 
+    ⚪ 30〜40m：${displayCounts.light}件 / 
+    ℹ 参考：${displayCounts.reference}件
+    <br><br>
+    ${targetWarningListHtml}
+  ` +
+  simpleMapGuideHtml;
+
+renderSimpleDistanceMap(points);
 }
 function renderSimpleDistanceMap(points = []) {
   const map = document.getElementById("distanceMap");
@@ -765,12 +773,42 @@ function renderSimpleDistanceMap(points = []) {
     return;
   }
 
-  const validPoints = points.filter(p =>
-    typeof p.lat === "number" &&
-    typeof p.lng === "number"
+function pickNumber(p, keys) {
+  for (const key of keys) {
+    if (p[key] !== undefined && p[key] !== null && p[key] !== "") {
+      const value = Number(String(p[key]).trim());
+      if (!isNaN(value)) return value;
+    }
+  }
+  return NaN;
+}
+const validPoints = points
+  .map(p => ({
+    ...p,
+
+    lat: pickNumber(p, [
+      "lat",
+      "latitude",
+      "Latitude",
+      "LAT",
+      "緯度"
+    ]),
+
+    lng: pickNumber(p, [
+      "lng",
+      "lon",
+      "longitude",
+      "Longitude",
+      "LON",
+      "経度"
+    ])
+  }))
+  .filter(p =>
+    !isNaN(p.lat) &&
+    !isNaN(p.lng)
   );
 
-  if (!validPoints.length) {
+if (!validPoints.length) {
     map.innerHTML = `
       <div class="distance-map-empty">
         表示できるPOIがありません。
@@ -796,10 +834,20 @@ function renderSimpleDistanceMap(points = []) {
     my: p.lat * metersPerLat
   }));
 
-  const minX = Math.min(...projected.map(p => p.mx));
-  const maxX = Math.max(...projected.map(p => p.mx));
-  const minY = Math.min(...projected.map(p => p.my));
-  const maxY = Math.max(...projected.map(p => p.my));
+  function percentile(values, rate) {
+  const sorted = [...values].sort((a, b) => a - b);
+  const index = Math.floor((sorted.length - 1) * rate);
+  return sorted[index];
+}
+
+const xs = projected.map(p => p.mx);
+const ys = projected.map(p => p.my);
+
+// 外れ値に引っ張られないよう、上下2%を除いた範囲で表示
+const minX = percentile(xs, 0.02);
+const maxX = percentile(xs, 0.98);
+const minY = percentile(ys, 0.02);
+const maxY = percentile(ys, 0.98);
 
   const rangeX = maxX - minX || 1;
   const rangeY = maxY - minY || 1;
@@ -816,14 +864,17 @@ function renderSimpleDistanceMap(points = []) {
   const offsetY = (height - mapContentHeight) / 2;
 
   projected.forEach(p => {
-    const x =
-      offsetX +
-      (p.mx - minX) * scale;
+    const rawX =
+  offsetX +
+  (p.mx - minX) * scale;
 
-    const y =
-      offsetY +
-      mapContentHeight -
-      (p.my - minY) * scale;
+const rawY =
+  offsetY +
+  mapContentHeight -
+  (p.my - minY) * scale;
+
+const x = Math.max(8, Math.min(width - 8, rawX));
+const y = Math.max(8, Math.min(height - 8, rawY));
 
     const dot = document.createElement("div");
 
