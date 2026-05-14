@@ -38,9 +38,8 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.04),
     0 8px 20px rgba(0, 0, 0, 0.18);
 }
-
 /* =========================
-   Distance Network Map
+   PC Simple Distance Map
 ========================= */
 
 #distanceMap {
@@ -53,7 +52,7 @@
   background:
     linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px),
-    radial-gradient(circle at center, rgba(30,41,59,0.7), #020617 70%);
+    radial-gradient(circle at center, rgba(30,41,59,0.72), #020617 72%);
 
   background-size:
     40px 40px,
@@ -71,24 +70,18 @@
 .distance-map-point {
   position: absolute;
 
-  width: 13px;
-  height: 13px;
+  width: 12px;
+  height: 12px;
 
   border-radius: 999px;
 
   transform: translate(-50%, -50%);
-
-  z-index: 5;
 
   background: #38bdf8;
 
   box-shadow:
     0 0 12px rgba(56,189,248,0.95),
     0 0 22px rgba(56,189,248,0.45);
-}
-
-.distance-map-point.existing {
-  background: #38bdf8;
 }
 
 .distance-map-point.add {
@@ -99,159 +92,13 @@
     0 0 22px rgba(249,115,22,0.45);
 }
 
-.distance-map-line {
-  position: absolute;
-
-  height: 3px;
-
-  transform-origin: left center;
-
-  z-index: 4;
-
-  pointer-events: none;
-
-  border-radius: 999px;
-
-  opacity: 1;
-}
-
-/* 20m未満：密集 */
-.distance-map-line.dense {
-  height: 5px;
-
-  background: #ef4444;
-
-  box-shadow:
-    0 0 14px rgba(239,68,68,1),
-    0 0 30px rgba(239,68,68,0.85);
-}
-
-/* 20〜30m：滞留 */
-.distance-map-line.stay {
-  height: 4px;
-
-  background: #f97316;
-
-  box-shadow:
-    0 0 12px rgba(249,115,22,1),
-    0 0 26px rgba(249,115,22,0.75);
-}
-
-/* 30〜40m：軽微 */
-.distance-map-line.light {
-  height: 2px;
-
-  background:
-    repeating-linear-gradient(
-      90deg,
-      rgba(226,232,240,0.95) 0px,
-      rgba(226,232,240,0.95) 8px,
-      transparent 8px,
-      transparent 14px
-    );
-
-  box-shadow:
-    0 0 8px rgba(226,232,240,0.65);
-}
-
-/* 距離カテゴリラベル */
-.distance-map-label {
-  position: absolute;
-
-  padding: 1px 5px;
-  border-radius: 999px;
-
-  font-size: 9px;
-  font-weight: 800;
-
-  transform: translate(-50%, -145%);
-
-  z-index: 6;
-  pointer-events: none;
-
-  white-space: nowrap;
-
-  opacity: 0.78;
-}
-
-.distance-map-label.dense {
-  color: #fff;
-  background: #ef4444;
-  box-shadow: 0 0 10px rgba(239,68,68,0.8);
-}
-
-.distance-map-label.stay {
-  color: #fff;
-  background: #f97316;
-  box-shadow: 0 0 10px rgba(249,115,22,0.75);
-}
-
-.distance-map-label.light {
-  color: #020617;
-  background: #e5e7eb;
-  box-shadow: 0 0 8px rgba(226,232,240,0.5);
-}
-
-/* 凡例 */
-.distance-map-legend {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-
-  padding: 10px 12px;
-
-  border-radius: 12px;
-
-  background: rgba(2,6,23,0.78);
-  border: 1px solid rgba(148,163,184,0.28);
-
-  color: #e5e7eb;
-
-  font-size: 12px;
-  line-height: 1.8;
-
-  z-index: 10;
-
-  box-shadow:
-    0 10px 24px rgba(0,0,0,0.32);
-}
-
-.legend-line {
-  display: inline-block;
-
-  width: 36px;
-  height: 3px;
-
-  margin-right: 8px;
-
-  vertical-align: middle;
-  border-radius: 999px;
-}
-
-.legend-line.dense {
-  background: #ef4444;
-}
-
-.legend-line.stay {
-  background: #f97316;
-}
-
-.legend-line.light {
-  background:
-    repeating-linear-gradient(
-      90deg,
-      #e5e7eb 0px,
-      #e5e7eb 8px,
-      transparent 8px,
-      transparent 14px
-    );
-}
 .distance-map-empty {
   padding: 18px;
   color: #94a3b8;
 }
 
-@media (max-width: 600px) {
+/* スマホでは簡易マップを表示しない */
+@media (max-width: 720px) {
   #distanceMap {
     display: none;
   }

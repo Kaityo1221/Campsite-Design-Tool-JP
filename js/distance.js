@@ -681,18 +681,23 @@ const adjustableCount = displayCounts.light;
       }
     </div>
   `;
-
+const simpleMapGuideHtml = `
+  <div class="distance-warning">
+    PC版では、読み込んだPOIの分布を簡易マップとして表示します。<br>
+    青：既存POI ／ オレンジ：追加希望POI
+  </div><br>
+`;
   if (warnings.length === 0) {
   result.innerHTML =
     scoreHtml +
     resultHeaderHtml +
-    `✅ 問題なし（${points.length}件）`;
+    `✅ 問題なし（${points.length}件）<br><br>` +
+    simpleMapGuideHtml;
 
-  renderDistanceMap(points, []);
+  renderSimpleDistanceMap(points);
 
   return;
 }
-
   const targetWarnings = warnings.filter(w => {
   const isExistingA = (w.a.originalLayer || "").includes("既存");
   const isExistingB = (w.b.originalLayer || "").includes("既存");
@@ -742,34 +747,68 @@ const adjustableCount = displayCounts.light;
   }).join("");
 
   result.innerHTML =
-    scoreHtml +
-    resultHeaderHtml +
-    riskAccordionHtml + `
-      ⚠ 40m未満があります<br><br>
-      🔴 20m未満：${displayCounts.dense}件 / 
-🟠 20〜30m：${displayCounts.stay}件 / 
-⚪ 30〜40m：${displayCounts.light}件 / 
-ℹ 参考：${displayCounts.reference}件
-      <br><br>
-      ${targetWarningListHtml}
-    `;
-    renderDistanceMap(points, []);
+  scoreHtml +
+  resultHeaderHtml +
+  riskAccordionHtml + `
+    ⚠ 40m未満があります<br><br>
+    🔴 20m未満：${displayCounts.dense}件 / 
+    🟠 20〜30m：${displayCounts.stay}件 / 
+    ⚪ 30〜40m：${displayCounts.light}件 / 
+    ℹ 参考：${displayCounts.reference}件
+    <br><br>
+    ${targetWarningListHtml}
+  ` +
+  simpleMapGuideHtml;
+
+renderSimpleDistanceMap(points);
 }
-function renderDistanceMap(existingPoints = [], addPoints = []) {
+function renderSimpleDistanceMap(points = []) {
   const map = document.getElementById("distanceMap");
-if (!map) return;
+  if (!map) return;
 
-map.innerHTML = "";
+  map.innerHTML = "";
 
-if (map.clientWidth <= 600) {
-  return;
+  // スマホでは描画しない
+  if (window.innerWidth <= 720) {
+    return;
+  }
+
+function pickNumber(p, keys) {
+  for (const key of keys) {
+    if (p[key] !== undefined && p[key] !== null && p[key] !== "") {
+      const value = Number(String(p[key]).trim());
+      if (!isNaN(value)) return value;
+    }
+  }
+  return NaN;
 }
-  const points = [
-    ...existingPoints.map(p => ({ ...p, type: "existing" })),
-    ...addPoints.map(p => ({ ...p, type: "add" }))
-  ].filter(p => typeof p.lat === "number" && typeof p.lng === "number");
+const validPoints = points
+  .map(p => ({
+    ...p,
 
-  if (!points.length) {
+    lat: pickNumber(p, [
+      "lat",
+      "latitude",
+      "Latitude",
+      "LAT",
+      "緯度"
+    ]),
+
+    lng: pickNumber(p, [
+      "lng",
+      "lon",
+      "longitude",
+      "Longitude",
+      "LON",
+      "経度"
+    ])
+  }))
+  .filter(p =>
+    !isNaN(p.lat) &&
+    !isNaN(p.lng)
+  );
+
+if (!validPoints.length) {
     map.innerHTML = `
       <div class="distance-map-empty">
         表示できるPOIがありません。
@@ -778,130 +817,78 @@ if (map.clientWidth <= 600) {
     return;
   }
 
-  const legend = document.createElement("div");
-  legend.className = "distance-map-legend";
-  legend.innerHTML = `
-    <div><span class="legend-line dense"></span>20m未満（密集）</div>
-    <div><span class="legend-line stay"></span>20〜30m（滞留）</div>
-    <div><span class="legend-line light"></span>30〜40m（軽微）</div>
-  `;
-  map.appendChild(legend);
-
   const padding = 42;
-const width = map.clientWidth;
-const height = map.clientHeight;
+  const width = map.clientWidth;
+  const height = map.clientHeight;
 
-// 緯度経度をざっくりメートル座標へ変換する
-const meanLat =
-  points.reduce((sum, p) => sum + p.lat, 0) / points.length;
+  const meanLat =
+    validPoints.reduce((sum, p) => sum + p.lat, 0) / validPoints.length;
 
-const metersPerLat = 111320;
-const metersPerLng =
-  111320 * Math.cos(meanLat * Math.PI / 180);
+  const metersPerLat = 111320;
+  const metersPerLng =
+    111320 * Math.cos(meanLat * Math.PI / 180);
 
-const projected = points.map(p => ({
-  ...p,
-  mx: p.lng * metersPerLng,
-  my: p.lat * metersPerLat
-}));
-
-const minX = Math.min(...projected.map(p => p.mx));
-const maxX = Math.max(...projected.map(p => p.mx));
-const minY = Math.min(...projected.map(p => p.my));
-const maxY = Math.max(...projected.map(p => p.my));
-
-const rangeX = maxX - minX || 1;
-const rangeY = maxY - minY || 1;
-
-// 縦横比を維持して、スマホでも引き伸ばさない
-const scale = Math.min(
-  (width - padding * 2) / rangeX,
-  (height - padding * 2) / rangeY
-);
-
-const mapContentWidth = rangeX * scale;
-const mapContentHeight = rangeY * scale;
-
-const offsetX = (width - mapContentWidth) / 2;
-const offsetY = (height - mapContentHeight) / 2;
-
-function toXY(p) {
-  const projectedPoint = {
+  const projected = validPoints.map(p => ({
+    ...p,
     mx: p.lng * metersPerLng,
     my: p.lat * metersPerLat
-  };
+  }));
 
-  const x =
-    offsetX +
-    (projectedPoint.mx - minX) * scale;
-
-  const y =
-    offsetY +
-    mapContentHeight -
-    (projectedPoint.my - minY) * scale;
-
-  return { x, y };
+  function percentile(values, rate) {
+  const sorted = [...values].sort((a, b) => a - b);
+  const index = Math.floor((sorted.length - 1) * rate);
+  return sorted[index];
 }
 
-  points.forEach(p => {
-  p.xy = toXY(p);
-});
+const xs = projected.map(p => p.mx);
+const ys = projected.map(p => p.my);
 
-const isMobileMap = map.clientWidth <= 600;
+// 外れ値に引っ張られないよう、上下2%を除いた範囲で表示
+const minX = percentile(xs, 0.02);
+const maxX = percentile(xs, 0.98);
+const minY = percentile(ys, 0.02);
+const maxY = percentile(ys, 0.98);
 
-if (!isMobileMap) {
-  for (let i = 0; i < points.length; i++) {
-    for (let j = i + 1; j < points.length; j++) {
-      const a = points[i];
-      const b = points[j];
+  const rangeX = maxX - minX || 1;
+  const rangeY = maxY - minY || 1;
 
-      const distance = getDistanceMeters(a, b);
+  const scale = Math.min(
+    (width - padding * 2) / rangeX,
+    (height - padding * 2) / rangeY
+  );
 
-      if (distance >= 40) continue;
+  const mapContentWidth = rangeX * scale;
+  const mapContentHeight = rangeY * scale;
 
-      let riskClass = "light";
-      let labelText = "40m";
+  const offsetX = (width - mapContentWidth) / 2;
+  const offsetY = (height - mapContentHeight) / 2;
 
-      if (distance < 20) {
-        riskClass = "dense";
-        labelText = "20m";
-      } else if (distance < 30) {
-        riskClass = "stay";
-        labelText = "30m";
-      }
+  projected.forEach(p => {
+    const rawX =
+  offsetX +
+  (p.mx - minX) * scale;
 
-      const dx = b.xy.x - a.xy.x;
-      const dy = b.xy.y - a.xy.y;
-      const length = Math.sqrt(dx * dx + dy * dy);
-      const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+const rawY =
+  offsetY +
+  mapContentHeight -
+  (p.my - minY) * scale;
 
-      const line = document.createElement("div");
-      line.className = `distance-map-line ${riskClass}`;
-      line.style.left = `${a.xy.x}px`;
-      line.style.top = `${a.xy.y}px`;
-      line.style.width = `${length}px`;
-      line.style.transform = `rotate(${angle}deg)`;
+const x = Math.max(8, Math.min(width - 8, rawX));
+const y = Math.max(8, Math.min(height - 8, rawY));
 
-      map.appendChild(line);
+    const dot = document.createElement("div");
 
-      const label = document.createElement("div");
-      label.className = `distance-map-label ${riskClass}`;
-      label.textContent = labelText;
-      label.style.left = `${(a.xy.x + b.xy.x) / 2}px`;
-      label.style.top = `${(a.xy.y + b.xy.y) / 2}px`;
+    const isAdd =
+      (p.originalLayer || p.layer || "").includes("追加");
 
-      map.appendChild(label);
-    }
-  }
-}
+    dot.className =
+      `distance-map-point ${isAdd ? "add" : "existing"}`;
 
-points.forEach(p => {
-  const dot = document.createElement("div");
-  dot.className = `distance-map-point ${p.type}`;
-  dot.style.left = `${p.xy.x}px`;
-  dot.style.top = `${p.xy.y}px`;
-  dot.title = `${p.layer || ""}\n${p.name || ""}`;
+    dot.style.left = `${x}px`;
+    dot.style.top = `${y}px`;
 
-  map.appendChild(dot);
-});
+    dot.title = `${p.layer || ""}\n${p.name || ""}`;
+
+    map.appendChild(dot);
+  });
 }
