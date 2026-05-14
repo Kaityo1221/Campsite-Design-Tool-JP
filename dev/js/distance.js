@@ -843,11 +843,22 @@ if (!validPoints.length) {
 const xs = projected.map(p => p.mx);
 const ys = projected.map(p => p.my);
 
-// 外れ値に引っ張られないよう、上下2%を除いた範囲で表示
-const minX = percentile(xs, 0.02);
-const maxX = percentile(xs, 0.98);
-const minY = percentile(ys, 0.02);
-const maxY = percentile(ys, 0.98);
+// 全POIが画面内に入るように範囲を取る
+let minX = Math.min(...xs);
+let maxX = Math.max(...xs);
+let minY = Math.min(...ys);
+let maxY = Math.max(...ys);
+
+// 端のPOIが枠に貼り付かないよう、少し余白を足す
+const marginRate = 0.08;
+
+const marginX = (maxX - minX || 1) * marginRate;
+const marginY = (maxY - minY || 1) * marginRate;
+
+minX -= marginX;
+maxX += marginX;
+minY -= marginY;
+maxY += marginY;
 
   const rangeX = maxX - minX || 1;
   const rangeY = maxY - minY || 1;
@@ -873,8 +884,10 @@ const rawY =
   mapContentHeight -
   (p.my - minY) * scale;
 
-const x = Math.max(8, Math.min(width - 8, rawX));
-const y = Math.max(8, Math.min(height - 8, rawY));
+const edgePadding = 14;
+
+const x = Math.max(edgePadding, Math.min(width - edgePadding, rawX));
+const y = Math.max(edgePadding, Math.min(height - edgePadding, rawY));
 
     const dot = document.createElement("div");
 
