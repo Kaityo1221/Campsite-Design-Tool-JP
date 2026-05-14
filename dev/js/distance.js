@@ -873,7 +873,9 @@ maxY += marginY;
 
   const offsetX = (width - mapContentWidth) / 2;
   const offsetY = (height - mapContentHeight) / 2;
-
+const tooltip = document.createElement("div");
+tooltip.className = "distance-map-tooltip";
+map.appendChild(tooltip);
   projected.forEach(p => {
     const rawX =
   offsetX +
@@ -900,8 +902,21 @@ const y = Math.max(edgePadding, Math.min(height - edgePadding, rawY));
     dot.style.left = `${x}px`;
     dot.style.top = `${y}px`;
 
-    dot.title = `${p.layer || ""}\n${p.name || ""}`;
+    dot.addEventListener("mouseenter", () => {
+  tooltip.innerHTML = `
+    <strong>${p.layer || "POI"}</strong><br>
+    ${p.name || "名称なし"}
+  `;
 
-    map.appendChild(dot);
+  tooltip.style.left = `${x}px`;
+  tooltip.style.top = `${y}px`;
+  tooltip.classList.add("show");
+});
+
+dot.addEventListener("mouseleave", () => {
+  tooltip.classList.remove("show");
+});
+
+map.appendChild(dot);
   });
 }

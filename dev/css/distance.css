@@ -103,3 +103,36 @@
     display: none;
   }
 }
+.distance-map-tooltip {
+  position: absolute;
+  z-index: 20;
+
+  max-width: 260px;
+  padding: 8px 10px;
+  border-radius: 10px;
+
+  background: rgba(2, 6, 23, 0.92);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+
+  color: #e5e7eb;
+  font-size: 12px;
+  line-height: 1.45;
+
+  pointer-events: none;
+
+  box-shadow:
+    0 10px 24px rgba(0,0,0,0.35),
+    0 0 14px rgba(56,189,248,0.18);
+
+  opacity: 0;
+  transform: translate(-50%, -120%);
+  transition: opacity 0.12s ease;
+}
+
+.distance-map-tooltip.show {
+  opacity: 1;
+}
+
+.distance-map-tooltip strong {
+  color: #38bdf8;
+}
