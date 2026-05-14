@@ -683,7 +683,7 @@ const adjustableCount = displayCounts.light;
   `;
 const simpleMapGuideHtml = `
   <div class="distance-warning">
-    PC版では、読み込んだPOIの分布を簡易マップとして表示します。<br>
+    PC版のみ、読み込んだPOIの分布を簡易マップとして表示しています。<br>
     青：既存POI ／ オレンジ：追加希望POI
   </div><br>
 `;
