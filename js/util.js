@@ -276,7 +276,7 @@ function removeDuplicate(points) {
       const lat = Number(point.lat).toFixed(7);
       const lng = Number(point.lng).toFixed(7);
       const name = point.name ? String(point.name).trim() : "";
-      key = `pos:${lat},${lng},${name}`;
+      key = `coord:${lat},${lng}`;
     } else {
       key = JSON.stringify(point);
     }
