@@ -542,3 +542,121 @@ if (topAreas.length === 0) {
     `;
   }
 }
+async function generateDensityAreaKMZ() {
+
+  const densityAreas = window._densityAreas || [];
+
+  if (!densityAreas.length) {
+    alert("先に密集エリアチェックを実行してください");
+    return;
+  }
+
+  const radius =
+    Number(document.getElementById("adminDensityRadius").value) || 100;
+
+  let kml = `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+<Document>
+
+<name>密集エリアチェック</name>
+
+<Style id="densityCircle">
+  <LineStyle>
+    <color>ff0000ff</color>
+    <width>3</width>
+  </LineStyle>
+
+  <PolyStyle>
+    <color>440000ff</color>
+  </PolyStyle>
+</Style>
+
+`;
+
+  densityAreas.forEach((area, index) => {
+
+    const lat = area.lat || area.center?.lat;
+    const lng = area.lng || area.center?.lng;
+
+    if (!lat || !lng) return;
+
+    const count =
+      area.count ||
+      area.points?.length ||
+      0;
+
+    const existing =
+      area.existingCount || 0;
+
+    const add =
+      area.addCount || 0;
+
+    const comment =
+      count >= 18
+        ? "かなり集中しています。集合・滞留に注意してください。"
+        : count >= 12
+        ? "やや密集しています。現地状況の確認を推奨します。"
+        : "密集候補です。";
+
+    const circleCoords = createCircleCoordinates(
+      lat,
+      lng,
+      radius
+    );
+
+    kml += `
+<Placemark>
+
+<name>密集エリア${index + 1}</name>
+
+<description><![CDATA[
+半径${radius}m以内：${count}件<br>
+既存POI：${existing}件<br>
+追加希望POI：${add}件<br><br>
+${comment}
+]]></description>
+
+<styleUrl>#densityCircle</styleUrl>
+
+<Polygon>
+  <outerBoundaryIs>
+    <LinearRing>
+      <coordinates>
+        ${circleCoords}
+      </coordinates>
+    </LinearRing>
+  </outerBoundaryIs>
+</Polygon>
+
+</Placemark>
+`;
+  });
+
+  kml += `
+</Document>
+</kml>
+`;
+
+  const zip = new JSZip();
+
+  zip.file("doc.kml", kml);
+
+  const blob = await zip.generateAsync({
+    type: "blob",
+    mimeType: "application/vnd.google-earth.kmz"
+  });
+
+  const a = document.createElement("a");
+
+  a.href = URL.createObjectURL(blob);
+
+  a.download = "density-area-check.kmz";
+
+  document.body.appendChild(a);
+
+  a.click();
+
+  document.body.removeChild(a);
+
+  URL.revokeObjectURL(a.href);
+}
