@@ -4,7 +4,13 @@ function classifyDistanceRisk(distance) {
   if (distance < 40) return "軽微";
   return null;
 }
-
+function isDistanceTargetLayer(layerName) {
+  return (
+    layerName.includes("既存") ||
+    layerName.includes("追加") ||
+    layerName.includes("希望")
+  );
+}
 async function loadDistanceFile() {
   const fileInput = document.getElementById("distanceFile");
   const container = document.getElementById("distanceLayerList");
