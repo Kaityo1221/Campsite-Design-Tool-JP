@@ -585,11 +585,18 @@ async function generateDensityAreaKMZ() {
       area.points?.length ||
       0;
 
-    const existing =
-      area.existingCount || 0;
+    let existing = 0;
+let add = 0;
 
-    const add =
-      area.addCount || 0;
+area.nearby.forEach(p => {
+  const info = getAdminLayerInfo(p.layer || "");
+
+  if (info.isAdd) {
+    add++;
+  } else if (info.isExisting) {
+    existing++;
+  }
+});
 
     const comment =
       count >= 18
@@ -659,4 +666,31 @@ ${comment}
   document.body.removeChild(a);
 
   URL.revokeObjectURL(a.href);
+}
+function createCircleCoordinates(lat, lng, radius) {
+
+  const coords = [];
+
+  const earthRadius = 6378137;
+
+  for (let i = 0; i <= 360; i += 8) {
+
+    const angle = i * Math.PI / 180;
+
+    const dx = radius * Math.cos(angle);
+    const dy = radius * Math.sin(angle);
+
+    const newLat =
+      lat + (dy / earthRadius) * (180 / Math.PI);
+
+    const newLng =
+      lng +
+      (dx / earthRadius) *
+      (180 / Math.PI) /
+      Math.cos(lat * Math.PI / 180);
+
+    coords.push(`${newLng},${newLat},0`);
+  }
+
+  return coords.join(" ");
 }
