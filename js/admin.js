@@ -543,7 +543,6 @@ if (topAreas.length === 0) {
   }
 }
 async function generateDensityAreaKMZ() {
-
   const densityAreas = window._densityAreas || [];
 
   if (!densityAreas.length) {
@@ -552,100 +551,84 @@ async function generateDensityAreaKMZ() {
   }
 
   const radius =
-    Number(document.getElementById("adminDensityRadius").value) || 100;
+    Number(document.getElementById("adminDensityRadius")?.value || 100);
 
   let kml = `<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2">
 <Document>
-
 <name>密集エリアチェック</name>
 
 <Style id="densityCircle">
   <LineStyle>
     <color>ff0000ff</color>
-    <width>3</width>
+    <width>4</width>
   </LineStyle>
-
   <PolyStyle>
-    <color>440000ff</color>
+    <color>330000ff</color>
+    <fill>1</fill>
+    <outline>1</outline>
   </PolyStyle>
 </Style>
-
 `;
 
   densityAreas.forEach((area, index) => {
+    const center = area.center || area;
 
-    const lat = area.lat || area.center?.lat;
-    const lng = area.lng || area.center?.lng;
+    const lat = Number(center.lat);
+    const lng = Number(center.lng);
 
-    if (!lat || !lng) return;
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      console.warn("密集エリアの座標が取得できません", area);
+      return;
+    }
 
-    const count =
-      area.count ||
-      area.points?.length ||
-      0;
+    const count = area.count || area.nearby?.length || 0;
 
     let existing = 0;
-let add = 0;
+    let add = 0;
 
-area.nearby.forEach(p => {
-  const info = getAdminLayerInfo(p.layer || "");
+    (area.nearby || []).forEach(p => {
+      const info = getAdminLayerInfo(p.layer || "");
 
-  if (info.isAdd) {
-    add++;
-  } else if (info.isExisting) {
-    existing++;
-  }
-});
+      if (info.isAdd) {
+        add++;
+      } else if (info.isExisting) {
+        existing++;
+      }
+    });
 
-    const comment =
-      count >= 18
-        ? "かなり集中しています。集合・滞留に注意してください。"
-        : count >= 12
-        ? "やや密集しています。現地状況の確認を推奨します。"
-        : "密集候補です。";
+    const rank = getDensityRank(count);
 
-    const circleCoords = createCircleCoordinates(
-      lat,
-      lng,
-      radius
-    );
+    const circleCoords = createCircleCoordinates(lat, lng, radius);
 
     kml += `
 <Placemark>
-
-<name>密集エリア${index + 1}</name>
-
-<description><![CDATA[
-半径${radius}m以内：${count}件<br>
+  <name>密集エリア${index + 1}：${rank.label}</name>
+  <description><![CDATA[
+中心候補：${center.name || "不明"}<br>
+判定半径：${radius}m<br>
+半径内POI：${count}件<br>
 既存POI：${existing}件<br>
 追加希望POI：${add}件<br><br>
-${comment}
-]]></description>
-
-<styleUrl>#densityCircle</styleUrl>
-
-<Polygon>
-  <outerBoundaryIs>
-    <LinearRing>
-      <coordinates>
-        ${circleCoords}
-      </coordinates>
-    </LinearRing>
-  </outerBoundaryIs>
-</Polygon>
-
+${rank.message}
+  ]]></description>
+  <styleUrl>#densityCircle</styleUrl>
+  <Polygon>
+    <outerBoundaryIs>
+      <LinearRing>
+        <coordinates>${circleCoords}</coordinates>
+      </LinearRing>
+    </outerBoundaryIs>
+  </Polygon>
 </Placemark>
 `;
   });
 
   kml += `
 </Document>
-</kml>
-`;
+</kml>`;
 
   const zip = new JSZip();
-
   zip.file("doc.kml", kml);
 
   const blob = await zip.generateAsync({
@@ -654,17 +637,11 @@ ${comment}
   });
 
   const a = document.createElement("a");
-
   a.href = URL.createObjectURL(blob);
-
   a.download = "density-area-check.kmz";
-
   document.body.appendChild(a);
-
   a.click();
-
   document.body.removeChild(a);
-
   URL.revokeObjectURL(a.href);
 }
 function createCircleCoordinates(lat, lng, radius) {
