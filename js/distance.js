@@ -552,7 +552,12 @@ async function runDistanceCheck() {
     for (let j = i + 1; j < points.length; j++) {
       const a = points[i];
       const b = points[j];
-
+　　　　if (
+  !isDistanceTargetLayer(a.layer || "") ||
+  !isDistanceTargetLayer(b.layer || "")
+) {
+  continue;
+}
       const distance = getDistanceMeters(a, b);
 
       if (distance < 40) {
