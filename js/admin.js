@@ -435,7 +435,9 @@ async function runAdminDensityCheck() {
 
     const topAreas = pickedAreas.slice(0, 10);
 
-    if (topAreas.length === 0) {
+window._densityAreas = topAreas;
+
+if (topAreas.length === 0) {
       result.innerHTML = `
         <div class="distance-warning" style="
           background:rgba(34,197,94,0.12);
