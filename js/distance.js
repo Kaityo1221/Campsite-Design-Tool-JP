@@ -553,8 +553,8 @@ async function runDistanceCheck() {
       const a = points[i];
       const b = points[j];
 　　　　if (
-  !isDistanceTargetLayer(a.layer || "") ||
-  !isDistanceTargetLayer(b.layer || "")
+  !isDistanceTargetLayer(a.originalLayer || "") ||
+  !isDistanceTargetLayer(b.originalLayer || "")
 ) {
   continue;
 }
