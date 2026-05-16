@@ -8,7 +8,7 @@ function isDistanceTargetLayer(layerName) {
   return (
     layerName.includes("既存") ||
     layerName.includes("追加") ||
-    layerName.includes("希望")
+    layerName.includes("追加希望")
   );
 }
 async function loadDistanceFile() {
