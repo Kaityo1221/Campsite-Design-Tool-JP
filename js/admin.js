@@ -1,3 +1,4 @@
+window._densityAreas = [];
 function escapeAdminHtml(text) {
   return String(text || "")
     .replace(/&/g, "&amp;")
