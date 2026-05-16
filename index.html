@@ -436,6 +436,7 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
         border:1px solid #475569;
       ">
         <option value="50">50m</option>
+        <option value="80">80m</option>
         <option value="100" selected>100m</option>
         <option value="150">150m</option>
         <option value="200">200m</option>
@@ -444,10 +445,18 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
   </div>
 
   <button class="generate" onclick="runAdminDensityCheck()">
-    密集エリアをチェック
-  </button>
+  密集エリアをチェック
+</button>
 
-  <div id="adminDensityResult"></div>
+<button
+  class="generate"
+  onclick="generateDensityAreaKMZ()"
+  style="margin-top:10px;"
+>
+  密集エリアKMZを生成
+</button>
+
+<div id="adminDensityResult"></div>
 </div>
   </div>
 </section>
@@ -774,7 +783,7 @@ Userscriptsをインストール
 <script src="js/util.js?v=10"></script>
 <script src="js/tabs.js"></script>
 <script src="js/distance.js?v=21"></script>
-<script src="js/admin.js"></script>
+<script src="js/admin.js?v=3"></script>
 <script src="js/main.js?v=38"></script>
 <script src="js/kmz.js?v=11"></script>
 </body>

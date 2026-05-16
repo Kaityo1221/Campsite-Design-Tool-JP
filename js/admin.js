@@ -1,3 +1,4 @@
+window._densityAreas = [];
 function escapeAdminHtml(text) {
   return String(text || "")
     .replace(/&/g, "&amp;")
@@ -434,7 +435,9 @@ async function runAdminDensityCheck() {
 
     const topAreas = pickedAreas.slice(0, 10);
 
-    if (topAreas.length === 0) {
+window._densityAreas = topAreas;
+
+if (topAreas.length === 0) {
       result.innerHTML = `
         <div class="distance-warning" style="
           background:rgba(34,197,94,0.12);
@@ -538,4 +541,133 @@ async function runAdminDensityCheck() {
       </div>
     `;
   }
+}
+async function generateDensityAreaKMZ() {
+  const densityAreas = window._densityAreas || [];
+
+  if (!densityAreas.length) {
+    alert("先に密集エリアチェックを実行してください");
+    return;
+  }
+
+  const radius =
+    Number(document.getElementById("adminDensityRadius")?.value || 100);
+
+  let kml = `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+<Document>
+<name>密集エリアチェック</name>
+
+<Style id="densityCircle">
+  <LineStyle>
+    <color>ff0000ff</color>
+    <width>4</width>
+  </LineStyle>
+  <PolyStyle>
+    <color>330000ff</color>
+    <fill>1</fill>
+    <outline>1</outline>
+  </PolyStyle>
+</Style>
+`;
+
+  densityAreas.forEach((area, index) => {
+    const center = area.center || area;
+
+    const lat = Number(center.lat);
+    const lng = Number(center.lng);
+
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      console.warn("密集エリアの座標が取得できません", area);
+      return;
+    }
+
+    const count = area.count || area.nearby?.length || 0;
+
+    let existing = 0;
+    let add = 0;
+
+    (area.nearby || []).forEach(p => {
+      const info = getAdminLayerInfo(p.layer || "");
+
+      if (info.isAdd) {
+        add++;
+      } else if (info.isExisting) {
+        existing++;
+      }
+    });
+
+    const rank = getDensityRank(count);
+
+    const circleCoords = createCircleCoordinates(lat, lng, radius);
+
+    kml += `
+<Placemark>
+  <name>密集エリア${index + 1}：${rank.label}</name>
+  <description><![CDATA[
+中心候補：${center.name || "不明"}<br>
+判定半径：${radius}m<br>
+半径内POI：${count}件<br>
+既存POI：${existing}件<br>
+追加希望POI：${add}件<br><br>
+${rank.message}
+  ]]></description>
+  <styleUrl>#densityCircle</styleUrl>
+  <Polygon>
+    <outerBoundaryIs>
+      <LinearRing>
+        <coordinates>${circleCoords}</coordinates>
+      </LinearRing>
+    </outerBoundaryIs>
+  </Polygon>
+</Placemark>
+`;
+  });
+
+  kml += `
+</Document>
+</kml>`;
+
+  const zip = new JSZip();
+  zip.file("doc.kml", kml);
+
+  const blob = await zip.generateAsync({
+    type: "blob",
+    mimeType: "application/vnd.google-earth.kmz"
+  });
+
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "density-area-check.kmz";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+}
+function createCircleCoordinates(lat, lng, radius) {
+
+  const coords = [];
+
+  const earthRadius = 6378137;
+
+  for (let i = 0; i <= 360; i += 8) {
+
+    const angle = i * Math.PI / 180;
+
+    const dx = radius * Math.cos(angle);
+    const dy = radius * Math.sin(angle);
+
+    const newLat =
+      lat + (dy / earthRadius) * (180 / Math.PI);
+
+    const newLng =
+      lng +
+      (dx / earthRadius) *
+      (180 / Math.PI) /
+      Math.cos(lat * Math.PI / 180);
+
+    coords.push(`${newLng},${newLat},0`);
+  }
+
+  return coords.join(" ");
 }
