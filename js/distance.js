@@ -4,7 +4,13 @@ function classifyDistanceRisk(distance) {
   if (distance < 40) return "軽微";
   return null;
 }
-
+function isDistanceTargetLayer(layerName) {
+  return (
+    layerName.includes("既存") ||
+    layerName.includes("追加") ||
+    layerName.includes("追加希望")
+  );
+}
 async function loadDistanceFile() {
   const fileInput = document.getElementById("distanceFile");
   const container = document.getElementById("distanceLayerList");
@@ -546,7 +552,12 @@ async function runDistanceCheck() {
     for (let j = i + 1; j < points.length; j++) {
       const a = points[i];
       const b = points[j];
-
+　　　　if (
+  !isDistanceTargetLayer(a.originalLayer || "") ||
+  !isDistanceTargetLayer(b.originalLayer || "")
+) {
+  continue;
+}
       const distance = getDistanceMeters(a, b);
 
       if (distance < 40) {
