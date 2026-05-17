@@ -204,7 +204,8 @@ if (duplicateInfo.duplicateCoordGroups.length > 0) {
     `;
   }).join("");
 
-  cautionMessages.push(`
+  cautionMessages.push({
+  html: `
     <div class="admin-danger-pulse" style="
       margin-top:10px;
       padding:10px 12px;
@@ -219,8 +220,8 @@ if (duplicateInfo.duplicateCoordGroups.length > 0) {
         </div>
       </details>
     </div>
-  `);
-}
+  `
+});
 const counts = {
   pokestop: 0,
   gym: 0,
@@ -296,7 +297,10 @@ existingPoints.forEach(p => {
         color:#fed7aa;
       ">
         <strong>確認ポイント</strong><br>
-        ${cautionMessages.map(m => String(m).trim().startsWith("<") ? m : "・" + escapeAdminHtml(m)).join("<br>")}
+        ${cautionMessages.map(m => {
+  if (typeof m === "object" && m.html) return m.html;
+  return "・" + escapeAdminHtml(m);
+}).join("<br>")}
       </div>
     `;
 
