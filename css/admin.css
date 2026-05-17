@@ -28,3 +28,24 @@
   box-shadow: 0 16px 40px rgba(0,0,0,0.45);
 }
 
+@keyframes adminDangerPulse {
+  0% {
+    box-shadow: 0 0 0 rgba(239,68,68,0);
+    background: rgba(239,68,68,0.10);
+  }
+
+  50% {
+    box-shadow: 0 0 18px rgba(239,68,68,0.55);
+    background: rgba(239,68,68,0.22);
+  }
+
+  100% {
+    box-shadow: 0 0 0 rgba(239,68,68,0);
+    background: rgba(239,68,68,0.10);
+  }
+}
+.admin-danger-pulse {
+  animation: adminDangerPulse 1.2s infinite;
+  border: 1px solid rgba(239,68,68,0.55);
+}
+
