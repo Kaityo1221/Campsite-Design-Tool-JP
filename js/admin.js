@@ -296,7 +296,7 @@ existingPoints.forEach(p => {
         color:#fed7aa;
       ">
         <strong>確認ポイント</strong><br>
-        ${cautionMessages.map(m => String(m).startsWith("<") ? m : "・" + escapeAdminHtml(m)).join("<br>")}
+        ${cautionMessages.map(m => String(m).trim().startsWith("<") ? m : "・" + escapeAdminHtml(m)).join("<br>")}
       </div>
     `;
 
