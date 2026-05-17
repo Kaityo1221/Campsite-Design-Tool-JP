@@ -222,6 +222,7 @@ if (duplicateInfo.duplicateCoordGroups.length > 0) {
     </div>
   `
 });
+
 }
 const counts = {
   pokestop: 0,
