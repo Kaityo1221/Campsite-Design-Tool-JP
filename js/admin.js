@@ -222,6 +222,7 @@ if (duplicateInfo.duplicateCoordGroups.length > 0) {
     </div>
   `
 });
+}
 const counts = {
   pokestop: 0,
   gym: 0,
@@ -298,7 +299,6 @@ existingPoints.forEach(p => {
       ">
         <strong>確認ポイント</strong><br>
         ${cautionMessages.map(m => {
-  ${cautionMessages.map(m => {
   if (typeof m === "object" && m.html) {
     return m.html;
   }
