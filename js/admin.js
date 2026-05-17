@@ -298,7 +298,11 @@ existingPoints.forEach(p => {
       ">
         <strong>確認ポイント</strong><br>
         ${cautionMessages.map(m => {
-  if (typeof m === "object" && m.html) return m.html;
+  ${cautionMessages.map(m => {
+  if (typeof m === "object" && m.html) {
+    return m.html;
+  }
+
   return "・" + escapeAdminHtml(m);
 }).join("<br>")}
       </div>
