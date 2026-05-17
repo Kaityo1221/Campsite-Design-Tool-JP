@@ -60,7 +60,34 @@ function getAdminLayerInfo(layerName) {
     isPower
   };
 }
+function analyzePoiDuplicates(points) {
+  const nameMap = new Map();
+  const coordMap = new Map();
+  const fullMap = new Map();
 
+  points.forEach(p => {
+    if (isDummyPoint(p)) return;
+
+    const name = (p.name || "").trim();
+    const lat = Number(p.lat);
+    const lng = Number(p.lng);
+
+    if (!name || !Number.isFinite(lat) || !Number.isFinite(lng)) return;
+
+    const coord = `${lat.toFixed(6)},${lng.toFixed(6)}`;
+    const full = `${name}_${coord}`;
+
+    nameMap.set(name, (nameMap.get(name) || 0) + 1);
+    coordMap.set(coord, (coordMap.get(coord) || 0) + 1);
+    fullMap.set(full, (fullMap.get(full) || 0) + 1);
+  });
+
+  return {
+    duplicateNames: [...nameMap.values()].filter(v => v >= 2).length,
+    duplicateCoords: [...coordMap.values()].filter(v => v >= 2).length,
+    duplicateFull: [...fullMap.values()].filter(v => v >= 2).length
+  };
+}
 async function runAdminFileCheck() {
   const input = document.getElementById("adminCheckFile");
   const result = document.getElementById("adminCheckResult");
@@ -145,13 +172,28 @@ async function runAdminFileCheck() {
     const addLayers = layerSummary.filter(l => l.isAdd);
     const existingLayers = layerSummary.filter(l => l.isExisting);
 
-    const usablePoints = allPoints.filter(p => !isDummyPoint(p));
+ const usablePoints = allPoints.filter(p => !isDummyPoint(p));
 
 const existingPoints = usablePoints.filter(p => {
   const info = getAdminLayerInfo(p.layer);
   return info.isExisting;
 });
 
+const cautionMessages = [];
+
+const duplicateInfo = analyzePoiDuplicates(usablePoints);
+
+if (duplicateInfo.duplicateNames > 0) {
+  cautionMessages.push(`同名POI：${duplicateInfo.duplicateNames}件`);
+}
+
+if (duplicateInfo.duplicateCoords > 0) {
+  cautionMessages.push(`同座標POI：${duplicateInfo.duplicateCoords}件`);
+}
+
+if (duplicateInfo.duplicateFull > 0) {
+  cautionMessages.push(`名前・座標完全一致：${duplicateInfo.duplicateFull}件`);
+}
 const counts = {
   pokestop: 0,
   gym: 0,
@@ -193,7 +235,6 @@ existingPoints.forEach(p => {
       `;
     }).join("");
 
-    const cautionMessages = [];
 
     if (circleLayers.length > 0) {
       cautionMessages.push("円レイヤーあり：再生成時は古い円レイヤーの扱いに注意");
