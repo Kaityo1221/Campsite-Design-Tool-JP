@@ -11,6 +11,7 @@ function isDistanceTargetLayer(layerName) {
     layerName.includes("追加希望")
   );
 }
+
 async function loadDistanceFile() {
   const fileInput = document.getElementById("distanceFile");
   const container = document.getElementById("distanceLayerList");
