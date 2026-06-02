@@ -247,7 +247,10 @@ function backToOpening() {
   const sheepTapArea = document.getElementById("sheepTapArea");
   const toolsArea = document.querySelector(".sign-tools");
   const glow = document.getElementById("sceneMagicGlow");
+const openingWrap = document.querySelector(".opening-scene-wrap");
+openingWrap?.classList.remove("is-right");
 
+document.getElementById("soulIcon")?.classList.remove("show");
   if (!opening) return;
 
   openingSceneChanged = false;
