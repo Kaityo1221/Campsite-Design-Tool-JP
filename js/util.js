@@ -12,18 +12,26 @@ window.checkQuiz = function () {
   const q1 = document.querySelector('input[name="q1"]:checked')?.value;
   const q2 = document.querySelector('input[name="q2"]:checked')?.value;
   const q3 = document.querySelector('input[name="q3"]:checked')?.value;
+  const q4 = document.querySelector('input[name="q4"]:checked')?.value;
+  const q5 = document.querySelector('input[name="q5"]:checked')?.value;
 
-  if (!q1 || !q2 || !q3) {
+  if (!q1 || !q2 || !q3 || !q4 || !q5) {
     alert("すべて選択してください");
     return;
   }
 
-  if (q1 === "40" && q2 === "hard" && q3 === "25") {
+  if (
+    q1 === "a" &&
+    q2 === "tap" &&
+    q3 === "none" &&
+    q4 === "25" &&
+    q5 === "safe"
+  ) {
     localStorage.setItem("quizPassed", window.QUIZ_VERSION);
     document.getElementById("quizModal").style.display = "none";
     alert("✔ 利用準備OK！ツールを使えます");
   } else {
-    alert("もう一度確認してください\nヒント：基本距離は40mです");
+    alert("もう一度確認してください\nヒント：このツールはPOIを増やすためではなく、安全で快適な設計のために使います");
   }
 }
 function showLoading(text = "読み込み中…") {
