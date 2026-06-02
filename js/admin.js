@@ -186,8 +186,9 @@ const duplicateInfo = analyzePoiDuplicates(usablePoints);
 if (duplicateInfo.duplicateCoordGroups.length > 0) {
   if (navigator.vibrate) {
     navigator.vibrate([120, 80, 120]);
+  } else {
+    console.log("この端末はバイブ通知に対応していません");
   }
-
   const duplicateDetailsHtml = duplicateInfo.duplicateCoordGroups.map(([coord, items], index) => {
     const poiList = items.map(p => {
       return `・${escapeAdminHtml(p.name || "名称なし")} <span style="opacity:0.7;">(${escapeAdminHtml(p.layer || "不明")})</span>`;
