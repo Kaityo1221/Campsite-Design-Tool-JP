@@ -132,7 +132,7 @@ body.opening-mode .container {
 .sheep-tap-area {
   position: absolute;
   left: 42%;
-  bottom: 18%;
+  bottom: 19%;
   width: 39%;
   height: 35%;
 
@@ -148,10 +148,10 @@ body.opening-mode .container {
   position: absolute;
 
   left: 21%;
-  bottom: 12%;
+  bottom: 11%;
 
   width: 57.5%;
-  height: 8%;
+  height: 7.5%;
 
   border: none;
   background: transparent;
