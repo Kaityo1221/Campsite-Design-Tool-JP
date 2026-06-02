@@ -183,16 +183,46 @@ const cautionMessages = [];
 
 const duplicateInfo = analyzePoiDuplicates(usablePoints);
 
-if (duplicateInfo.duplicateNames > 0) {
-  cautionMessages.push(`同名POI：${duplicateInfo.duplicateNames}件`);
-}
+if (duplicateInfo.duplicateCoordGroups.length > 0) {
+  if (navigator.vibrate) {
+    navigator.vibrate([120, 80, 120]);
+  }
 
-if (duplicateInfo.duplicateCoords > 0) {
-  cautionMessages.push(`同座標POI：${duplicateInfo.duplicateCoords}件`);
-}
+  const duplicateDetailsHtml = duplicateInfo.duplicateCoordGroups.map(([coord, items], index) => {
+    const poiList = items.map(p => {
+      return `・${escapeAdminHtml(p.name || "名称なし")} <span style="opacity:0.7;">(${escapeAdminHtml(p.layer || "不明")})</span>`;
+    }).join("<br>");
 
-if (duplicateInfo.duplicateFull > 0) {
-  cautionMessages.push(`名前・座標完全一致：${duplicateInfo.duplicateFull}件`);
+    return `
+      <details style="margin-top:8px;">
+        <summary style="cursor:pointer; font-weight:bold;">
+          グループ${index + 1}：${escapeAdminHtml(coord)}（${items.length}件）
+        </summary>
+        <div style="margin-top:6px; line-height:1.7;">
+          ${poiList}
+        </div>
+      </details>
+    `;
+  }).join("");
+
+  cautionMessages.push({
+    html: `
+      <div class="admin-danger-pulse" style="
+        margin-top:10px;
+        padding:10px 12px;
+        border-radius:12px;
+      ">
+        <details>
+          <summary style="cursor:pointer; font-weight:bold; color:#fecaca;">
+            🚨 座標完全一致 ${duplicateInfo.duplicateCoordGroups.length}グループ
+          </summary>
+          <div style="margin-top:8px;">
+            ${duplicateDetailsHtml}
+          </div>
+        </details>
+      </div>
+    `
+  });
 }
 const counts = {
   pokestop: 0,
@@ -269,7 +299,13 @@ existingPoints.forEach(p => {
         color:#fed7aa;
       ">
         <strong>確認ポイント</strong><br>
-        ${cautionMessages.map(m => "・" + escapeAdminHtml(m)).join("<br>")}
+        ${cautionMessages.map(m => {
+  if (typeof m === "object" && m.html) {
+    return m.html;
+  }
+
+  return "・" + escapeAdminHtml(m);
+}).join("<br>")}
       </div>
     `;
 
