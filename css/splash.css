@@ -132,7 +132,7 @@ body.opening-mode .container {
 .sheep-tap-area {
   position: absolute;
   left: 36%;
-  bottom: 23%;
+  bottom: 26%;
   width: 38%;
   height: 35%;
 
@@ -240,7 +240,7 @@ body.opening-mode .container {
 
 /* 位置調整 */
 .sign-howto {
-  top: 29.0%;
+  top: 29.5%;
 }
 
 .sign-script {
