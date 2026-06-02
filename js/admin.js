@@ -61,33 +61,33 @@ function getAdminLayerInfo(layerName) {
   };
 }
 function analyzePoiDuplicates(points) {
-  const nameMap = new Map();
   const coordMap = new Map();
-  const fullMap = new Map();
 
   points.forEach(p => {
     if (isDummyPoint(p)) return;
 
-    const name = (p.name || "").trim();
     const lat = Number(p.lat);
     const lng = Number(p.lng);
 
-    if (!name || !Number.isFinite(lat) || !Number.isFinite(lng)) return;
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
 
     const coord = `${lat.toFixed(6)},${lng.toFixed(6)}`;
-    const full = `${name}_${coord}`;
 
-    nameMap.set(name, (nameMap.get(name) || 0) + 1);
-    coordMap.set(coord, (coordMap.get(coord) || 0) + 1);
-    fullMap.set(full, (fullMap.get(full) || 0) + 1);
+    if (!coordMap.has(coord)) {
+      coordMap.set(coord, []);
+    }
+
+    coordMap.get(coord).push(p);
   });
 
+  const duplicateCoordGroups = [...coordMap.entries()]
+    .filter(([coord, items]) => items.length >= 2);
+
   return {
-    duplicateNames: [...nameMap.values()].filter(v => v >= 2).length,
-    duplicateCoords: [...coordMap.values()].filter(v => v >= 2).length,
-    duplicateFull: [...fullMap.values()].filter(v => v >= 2).length
+    duplicateCoordGroups
   };
 }
+
 async function runAdminFileCheck() {
   const input = document.getElementById("adminCheckFile");
   const result = document.getElementById("adminCheckResult");
@@ -183,16 +183,52 @@ const cautionMessages = [];
 
 const duplicateInfo = analyzePoiDuplicates(usablePoints);
 
-if (duplicateInfo.duplicateNames > 0) {
-  cautionMessages.push(`同名POI：${duplicateInfo.duplicateNames}件`);
-}
+if (duplicateInfo.duplicateCoordGroups.length > 0) {
+  document.body.classList.add("admin-alert");
 
-if (duplicateInfo.duplicateCoords > 0) {
-  cautionMessages.push(`同座標POI：${duplicateInfo.duplicateCoords}件`);
-}
+setTimeout(() => {
+  document.body.classList.remove("admin-alert");
+}, 1000);
+  if (navigator.vibrate) {
+    navigator.vibrate([120, 80, 120]);
+  } else {
+    console.log("この端末はバイブ通知に対応していません");
+  }
+  const duplicateDetailsHtml = duplicateInfo.duplicateCoordGroups.map(([coord, items], index) => {
+    const poiList = items.map(p => {
+      return `・${escapeAdminHtml(p.name || "名称なし")} <span style="opacity:0.7;">(${escapeAdminHtml(p.layer || "不明")})</span>`;
+    }).join("<br>");
 
-if (duplicateInfo.duplicateFull > 0) {
-  cautionMessages.push(`名前・座標完全一致：${duplicateInfo.duplicateFull}件`);
+    return `
+      <details style="margin-top:8px;">
+        <summary style="cursor:pointer; font-weight:bold;">
+          グループ${index + 1}：${escapeAdminHtml(coord)}（${items.length}件）
+        </summary>
+        <div style="margin-top:6px; line-height:1.7;">
+          ${poiList}
+        </div>
+      </details>
+    `;
+  }).join("");
+
+  cautionMessages.push({
+    html: `
+      <div class="admin-danger-pulse" style="
+        margin-top:10px;
+        padding:10px 12px;
+        border-radius:12px;
+      ">
+        <details>
+          <summary style="cursor:pointer; font-weight:bold; color:#fecaca;">
+            🚨 座標完全一致 ${duplicateInfo.duplicateCoordGroups.length}グループ
+          </summary>
+          <div style="margin-top:8px;">
+            ${duplicateDetailsHtml}
+          </div>
+        </details>
+      </div>
+    `
+  });
 }
 const counts = {
   pokestop: 0,
@@ -269,7 +305,13 @@ existingPoints.forEach(p => {
         color:#fed7aa;
       ">
         <strong>確認ポイント</strong><br>
-        ${cautionMessages.map(m => "・" + escapeAdminHtml(m)).join("<br>")}
+        ${cautionMessages.map(m => {
+  if (typeof m === "object" && m.html) {
+    return m.html;
+  }
+
+  return "・" + escapeAdminHtml(m);
+}).join("<br>")}
       </div>
     `;
 
