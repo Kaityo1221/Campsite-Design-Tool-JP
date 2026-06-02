@@ -774,3 +774,26 @@ button.generate:active {
     inset 0 4px 10px rgba(28, 15, 9, 0.55),
     0 6px 14px rgba(0, 0, 0, 0.28);
 }
+.manual-btn{
+  display:block;
+  width:100%;
+  text-align:center;
+
+  padding:16px;
+
+  border-radius:16px;
+
+  color:white;
+  text-decoration:none;
+  font-weight:700;
+
+  background:linear-gradient(
+    90deg,
+    #4f8cff,
+    #8b5cf6,
+    #ec4899
+  );
+
+  box-shadow:
+    0 0 20px rgba(139,92,246,.35);
+}
