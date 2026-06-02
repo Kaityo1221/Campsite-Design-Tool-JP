@@ -184,6 +184,11 @@ const cautionMessages = [];
 const duplicateInfo = analyzePoiDuplicates(usablePoints);
 
 if (duplicateInfo.duplicateCoordGroups.length > 0) {
+  document.body.classList.add("admin-alert");
+
+setTimeout(() => {
+  document.body.classList.remove("admin-alert");
+}, 1000);
   if (navigator.vibrate) {
     navigator.vibrate([120, 80, 120]);
   } else {
