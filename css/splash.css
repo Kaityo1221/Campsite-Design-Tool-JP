@@ -227,7 +227,7 @@ body.opening-mode .container {
   position: absolute;
 
   left: 0%;
-  width: 39%;
+  width: 36%;
   height: 4.7%;
 
   border: none;
@@ -267,7 +267,7 @@ body.opening-mode .container {
 }
 .camp-secret-button{
   position:absolute;
-  left:41%;
+  left:38%;
   top:67%;
   width:52px;
   height:52px;
