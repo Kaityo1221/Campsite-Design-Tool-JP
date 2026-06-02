@@ -131,9 +131,9 @@ body.opening-mode .container {
 /* 羊タップ範囲 */
 .sheep-tap-area {
   position: absolute;
-  left: 36%;
-  bottom: 20%;
-  width: 38%;
+  left: 40%;
+  bottom: 26%;
+  width: 34%;
   height: 35%;
 
   border: none;
