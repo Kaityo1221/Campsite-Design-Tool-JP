@@ -61,33 +61,33 @@ function getAdminLayerInfo(layerName) {
   };
 }
 function analyzePoiDuplicates(points) {
-  const nameMap = new Map();
   const coordMap = new Map();
-  const fullMap = new Map();
 
   points.forEach(p => {
     if (isDummyPoint(p)) return;
 
-    const name = (p.name || "").trim();
     const lat = Number(p.lat);
     const lng = Number(p.lng);
 
-    if (!name || !Number.isFinite(lat) || !Number.isFinite(lng)) return;
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
 
     const coord = `${lat.toFixed(6)},${lng.toFixed(6)}`;
-    const full = `${name}_${coord}`;
 
-    nameMap.set(name, (nameMap.get(name) || 0) + 1);
-    coordMap.set(coord, (coordMap.get(coord) || 0) + 1);
-    fullMap.set(full, (fullMap.get(full) || 0) + 1);
+    if (!coordMap.has(coord)) {
+      coordMap.set(coord, []);
+    }
+
+    coordMap.get(coord).push(p);
   });
 
+  const duplicateCoordGroups = [...coordMap.entries()]
+    .filter(([coord, items]) => items.length >= 2);
+
   return {
-    duplicateNames: [...nameMap.values()].filter(v => v >= 2).length,
-    duplicateCoords: [...coordMap.values()].filter(v => v >= 2).length,
-    duplicateFull: [...fullMap.values()].filter(v => v >= 2).length
+    duplicateCoordGroups
   };
 }
+
 async function runAdminFileCheck() {
   const input = document.getElementById("adminCheckFile");
   const result = document.getElementById("adminCheckResult");
