@@ -1,5 +1,5 @@
 window.ENABLE_QUIZ = true;
-window.QUIZ_VERSION = "beta1";
+window.QUIZ_VERSION = "beta2";
 const ADMIN_PASSWORD = "she1ep";
 
 window._layerPoints = {};
