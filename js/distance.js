@@ -142,12 +142,11 @@ function cleanLayerName(name) {
 }
 
 function getStars(score) {
-  if (score >= 85) return "⭐⭐⭐⭐⭐";
-  if (score >= 70) return "⭐⭐⭐⭐☆";
-  if (score >= 50) return "⭐⭐⭐☆☆";
+  if (score >= 90) return "⭐⭐⭐⭐⭐";
+  if (score >= 75) return "⭐⭐⭐⭐☆";
+  if (score >= 70) return "⭐⭐⭐☆☆";
   return "⭐⭐☆☆☆";
 }
-
 function getRankColor(rank) {
   if (rank === "S") return "#a855f7";
   if (rank === "A") return "#3b82f6";
@@ -478,7 +477,7 @@ else if (score >= 75) {
   rank = "A";
   label = "かなり良い";
 }
-else if (score >= 60) {
+else if (score >= 70) {
   rank = "B";
   label = "良好";
 }
