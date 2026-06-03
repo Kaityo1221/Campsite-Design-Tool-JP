@@ -407,21 +407,21 @@ function calculateCampsiteScore(points, warnings) {
   let distancePenalty = 0;
 
   warnings.forEach(w => {
-    const d = w.distance;
+  const d = w.distance;
 
-    if (d < 20) {
-      distancePenalty += 4;
-      under20++;
-    } else if (d < 30) {
-      distancePenalty += 2;
-      under30++;
-    } else if (d < 40) {
-      distancePenalty += 0.5;
-      under40++;
-    }
-  });
+  if (d < 20) {
+    distancePenalty += 5;
+    under20++;
+  } else if (d < 30) {
+    distancePenalty += 3;
+    under30++;
+  } else if (d < 40) {
+    distancePenalty += 0.5;
+    under40++;
+  }
+});
 
-  distancePenalty = Math.min(distancePenalty, 25);
+  distancePenalty = Math.min(distancePenalty, 30);
   score -= distancePenalty;
 
   let stayPenalty = 0;
@@ -470,16 +470,22 @@ function calculateCampsiteScore(points, warnings) {
   let rank = "C";
   let label = "調整あり";
 
-  if (score >= 85) {
-    rank = "S";
-    label = "理想";
-  } else if (score >= 70) {
-    rank = "A";
-    label = "かなり良い";
-  } else if (score >= 50) {
-    rank = "B";
-    label = "良好";
-  }
+  if (score >= 90) {
+  rank = "S";
+  label = "理想";
+}
+else if (score >= 75) {
+  rank = "A";
+  label = "かなり良い";
+}
+else if (score >= 60) {
+  rank = "B";
+  label = "良好";
+}
+else {
+  rank = "C";
+  label = "調整推奨";
+}
 
   let type = "バランス型";
   if (under20 > 0 || under30 >= 5) {
