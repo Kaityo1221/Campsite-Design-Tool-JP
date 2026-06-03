@@ -142,9 +142,9 @@ function cleanLayerName(name) {
 }
 
 function getStars(score) {
-  if (score >= 90) return "⭐⭐⭐⭐⭐";
-  if (score >= 75) return "⭐⭐⭐⭐☆";
-  if (score >= 70) return "⭐⭐⭐☆☆";
+  if (score >= 85) return "⭐⭐⭐⭐⭐";
+  if (score >= 70) return "⭐⭐⭐⭐☆";
+  if (score >= 50) return "⭐⭐⭐☆☆";
   return "⭐⭐☆☆☆";
 }
 function getRankColor(rank) {
@@ -409,18 +409,18 @@ function calculateCampsiteScore(points, warnings) {
   const d = w.distance;
 
   if (d < 20) {
-    distancePenalty += 5;
-    under20++;
-  } else if (d < 30) {
-    distancePenalty += 3;
-    under30++;
-  } else if (d < 40) {
-    distancePenalty += 0.5;
-    under40++;
-  }
+  distancePenalty += 4;
+  under20++;
+} else if (d < 30) {
+  distancePenalty += 2;
+  under30++;
+} else if (d < 40) {
+  distancePenalty += 0.5;
+  under40++;
+}
 });
 
-  distancePenalty = Math.min(distancePenalty, 30);
+distancePenalty = Math.min(distancePenalty, 25);
   score -= distancePenalty;
 
   let stayPenalty = 0;
@@ -469,19 +469,16 @@ function calculateCampsiteScore(points, warnings) {
   let rank = "C";
   let label = "調整あり";
 
-  if (score >= 90) {
+  if (score >= 85) {
   rank = "S";
   label = "理想";
-}
-else if (score >= 75) {
+} else if (score >= 70) {
   rank = "A";
   label = "かなり良い";
-}
-else if (score >= 70) {
+} else if (score >= 60) {
   rank = "B";
   label = "良好";
-}
-else {
+} else {
   rank = "C";
   label = "調整推奨";
 }
