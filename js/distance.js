@@ -147,7 +147,6 @@ function getStars(score) {
   if (score >= 50) return "⭐⭐⭐☆☆";
   return "⭐⭐☆☆☆";
 }
-
 function getRankColor(rank) {
   if (rank === "S") return "#a855f7";
   if (rank === "A") return "#3b82f6";
@@ -407,21 +406,21 @@ function calculateCampsiteScore(points, warnings) {
   let distancePenalty = 0;
 
   warnings.forEach(w => {
-    const d = w.distance;
+  const d = w.distance;
 
-    if (d < 20) {
-      distancePenalty += 4;
-      under20++;
-    } else if (d < 30) {
-      distancePenalty += 2;
-      under30++;
-    } else if (d < 40) {
-      distancePenalty += 0.5;
-      under40++;
-    }
-  });
+  if (d < 20) {
+  distancePenalty += 4;
+  under20++;
+} else if (d < 30) {
+  distancePenalty += 2;
+  under30++;
+} else if (d < 40) {
+  distancePenalty += 0.5;
+  under40++;
+}
+});
 
-  distancePenalty = Math.min(distancePenalty, 25);
+distancePenalty = Math.min(distancePenalty, 25);
   score -= distancePenalty;
 
   let stayPenalty = 0;
@@ -471,15 +470,18 @@ function calculateCampsiteScore(points, warnings) {
   let label = "調整あり";
 
   if (score >= 85) {
-    rank = "S";
-    label = "理想";
-  } else if (score >= 70) {
-    rank = "A";
-    label = "かなり良い";
-  } else if (score >= 50) {
-    rank = "B";
-    label = "良好";
-  }
+  rank = "S";
+  label = "理想";
+} else if (score >= 70) {
+  rank = "A";
+  label = "かなり良い";
+} else if (score >= 60) {
+  rank = "B";
+  label = "良好";
+} else {
+  rank = "C";
+  label = "調整推奨";
+}
 
   let type = "バランス型";
   if (under20 > 0 || under30 >= 5) {
@@ -553,8 +555,18 @@ async function runDistanceCheck() {
     for (let j = i + 1; j < points.length; j++) {
       const a = points[i];
       const b = points[j];
-　　　　if (
-  !isDistanceTargetLayer(a.originalLayer || "") ||
+　　　　const isCsvA = (a.originalLayer || a.layer || "") === "CSV_POI";
+const isCsvB = (b.originalLayer || b.layer || "") === "CSV_POI";
+
+if (
+  !isCsvA &&
+  !isDistanceTargetLayer(a.originalLayer || "")
+) {
+  continue;
+}
+
+if (
+  !isCsvB &&
   !isDistanceTargetLayer(b.originalLayer || "")
 ) {
   continue;
