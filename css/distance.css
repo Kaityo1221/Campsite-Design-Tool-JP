@@ -182,3 +182,25 @@
   box-shadow:
     0 0 8px rgba(249,115,22,0.9);
 }
+.poi-count-box {
+  margin-top: 16px;
+  padding: 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.poi-count-box h3 {
+  margin: 0 0 10px;
+  font-size: 16px;
+}
+
+.poi-count-row {
+  font-size: 15px;
+  line-height: 1.8;
+  font-weight: 600;
+}
+
+.poi-count-over {
+  color: #dc2626;
+}
