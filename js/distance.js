@@ -101,9 +101,10 @@ function isDistanceTargetLayer(layerName) {
   );
 }
 
-async function loadDistanceFile() {
+  async function loadDistanceFile() {
   const fileInput = document.getElementById("distanceFile");
   const container = document.getElementById("distanceLayerList");
+  const summary = document.getElementById("distancePoiSummary");
 
   if (!fileInput.files.length) return;
 
@@ -112,13 +113,33 @@ async function loadDistanceFile() {
 
   window._layerPoints = {};
 
+  if (summary) {
+    summary.innerHTML = "";
+  }
+
   if (fileName.endsWith(".csv")) {
     const text = await file.text();
     const points = parseCSV(text);
     window._layerPoints["CSV_POI"] = points;
     renderLayerSelector(["CSV_POI"], container);
+
+    if (summary) {
+      const counts = countPoiTypesFromLayers(window._layerPoints);
+      summary.innerHTML = renderPoiCountHtml(counts);
+    }
+
     return;
   }
+
+  const result = await extractLayersFromKML(file);
+  window._layerPoints = result.pointsByLayer;
+  renderLayerSelector(result.layers, container);
+
+  if (summary) {
+    const counts = countPoiTypesFromLayers(window._layerPoints);
+    summary.innerHTML = renderPoiCountHtml(counts);
+  }
+}
 
   const result = await extractLayersFromKML(file);
   window._layerPoints = result.pointsByLayer;
