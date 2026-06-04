@@ -85,8 +85,8 @@ function renderPoiCountRow(label, current, limit, icon, type) {
 
 function renderPoiCountHtml(counts) {
   return `
-    <div class="poi-count-box">
-      <h3>POI内訳</h3>
+  <div class="poi-count-box">
+    <h3>追加POI内訳</h3>
       ${renderPoiCountRow("ポケストップ", counts.pokestop, POI_LIMITS.pokestop, "🔵", "pokestop")}
       ${renderPoiCountRow("ジム", counts.gym, POI_LIMITS.gym, "🟡", "gym")}
       ${renderPoiCountRow("パワースポット", counts.power, POI_LIMITS.power, "🟣", "power")}
