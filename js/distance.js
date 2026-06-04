@@ -668,6 +668,8 @@ if (
   const stars = getStars(campsite.score);
   const color = getRankColor(campsite.rank);
   const bar = getScoreBar(campsite.score, color);
+  const poiCounts = countPoiTypesFromLayers(window._layerPoints);
+  const poiCountHtml = renderPoiCountHtml(poiCounts);
 const sectionTitleHtml = (title, sub = "") => `
   <div style="
     margin:22px 0 10px;
@@ -700,9 +702,11 @@ const sectionTitleHtml = (title, sub = "") => `
 
       ${bar}
 
-      <div style="margin-top:6px; font-size:13px; opacity:0.8;">
+            <div style="margin-top:6px; font-size:13px; opacity:0.8;">
         スコア：${campsite.score}点
       </div>
+
+      ${poiCountHtml}
 
       <br>
       <strong>総評</strong><br>
