@@ -10,6 +10,30 @@ const POI_LIMITS = {
   gym: 8,
   power: 5
 };
+function getDistanceMeters(a, b) {
+
+  const R = 6371000;
+
+  const lat1 = a.lat * Math.PI / 180;
+  const lat2 = b.lat * Math.PI / 180;
+
+  const dLat = (b.lat - a.lat) * Math.PI / 180;
+  const dLng = (b.lng - a.lng) * Math.PI / 180;
+
+  const aa =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1) *
+    Math.cos(lat2) *
+    Math.sin(dLng / 2) ** 2;
+
+  const c =
+    2 * Math.atan2(
+      Math.sqrt(aa),
+      Math.sqrt(1 - aa)
+    );
+
+  return R * c;
+}
 function getPoiTypeFromLayerName(layerName) {
   const name = String(layerName || "").toLowerCase();
 
