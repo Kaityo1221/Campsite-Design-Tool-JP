@@ -4,6 +4,119 @@ function classifyDistanceRisk(distance) {
   if (distance < 40) return "軽微";
   return null;
 }
+/* POI上限・内訳表示 */
+const POI_LIMITS = {
+  pokestop: 12,
+  gym: 8,
+  power: 5
+};
+function getDistanceMeters(a, b) {
+
+  const R = 6371000;
+
+  const lat1 = a.lat * Math.PI / 180;
+  const lat2 = b.lat * Math.PI / 180;
+
+  const dLat = (b.lat - a.lat) * Math.PI / 180;
+  const dLng = (b.lng - a.lng) * Math.PI / 180;
+
+  const aa =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1) *
+    Math.cos(lat2) *
+    Math.sin(dLng / 2) ** 2;
+
+  const c =
+    2 * Math.atan2(
+      Math.sqrt(aa),
+      Math.sqrt(1 - aa)
+    );
+
+  return R * c;
+}
+function getPoiTypeFromLayerName(layerName) {
+  const name = String(layerName || "").toLowerCase();
+
+  if (
+    name.includes("パワースポット") ||
+    name.includes("power")
+  ) {
+    return "power";
+  }
+
+  if (
+    name.includes("ジム") ||
+    name.includes("gym")
+  ) {
+    return "gym";
+  }
+
+  if (
+    name.includes("ポケスト") ||
+    name.includes("pokestop")
+  ) {
+    return "pokestop";
+  }
+
+  return null;
+}
+
+function countPoiTypesFromLayers(pointsByLayer) {
+  const counts = {
+    pokestop: 0,
+    gym: 0,
+    power: 0
+  };
+
+  Object.entries(pointsByLayer || {}).forEach(([layerName, points]) => {
+    if (!Array.isArray(points)) return;
+
+    const isAddLayer =
+      layerName.includes("追加") ||
+      layerName.includes("新規") ||
+      layerName.includes("CA ");
+
+    if (!isAddLayer) return;
+
+    const type = getPoiTypeFromLayerName(layerName);
+
+    if (!type) return;
+
+    counts[type] += points.length;
+  });
+
+  return counts;
+}
+
+function renderPoiCountRow(label, current, limit, icon, type) {
+  const isOver = current > limit;
+  const percent = Math.min(100, Math.round((current / limit) * 100));
+
+  return `
+  <div class="poi-count-card ${type} ${isOver ? "poi-count-over" : ""}">
+      <div class="poi-count-head">
+        <span class="poi-count-icon">${icon}</span>
+        <span class="poi-count-label">${label}</span>
+        <span class="poi-count-value">${current} / ${limit}${isOver ? " ⚠" : ""}</span>
+      </div>
+
+      <div class="poi-count-meter">
+        <div class="poi-count-meter-fill" style="width:${percent}%;"></div>
+      </div>
+    </div>
+  `;
+}
+
+function renderPoiCountHtml(counts) {
+  return `
+  <div class="poi-count-box">
+    <h3>追加POI内訳</h3>
+      ${renderPoiCountRow("ポケストップ", counts.pokestop, POI_LIMITS.pokestop, "🔵", "pokestop")}
+      ${renderPoiCountRow("ジム", counts.gym, POI_LIMITS.gym, "🟡", "gym")}
+      ${renderPoiCountRow("パワースポット", counts.power, POI_LIMITS.power, "🟣", "power")}
+    </div>
+  `;
+}
 function isDistanceTargetLayer(layerName) {
   return (
     layerName.includes("既存") ||
@@ -12,9 +125,10 @@ function isDistanceTargetLayer(layerName) {
   );
 }
 
-async function loadDistanceFile() {
+  async function loadDistanceFile() {
   const fileInput = document.getElementById("distanceFile");
   const container = document.getElementById("distanceLayerList");
+  const summary = document.getElementById("distancePoiSummary");
 
   if (!fileInput.files.length) return;
 
@@ -23,17 +137,32 @@ async function loadDistanceFile() {
 
   window._layerPoints = {};
 
+  if (summary) {
+    summary.innerHTML = "";
+  }
+
   if (fileName.endsWith(".csv")) {
     const text = await file.text();
     const points = parseCSV(text);
     window._layerPoints["CSV_POI"] = points;
     renderLayerSelector(["CSV_POI"], container);
+
+    if (summary) {
+      const counts = countPoiTypesFromLayers(window._layerPoints);
+      summary.innerHTML = renderPoiCountHtml(counts);
+    }
+
     return;
   }
 
   const result = await extractLayersFromKML(file);
   window._layerPoints = result.pointsByLayer;
   renderLayerSelector(result.layers, container);
+
+  if (summary) {
+    const counts = countPoiTypesFromLayers(window._layerPoints);
+    summary.innerHTML = renderPoiCountHtml(counts);
+  }
 }
 
 async function extractLayersFromKML(file) {
@@ -553,9 +682,9 @@ async function runDistanceCheck() {
 
   for (let i = 0; i < points.length; i++) {
     for (let j = i + 1; j < points.length; j++) {
-      const a = points[i];
-      const b = points[j];
-　　　　const isCsvA = (a.originalLayer || a.layer || "") === "CSV_POI";
+const a = points[i];
+const b = points[j];
+const isCsvA = (a.originalLayer || a.layer || "") === "CSV_POI";
 const isCsvB = (b.originalLayer || b.layer || "") === "CSV_POI";
 
 if (
@@ -592,6 +721,8 @@ if (
   const stars = getStars(campsite.score);
   const color = getRankColor(campsite.rank);
   const bar = getScoreBar(campsite.score, color);
+  const poiCounts = countPoiTypesFromLayers(window._layerPoints);
+const poiCountHtml = renderPoiCountHtml(poiCounts);
 const sectionTitleHtml = (title, sub = "") => `
   <div style="
     margin:22px 0 10px;
@@ -627,7 +758,7 @@ const sectionTitleHtml = (title, sub = "") => `
       <div style="margin-top:6px; font-size:13px; opacity:0.8;">
         スコア：${campsite.score}点
       </div>
-
+${poiCountHtml}
       <br>
       <strong>総評</strong><br>
       ${campsite.summary}<br><br>
