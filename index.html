@@ -141,7 +141,7 @@ v5.8<br>
 <button
   type="button"
   class="opening-sign-area sign-tools"
-  aria-label="個別ツールへ"
+  aria-label="Campsite Labへ"
   onclick="goOpeningTab('parts')"
 ></button>
     <!-- 設計を始める -->
@@ -180,7 +180,7 @@ v5.8<br>
 
   <div class="tabs">
   <button class="tab-button active" onclick="openTab('tool', this)">キャンプサイト作成</button>
-  <button class="tab-button" onclick="openTab('parts', this)">ツール集</button>
+  <button class="tab-button" onclick="openTab('parts', this)">Campsite Lab</button>
   <button class="tab-button" onclick="openTab('script', this)">スクリプト導入方法</button>
   <button class="tab-button" onclick="openTab('guide', this)">設計ガイド</button>
   <button class="tab-button" onclick="openTab('check', this)">チェックリスト</button>
@@ -322,12 +322,14 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
 </section> <!-- tool -->
   <section id="parts" class="tab-content">
   <div class="panel">
-    <h2>個別ツール</h2>
-
+    <h2>🧪 Campsite Lab</h2>
+<p class="note">
+  Experimental & Utility Tools（補助機能・実験機能）
+</p>
     <p class="note">
-      すでにMy Mapsを作成済みの方向けに、必要なパーツだけを追加生成するための機能です。<br>
-      円だけ生成や既存POI分類だけ生成など、作成済みのMy Mapsを調整・整理するための機能を利用できます。
-    </p>
+  Campsite Design Tool の補助機能・実験機能をまとめたエリアです。<br>
+  円だけ生成、既存POI整理、今後追加される検証機能などを利用できます。
+</p>
 
     <div class="step">
   <div class="step-no">個別機能</div>
@@ -398,8 +400,38 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
 
   <button class="generate" onclick="generateExistingOnlyKMZ()">既存POI分類KMZを生成</button>
   <div id="existingOnlyStatus"></div>
-</div>
   </div>
+<div class="step">
+  <div class="step-no">Experimental</div>
+  <h3>配置余地チェック（実験）</h3>
+
+  <p class="note">
+    出来上がったキャンプサイトKMZ、または追加POIがまだ入っていないKMZを読み込み、<br>
+    40m間隔をもとに「あとどのくらい配置余地がありそうか」を概算します。
+  </p>
+
+  <p class="note" style="
+    padding:12px;
+    border-radius:12px;
+    background:rgba(168,85,247,0.12);
+    border:1px solid rgba(168,85,247,0.35);
+    color:#ddd6fe;
+  ">
+    🧪 実験機能<br>
+    ぎゅうぎゅう詰めにするための機能ではありません。<br>
+    現地の導線・安全性・遊びやすさを優先してください。
+  </p>
+
+  <p>キャンプサイトKMZ / KMLを選択します。</p>
+  <input type="file" id="capacityFile">
+
+  <button class="generate" onclick="analyzePlacementCapacity()">
+    配置余地を確認する
+  </button>
+    <div id="capacityResult"></div>
+</div>
+
+  </div> <!-- panel -->
 </section>
 <section id="admin" class="tab-content">
   <div class="panel">
@@ -846,5 +878,6 @@ GOロケット団の出現率が3倍になる
 <script src="js/admin.js?v=7"></script>
 <script src="js/main.js?v=42"></script>
 <script src="js/kmz.js?v=12"></script>
+<script src="js/capacity.js?v=1"></script>
 </body>
 </html>
