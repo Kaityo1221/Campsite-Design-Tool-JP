@@ -124,7 +124,8 @@ async function loadDistanceFile() {
   window._layerPoints = result.pointsByLayer;
   renderLayerSelector(result.layers, container);
 }
-
+const counts = countPoiTypesFromLayers(window._layerPoints);
+renderPoiSummary(counts);
 async function extractLayersFromKML(file) {
   let kmlText = null;
   const fileName = file.name.toLowerCase();
