@@ -4,6 +4,86 @@ function classifyDistanceRisk(distance) {
   if (distance < 40) return "軽微";
   return null;
 }
+/* POI上限・内訳表示 */
+const POI_LIMITS = {
+  pokestop: 12,
+  gym: 8,
+  power: 5
+};
+function getPoiTypeFromLayerName(layerName) {
+  const name = String(layerName || "").toLowerCase();
+
+  if (
+    name.includes("パワースポット") ||
+    name.includes("power")
+  ) {
+    return "power";
+  }
+
+  if (
+    name.includes("ジム") ||
+    name.includes("gym")
+  ) {
+    return "gym";
+  }
+
+  if (
+    name.includes("ポケスト") ||
+    name.includes("pokestop")
+  ) {
+    return "pokestop";
+  }
+
+  return null;
+}
+
+function countPoiTypesFromLayers(pointsByLayer) {
+  const counts = {
+    pokestop: 0,
+    gym: 0,
+    power: 0
+  };
+
+  Object.entries(pointsByLayer || {}).forEach(([layerName, points]) => {
+    if (!Array.isArray(points)) return;
+
+    const isAddLayer =
+      layerName.includes("追加") ||
+      layerName.includes("新規") ||
+      layerName.includes("CA ");
+
+    if (!isAddLayer) return;
+
+    const type = getPoiTypeFromLayerName(layerName);
+
+    if (!type) return;
+
+    counts[type] += points.length;
+  });
+
+  return counts;
+}
+
+function renderPoiCountRow(label, current, limit) {
+  const isOver = current > limit;
+
+  return `
+    <div class="poi-count-row ${isOver ? "poi-count-over" : ""}">
+      ${label}：${current} / ${limit}${isOver ? " ⚠" : ""}
+    </div>
+  `;
+}
+
+function renderPoiCountHtml(counts) {
+  return `
+    <div class="poi-count-box">
+      <h3>POI内訳</h3>
+      ${renderPoiCountRow("ポケストップ", counts.pokestop, POI_LIMITS.pokestop)}
+      ${renderPoiCountRow("ジム", counts.gym, POI_LIMITS.gym)}
+      ${renderPoiCountRow("パワースポット", counts.power, POI_LIMITS.power)}
+    </div>
+  `;
+}
 function isDistanceTargetLayer(layerName) {
   return (
     layerName.includes("既存") ||
@@ -592,6 +672,8 @@ if (
   const stars = getStars(campsite.score);
   const color = getRankColor(campsite.rank);
   const bar = getScoreBar(campsite.score, color);
+  const poiCounts = countPoiTypesFromLayers(window._layerPoints);
+const poiCountHtml = renderPoiCountHtml(poiCounts);
 const sectionTitleHtml = (title, sub = "") => `
   <div style="
     margin:22px 0 10px;
@@ -627,7 +709,7 @@ const sectionTitleHtml = (title, sub = "") => `
       <div style="margin-top:6px; font-size:13px; opacity:0.8;">
         スコア：${campsite.score}点
       </div>
-
+${poiCountHtml}
       <br>
       <strong>総評</strong><br>
       ${campsite.summary}<br><br>

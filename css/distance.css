@@ -182,3 +182,7 @@
   box-shadow:
     0 0 8px rgba(249,115,22,0.9);
 }
+.poi-count-over {
+  color: #ef4444 !important;
+  font-weight: 800;
+}
