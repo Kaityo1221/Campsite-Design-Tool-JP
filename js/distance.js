@@ -64,12 +64,21 @@ function countPoiTypesFromLayers(pointsByLayer) {
   return counts;
 }
 
-function renderPoiCountRow(label, current, limit) {
+function renderPoiCountRow(label, current, limit, icon, type) {
   const isOver = current > limit;
+  const percent = Math.min(100, Math.round((current / limit) * 100));
 
   return `
-    <div class="poi-count-row ${isOver ? "poi-count-over" : ""}">
-      ${label}：${current} / ${limit}${isOver ? " ⚠" : ""}
+  <div class="poi-count-card ${type} ${isOver ? "poi-count-over" : ""}">
+      <div class="poi-count-head">
+        <span class="poi-count-icon">${icon}</span>
+        <span class="poi-count-label">${label}</span>
+        <span class="poi-count-value">${current} / ${limit}${isOver ? " ⚠" : ""}</span>
+      </div>
+
+      <div class="poi-count-meter">
+        <div class="poi-count-meter-fill" style="width:${percent}%;"></div>
+      </div>
     </div>
   `;
 }
@@ -78,9 +87,9 @@ function renderPoiCountHtml(counts) {
   return `
     <div class="poi-count-box">
       <h3>POI内訳</h3>
-      ${renderPoiCountRow("ポケストップ", counts.pokestop, POI_LIMITS.pokestop)}
-      ${renderPoiCountRow("ジム", counts.gym, POI_LIMITS.gym)}
-      ${renderPoiCountRow("パワースポット", counts.power, POI_LIMITS.power)}
+      ${renderPoiCountRow("ポケストップ", counts.pokestop, POI_LIMITS.pokestop, "🔵", "pokestop")}
+      ${renderPoiCountRow("ジム", counts.gym, POI_LIMITS.gym, "🟡", "gym")}
+      ${renderPoiCountRow("パワースポット", counts.power, POI_LIMITS.power, "🟣", "power")}
     </div>
   `;
 }
