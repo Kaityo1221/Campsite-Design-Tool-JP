@@ -658,9 +658,9 @@ async function runDistanceCheck() {
 
   for (let i = 0; i < points.length; i++) {
     for (let j = i + 1; j < points.length; j++) {
-      const a = points[i];
-      const b = points[j];
-　　　　const isCsvA = (a.originalLayer || a.layer || "") === "CSV_POI";
+const a = points[i];
+const b = points[j];
+const isCsvA = (a.originalLayer || a.layer || "") === "CSV_POI";
 const isCsvB = (b.originalLayer || b.layer || "") === "CSV_POI";
 
 if (
