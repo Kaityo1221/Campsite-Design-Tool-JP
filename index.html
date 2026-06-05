@@ -6,7 +6,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Campsite Design Tool JP</title>
-<link rel="stylesheet" href="css/style.css?v=34">
+<link rel="stylesheet" href="css/style.css?v=35">
 <link rel="stylesheet" href="css/splash.css?v=92">
 <link rel="stylesheet" href="css/tabs.css?v=25">
 <link rel="stylesheet" href="css/admin.css?v=23">
@@ -503,7 +503,7 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
       <button
         type="button"
         class="script-device-card"
-        onclick="showScriptFlow('pc')"
+        onclick="showScriptFlow('pc', this)"
       >
         <span class="script-device-icon">💻</span>
         <strong>PC版</strong>
@@ -513,7 +513,7 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
       <button
         type="button"
         class="script-device-card"
-        onclick="showScriptFlow('iphone')"
+        onclick="showScriptFlow('iphone', this)"
       >
         <span class="script-device-icon">🍎</span>
         <strong>iPhone版</strong>
@@ -523,7 +523,7 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
       <button
         type="button"
         class="script-device-card"
-        onclick="showScriptFlow('android')"
+        onclick="showScriptFlow('android', this)"
       >
         <span class="script-device-icon">🤖</span>
         <strong>Android版</strong>
@@ -634,20 +634,31 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
       <div class="flow-arrow">↓</div>
 
       <div class="step">
-        <div class="step-no">iPhone STEP 2</div>
-        <h3>Safariの機能拡張をONにする</h3>
-        <p class="note">
-          SafariでWayfarer Mapを開き、アドレスバー左側のボタンを押します。<br>
-          「機能拡張を管理」からUserscriptsをONにしてください。
-        </p>
-      </div>
+  <div class="step-no">iPhone STEP 2</div>
+  <h3>Safariの機能拡張をONにする</h3>
 
+  <p class="note">
+    Userscriptsをインストールしただけでは、まだ使えません。<br>
+    Safari側でも機能拡張をONにしてください。
+  </p>
+
+  <ol class="note">
+    <li>Safariを開く</li>
+    <li>Safari左上のメニューを押す</li>
+    <li>「機能拡張を管理」を押す</li>
+    <li>一覧にある「Userscripts」をONにする</li>
+  </ol>
+</div>
       <div class="flow-arrow">↓</div>
 
       <div class="step">
         <div class="step-no">iPhone STEP 3</div>
         <h3>Baseをインストール</h3>
-
+<p class="note">
+  下のボタンを押すと、スクリプトの画面が開きます。<br>
+  Safari左上のメニューから「Userscripts」を押し、
+  続けて「Tap to Install」を押してください。
+</p>
         <a
           class="link-btn"
           href="https://gitlab.com/Tntnnbltn/wayfarer-addons/-/raw/main/wayfarer-map-mods-base.user.js"
@@ -662,7 +673,11 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
       <div class="step">
         <div class="step-no">iPhone STEP 4</div>
         <h3>S2 Cellsをインストール</h3>
-
+<p class="note">
+  Baseのインストールが終わったら、次にS2 Cellsを追加します。<br>
+  同じように、Safari左上のメニューから「Userscripts」を押し、
+  続けて「Tap to Install」を押してください。
+</p>
         <a
           class="link-btn"
           href="https://gitlab.com/Tntnnbltn/wayfarer-addons/-/raw/main/wayfarer-map-mods-s2-cells.user.js"
@@ -675,20 +690,23 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
       <div class="flow-arrow">↓</div>
 
       <div class="step">
-        <div class="step-no">iPhone STEP 5</div>
-        <h3>SafariでWayfarer Mapを開く</h3>
-        <p class="note">
-          左上にアイコンが2つ表示されたら完了です。
-        </p>
+  <div class="step-no">iPhone STEP 5</div>
+  <h3>Wayfarer Mapで動作を確認する</h3>
 
-        <a
-          class="link-btn"
-          href="https://wayfarer.nianticlabs.com/new/"
-          target="_blank"
-        >
-          Wayfarer Mapを開く
-        </a>
-      </div>
+  <p class="note">
+    BaseとS2 Cellsのインストールが終わったら、
+    SafariでWayfarer Mapを開いてください。<br>
+    左上にアイコンが2つ表示されたら導入完了です。
+  </p>
+
+  <a
+    class="link-btn"
+    href="https://wayfarer.nianticlabs.com/new/"
+    target="_blank"
+  >
+    SafariでWayfarer Mapを開く
+  </a>
+</div>
 
     </div>
 
@@ -716,67 +734,94 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
       <div class="step">
         <div class="step-no">Android STEP 2</div>
         <h3>Tampermonkeyを追加</h3>
-        <p class="note">
-          Firefoxで以下のページを開き、Tampermonkeyを追加してください。
-        </p>
+        <div class="step">
+  <div class="step-no">Android STEP 2</div>
+  <h3>TampermonkeyをFirefoxに追加する</h3>
 
-        <a
-          class="link-btn"
-          href="https://addons.mozilla.org/ja/firefox/addon/tampermonkey/"
-          target="_blank"
-        >
-          TampermonkeyをFirefoxに追加
-        </a>
-      </div>
+  <p class="note">
+    Firefoxで下のボタンを開き、Tampermonkeyを追加してください。<br>
+    Chromeではなく、必ずFirefoxで開いてください。
+  </p>
 
-      <div class="flow-arrow">↓</div>
+  <ol class="note">
+    <li>下のボタンを押す</li>
+    <li>Firefoxでページを開く</li>
+    <li>「Firefoxへ追加」を押す</li>
+    <li>確認画面で「追加」を押す</li>
+  </ol>
 
-      <div class="step">
-        <div class="step-no">Android STEP 3</div>
-        <h3>Baseをインストール</h3>
-
-        <a
-          class="link-btn"
-          href="https://gitlab.com/Tntnnbltn/wayfarer-addons/-/raw/main/wayfarer-map-mods-base.user.js"
-          target="_blank"
-        >
-          Baseをインストール
-        </a>
-      </div>
+  <a
+    class="link-btn"
+    href="https://addons.mozilla.org/ja/firefox/addon/tampermonkey/"
+    target="_blank"
+  >
+    TampermonkeyをFirefoxに追加
+  </a>
+</div>
 
       <div class="flow-arrow">↓</div>
 
       <div class="step">
-        <div class="step-no">Android STEP 4</div>
-        <h3>S2 Cellsをインストール</h3>
+  <div class="step-no">Android STEP 3</div>
+  <h3>Baseをインストール</h3>
 
-        <a
-          class="link-btn"
-          href="https://gitlab.com/Tntnnbltn/wayfarer-addons/-/raw/main/wayfarer-map-mods-s2-cells.user.js"
-          target="_blank"
-        >
-          S2 Cellsをインストール
-        </a>
-      </div>
+  <p class="note">
+    Firefoxで下のボタンを開いてください。<br>
+    Tampermonkeyの画面が表示されたら、
+    「インストール」を押してください。
+  </p>
+
+  <a
+    class="link-btn"
+    href="https://gitlab.com/Tntnnbltn/wayfarer-addons/-/raw/main/wayfarer-map-mods-base.user.js"
+    target="_blank"
+  >
+    Baseをインストール
+  </a>
+</div>
+
+<div class="flow-arrow">↓</div>
+
+<div class="step">
+  <div class="step-no">Android STEP 4</div>
+  <h3>S2 Cellsをインストール</h3>
+
+  <p class="note">
+    Baseのインストールが終わったら、
+    続けてS2 Cellsを追加します。<br>
+    Firefoxで下のボタンを開き、
+    Tampermonkeyの画面で「インストール」を押してください。
+  </p>
+
+  <a
+    class="link-btn"
+    href="https://gitlab.com/Tntnnbltn/wayfarer-addons/-/raw/main/wayfarer-map-mods-s2-cells.user.js"
+    target="_blank"
+  >
+    S2 Cellsをインストール
+  </a>
+</div>
 
       <div class="flow-arrow">↓</div>
 
       <div class="step">
-        <div class="step-no">Android STEP 5</div>
-        <h3>FirefoxでWayfarer Mapを開く</h3>
-        <p class="note">
-          左上にアイコンが2つ表示されたら完了です。
-        </p>
+  <div class="step-no">Android STEP 5</div>
+  <h3>Wayfarer Mapで動作を確認する</h3>
 
-        <a
-          class="link-btn"
-          href="https://wayfarer.nianticlabs.com/new/"
-          target="_blank"
-        >
-          Wayfarer Mapを開く
-        </a>
-      </div>
+  <p class="note">
+    BaseとS2 Cellsのインストールが終わったら、
+    FirefoxでWayfarer Mapを開いてください。<br>
+    左上にアイコンが2つ表示されたら導入完了です。
+  </p>
 
+  <a
+    class="link-btn"
+    href="https://wayfarer.nianticlabs.com/new/"
+    target="_blank"
+  >
+    FirefoxでWayfarer Mapを開く
+  </a>
+</div>
     </div>
 
   </div>
@@ -1091,7 +1136,7 @@ GOロケット団の出現率が3倍になる
   </div>
 </div>
 <script src="js/util.js?v=11"></script>
-<script src="js/tabs.js?v=1"></script>
+<script src="js/tabs.js?v=2"></script>
 <script src="js/distance.js?v=32"></script>
 <script src="js/admin.js?v=7"></script>
 <script src="js/main.js?v=43"></script>

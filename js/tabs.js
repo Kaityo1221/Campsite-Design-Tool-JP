@@ -17,6 +17,10 @@ function toggleUpdateLog(event) {
 function toggleRenameGuide() {
   const guide = document.getElementById("renameGuide");
 
+  if (!guide) {
+    return;
+  }
+
   guide.style.display =
     guide.style.display === "block" ? "none" : "block";
 }
@@ -45,24 +49,35 @@ function openTab(tabId, button) {
     behavior: "smooth"
   });
 }
-function showScriptFlow(device) {
-  // すべての端末別フローをいったん非表示にする
+
+function showScriptFlow(device, selectedButton) {
+  // すべての端末別フローを非表示にする
   document.querySelectorAll(".script-flow").forEach(flow => {
     flow.classList.remove("active");
   });
 
-  // 端末名と表示対象のIDを対応させる
+  // すべての端末カードから選択状態を外す
+  document.querySelectorAll(".script-device-card").forEach(card => {
+    card.classList.remove("selected");
+  });
+
+  // 選択した端末に対応するフローを指定する
   const flowMap = {
     pc: "scriptFlowPc",
     iphone: "scriptFlowIphone",
     android: "scriptFlowAndroid"
   };
 
-  // 選択された端末のフローだけを表示する
   const targetId = flowMap[device];
   const targetFlow = document.getElementById(targetId);
 
+  // 選択した端末のフローを表示する
   if (targetFlow) {
     targetFlow.classList.add("active");
+  }
+
+  // 選択した端末カードだけを光らせる
+  if (selectedButton && selectedButton.classList) {
+    selectedButton.classList.add("selected");
   }
 }
