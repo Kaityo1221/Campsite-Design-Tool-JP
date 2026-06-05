@@ -797,3 +797,126 @@ button.generate:active {
   box-shadow:
     0 0 20px rgba(139,92,246,.35);
 }
+/* =========================
+   Script Setup Device Selector
+========================= */
+
+.script-device-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 18px;
+  margin-bottom: 22px;
+}
+
+.script-device-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 130px;
+  padding: 16px 12px;
+
+  border-radius: 18px;
+  border: 1px solid rgba(147, 197, 253, 0.28);
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(30, 41, 59, 0.98),
+      rgba(15, 23, 42, 0.98)
+    );
+
+  color: #f8fafc;
+  cursor: pointer;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 10px 22px rgba(0, 0, 0, 0.22);
+
+  transition:
+    transform 0.12s ease,
+    filter 0.12s ease,
+    border-color 0.12s ease;
+}
+
+.script-device-card:hover {
+  filter: brightness(1.1);
+  border-color: rgba(196, 181, 253, 0.7);
+}
+
+.script-device-card:active {
+  transform: scale(0.96);
+}
+
+.script-device-icon {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 32px;
+}
+
+.script-device-card strong {
+  display: block;
+  font-size: 16px;
+}
+
+.script-device-card small {
+  display: block;
+  margin-top: 6px;
+  color: #cbd5e1;
+  font-size: 12px;
+}
+
+/* 初期状態では端末別フローを隠す */
+.script-flow {
+  display: none;
+}
+
+/* 選択した端末のフローだけ表示 */
+.script-flow.active {
+  display: block;
+}
+
+/* フローチャートの矢印 */
+.flow-arrow {
+  margin: 10px 0 -2px;
+  text-align: center;
+  color: #93c5fd;
+  font-size: 30px;
+  font-weight: bold;
+
+  text-shadow:
+    0 0 14px rgba(147, 197, 253, 0.7);
+}
+
+/* スマホ表示 */
+@media (max-width: 720px) {
+  .script-device-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .script-device-card {
+    min-height: 92px;
+  }
+}
+/* 選択中の端末カード */
+.script-device-card.selected {
+  border-color: rgba(196, 181, 253, 0.95);
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(67, 56, 202, 0.96),
+      rgba(30, 41, 59, 0.98)
+    );
+
+  box-shadow:
+    0 0 20px rgba(129, 140, 248, 0.5),
+    0 0 34px rgba(236, 72, 153, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+
+.script-device-card.selected small {
+  color: #e0e7ff;
+}
