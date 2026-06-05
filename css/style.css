@@ -920,3 +920,42 @@ button.generate:active {
 .script-device-card.selected small {
   color: #e0e7ff;
 }
+/* =========================
+   Script Setup Success Image
+========================= */
+
+.script-check-image-wrap {
+  margin-top: 16px;
+  margin-bottom: 12px;
+  padding: 14px;
+
+  border-radius: 16px;
+
+  background: rgba(16, 185, 129, 0.10);
+  border: 1px solid rgba(52, 211, 153, 0.38);
+
+  box-shadow:
+    0 0 18px rgba(16, 185, 129, 0.10);
+}
+
+.script-check-label {
+  margin: 0 0 10px !important;
+
+  color: #a7f3d0 !important;
+  font-size: 14px !important;
+  font-weight: bold;
+  line-height: 1.7;
+}
+
+.script-check-image {
+  display: block;
+
+  width: 100%;
+  max-width: 420px;
+
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.32);
+
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.20);
+}
