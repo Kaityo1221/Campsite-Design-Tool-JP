@@ -45,3 +45,24 @@ function openTab(tabId, button) {
     behavior: "smooth"
   });
 }
+function showScriptFlow(device) {
+  // すべての端末別フローをいったん非表示にする
+  document.querySelectorAll(".script-flow").forEach(flow => {
+    flow.classList.remove("active");
+  });
+
+  // 端末名と表示対象のIDを対応させる
+  const flowMap = {
+    pc: "scriptFlowPc",
+    iphone: "scriptFlowIphone",
+    android: "scriptFlowAndroid"
+  };
+
+  // 選択された端末のフローだけを表示する
+  const targetId = flowMap[device];
+  const targetFlow = document.getElementById(targetId);
+
+  if (targetFlow) {
+    targetFlow.classList.add("active");
+  }
+}
