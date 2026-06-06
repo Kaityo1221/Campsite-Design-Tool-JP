@@ -64,9 +64,9 @@ v6.0<br>
   autocorrect="off"
   autocapitalize="off"
   spellcheck="false"
-  enterkeyhint="done"
   placeholder="アクセスコードを入力"
   oninput="sanitizePasscodeInput(this)"
+  style="-webkit-text-security:disc;"
 >
 <button type="button" id="loginButton" onclick="checkAccessCode()">ログイン</button>
 <p id="loginError" class="error"></p>
@@ -1261,7 +1261,7 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
   ">
     <h3>管理者ログイン</h3>
     <p class="note">
-      管理者専用機能を開くには、パスコードを入力してください。
+      管理者専用機能を開くには、管理者コードを入力してください。
     </p>
 
     <input
