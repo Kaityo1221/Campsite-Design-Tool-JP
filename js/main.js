@@ -1,6 +1,6 @@
 window.ENABLE_QUIZ = true;
 window.QUIZ_VERSION = "beta1";
-const ADMIN_PASSWORD = "she1ep";
+const ADMIN_CODE = "she1ep";
 
 window._layerPoints = {};
 
@@ -13,8 +13,8 @@ function sanitizePasscodeInput(input) {
   input.value = input.value.replace(/[^A-Za-z0-9]/g, "");
 }
 
-function checkPassword() {
-  const input = document.getElementById("passwordInput");
+function checkAccessCode() {
+  const input = document.getElementById("accessCodeInput");
   const error = document.getElementById("loginError");
   const loginScreen = document.getElementById("loginScreen");
   const splashScreen = document.getElementById("splashScreen");
@@ -48,7 +48,7 @@ splashScreen.classList.add("show");
 
 function openAdminLogin() {
   const modal = document.getElementById("adminLoginModal");
-  const input = document.getElementById("adminPasswordInput");
+  const input = document.getElementById("adminCodeInput");
   const error = document.getElementById("adminLoginError");
 
   if (!modal) {
@@ -73,13 +73,13 @@ function closeAdminLogin() {
   }
 }
 
-function checkAdminPassword() {
-  const input = document.getElementById("adminPasswordInput");
+function checkAdminCode() {
+  const input = document.getElementById("adminCodeInput");
   const error = document.getElementById("adminLoginError");
 
   if (!input) return;
 
-  if (input.value.trim() === ADMIN_PASSWORD) {
+  if (input.value.trim() === ADMIN_CODE) {
     if (error) error.textContent = "";
     closeAdminLogin();
 
@@ -99,11 +99,11 @@ function checkAdminPassword() {
 }
 document.addEventListener("DOMContentLoaded", function () {
 
-  const passwordInput =
-    document.getElementById("passwordInput");
+  const accessCodeInput =
+    document.getElementById("accessCodeInput");
 
-  if (passwordInput) {
-    passwordInput.addEventListener("keydown", function (e) {
+  if (accessCodeInput) {
+    accessCodeInput.addEventListener("keydown", function (e) {
 
       if (e.key === "Enter") {
         e.preventDefault();
@@ -113,11 +113,11 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  const adminPasswordInput =
-    document.getElementById("adminPasswordInput");
+  const adminaccessCodeInput =
+    document.getElementById("adminCodeInput");
 
-  if (adminPasswordInput) {
-    adminPasswordInput.addEventListener("keydown", function (e) {
+  if (adminaccessCodeInput) {
+    adminaccessCodeInput.addEventListener("keydown", function (e) {
 
       if (e.key === "Enter") {
         e.preventDefault();

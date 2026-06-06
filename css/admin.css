@@ -78,3 +78,7 @@
     background: rgba(239, 68, 68, 0);
   }
 }
+#adminCodeInput{
+  font-family: text-security-disc;
+  -webkit-text-security: disc;
+}
