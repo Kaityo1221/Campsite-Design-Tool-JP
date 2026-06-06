@@ -509,3 +509,5 @@ function playDeduplicateSuccessSound() {
       .catch(() => {});
   }, 100);
 }
+window.generateDeduplicatedPoiKMZ =
+  generateDeduplicatedPoiKMZ;
