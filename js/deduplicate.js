@@ -102,9 +102,32 @@ async function createDeduplicatedKmzFromCsv(file) {
     await file.text();
 
   let points =
-    parseCSV(text)
-      .filter(point => !isDummyPoint(point));
+  parseCSV(text)
+    .filter(point => {
+      if (isDummyPoint(point)) return false;
 
+      const layerName = point.layer || "";
+      const name = point.name || "";
+      const type = point.type || "";
+
+      const judgeText =
+        `${layerName} ${name} ${type}`;
+
+      const lower =
+        judgeText.toLowerCase();
+
+      return !(
+        judgeText.includes("追加") ||
+        lower.includes("add") ||
+        lower.includes("new") ||
+        judgeText.includes("円") ||
+        judgeText.includes("30m") ||
+        judgeText.includes("40m") ||
+        judgeText.includes("ダミー") ||
+        judgeText.includes("レイヤー保持用") ||
+        judgeText.includes("ここに追加")
+      );
+    });
   const existingBefore =
     points.length;
 
@@ -366,21 +389,21 @@ function isDeduplicateTargetExistingPoi(placemark) {
   /*
     追加POI、円、ダミーは対象外。
   */
-  if (
-    text.includes("追加希望") ||
-    text.includes("追加ポケスト") ||
-    text.includes("追加ジム") ||
-    text.includes("追加パワスポ") ||
-    text.includes("30m") ||
-    text.includes("40m") ||
-    text.includes("円") ||
-    text.includes("ダミー") ||
-    text.includes("レイヤー保持用") ||
-    text.includes("ここに追加")
-  ) {
-    return false;
-  }
+const lower = text.toLowerCase();
 
+if (
+  text.includes("追加") ||
+  lower.includes("add") ||
+  lower.includes("new") ||
+  text.includes("30m") ||
+  text.includes("40m") ||
+  text.includes("円") ||
+  text.includes("ダミー") ||
+  text.includes("レイヤー保持用") ||
+  text.includes("ここに追加")
+) {
+  return false;
+}
   return true;
 }
 
