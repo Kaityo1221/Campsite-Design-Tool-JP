@@ -49,15 +49,7 @@ async function generateCircleOnlyKMZ() {
 
   return true;
 });
-points = points.filter(p => {
-  const layerName = p.layer || "";
 
-  return !(
-    layerName.includes("円") ||
-    layerName.includes("30m") ||
-    layerName.includes("40m")
-  );
-});
     const beforeCount = points.length;
 
     if (beforeCount === 0) {
@@ -297,20 +289,33 @@ async function generateKMZ() {
   let points = [];
 
   for (const file of files) {
-    const fileName = file.name.toLowerCase();
+  const fileName = file.name.toLowerCase();
 
-    if (fileName.endsWith(".csv")) {
-      const text = await file.text();
-      points.push(...parseCSV(text));
-    } else if (
-  fileName.endsWith(".kml") ||
-  fileName.endsWith(".kmz") ||
-  fileName.endsWith(".zip")
-) {
-  points.push(...await getPointsFromKmlOrKmz(file));
-}  }
+  if (fileName.endsWith(".csv")) {
+    const text = await file.text();
+    points.push(...parseCSV(text));
+  } else if (
+    fileName.endsWith(".kml") ||
+    fileName.endsWith(".kmz") ||
+    fileName.endsWith(".zip")
+  ) {
+    points.push(...await getPointsFromKmlOrKmz(file));
+  }
+}
 
-  const beforeCount = points.length;
+points = points.filter(p => {
+  if (isDummyPoint(p)) return false;
+
+  const layerName = p.layer || "";
+
+  return !(
+    layerName.includes("円") ||
+    layerName.includes("30m") ||
+    layerName.includes("40m")
+  );
+});
+
+const beforeCount = points.length;
 
  if (beforeCount === 0) {
   alert("スポット座標が見つかりませんでした");
