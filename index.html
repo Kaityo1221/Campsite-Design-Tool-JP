@@ -14,8 +14,8 @@
     background: #020617;
   }
 </style>
-<link rel="stylesheet" href="css/style.css?v=45">
-<link rel="stylesheet" href="css/splash.css?v=92">
+<link rel="stylesheet" href="css/style.css?v=47">
+<link rel="stylesheet" href="css/splash.css?v=96">
 <link rel="stylesheet" href="css/tabs.css?v=28">
 <link rel="stylesheet" href="css/admin.css?v=23">
 <link rel="stylesheet" href="css/distance.css?v=29">
@@ -471,6 +471,7 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
   <p class="note">
     <div class="step return-step-card">
   <div class="step-no">STEP 6</div>
+
   <h3>追加POIが決まったら、ここへ帰ってきてね</h3>
 
   <p class="note">
@@ -1113,7 +1114,7 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
     </button>
 
     <img
-  data-src="assets/icon.png"
+  data-src="assets/return-back-icon.PNG"
   alt="おかえりなさいと迎える羊"
   class="return-modal-sheep"
 >
@@ -1187,34 +1188,49 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
     </p>
 
     <button
-      type="button"
-      class="campsite-csv-choice-button"
-      onclick="selectCampsiteCsvMode('wayfarer')"
-    >
-      <span class="campsite-csv-choice-icon">📍</span>
+  type="button"
+  class="campsite-csv-choice-button"
+  onclick="selectCampsiteCsvMode('wayfarer')"
+>
+  <span class="campsite-csv-choice-icon">📍</span>
 
-      <span>
-        <strong>Wayfarer Mapから抽出したCSVを使う</strong>
-        <small>
-          周辺POIをまとめて取得する通常の作成方法です
-        </small>
-      </span>
-    </button>
+  <span>
+    <strong>Wayfarer Mapから抽出してキャンプサイトを作成する</strong>
+    <small>
+      周辺POIをまとめて取得する通常の作成方法です
+    </small>
+  </span>
+</button>
 
-    <button
-      type="button"
-      class="campsite-csv-choice-button"
-      onclick="selectCampsiteCsvMode('custom')"
-    >
-      <span class="campsite-csv-choice-icon">📊</span>
+<button
+  type="button"
+  class="campsite-csv-choice-button"
+  onclick="selectCampsiteCsvMode('custom')"
+>
+  <span class="campsite-csv-choice-icon">📊</span>
 
-      <span>
-        <strong>自作CSVを使う</strong>
-        <small>
-          自分で作成したPOI一覧を読み込みます
-        </small>
-      </span>
-    </button>
+  <span>
+    <strong>自作CSVを使ってキャンプサイトを作成する</strong>
+    <small>
+      自分でPOI一覧を作成します
+    </small>
+  </span>
+</button>
+
+<button
+  type="button"
+  class="campsite-csv-choice-button"
+  onclick="selectCampsiteCsvMode('extracted')"
+>
+  <span class="campsite-csv-choice-icon">📁</span>
+
+  <span>
+    <strong>抽出済みCSVを使ってキャンプサイトを作成する</strong>
+    <small>
+      すでにWayfarer Mapから取得したCSVを読み込みます
+    </small>
+  </span>
+</button>
 
     <button
       type="button"
@@ -1389,7 +1405,7 @@ GOロケット団の出現率が3倍になる
   </div>
 </div>
 <script src="js/util.js?v=11"></script>
-<script src="js/tabs.js?v=4"></script>
+<script src="js/tabs.js?v=5"></script>
 <script src="js/distance.js?v=32"></script>
 <script src="js/admin.js?v=7"></script>
 <script src="js/main.js?v=47"></script>
