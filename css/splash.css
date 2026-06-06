@@ -348,17 +348,3 @@ body.opening-mode .container {
     opacity: 0;
   }
 }
-/* =========================
-   オープニング画面：タップ範囲確認用
-   確認後は削除する
-========================= */
-
-.opening-sign-area,
-.opening-start-area,
-.opening-guide-area,
-.sheep-tap-area,
-.camp-secret-button {
-  background: rgba(255, 0, 0, 0.28) !important;
-  border: 2px solid rgba(255, 255, 0, 0.95) !important;
-  outline: 1px dashed rgba(255, 255, 255, 0.95) !important;
-}
