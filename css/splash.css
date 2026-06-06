@@ -240,26 +240,27 @@ body.opening-mode .container {
 
 /* 位置調整 */
 .sign-howto {
-  top: 29.5%;
+  top: 31%;
 }
 
 .sign-script {
-  top: 37.9%;
+  top: 39%;
 }
 
 .sign-campsite {
-  top: 46.3%;
+  top: 47%;
 }
 
 .sign-distance {
-  top: 54.5%;
+  top: 55.5%;
 }
 
 .sign-check {
-  top: 62.5%;
+  top: 63.5%;
 }
 .sign-tools {
-  top: 71.3%;
+  top: 72.3%;
+  height: 5.3%;
   display: none;
 }
 #openingSceneRight.active ~ .sign-tools {
@@ -346,4 +347,18 @@ body.opening-mode .container {
   100% {
     opacity: 0;
   }
+}
+/* =========================
+   オープニング画面：タップ範囲確認用
+   確認後は削除する
+========================= */
+
+.opening-sign-area,
+.opening-start-area,
+.opening-guide-area,
+.sheep-tap-area,
+.camp-secret-button {
+  background: rgba(255, 0, 0, 0.28) !important;
+  border: 2px solid rgba(255, 255, 0, 0.95) !important;
+  outline: 1px dashed rgba(255, 255, 255, 0.95) !important;
 }

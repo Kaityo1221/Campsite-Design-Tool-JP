@@ -400,11 +400,30 @@ async function getCapacityKmlText(file) {
 }
 
 function extractFirstCapacityPolygon(xml) {
-  const polygons = Array.from(xml.getElementsByTagName("Polygon"));
-  if (!polygons.length) return [];
+  const folders = Array.from(xml.getElementsByTagName("Folder"));
+
+  const areaFolder = folders.find(folder => {
+    const folderName =
+      Array.from(folder.children)
+        .find(child => child.tagName === "name")
+        ?.textContent || "";
+
+    return (
+      folderName.includes("活動範囲") ||
+      folderName.includes("活動エリア") ||
+      folderName.includes("範囲") ||
+      folderName.includes("エリア") ||
+      folderName.includes("ゾーン")
+    );
+  });
+
+  if (!areaFolder) return [];
+
+  const polygon = areaFolder.getElementsByTagName("Polygon")[0];
+  if (!polygon) return [];
 
   const coordinates =
-    polygons[0].getElementsByTagName("coordinates")[0]?.textContent;
+    polygon.getElementsByTagName("coordinates")[0]?.textContent;
 
   if (!coordinates) return [];
 
@@ -413,6 +432,7 @@ function extractFirstCapacityPolygon(xml) {
     .split(/\s+/)
     .map(pair => {
       const [lng, lat] = pair.split(",").map(Number);
+
       return { lat, lng };
     })
     .filter(p => !isNaN(p.lat) && !isNaN(p.lng));
@@ -445,13 +465,10 @@ function extractCapacityPoiPoints(xml) {
       parent = parent.parentElement;
     }
 
-    const isCircle =
+        const isCircle =
       layerName.includes("円") ||
       layerName.includes("30m") ||
-      layerName.includes("40m") ||
-      name.includes("円") ||
-      name.includes("30m") ||
-      name.includes("40m");
+      layerName.includes("40m");
 
     if (isCircle) return null;
 

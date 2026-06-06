@@ -163,23 +163,38 @@ function applyCampsiteCsvMode(mode){
     return;
   }
 
+  /* 自作CSVを使う */
   if(mode === "custom"){
     wayfarerStep.style.display = "none";
     customStep.style.display = "block";
 
     summaryText.textContent =
-      "自作CSVを使用";
+      "自作CSVを使ってキャンプサイトを作成";
 
     summary.style.display = "flex";
 
     return;
   }
 
+  /* Wayfarer Mapから抽出済みのCSVを使う */
+  if(mode === "extracted"){
+    wayfarerStep.style.display = "none";
+    customStep.style.display = "none";
+
+    summaryText.textContent =
+      "抽出済みCSVを使ってキャンプサイトを作成";
+
+    summary.style.display = "flex";
+
+    return;
+  }
+
+  /* Wayfarer Mapから新しく抽出する */
   wayfarerStep.style.display = "block";
   customStep.style.display = "none";
 
   summaryText.textContent =
-    "Wayfarer Mapから抽出したCSVを使用";
+    "Wayfarer Mapから抽出してキャンプサイトを作成";
 
   summary.style.display = "flex";
 }
