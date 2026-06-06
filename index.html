@@ -211,7 +211,12 @@ v6.0<br>
   >
     円だけ生成
   </button>
-
+<button
+  class="tab-button"
+  onclick="openTab('deduplicate-poi', this)"
+>
+  重複POI整理
+</button>
   <button
     class="tab-button"
     onclick="openTab('distance', this)"
@@ -540,6 +545,52 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
       </button>
 
       <div id="circleOnlyStatus"></div>
+    </div>
+  </div>
+</section>
+<section id="deduplicate-poi" class="tab-content">
+  <div class="panel">
+    <h2>🧹 重複POI整理</h2>
+
+    <p class="note">
+      CSV / KML / KMZを読み込み、重複している既存POIを整理します。<br>
+      完成済みデータの修正や、複数回のインポートで既存POIが重なってしまった場合に利用してください。
+    </p>
+
+    <div class="step">
+      <div class="step-no">補助機能</div>
+      <h3>既存POIの重複を削除する</h3>
+
+      <p class="note">
+        同じ座標に重複している既存POIを1件にまとめます。<br>
+        追加希望POI、30m円、40m円、ダミーポイントは削除対象になりません。
+      </p>
+
+      <p class="note" style="
+        padding:12px;
+        border-radius:12px;
+        background:rgba(56,189,248,0.10);
+        border:1px solid rgba(56,189,248,0.30);
+        color:#bae6fd;
+      ">
+        💡 KML / KMZを読み込んだ場合は、元のレイヤー構成を維持したまま既存POIの重複だけを削除します。<br>
+        CSVを読み込んだ場合は、整理済みの既存POI分類KMZを新しく生成します。
+      </p>
+
+      <p>整理したいCSV / KML / KMZファイルを選択します。</p>
+
+      <input
+        type="file"
+        id="deduplicatePoiFile"
+      >
+
+    <button
+  class="generate"
+  onclick="generateDeduplicatedPoiKMZ()"
+>
+  重複を削除したKMZを生成
+</button>
+      <div id="deduplicatePoiStatus"></div>
     </div>
   </div>
 </section>
@@ -1409,6 +1460,7 @@ GOロケット団の出現率が3倍になる
 <script src="js/admin.js?v=8"></script>
 <script src="js/main.js?v=50"></script>
 <script src="js/kmz.js?v=12"></script>
+<script src="js/deduplicate.js?v=2"></script>
 <script src="js/capacity.js?v=3"></script>
 </body>
 </html>
