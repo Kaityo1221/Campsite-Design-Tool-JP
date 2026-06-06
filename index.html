@@ -8,9 +8,10 @@
 <title>Campsite Design Tool JP</title>
 <link rel="stylesheet" href="css/style.css?v=36">
 <link rel="stylesheet" href="css/splash.css?v=92">
-<link rel="stylesheet" href="css/tabs.css?v=25">
+<link rel="stylesheet" href="css/tabs.css?v=26">
 <link rel="stylesheet" href="css/admin.css?v=23">
 <link rel="stylesheet" href="css/distance.css?v=29">
+<link rel="stylesheet" href="css/capacity.css?v=2">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/icon.png">
 <link rel="manifest" href="manifest-dev.json">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -22,13 +23,11 @@
 <div id="updateLog" class="update-log">
   <strong>更新内容</strong><br>
 v5.8<br>
-・ログイン後のオープニング画面を2枚画像式に変更しました。<br>
-・羊をタップすると、左シーンから右シーンへ切り替わる演出を追加しました。<br>
-・オープニング画面の看板から各機能タブへ直接移動できるショートカットを追加しました。<br>
-・TOOLSからツール集へ移動できるようにしました。<br>
-・メイン画面のタブに「オープニング」を追加し、いつでも入口画面へ戻れるようにしました。<br>
-・オープニング画面のスマホ表示、タップ判定、画面遷移を調整しました。<br>
-・看板ショートカット押下時に、前回開いていたタブが一瞬見えないよう遷移処理を改善しました。<br>
+・距離チェック結果に、POI種別ごとの件数と上限表示を追加<br>
+・POIの上限超過を警告し、総評にも反映されるよう改善<br>
+・キャンプサイト作成手順を整理し、案内文をより分かりやすく調整<br>
+・Wayfarer MapからPOIを一括抽出する手順を追加<br>
+・初回設定が必要な方向けに、スクリプト導入方法と抽出マニュアルへの導線を追加<br>
 <br>
 </div>
 <audio id="loginSound" src="assets/login.mp3"></audio>
@@ -69,14 +68,14 @@ v5.8<br>
     <img
   id="openingSceneLeft"
   class="opening-scene active"
-  src="assets/story-left.PNG"
+  src="assets/story-left.png"
   alt="Campsite Design Tool opening"
 >
 
 <img
   id="openingSceneRight"
   class="opening-scene"
-  src="assets/story-right.PNG"
+  src="assets/story-right.png"
   alt="Campsite Design Tool campfire"
 >
 <!-- CAMP隠しボタン -->
@@ -122,7 +121,7 @@ v5.8<br>
   type="button"
   class="opening-sign-area sign-campsite"
   aria-label="キャンプサイト作成へ"
-  onclick="goOpeningTab('tool')"
+  onclick="openCampsiteStartModal()"
 ></button>
 
 <button
@@ -141,16 +140,16 @@ v5.8<br>
 <button
   type="button"
   class="opening-sign-area sign-tools"
-  aria-label="個別ツールへ"
+  aria-label="Campsite Labへ"
   onclick="goOpeningTab('parts')"
 ></button>
     <!-- 設計を始める -->
     <button
-      type="button"
-      class="opening-start-area"
-      aria-label="設計を始める"
-      onclick="startAdventure()"
-    ></button>
+  type="button"
+  class="opening-start-area"
+  aria-label="設計を始める"
+  onclick="openCampsiteStartModal()"
+></button>
 
     <!-- ガイドPDFを見る -->
     <a
@@ -179,13 +178,67 @@ v5.8<br>
   </div>
 
   <div class="tabs">
-  <button class="tab-button active" onclick="openTab('tool', this)">キャンプサイト作成</button>
-  <button class="tab-button" onclick="openTab('parts', this)">ツール集</button>
-  <button class="tab-button" onclick="openTab('script', this)">スクリプト導入方法</button>
-  <button class="tab-button" onclick="openTab('guide', this)">設計ガイド</button>
-  <button class="tab-button" onclick="openTab('check', this)">チェックリスト</button>
-  <button class="tab-button" onclick="openTab('howto', this)">使い方</button>
-  <button class="tab-button" onclick="openTab('distance', this)">距離チェック</button>
+
+  <!-- 通常作業 -->
+  <button
+  class="tab-button active"
+  data-tab-target="tool"
+  onclick="openCampsiteStartModal(this)"
+>
+  キャンプサイト作成
+</button>
+
+  <button
+    class="tab-button"
+    onclick="openTab('circle-tools', this)"
+  >
+    円だけ生成
+  </button>
+
+  <button
+    class="tab-button"
+    onclick="openTab('distance', this)"
+  >
+    距離チェック
+  </button>
+
+  <!-- 補助・確認 -->
+  <button
+    class="tab-button"
+    onclick="openTab('howto', this)"
+  >
+    使い方
+  </button>
+
+  <button
+    class="tab-button"
+    onclick="openTab('script', this)"
+  >
+    スクリプト導入方法
+  </button>
+
+  <button
+    class="tab-button"
+    onclick="openTab('guide', this)"
+  >
+    設計ガイド
+  </button>
+
+  <!-- 隠しタブ：通常時はCSSで非表示 -->
+  <button
+    class="tab-button lab-secret-tab"
+    onclick="openTab('parts', this)"
+  >
+    🧪 Campsite Lab
+  </button>
+
+  <!-- 最終確認・ホームへ戻る -->
+  <button
+    class="tab-button"
+    onclick="openTab('check', this)"
+  >
+    チェックリスト
+  </button>
 
   <button
     type="button"
@@ -194,6 +247,7 @@ v5.8<br>
   >
     オープニング
   </button>
+
 </div>
 <div style="text-align:right; margin-top:-10px; margin-bottom:18px;">
   <button type="button" class="guide-btn" onclick="openAdminLogin()" style="
@@ -208,6 +262,24 @@ v5.8<br>
   <section id="tool" class="tab-content active">
     <div class="panel">
       <h2>キャンプサイト作成の手順</h2>
+      <div
+  id="csvModeSummary"
+  class="csv-mode-summary"
+  style="display:none;"
+>
+  <div>
+    <span class="csv-mode-summary-label">選択中の作成方法</span>
+    <strong id="csvModeSummaryText"></strong>
+  </div>
+
+  <button
+    type="button"
+    class="csv-mode-change-button"
+    onclick="openCampsiteStartModal()"
+  >
+    変更する
+  </button>
+</div>
           <div class="step">
       <div class="step-no">STEP 0</div>
       <h3>はじめにマニュアルPDFを見る</h3>
@@ -230,8 +302,7 @@ v5.8<br>
         複数CSVを同時に取り込んで、重複したPOIを自動で削除します。
       </p>
 
-      <div class="step">
-  <div class="step">
+      <div id="wayfarerCsvStep" class="step">
   <div class="step-no">STEP 1</div>
   <h3>Wayfarer MapからPOIを抽出する</h3>
 
@@ -257,7 +328,52 @@ v5.8<br>
     をご確認ください。
   </p>
 </div>
+<div
+  id="customCsvStep"
+  class="step"
+  style="display:none;"
+>
+  <div class="step-no">STEP 1</div>
+  <h3>POI一覧を自分で作成する</h3>
 
+  <p class="note">
+    Wayfarer Mapを使わず、自分で整理したPOI一覧を読み込む方法です。<br>
+    自作CSVを初めて作る場合は、入力用Excelテンプレートをご利用ください。
+  </p>
+
+  <a
+    href="docs/campsite-poi-template.xlsx"
+    class="link-btn"
+    download
+  >
+    📊 自作CSV用Excelテンプレートをダウンロード
+  </a>
+
+  <div class="custom-csv-rule-box">
+    <strong>入力する列</strong>
+
+    <ul>
+      <li>POI名</li>
+      <li>緯度</li>
+      <li>経度</li>
+      <li>POI種別</li>
+    </ul>
+
+    <p class="note">
+      POI種別には、
+      <strong>pokestop</strong>、
+      <strong>gym</strong>、
+      <strong>power</strong>
+      のいずれかを入力してください。
+    </p>
+  </div>
+
+  <p class="note">
+    Excelへの入力が完了したら、
+    「CSV UTF-8（コンマ区切り）」形式で保存してください。<br>
+    保存したCSVは、次のSTEP 2で読み込みます。
+  </p>
+</div>
       <div class="step">
         <div class="step-no">STEP 2</div>
         <p>CSV ファイルを選択します。<br>※正しくポケストップ・ジム・パワースポットを分類するため、
@@ -334,87 +450,150 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
 
 </div> <!-- panel -->
 </section> <!-- tool -->
-  <section id="parts" class="tab-content">
+<section id="circle-tools" class="tab-content">
   <div class="panel">
-    <h2>個別ツール</h2>
+    <h2>円だけ生成</h2>
 
     <p class="note">
-      すでにMy Mapsを作成済みの方向けに、必要なパーツだけを追加生成するための機能です。<br>
-      円だけ生成や既存POI分類だけ生成など、作成済みのMy Mapsを調整・整理するための機能を利用できます。
+      既存のGoogle My Mapsを調整するための補助機能です。<br>
+      CSV / KML / KMZから、30m円・40m円だけを生成できます。
     </p>
 
     <div class="step">
-  <div class="step-no">個別機能</div>
-  <h3>円だけ生成</h3>
+      <div class="step-no">補助機能</div>
+      <h3>円だけ生成</h3>
 
-  <p class="note">
-    CSV / KML / KMZから、30m円・40m円だけを生成します。<br>
-    既存のMy Mapsに円レイヤーだけ追加したい場合に使います。
-  </p>
-<p class="note" style="
-  padding:12px;
-  border-radius:12px;
-  background:rgba(249,115,22,0.12);
-  border:1px solid rgba(249,115,22,0.35);
-  color:#fed7aa;
-">
-  ⚠ 既に作成済みのMy Mapsから書き出したKMZを読み込む場合、既存の30m円・40m円レイヤーは自動で読み込み対象から除外します。<br>
-  ただし、My Maps上の古い円レイヤーは自動削除できないため、新しい円KMZをインポートする前に、My Maps側で古い円レイヤーを削除してください。
-</p>
-  <p>円を作成したいファイルを選択します。</p>
-  <input type="file" id="circleOnlyFileInput" multiple>
-
-  <div class="checks">
-    <label>
-      <input type="checkbox" name="circleOnlyRadius" value="40" checked>
-      40m円（基本距離）
-    </label><br>
-
-    <label>
-      <input type="checkbox" name="circleOnlyRadius" value="30" checked>
-      30m円（調整用）
-    </label>
-  </div>
-
-  <button class="generate" onclick="generateCircleOnlyKMZ()">円だけKMZを生成</button>
-  <div id="circleOnlyStatus"></div>
-</div>
-    <div class="step">
-      <div class="step-no">準備中</div>
-      <h3>追加希望レイヤーだけ生成</h3>
       <p class="note">
-        追加希望ポケスト／追加希望ジム／追加希望パワスポの空レイヤーだけを生成する機能を追加予定です。
+        CSV / KML / KMZから、30m円・40m円だけを生成します。<br>
+        既存のMy Mapsに円レイヤーだけ追加したい場合に使います。
       </p>
-    </div>
 
-    <div class="step">
-  <div class="step-no">個別機能</div>
-  <h3>既存POI分類だけ生成</h3>
+      <p class="note" style="
+        padding:12px;
+        border-radius:12px;
+        background:rgba(249,115,22,0.12);
+        border:1px solid rgba(249,115,22,0.35);
+        color:#fed7aa;
+      ">
+        ⚠ 既に作成済みのMy Mapsから書き出したKMZを読み込む場合、既存の30m円・40m円レイヤーは自動で読み込み対象から除外します。<br>
+        ただし、My Maps上の古い円レイヤーは自動削除できないため、新しい円KMZをインポートする前に、My Maps側で古い円レイヤーを削除してください。
+      </p>
+
+      <p>円を作成したいファイルを選択します。</p>
+      <input type="file" id="circleOnlyFileInput" multiple>
+
+      <div class="checks">
+        <label>
+          <input type="checkbox" name="circleOnlyRadius" value="40" checked>
+          40m円（基本距離）
+        </label><br>
+
+        <label>
+          <input type="checkbox" name="circleOnlyRadius" value="30" checked>
+          30m円（調整用）
+        </label>
+      </div>
+
+      <button class="generate" onclick="generateCircleOnlyKMZ()">
+        円だけKMZを生成
+      </button>
+
+      <div id="circleOnlyStatus"></div>
+    </div>
+  </div>
+</section>
+ <section id="parts" class="tab-content">
+  <div class="panel">
+    <h2>🧪 Campsite Lab</h2>
+
+    <p class="note">
+      Experimental & Utility Tools（補助機能・実験機能）
+    </p>
+
+    <p class="note">
+  Campsite Design Tool の実験機能をまとめた秘密の研究室です。<br>
+  配置余地チェック、候補POI生成、今後追加される検証機能などを利用できます。
+</p>
+    
+   <div class="step">
+  <div class="step-no">Experimental</div>
+  <h3>配置余地チェック（実験）</h3>
 
   <p class="note">
-    CSV / KML / KMZから、既存POIだけをポケストップ／ジム／パワースポットに分類して生成します。<br>
-    他CAが作成したMy Mapsや、未整理のKMZを確認しやすく整理したい場合に使います。
+    出来上がったキャンプサイトKMZ、または追加POIがまだ入っていないKMZを読み込み、<br>
+    40m間隔をもとに配置余地を概算し、候補POIをKMZで生成します。
   </p>
 
   <p class="note" style="
     padding:12px;
     border-radius:12px;
-    background:rgba(59,130,246,0.12);
-    border:1px solid rgba(96,165,250,0.35);
-    color:#bfdbfe;
+    background:rgba(168,85,247,0.12);
+    border:1px solid rgba(168,85,247,0.35);
+    color:#ddd6fe;
   ">
-    ℹ 円レイヤー、追加希望レイヤー、レイヤー保持用のダミーポイントは自動で除外します。<br>
-    出力されるのは、既存POI分類用のレイヤーだけです。
+    🧪 実験機能<br>
+    無理やり敷き詰めるための機能ではありません。<br>
+    現地の導線・安全性・遊びやすさを優先してください。
   </p>
 
-  <p>分類したいCSV / KML / KMZファイルを選択します。</p>
-  <input type="file" id="existingOnlyFileInput" multiple>
+  <div class="capacity-pc-layout">
 
-  <button class="generate" onclick="generateExistingOnlyKMZ()">既存POI分類KMZを生成</button>
-  <div id="existingOnlyStatus"></div>
-</div>
+  <!-- 左側：操作パネル -->
+  <div class="capacity-control-column">
+
+    <div class="capacity-section-title">
+      1. キャンプサイトKMZを読み込む
+    </div>
+
+    <p>キャンプサイトKMZ / KMLを選択します。</p>
+
+    <input type="file" id="capacityFile">
+
+    <button class="generate" onclick="analyzePlacementCapacity()">
+      配置余地を確認する
+    </button>
+
+    <div id="capacityResult"></div>
+
   </div>
-</section>
+
+  <!-- 右側：PC専用プレビュー枠 -->
+  <div class="capacity-preview-column">
+
+    <div class="capacity-section-title">
+      配置プレビュー
+    </div>
+
+    <div class="capacity-preview-placeholder">
+      <div class="capacity-preview-icon">🗺️</div>
+
+      <strong>配置プレビュー準備中</strong>
+
+      <p>
+        ここには、均等配置モードの確認用プレビューを表示する予定です。
+      </p>
+
+      <p class="note">
+        現在は候補POI KMZを生成後、Google My Mapsへインポートして確認してください。
+      </p>
+    </div>
+
+    <div class="capacity-result-placeholder">
+      <strong>配置余地の推定結果</strong>
+
+      <p class="note">
+        KMZを読み込むと、左側に現在の追加POI数、残容量、生成数設定が表示されます。
+      </p>
+    </div>
+
+  </div>
+
+</div>
+</div>
+
+  </div> <!-- panel -->
+</section> <!-- parts -->
+
 <section id="admin" class="tab-content">
   <div class="panel">
     <h2>管理者ツール</h2>
@@ -1145,6 +1324,66 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
 </section>
 
 </div> <!-- container -->
+<div
+  id="campsiteCsvModal"
+  class="campsite-csv-modal"
+  onclick="closeCampsiteStartModalByBackdrop(event)"
+>
+  <div
+    class="campsite-csv-modal-card"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="campsiteCsvModalTitle"
+  >
+    <div class="campsite-csv-modal-icon">🏕️</div>
+
+    <h3 id="campsiteCsvModalTitle">
+      キャンプサイト作成を始めます
+    </h3>
+
+    <p class="note">
+      使用するCSVを選んでください。
+    </p>
+
+    <button
+      type="button"
+      class="campsite-csv-choice-button"
+      onclick="selectCampsiteCsvMode('wayfarer')"
+    >
+      <span class="campsite-csv-choice-icon">📍</span>
+
+      <span>
+        <strong>Wayfarer Mapから抽出したCSVを使う</strong>
+        <small>
+          周辺POIをまとめて取得する通常の作成方法です
+        </small>
+      </span>
+    </button>
+
+    <button
+      type="button"
+      class="campsite-csv-choice-button"
+      onclick="selectCampsiteCsvMode('custom')"
+    >
+      <span class="campsite-csv-choice-icon">📊</span>
+
+      <span>
+        <strong>自作CSVを使う</strong>
+        <small>
+          自分で作成したPOI一覧を読み込みます
+        </small>
+      </span>
+    </button>
+
+    <button
+      type="button"
+      class="campsite-csv-close-button"
+      onclick="closeCampsiteStartModal()"
+    >
+      閉じる
+    </button>
+  </div>
+</div>
 <div id="adminLoginModal" style="
   display:none;
   position:fixed;
@@ -1309,10 +1548,11 @@ GOロケット団の出現率が3倍になる
   </div>
 </div>
 <script src="js/util.js?v=11"></script>
-<script src="js/tabs.js?v=3"></script>
+<script src="js/tabs.js?v=4"></script>
 <script src="js/distance.js?v=32"></script>
 <script src="js/admin.js?v=7"></script>
 <script src="js/main.js?v=43"></script>
 <script src="js/kmz.js?v=12"></script>
+<script src="js/capacity.js?v=3"></script>
 </body>
 </html>

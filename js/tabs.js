@@ -81,3 +81,113 @@ function showScriptFlow(device, selectedButton) {
     selectedButton.classList.add("selected");
   }
 }
+/*
+  Campsite CSV Mode Selector
+  Wayfarer Map抽出CSV / 自作CSV の入口を分岐する
+*/
+
+window._campsiteCsvMode = null;
+
+function openCampsiteStartModal(){
+  const modal = document.getElementById("campsiteCsvModal");
+
+  if(!modal){
+    return;
+  }
+
+  modal.style.display = "flex";
+}
+
+function closeCampsiteStartModal(){
+  const modal = document.getElementById("campsiteCsvModal");
+
+  if(!modal){
+    return;
+  }
+
+  modal.style.display = "none";
+}
+
+function closeCampsiteStartModalByBackdrop(event){
+  if(event.target.id !== "campsiteCsvModal"){
+    return;
+  }
+
+  closeCampsiteStartModal();
+}
+
+function selectCampsiteCsvMode(mode){
+  window._campsiteCsvMode = mode;
+
+  closeCampsiteStartModal();
+
+  const openingScreen =
+    document.getElementById("openingScreen");
+
+  const isOpeningVisible =
+    openingScreen &&
+    window.getComputedStyle(openingScreen).display !== "none";
+
+  if(isOpeningVisible && typeof startAdventure === "function"){
+    startAdventure();
+  }
+
+  window.setTimeout(() => {
+    const toolTabButton =
+      document.querySelector(
+        '.tab-button[data-tab-target="tool"]'
+      );
+
+    if(typeof openTab === "function"){
+      openTab("tool", toolTabButton);
+    }
+
+    applyCampsiteCsvMode(mode);
+  }, 0);
+}
+
+function applyCampsiteCsvMode(mode){
+  const wayfarerStep =
+    document.getElementById("wayfarerCsvStep");
+
+  const customStep =
+    document.getElementById("customCsvStep");
+
+  const summary =
+    document.getElementById("csvModeSummary");
+
+  const summaryText =
+    document.getElementById("csvModeSummaryText");
+
+  if(!wayfarerStep || !customStep || !summary || !summaryText){
+    return;
+  }
+
+  if(mode === "custom"){
+    wayfarerStep.style.display = "none";
+    customStep.style.display = "block";
+
+    summaryText.textContent =
+      "自作CSVを使用";
+
+    summary.style.display = "flex";
+
+    return;
+  }
+
+  wayfarerStep.style.display = "block";
+  customStep.style.display = "none";
+
+  summaryText.textContent =
+    "Wayfarer Mapから抽出したCSVを使用";
+
+  summary.style.display = "flex";
+}
+
+document.addEventListener("keydown", event => {
+  if(event.key !== "Escape"){
+    return;
+  }
+
+  closeCampsiteStartModal();
+});
