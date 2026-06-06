@@ -39,7 +39,6 @@ v6.0<br>
 ・Google My Mapsで追加POIを決めた後に戻れるSTEP 6を追加しました。<br>
 ・羊の相棒が「おかえりなさい」と迎える画面を追加しました。<br>
 ・設計後の次の作業として、距離チェック・提出前チェックリスト・設計継続を選択できるようにしました。<br>
-・パスコード入力欄を半角英数字のみに制限しました。<br>
 ・ページ読み込み直後に白い背景が一瞬表示されないよう、初期背景色をHTML内で指定しました。<br>
 <br>
 </div>
@@ -54,19 +53,19 @@ v6.0<br>
 <div id="loginScreen" class="login-screen">
   <div class="login-card">
     <h2>Campsite Design Tool</h2>
-    <p class="login-sub">アクセスにはパスコードが必要です</p>
+    <p class="login-sub">アクセスには管理者コードが必要です</p>
 
 <input
-  id="passwordInput"
-  type="password"
-  inputmode="email"
-  name="campsite-passcode"
+  id="accessCodeInput"
+  type="text"
+  inputmode="text"
+  name="accessCode"
   autocomplete="off"
   autocorrect="off"
-  autocapitalize="none"
+  autocapitalize="off"
   spellcheck="false"
   enterkeyhint="done"
-  placeholder="パスコードを入力"
+  placeholder="アクセスコードを入力"
   oninput="sanitizePasscodeInput(this)"
 >
 <button type="button" id="loginButton" onclick="checkPassword()">ログイン</button>
@@ -1266,11 +1265,11 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
     </p>
 
     <input
-  id="adminPasswordInput"
-  type="password"
+  id="adminCodeInput"
+  type="text"
   inputmode="text"
   name="adminCode"
-  autocomplete="new-password"
+  autocomplete="off"
   autocorrect="off"
   autocapitalize="off"
   spellcheck="false"
@@ -1407,7 +1406,7 @@ GOロケット団の出現率が3倍になる
 <script src="js/tabs.js?v=5"></script>
 <script src="js/distance.js?v=32"></script>
 <script src="js/admin.js?v=7"></script>
-<script src="js/main.js?v=47"></script>
+<script src="js/main.js?v=49"></script>
 <script src="js/kmz.js?v=12"></script>
 <script src="js/capacity.js?v=3"></script>
 </body>
