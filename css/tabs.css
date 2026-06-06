@@ -164,10 +164,6 @@
       transparent
     );
 }
-/* Campsite Labはオープニング看板からのみ入れる隠し機能 */
-.lab-secret-tab{
-  display:none !important;
-}
 /* キャンプサイト作成：CSV選択モーダル */
 
 .campsite-csv-modal{
@@ -379,4 +375,17 @@
     align-items:flex-start;
     flex-direction:column;
   }
+}
+/* =========================
+   Campsite Lab Secret Tab
+========================= */
+
+/* 通常時は秘密のLabタブを隠す */
+.lab-secret-tab {
+  display: none;
+}
+
+/* オープニングのLab看板から入った時だけ表示 */
+.lab-secret-tab.show {
+  display: block;
 }

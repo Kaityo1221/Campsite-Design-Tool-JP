@@ -254,6 +254,7 @@ const openingWrap = document.querySelector(".opening-scene-wrap");
 openingWrap?.classList.remove("is-right");
 
 document.getElementById("soulIcon")?.classList.remove("show");
+resetCampsiteLabTab();
   if (!opening) return;
 
   openingSceneChanged = false;
@@ -327,6 +328,48 @@ function showSoulIcon(){
   setTimeout(() => {
     icon.classList.remove("show");
   }, 2500);
+}
+/* =========================
+   Campsite Lab Secret Tab
+========================= */
+
+/* オープニングの看板からLabへ入る時だけタブを解放する */
+function openCampsiteLab() {
+  const labTab =
+    document.querySelector(".lab-secret-tab");
+
+  if (labTab) {
+    labTab.classList.add("show");
+  }
+
+  goOpeningTab("parts");
+
+  /*
+    goOpeningTab() では看板側のbuttonを渡していないため、
+    表示後にLabタブをactiveにする
+  */
+  setTimeout(() => {
+    document.querySelectorAll(".tab-button").forEach(button => {
+      button.classList.remove("active");
+    });
+
+    if (labTab) {
+      labTab.classList.add("active");
+    }
+  }, 140);
+}
+
+/* オープニングへ戻った時にLabタブを再び隠す */
+function resetCampsiteLabTab() {
+  const labTab =
+    document.querySelector(".lab-secret-tab");
+
+  if (!labTab) {
+    return;
+  }
+
+  labTab.classList.remove("show");
+  labTab.classList.remove("active");
 }
 /* =========================
    おかえりなさいモーダル
