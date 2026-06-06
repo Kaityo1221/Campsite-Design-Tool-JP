@@ -48,7 +48,7 @@ splashScreen.classList.add("show");
 
 function openAdminLogin() {
   const modal = document.getElementById("adminLoginModal");
-  const input = document.getElementById("adminaccessCodeInput");
+  const input = document.getElementById("adminCodeInput");
   const error = document.getElementById("adminLoginError");
 
   if (!modal) {
@@ -74,7 +74,7 @@ function closeAdminLogin() {
 }
 
 function checkAdminCode() {
-  const input = document.getElementById("adminaccessCodeInput");
+  const input = document.getElementById("adminCodeInput");
   const error = document.getElementById("adminLoginError");
 
   if (!input) return;
@@ -114,7 +114,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   const adminaccessCodeInput =
-    document.getElementById("adminaccessCodeInput");
+    document.getElementById("adminCodeInput");
 
   if (adminaccessCodeInput) {
     adminaccessCodeInput.addEventListener("keydown", function (e) {
