@@ -64,9 +64,10 @@ v6.0<br>
   autocorrect="off"
   autocapitalize="off"
   spellcheck="false"
+  enterkeyhint="done"
   placeholder="アクセスコードを入力"
   oninput="sanitizePasscodeInput(this)"
-  style="-webkit-text-security:disc;"
+  style="-webkit-text-security: disc;"
 >
 <button type="button" id="loginButton" onclick="checkAccessCode()">ログイン</button>
 <p id="loginError" class="error"></p>
