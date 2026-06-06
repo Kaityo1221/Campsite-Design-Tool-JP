@@ -339,8 +339,24 @@ function openReturnModal() {
     return;
   }
 
-  modal.hidden = false;
-  modal.classList.add("show");
+  const sheepImage =
+    modal.querySelector(".return-modal-sheep");
+
+  if (
+    sheepImage &&
+    !sheepImage.getAttribute("src")
+  ) {
+    sheepImage.setAttribute(
+      "src",
+      sheepImage.dataset.src
+    );
+  }
+
+  modal.style.display = "flex";
+
+  requestAnimationFrame(() => {
+    modal.classList.add("show");
+  });
 }
 
 function closeReturnModal() {
@@ -351,7 +367,7 @@ function closeReturnModal() {
   }
 
   modal.classList.remove("show");
-  modal.hidden = true;
+  modal.style.display = "none";
 }
 
 function closeReturnModalByBackdrop(event) {

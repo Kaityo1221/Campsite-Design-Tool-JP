@@ -1033,3 +1033,7 @@ button.generate:active {
 .script-step-next::before {
   display: none;
 }
+/* 非表示状態のおかえりなさいモーダルを確実に隠す */
+.return-modal[hidden] {
+  display: none !important;
+}
