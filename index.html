@@ -6,7 +6,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Campsite Design Tool JP</title>
-<link rel="stylesheet" href="css/style.css?v=36">
+<link rel="stylesheet" href="css/style.css?v=45">
 <link rel="stylesheet" href="css/splash.css?v=92">
 <link rel="stylesheet" href="css/tabs.css?v=26">
 <link rel="stylesheet" href="css/admin.css?v=23">
@@ -43,16 +43,18 @@ v5.8<br>
     <h2>Campsite Design Tool</h2>
     <p class="login-sub">アクセスにはパスコードが必要です</p>
 
-  <input
+<input
   id="passwordInput"
-  type="text"
-  inputmode="text"
+  type="password"
+  inputmode="email"
   name="campsite-passcode"
   autocomplete="off"
   autocorrect="off"
-  autocapitalize="off"
+  autocapitalize="none"
   spellcheck="false"
+  enterkeyhint="done"
   placeholder="パスコードを入力"
+  oninput="sanitizePasscodeInput(this)"
 >
 <button type="button" id="loginButton" onclick="checkPassword()">ログイン</button>
 <p id="loginError" class="error"></p>
@@ -169,8 +171,10 @@ v5.8<br>
 <div class="container">
 
   <div class="hero">
+  <div>
     <div class="badge">Community Ambassador Support Tool</div>
-    <h1>Campsite Design Tool</h1>
+  </div>
+  <h1>Campsite Design Tool</h1>
     <p class="lead">
       Wayfarer CSV / My Maps KML / KMZ から<br>POIを読み込み、
       30m・40m円と既存POIレイヤーを自動生成します。
@@ -447,6 +451,29 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
   </ol>
           </div> <!-- renameGuide -->
       </div> <!-- STEP5 -->
+<div class="step">
+  <div class="step-no">STEP 6</div>
+  <h3>追加POIを決めたら、このツールへ戻る</h3>
+
+  <p class="note">
+    <div class="step return-step-card">
+  <div class="step-no">STEP 6</div>
+  <h3>追加POIが決まったら、ここへ帰ってきてね</h3>
+
+  <p class="note">
+    Google My Mapsで追加したいPOIの場所を決めたら、
+    このツールへ戻ってきてください。<br>
+    小さな羊の相棒が、ここで待っています🐏
+  </p>
+
+  <button
+    type="button"
+    class="return-home-button"
+    onclick="openReturnModal()"
+  >
+    🐏 設計できたよ！ 戻ってきました
+  </button>
+</div>
 
 </div> <!-- panel -->
 </section> <!-- tool -->
@@ -680,234 +707,122 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
 
     <!-- 端末選択 -->
     <div class="script-device-grid">
-
-      <button
-        type="button"
-        class="script-device-card"
-        onclick="showScriptFlow('pc', this)"
-      >
+      <button type="button" class="script-device-card" onclick="showScriptFlow('pc', this)">
         <span class="script-device-icon">💻</span>
         <strong>PC版</strong>
         <small>Chromeを使用</small>
       </button>
 
-      <button
-        type="button"
-        class="script-device-card"
-        onclick="showScriptFlow('iphone', this)"
-      >
+      <button type="button" class="script-device-card" onclick="showScriptFlow('iphone', this)">
         <span class="script-device-icon">🍎</span>
         <strong>iPhone版</strong>
         <small>Safariを使用</small>
       </button>
 
-      <button
-        type="button"
-        class="script-device-card"
-        onclick="showScriptFlow('android', this)"
-      >
+      <button type="button" class="script-device-card" onclick="showScriptFlow('android', this)">
         <span class="script-device-icon">🤖</span>
         <strong>Android版</strong>
         <small>Firefoxを使用</small>
       </button>
-
     </div>
 
     <!-- PC版 -->
     <div id="scriptFlowPc" class="script-flow">
-
       <div class="step">
         <div class="step-no">PC STEP 1</div>
         <h3>Tampermonkeyをインストール</h3>
-        <p class="note">
-          Chromeブラウザに、ユーザースクリプト管理用の拡張機能を追加します。
-        </p>
-
-        <a
-          class="link-btn"
-          href="https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo?hl=ja"
-          target="_blank"
-        >
-          Tampermonkeyをインストール
-        </a>
+        <p class="note">Chromeブラウザに、ユーザースクリプト管理用の拡張機能を追加します。</p>
+        <a class="link-btn" href="https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo?hl=ja" target="_blank">Tampermonkeyをインストール</a>
       </div>
 
       <div class="flow-arrow">↓</div>
-<div class="step">
-  <div class="step-no">PC STEP 2</div>
-  <h3>Chromeの拡張機能設定を確認する</h3>
 
-  <p class="note">
-    Tampermonkeyを追加しただけでは、まだ設定が足りません。<br>
-    Chromeの拡張機能画面で、以下の項目をONにしてください。
-  </p>
-
-  <ol class="note">
-    <li>Chrome右上の「︙」を押す</li>
-    <li>「拡張機能」を押す</li>
-    <li>「拡張機能を管理」を押す</li>
-    <li>画面右上の「デベロッパーモード」をONにする</li>
-    <li>Tampermonkeyの枠内にある「詳細」を押す</li>
-    <li>「ユーザースクリプトを許可する」をONにする</li>
-  </ol>
-</div>
+      <div class="step">
+        <div class="step-no">PC STEP 2</div>
+        <h3>Chromeの拡張機能設定を確認する</h3>
+        <p class="note">Tampermonkeyを追加しただけでは、まだ設定が足りません。<br>Chromeの拡張機能画面で、以下の項目をONにしてください。</p>
+        <ol class="note">
+          <li>Chrome右上の「︙」を押す</li>
+          <li>「拡張機能」を押す</li>
+          <li>「拡張機能を管理」を押す</li>
+          <li>画面右上の「デベロッパーモード」をONにする</li>
+          <li>Tampermonkeyの枠内にある「詳細」を押す</li>
+          <li>「ユーザースクリプトを許可する」をONにする</li>
+        </ol>
+      </div>
 
       <div class="flow-arrow">↓</div>
 
       <div class="step">
-  <div class="step-no">PC STEP 3</div>
-  <h3>Baseをインストール</h3>
-
-  <p class="note">
-    下のボタンを押すと、Tampermonkeyの画面が開きます。<br>
-    画面内の「インストール」を押してください。
-  </p>
-
-  <a
-    class="link-btn"
-    href="https://gitlab.com/Tntnnbltn/wayfarer-addons/-/raw/main/wayfarer-map-mods-base.user.js"
-    target="_blank"
-  >
-    Baseをインストール
-  </a>
-</div>
-
-<div class="flow-arrow">↓</div>
-
-<div class="step">
-  <div class="step-no">PC STEP 4</div>
-  <h3>S2 Cellsをインストール</h3>
-
-  <p class="note">
-    Baseのインストールが終わったら、
-    続けてS2 Cellsを追加します。<br>
-    下のボタンを押し、Tampermonkeyの画面内にある
-    「インストール」を押してください。
-  </p>
-
-  <a
-    class="link-btn"
-    href="https://gitlab.com/Tntnnbltn/wayfarer-addons/-/raw/main/wayfarer-map-mods-s2-cells.user.js"
-    target="_blank"
-  >
-    S2 Cellsをインストール
-  </a>
-</div>
+        <div class="step-no">PC STEP 3</div>
+        <h3>Baseをインストール</h3>
+        <p class="note">下のボタンを押すと、Tampermonkeyの画面が開きます。<br>画面内の「インストール」を押してください。</p>
+        <a class="link-btn" href="https://gitlab.com/Tntnnbltn/wayfarer-addons/-/raw/main/wayfarer-map-mods-base.user.js" target="_blank">Baseをインストール</a>
+      </div>
 
       <div class="flow-arrow">↓</div>
 
       <div class="step">
-  <div class="step-no">PC STEP 5</div>
-  <h3>Wayfarer Mapで動作を確認する</h3>
+        <div class="step-no">PC STEP 4</div>
+        <h3>S2 Cellsをインストール</h3>
+        <p class="note">Baseのインストールが終わったら、続けてS2 Cellsを追加します。<br>下のボタンを押し、Tampermonkeyの画面内にある「インストール」を押してください。</p>
+        <a class="link-btn" href="https://gitlab.com/Tntnnbltn/wayfarer-addons/-/raw/main/wayfarer-map-mods-s2-cells.user.js" target="_blank">S2 Cellsをインストール</a>
+      </div>
 
-  <p class="note">
-    BaseとS2 Cellsのインストールが終わったら、
-    ChromeでWayfarer Mapを開いてください。<br>
-    左上にアイコンが2つ表示されたら導入完了です。
-  </p>
-<div class="script-check-image-wrap">
-  <p class="script-check-label">
-    ✓ このように左上へアイコンが2つ表示されれば成功です
-  </p>
+      <div class="flow-arrow">↓</div>
 
-  <img
-    src="assets/wayfarer-icons-check.png"
-    alt="Wayfarer Map左上にアイコンが2つ表示された正常な状態"
-    class="script-check-image"
-  >
-</div>
-  <a
-    class="link-btn"
-    href="https://wayfarer.nianticlabs.com/new/"
-    target="_blank"
-  >
-    ChromeでWayfarer Mapを開く
-  </a>
-</div>
-<div class="flow-arrow">↓</div>
+      <div class="step script-step-complete">
+        <div class="step-no">PC STEP 5</div>
+        <h3>Wayfarer Mapで動作を確認する</h3>
+        <p class="note">BaseとS2 Cellsのインストールが終わったら、ChromeでWayfarer Mapを開いてください。<br>左上にアイコンが2つ表示されたら導入完了です。</p>
+        <div class="script-check-image-wrap">
+          <p class="script-check-label">✓ このように画面左上へアイコンが2つ表示されれば成功です</p>
+          <img src="assets/wayfarer-icons-check.png" alt="Wayfarer Map左上にアイコンが2つ表示された正常な状態" class="script-check-image">
+        </div>
+        <a class="link-btn" href="https://wayfarer.nianticlabs.com/new/" target="_blank">ChromeでWayfarer Mapを開く</a>
+      </div>
 
-<div class="step">
-  <div class="step-no">NEXT STEP</div>
-  <h3>POIを抽出する</h3>
+      <div class="flow-arrow">↓</div>
 
-  <p class="note">
-    スクリプトの導入が完了したら、
-    Wayfarer MapからPOIを抽出してください。<br>
-    詳しい手順は、POI一括抽出マニュアルをご確認ください。
-  </p>
-
-  <a
-    class="link-btn"
-    href="docs/poi-export-guide.pdf"
-    target="_blank"
-  >
-    📍 POI一括抽出マニュアルを開く
-  </a>
-
-  <a
-    class="link-btn"
-    href="#"
-    onclick="openTab('tool', this); return false;"
-  >
-    キャンプサイト作成へ戻る
-  </a>
-</div>
+      <div class="step script-step-next">
+        <div class="step-no">NEXT STEP</div>
+        <h3>POIを抽出する</h3>
+        <p class="note">スクリプトの導入が完了したら、Wayfarer MapからPOIを抽出してください。<br>詳しい手順は、POI一括抽出マニュアルをご確認ください。</p>
+        <a class="link-btn" href="docs/poi-export-guide.pdf" target="_blank">📍 POI一括抽出マニュアルを開く</a>
+        <a class="link-btn" href="#" onclick="openTab('tool', this); return false;">キャンプサイト作成へ戻る</a>
+      </div>
     </div>
 
     <!-- iPhone版 -->
     <div id="scriptFlowIphone" class="script-flow">
-
       <div class="step">
         <div class="step-no">iPhone STEP 1</div>
         <h3>Userscriptsをインストール</h3>
-        <p class="note">
-          App StoreからUserscriptsアプリを追加します。
-        </p>
-
-        <a
-          class="link-btn"
-          href="https://apps.apple.com/jp/app/userscripts/id1463298887"
-          target="_blank"
-        >
-          Userscriptsをインストール
-        </a>
+        <p class="note">App StoreからUserscriptsアプリを追加します。</p>
+        <a class="link-btn" href="https://apps.apple.com/jp/app/userscripts/id1463298887" target="_blank">Userscriptsをインストール</a>
       </div>
 
       <div class="flow-arrow">↓</div>
 
       <div class="step">
-  <div class="step-no">iPhone STEP 2</div>
-  <h3>Safariの機能拡張をONにする</h3>
+        <div class="step-no">iPhone STEP 2</div>
+        <h3>Safariの機能拡張をONにする</h3>
+        <p class="note">Userscriptsをインストールしただけでは、まだ使えません。<br>Safari側でも機能拡張をONにしてください。</p>
+        <ol class="note">
+          <li>Safariを開く</li>
+          <li>Safari左上のメニューを押す</li>
+          <li>「機能拡張を管理」を押す</li>
+          <li>一覧にある「Userscripts」をONにする</li>
+        </ol>
+      </div>
 
-  <p class="note">
-    Userscriptsをインストールしただけでは、まだ使えません。<br>
-    Safari側でも機能拡張をONにしてください。
-  </p>
-
-  <ol class="note">
-    <li>Safariを開く</li>
-    <li>Safari左上のメニューを押す</li>
-    <li>「機能拡張を管理」を押す</li>
-    <li>一覧にある「Userscripts」をONにする</li>
-  </ol>
-</div>
       <div class="flow-arrow">↓</div>
 
       <div class="step">
         <div class="step-no">iPhone STEP 3</div>
         <h3>Baseをインストール</h3>
-<p class="note">
-  下のボタンを押すと、スクリプトの画面が開きます。<br>
-  Safari左上のメニューから「Userscripts」を押し、
-  続けて「Tap to Install」を押してください。
-</p>
-        <a
-          class="link-btn"
-          href="https://gitlab.com/Tntnnbltn/wayfarer-addons/-/raw/main/wayfarer-map-mods-base.user.js"
-          target="_blank"
-        >
-          Baseをインストール
-        </a>
+        <p class="note">下のボタンを押すと、スクリプトの画面が開きます。<br>Safari左上のメニューから「Userscripts」を押し、続けて「Tap to Install」を押してください。</p>
+        <a class="link-btn" href="https://gitlab.com/Tntnnbltn/wayfarer-addons/-/raw/main/wayfarer-map-mods-base.user.js" target="_blank">Baseをインストール</a>
       </div>
 
       <div class="flow-arrow">↓</div>
@@ -915,271 +830,111 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
       <div class="step">
         <div class="step-no">iPhone STEP 4</div>
         <h3>S2 Cellsをインストール</h3>
-<p class="note">
-  Baseのインストールが終わったら、次にS2 Cellsを追加します。<br>
-  同じように、Safari左上のメニューから「Userscripts」を押し、
-  続けて「Tap to Install」を押してください。
-</p>
-        <a
-          class="link-btn"
-          href="https://gitlab.com/Tntnnbltn/wayfarer-addons/-/raw/main/wayfarer-map-mods-s2-cells.user.js"
-          target="_blank"
-        >
-          S2 Cellsをインストール
-        </a>
+        <p class="note">Baseのインストールが終わったら、次にS2 Cellsを追加します。<br>同じように、Safari左上のメニューから「Userscripts」を押し、続けて「Tap to Install」を押してください。</p>
+        <a class="link-btn" href="https://gitlab.com/Tntnnbltn/wayfarer-addons/-/raw/main/wayfarer-map-mods-s2-cells.user.js" target="_blank">S2 Cellsをインストール</a>
       </div>
 
       <div class="flow-arrow">↓</div>
 
-      <div class="step">
-  <div class="step-no">iPhone STEP 5</div>
-  <h3>Wayfarer Mapで動作を確認する</h3>
+      <<div class="step script-step-complete">
+        <div class="step-no">iPhone STEP 5</div>
+        <h3>Wayfarer Mapで動作を確認する</h3>
+        <p class="note">BaseとS2 Cellsのインストールが終わったら、SafariでWayfarer Mapを開いてください。<br>左上にアイコンが2つ表示されたら導入完了です。</p>
+        <div class="script-check-image-wrap">
+          <p class="script-check-label">✓ このように画面左上へアイコンが2つ表示されれば成功です</p>
+          <img src="assets/wayfarer-icons-check.png" alt="Wayfarer Map左上にアイコンが2つ表示された正常な状態" class="script-check-image">
+        </div>
+        <a class="link-btn" href="https://wayfarer.nianticlabs.com/new/" target="_blank">SafariでWayfarer Mapを開く</a>
+      </div>
 
-  <p class="note">
-    BaseとS2 Cellsのインストールが終わったら、
-    SafariでWayfarer Mapを開いてください。<br>
-    左上にアイコンが2つ表示されたら導入完了です。
-  </p>
-   <div class="step">
-  <div class="step-no">PC STEP 5</div>
-  <h3>Wayfarer Mapで動作を確認する</h3>
+      <div class="flow-arrow">↓</div>
 
-  <p class="note">
-    BaseとS2 Cellsのインストールが終わったら、
-    ChromeでWayfarer Mapを開いてください。<br>
-    左上にアイコンが2つ表示されたら導入完了です。
-  </p>
-<div class="script-check-image-wrap">
-  <p class="script-check-label">
-    ✓ このように左上へアイコンが2つ表示されれば成功です
-  </p>
-
-  <img
-    src="assets/wayfarer-icons-check.png"
-    alt="Wayfarer Map左上にアイコンが2つ表示された正常な状態"
-    class="script-check-image"
-  >
-</div>
-  <a
-    class="link-btn"
-    href="https://wayfarer.nianticlabs.com/new/"
-    target="_blank"
-  >
-    ChromeでWayfarer Mapを開く
-  </a>
-</div>
-<div class="flow-arrow">↓</div>
-  <a
-    class="link-btn"
-    href="https://wayfarer.nianticlabs.com/new/"
-    target="_blank"
-  >
-    SafariでWayfarer Mapを開く
-  </a>
-</div>
-<div class="flow-arrow">↓</div>
-
-<div class="step">
-  <div class="step-no">NEXT STEP</div>
-  <h3>POIを抽出する</h3>
-
-  <p class="note">
-    スクリプトの導入が完了したら、
-    Wayfarer MapからPOIを抽出してください。<br>
-    詳しい手順は、POI一括抽出マニュアルをご確認ください。
-  </p>
-
-  <a
-    class="link-btn"
-    href="docs/poi-export-guide.pdf"
-    target="_blank"
-  >
-    📍 POI一括抽出マニュアルを開く
-  </a>
-
-  <a
-    class="link-btn"
-    href="#"
-    onclick="openTab('tool', this); return false;"
-  >
-    キャンプサイト作成へ戻る
-  </a>
-</div>
+      <div class="step script-step-next">
+        <div class="step-no">NEXT STEP</div>
+        <h3>POIを抽出する</h3>
+        <p class="note">スクリプトの導入が完了したら、Wayfarer MapからPOIを抽出してください。<br>詳しい手順は、POI一括抽出マニュアルをご確認ください。</p>
+        <a class="link-btn" href="docs/poi-export-guide.pdf" target="_blank">📍 POI一括抽出マニュアルを開く</a>
+        <a class="link-btn" href="#" onclick="openTab('tool', this); return false;">キャンプサイト作成へ戻る</a>
+      </div>
     </div>
 
     <!-- Android版 -->
     <div id="scriptFlowAndroid" class="script-flow">
-
       <div class="step">
         <div class="step-no">Android STEP 1</div>
         <h3>Firefoxをインストール</h3>
-        <p class="note">
-          Android版ではFirefoxブラウザを使用します。
-        </p>
-
-        <a
-          class="link-btn"
-          href="https://play.google.com/store/apps/details?id=org.mozilla.firefox"
-          target="_blank"
-        >
-          Firefoxをインストール
-        </a>
+        <p class="note">Android版ではFirefoxブラウザを使用します。</p>
+        <a class="link-btn" href="https://play.google.com/store/apps/details?id=org.mozilla.firefox" target="_blank">Firefoxをインストール</a>
       </div>
 
       <div class="flow-arrow">↓</div>
 
       <div class="step">
         <div class="step-no">Android STEP 2</div>
-        <h3>Tampermonkeyを追加</h3>
-        <div class="step">
-  <div class="step-no">Android STEP 2</div>
-  <h3>TampermonkeyをFirefoxに追加する</h3>
-
-  <p class="note">
-    Firefoxで下のボタンを開き、Tampermonkeyを追加してください。<br>
-    Chromeではなく、必ずFirefoxで開いてください。
-  </p>
-
-  <ol class="note">
-    <li>下のボタンを押す</li>
-    <li>Firefoxでページを開く</li>
-    <li>「Firefoxへ追加」を押す</li>
-    <li>確認画面で「追加」を押す</li>
-  </ol>
-
-  <a
-    class="link-btn"
-    href="https://addons.mozilla.org/ja/firefox/addon/tampermonkey/"
-    target="_blank"
-  >
-    TampermonkeyをFirefoxに追加
-  </a>
-</div>
+        <h3>TampermonkeyをFirefoxに追加する</h3>
+        <p class="note">Firefoxで下のボタンを開き、Tampermonkeyを追加してください。<br>Chromeではなく、必ずFirefoxで開いてください。</p>
+        <ol class="note">
+          <li>下のボタンを押す</li>
+          <li>Firefoxでページを開く</li>
+          <li>「Firefoxへ追加」を押す</li>
+          <li>確認画面で「追加」を押す</li>
+        </ol>
+        <a class="link-btn" href="https://addons.mozilla.org/ja/firefox/addon/tampermonkey/" target="_blank">TampermonkeyをFirefoxに追加</a>
+        <p class="note" style="margin-top:14px;padding:12px;border-radius:12px;background:rgba(59,130,246,0.12);border:1px solid rgba(96,165,250,0.35);color:#bfdbfe;">ℹ Tampermonkey追加後に案内ページが開きますが、<br>そのページでは何も押さなくて大丈夫です。<br>この手順ページへ戻り、次のSTEPへ進んでください。</p>
+      </div>
 
       <div class="flow-arrow">↓</div>
 
       <div class="step">
-  <div class="step-no">Android STEP 3</div>
-  <h3>Baseをインストール</h3>
-
-  <p class="note">
-    Firefoxで下のボタンを開いてください。<br>
-    Tampermonkeyの画面が表示されたら、
-    「インストール」を押してください。
-  </p>
-
-  <a
-    class="link-btn"
-    href="https://gitlab.com/Tntnnbltn/wayfarer-addons/-/raw/main/wayfarer-map-mods-base.user.js"
-    target="_blank"
-  >
-    Baseをインストール
-  </a>
-</div>
-
-<div class="flow-arrow">↓</div>
-
-<div class="step">
-  <div class="step-no">Android STEP 4</div>
-  <h3>S2 Cellsをインストール</h3>
-
-  <p class="note">
-    Baseのインストールが終わったら、
-    続けてS2 Cellsを追加します。<br>
-    Firefoxで下のボタンを開き、
-    Tampermonkeyの画面で「インストール」を押してください。
-  </p>
-
-  <a
-    class="link-btn"
-    href="https://gitlab.com/Tntnnbltn/wayfarer-addons/-/raw/main/wayfarer-map-mods-s2-cells.user.js"
-    target="_blank"
-  >
-    S2 Cellsをインストール
-  </a>
-</div>
+        <div class="step-no">Android STEP 3</div>
+        <h3>Baseをインストール</h3>
+        <p class="note">Firefoxで下のボタンを開いてください。<br>Tampermonkeyの画面が表示されたら、「インストール」を押してください。</p>
+        <p class="note" style="margin-top:14px;padding:12px;border-radius:12px;background:rgba(245,158,11,0.12);border:1px solid rgba(251,191,36,0.38);color:#fde68a;">⚠ インストール画面に注意文が表示されます。<br>今回案内しているリンクから開いた場合は、画面下部の「インストール」を押して進んでください。</p>
+        <div class="script-warning-image-wrap">
+          <p class="script-warning-label">この画面が表示されても問題ありません</p>
+          <img src="assets/script-install-warning.PNG" alt="Android版Firefoxで表示されるユーザースクリプトのインストール確認画面" class="script-warning-image">
+        </div>
+        <a class="link-btn" href="https://gitlab.com/Tntnnbltn/wayfarer-addons/-/raw/main/wayfarer-map-mods-base.user.js" target="_blank">Baseをインストール</a>
+      </div>
 
       <div class="flow-arrow">↓</div>
 
       <div class="step">
-  <div class="step-no">Android STEP 5</div>
-  <h3>Wayfarer Mapで動作を確認する</h3>
+        <div class="step-no">Android STEP 4</div>
+        <h3>S2 Cellsをインストール</h3>
+        <p class="note">Baseのインストールが終わったら、続けてS2 Cellsを追加します。<br>Firefoxで下のボタンを開き、Tampermonkeyの画面で「インストール」を押してください。</p>
+        <p class="note" style="margin-top:14px;padding:12px;border-radius:12px;background:rgba(245,158,11,0.12);border:1px solid rgba(251,191,36,0.38);color:#fde68a;">⚠ STEP 3と同じ注意文が表示されます。<br>画面下部の「インストール」を押して進んでください。</p>
+        <a class="link-btn" href="https://gitlab.com/Tntnnbltn/wayfarer-addons/-/raw/main/wayfarer-map-mods-s2-cells.user.js" target="_blank">S2 Cellsをインストール</a>
+      </div>
 
-  <p class="note">
-    BaseとS2 Cellsのインストールが終わったら、
-    FirefoxでWayfarer Mapを開いてください。<br>
-    左上にアイコンが2つ表示されたら導入完了です。
-  </p>
-   <div class="step">
-  <div class="step-no">PC STEP 5</div>
-  <h3>Wayfarer Mapで動作を確認する</h3>
+      <div class="flow-arrow">↓</div>
 
-  <p class="note">
-    BaseとS2 Cellsのインストールが終わったら、
-    ChromeでWayfarer Mapを開いてください。<br>
-    左上にアイコンが2つ表示されたら導入完了です。
-  </p>
-<div class="script-check-image-wrap">
-  <p class="script-check-label">
-    ✓ このように左上へアイコンが2つ表示されれば成功です
-  </p>
+      <div class="step script-step-complete">
+        <div class="step-no">Android STEP 5</div>
+        <h3>Wayfarer Mapで動作を確認する</h3>
+        <p class="note">BaseとS2 Cellsのインストールが終わったら、FirefoxでWayfarer Mapを開いてください。<br>左上にアイコンが2つ表示されたら導入完了です。</p>
+        <div class="script-check-image-wrap">
+          <p class="script-check-label">✓ このように画面左上へアイコンが2つ表示されれば成功です</p>
+          <img src="assets/wayfarer-icons-check.png" alt="Wayfarer Map左上にアイコンが2つ表示された正常な状態" class="script-check-image">
+        </div>
+        <a class="link-btn" href="https://wayfarer.nianticlabs.com/new/" target="_blank">FirefoxでWayfarer Mapを開く</a>
+      </div>
 
-  <img
-    src="assets/wayfarer-icons-check.png"
-    alt="Wayfarer Map左上にアイコンが2つ表示された正常な状態"
-    class="script-check-image"
-  >
-</div>
-  <a
-    class="link-btn"
-    href="https://wayfarer.nianticlabs.com/new/"
-    target="_blank"
-  >
-    ChromeでWayfarer Mapを開く
-  </a>
-</div>
-<div class="flow-arrow">↓</div>
-  <a
-    class="link-btn"
-    href="https://wayfarer.nianticlabs.com/new/"
-    target="_blank"
-  >
-    FirefoxでWayfarer Mapを開く
-  </a>
-</div>
+      <div class="flow-arrow">↓</div>
+
+      <div class="step script-step-next">
+        <div class="step-no">NEXT STEP</div>
+        <h3>POIを抽出する</h3>
+        <p class="note">スクリプトの導入が完了したら、Wayfarer MapからPOIを抽出してください。<br>詳しい手順は、POI一括抽出マニュアルをご確認ください。</p>
+        <a class="link-btn" href="docs/poi-export-guide.pdf" target="_blank">📍 POI一括抽出マニュアルを開く</a>
+        <a class="link-btn" href="#" onclick="openTab('tool', this); return false;">キャンプサイト作成へ戻る</a>
+      </div>
     </div>
-<div class="flow-arrow">↓</div>
-
-<div class="step">
-  <div class="step-no">NEXT STEP</div>
-  <h3>POIを抽出する</h3>
-
-  <p class="note">
-    スクリプトの導入が完了したら、
-    Wayfarer MapからPOIを抽出してください。<br>
-    詳しい手順は、POI一括抽出マニュアルをご確認ください。
-  </p>
-
-  <a
-    class="link-btn"
-    href="docs/poi-export-guide.pdf"
-    target="_blank"
-  >
-    📍 POI一括抽出マニュアルを開く
-  </a>
-
-  <a
-    class="link-btn"
-    href="#"
-    onclick="openTab('tool', this); return false;"
-  >
-    キャンプサイト作成へ戻る
-  </a>
-</div>
   </div>
 </section>
 
-  <section id="guide" class="tab-content">
+
+<section id="guide" class="tab-content">
     <div class="panel">
       <h2>設計ガイド</h2>
 
@@ -1324,6 +1079,79 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
 </section>
 
 </div> <!-- container -->
+<!-- =========================
+     おかえりなさいモーダル
+========================= -->
+<div
+  id="returnModal"
+  class="return-modal"
+  hidden
+  onclick="closeReturnModalByBackdrop(event)"
+>
+  <div class="return-modal-card">
+
+    <button
+      type="button"
+      class="return-modal-close"
+      onclick="closeReturnModal()"
+      aria-label="閉じる"
+    >
+      ×
+    </button>
+
+    <img
+      src="assets/icon.png"
+      alt="おかえりなさいと迎える羊"
+      class="return-modal-sheep"
+    >
+
+    <p class="return-modal-label">
+      WELCOME BACK
+    </p>
+
+    <h2>おかえりなさい！</h2>
+
+    <p class="return-modal-message">
+      追加POIは決まりましたか？<br>
+      次に進む作業を選んでください。
+    </p>
+
+    <div class="return-modal-actions">
+
+      <button
+        type="button"
+        class="return-action-button distance"
+        onclick="goFromReturnModal('distance')"
+      >
+        <span>📏</span>
+        <strong>距離チェックへ進む</strong>
+        <small>POI同士の距離を確認します</small>
+      </button>
+
+      <button
+        type="button"
+        class="return-action-button checklist"
+        onclick="goFromReturnModal('check')"
+      >
+        <span>✅</span>
+        <strong>提出前チェックリストを見る</strong>
+        <small>提出前の最終確認を行います</small>
+      </button>
+
+      <button
+        type="button"
+        class="return-action-button continue"
+        onclick="closeReturnModal()"
+      >
+        <span>🗺️</span>
+        <strong>まだ設計を続ける</strong>
+        <small>Google My Mapsで調整を続けます</small>
+      </button>
+
+    </div>
+
+  </div>
+</div>
 <div
   id="campsiteCsvModal"
   class="campsite-csv-modal"
@@ -1551,7 +1379,7 @@ GOロケット団の出現率が3倍になる
 <script src="js/tabs.js?v=4"></script>
 <script src="js/distance.js?v=32"></script>
 <script src="js/admin.js?v=7"></script>
-<script src="js/main.js?v=43"></script>
+<script src="js/main.js?v=44"></script>
 <script src="js/kmz.js?v=12"></script>
 <script src="js/capacity.js?v=3"></script>
 </body>

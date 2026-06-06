@@ -8,7 +8,10 @@ let distanceData = {
   existing: [],
   add: []
 };
-
+/* パスコード入力を半角英数字だけに制限 */
+function sanitizePasscodeInput(input) {
+  input.value = input.value.replace(/[^A-Za-z0-9]/g, "");
+}
 
 function checkPassword() {
   const input = document.getElementById("passwordInput");
@@ -324,4 +327,40 @@ function showSoulIcon(){
   setTimeout(() => {
     icon.classList.remove("show");
   }, 2500);
+}
+/* =========================
+   おかえりなさいモーダル
+========================= */
+
+function openReturnModal() {
+  const modal = document.getElementById("returnModal");
+
+  if (!modal) {
+    return;
+  }
+
+  modal.hidden = false;
+  modal.classList.add("show");
+}
+
+function closeReturnModal() {
+  const modal = document.getElementById("returnModal");
+
+  if (!modal) {
+    return;
+  }
+
+  modal.classList.remove("show");
+  modal.hidden = true;
+}
+
+function closeReturnModalByBackdrop(event) {
+  if (event.target.id === "returnModal") {
+    closeReturnModal();
+  }
+}
+
+function goFromReturnModal(tabId) {
+  closeReturnModal();
+  openTab(tabId);
 }
