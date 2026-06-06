@@ -79,5 +79,6 @@
   }
 }
 #adminCodeInput{
+  font-family: text-security-disc;
   -webkit-text-security: disc;
 }
