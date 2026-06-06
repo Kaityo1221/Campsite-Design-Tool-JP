@@ -49,6 +49,15 @@ async function generateCircleOnlyKMZ() {
 
   return true;
 });
+points = points.filter(p => {
+  const layerName = p.layer || "";
+
+  return !(
+    layerName.includes("円") ||
+    layerName.includes("30m") ||
+    layerName.includes("40m")
+  );
+});
     const beforeCount = points.length;
 
     if (beforeCount === 0) {
