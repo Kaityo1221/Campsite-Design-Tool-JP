@@ -6,6 +6,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Campsite Design Tool JP</title>
+<style>
+  html,
+  body {
+    margin: 0;
+    min-height: 100%;
+    background: #020617;
+  }
+</style>
 <link rel="stylesheet" href="css/style.css?v=45">
 <link rel="stylesheet" href="css/splash.css?v=92">
 <link rel="stylesheet" href="css/tabs.css?v=26">
@@ -19,15 +27,20 @@
 
   
 <body>
- <div class="version-badge" onclick="toggleUpdateLog(event)">v5.8</div>
+ <div class="version-badge" onclick="toggleUpdateLog(event)">v6.0</div>
 <div id="updateLog" class="update-log">
   <strong>更新内容</strong><br>
-v5.8<br>
-・距離チェック結果に、POI種別ごとの件数と上限表示を追加<br>
-・POIの上限超過を警告し、総評にも反映されるよう改善<br>
-・キャンプサイト作成手順を整理し、案内文をより分かりやすく調整<br>
-・Wayfarer MapからPOIを一括抽出する手順を追加<br>
-・初回設定が必要な方向けに、スクリプト導入方法と抽出マニュアルへの導線を追加<br>
+v6.0<br>
+・PC・iPhone・Android別のスクリプト導入フローを追加しました。<br>
+・Android版はFirefoxからTampermonkeyを追加する手順を実機で確認しました。<br>
+・Android版でTampermonkey追加後に開く案内ページは操作不要であることを明記しました。<br>
+・Android版でアドオン導入時に表示される注意画面の見本画像を追加しました。<br>
+・スクリプト導入後の成功状態を確認できるよう、Wayfarer Mapの表示例を追加しました。<br>
+・Google My Mapsで追加POIを決めた後に戻れるSTEP 6を追加しました。<br>
+・羊の相棒が「おかえりなさい」と迎える画面を追加しました。<br>
+・設計後の次の作業として、距離チェック・提出前チェックリスト・設計継続を選択できるようにしました。<br>
+・パスコード入力欄を半角英数字のみに制限しました。<br>
+・ページ読み込み直後に白い背景が一瞬表示されないよう、初期背景色をHTML内で指定しました。<br>
 <br>
 </div>
 <audio id="loginSound" src="assets/login.mp3"></audio>
@@ -1379,7 +1392,7 @@ GOロケット団の出現率が3倍になる
 <script src="js/tabs.js?v=4"></script>
 <script src="js/distance.js?v=32"></script>
 <script src="js/admin.js?v=7"></script>
-<script src="js/main.js?v=44"></script>
+<script src="js/main.js?v=45"></script>
 <script src="js/kmz.js?v=12"></script>
 <script src="js/capacity.js?v=3"></script>
 </body>
