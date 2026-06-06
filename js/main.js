@@ -8,7 +8,10 @@ let distanceData = {
   existing: [],
   add: []
 };
-
+/* パスコード入力を半角英数字だけに制限 */
+function sanitizePasscodeInput(input) {
+  input.value = input.value.replace(/[^A-Za-z0-9]/g, "");
+}
 
 function checkPassword() {
   const input = document.getElementById("passwordInput");
@@ -251,6 +254,7 @@ const openingWrap = document.querySelector(".opening-scene-wrap");
 openingWrap?.classList.remove("is-right");
 
 document.getElementById("soulIcon")?.classList.remove("show");
+resetCampsiteLabTab();
   if (!opening) return;
 
   openingSceneChanged = false;
@@ -324,4 +328,98 @@ function showSoulIcon(){
   setTimeout(() => {
     icon.classList.remove("show");
   }, 2500);
+}
+/* =========================
+   Campsite Lab Secret Tab
+========================= */
+
+/* オープニングの看板からLabへ入る時だけタブを解放する */
+function openCampsiteLab() {
+  const labTab =
+    document.querySelector(".lab-secret-tab");
+
+  if (labTab) {
+    labTab.classList.add("show");
+  }
+
+  goOpeningTab("parts");
+
+  /*
+    goOpeningTab() では看板側のbuttonを渡していないため、
+    表示後にLabタブをactiveにする
+  */
+  setTimeout(() => {
+    document.querySelectorAll(".tab-button").forEach(button => {
+      button.classList.remove("active");
+    });
+
+    if (labTab) {
+      labTab.classList.add("active");
+    }
+  }, 140);
+}
+
+/* オープニングへ戻った時にLabタブを再び隠す */
+function resetCampsiteLabTab() {
+  const labTab =
+    document.querySelector(".lab-secret-tab");
+
+  if (!labTab) {
+    return;
+  }
+
+  labTab.classList.remove("show");
+  labTab.classList.remove("active");
+}
+/* =========================
+   おかえりなさいモーダル
+========================= */
+
+function openReturnModal() {
+  const modal = document.getElementById("returnModal");
+
+  if (!modal) {
+    return;
+  }
+
+  const sheepImage =
+    modal.querySelector(".return-modal-sheep");
+
+  if (
+    sheepImage &&
+    !sheepImage.getAttribute("src")
+  ) {
+    sheepImage.setAttribute(
+      "src",
+      sheepImage.dataset.src
+    );
+  }
+
+  modal.style.display = "flex";
+
+  requestAnimationFrame(() => {
+    modal.classList.add("show");
+  });
+}
+
+function closeReturnModal() {
+  const modal = document.getElementById("returnModal");
+
+  if (!modal) {
+    return;
+  }
+
+  modal.classList.remove("show");
+  modal.style.display = "none";
+}
+
+function closeReturnModalByBackdrop(event) {
+  if (event.target.id === "returnModal") {
+    closeReturnModal();
+  }
+}
+
+function goFromReturnModal(tabId) {
+  closeReturnModal();
+  openTab(tabId);
 }

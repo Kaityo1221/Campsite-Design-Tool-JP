@@ -1,0 +1,606 @@
+let capacityState = null;
+let capacityMode = "manual";
+const CAPACITY_LIMITS = {
+  pokestop: 12,
+  gym: 8,
+  power: 5
+};
+
+const CAPACITY_LABELS = {
+  pokestop: "ポケストップ",
+  gym: "ジム",
+  power: "パワースポット"
+};
+
+async function analyzePlacementCapacity() {
+  const file = document.getElementById("capacityFile")?.files?.[0];
+  const result = document.getElementById("capacityResult");
+
+  if (!result) return;
+
+  if (!file) {
+    result.innerHTML = `<div class="distance-warning">KMZ / KMLファイルを選択してください。</div>`;
+    return;
+  }
+
+  result.innerHTML = `<div class="distance-warning">解析中...</div>`;
+
+  try {
+    const kmlText = await getCapacityKmlText(file);
+
+    if (!kmlText) {
+      result.innerHTML = `<div class="distance-warning">KMLデータを読み込めませんでした。</div>`;
+      return;
+    }
+
+    const xml = new DOMParser().parseFromString(kmlText, "application/xml");
+
+    const polygon = extractFirstCapacityPolygon(xml);
+    const poi = extractCapacityPoiPoints(xml);
+
+    if (!polygon.length) {
+      result.innerHTML = `
+        <div class="distance-warning">
+          範囲ポリゴンが見つかりませんでした。<br>
+          Google My Mapsで活動範囲をポリゴンとして作成してください。
+        </div>
+      `;
+      return;
+    }
+
+    const addCounts = {
+      pokestop: poi.filter(p => p.type === "add" && p.kind === "pokestop").length,
+      gym: poi.filter(p => p.type === "add" && p.kind === "gym").length,
+      power: poi.filter(p => p.type === "add" && p.kind === "power").length
+    };
+
+    const remaining = {
+      pokestop: Math.max(0, CAPACITY_LIMITS.pokestop - addCounts.pokestop),
+      gym: Math.max(0, CAPACITY_LIMITS.gym - addCounts.gym),
+      power: Math.max(0, CAPACITY_LIMITS.power - addCounts.power)
+    };
+
+    const estimate = estimateCapacityRandom(polygon, poi, 40, 12000);
+
+    capacityState = {
+      polygon,
+      poi,
+      estimate,
+      remaining
+    };
+
+    result.innerHTML = `
+      <div class="distance-warning">
+        <strong style="font-size:20px; color:#a78bfa;">
+          配置余地チェック結果
+        </strong><br><br>
+
+        範囲ポリゴン：あり<br>
+        読み込みPOI：${poi.length}件<br><br>
+
+        <strong>現在の追加POI</strong><br>
+        ポケストップ：${addCounts.pokestop} / ${CAPACITY_LIMITS.pokestop}<br>
+        ジム：${addCounts.gym} / ${CAPACITY_LIMITS.gym}<br>
+        パワースポット：${addCounts.power} / ${CAPACITY_LIMITS.power}<br><br>
+
+       <strong>残容量</strong><br>
+ポケストップ：${capacityText(addCounts.pokestop, CAPACITY_LIMITS.pokestop)}<br>
+ジム：${capacityText(addCounts.gym, CAPACITY_LIMITS.gym)}<br>
+パワースポット：${capacityText(addCounts.power, CAPACITY_LIMITS.power)}<br><br>
+        <strong>理論上の配置余地：約${estimate.points.length}地点</strong><br><br>
+
+        <span class="note">
+          ※ランダムサンプリングによる概算です。<br>
+          ※詰め込み注意！<br>
+          ※実際に現地検証を進め、導線・安全性・遊びやすさを優先してください。
+        </span>
+      </div>
+
+      <div class="distance-warning">
+  <div class="capacity-section-title">
+    2. 候補POIの生成設定
+  </div>
+
+  ${renderCapacityModeSelector()}
+
+  <div class="capacity-manual-settings">
+    <strong>マニュアル設定</strong>
+    <span class="note">（残容量の範囲内で指定）</span>
+    <br><br>
+
+    ${renderCapacitySelect("pokestop", remaining.pokestop)}
+    ${renderCapacitySelect("gym", remaining.gym)}
+    ${renderCapacitySelect("power", remaining.power)}
+  </div>
+
+  <br>
+
+  <button class="generate" onclick="generateCandidatePoiKMZ()">
+    候補POI KMZを生成
+  </button>
+
+  <div id="candidateKmlResult"></div>
+</div>
+    `;
+  } catch (error) {
+    console.error(error);
+    result.innerHTML = `<div class="distance-warning">解析に失敗しました。</div>`;
+  }
+}
+function capacityText(current, limit) {
+  const remain = limit - current;
+
+  if (remain < 0) {
+    return `<span style="color:#ef4444;">超過中（+${Math.abs(remain)}）</span>`;
+  }
+
+  return `${remain}件`;
+}
+function renderCapacityModeSelector() {
+  return `
+    <div class="capacity-mode-section">
+      <strong>配置モードを選択</strong>
+
+      <div class="capacity-mode-grid">
+
+        <button
+          type="button"
+          id="capacityModeManual"
+          class="capacity-mode-card active"
+          onclick="setCapacityMode('manual')"
+        >
+          <span class="capacity-mode-radio">●</span>
+
+          <span class="capacity-mode-card-text">
+            <strong>マニュアルモード</strong>
+            <small>
+              残容量の範囲内で、種類ごとに候補数を指定して生成します。
+            </small>
+          </span>
+        </button>
+
+        <button
+          type="button"
+          id="capacityModeBalanced"
+          class="capacity-mode-card preparing"
+          onclick="setCapacityMode('balanced')"
+        >
+          <span class="capacity-mode-radio">○</span>
+
+          <span class="capacity-mode-card-text">
+            <strong>均等配置モード</strong>
+            <small>
+              全体に均等に広がるよう、候補を自動調整します。
+            </small>
+
+            <em>準備中</em>
+          </span>
+        </button>
+
+      </div>
+
+      <div id="capacityModeMessage" class="capacity-mode-message">
+        種類ごとの生成数を選択してください。
+      </div>
+    </div>
+  `;
+}
+
+function setCapacityMode(mode) {
+  if (mode === "balanced") {
+    const message = document.getElementById("capacityModeMessage");
+
+    if (message) {
+      message.innerHTML = `
+        🧪 均等配置モードは現在開発中です。<br>
+        今はマニュアルモードをご利用ください。
+      `;
+    }
+
+    return;
+  }
+
+  capacityMode = "manual";
+
+  const manual = document.getElementById("capacityModeManual");
+  const balanced = document.getElementById("capacityModeBalanced");
+  const message = document.getElementById("capacityModeMessage");
+
+  manual?.classList.add("active");
+  balanced?.classList.remove("active");
+
+  if (message) {
+    message.textContent = "種類ごとの生成数を選択してください。";
+  }
+}
+function renderCapacitySelect(kind, max) {
+  let options = "";
+
+  for (let i = 0; i <= max; i++) {
+    options += `<option value="${i}">${i}</option>`;
+  }
+
+  return `
+    <label>
+      ${CAPACITY_LABELS[kind]}：
+      <select id="capacitySelect_${kind}" style="
+        padding:8px 10px;
+        border-radius:8px;
+        background:#1e293b;
+        color:white;
+        border:1px solid #475569;
+        margin:6px 0 10px;
+      ">
+        ${options}
+      </select>
+    </label><br>
+  `;
+}
+
+async function generateCandidatePoiKMZ() {
+  const output = document.getElementById("candidateKmlResult");
+
+  if (!capacityState) {
+    alert("先に配置余地を確認してください。");
+    return;
+  }
+
+  const counts = {
+    pokestop: Number(document.getElementById("capacitySelect_pokestop")?.value || 0),
+    gym: Number(document.getElementById("capacitySelect_gym")?.value || 0),
+    power: Number(document.getElementById("capacitySelect_power")?.value || 0)
+  };
+
+  const total = counts.pokestop + counts.gym + counts.power;
+
+  if (total <= 0) {
+    alert("生成する候補数を1件以上選択してください。");
+    return;
+  }
+
+  if (capacityState.estimate.points.length < total) {
+    alert("選択数に対して配置余地が不足しています。");
+    return;
+  }
+
+  const selectedPoints = pickBalancedCandidatePoints(
+    capacityState.estimate.points,
+    total
+  );
+
+  let index = 0;
+
+  const grouped = {
+    pokestop: [],
+    gym: [],
+    power: []
+  };
+
+  ["pokestop", "gym", "power"].forEach(kind => {
+    for (let i = 0; i < counts[kind]; i++) {
+      grouped[kind].push(selectedPoints[index]);
+      index++;
+    }
+  });
+
+  const kml = buildCandidatePoiKml(grouped);
+  const zip = new JSZip();
+  zip.file("doc.kml", kml);
+
+  const blob = await zip.generateAsync({
+    type: "blob",
+    compression: "DEFLATE"
+  });
+
+  downloadCapacityBlob(blob, "候補POI.kmz");
+
+  if (output) {
+    output.innerHTML = `
+      <div class="distance-warning">
+        候補POI KMZを生成しました。<br><br>
+        ポケストップ候補：${counts.pokestop}件<br>
+        ジム候補：${counts.gym}件<br>
+        パワースポット候補：${counts.power}件<br><br>
+        Google My Mapsにインポートして、現地状況を確認してください。
+      </div>
+    `;
+  }
+}
+
+function pickBalancedCandidatePoints(points, count) {
+  const pool = [...points].sort(() => Math.random() - 0.5);
+  const picked = [];
+
+  while (picked.length < count && pool.length) {
+    let bestIndex = 0;
+    let bestScore = -1;
+
+    pool.forEach((p, index) => {
+      if (!picked.length) {
+        bestScore = Infinity;
+        bestIndex = index;
+        return;
+      }
+
+      const nearest = Math.min(
+        ...picked.map(existing => getCapacityDistance(p, existing))
+      );
+
+      if (nearest > bestScore) {
+        bestScore = nearest;
+        bestIndex = index;
+      }
+    });
+
+    picked.push(pool.splice(bestIndex, 1)[0]);
+  }
+
+  return picked;
+}
+
+function buildCandidatePoiKml(grouped) {
+  const allPoints = [
+    ...grouped.pokestop.map((p, i) => ({
+      ...p,
+      label: "候補ポケストップ",
+      name: `候補ポケストップ${i + 1}`
+    })),
+
+    ...grouped.gym.map((p, i) => ({
+      ...p,
+      label: "候補ジム",
+      name: `候補ジム${i + 1}`
+    })),
+
+    ...grouped.power.map((p, i) => ({
+      ...p,
+      label: "候補パワースポット",
+      name: `候補パワースポット${i + 1}`
+    }))
+  ];
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+<Document>
+  <name>候補POI</name>
+  <Folder>
+    <name>候補POI</name>
+    ${allPoints.map(p => `
+      <Placemark>
+        <name>${p.name}</name>
+        <description>${p.label}</description>
+        <Point>
+          <coordinates>${p.lng},${p.lat},0</coordinates>
+        </Point>
+      </Placemark>
+    `).join("")}
+  </Folder>
+</Document>
+</kml>`;
+}
+
+async function getCapacityKmlText(file) {
+  const name = file.name.toLowerCase();
+
+  if (name.endsWith(".kml")) {
+    return await file.text();
+  }
+
+  if (name.endsWith(".kmz") || name.endsWith(".zip")) {
+    const zip = await JSZip.loadAsync(file);
+
+    for (const path in zip.files) {
+      if (path.toLowerCase().endsWith(".kml")) {
+        return await zip.files[path].async("text");
+      }
+    }
+  }
+
+  return null;
+}
+
+function extractFirstCapacityPolygon(xml) {
+  const polygons = Array.from(xml.getElementsByTagName("Polygon"));
+  if (!polygons.length) return [];
+
+  const coordinates =
+    polygons[0].getElementsByTagName("coordinates")[0]?.textContent;
+
+  if (!coordinates) return [];
+
+  return coordinates
+    .trim()
+    .split(/\s+/)
+    .map(pair => {
+      const [lng, lat] = pair.split(",").map(Number);
+      return { lat, lng };
+    })
+    .filter(p => !isNaN(p.lat) && !isNaN(p.lng));
+}
+
+function extractCapacityPoiPoints(xml) {
+  const placemarks = Array.from(xml.getElementsByTagName("Placemark"));
+
+  return placemarks.map(pm => {
+    const point = pm.getElementsByTagName("Point")[0];
+    if (!point) return null;
+
+    const coord = point.getElementsByTagName("coordinates")[0]?.textContent;
+    if (!coord) return null;
+
+    const [lng, lat] = coord.trim().split(",").map(Number);
+    if (isNaN(lat) || isNaN(lng)) return null;
+
+    const name = pm.getElementsByTagName("name")[0]?.textContent || "POI";
+
+    let layerName = "";
+    let parent = pm.parentElement;
+
+    while (parent) {
+      if (parent.tagName === "Folder") {
+        layerName = parent.getElementsByTagName("name")[0]?.textContent || "";
+        break;
+      }
+
+      parent = parent.parentElement;
+    }
+
+    const isCircle =
+      layerName.includes("円") ||
+      layerName.includes("30m") ||
+      layerName.includes("40m") ||
+      name.includes("円") ||
+      name.includes("30m") ||
+      name.includes("40m");
+
+    if (isCircle) return null;
+
+    const isDummy =
+      layerName.includes("ダミー") ||
+      name.includes("ダミー") ||
+      name.toLowerCase().includes("dummy");
+
+    if (isDummy) return null;
+
+    const isAdd =
+      layerName.includes("追加") ||
+      layerName.includes("追加希望") ||
+      name.includes("追加") ||
+      name.includes("追加希望");
+
+    return {
+      lat,
+      lng,
+      name,
+      layer: layerName,
+      type: isAdd ? "add" : "existing",
+      kind: detectCapacityKind(layerName, name)
+    };
+  }).filter(Boolean);
+}
+
+function detectCapacityKind(layerName, name) {
+  const text = `${layerName} ${name}`.toLowerCase();
+
+  if (
+    text.includes("gym") ||
+    text.includes("ジム")
+  ) {
+    return "gym";
+  }
+
+  if (
+    text.includes("power") ||
+    text.includes("パワ")
+  ) {
+    return "power";
+  }
+
+  return "pokestop";
+}
+
+function estimateCapacityRandom(polygon, blockingPoints, minDistance, trialCount = 12000) {
+  const meanLat =
+    polygon.reduce((sum, p) => sum + p.lat, 0) / polygon.length;
+
+  const metersPerLat = 111320;
+  const metersPerLng =
+    111320 * Math.cos(meanLat * Math.PI / 180);
+
+  const projectedPolygon = polygon.map(p => ({
+    x: p.lng * metersPerLng,
+    y: p.lat * metersPerLat,
+    lat: p.lat,
+    lng: p.lng
+  }));
+
+  const projectedBlocking = blockingPoints.map(p => ({
+    x: p.lng * metersPerLng,
+    y: p.lat * metersPerLat
+  }));
+
+  const xs = projectedPolygon.map(p => p.x);
+  const ys = projectedPolygon.map(p => p.y);
+
+  const minX = Math.min(...xs);
+  const maxX = Math.max(...xs);
+  const minY = Math.min(...ys);
+  const maxY = Math.max(...ys);
+
+  const accepted = [];
+  const safetyMargin = 0;
+
+  for (let i = 0; i < trialCount; i++) {
+    const x = minX + Math.random() * (maxX - minX);
+    const y = minY + Math.random() * (maxY - minY);
+
+    const candidate = { x, y };
+
+    if (!isCapacityPointInPolygon(candidate, projectedPolygon)) continue;
+
+    const nearBlocking = projectedBlocking.some(p =>
+      getCapacityDistance(candidate, p) < minDistance + safetyMargin
+    );
+
+    if (nearBlocking) continue;
+
+    const nearAccepted = accepted.some(p =>
+      getCapacityDistance(candidate, p) < minDistance
+    );
+
+    if (nearAccepted) continue;
+
+    accepted.push({
+      x,
+      y,
+      lat: y / metersPerLat,
+      lng: x / metersPerLng
+    });
+  }
+
+  return {
+    count: accepted.length,
+    points: accepted
+  };
+}
+
+function getCapacityDistance(a, b) {
+  return Math.sqrt(
+    Math.pow(a.x - b.x, 2) +
+    Math.pow(a.y - b.y, 2)
+  );
+}
+
+function isCapacityPointInPolygon(point, polygon) {
+  let inside = false;
+
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    const xi = polygon[i].x;
+    const yi = polygon[i].y;
+    const xj = polygon[j].x;
+    const yj = polygon[j].y;
+
+    const intersect =
+      ((yi > point.y) !== (yj > point.y)) &&
+      (point.x < ((xj - xi) * (point.y - yi)) / ((yj - yi) || 1) + xi);
+
+    if (intersect) inside = !inside;
+  }
+
+  return inside;
+}
+
+function downloadCapacityBlob(blob, fileName) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+
+  setTimeout(() => {
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, 0);
+}
