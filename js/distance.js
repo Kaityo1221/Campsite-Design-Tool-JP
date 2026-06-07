@@ -264,18 +264,31 @@ function renderLayerSelector(layers, container) {
 }
 function getTargetLayerDebugInfo() {
   const layerPoints = window._layerPoints || {};
-  const layerNames = Object.keys(layerPoints);
+  const allLayerNames = Object.keys(layerPoints);
 
-  let pointCount = 0;
+  const targetLayerNames = allLayerNames.filter(name =>
+    !name.includes("円") &&
+    !name.includes("30m") &&
+    !name.includes("40m")
+  );
 
-  layerNames.forEach(layerName => {
-    pointCount += layerPoints[layerName]?.length || 0;
+  let allPointCount = 0;
+  let targetPointCount = 0;
+
+  allLayerNames.forEach(layerName => {
+    allPointCount += layerPoints[layerName]?.length || 0;
+  });
+
+  targetLayerNames.forEach(layerName => {
+    targetPointCount += layerPoints[layerName]?.length || 0;
   });
 
   return {
-    layerCount: layerNames.length,
-    pointCount,
-    layerNames
+    allLayerCount: allLayerNames.length,
+    targetLayerCount: targetLayerNames.length,
+    allPointCount,
+    targetPointCount,
+    targetLayerNames
   };
 }
 function cleanLayerName(name) {
@@ -842,7 +855,23 @@ const adjustableCount = displayCounts.light;
   resultStatusColor = "#94a3b8";
   resultStatusIcon = "ℹ";
 }
+const debugInfo = getTargetLayerDebugInfo();
 
+const debugHtml = `
+  <div class="distance-warning" style="
+    margin-bottom:16px;
+    border:1px solid rgba(56,189,248,0.45);
+    background:rgba(14,165,233,0.10);
+  ">
+    <strong>読み込み状況</strong><br><br>
+    全レイヤー数：${debugInfo.allLayerCount}件<br>
+    判定対象レイヤー数：${debugInfo.targetLayerCount}件<br>
+    全POI数：${debugInfo.allPointCount}件<br>
+    判定対象POI数：${debugInfo.targetPointCount}件<br><br>
+    <strong>判定対象レイヤー</strong><br>
+    ${debugInfo.targetLayerNames.join("<br>") || "なし"}
+  </div>
+`;
   const resultHeaderHtml = `
     <div class="distance-warning" style="
       margin-bottom:16px;
@@ -881,7 +910,8 @@ const simpleMapGuideHtml = `
     sectionTitleHtml("拠点充実度", "距離・通行・広場・回遊性などをもとにした総合評価です。") +
     scoreHtml +
     sectionTitleHtml("判定結果", "20m未満／20〜30m／30〜40mの近接件数を確認します。") +
-    resultHeaderHtml +
+debugHtml +
+resultHeaderHtml +
     `✅ 問題なし（${points.length}件）<br><br>` +
     sectionTitleHtml("PC版簡易マップ", "読み込んだPOIの分布を点で確認できます。") +
     simpleMapGuideHtml;
@@ -942,7 +972,8 @@ const simpleMapGuideHtml = `
   sectionTitleHtml("拠点充実度", "距離・通行・広場・回遊性などをもとにした総合評価です。") +
   scoreHtml +
   sectionTitleHtml("判定結果", "20m未満／20〜30m／30〜40mの近接件数を確認します。") +
-  resultHeaderHtml +
+debugHtml +
+resultHeaderHtml +
   sectionTitleHtml("分類別チェック", "近接内容を密集・滞留・軽微に分けて確認します。") +
   riskAccordionHtml + `
     40m未満の組み合わせがあります。<br><br>
