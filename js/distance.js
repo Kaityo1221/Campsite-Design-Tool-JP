@@ -262,7 +262,22 @@ function renderLayerSelector(layers, container) {
     </div>
   `).join("");
 }
+function getTargetLayerDebugInfo() {
+  const layerPoints = window._layerPoints || {};
+  const layerNames = Object.keys(layerPoints);
 
+  let pointCount = 0;
+
+  layerNames.forEach(layerName => {
+    pointCount += layerPoints[layerName]?.length || 0;
+  });
+
+  return {
+    layerCount: layerNames.length,
+    pointCount,
+    layerNames
+  };
+}
 function cleanLayerName(name) {
   return name
     .replace("既存の", "")
