@@ -59,15 +59,20 @@ async function sendAnalytics(data) {
   ).catch(() => {});
 }
 function getPoiTypeFromLayerName(layerName) {
-  const name = String(layerName || "").toLowerCase();
+  const name = String(layerName || "")
+    .toLowerCase()
+    .replace(/[Ａ-Ｚａ-ｚ０-９]/g, s =>
+      String.fromCharCode(s.charCodeAt(0) - 0xFEE0)
+    );
 
   if (
-  name.includes("パワースポット") ||
-  name.includes("パワスポ") ||
-  name.includes("power")
-) {
-  return "power";
-}
+    name.includes("パワースポット") ||
+    name.includes("パワスポ") ||
+    name.includes("powerspot") ||
+    name.includes("power")
+  ) {
+    return "power";
+  }
 
   if (
     name.includes("ジム") ||
@@ -78,12 +83,33 @@ function getPoiTypeFromLayerName(layerName) {
 
   if (
     name.includes("ポケスト") ||
-    name.includes("pokestop")
+    name.includes("pokestop") ||
+    name.includes("poke stop")
   ) {
     return "pokestop";
   }
 
   return null;
+}
+function normalizeLayerNameText(text) {
+  return String(text || "")
+    .toLowerCase()
+    .replace(/[Ａ-Ｚａ-ｚ０-９]/g, s =>
+      String.fromCharCode(s.charCodeAt(0) - 0xFEE0)
+    );
+}
+
+function isAddedLayerName(layerName) {
+  const name = normalizeLayerNameText(layerName);
+
+  return (
+    name.includes("追加") ||
+    name.includes("新規") ||
+    name.includes("希望") ||
+    name.includes("proposed") ||
+    name.includes("new") ||
+    name.includes("add")
+  );
 }
 function extractParkNameFromText(text) {
   const value = String(text || "");
