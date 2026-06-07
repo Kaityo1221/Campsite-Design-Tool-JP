@@ -87,14 +87,18 @@ async function analyzePlacementCapacity() {
 ポケストップ：${capacityText(addCounts.pokestop, CAPACITY_LIMITS.pokestop)}<br>
 ジム：${capacityText(addCounts.gym, CAPACITY_LIMITS.gym)}<br>
 パワースポット：${capacityText(addCounts.power, CAPACITY_LIMITS.power)}<br><br>
-        <strong>理論上の配置余地：約${estimate.points.length}地点</strong><br><br>
+       <strong>
+<strong>
+推定配置余地：約${estimate.points.length}地点
+（目安：${Math.max(0, estimate.points.length - 1)}～${estimate.points.length + 1}地点程度）
+</strong><br><br>
 
-        <span class="note">
-          ※ランダムサンプリングによる概算です。<br>
-          ※詰め込み注意！<br>
-          ※実際に現地検証を進め、導線・安全性・遊びやすさを優先してください。
-        </span>
-      </div>
+<span class="note">
+  ※ランダムサンプリングによる概算です。<br>
+  ※実行ごとに結果が多少変動します。<br>
+  ※詰め込み注意！<br>
+  ※実際に現地検証を進め、導線・安全性・遊びやすさを優先してください。
+</span>
 
       <div class="distance-warning">
   <div class="capacity-section-title">
@@ -400,44 +404,75 @@ async function getCapacityKmlText(file) {
 }
 
 function extractFirstCapacityPolygon(xml) {
-  const folders = Array.from(xml.getElementsByTagName("Folder"));
+  const placemarks = Array.from(xml.getElementsByTagName("Placemark"));
 
-  const areaFolder = folders.find(folder => {
-    const folderName =
-      Array.from(folder.children)
-        .find(child => child.tagName === "name")
-        ?.textContent || "";
+  for (const pm of placemarks) {
+    const polygon = pm.getElementsByTagName("Polygon")[0];
+    if (!polygon) continue;
 
-    return (
-      folderName.includes("活動範囲") ||
-      folderName.includes("活動エリア") ||
-      folderName.includes("範囲") ||
-      folderName.includes("エリア") ||
-      folderName.includes("ゾーン")
-    );
-  });
+    const placemarkName =
+      pm.getElementsByTagName("name")[0]?.textContent || "";
 
-  if (!areaFolder) return [];
+    const layerName = getCapacityParentFolderName(pm);
 
-  const polygon = areaFolder.getElementsByTagName("Polygon")[0];
-  if (!polygon) return [];
+    const text = `${placemarkName} ${layerName}`.toLowerCase();
 
-  const coordinates =
-    polygon.getElementsByTagName("coordinates")[0]?.textContent;
+    const isCircle =
+      text.includes("円") ||
+      text.includes("30m") ||
+      text.includes("40m") ||
+      text.includes("radius") ||
+      text.includes("circle");
 
-  if (!coordinates) return [];
+    if (isCircle) continue;
 
-  return coordinates
-    .trim()
-    .split(/\s+/)
-    .map(pair => {
-      const [lng, lat] = pair.split(",").map(Number);
+    const isArea =
+      text.includes("活動範囲") ||
+      text.includes("範囲") ||
+      text.includes("エリア") ||
+      text.includes("area") ||
+      text.includes("zone") ||
+      text.includes("polygon");
 
-      return { lat, lng };
-    })
-    .filter(p => !isNaN(p.lat) && !isNaN(p.lng));
+    if (!isArea) continue;
+
+    const coordText =
+      polygon.getElementsByTagName("coordinates")[0]?.textContent || "";
+
+    const points = coordText
+      .trim()
+      .split(/\s+/)
+      .map(coord => {
+        const [lng, lat] = coord.split(",").map(Number);
+
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+          return null;
+        }
+
+        return { lat, lng };
+      })
+      .filter(Boolean);
+
+    if (points.length >= 3) {
+      return points;
+    }
+  }
+
+  return [];
 }
+function getCapacityParentFolderName(element) {
+  let parent = element.parentElement;
 
+  while (parent) {
+    if (parent.tagName === "Folder") {
+      return parent.getElementsByTagName("name")[0]?.textContent || "";
+    }
+
+    parent = parent.parentElement;
+  }
+
+  return "";
+}
 function extractCapacityPoiPoints(xml) {
   const placemarks = Array.from(xml.getElementsByTagName("Placemark"));
 
@@ -479,12 +514,19 @@ function extractCapacityPoiPoints(xml) {
 
     if (isDummy) return null;
 
-    const isAdd =
-      layerName.includes("追加") ||
-      layerName.includes("追加希望") ||
-      name.includes("追加") ||
-      name.includes("追加希望");
+    const normalizedLayerName = String(layerName || "")
+  .toLowerCase()
+  .replace(/[Ａ-Ｚａ-ｚ０-９]/g, s =>
+    String.fromCharCode(s.charCodeAt(0) - 0xFEE0)
+  );
 
+const isAdd =
+  normalizedLayerName.includes("追加") ||
+  normalizedLayerName.includes("新規") ||
+  normalizedLayerName.includes("add") ||
+  normalizedLayerName.includes("new") ||
+  normalizedLayerName.includes("proposed");
+  
     return {
       lat,
       lng,
