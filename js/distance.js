@@ -118,10 +118,20 @@ function renderPoiCountHtml(counts) {
   `;
 }
 function isDistanceTargetLayer(layerName) {
+  const name = String(layerName || "").toLowerCase();
+
   return (
     layerName.includes("既存") ||
     layerName.includes("追加") ||
-    layerName.includes("追加希望")
+    layerName.includes("追加希望") ||
+    name.includes("current") ||
+    name.includes("existing") ||
+    name.includes("addition") ||
+    name.includes("additions") ||
+    name.includes("proposed") ||
+    name.includes("new") ||
+    name.includes("map") ||
+    name.includes("ebene")
   );
 }
 
