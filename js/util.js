@@ -106,16 +106,16 @@ function parseCSV(text) {
       });
 
       const name =
-        pickValue(obj, [
-          "title",
-          "Title",
-          "name",
-          "Name",
-          "wayspotTitle",
-          "Wayspot Title",
-          "タイトル",
-          "名前"
-        ]) || row[0] || "名称未設定";
+  pickValue(obj, [
+    "title",
+    "Title",
+    "name",
+    "Name",
+    "wayspotTitle",
+    "Wayspot Title",
+    "タイトル",
+    "名前"
+  ]) || row[0] || "";
 
       const lat =
         pickValue(obj, [
@@ -178,7 +178,7 @@ function parseCSV(text) {
   ]) || "";
 
 return {
-  name: String(name || "名称未設定"),
+  name: String(name || ""),
   lat: nLat,
   lng: nLng,
   type: String(type || ""),
@@ -356,7 +356,7 @@ function getBestPlacemarkName(placemark) {
   const placemarkName =
     placemark.getElementsByTagName("name")[0]?.textContent?.trim() || "";
 
-  return placemarkName || "名称未設定";
+  return placemarkName || "";
 }
 function parseKmlPoints(kmlText) {
   const parser = new DOMParser();
@@ -437,7 +437,7 @@ function createPointPlacemark(outputXml, point) {
   const placemark = outputXml.createElement("Placemark");
 
   const name = outputXml.createElement("name");
-  name.textContent = point.name || "名称未設定";
+  name.textContent = point.name || "";
   placemark.appendChild(name);
 
   const description = outputXml.createElement("description");
@@ -462,7 +462,9 @@ function createCirclePlacemark(outputXml, point, radius) {
   const placemark = outputXml.createElement("Placemark");
 
   const name = outputXml.createElement("name");
-  name.textContent = `${point.name || "名称未設定"}_${radius}m円`;
+  name.textContent = point.name
+  ? `${point.name}_${radius}m円`
+  : "";
   placemark.appendChild(name);
 
   const polygon = outputXml.createElement("Polygon");
