@@ -34,16 +34,40 @@ function getDistanceMeters(a, b) {
 
   return R * c;
 }
+function getUserId() {
+  let userId = localStorage.getItem("campsiteUserId");
+
+  if (!userId) {
+    userId = crypto.randomUUID();
+    localStorage.setItem("campsiteUserId", userId);
+  }
+
+  return userId;
+}
+
+async function sendAnalytics(data) {
+  fetch(
+    "https://script.google.com/macros/s/AKfycbzvkCTL7py9n12dH9q_w9LUn9HLYnq1fi2U4Zvk0f3vC3RKWNVU_Cgy9J3kWNFw1EPU/exec",
+    {
+      method: "POST",
+      mode: "no-cors",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(data)
+    }
+  ).catch(() => {});
+}
 function getPoiTypeFromLayerName(layerName) {
   const name = String(layerName || "").toLowerCase();
 
   if (
-    name.includes("パワースポット") ||
-    name.includes("パワスポ") ||
-    name.includes("power")
-  ) {
-    return "power";
-  }
+  name.includes("パワースポット") ||
+  name.includes("パワスポ") ||
+  name.includes("power")
+) {
+  return "power";
+}
 
   if (
     name.includes("ジム") ||
@@ -61,7 +85,45 @@ function getPoiTypeFromLayerName(layerName) {
 
   return null;
 }
+function extractParkNameFromText(text) {
+  const value = String(text || "");
 
+  const match = value.match(/([^\s　、,「」（）()]+公園)/);
+
+  if (match) {
+    return match[1];
+  }
+
+  const parkMatch = value.match(/([A-Za-z0-9\s'-]+Park)/i);
+
+  if (parkMatch) {
+    return parkMatch[1].trim();
+  }
+
+  return "";
+}
+
+function guessParkNameFromPoints(points = []) {
+  const parkCounts = {};
+
+  points.forEach(p => {
+    const name = p.name || "";
+    const layer = p.layer || "";
+
+    const parkName =
+      extractParkNameFromText(name) ||
+      extractParkNameFromText(layer);
+
+    if (!parkName) return;
+
+    parkCounts[parkName] = (parkCounts[parkName] || 0) + 1;
+  });
+
+  const entries = Object.entries(parkCounts)
+    .sort((a, b) => b[1] - a[1]);
+
+  return entries[0]?.[0] || "";
+}
 function countPoiTypesFromLayers(pointsByLayer) {
   const counts = {
     pokestop: 0,
@@ -146,7 +208,8 @@ function isDistanceTargetLayer(layerName) {
   const fileName = file.name.toLowerCase();
 
   window._layerPoints = {};
-
+  window._hasPolygon = false;
+  window._inputType = fileName.endsWith(".csv") ? "csv" : "kmz";
   if (summary) {
     summary.innerHTML = "";
   }
@@ -209,6 +272,8 @@ async function extractLayersFromKML(file) {
   }
 
   const xml = new DOMParser().parseFromString(kmlText, "application/xml");
+  window._hasPolygon =
+  xml.getElementsByTagName("Polygon").length > 0;
   const pointsByLayer = extractPointsByLayer(xml);
   const layers = Object.keys(pointsByLayer);
 
@@ -999,6 +1064,45 @@ resultHeaderHtml +
   simpleMapGuideHtml;
 
   renderSimpleDistanceMap(points);
+const parkName = guessParkNameFromPoints(points);
+  sendAnalytics({
+    timestamp: new Date().toISOString(),
+    userId: getUserId(),
+
+    toolVersion: "5.8",
+action: "distance_check",
+
+parkName: parkName,
+parkNameSource: parkName ? "poi_name" : "",
+
+hasPolygon: window._hasPolygon === true,
+inputType: window._inputType || "unknown",
+deviceType: window.innerWidth <= 720 ? "mobile" : "desktop",
+    totalPoiCount: points.length,
+
+    pokestopCount: poiCounts.pokestop,
+    gymCount: poiCounts.gym,
+    powerspotCount: poiCounts.power,
+
+    denseCount: displayCounts.dense,
+    stayCount: displayCounts.stay,
+    lightCount: displayCounts.light,
+
+    trafficOk: campsite.trafficOk,
+
+    hasOpenSpace:
+      document.getElementById("hasOpenSpace")?.checked,
+
+    hasLoopRoute:
+      document.getElementById("hasLoopRoute")?.checked,
+
+    hasWaitingSpace:
+      document.getElementById("hasWaitingSpace")?.checked,
+
+    score: campsite.score,
+    rank: campsite.rank,
+    summary: campsite.summary
+  });
 }
 
 function renderSimpleDistanceMap(points = []) {
