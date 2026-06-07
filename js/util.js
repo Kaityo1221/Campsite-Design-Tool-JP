@@ -106,16 +106,16 @@ function parseCSV(text) {
       });
 
       const name =
-        pickValue(obj, [
-          "title",
-          "Title",
-          "name",
-          "Name",
-          "wayspotTitle",
-          "Wayspot Title",
-          "タイトル",
-          "名前"
-        ]) || row[0] || "名称未設定";
+  pickValue(obj, [
+    "title",
+    "Title",
+    "name",
+    "Name",
+    "wayspotTitle",
+    "Wayspot Title",
+    "タイトル",
+    "名前"
+  ]) || row[0] || "";
 
       const lat =
         pickValue(obj, [
@@ -178,7 +178,7 @@ function parseCSV(text) {
   ]) || "";
 
 return {
-  name: String(name || "名称未設定"),
+  name: String(name || ""),
   lat: nLat,
   lng: nLng,
   type: String(type || ""),
@@ -327,7 +327,37 @@ async function getPointsFromKmlOrKmz(file) {
   const text = await file.text();
   return parseKmlPoints(text);
 }
+function getExtendedDataValue(placemark, keyName) {
+  const dataNodes = Array.from(placemark.getElementsByTagName("Data"));
 
+  for (const dataNode of dataNodes) {
+    const nameAttr = dataNode.getAttribute("name");
+
+    if (nameAttr === keyName) {
+      return dataNode.getElementsByTagName("value")[0]?.textContent?.trim() || "";
+    }
+  }
+
+  return "";
+}
+
+function getBestPlacemarkName(placemark) {
+  const extendedName =
+    getExtendedDataValue(placemark, "名前") ||
+    getExtendedDataValue(placemark, "name") ||
+    getExtendedDataValue(placemark, "Name") ||
+    getExtendedDataValue(placemark, "title") ||
+    getExtendedDataValue(placemark, "Title");
+
+  if (extendedName) {
+    return extendedName;
+  }
+
+  const placemarkName =
+    placemark.getElementsByTagName("name")[0]?.textContent?.trim() || "";
+
+  return placemarkName || "";
+}
 function parseKmlPoints(kmlText) {
   const parser = new DOMParser();
   const xml = parser.parseFromString(kmlText, "application/xml");
@@ -335,9 +365,7 @@ function parseKmlPoints(kmlText) {
 
   return placemarks
     .map(placemark => {
-      const name =
-        placemark.getElementsByTagName("name")[0]?.textContent?.trim() ||
-        "名称未設定";
+      const name = getBestPlacemarkName(placemark);
 
       const description =
         placemark.getElementsByTagName("description")[0]?.textContent?.trim() ||
@@ -409,7 +437,7 @@ function createPointPlacemark(outputXml, point) {
   const placemark = outputXml.createElement("Placemark");
 
   const name = outputXml.createElement("name");
-  name.textContent = point.name || "名称未設定";
+  name.textContent = point.name || "";
   placemark.appendChild(name);
 
   const description = outputXml.createElement("description");
@@ -434,7 +462,9 @@ function createCirclePlacemark(outputXml, point, radius) {
   const placemark = outputXml.createElement("Placemark");
 
   const name = outputXml.createElement("name");
-  name.textContent = `${point.name || "名称未設定"}_${radius}m円`;
+  name.textContent = point.name
+  ? `${point.name}_${radius}m円`
+  : "";
   placemark.appendChild(name);
 
   const polygon = outputXml.createElement("Polygon");

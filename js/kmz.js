@@ -389,14 +389,29 @@ addDummyPlacemark(outputXml, folders.addPower, "ここに追加パワスポを�
 
 points.forEach(p => {
   const kind = classifyType(p.type, p.name, p.layer);
+  const isAdd =
+    isAddedLayerName(p.layer || p.originalLayer || "");
+
   const pointPlacemark = createPointPlacemark(outputXml, p);
 
   if (kind === "gym") {
-    folders.gym.appendChild(pointPlacemark);
+    if (isAdd) {
+      folders.addGym.appendChild(pointPlacemark);
+    } else {
+      folders.gym.appendChild(pointPlacemark);
+    }
   } else if (kind === "power") {
-    folders.power.appendChild(pointPlacemark);
+    if (isAdd) {
+      folders.addPower.appendChild(pointPlacemark);
+    } else {
+      folders.power.appendChild(pointPlacemark);
+    }
   } else {
-    folders.pokestop.appendChild(pointPlacemark);
+    if (isAdd) {
+      folders.addPokestop.appendChild(pointPlacemark);
+    } else {
+      folders.pokestop.appendChild(pointPlacemark);
+    }
   }
 
   selectedRadii.forEach(radius => {

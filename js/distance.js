@@ -47,7 +47,7 @@ function getUserId() {
 
 async function sendAnalytics(data) {
   fetch(
-    "https://script.google.com/macros/s/AKfycbzvkCTL7py9n12dH9q_w9LUn9HLYnq1fi2U4Zvk0f3vC3RKWNVU_Cgy9J3kWNFw1EPU/exec",
+    "https://script.google.com/macros/s/AKfycbxldgzcVeez7AEQk0MXbd569zRIQ_4Z8hHBKrO3lBA9bePX8C3Z5HTqjo9YnbBVTZpl/exec",
     {
       method: "POST",
       mode: "no-cors",
@@ -59,15 +59,20 @@ async function sendAnalytics(data) {
   ).catch(() => {});
 }
 function getPoiTypeFromLayerName(layerName) {
-  const name = String(layerName || "").toLowerCase();
+  const name = String(layerName || "")
+    .toLowerCase()
+    .replace(/[Ａ-Ｚａ-ｚ０-９]/g, s =>
+      String.fromCharCode(s.charCodeAt(0) - 0xFEE0)
+    );
 
   if (
-  name.includes("パワースポット") ||
-  name.includes("パワスポ") ||
-  name.includes("power")
-) {
-  return "power";
-}
+    name.includes("パワースポット") ||
+    name.includes("パワスポ") ||
+    name.includes("powerspot") ||
+    name.includes("power")
+  ) {
+    return "power";
+  }
 
   if (
     name.includes("ジム") ||
@@ -78,12 +83,33 @@ function getPoiTypeFromLayerName(layerName) {
 
   if (
     name.includes("ポケスト") ||
-    name.includes("pokestop")
+    name.includes("pokestop") ||
+    name.includes("poke stop")
   ) {
     return "pokestop";
   }
 
   return null;
+}
+function normalizeLayerNameText(text) {
+  return String(text || "")
+    .toLowerCase()
+    .replace(/[Ａ-Ｚａ-ｚ０-９]/g, s =>
+      String.fromCharCode(s.charCodeAt(0) - 0xFEE0)
+    );
+}
+
+function isAddedLayerName(layerName) {
+  const name = normalizeLayerNameText(layerName);
+
+  return (
+    name.includes("追加") ||
+    name.includes("新規") ||
+    name.includes("希望") ||
+    name.includes("proposed") ||
+    name.includes("new") ||
+    name.includes("add")
+  );
 }
 function extractParkNameFromText(text) {
   const value = String(text || "");
@@ -150,7 +176,39 @@ function countPoiTypesFromLayers(pointsByLayer) {
 
   return counts;
 }
+function countExistingAndAddedPoi(pointsByLayer) {
+  const counts = {
+    existing: 0,
+    added: 0
+  };
 
+  Object.entries(pointsByLayer || {}).forEach(([layerName, points]) => {
+    if (!Array.isArray(points)) return;
+
+    if (
+      layerName.includes("円") ||
+      layerName.includes("30m") ||
+      layerName.includes("40m")
+    ) {
+      return;
+    }
+
+    const isExisting = layerName.includes("既存");
+
+    const isAdded =
+      layerName.includes("追加") ||
+      layerName.includes("新規") ||
+      layerName.includes("CA ");
+
+    if (isExisting) {
+      counts.existing += points.length;
+    } else if (isAdded) {
+      counts.added += points.length;
+    }
+  });
+
+  return counts;
+}
 function renderPoiCountRow(label, current, limit, icon, type) {
   const isOver = current > limit;
   const percent = Math.min(100, Math.round((current / limit) * 100));
@@ -282,7 +340,42 @@ async function extractLayersFromKML(file) {
     pointsByLayer
   };
 }
+function getExtendedDataValue(pm, keyName) {
+  const dataNodes = Array.from(pm.getElementsByTagName("Data"));
 
+  for (const dataNode of dataNodes) {
+    const nameAttr = dataNode.getAttribute("name");
+
+    if (nameAttr === keyName) {
+      return dataNode.getElementsByTagName("value")[0]?.textContent || "";
+    }
+  }
+
+  return "";
+}
+
+function getPlacemarkPoiName(pm) {
+  const extendedName =
+    getExtendedDataValue(pm, "名前") ||
+    getExtendedDataValue(pm, "name") ||
+    getExtendedDataValue(pm, "title");
+
+  if (extendedName.trim()) {
+    return extendedName.trim();
+  }
+
+  const placemarkName =
+    pm.getElementsByTagName("name")[0]?.textContent || "";
+
+  if (
+    placemarkName.trim() &&
+    placemarkName.trim() !== "無題"
+  ) {
+    return placemarkName.trim();
+  }
+
+  return "無題";
+}
 function extractPointsByLayer(xml) {
   const result = {};
 
@@ -305,11 +398,11 @@ function extractPointsByLayer(xml) {
       if (isNaN(lat) || isNaN(lng)) return null;
 
       return {
-        lat,
-        lng,
-        name: pm.getElementsByTagName("name")[0]?.textContent || "POI",
-        layer: layerName
-      };
+  lat,
+  lng,
+  name: getPlacemarkPoiName(pm),
+  layer: layerName
+};
     }).filter(Boolean);
   });
 
@@ -825,6 +918,12 @@ if (
   const color = getRankColor(campsite.rank);
   const bar = getScoreBar(campsite.score, color);
   const poiCounts = countPoiTypesFromLayers(window._layerPoints);
+  const poiVolumeCounts = countExistingAndAddedPoi(window._layerPoints);
+
+const expansionRate =
+  points.length > 0
+    ? Math.round((poiVolumeCounts.added / points.length) * 1000) / 10
+    : 0;
 const poiCountHtml = renderPoiCountHtml(poiCounts);
 const sectionTitleHtml = (title, sub = "") => `
   <div style="
@@ -1079,10 +1178,13 @@ hasPolygon: window._hasPolygon === true,
 inputType: window._inputType || "unknown",
 deviceType: window.innerWidth <= 720 ? "mobile" : "desktop",
     totalPoiCount: points.length,
+existingPoiCount: poiVolumeCounts.existing,
+addedPoiCount: poiVolumeCounts.added,
+expansionRate: expansionRate,
 
-    pokestopCount: poiCounts.pokestop,
-    gymCount: poiCounts.gym,
-    powerspotCount: poiCounts.power,
+pokestopCount: poiCounts.pokestop,
+gymCount: poiCounts.gym,
+powerspotCount: poiCounts.power,
 
     denseCount: displayCounts.dense,
     stayCount: displayCounts.stay,

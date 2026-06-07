@@ -106,9 +106,9 @@ document.addEventListener("DOMContentLoaded", function () {
     accessCodeInput.addEventListener("keydown", function (e) {
 
       if (e.key === "Enter") {
-        e.preventDefault();
-        checkPassword();
-      }
+  e.preventDefault();
+  checkAccessCode();
+}
 
     });
   }
@@ -119,10 +119,10 @@ document.addEventListener("DOMContentLoaded", function () {
   if (adminaccessCodeInput) {
     adminaccessCodeInput.addEventListener("keydown", function (e) {
 
-      if (e.key === "Enter") {
-        e.preventDefault();
-        checkAdminPassword();
-      }
+     if (e.key === "Enter") {
+  e.preventDefault();
+  checkAdminCode();
+}
 
     });
   }
