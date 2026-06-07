@@ -340,7 +340,42 @@ async function extractLayersFromKML(file) {
     pointsByLayer
   };
 }
+function getExtendedDataValue(pm, keyName) {
+  const dataNodes = Array.from(pm.getElementsByTagName("Data"));
 
+  for (const dataNode of dataNodes) {
+    const nameAttr = dataNode.getAttribute("name");
+
+    if (nameAttr === keyName) {
+      return dataNode.getElementsByTagName("value")[0]?.textContent || "";
+    }
+  }
+
+  return "";
+}
+
+function getPlacemarkPoiName(pm) {
+  const extendedName =
+    getExtendedDataValue(pm, "名前") ||
+    getExtendedDataValue(pm, "name") ||
+    getExtendedDataValue(pm, "title");
+
+  if (extendedName.trim()) {
+    return extendedName.trim();
+  }
+
+  const placemarkName =
+    pm.getElementsByTagName("name")[0]?.textContent || "";
+
+  if (
+    placemarkName.trim() &&
+    placemarkName.trim() !== "無題"
+  ) {
+    return placemarkName.trim();
+  }
+
+  return "無題";
+}
 function extractPointsByLayer(xml) {
   const result = {};
 
@@ -363,11 +398,11 @@ function extractPointsByLayer(xml) {
       if (isNaN(lat) || isNaN(lng)) return null;
 
       return {
-        lat,
-        lng,
-        name: pm.getElementsByTagName("name")[0]?.textContent || "POI",
-        layer: layerName
-      };
+  lat,
+  lng,
+  name: getPlacemarkPoiName(pm),
+  layer: layerName
+};
     }).filter(Boolean);
   });
 

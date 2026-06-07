@@ -327,7 +327,37 @@ async function getPointsFromKmlOrKmz(file) {
   const text = await file.text();
   return parseKmlPoints(text);
 }
+function getExtendedDataValue(placemark, keyName) {
+  const dataNodes = Array.from(placemark.getElementsByTagName("Data"));
 
+  for (const dataNode of dataNodes) {
+    const nameAttr = dataNode.getAttribute("name");
+
+    if (nameAttr === keyName) {
+      return dataNode.getElementsByTagName("value")[0]?.textContent?.trim() || "";
+    }
+  }
+
+  return "";
+}
+
+function getBestPlacemarkName(placemark) {
+  const extendedName =
+    getExtendedDataValue(placemark, "名前") ||
+    getExtendedDataValue(placemark, "name") ||
+    getExtendedDataValue(placemark, "Name") ||
+    getExtendedDataValue(placemark, "title") ||
+    getExtendedDataValue(placemark, "Title");
+
+  if (extendedName) {
+    return extendedName;
+  }
+
+  const placemarkName =
+    placemark.getElementsByTagName("name")[0]?.textContent?.trim() || "";
+
+  return placemarkName || "名称未設定";
+}
 function parseKmlPoints(kmlText) {
   const parser = new DOMParser();
   const xml = parser.parseFromString(kmlText, "application/xml");
@@ -335,9 +365,7 @@ function parseKmlPoints(kmlText) {
 
   return placemarks
     .map(placemark => {
-      const name =
-        placemark.getElementsByTagName("name")[0]?.textContent?.trim() ||
-        "名称未設定";
+      const name = getBestPlacemarkName(placemark);
 
       const description =
         placemark.getElementsByTagName("description")[0]?.textContent?.trim() ||
