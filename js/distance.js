@@ -44,7 +44,13 @@ function getUserId() {
 
   return userId;
 }
+function getJstIsoString(date = new Date()) {
+  const jst = new Date(date.getTime() + 9 * 60 * 60 * 1000);
 
+  return jst
+    .toISOString()
+    .replace("Z", "+09:00");
+}
 async function sendAnalytics(data) {
   fetch(
     "https://script.google.com/macros/s/AKfycbxldgzcVeez7AEQk0MXbd569zRIQ_4Z8hHBKrO3lBA9bePX8C3Z5HTqjo9YnbBVTZpl/exec",
@@ -1165,7 +1171,7 @@ resultHeaderHtml +
   renderSimpleDistanceMap(points);
 const parkName = guessParkNameFromPoints(points);
   sendAnalytics({
-    timestamp: new Date().toISOString(),
+    timestamp: getJstIsoString(),
     userId: getUserId(),
 
     toolVersion: "5.8",
