@@ -47,7 +47,7 @@ function getUserId() {
 
 async function sendAnalytics(data) {
   fetch(
-    "https://script.google.com/macros/s/AKfycbzvkCTL7py9n12dH9q_w9LUn9HLYnq1fi2U4Zvk0f3vC3RKWNVU_Cgy9J3kWNFw1EPU/exec",
+    "https://script.google.com/macros/s/AKfycbxldgzcVeez7AEQk0MXbd569zRIQ_4Z8hHBKrO3lBA9bePX8C3Z5HTqjo9YnbBVTZpl/exec",
     {
       method: "POST",
       mode: "no-cors",
@@ -150,7 +150,39 @@ function countPoiTypesFromLayers(pointsByLayer) {
 
   return counts;
 }
+function countExistingAndAddedPoi(pointsByLayer) {
+  const counts = {
+    existing: 0,
+    added: 0
+  };
 
+  Object.entries(pointsByLayer || {}).forEach(([layerName, points]) => {
+    if (!Array.isArray(points)) return;
+
+    if (
+      layerName.includes("円") ||
+      layerName.includes("30m") ||
+      layerName.includes("40m")
+    ) {
+      return;
+    }
+
+    const isExisting = layerName.includes("既存");
+
+    const isAdded =
+      layerName.includes("追加") ||
+      layerName.includes("新規") ||
+      layerName.includes("CA ");
+
+    if (isExisting) {
+      counts.existing += points.length;
+    } else if (isAdded) {
+      counts.added += points.length;
+    }
+  });
+
+  return counts;
+}
 function renderPoiCountRow(label, current, limit, icon, type) {
   const isOver = current > limit;
   const percent = Math.min(100, Math.round((current / limit) * 100));
@@ -825,6 +857,12 @@ if (
   const color = getRankColor(campsite.rank);
   const bar = getScoreBar(campsite.score, color);
   const poiCounts = countPoiTypesFromLayers(window._layerPoints);
+  const poiVolumeCounts = countExistingAndAddedPoi(window._layerPoints);
+
+const expansionRate =
+  points.length > 0
+    ? Math.round((poiVolumeCounts.added / points.length) * 1000) / 10
+    : 0;
 const poiCountHtml = renderPoiCountHtml(poiCounts);
 const sectionTitleHtml = (title, sub = "") => `
   <div style="
@@ -1079,10 +1117,13 @@ hasPolygon: window._hasPolygon === true,
 inputType: window._inputType || "unknown",
 deviceType: window.innerWidth <= 720 ? "mobile" : "desktop",
     totalPoiCount: points.length,
+existingPoiCount: poiVolumeCounts.existing,
+addedPoiCount: poiVolumeCounts.added,
+expansionRate: expansionRate,
 
-    pokestopCount: poiCounts.pokestop,
-    gymCount: poiCounts.gym,
-    powerspotCount: poiCounts.power,
+pokestopCount: poiCounts.pokestop,
+gymCount: poiCounts.gym,
+powerspotCount: poiCounts.power,
 
     denseCount: displayCounts.dense,
     stayCount: displayCounts.stay,
