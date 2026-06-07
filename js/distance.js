@@ -130,7 +130,6 @@ function isDistanceTargetLayer(layerName) {
     name.includes("additions") ||
     name.includes("proposed") ||
     name.includes("new") ||
-    name.includes("map") ||
     name.includes("ebene")
   );
 }
