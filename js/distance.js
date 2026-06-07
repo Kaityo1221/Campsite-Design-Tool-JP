@@ -39,6 +39,7 @@ function getPoiTypeFromLayerName(layerName) {
 
   if (
     name.includes("パワースポット") ||
+    name.includes("パワスポ") ||
     name.includes("power")
   ) {
     return "power";

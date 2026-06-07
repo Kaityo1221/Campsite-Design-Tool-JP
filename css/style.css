@@ -1295,3 +1295,33 @@ button.generate:active {
     width: min(100%, 290px);
   }
 }
+/* =========================
+   Smartphone Text Readability
+========================= */
+
+@media (max-width: 720px) {
+  body {
+    font-size: 17px;
+  }
+
+  .step p {
+    font-size: 17px;
+    line-height: 1.9;
+  }
+
+  .step .note,
+  .note {
+    font-size: 15px;
+    line-height: 1.85;
+  }
+
+  .tab-button {
+    font-size: 15px;
+  }
+
+  .link-btn,
+  .generate,
+  .guide-btn {
+    font-size: 15px;
+  }
+}
