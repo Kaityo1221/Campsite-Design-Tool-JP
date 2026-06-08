@@ -1719,3 +1719,15 @@ button.generate:active {
     width:100%;
   }
 }
+/* =========================
+   Campsite Lab：通常時は非表示
+========================= */
+
+.grouped-tabs .lab-secret-tab{
+  display:none;
+}
+
+/* オープニングの隠し看板から入った時だけ表示 */
+.grouped-tabs .lab-secret-tab.show{
+  display:flex;
+}
