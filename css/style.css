@@ -1523,3 +1523,143 @@ button.generate:active {
     opacity:0.88;
   }
 }
+/* =========================
+   メインフロー・補助ツール整理
+========================= */
+
+.tab-group-main{
+  width:100%;
+  box-sizing:border-box;
+
+  padding:14px;
+
+  border-color:rgba(96,165,250,0.35);
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(15,23,42,0.72),
+      rgba(30,41,59,0.62)
+    );
+}
+
+.main-flow-buttons{
+  display:flex;
+  align-items:center;
+  gap:10px;
+
+  width:100%;
+}
+
+.main-flow-button{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+
+  flex:1;
+
+  min-height:58px;
+
+  border-color:rgba(96,165,250,0.30);
+}
+
+.main-flow-number{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+
+  width:26px;
+  height:26px;
+
+  border-radius:50%;
+
+  background:rgba(96,165,250,0.18);
+  border:1px solid rgba(147,197,253,0.32);
+
+  color:#bfdbfe;
+
+  font-size:13px;
+  font-weight:800;
+}
+
+.main-flow-arrow{
+  color:#93c5fd;
+
+  font-size:22px;
+  font-weight:800;
+
+  opacity:0.72;
+}
+
+.tab-group-utility{
+  opacity:0.88;
+
+  background:rgba(15,23,42,0.24);
+}
+
+.utility-tab-button{
+  font-size:13px;
+
+  opacity:0.88;
+}
+
+.tab-group-other{
+  opacity:0.76;
+
+  background:rgba(15,23,42,0.18);
+}
+
+/* =========================
+   メインフロー：スマホ調整
+========================= */
+
+@media (max-width:720px){
+
+  .grouped-tabs{
+    gap:12px;
+  }
+
+  .tab-group-main{
+    padding:12px;
+  }
+
+  .main-flow-buttons{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:6px;
+  }
+
+  .main-flow-button{
+    justify-content:flex-start;
+
+    width:100%;
+    min-height:50px;
+
+    padding:12px 14px;
+
+    font-size:15px;
+  }
+
+  .main-flow-arrow{
+    line-height:1;
+    text-align:center;
+
+    transform:rotate(90deg);
+
+    font-size:18px;
+  }
+
+  .tab-group-utility,
+  .tab-group-other{
+    width:100%;
+    box-sizing:border-box;
+  }
+
+  .tab-group-utility .tab-button,
+  .tab-group-other .tab-button{
+    padding:10px 12px;
+
+    font-size:13px;
+  }
+}
