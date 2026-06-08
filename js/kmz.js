@@ -11,7 +11,7 @@ function getUserId() {
 
 async function sendAnalytics(data) {
   fetch(
-    "ここに距離チェックで使っているGASのURLを入れる",
+    "https://script.google.com/macros/s/AKfycbxldgzcVeez7AEQk0MXbd569zRIQ_4Z8hHBKrO3lBA9bePX8C3Z5HTqjo9YnbBVTZpl/exec",
     {
       method: "POST",
       mode: "no-cors",
