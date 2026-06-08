@@ -64,6 +64,52 @@ async function sendAnalytics(data) {
     }
   ).catch(() => {});
 }
+function sendDistanceCheckAnalytics(points, poiVolumeCounts, poiCounts, expansionRate, displayCounts, campsite) {
+  const parkName = guessParkNameFromPoints(points);
+
+  sendAnalytics({
+    timestamp: getJstIsoString(),
+    userId: getUserId(),
+
+    toolVersion: window.APP_VERSION,
+    action: "distance_check",
+
+    parkName: parkName,
+    parkNameSource: parkName ? "poi_name" : "",
+
+    hasPolygon: window._hasPolygon === true,
+    inputType: window._inputType || "unknown",
+    deviceType: window.innerWidth <= 720 ? "mobile" : "desktop",
+
+    totalPoiCount: points.length,
+    existingPoiCount: poiVolumeCounts.existing,
+    addedPoiCount: poiVolumeCounts.added,
+    expansionRate: expansionRate,
+
+    pokestopCount: poiCounts.pokestop,
+    gymCount: poiCounts.gym,
+    powerspotCount: poiCounts.power,
+
+    denseCount: displayCounts.dense,
+    stayCount: displayCounts.stay,
+    lightCount: displayCounts.light,
+
+    trafficOk: campsite.trafficOk,
+
+    hasOpenSpace:
+      document.getElementById("hasOpenSpace")?.checked,
+
+    hasLoopRoute:
+      document.getElementById("hasLoopRoute")?.checked,
+
+    hasWaitingSpace:
+      document.getElementById("hasWaitingSpace")?.checked,
+
+    score: campsite.score,
+    rank: campsite.rank,
+    summary: campsite.summary
+  });
+}
 function getPoiTypeFromLayerName(layerName) {
   const name = String(layerName || "")
     .toLowerCase()
@@ -1098,7 +1144,16 @@ resultHeaderHtml +
 
   renderSimpleDistanceMap(points);
 
-  return;
+sendDistanceCheckAnalytics(
+  points,
+  poiVolumeCounts,
+  poiCounts,
+  expansionRate,
+  displayCounts,
+  campsite
+);
+
+return;
 }
   const targetWarnings = warnings.filter(w => {
   const isExistingA = (w.a.originalLayer || "").includes("既存");
@@ -1169,48 +1224,14 @@ resultHeaderHtml +
   simpleMapGuideHtml;
 
   renderSimpleDistanceMap(points);
-const parkName = guessParkNameFromPoints(points);
-  sendAnalytics({
-    timestamp: getJstIsoString(),
-    userId: getUserId(),
-
-    toolVersion: window.APP_VERSION,
-action: "distance_check",
-
-parkName: parkName,
-parkNameSource: parkName ? "poi_name" : "",
-
-hasPolygon: window._hasPolygon === true,
-inputType: window._inputType || "unknown",
-deviceType: window.innerWidth <= 720 ? "mobile" : "desktop",
-    totalPoiCount: points.length,
-existingPoiCount: poiVolumeCounts.existing,
-addedPoiCount: poiVolumeCounts.added,
-expansionRate: expansionRate,
-
-pokestopCount: poiCounts.pokestop,
-gymCount: poiCounts.gym,
-powerspotCount: poiCounts.power,
-
-    denseCount: displayCounts.dense,
-    stayCount: displayCounts.stay,
-    lightCount: displayCounts.light,
-
-    trafficOk: campsite.trafficOk,
-
-    hasOpenSpace:
-      document.getElementById("hasOpenSpace")?.checked,
-
-    hasLoopRoute:
-      document.getElementById("hasLoopRoute")?.checked,
-
-    hasWaitingSpace:
-      document.getElementById("hasWaitingSpace")?.checked,
-
-    score: campsite.score,
-    rank: campsite.rank,
-    summary: campsite.summary
-  });
+sendDistanceCheckAnalytics(
+  points,
+  poiVolumeCounts,
+  poiCounts,
+  expansionRate,
+  displayCounts,
+  campsite
+);
 }
 
 function renderSimpleDistanceMap(points = []) {
