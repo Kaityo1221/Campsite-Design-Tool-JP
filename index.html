@@ -14,7 +14,7 @@
     background: #020617;
   }
 </style>
-<link rel="stylesheet" href="css/style.css?v=49">
+<link rel="stylesheet" href="css/style.css?v=50">
 <link rel="stylesheet" href="css/splash.css?v=97">
 <link rel="stylesheet" href="css/tabs.css?v=28">
 <link rel="stylesheet" href="css/admin.css?v=25">
@@ -184,103 +184,115 @@ v6.0<br>
 <div class="container">
 
   <div class="hero">
-  <div>
-    <div class="badge">Community Ambassador Support Tool</div>
-  </div>
+  <div class="badge">Community Ambassador Support Tool</div>
+
   <h1>Campsite Design Tool</h1>
-    <p class="lead">
-      Wayfarer CSV / My Maps KML / KMZ から<br>POIを読み込み、
-      30m・40m円と既存POIレイヤーを自動生成します。
-    </p>
+
+  <p class="lead">
+    Wayfarer CSV / My Maps KML / KMZ から<br>
+    POIを読み込み、30m・40m円と既存POIレイヤーを自動生成します。
+  </p>
+</div>
+
+  <div class="tabs grouped-tabs">
+
+  <div class="tab-group">
+    <div class="tab-group-label">作成前</div>
+
+    <button
+      class="tab-button"
+      onclick="openTab('howto', this)"
+    >
+      使い方
+    </button>
+
+    <button
+      class="tab-button"
+      onclick="openTab('script', this)"
+    >
+      スクリプト導入
+    </button>
+
+    <button
+      class="tab-button"
+      onclick="openTab('guide', this)"
+    >
+      設計ガイド
+    </button>
   </div>
 
-  <div class="tabs">
+  <div class="tab-group">
+    <div class="tab-group-label">作成中</div>
 
-  <!-- 通常作業 -->
-  <button
-  class="tab-button active"
-  data-tab-target="tool"
-  onclick="openCampsiteStartModal(this)"
->
-  キャンプサイト作成
-</button>
+    <button
+      class="tab-button active"
+      data-tab-target="tool"
+      onclick="openCampsiteStartModal(this)"
+    >
+      キャンプサイト作成
+    </button>
 
-  <button
-    class="tab-button"
-    onclick="openTab('circle-tools', this)"
-  >
-    円だけ生成
-  </button>
-<button
-  class="tab-button"
-  onclick="openTab('deduplicate-poi', this)"
->
-  重複POI整理
-</button>
-  <button
-    class="tab-button"
-    onclick="openTab('distance', this)"
-  >
-    距離チェック
-  </button>
+    <button
+      class="tab-button"
+      onclick="openTab('circle-tools', this)"
+    >
+      円だけ生成
+    </button>
 
-  <!-- 補助・確認 -->
-  <button
-    class="tab-button"
-    onclick="openTab('howto', this)"
-  >
-    使い方
-  </button>
+    <button
+      class="tab-button"
+      onclick="openTab('deduplicate-poi', this)"
+    >
+      重複POI整理
+    </button>
+  </div>
 
-  <button
-    class="tab-button"
-    onclick="openTab('script', this)"
-  >
-    スクリプト導入方法
-  </button>
+  <div class="tab-group">
+    <div class="tab-group-label">作成後</div>
 
-  <button
-    class="tab-button"
-    onclick="openTab('guide', this)"
-  >
-    設計ガイド
-  </button>
+    <button
+      class="tab-button"
+      onclick="openTab('distance', this)"
+    >
+      距離チェック
+    </button>
 
-  <!-- 隠しタブ：通常時はCSSで非表示 -->
-  <button
-    class="tab-button lab-secret-tab"
-    onclick="openTab('parts', this)"
-  >
-    🧪 Campsite Lab
-  </button>
+    <button
+      class="tab-button"
+      onclick="openTab('check', this)"
+    >
+      チェックリスト
+    </button>
+  </div>
 
-  <!-- 最終確認・ホームへ戻る -->
-  <button
-    class="tab-button"
-    onclick="openTab('check', this)"
-  >
-    チェックリスト
-  </button>
+  <div class="tab-group">
+    <div class="tab-group-label">その他</div>
 
-  <button
-    type="button"
-    class="tab-button opening-tab-button"
-    onclick="backToOpening()"
-  >
-    オープニング
-  </button>
+    <button
+      class="tab-button lab-secret-tab"
+      onclick="openTab('parts', this)"
+    >
+      🧪 Lab
+    </button>
 
-</div>
-<div style="text-align:right; margin-top:-10px; margin-bottom:18px;">
-  <button type="button" class="guide-btn" onclick="openAdminLogin()" style="
-    width:auto;
-    padding:8px 12px;
-    font-size:12px;
-    opacity:0.65;
-  ">
-    管理者
-  </button>
-</div>
+    <button
+      type="button"
+      class="tab-button opening-tab-button"
+      onclick="backToOpening()"
+    >
+      オープニング
+    </button>
+
+    <button
+      type="button"
+      class="tab-button admin-tab-button"
+      onclick="openAdminLogin()"
+    >
+      管理者
+    </button>
+  </div>
+
+  </div>
   <section id="tool" class="tab-content active">
     <div class="panel">
       <h2>キャンプサイト作成の手順</h2>
