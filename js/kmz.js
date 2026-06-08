@@ -132,7 +132,7 @@ sendAnalytics({
   timestamp: new Date().toISOString(),
   userId: getUserId(),
 
-  toolVersion: "5.8",
+  toolVersion: window.APP_VERSION,
   action: "circle_only_kmz_generate",
 
   totalPoiCount: points.length,
@@ -269,7 +269,7 @@ async function generateExistingOnlyKMZ() {
   timestamp: new Date().toISOString(),
   userId: getUserId(),
 
-  toolVersion: "5.8",
+  toolVersion: window.APP_VERSION,
   action: "existing_poi_kmz_generate",
 
   totalPoiCount: points.length,
@@ -497,7 +497,7 @@ a.download = `campsite_${now.getFullYear()}${now.getMonth()+1}${now.getDate()}.k
   timestamp: new Date().toISOString(),
   userId: getUserId(),
 
-  toolVersion: "5.8",
+  toolVersion: window.APP_VERSION,
   action: "kmz_generate",
 
   totalPoiCount: points.length,
