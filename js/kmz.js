@@ -269,7 +269,7 @@ sendAnalytics({
   userId: getUserId(),
 
   toolVersion: "5.8",
-  action: "kmz_generate",
+  action: "existing_poi_kmz_generate",
 
   totalPoiCount: points.length,
 
