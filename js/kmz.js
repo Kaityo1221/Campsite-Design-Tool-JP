@@ -228,7 +228,7 @@ async function generateExistingOnlyKMZ() {
     a.click();
 
 sendAnalytics({
-  timestamp: getJstIsoString(),
+  timestamp: new Date().toISOString(),
   userId: getUserId(),
 
   toolVersion: "5.8",
