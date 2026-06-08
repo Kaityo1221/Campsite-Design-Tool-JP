@@ -1324,7 +1324,6 @@ button.generate:active {
 }
 /* =========================
    作業進捗ナビ
-========================= */
 
 .workflow-nav{
   display:flex;
@@ -1375,4 +1374,34 @@ button.generate:active {
   box-shadow:0 0 18px rgba(96,165,250,0.25);
 
   color:#ffffff;
+.grouped-tabs{
+  display:flex;
+  flex-wrap:wrap;
+  gap:14px;
+  align-items:flex-start;
+}
+
+.tab-group{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+
+  padding:10px;
+  border-radius:16px;
+
+  background:rgba(15,23,42,0.35);
+  border:1px solid rgba(148,163,184,0.18);
+}
+
+.tab-group-label{
+  width:100%;
+  font-size:12px;
+  font-weight:800;
+  color:#93c5fd;
+  letter-spacing:0.08em;
+  opacity:0.9;
+}
+
+.admin-tab-button{
+  opacity:0.65;
 }
