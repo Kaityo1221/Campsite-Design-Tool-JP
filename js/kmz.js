@@ -227,6 +227,20 @@ async function generateExistingOnlyKMZ() {
     a.download = `campsite_existing_poi_${now.getFullYear()}${now.getMonth() + 1}${now.getDate()}.kmz`;
     a.click();
 
+sendAnalytics({
+  timestamp: getJstIsoString(),
+  userId: getUserId(),
+
+  toolVersion: "5.8",
+  action: "kmz_generate",
+
+  totalPoiCount: points.length,
+
+  deviceType:
+    window.innerWidth <= 720
+      ? "mobile"
+      : "desktop"
+});
     status.innerHTML =
       `読み込み：${beforeCount}件<br>` +
       `重複削除：${duplicateResult.duplicateCount}件<br>` +
