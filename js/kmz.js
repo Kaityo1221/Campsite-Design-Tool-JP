@@ -128,7 +128,6 @@ async function generateCircleOnlyKMZ() {
 
     const now = new Date();
     a.download = `campsite_circles_${now.getFullYear()}${now.getMonth() + 1}${now.getDate()}.kmz`;
-    a.click();
 sendAnalytics({
   timestamp: new Date().toISOString(),
   userId: getUserId(),
@@ -143,6 +142,10 @@ sendAnalytics({
       ? "mobile"
       : "desktop"
 });
+
+setTimeout(() => {
+  a.click();
+}, 300);
     status.innerHTML =
       `読み込み：${beforeCount}件<br>` +
       `重複削除：${result.duplicateCount}件<br>` +
@@ -262,9 +265,7 @@ async function generateExistingOnlyKMZ() {
 
     const now = new Date();
     a.download = `campsite_existing_poi_${now.getFullYear()}${now.getMonth() + 1}${now.getDate()}.kmz`;
-    a.click();
-
-sendAnalytics({
+    sendAnalytics({
   timestamp: new Date().toISOString(),
   userId: getUserId(),
 
@@ -278,6 +279,10 @@ sendAnalytics({
       ? "mobile"
       : "desktop"
 });
+
+setTimeout(() => {
+  a.click();
+}, 300);
     status.innerHTML =
       `読み込み：${beforeCount}件<br>` +
       `重複削除：${duplicateResult.duplicateCount}件<br>` +
@@ -488,8 +493,7 @@ points.forEach(p => {
   a.href = URL.createObjectURL(blob);
   const now = new Date();
 a.download = `campsite_${now.getFullYear()}${now.getMonth()+1}${now.getDate()}.kmz`;
- a.click();
-sendAnalytics({
+ sendAnalytics({
   timestamp: new Date().toISOString(),
   userId: getUserId(),
 
@@ -503,6 +507,10 @@ sendAnalytics({
       ? "mobile"
       : "desktop"
 });
+
+setTimeout(() => {
+  a.click();
+}, 300);
 const success = document.getElementById("successSound");
 
 if (success) {
