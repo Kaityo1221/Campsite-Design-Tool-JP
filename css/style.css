@@ -1663,3 +1663,59 @@ button.generate:active {
     font-size:13px;
   }
 }
+/* =========================
+   グループタブ：スマホ横幅統一
+========================= */
+
+@media (max-width:720px){
+
+  /* カテゴリ全体を縦並びにする */
+  .grouped-tabs{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:12px;
+  }
+
+  /* 各カテゴリを横幅いっぱいにする */
+  .grouped-tabs .tab-group{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:8px;
+
+    width:100%;
+    box-sizing:border-box;
+
+    padding:12px;
+  }
+
+  /* 見出しも横幅いっぱい */
+  .grouped-tabs .tab-group-label{
+    width:max-content;
+    margin:0 0 4px 2px;
+  }
+
+  /* すべての通常ボタンを同じ大きさにする */
+  .grouped-tabs .tab-button{
+    display:flex;
+    align-items:center;
+    justify-content:flex-start;
+
+    width:100%;
+    min-height:50px;
+    box-sizing:border-box;
+
+    padding:12px 14px;
+
+    font-size:15px;
+    text-align:left;
+  }
+
+  /* メインフローは既存デザインを維持 */
+  .main-flow-buttons{
+    width:100%;
+  }
+
+  .main-flow-button{
+    width:100%;
+  }
+}
