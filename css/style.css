@@ -1496,3 +1496,30 @@ button.generate:active {
     color:#ffffff;
   }
 }
+/* =========================
+   グループタブ見出し：スマホ調整
+========================= */
+
+@media (max-width: 720px) {
+  .grouped-tabs .tab-group-label{
+    display:inline-flex;
+    align-items:center;
+
+    width:auto;
+    margin:0 0 4px 2px;
+    padding:3px 8px;
+
+    border-radius:999px;
+
+    background:rgba(96,165,250,0.10);
+    border:1px solid rgba(147,197,253,0.18);
+
+    color:#93c5fd;
+
+    font-size:11px !important;
+    font-weight:700;
+    letter-spacing:0.08em;
+
+    opacity:0.88;
+  }
+}
