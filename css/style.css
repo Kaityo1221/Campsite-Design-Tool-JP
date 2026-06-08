@@ -1405,3 +1405,69 @@ button.generate:active {
 .admin-tab-button{
   opacity:0.65;
 }
+/* =========================
+   作業進捗ナビ：スマホ表示調整
+========================= */
+
+@media (max-width: 720px) {
+  .workflow-nav{
+    display:block;
+
+    margin:18px 0 18px;
+    padding:14px 16px;
+
+    border-radius:18px;
+    border:1px solid rgba(96,165,250,0.35);
+
+    background:
+      linear-gradient(
+        135deg,
+        rgba(15,23,42,0.82),
+        rgba(30,41,59,0.72)
+      );
+
+    box-shadow:
+      0 0 18px rgba(96,165,250,0.16);
+  }
+
+  .workflow-nav::before{
+    content:"現在の工程";
+
+    display:block;
+
+    margin-bottom:8px;
+
+    color:#93c5fd;
+    font-size:12px;
+    font-weight:800;
+    letter-spacing:0.12em;
+  }
+
+  .workflow-step{
+    display:none;
+  }
+
+  .workflow-step.active{
+    display:flex;
+    justify-content:flex-start;
+
+    width:100%;
+    padding:12px 14px;
+
+    font-size:18px;
+    font-weight:800;
+
+    border-radius:16px;
+  }
+
+  .workflow-step.active span{
+    width:30px;
+    height:30px;
+
+    font-size:16px;
+  }
+
+  .workflow-step.active strong{
+    font-size:18px;
+  }
+}
