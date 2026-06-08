@@ -129,7 +129,20 @@ async function generateCircleOnlyKMZ() {
     const now = new Date();
     a.download = `campsite_circles_${now.getFullYear()}${now.getMonth() + 1}${now.getDate()}.kmz`;
     a.click();
+sendAnalytics({
+  timestamp: new Date().toISOString(),
+  userId: getUserId(),
 
+  toolVersion: "5.8",
+  action: "circle_only_kmz_generate",
+
+  totalPoiCount: points.length,
+
+  deviceType:
+    window.innerWidth <= 720
+      ? "mobile"
+      : "desktop"
+});
     status.innerHTML =
       `読み込み：${beforeCount}件<br>` +
       `重複削除：${result.duplicateCount}件<br>` +
