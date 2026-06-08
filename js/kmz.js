@@ -22,6 +22,23 @@ async function sendAnalytics(data) {
     }
   ).catch(() => {});
 }
+
+function showAfterKmzGuide() {
+  alert(
+`🐏 KMZ生成完了！
+
+次は Google My Maps に
+このKMZをアップロードしましょう。
+
+① My Mapsへアップロード
+② 追加したいPOIを配置
+③ 完成したKMZを書き出す
+④ このツールへ戻る
+
+おかえりなさいボタンから
+距離チェックへ進めます。`
+  );
+}
 async function generateCircleOnlyKMZ() {
   const files = Array.from(document.getElementById("circleOnlyFileInput").files);
   const status = document.getElementById("circleOnlyStatus");
@@ -531,11 +548,17 @@ status.innerHTML =
     `重複削除：${result.duplicateCount}件<br>` +
     `出力：${points.length}件<br>` +
     `✔ KMZを生成しました`;
-  status.style.transform = "scale(1.05)";
+
+status.style.transform = "scale(1.05)";
+
 setTimeout(() => {
   status.style.transform = "scale(1)";
 }, 120);
- } 
+
+setTimeout(() => {
+  showAfterKmzGuide();
+}, 700);
+} 
 /* =========================
    KMZ生成ローディング停止保険
 ========================= */
