@@ -1,3 +1,5 @@
+window.APP_VERSION = "6.0";
+
 window.ENABLE_QUIZ = true;
 window.QUIZ_VERSION = "beta1";
 const ADMIN_CODE = "she1ep";

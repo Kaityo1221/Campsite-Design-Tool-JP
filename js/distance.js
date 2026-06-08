@@ -1174,7 +1174,7 @@ const parkName = guessParkNameFromPoints(points);
     timestamp: getJstIsoString(),
     userId: getUserId(),
 
-    toolVersion: "5.8",
+    toolVersion: window.APP_VERSION,
 action: "distance_check",
 
 parkName: parkName,
