@@ -1762,3 +1762,27 @@ button.generate:active {
     line-height:1;
   }
 }
+/* =========================
+   メインフロー：スマホ1行表示
+========================= */
+
+@media (max-width:720px){
+
+  .main-flow-button{
+    gap:7px;
+
+    padding:12px 10px;
+
+    font-size:13px;
+    white-space:nowrap;
+  }
+
+  .main-flow-number{
+    flex-shrink:0;
+
+    width:24px;
+    height:24px;
+
+    font-size:12px;
+  }
+}
