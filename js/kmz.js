@@ -1,3 +1,27 @@
+function getUserId() {
+  let userId = localStorage.getItem("campsiteUserId");
+
+  if (!userId) {
+    userId = crypto.randomUUID();
+    localStorage.setItem("campsiteUserId", userId);
+  }
+
+  return userId;
+}
+
+async function sendAnalytics(data) {
+  fetch(
+    "https://script.google.com/macros/s/AKfycbxldgzcVeez7AEQk0MXbd569zRIQ_4Z8hHBKrO3lBA9bePX8C3Z5HTqjo9YnbBVTZpl/exec",
+    {
+      method: "POST",
+      mode: "no-cors",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(data)
+    }
+  ).catch(() => {});
+}
 async function generateCircleOnlyKMZ() {
   const files = Array.from(document.getElementById("circleOnlyFileInput").files);
   const status = document.getElementById("circleOnlyStatus");
@@ -104,8 +128,24 @@ async function generateCircleOnlyKMZ() {
 
     const now = new Date();
     a.download = `campsite_circles_${now.getFullYear()}${now.getMonth() + 1}${now.getDate()}.kmz`;
-    a.click();
+sendAnalytics({
+  timestamp: new Date().toISOString(),
+  userId: getUserId(),
 
+  toolVersion: "5.8",
+  action: "circle_only_kmz_generate",
+
+  totalPoiCount: points.length,
+
+  deviceType:
+    window.innerWidth <= 720
+      ? "mobile"
+      : "desktop"
+});
+
+setTimeout(() => {
+  a.click();
+}, 300);
     status.innerHTML =
       `読み込み：${beforeCount}件<br>` +
       `重複削除：${result.duplicateCount}件<br>` +
@@ -225,8 +265,24 @@ async function generateExistingOnlyKMZ() {
 
     const now = new Date();
     a.download = `campsite_existing_poi_${now.getFullYear()}${now.getMonth() + 1}${now.getDate()}.kmz`;
-    a.click();
+    sendAnalytics({
+  timestamp: new Date().toISOString(),
+  userId: getUserId(),
 
+  toolVersion: "5.8",
+  action: "existing_poi_kmz_generate",
+
+  totalPoiCount: points.length,
+
+  deviceType:
+    window.innerWidth <= 720
+      ? "mobile"
+      : "desktop"
+});
+
+setTimeout(() => {
+  a.click();
+}, 300);
     status.innerHTML =
       `読み込み：${beforeCount}件<br>` +
       `重複削除：${duplicateResult.duplicateCount}件<br>` +
@@ -437,8 +493,24 @@ points.forEach(p => {
   a.href = URL.createObjectURL(blob);
   const now = new Date();
 a.download = `campsite_${now.getFullYear()}${now.getMonth()+1}${now.getDate()}.kmz`;
- a.click();
+ sendAnalytics({
+  timestamp: new Date().toISOString(),
+  userId: getUserId(),
 
+  toolVersion: "5.8",
+  action: "kmz_generate",
+
+  totalPoiCount: points.length,
+
+  deviceType:
+    window.innerWidth <= 720
+      ? "mobile"
+      : "desktop"
+});
+
+setTimeout(() => {
+  a.click();
+}, 300);
 const success = document.getElementById("successSound");
 
 if (success) {
