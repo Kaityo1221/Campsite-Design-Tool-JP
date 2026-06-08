@@ -1,3 +1,27 @@
+function getUserId() {
+  let userId = localStorage.getItem("campsiteUserId");
+
+  if (!userId) {
+    userId = crypto.randomUUID();
+    localStorage.setItem("campsiteUserId", userId);
+  }
+
+  return userId;
+}
+
+async function sendAnalytics(data) {
+  fetch(
+    "ここに距離チェックで使っているGASのURLを入れる",
+    {
+      method: "POST",
+      mode: "no-cors",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(data)
+    }
+  ).catch(() => {});
+}
 async function generateCircleOnlyKMZ() {
   const files = Array.from(document.getElementById("circleOnlyFileInput").files);
   const status = document.getElementById("circleOnlyStatus");
