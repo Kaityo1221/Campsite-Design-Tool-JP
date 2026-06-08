@@ -14,7 +14,7 @@
     background: #020617;
   }
 </style>
-<link rel="stylesheet" href="css/style.css?v=49">
+<link rel="stylesheet" href="css/style.css?v=52">
 <link rel="stylesheet" href="css/splash.css?v=97">
 <link rel="stylesheet" href="css/tabs.css?v=28">
 <link rel="stylesheet" href="css/admin.css?v=25">
@@ -184,103 +184,131 @@ v6.0<br>
 <div class="container">
 
   <div class="hero">
-  <div>
     <div class="badge">Community Ambassador Support Tool</div>
-  </div>
-  <h1>Campsite Design Tool</h1>
+
+    <h1>Campsite Design Tool</h1>
+
     <p class="lead">
-      Wayfarer CSV / My Maps KML / KMZ から<br>POIを読み込み、
-      30m・40m円と既存POIレイヤーを自動生成します。
+      Wayfarer CSV / My Maps KML / KMZ から<br>
+      POIを読み込み、30m・40m円と既存POIレイヤーを自動生成します。
     </p>
   </div>
 
-  <div class="tabs">
+  <!-- =========================
+       作業進捗ナビ
+  ========================= -->
+  <div class="workflow-nav" aria-label="キャンプサイト作成の進捗">
+    <div class="workflow-step active" data-workflow-step="prepare">
+      <span>1</span>
+      <strong>準備</strong>
+    </div>
 
-  <!-- 通常作業 -->
-  <button
-  class="tab-button active"
-  data-tab-target="tool"
-  onclick="openCampsiteStartModal(this)"
->
-  キャンプサイト作成
-</button>
+    <div class="workflow-step" data-workflow-step="csv">
+      <span>2</span>
+      <strong>CSV読込</strong>
+    </div>
 
-  <button
-    class="tab-button"
-    onclick="openTab('circle-tools', this)"
-  >
-    円だけ生成
-  </button>
-<button
-  class="tab-button"
-  onclick="openTab('deduplicate-poi', this)"
->
-  重複POI整理
-</button>
-  <button
-    class="tab-button"
-    onclick="openTab('distance', this)"
-  >
-    距離チェック
-  </button>
+    <div class="workflow-step" data-workflow-step="kmz">
+      <span>3</span>
+      <strong>KMZ生成</strong>
+    </div>
 
-  <!-- 補助・確認 -->
-  <button
-    class="tab-button"
-    onclick="openTab('howto', this)"
-  >
-    使い方
-  </button>
+    <div class="workflow-step" data-workflow-step="mymaps">
+      <span>4</span>
+      <strong>My Maps設計</strong>
+    </div>
 
-  <button
-    class="tab-button"
-    onclick="openTab('script', this)"
-  >
-    スクリプト導入方法
-  </button>
+    <div class="workflow-step" data-workflow-step="finished-kmz">
+      <span>5</span>
+      <strong>完成KMZ読込</strong>
+    </div>
 
-  <button
-    class="tab-button"
-    onclick="openTab('guide', this)"
-  >
-    設計ガイド
-  </button>
+    <div class="workflow-step" data-workflow-step="distance">
+      <span>6</span>
+      <strong>距離確認</strong>
+    </div>
 
-  <!-- 隠しタブ：通常時はCSSで非表示 -->
-  <button
-    class="tab-button lab-secret-tab"
-    onclick="openTab('parts', this)"
-  >
-    🧪 Campsite Lab
-  </button>
+    <div class="workflow-step" data-workflow-step="check">
+      <span>7</span>
+      <strong>提出前確認</strong>
+    </div>
+  </div>
 
-  <!-- 最終確認・ホームへ戻る -->
-  <button
-    class="tab-button"
-    onclick="openTab('check', this)"
-  >
-    チェックリスト
-  </button>
+  <div class="tabs grouped-tabs">
 
-  <button
-    type="button"
-    class="tab-button opening-tab-button"
-    onclick="backToOpening()"
-  >
-    オープニング
-  </button>
+    <div class="tab-group">
+      <div class="tab-group-label">作成前</div>
 
-</div>
-<div style="text-align:right; margin-top:-10px; margin-bottom:18px;">
-  <button type="button" class="guide-btn" onclick="openAdminLogin()" style="
-    width:auto;
-    padding:8px 12px;
-    font-size:12px;
-    opacity:0.65;
-  ">
-    管理者
-  </button>
-</div>
+      <button class="tab-button" onclick="openTab('howto', this)">
+        使い方
+      </button>
+
+      <button class="tab-button" onclick="openTab('script', this)">
+        スクリプト導入
+      </button>
+
+      <button class="tab-button" onclick="openTab('guide', this)">
+        設計ガイド
+      </button>
+    </div>
+
+    <div class="tab-group">
+      <div class="tab-group-label">作成中</div>
+
+      <button
+        class="tab-button active"
+        data-tab-target="tool"
+        onclick="openCampsiteStartModal(this)"
+      >
+        キャンプサイト作成
+      </button>
+
+      <button class="tab-button" onclick="openTab('circle-tools', this)">
+        円だけ生成
+      </button>
+
+      <button class="tab-button" onclick="openTab('deduplicate-poi', this)">
+        重複POI整理
+      </button>
+    </div>
+
+    <div class="tab-group">
+      <div class="tab-group-label">作成後</div>
+
+      <button class="tab-button" onclick="openTab('distance', this)">
+        距離チェック
+      </button>
+
+      <button class="tab-button" onclick="openTab('check', this)">
+        チェックリスト
+      </button>
+    </div>
+
+    <div class="tab-group">
+      <div class="tab-group-label">その他</div>
+
+      <button class="tab-button lab-secret-tab" onclick="openTab('parts', this)">
+        🧪 Lab
+      </button>
+
+      <button
+        type="button"
+        class="tab-button opening-tab-button"
+        onclick="backToOpening()"
+      >
+        オープニング
+      </button>
+
+      <button
+        type="button"
+        class="tab-button admin-tab-button"
+        onclick="openAdminLogin()"
+      >
+        管理者
+      </button>
+    </div>
+
+  </div>
   <section id="tool" class="tab-content active">
     <div class="panel">
       <h2>キャンプサイト作成の手順</h2>
@@ -1139,6 +1167,67 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
 </section>
 
 </div> <!-- container -->
+
+<!-- =========================
+     KMZ生成完了モーダル
+========================= -->
+<div
+  id="kmzCompleteModal"
+  class="kmz-complete-modal"
+  style="display:none;"
+  onclick="closeKmzCompleteModalByBackdrop(event)"
+>
+  <div class="kmz-complete-modal-card">
+
+    <button
+      type="button"
+      class="kmz-complete-modal-close"
+      onclick="closeKmzCompleteModal()"
+      aria-label="閉じる"
+    >
+      ×
+    </button>
+
+    <div class="kmz-complete-sheep">🐏</div>
+
+    <p class="kmz-complete-label">
+      KMZ COMPLETE
+    </p>
+
+    <h2>KMZ生成完了！</h2>
+
+    <p class="kmz-complete-message">
+      次はGoogle My Mapsで<br>
+      追加POIを配置しましょう。
+    </p>
+
+    <div class="kmz-complete-actions">
+
+      <button
+        type="button"
+        class="kmz-complete-action-button maps"
+        onclick="openGoogleMyMaps()"
+      >
+        <span>🗺️</span>
+        <strong>Google My Mapsを開く</strong>
+        <small>生成したKMZをインポートします</small>
+      </button>
+
+          <button
+        type="button"
+        class="kmz-complete-action-button later"
+        onclick="closeKmzCompleteModal()"
+      >
+        <span>🐏</span>
+        <strong>閉じる</strong>
+        <small>あとで続きを行います</small>
+      </button>
+
+    </div>
+
+  </div>
+</div>
+
 <!-- =========================
      おかえりなさいモーダル
 ========================= -->
@@ -1455,11 +1544,11 @@ GOロケット団の出現率が3倍になる
   </div>
 </div>
 <script src="js/util.js?v=18"></script>
-<script src="js/tabs.js?v=5"></script>
-<script src="js/distance.js?v=44"></script>
+<script src="js/tabs.js?v=8"></script>
+<script src="js/distance.js?v=45"></script>
 <script src="js/admin.js?v=10"></script>
-<script src="js/main.js?v=53"></script>
-<script src="js/kmz.js?v=25"></script>
+<script src="js/main.js?v=56"></script>
+<script src="js/kmz.js?v=27"></script>
 <script src="js/deduplicate.js?v=3"></script>
 <script src="js/capacity.js?v=6"></script>
 </body>

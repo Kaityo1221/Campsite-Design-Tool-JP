@@ -44,10 +44,47 @@ function openTab(tabId, button) {
     button.classList.add("active");
   }
 
-  window.scrollTo({
+updateWorkflowStep(tabId);
+  
+window.scrollTo({
     top: 0,
     behavior: "smooth"
   });
+}
+function setWorkflowStep(step) {
+  document
+    .querySelectorAll(".workflow-step")
+    .forEach(el => {
+      el.classList.remove("active");
+    });
+
+  const target =
+    document.querySelector(
+      `[data-workflow-step="${step}"]`
+    );
+
+  if (target) {
+    target.classList.add("active");
+  }
+}
+function updateWorkflowStep(tabId) {
+  const stepMap = {
+    howto: "prepare",
+    script: "prepare",
+    guide: "prepare",
+
+    tool: "prepare",
+    "circle-tools": "kmz",
+    "deduplicate-poi": "kmz",
+
+    distance: "finished-kmz",
+    check: "check",
+
+    parts: "finished-kmz",
+    admin: "finished-kmz"
+  };
+
+  setWorkflowStep(stepMap[tabId] || "prepare");
 }
 
 function showScriptFlow(device, selectedButton) {
@@ -143,10 +180,14 @@ function selectCampsiteCsvMode(mode){
     }
 
     applyCampsiteCsvMode(mode);
+
+setWorkflowStep("csv");
   }, 0);
 }
 
 function applyCampsiteCsvMode(mode){
+  setWorkflowStep("csv");
+
   const wayfarerStep =
     document.getElementById("wayfarerCsvStep");
 
