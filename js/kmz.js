@@ -452,7 +452,20 @@ points.forEach(p => {
   const now = new Date();
 a.download = `campsite_${now.getFullYear()}${now.getMonth()+1}${now.getDate()}.kmz`;
  a.click();
+sendAnalytics({
+  timestamp: new Date().toISOString(),
+  userId: getUserId(),
 
+  toolVersion: "5.8",
+  action: "kmz_generate",
+
+  totalPoiCount: points.length,
+
+  deviceType:
+    window.innerWidth <= 720
+      ? "mobile"
+      : "desktop"
+});
 const success = document.getElementById("successSound");
 
 if (success) {
