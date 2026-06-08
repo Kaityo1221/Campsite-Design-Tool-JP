@@ -234,10 +234,51 @@ v6.0<br>
     </div>
   </div>
 
-  <div class="tabs grouped-tabs">
+    <div class="tabs grouped-tabs">
 
+    <!-- =========================
+         メインフロー
+    ========================= -->
+    <div class="tab-group tab-group-main">
+      <div class="tab-group-label">メインフロー</div>
+
+      <div class="main-flow-buttons">
+        <button
+          class="tab-button main-flow-button active"
+          data-tab-target="tool"
+          onclick="openCampsiteStartModal(this)"
+        >
+          <span class="main-flow-number">1</span>
+          キャンプサイト作成
+        </button>
+
+        <span class="main-flow-arrow">→</span>
+
+        <button
+          class="tab-button main-flow-button"
+          onclick="openTab('distance', this)"
+        >
+          <span class="main-flow-number">2</span>
+          距離チェック
+        </button>
+
+        <span class="main-flow-arrow">→</span>
+
+        <button
+          class="tab-button main-flow-button"
+          onclick="openTab('check', this)"
+        >
+          <span class="main-flow-number">3</span>
+          チェックリスト
+        </button>
+      </div>
+    </div>
+
+    <!-- =========================
+         事前準備
+    ========================= -->
     <div class="tab-group">
-      <div class="tab-group-label">作成前</div>
+      <div class="tab-group-label">事前準備</div>
 
       <button class="tab-button" onclick="openTab('howto', this)">
         使い方
@@ -252,44 +293,30 @@ v6.0<br>
       </button>
     </div>
 
-    <div class="tab-group">
-      <div class="tab-group-label">作成中</div>
+    <!-- =========================
+         補助ツール
+    ========================= -->
+    <div class="tab-group tab-group-utility">
+      <div class="tab-group-label">必要な時だけ使う補助ツール</div>
 
-      <button
-        class="tab-button active"
-        data-tab-target="tool"
-        onclick="openCampsiteStartModal(this)"
-      >
-        キャンプサイト作成
-      </button>
-
-      <button class="tab-button" onclick="openTab('circle-tools', this)">
+      <button class="tab-button utility-tab-button" onclick="openTab('circle-tools', this)">
         円だけ生成
       </button>
 
-      <button class="tab-button" onclick="openTab('deduplicate-poi', this)">
+      <button class="tab-button utility-tab-button" onclick="openTab('deduplicate-poi', this)">
         重複POI整理
       </button>
-    </div>
-
-    <div class="tab-group">
-      <div class="tab-group-label">作成後</div>
-
-      <button class="tab-button" onclick="openTab('distance', this)">
-        距離チェック
-      </button>
-
-      <button class="tab-button" onclick="openTab('check', this)">
-        チェックリスト
-      </button>
-    </div>
-
-    <div class="tab-group">
-      <div class="tab-group-label">その他</div>
 
       <button class="tab-button lab-secret-tab" onclick="openTab('parts', this)">
         🧪 Lab
       </button>
+    </div>
+
+    <!-- =========================
+         その他
+    ========================= -->
+    <div class="tab-group tab-group-other">
+      <div class="tab-group-label">その他</div>
 
       <button
         type="button"
