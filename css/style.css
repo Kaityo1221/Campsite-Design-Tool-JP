@@ -1731,3 +1731,34 @@ button.generate:active {
 .grouped-tabs .lab-secret-tab.show{
   display:flex;
 }
+/* =========================
+   グループタブ見出し：高さ統一
+========================= */
+
+@media (max-width:720px){
+
+  /* グループ内の余白で見出しが縦に伸びないようにする */
+  .grouped-tabs .tab-group{
+    align-content:start;
+  }
+
+  /* 全カテゴリ見出しを同じ高さに統一 */
+  .grouped-tabs .tab-group-label{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+
+    align-self:start;
+    justify-self:start;
+
+    width:max-content;
+    height:28px;
+    min-height:28px;
+
+    box-sizing:border-box;
+    padding:0 10px;
+    margin:0 0 4px 2px;
+
+    line-height:1;
+  }
+}
