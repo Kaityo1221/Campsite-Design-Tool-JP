@@ -1477,13 +1477,14 @@ button.generate:active {
 }
 /* =========================
    作業進捗ナビ
+========================= */
 
 .workflow-nav{
   display:flex;
   flex-wrap:wrap;
-  gap:8px;
+  gap:10px;
 
-  margin:18px 0 20px;
+  margin:24px 0;
 }
 
 .workflow-step{
@@ -1491,14 +1492,15 @@ button.generate:active {
   align-items:center;
   gap:8px;
 
-  padding:8px 12px;
+  padding:9px 14px;
   border-radius:999px;
 
-  background:rgba(15,23,42,0.55);
-  border:1px solid rgba(148,163,184,0.18);
+  background:rgba(15,23,42,0.62);
+  border:1px solid rgba(148,163,184,0.22);
 
   color:#cbd5e1;
-  font-size:12px;
+  font-size:13px;
+  font-weight:800;
 }
 
 .workflow-step span{
@@ -1506,69 +1508,41 @@ button.generate:active {
   align-items:center;
   justify-content:center;
 
-  width:22px;
-  height:22px;
+  width:24px;
+  height:24px;
 
   border-radius:50%;
+
   background:rgba(255,255,255,0.08);
 
-  font-weight:bold;
+  font-weight:900;
 }
 
 .workflow-step.active{
+  color:#ffffff;
+
   background:
     linear-gradient(
       135deg,
-      rgba(96,165,250,0.35),
-      rgba(59,130,246,0.25)
+      rgba(59,130,246,0.46),
+      rgba(124,58,237,0.38)
     );
 
-  border-color:rgba(96,165,250,0.55);
-  box-shadow:0 0 18px rgba(96,165,250,0.25);
+  border-color:rgba(147,197,253,0.72);
 
-  color:#ffffff;
-.grouped-tabs{
-  display:flex;
-  flex-wrap:wrap;
-  gap:14px;
-  align-items:flex-start;
+  box-shadow:
+    0 0 20px rgba(96,165,250,0.28);
 }
 
-.tab-group{
-  display:flex;
-  flex-wrap:wrap;
-  gap:8px;
+/* スマホ：進捗ナビを横スクロール */
+@media (max-width:720px){
 
-  padding:10px;
-  border-radius:16px;
-
-  background:rgba(15,23,42,0.35);
-  border:1px solid rgba(148,163,184,0.18);
-}
-
-.tab-group-label{
-  width:100%;
-  font-size:12px;
-  font-weight:800;
-  color:#93c5fd;
-  letter-spacing:0.08em;
-  opacity:0.9;
-}
-
-.admin-tab-button{
-  opacity:0.65;
-}
-/* =========================
-   作業進捗ナビ：スマホ表示調整
-========================= */
-
-@media (max-width: 720px) {
   .workflow-nav{
     display:flex;
     flex-wrap:nowrap;
     gap:8px;
 
-    margin:18px 0 18px;
+    margin:18px 0;
     padding:12px;
 
     overflow-x:auto;
@@ -1595,694 +1569,840 @@ button.generate:active {
   }
 
   .workflow-step{
-    display:flex;
     flex:0 0 auto;
-    align-items:center;
+
     gap:6px;
-
     padding:8px 10px;
-
-    border-radius:999px;
-
-    background:rgba(15,23,42,0.55);
-    border:1px solid rgba(148,163,184,0.18);
-
-    color:#cbd5e1;
 
     font-size:12px;
     white-space:nowrap;
   }
 
   .workflow-step span{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-
     width:22px;
     height:22px;
 
-    border-radius:50%;
-
-    background:rgba(255,255,255,0.08);
-
     font-size:12px;
-    font-weight:bold;
   }
 
   .workflow-step strong{
     font-size:12px;
   }
-
-  .workflow-step.active{
-    background:
-      linear-gradient(
-        135deg,
-        rgba(59,130,246,0.46),
-        rgba(124,58,237,0.36)
-      );
-
-    border-color:rgba(147,197,253,0.72);
-
-    box-shadow:
-      0 0 18px rgba(96,165,250,0.26);
-
-    color:#ffffff;
-  }
 }
+
 /* =========================
-   グループタブ見出し：スマホ調整
+   Neon Dashboard Menu
 ========================= */
 
-@media (max-width: 720px) {
-  .grouped-tabs .tab-group-label{
-    display:inline-flex;
-    align-items:center;
-
-    width:auto;
-    margin:0 0 4px 2px;
-    padding:3px 8px;
-
-    border-radius:999px;
-
-    background:rgba(96,165,250,0.10);
-    border:1px solid rgba(147,197,253,0.18);
-
-    color:#93c5fd;
-
-    font-size:11px !important;
-    font-weight:700;
-    letter-spacing:0.08em;
-
-    opacity:0.88;
+/* PCではダッシュボードの横幅を広く使う */
+@media (min-width:1200px){
+  .container{
+    max-width:1500px;
   }
 }
+
+/* SVGアイコン定義を画面上では隠す */
+.dashboard-icon-sprite{
+  position:absolute;
+
+  width:0;
+  height:0;
+
+  overflow:hidden;
+}
+
+/* ダッシュボード全体 */
+.dashboard-menu{
+  display:grid;
+
+  grid-template-columns:
+    minmax(250px, 0.95fr)
+    minmax(560px, 1.75fr)
+    minmax(250px, 0.95fr)
+    minmax(220px, 0.80fr);
+
+  gap:14px;
+
+  margin:26px 0 24px;
+  padding:16px;
+
+  border-radius:28px;
+  border:1px solid rgba(147,197,253,0.20);
+
+  background:
+    radial-gradient(
+      circle at 22% 0%,
+      rgba(56,189,248,0.12),
+      transparent 30%
+    ),
+    radial-gradient(
+      circle at 78% 20%,
+      rgba(236,72,153,0.10),
+      transparent 30%
+    ),
+    linear-gradient(
+      135deg,
+      rgba(15,23,42,0.84),
+      rgba(15,23,42,0.62)
+    );
+
+  box-shadow:
+    0 24px 70px rgba(0,0,0,0.28),
+    inset 0 1px 0 rgba(255,255,255,0.05);
+}
+
+/* 各カテゴリの枠 */
+.dashboard-section{
+  position:relative;
+
+  min-width:0;
+  padding:18px;
+
+  border-radius:22px;
+  border:1px solid rgba(148,163,184,0.22);
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(30,41,59,0.72),
+      rgba(15,23,42,0.76)
+    );
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+.dashboard-section-title{
+  margin:0 0 18px;
+
+  color:#bfdbfe;
+  font-size:16px;
+  font-weight:900;
+  letter-spacing:0.08em;
+
+  text-shadow:
+    0 0 14px rgba(96,165,250,0.42);
+}
+
+.dashboard-list{
+  display:grid;
+  gap:12px;
+}
+
 /* =========================
-   メインフロー・補助ツール整理
+   サブメニュー看板
 ========================= */
 
-.tab-group-main{
+.dashboard-menu .dashboard-button{
+  --neon:#60a5fa;
+  --neon-glow:rgba(96,165,250,0.52);
+
+  display:grid;
+  grid-template-columns:52px 1fr;
+  align-items:center;
+  gap:12px;
+
   width:100%;
-  box-sizing:border-box;
+  min-height:94px;
+  padding:14px 16px;
 
-  padding:14px;
-
-  border-color:rgba(96,165,250,0.35);
+  border-radius:18px;
+  border:1px solid rgba(148,163,184,0.24);
 
   background:
     linear-gradient(
       135deg,
-      rgba(15,23,42,0.72),
-      rgba(30,41,59,0.62)
+      rgba(30,41,59,0.90),
+      rgba(15,23,42,0.94)
+    );
+
+  color:#f8fafc;
+  text-align:left;
+
+  cursor:pointer;
+
+  transition:
+    transform 0.14s ease,
+    border-color 0.14s ease,
+    filter 0.14s ease,
+    box-shadow 0.14s ease;
+}
+
+.dashboard-menu .dashboard-button:hover{
+  transform:translateY(-2px);
+  filter:brightness(1.10);
+
+  border-color:var(--neon);
+
+  box-shadow:
+    0 0 22px var(--neon-glow),
+    inset 0 1px 0 rgba(255,255,255,0.08);
+}
+
+.dashboard-menu .dashboard-button.active{
+  border-color:var(--neon);
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(67,56,202,0.80),
+      rgba(30,41,59,0.96)
+    );
+
+  box-shadow:
+    0 0 22px var(--neon-glow),
+    inset 0 1px 0 rgba(255,255,255,0.10);
+}
+
+.dashboard-icon{
+  width:40px;
+  height:40px;
+
+  fill:none;
+  stroke:currentColor;
+  stroke-width:2.5;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+
+  color:var(--neon);
+
+  filter:
+    drop-shadow(0 0 5px var(--neon-glow))
+    drop-shadow(0 0 12px var(--neon-glow));
+}
+
+.dashboard-copy{
+  display:block;
+  min-width:0;
+}
+
+.dashboard-copy strong{
+  display:block;
+
+  color:#f8fafc;
+  font-size:16px;
+  line-height:1.3;
+}
+
+.dashboard-copy small{
+  display:block;
+
+  margin-top:5px;
+
+  color:#cbd5e1;
+  font-size:12px;
+  line-height:1.5;
+}
+
+/* =========================
+   ネオン色
+========================= */
+
+.neon-blue{
+  --neon:#60a5fa;
+  --neon-glow:rgba(96,165,250,0.52);
+}
+
+.neon-cyan{
+  --neon:#22d3ee;
+  --neon-glow:rgba(34,211,238,0.50);
+}
+
+.neon-purple{
+  --neon:#a78bfa;
+  --neon-glow:rgba(167,139,250,0.54);
+}
+
+.neon-green{
+  --neon:#34d399;
+  --neon-glow:rgba(52,211,153,0.50);
+}
+
+/* =========================
+   メインフロー
+========================= */
+
+.dashboard-route{
+  border-color:rgba(129,140,248,0.42);
+
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(129,140,248,0.20),
+      transparent 44%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(30,41,59,0.84),
+      rgba(15,23,42,0.90)
     );
 }
 
-@media (min-width:721px){
+.dashboard-route-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
 
-  .tab-group-main .main-flow-buttons{
-    display:grid;
-    grid-template-columns:1fr 40px 1fr 40px 1fr;
-    gap:14px;
-    align-items:center;
-  }
-
-  .main-flow-card{
-    min-height:160px;
-
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-
-    text-align:center;
-
-    border-radius:24px;
-
-    background:
-      linear-gradient(
-        180deg,
-        rgba(30,41,59,0.92),
-        rgba(15,23,42,0.95)
-      );
-  }
-
-  .main-flow-card.active{
-    box-shadow:
-      0 0 30px rgba(129,140,248,.35);
-  }
-
-  .main-flow-number{
-    width:48px;
-    height:48px;
-
-    margin-bottom:18px;
-
-    font-size:22px;
-  }
-
-  .flow-title{
-    font-size:28px;
-    font-weight:800;
-    line-height:1.4;
-  }
-
-  .main-flow-arrow{
-    font-size:42px;
-    color:#93c5fd;
-    text-align:center;
-  }
+  margin-bottom:16px;
 }
 
-.main-flow-number{
-  display:inline-flex;
+.dashboard-route-head .dashboard-section-title{
+  margin:0;
+}
+
+.dashboard-route-head span{
+  color:#a78bfa;
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:0.14em;
+
+  text-shadow:
+    0 0 14px rgba(167,139,250,0.72);
+}
+
+.route-grid{
+  display:grid;
+
+  grid-template-columns:
+    minmax(0, 1fr)
+    22px
+    minmax(0, 1fr)
+    22px
+    minmax(0, 1fr);
+
+  align-items:center;
+  gap:8px;
+}
+
+.dashboard-menu .route-card{
+  --neon:#60a5fa;
+  --neon-glow:rgba(96,165,250,0.52);
+
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+
+  width:100%;
+  min-width:0;
+  min-height:260px;
+  padding:18px 10px;
+
+  border-radius:24px;
+  border:1px solid rgba(148,163,184,0.28);
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(30,41,59,0.94),
+      rgba(15,23,42,0.96)
+    );
+
+  color:#f8fafc;
+  text-align:center;
+
+  cursor:pointer;
+
+  transition:
+    transform 0.16s ease,
+    filter 0.16s ease,
+    border-color 0.16s ease,
+    box-shadow 0.16s ease;
+}
+
+.dashboard-menu .route-card:hover{
+  transform:translateY(-4px);
+  filter:brightness(1.12);
+
+  border-color:var(--neon);
+
+  box-shadow:
+    0 0 24px var(--neon-glow),
+    inset 0 1px 0 rgba(255,255,255,0.10);
+}
+
+.dashboard-menu .route-card.active{
+  border-color:var(--neon);
+
+  background:
+    linear-gradient(
+      160deg,
+      rgba(79,70,229,0.92),
+      rgba(88,28,135,0.66),
+      rgba(15,23,42,0.94)
+    );
+
+  box-shadow:
+    0 0 26px var(--neon-glow),
+    0 0 44px rgba(236,72,153,0.18),
+    inset 0 1px 0 rgba(255,255,255,0.14);
+}
+
+.route-number{
+  display:flex;
   align-items:center;
   justify-content:center;
 
-  width:26px;
-  height:26px;
+  width:44px;
+  height:44px;
 
   border-radius:50%;
 
   background:rgba(96,165,250,0.18);
-  border:1px solid rgba(147,197,253,0.32);
+  border:1px solid rgba(147,197,253,0.42);
 
-  color:#bfdbfe;
+  color:#dbeafe;
+  font-size:19px;
+  font-weight:900;
 
-  font-size:13px;
-  font-weight:800;
+  box-shadow:
+    0 0 14px rgba(96,165,250,0.20);
 }
 
-.main-flow-arrow{
+.route-icon{
+  width:56px;
+  height:56px;
+
+  fill:none;
+  stroke:currentColor;
+  stroke-width:2.4;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+
+  color:var(--neon);
+
+  filter:
+    drop-shadow(0 0 5px var(--neon-glow))
+    drop-shadow(0 0 14px var(--neon-glow));
+}
+
+.route-card strong{
+  color:#ffffff;
+  font-size:16px;
+  font-weight:900;
+  line-height:1.3;
+  white-space:nowrap;
+}
+
+.route-card small{
+  color:#cbd5e1;
+  font-size:12px;
+  line-height:1.65;
+}
+
+.route-arrow{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
   color:#93c5fd;
+  font-size:26px;
+  font-weight:900;
 
-  font-size:22px;
-  font-weight:800;
-
-  opacity:0.72;
-}
-
-.tab-group-utility{
-  opacity:0.88;
-
-  background:rgba(15,23,42,0.24);
-}
-
-.utility-tab-button{
-  font-size:13px;
-
-  opacity:0.88;
-}
-
-.tab-group-other{
-  opacity:0.76;
-
-  background:rgba(15,23,42,0.18);
+  text-shadow:
+    0 0 16px rgba(96,165,250,0.80);
 }
 
 /* =========================
-   メインフロー：スマホ調整
+   Labは通常メニューに出さない
 ========================= */
 
-@media (max-width:720px){
-
-  .grouped-tabs{
-    gap:12px;
-  }
-
-  .tab-group-main{
-    padding:12px;
-  }
-
-  .main-flow-buttons{
-    display:grid;
-    grid-template-columns:1fr;
-    gap:6px;
-  }
-
-  .main-flow-button{
-    justify-content:flex-start;
-
-    width:100%;
-    min-height:50px;
-
-    padding:12px 14px;
-
-    font-size:15px;
-  }
-
-  .main-flow-arrow{
-    line-height:1;
-    text-align:center;
-
-    transform:rotate(90deg);
-
-    font-size:18px;
-  }
-
-  .tab-group-utility,
-  .tab-group-other{
-    width:100%;
-    box-sizing:border-box;
-  }
-
-  .tab-group-utility .tab-button,
-  .tab-group-other .tab-button{
-    padding:10px 12px;
-
-    font-size:13px;
-  }
-}
-/* =========================
-   グループタブ：スマホ横幅統一
-========================= */
-
-@media (max-width:720px){
-
-  /* カテゴリ全体を縦並びにする */
-  .grouped-tabs{
-    display:grid;
-    grid-template-columns:1fr;
-    gap:12px;
-  }
-
-  /* 各カテゴリを横幅いっぱいにする */
-  .grouped-tabs .tab-group{
-    display:grid;
-    grid-template-columns:1fr;
-    gap:8px;
-
-    width:100%;
-    box-sizing:border-box;
-
-    padding:12px;
-  }
-
-  /* 見出しも横幅いっぱい */
-  .grouped-tabs .tab-group-label{
-    width:max-content;
-    margin:0 0 4px 2px;
-  }
-
-  /* すべての通常ボタンを同じ大きさにする */
-  .grouped-tabs .tab-button{
-    display:flex;
-    align-items:center;
-    justify-content:flex-start;
-
-    width:100%;
-    min-height:50px;
-    box-sizing:border-box;
-
-    padding:12px 14px;
-
-    font-size:15px;
-    text-align:left;
-  }
-
-  /* メインフローは既存デザインを維持 */
-  .main-flow-buttons{
-    width:100%;
-  }
-
-  .main-flow-button{
-    width:100%;
-  }
-}
-/* =========================
-   Campsite Lab：通常時は非表示
-========================= */
-
-.grouped-tabs .lab-secret-tab{
-  display:none;
-}
-
-/* オープニングの隠し看板から入った時だけ表示 */
-.grouped-tabs .lab-secret-tab.show{
-  display:flex;
-}
-/* =========================
-   グループタブ見出し：高さ統一
-========================= */
-
-@media (max-width:720px){
-
-  /* グループ内の余白で見出しが縦に伸びないようにする */
-  .grouped-tabs .tab-group{
-    align-content:start;
-  }
-
-  /* 全カテゴリ見出しを同じ高さに統一 */
-  .grouped-tabs .tab-group-label{
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-
-    align-self:start;
-    justify-self:start;
-
-    width:max-content;
-    height:28px;
-    min-height:28px;
-
-    box-sizing:border-box;
-    padding:0 10px;
-    margin:0 0 4px 2px;
-
-    line-height:1;
-  }
-}
-/* =========================
-   メインフロー：スマホ1行表示
-========================= */
-
-@media (max-width:720px){
-
-  .main-flow-button{
-    gap:7px;
-
-    padding:12px 8px;
-
-    font-size:12px;
-    white-space:nowrap;
-  }
-
-  .main-flow-number{
-    flex-shrink:0;
-
-    width:24px;
-    height:24px;
-
-    font-size:12px;
-  }
-}
-
-/* =========================
-   メインフロー：スマホ文字幅の最終調整
-========================= */
-
-@media (max-width:720px){
-
-  .grouped-tabs .main-flow-button{
-    gap:5px;
-
-    padding:12px 7px;
-
-    font-size:12px;
-    letter-spacing:-0.02em;
-
-    white-space:nowrap;
-  }
-
-  .grouped-tabs .main-flow-number{
-    flex-shrink:0;
-
-    width:22px;
-    height:22px;
-
-    font-size:11px;
-  }
-}
-.step-note{
-  margin-top:12px;
-  padding:12px;
-  border-radius:12px;
-  background:#f8fafc;
-  border:1px solid #dbeafe;
-  color:#0f172a;
-  line-height:1.8;
-}
-/* =========================
-   PC版：フロータブ デラックス完成版
-========================= */
-
-@media (min-width:721px){
-
-  .container{
-    max-width:1320px;
-  }
-
-  .workflow-nav{
-    display:flex;
-    flex-wrap:wrap;
-    gap:10px;
-    margin:24px 0;
-  }
-
-  .workflow-step{
-    display:flex;
-    align-items:center;
-    gap:8px;
-
-    padding:9px 14px;
-    border-radius:999px;
-
-    background:rgba(15,23,42,0.62);
-    border:1px solid rgba(148,163,184,0.22);
-
-    color:#cbd5e1;
-    font-size:13px;
-    font-weight:800;
-  }
-
-  .workflow-step span{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-
-    width:24px;
-    height:24px;
-    border-radius:50%;
-
-    background:rgba(255,255,255,0.08);
-  }
-
-  .workflow-step.active{
-    color:#ffffff;
-    background:linear-gradient(135deg, rgba(59,130,246,0.42), rgba(124,58,237,0.34));
-    border-color:rgba(147,197,253,0.70);
-    box-shadow:0 0 20px rgba(96,165,250,0.28);
-  }
-
-  .grouped-tabs{
-    display:grid;
-    grid-template-columns:1fr 1.7fr 1fr 0.95fr;
-    gap:16px;
-
-    margin:26px 0 24px;
-    padding:18px;
-
-    border-radius:26px;
-    border:1px solid rgba(147,197,253,0.22);
-
-    background:
-      radial-gradient(circle at 30% 0%, rgba(96,165,250,0.16), transparent 34%),
-      radial-gradient(circle at 72% 18%, rgba(236,72,153,0.12), transparent 32%),
-      linear-gradient(135deg, rgba(15,23,42,0.78), rgba(15,23,42,0.52));
-
-    box-shadow:
-      0 18px 50px rgba(0,0,0,0.28),
-      inset 0 1px 0 rgba(255,255,255,0.05);
-  }
-
-  .grouped-tabs .tab-group{
-    position:relative;
-
-    display:flex;
-    flex-wrap:wrap;
-    align-content:flex-start;
-    gap:12px;
-
-    min-height:190px;
-    padding:20px 18px;
-
-    border-radius:22px;
-    border:1px solid rgba(148,163,184,0.18);
-
-    background:linear-gradient(180deg, rgba(30,41,59,0.68), rgba(15,23,42,0.72));
-  }
-
-  .grouped-tabs .tab-group-label{
-    width:100%;
-    margin:0 0 6px;
-
-    color:#bfdbfe;
-    font-size:14px;
-    font-weight:900;
-    letter-spacing:0.10em;
-  }
-
-  .grouped-tabs .tab-button{
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-
-    min-height:52px;
-    padding:12px 18px;
-
-    border-radius:16px;
-
-    font-size:14px;
-    font-weight:800;
-    white-space:nowrap;
-  }
-
-  .tab-group-main{
-    background:
-      radial-gradient(circle at 50% 0%, rgba(129,140,248,0.22), transparent 42%),
-      linear-gradient(180deg, rgba(30,41,59,0.78), rgba(15,23,42,0.82));
-
-    border-color:rgba(129,140,248,0.42);
-  }
-
-  .tab-group-main::before{
-    content:"Adventure Route";
-
-    position:absolute;
-    top:18px;
-    right:18px;
-
-    color:rgba(196,181,253,0.46);
-    font-size:11px;
-    font-weight:900;
-    letter-spacing:0.14em;
-  }
-
-  .tab-group-main .main-flow-buttons{
-    display:grid;
-    grid-template-columns:1fr 28px 1fr 28px 1fr;
-    align-items:stretch;
-    gap:8px;
-
-    width:100%;
-    margin-top:10px;
-  }
-
-  .grouped-tabs .tab-group-main .main-flow-button{
-    width:100%;
-    min-width:0;
-    min-height:118px;
-
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    gap:9px;
-
-    padding:14px 10px;
-
-    text-align:center;
-    white-space:normal;
-    line-height:1.35;
-
-    font-size:15px;
-
-    border-radius:22px;
-  }
-
-  .main-flow-number{
-    width:34px;
-    height:34px;
-    font-size:14px;
-    flex-shrink:0;
-  }
-
-  .tab-group-main .main-flow-arrow{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-
-    width:28px;
-
-    color:#93c5fd;
-    font-size:24px;
-    font-weight:900;
-
-    text-shadow:0 0 16px rgba(96,165,250,0.60);
-  }
-
-  .tab-group-utility .tab-button,
-  .tab-group-other .tab-button{
-    opacity:0.9;
-  }
-}
-
-/* =========================
-   Campsite Lab：通常時は非表示
-========================= */
-
-.grouped-tabs .lab-secret-tab{
-  display:none;
-}
-
-.grouped-tabs .lab-secret-tab.show{
-  display:flex;
-}
-
-
-/* =========================
-   PC版：メインフロー横書きカード最終調整
-========================= */
-
-@media (min-width:721px){
-
-  .grouped-tabs{
-    grid-template-columns:1fr 2fr 1fr 0.9fr;
-  }
-
-  .tab-group-main .main-flow-buttons{
-    display:grid;
-    grid-template-columns:1fr 34px 1fr 34px 1fr;
-    gap:14px;
-    align-items:center;
-    width:100%;
-  }
-
-  .grouped-tabs .tab-group-main .main-flow-button{
-    width:100%;
-    min-height:150px;
-
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    gap:14px;
-
-    padding:18px 10px;
-
-    border-radius:24px;
-
-    text-align:center;
-    white-space:normal;
-
-    font-size:18px;
-    font-weight:900;
-    line-height:1.35;
-  }
-
-  .grouped-tabs .tab-group-main .main-flow-button .main-flow-number{
-    width:46px;
-    height:46px;
-    margin-bottom:0;
-
-    font-size:20px;
-    flex-shrink:0;
-  }
-
-  .tab-group-main .main-flow-arrow{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-
-    width:34px;
-
-    font-size:28px;
-  }
-}
-
-/* Labは通常時非表示を最優先 */
-.grouped-tabs .lab-secret-tab{
+.dashboard-menu .lab-secret-tab{
   display:none !important;
 }
 
-.grouped-tabs .lab-secret-tab.show{
-  display:flex !important;
+/* =========================
+   タブレット
+========================= */
+
+@media (min-width:721px) and (max-width:1199px){
+
+  .dashboard-menu{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .dashboard-route{
+    grid-column:1 / -1;
+    grid-row:1;
+  }
+
+  .dashboard-prep{
+    grid-column:1;
+  }
+
+  .dashboard-utility{
+    grid-column:2;
+  }
+
+  .dashboard-other{
+    grid-column:1 / -1;
+  }
+
+  .dashboard-other .dashboard-list{
+    grid-template-columns:1fr 1fr;
+  }
+}
+
+/* =========================
+   スマホ
+========================= */
+
+@media (max-width:720px){
+
+  .dashboard-menu{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:12px;
+
+    margin:18px 0;
+    padding:12px;
+
+    border-radius:22px;
+  }
+
+  .dashboard-route{
+    order:1;
+  }
+
+  .dashboard-prep{
+    order:2;
+  }
+
+  .dashboard-utility{
+    order:3;
+  }
+
+  .dashboard-other{
+    order:4;
+  }
+
+  .dashboard-section{
+    padding:14px;
+
+    border-radius:18px;
+  }
+
+  .dashboard-section-title{
+    margin-bottom:12px;
+
+    font-size:14px;
+  }
+
+  .dashboard-route-head{
+    margin-bottom:12px;
+  }
+
+  .dashboard-route-head span{
+    font-size:10px;
+  }
+
+  .route-grid{
+    grid-template-columns:1fr;
+    gap:7px;
+  }
+
+  .dashboard-menu .route-card{
+    display:grid;
+
+    grid-template-columns:32px 40px 1fr;
+    grid-template-rows:auto auto;
+
+    column-gap:10px;
+    row-gap:2px;
+
+    min-height:68px;
+    padding:10px 12px;
+
+    border-radius:18px;
+
+    text-align:left;
+  }
+
+  .route-number{
+    grid-row:1 / 3;
+
+    width:30px;
+    height:30px;
+
+    font-size:13px;
+  }
+
+  .route-icon{
+    grid-row:1 / 3;
+
+    width:34px;
+    height:34px;
+  }
+
+  .route-card strong{
+    grid-column:3;
+
+    font-size:14px;
+  }
+
+  .route-card small{
+    grid-column:3;
+
+    font-size:11px;
+    line-height:1.4;
+  }
+
+  .route-arrow{
+    height:18px;
+
+    transform:rotate(90deg);
+
+    font-size:20px;
+  }
+
+  .dashboard-menu .dashboard-button{
+    min-height:70px;
+    padding:11px 12px;
+
+    grid-template-columns:42px 1fr;
+  }
+
+  .dashboard-icon{
+    width:32px;
+    height:32px;
+  }
+
+  .dashboard-copy strong{
+    font-size:14px;
+  }
+
+  .dashboard-copy small{
+    font-size:11px;
+  }
+}
+/* =========================
+   PC版：メインフロー視認性アップ
+   画面幅に応じて安全に並び替える
+========================= */
+
+/* 共通：ダッシュボードは画面内に必ず収める */
+.dashboard-menu{
+  width:100%;
+  max-width:100%;
+  box-sizing:border-box;
+}
+
+/* =========================
+   横幅に余裕がある大型PC
+   4列のデラックス表示
+========================= */
+
+@media (min-width:1560px){
+
+  .container{
+    max-width:1740px;
+    padding-left:28px;
+    padding-right:28px;
+  }
+
+  .dashboard-menu.tabs.grouped-tabs{
+    display:grid;
+
+    grid-template-columns:
+      minmax(0, 0.90fr)
+      minmax(0, 2.35fr)
+      minmax(0, 0.95fr)
+      minmax(0, 0.82fr) !important;
+
+    gap:16px;
+  }
+
+  .dashboard-menu .dashboard-route{
+    min-width:0;
+    padding:20px;
+  }
+
+  .dashboard-menu .route-grid{
+    display:grid;
+
+    grid-template-columns:
+      minmax(0, 1fr)
+      28px
+      minmax(0, 1fr)
+      28px
+      minmax(0, 1fr);
+
+    align-items:center;
+    gap:10px;
+
+    width:100%;
+  }
+
+  .dashboard-menu .route-card{
+    min-width:0;
+    min-height:272px;
+
+    padding:20px 14px;
+
+    overflow:visible;
+  }
+
+  .dashboard-menu .route-card strong{
+    font-size:18px;
+    line-height:1.35;
+
+    white-space:nowrap;
+    letter-spacing:-0.04em;
+  }
+
+  .dashboard-menu .route-card small{
+    max-width:160px;
+
+    font-size:13px;
+    line-height:1.65;
+  }
+
+  .dashboard-menu .route-icon{
+    width:62px;
+    height:62px;
+  }
+
+  .dashboard-menu .route-number{
+    width:48px;
+    height:48px;
+
+    font-size:20px;
+  }
+
+  .dashboard-menu .route-arrow{
+    width:28px;
+
+    font-size:30px;
+  }
+}
+
+/* =========================
+   一般的なPC
+   見やすさを保ったコンパクト表示
+========================= */
+
+@media (min-width:1200px) and (max-width:1559px){
+
+  .container{
+    max-width:1360px;
+    padding-left:22px;
+    padding-right:22px;
+  }
+
+  .dashboard-menu.tabs.grouped-tabs{
+    display:grid;
+
+    grid-template-columns:
+      minmax(0, 1fr)
+      minmax(0, 1fr)
+      minmax(0, 1fr);
+
+    gap:14px;
+
+    max-width:1360px;
+    margin-left:auto;
+    margin-right:auto;
+  }
+
+  /* メインフローは上段いっぱい */
+  .dashboard-menu .dashboard-route{
+    grid-column:1 / -1;
+    grid-row:1;
+
+    min-width:0;
+    padding:18px;
+  }
+
+  /* 下段 */
+  .dashboard-menu .dashboard-prep{
+    grid-column:1;
+    grid-row:2;
+  }
+
+  .dashboard-menu .dashboard-utility{
+    grid-column:2;
+    grid-row:2;
+  }
+
+  .dashboard-menu .dashboard-other{
+    grid-column:3;
+    grid-row:2;
+  }
+
+  /* メインフロー */
+  .dashboard-menu .route-grid{
+    display:grid;
+
+    grid-template-columns:
+      minmax(0, 1fr)
+      30px
+      minmax(0, 1fr)
+      30px
+      minmax(0, 1fr);
+
+    align-items:center;
+    gap:12px;
+
+    width:100%;
+  }
+
+  .dashboard-menu .route-card{
+    min-width:0;
+    min-height:190px;
+
+    padding:16px 14px;
+  }
+
+  .dashboard-menu .route-card strong{
+    font-size:17px;
+    line-height:1.35;
+
+    white-space:nowrap;
+    letter-spacing:-0.03em;
+  }
+
+  .dashboard-menu .route-card small{
+    font-size:12px;
+    line-height:1.55;
+  }
+
+  .dashboard-menu .route-icon{
+    width:52px;
+    height:52px;
+  }
+
+  .dashboard-menu .route-number{
+    width:42px;
+    height:42px;
+
+    font-size:18px;
+  }
+
+  .dashboard-menu .route-arrow{
+    width:30px;
+
+    font-size:28px;
+  }
+
+  /* 下段の補助メニューも少し小さくする */
+  .dashboard-menu .dashboard-button{
+    min-height:78px;
+
+    padding:12px 14px;
+  }
+
+  .dashboard-menu .dashboard-icon{
+    width:34px;
+    height:34px;
+  }
+
+  .dashboard-menu .dashboard-copy strong{
+    font-size:15px;
+  }
+
+  .dashboard-menu .dashboard-copy small{
+    font-size:11px;
+  }
 }

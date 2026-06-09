@@ -14,7 +14,7 @@
     background: #020617;
   }
 </style>
-<link rel="stylesheet" href="css/style.css?v=69">
+<link rel="stylesheet" href="css/style.css?v=72">
 <link rel="stylesheet" href="css/splash.css?v=97">
 <link rel="stylesheet" href="css/tabs.css?v=28">
 <link rel="stylesheet" href="css/admin.css?v=25">
@@ -31,15 +31,12 @@
 <div id="updateLog" class="update-log">
   <strong>更新内容</strong><br>
 v6.0<br>
-・PC・iPhone・Android別のスクリプト導入フローを追加しました。<br>
-・Android版はFirefoxからTampermonkeyを追加する手順を実機で確認しました。<br>
-・Android版でTampermonkey追加後に開く案内ページは操作不要であることを明記しました。<br>
-・Android版でアドオン導入時に表示される注意画面の見本画像を追加しました。<br>
-・スクリプト導入後の成功状態を確認できるよう、Wayfarer Mapの表示例を追加しました。<br>
-・Google My Mapsで追加POIを配置し、活動範囲ポリゴンを作成した後、完成KMZを書き出して距離チェックへ進むSTEP 6を追加しました。<br>
-・羊の相棒が「おかえりなさい」と迎える画面を追加しました。<br>
-・設計後の次の作業として、距離チェック・提出前チェックリスト・設計継続を選択できるようにしました。<br>
-・ページ読み込み直後に白い背景が一瞬表示されないよう、初期背景色をHTML内で指定しました。<br>
+・PC版メイン画面をネオン看板型のダッシュボードデザインへ変更しました。<br>
+・事前準備、メインフロー、補助ツール、その他を目的別に整理しました。<br>
+・各ボタンにネオン発光する線画アイコンと補足説明を追加しました。<br>
+・メインフローをAdventure Routeとして強調し、作業順を視覚的に分かりやすくしました。<br>
+・スマホでは縦並び表示へ自動調整されるレスポンシブデザインにしました。<br>
+
 <br>
 </div>
 <audio id="loginSound" src="assets/login.mp3"></audio>
@@ -234,108 +231,280 @@ v6.0<br>
     </div>
   </div>
 
-    <div class="tabs grouped-tabs">
+  <!-- =========================
+     ネオン看板メニュー
+========================= -->
+<div class="tabs grouped-tabs dashboard-menu">
 
-   <!-- =========================
-         事前準備
-    ========================= -->
-    <div class="tab-group">
-      <div class="tab-group-label">事前準備</div>
+  <!-- ネオンアイコン定義 -->
+  <svg
+    class="dashboard-icon-sprite"
+    aria-hidden="true"
+    focusable="false"
+  >
+    <symbol id="icon-book" viewBox="0 0 48 48">
+      <path d="M7 10c7-3 12-2 17 2v27c-5-4-10-5-17-2z"/>
+      <path d="M41 10c-7-3-12-2-17 2v27c5-4 10-5 17-2z"/>
+    </symbol>
 
-      <button class="tab-button" onclick="openTab('howto', this)">
-        使い方
+    <symbol id="icon-code" viewBox="0 0 48 48">
+      <path d="M17 14 7 24l10 10"/>
+      <path d="m31 14 10 10-10 10"/>
+      <path d="m27 9-7 30"/>
+    </symbol>
+
+    <symbol id="icon-guide" viewBox="0 0 48 48">
+      <path d="M13 5h16l7 7v31H13z"/>
+      <path d="M29 5v9h7"/>
+      <path d="M18 22h13"/>
+      <path d="M18 29h13"/>
+      <path d="M18 36h9"/>
+    </symbol>
+
+    <symbol id="icon-campsite" viewBox="0 0 48 48">
+      <path d="M5 37 20 10l15 27z"/>
+      <path d="M20 10v27"/>
+      <path d="m20 37 7-13 8 13"/>
+      <path d="M40 38c-4-3-4-7-1-10 0 3 2 3 3 1 3 4 2 7-2 9z"/>
+    </symbol>
+
+    <symbol id="icon-radar" viewBox="0 0 48 48">
+      <circle cx="24" cy="24" r="18"/>
+      <circle cx="24" cy="24" r="10"/>
+      <circle cx="24" cy="24" r="3"/>
+      <path d="M24 6v36"/>
+      <path d="M6 24h36"/>
+      <path d="m24 24 12-9"/>
+    </symbol>
+
+    <symbol id="icon-checklist" viewBox="0 0 48 48">
+      <path d="M15 8h22v35H15z"/>
+      <path d="M20 5h12v6H20z"/>
+      <path d="m20 19 3 3 5-6"/>
+      <path d="M30 20h4"/>
+      <path d="m20 29 3 3 5-6"/>
+      <path d="M30 30h4"/>
+      <path d="M20 38h14"/>
+    </symbol>
+
+    <symbol id="icon-circle" viewBox="0 0 48 48">
+      <circle cx="24" cy="24" r="17"/>
+      <path d="M24 7v7"/>
+      <path d="M24 34v7"/>
+      <path d="M7 24h7"/>
+      <path d="M34 24h7"/>
+      <path d="M24 24 34 15"/>
+      <circle cx="24" cy="24" r="3"/>
+    </symbol>
+
+    <symbol id="icon-layers" viewBox="0 0 48 48">
+      <path d="m24 6 17 9-17 9-17-9z"/>
+      <path d="m7 23 17 9 17-9"/>
+      <path d="m7 31 17 9 17-9"/>
+    </symbol>
+
+    <symbol id="icon-megaphone" viewBox="0 0 48 48">
+      <path d="M8 21h10l18-9v24l-18-9H8z"/>
+      <path d="M18 27l3 12h-7l-3-12"/>
+      <path d="M40 19c3 3 3 7 0 10"/>
+    </symbol>
+
+    <symbol id="icon-admin" viewBox="0 0 48 48">
+      <path d="M24 5 39 10v12c0 10-6 17-15 21C15 39 9 32 9 22V10z"/>
+      <circle cx="24" cy="20" r="5"/>
+      <path d="M16 34c2-5 14-5 16 0"/>
+    </symbol>
+  </svg>
+
+  <!-- =========================
+       事前準備
+  ========================= -->
+  <section class="dashboard-section dashboard-prep">
+    <h2 class="dashboard-section-title">事前準備</h2>
+
+    <div class="dashboard-list">
+      <button
+        class="tab-button dashboard-button neon-blue"
+        onclick="openTab('howto', this)"
+      >
+        <svg class="dashboard-icon">
+          <use href="#icon-book"></use>
+        </svg>
+
+        <span class="dashboard-copy">
+          <strong>使い方</strong>
+          <small>基本的な使い方を確認</small>
+        </span>
       </button>
-
-      <button class="tab-button" onclick="openTab('script', this)">
-        スクリプト
-      </button>
-
-      <button class="tab-button" onclick="openTab('guide', this)">
-        設計ガイド
-      </button>
-    </div>
-
-    <!-- =========================
-         メインフロー
-    ========================= -->
-    <div class="tab-group tab-group-main">
-      <div class="tab-group-label">メインフロー</div>
-
-      <div class="main-flow-buttons">
-        <button
-          class="tab-button main-flow-button active"
-          data-tab-target="tool"
-          onclick="openCampsiteStartModal(this)"
-        >
-          <span class="main-flow-number">1</span>
-          キャンプサイト作成
-        </button>
-
-        <span class="main-flow-arrow">→</span>
-
-        <button
-          class="tab-button main-flow-button"
-          onclick="openTab('distance', this)"
-        >
-          <span class="main-flow-number">2</span>
-          距離チェック
-        </button>
-
-        <span class="main-flow-arrow">→</span>
-
-        <button
-          class="tab-button main-flow-button"
-          onclick="openTab('check', this)"
-        >
-          <span class="main-flow-number">3</span>
-          チェックリスト
-        </button>
-      </div>
-    </div>
-
-    <!-- =========================
-         補助ツール
-    ========================= -->
-    <div class="tab-group tab-group-utility">
-      <div class="tab-group-label">補助ツール</div>
-
-      <button class="tab-button utility-tab-button" onclick="openTab('circle-tools', this)">
-        円だけ生成
-      </button>
-
-      <button class="tab-button utility-tab-button" onclick="openTab('deduplicate-poi', this)">
-        重複POI整理
-      </button>
-
-      <button class="tab-button lab-secret-tab" onclick="openTab('parts', this)">
-        🧪 Lab
-      </button>
-    </div>
-
-    <!-- =========================
-         その他
-    ========================= -->
-    <div class="tab-group tab-group-other">
-      <div class="tab-group-label">その他</div>
 
       <button
+        class="tab-button dashboard-button neon-purple"
+        onclick="openTab('script', this)"
+      >
+        <svg class="dashboard-icon">
+          <use href="#icon-code"></use>
+        </svg>
+
+        <span class="dashboard-copy">
+          <strong>スクリプト導入</strong>
+          <small>スクリプトを導入</small>
+        </span>
+      </button>
+
+      <button
+        class="tab-button dashboard-button neon-blue"
+        onclick="openTab('guide', this)"
+      >
+        <svg class="dashboard-icon">
+          <use href="#icon-guide"></use>
+        </svg>
+
+        <span class="dashboard-copy">
+          <strong>設計ガイド</strong>
+          <small>設計のポイントを確認</small>
+        </span>
+      </button>
+    </div>
+  </section>
+
+  <!-- =========================
+       メインフロー
+  ========================= -->
+  <section class="dashboard-section dashboard-route">
+    <div class="dashboard-route-head">
+      <h2 class="dashboard-section-title">メインフロー</h2>
+      <span>Adventure Route</span>
+    </div>
+
+    <div class="route-grid">
+
+      <button
+        class="tab-button route-card neon-purple active"
+        data-tab-target="tool"
+        onclick="openCampsiteStartModal(this)"
+      >
+        <span class="route-number">1</span>
+
+        <svg class="route-icon">
+          <use href="#icon-campsite"></use>
+        </svg>
+
+        <strong>キャンプサイト作成</strong>
+        <small>POIを配置してサイトを作成</small>
+      </button>
+
+      <span class="route-arrow">→</span>
+
+      <button
+        class="tab-button route-card neon-blue"
+        onclick="openTab('distance', this)"
+      >
+        <span class="route-number">2</span>
+
+        <svg class="route-icon">
+          <use href="#icon-radar"></use>
+        </svg>
+
+        <strong>距離チェック</strong>
+        <small>30m・40mの距離を確認</small>
+      </button>
+
+      <span class="route-arrow">→</span>
+
+      <button
+        class="tab-button route-card neon-purple"
+        onclick="openTab('check', this)"
+      >
+        <span class="route-number">3</span>
+
+        <svg class="route-icon">
+          <use href="#icon-checklist"></use>
+        </svg>
+
+        <strong>チェックリスト</strong>
+        <small>提出前に最終確認</small>
+      </button>
+
+    </div>
+  </section>
+
+  <!-- =========================
+       補助ツール
+  ========================= -->
+  <section class="dashboard-section dashboard-utility">
+    <h2 class="dashboard-section-title">補助ツール</h2>
+
+    <div class="dashboard-list">
+      <button
+        class="tab-button dashboard-button neon-cyan"
+        onclick="openTab('circle-tools', this)"
+      >
+        <svg class="dashboard-icon">
+          <use href="#icon-circle"></use>
+        </svg>
+
+        <span class="dashboard-copy">
+          <strong>円だけ生成</strong>
+          <small>30m・40m円をまとめて生成</small>
+        </span>
+      </button>
+
+      <button
+        class="tab-button dashboard-button neon-green"
+        onclick="openTab('deduplicate-poi', this)"
+      >
+        <svg class="dashboard-icon">
+          <use href="#icon-layers"></use>
+        </svg>
+
+        <span class="dashboard-copy">
+          <strong>重複POI整理</strong>
+          <small>重複しているPOIを検出・整理</small>
+        </span>
+      </button>
+    </div>
+  </section>
+
+  <!-- =========================
+       その他
+  ========================= -->
+  <section class="dashboard-section dashboard-other">
+    <h2 class="dashboard-section-title">その他</h2>
+
+    <div class="dashboard-list">
+      <button
         type="button"
-        class="tab-button opening-tab-button"
+        class="tab-button dashboard-button neon-purple"
         onclick="backToOpening()"
       >
-        オープニング
+        <svg class="dashboard-icon">
+          <use href="#icon-megaphone"></use>
+        </svg>
+
+        <span class="dashboard-copy">
+          <strong>オープニング</strong>
+          <small>はじめに戻る</small>
+        </span>
       </button>
 
       <button
         type="button"
-        class="tab-button admin-tab-button"
+        class="tab-button dashboard-button neon-blue admin-tab-button"
         onclick="openAdminLogin()"
       >
-        管理者
+        <svg class="dashboard-icon">
+          <use href="#icon-admin"></use>
+        </svg>
+
+        <span class="dashboard-copy">
+          <strong>管理者</strong>
+          <small>管理者向け機能</small>
+        </span>
       </button>
     </div>
+  </section>
 
-  </div>
+</div>
   <section id="tool" class="tab-content active">
     <div class="panel">
       <h2>キャンプサイト作成の手順</h2>
