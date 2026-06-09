@@ -538,9 +538,26 @@ function renderDistanceUploadSummary() {
       全レイヤー数：${info.allLayerCount}件<br>
       判定対象レイヤー数：${info.targetLayerCount}件<br>
       全POI数：${info.allPointCount}件<br>
-      判定対象POI数：${info.targetPointCount}件<br><br>
-      <strong>判定対象レイヤー</strong><br>
-      ${info.targetLayerNames.map(name => escapeHtml(name)).join("<br>") || "なし"}
+      判定対象POI数：${info.targetPointCount}件<br>
+活動範囲ポリゴン：${window._hasPolygon ? "あり" : "なし"}<br>
+
+${window._hasPolygon ? "" : `
+  <div style="
+    margin-top:10px;
+    padding:10px 12px;
+    border-radius:10px;
+    background:rgba(245,158,11,0.14);
+    border:1px solid rgba(245,158,11,0.35);
+    color:#fde68a;
+    line-height:1.7;
+  ">
+    ⚠ 活動範囲ポリゴンが見つかりません。<br>
+    Google My Mapsで、実際に歩く範囲や活動エリアをポリゴンで囲んだレイヤーを作成してください。
+  </div>
+`}
+<br>
+<strong>判定対象レイヤー</strong><br>
+${info.targetLayerNames.map(name => escapeHtml(name)).join("<br>") || "なし"}
     </div>
   `;
 }

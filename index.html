@@ -36,7 +36,7 @@ v6.0<br>
 ・Android版でTampermonkey追加後に開く案内ページは操作不要であることを明記しました。<br>
 ・Android版でアドオン導入時に表示される注意画面の見本画像を追加しました。<br>
 ・スクリプト導入後の成功状態を確認できるよう、Wayfarer Mapの表示例を追加しました。<br>
-・Google My Mapsで追加POIを決めた後に戻れるSTEP 6を追加しました。<br>
+・Google My Mapsで追加POIを配置し、活動範囲ポリゴンを作成した後、完成KMZを書き出して距離チェックへ進むSTEP 6を追加しました。<br>
 ・羊の相棒が「おかえりなさい」と迎える画面を追加しました。<br>
 ・設計後の次の作業として、距離チェック・提出前チェックリスト・設計継続を選択できるようにしました。<br>
 ・ページ読み込み直後に白い背景が一瞬表示されないよう、初期背景色をHTML内で指定しました。<br>
@@ -527,22 +527,27 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
 <div class="step return-step-card">
   <div class="step-no">STEP 6</div>
 
-  <h3>追加POIが決まったら、ここへ帰ってきてね</h3>
+  <h3>追加POIが決まったら、完成KMZを書き出して戻ってきてね</h3>
 
   <p class="note">
-    Google My Mapsで追加したいPOIの場所を決めたら、
-    このツールへ戻ってきてください。<br>
-    小さな羊の相棒が、ここで待っています🐏
+    Google My Mapsで追加POIの配置が終わったら、
+    完成した地図をKMZ形式で書き出してください。<br>
+    そのKMZをこのツールの「距離チェック」で読み込み、提出前確認を行います。
   </p>
-  
-<div class="step-note">
-  <strong>次にやること</strong><br>
-  ① Google My Mapsで追加POIを配置する<br>
-  ② 完成した地図をKMZ形式で書き出す<br>
-    ※iPhoneでZIP形式になった場合は、上の手順で .kmz に変更してください。
-  ③ このツールへ戻る<br>
-  ④ 距離チェックで完成KMZを読み込む
-</div>
+
+  <div class="step-note">
+    <strong>STEP 6でやること</strong><br>
+    ① Google My Mapsで追加POIを配置する<br>
+    ② 活動範囲ポリゴンを作成する<br>
+    ③ 完成した地図をKMZ形式で書き出す<br>
+    ④ このツールへ戻る<br>
+    ⑤ 距離チェックで完成KMZを読み込む
+  </div>
+
+  <p class="note">
+    ※iPhoneでKMZがZIPとして保存された場合は、
+    上の「ZIPをKMZへ変更する手順」を確認してください。
+  </p>
 
   <button
     type="button"
@@ -1131,7 +1136,7 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
       <div class="step-no">2</div>
       <h3>このツールに読み込む</h3>
       <p class="note">
-        CSV / KML / KMZ に対応しています。複数CSVを入れた場合、自動で重複削除されます。
+        CSVファイルを選択してください。複数CSVを入れた場合、自動で重複削除されます。
       </p>
     </div>
 
@@ -1307,9 +1312,9 @@ Google My Mapsで作成した完成版KMZを読み込み、<br>
     <h2>おかえりなさい！</h2>
 
     <p class="return-modal-message">
-      追加POIは決まりましたか？<br>
-      次に進む作業を選んでください。
-    </p>
+  追加POIの配置と、活動範囲ポリゴンの作成は終わりましたか？<br>
+  Google My Mapsから完成KMZを書き出したら、次に進む作業を選んでください。
+</p>
 
     <div class="return-modal-actions">
 
@@ -1591,7 +1596,7 @@ GOロケット団の出現率が3倍になる
 </div>
 <script src="js/util.js?v=18"></script>
 <script src="js/tabs.js?v=8"></script>
-<script src="js/distance.js?v=47"></script>
+<script src="js/distance.js?v=48"></script>
 <script src="js/admin.js?v=10"></script>
 <script src="js/main.js?v=56"></script>
 <script src="js/kmz.js?v=27"></script>
