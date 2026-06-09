@@ -1286,6 +1286,159 @@ button.generate:active {
     transform: translateY(0) scale(1);
   }
 }
+/* =========================
+   おかえりなさいモーダル
+========================= */
+
+.return-modal{
+  display:none;
+  position:fixed;
+  inset:0;
+  z-index:99999;
+
+  align-items:center;
+  justify-content:center;
+
+  padding:20px;
+  box-sizing:border-box;
+
+  background:rgba(2,6,23,0.82);
+  backdrop-filter:blur(6px);
+}
+
+.return-modal.show{
+  display:flex;
+}
+
+.return-modal-card{
+  position:relative;
+
+  width:min(92vw, 620px);
+  max-height:88vh;
+  overflow-y:auto;
+
+  padding:22px;
+  box-sizing:border-box;
+
+  border-radius:24px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(30,41,59,0.98),
+      rgba(15,23,42,0.98)
+    );
+
+  border:1px solid rgba(148,163,184,0.28);
+
+  box-shadow:
+    0 20px 60px rgba(0,0,0,0.45);
+
+  color:#f8fafc;
+  text-align:center;
+}
+
+.return-modal-close{
+  position:absolute;
+  top:12px;
+  right:12px;
+
+  width:36px;
+  height:36px;
+
+  border:none;
+  border-radius:999px;
+
+  background:rgba(255,255,255,0.12);
+  color:#ffffff;
+
+  font-size:24px;
+  line-height:1;
+
+  cursor:pointer;
+}
+
+.return-modal-sheep{
+  display:block;
+
+  width:min(100%, 420px);
+  height:auto;
+
+  margin:0 auto 14px;
+
+  border-radius:20px;
+}
+
+.return-modal-label{
+  margin:6px 0;
+
+  color:#a5b4fc;
+
+  font-size:13px;
+  font-weight:800;
+  letter-spacing:0.16em;
+}
+
+.return-modal-message{
+  margin:10px 0 18px;
+
+  color:#e2e8f0;
+
+  font-size:15px;
+  line-height:1.8;
+}
+
+.return-modal-actions{
+  display:grid;
+  gap:10px;
+}
+
+.return-action-button{
+  display:flex;
+  align-items:center;
+  gap:12px;
+
+  width:100%;
+
+  padding:14px 16px;
+
+  border:none;
+  border-radius:14px;
+
+  color:#ffffff;
+  text-align:left;
+
+  cursor:pointer;
+}
+
+.return-action-button span{
+  font-size:24px;
+}
+
+.return-action-button strong{
+  display:block;
+  font-size:15px;
+}
+
+.return-action-button small{
+  display:block;
+  margin-top:3px;
+
+  color:rgba(255,255,255,0.78);
+  font-size:12px;
+}
+
+.return-action-button.distance{
+  background:linear-gradient(135deg,#2563eb,#4f46e5);
+}
+
+.return-action-button.checklist{
+  background:linear-gradient(135deg,#059669,#16a34a);
+}
+
+.return-action-button.continue{
+  background:linear-gradient(135deg,#7c3aed,#db2777);
+}
 @media (max-width: 600px) {
   .return-modal-sheep,
   .kmz-complete-modal-sheep {
