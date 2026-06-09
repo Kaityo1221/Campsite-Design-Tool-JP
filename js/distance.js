@@ -10,6 +10,14 @@ const POI_LIMITS = {
   gym: 8,
   power: 5
 };
+function escapeHtml(text) {
+  return String(text || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
 function getDistanceMeters(a, b) {
 
   const R = 6371000;
@@ -34,6 +42,7 @@ function getDistanceMeters(a, b) {
 
   return R * c;
 }
+
 function getUserId() {
   let userId = localStorage.getItem("campsiteUserId");
 
@@ -477,12 +486,11 @@ function renderLayerSelector(layers, container) {
 
   container.innerHTML = targetLayers.map(name => `
     <div class="layer-row">
-      <strong>${cleanLayerName(name)}</strong>
+      <strong>${escapeHtml(cleanLayerName(name))}</strong>
       <span class="note">（${window._layerPoints[name]?.length || 0}件）</span>
     </div>
   `).join("");
-}
-function getTargetLayerDebugInfo() {
+}function getTargetLayerDebugInfo() {
   const layerPoints = window._layerPoints || {};
   const allLayerNames = Object.keys(layerPoints);
 
@@ -1096,7 +1104,7 @@ const debugHtml = `
     全POI数：${debugInfo.allPointCount}件<br>
     判定対象POI数：${debugInfo.targetPointCount}件<br><br>
     <strong>判定対象レイヤー</strong><br>
-    ${debugInfo.targetLayerNames.join("<br>") || "なし"}
+    ${debugInfo.targetLayerNames.map(name => escapeHtml(name)).join("<br>") || "なし"}
   </div>
 `;
   const resultHeaderHtml = `
@@ -1118,8 +1126,8 @@ const debugHtml = `
         nearestWarning ? `
           <strong>最短距離ペア</strong><br>
           ${nearestWarning.distance.toFixed(1)}m<br>
-          ${nearestWarning.a.layer}：${nearestWarning.a.name}<br>
-          × ${nearestWarning.b.layer}：${nearestWarning.b.name}<br>
+          ${nearestWarning.a.layer}：${escapeHtml(nearestWarning.a.name)}<br>
+          × ${nearestWarning.b.layer}：${escapeHtml(nearestWarning.b.name)}<br>
         ` : `
           <strong>最短距離ペア</strong><br>
           40m未満の組み合わせはありません。<br>
@@ -1197,8 +1205,8 @@ return;
         <strong style="color:${cardColor};">
           ${label}（${w.distance.toFixed(1)}m）
         </strong><br>
-        ${w.a.layer}：${w.a.name}<br>
-        × ${w.b.layer}：${w.b.name}<br>
+        ${w.a.layer}：${escapeHtml(w.a.name)}<br>
+        × ${w.b.layer}：${escapeHtml(w.b.name)}<br>
         → ${message}
       </div>
     `;
@@ -1384,8 +1392,8 @@ const y = Math.max(edgePadding, Math.min(height - edgePadding, rawY));
 
     dot.addEventListener("mouseenter", () => {
   tooltip.innerHTML = `
-    <strong>${p.layer || "POI"}</strong><br>
-    ${p.name || "名称なし"}
+    <strong>${escapeHtml(p.layer || "POI")}</strong><br>
+${escapeHtml(p.name || "名称なし")}
   `;
 
   tooltip.style.left = `${x}px`;
