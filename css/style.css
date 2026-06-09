@@ -1786,3 +1786,30 @@ button.generate:active {
     font-size:12px;
   }
 }
+
+/* =========================
+   メインフロー：スマホ文字幅の最終調整
+========================= */
+
+@media (max-width:720px){
+
+  .grouped-tabs .main-flow-button{
+    gap:5px;
+
+    padding:12px 7px;
+
+    font-size:12px;
+    letter-spacing:-0.02em;
+
+    white-space:nowrap;
+  }
+
+  .grouped-tabs .main-flow-number{
+    flex-shrink:0;
+
+    width:22px;
+    height:22px;
+
+    font-size:11px;
+  }
+}
