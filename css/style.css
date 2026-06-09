@@ -1813,3 +1813,11 @@ button.generate:active {
     font-size:11px;
   }
 }
+.step-note{
+  margin-top:12px;
+  padding:12px;
+  border-radius:12px;
+  background:#f8fafc;
+  border:1px solid #dbeafe;
+  line-height:1.8;
+}
