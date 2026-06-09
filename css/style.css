@@ -2282,3 +2282,72 @@ button.generate:active {
     line-height:1.35;
   }
 }
+
+/* =========================
+   PC版：メインフロー横書きカード最終調整
+========================= */
+
+@media (min-width:721px){
+
+  .grouped-tabs{
+    grid-template-columns:1fr 2fr 1fr 0.9fr;
+  }
+
+  .tab-group-main .main-flow-buttons{
+    display:grid;
+    grid-template-columns:1fr 34px 1fr 34px 1fr;
+    gap:14px;
+    align-items:center;
+    width:100%;
+  }
+
+  .grouped-tabs .tab-group-main .main-flow-button{
+    width:100%;
+    min-height:150px;
+
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:14px;
+
+    padding:18px 10px;
+
+    border-radius:24px;
+
+    text-align:center;
+    white-space:normal;
+
+    font-size:18px;
+    font-weight:900;
+    line-height:1.35;
+  }
+
+  .grouped-tabs .tab-group-main .main-flow-button .main-flow-number{
+    width:46px;
+    height:46px;
+    margin-bottom:0;
+
+    font-size:20px;
+    flex-shrink:0;
+  }
+
+  .tab-group-main .main-flow-arrow{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    width:34px;
+
+    font-size:28px;
+  }
+}
+
+/* Labは通常時非表示を最優先 */
+.grouped-tabs .lab-secret-tab{
+  display:none !important;
+}
+
+.grouped-tabs .lab-secret-tab.show{
+  display:flex !important;
+}
