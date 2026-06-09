@@ -901,6 +901,7 @@ if (under20 > 0) {
   };
 }
 async function runDistanceCheck() {
+  setWorkflowStep("distance");
   const result = document.getElementById("distanceResult");
 
   const points = [];

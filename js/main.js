@@ -425,3 +425,48 @@ function goFromReturnModal(tabId) {
   closeReturnModal();
   openTab(tabId);
 }
+
+/* =========================
+   KMZ生成完了モーダル
+========================= */
+
+function openKmzCompleteModal() {
+  const modal = document.getElementById("kmzCompleteModal");
+
+  if (!modal) {
+    return;
+  }
+
+  modal.style.display = "flex";
+
+  requestAnimationFrame(() => {
+    modal.classList.add("show");
+  });
+}
+
+function closeKmzCompleteModal() {
+  const modal = document.getElementById("kmzCompleteModal");
+
+  if (!modal) {
+    return;
+  }
+
+  modal.classList.remove("show");
+  modal.style.display = "none";
+}
+
+function closeKmzCompleteModalByBackdrop(event) {
+  if (event.target.id === "kmzCompleteModal") {
+    closeKmzCompleteModal();
+  }
+}
+
+function openGoogleMyMaps() {
+
+  setWorkflowStep("mymaps");
+
+  window.open(
+    "https://www.google.com/maps/d/",
+    "_blank"
+  );
+}

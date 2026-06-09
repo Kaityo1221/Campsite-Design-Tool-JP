@@ -505,7 +505,7 @@ points.forEach(p => {
   zip.file("doc.kml", newKml);
 
   const blob = await zip.generateAsync({ type: "blob" });
-
+setWorkflowStep("kmz");
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
   const now = new Date();
@@ -556,7 +556,7 @@ setTimeout(() => {
 }, 120);
 
 setTimeout(() => {
-  showAfterKmzGuide();
+  openKmzCompleteModal();
 }, 700);
 } 
 /* =========================
