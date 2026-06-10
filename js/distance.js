@@ -10,6 +10,14 @@ const POI_LIMITS = {
   gym: 8,
   power: 5
 };
+function escapeHtml(text) {
+  return String(text || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
 function getDistanceMeters(a, b) {
 
   const R = 6371000;
@@ -34,6 +42,7 @@ function getDistanceMeters(a, b) {
 
   return R * c;
 }
+
 function getUserId() {
   let userId = localStorage.getItem("campsiteUserId");
 
@@ -332,7 +341,9 @@ function isDistanceTargetLayer(layerName) {
 
     if (summary) {
       const counts = countPoiTypesFromLayers(window._layerPoints);
-      summary.innerHTML = renderPoiCountHtml(counts);
+      summary.innerHTML =
+  renderDistanceUploadSummary() +
+  renderPoiCountHtml(counts);
     }
 
     return;
@@ -344,7 +355,9 @@ function isDistanceTargetLayer(layerName) {
 
   if (summary) {
     const counts = countPoiTypesFromLayers(window._layerPoints);
-    summary.innerHTML = renderPoiCountHtml(counts);
+    summary.innerHTML =
+  renderDistanceUploadSummary() +
+  renderPoiCountHtml(counts);
   }
 }
 
@@ -477,11 +490,12 @@ function renderLayerSelector(layers, container) {
 
   container.innerHTML = targetLayers.map(name => `
     <div class="layer-row">
-      <strong>${cleanLayerName(name)}</strong>
+      <strong>${escapeHtml(cleanLayerName(name))}</strong>
       <span class="note">（${window._layerPoints[name]?.length || 0}件）</span>
     </div>
   `).join("");
 }
+
 function getTargetLayerDebugInfo() {
   const layerPoints = window._layerPoints || {};
   const allLayerNames = Object.keys(layerPoints);
@@ -510,6 +524,42 @@ function getTargetLayerDebugInfo() {
     targetPointCount,
     targetLayerNames
   };
+}
+function renderDistanceUploadSummary() {
+  const info = getTargetLayerDebugInfo();
+
+  return `
+    <div class="distance-warning" style="
+      margin-top:12px;
+      border:1px solid rgba(56,189,248,0.45);
+      background:rgba(14,165,233,0.10);
+    ">
+      <strong>読み込み内容の確認</strong><br><br>
+      全レイヤー数：${info.allLayerCount}件<br>
+      判定対象レイヤー数：${info.targetLayerCount}件<br>
+      全POI数：${info.allPointCount}件<br>
+      判定対象POI数：${info.targetPointCount}件<br>
+活動範囲ポリゴン：${window._hasPolygon ? "あり" : "なし"}<br>
+
+${window._hasPolygon ? "" : `
+  <div style="
+    margin-top:10px;
+    padding:10px 12px;
+    border-radius:10px;
+    background:rgba(245,158,11,0.14);
+    border:1px solid rgba(245,158,11,0.35);
+    color:#fde68a;
+    line-height:1.7;
+  ">
+    ⚠ 活動範囲ポリゴンが見つかりません。<br>
+    Google My Mapsで、実際に歩く範囲や活動エリアをポリゴンで囲んだレイヤーを作成してください。
+  </div>
+`}
+<br>
+<strong>判定対象レイヤー</strong><br>
+${info.targetLayerNames.map(name => escapeHtml(name)).join("<br>") || "なし"}
+    </div>
+  `;
 }
 function cleanLayerName(name) {
   return name
@@ -676,8 +726,8 @@ function getRiskAccordionHtml(warnings) {
       <strong style="color:${cardColor};">
         ${label}（${w.distance.toFixed(1)}m）
       </strong><br>
-      ${w.a.layer}：${w.a.name}<br>
-      × ${w.b.layer}：${w.b.name}<br>
+      ${escapeHtml(w.a.layer)}：${escapeHtml(w.a.name)}<br>
+× ${escapeHtml(w.b.layer)}：${escapeHtml(w.b.name)}<br>
       → ${message}
     </div>
   `;
@@ -1096,7 +1146,7 @@ const debugHtml = `
     全POI数：${debugInfo.allPointCount}件<br>
     判定対象POI数：${debugInfo.targetPointCount}件<br><br>
     <strong>判定対象レイヤー</strong><br>
-    ${debugInfo.targetLayerNames.join("<br>") || "なし"}
+    ${debugInfo.targetLayerNames.map(name => escapeHtml(name)).join("<br>") || "なし"}
   </div>
 `;
   const resultHeaderHtml = `
@@ -1118,8 +1168,8 @@ const debugHtml = `
         nearestWarning ? `
           <strong>最短距離ペア</strong><br>
           ${nearestWarning.distance.toFixed(1)}m<br>
-          ${nearestWarning.a.layer}：${nearestWarning.a.name}<br>
-          × ${nearestWarning.b.layer}：${nearestWarning.b.name}<br>
+          ${escapeHtml(nearestWarning.a.layer)}：${escapeHtml(nearestWarning.a.name)}<br>
+× ${escapeHtml(nearestWarning.b.layer)}：${escapeHtml(nearestWarning.b.name)}<br>
         ` : `
           <strong>最短距離ペア</strong><br>
           40m未満の組み合わせはありません。<br>
@@ -1197,8 +1247,8 @@ return;
         <strong style="color:${cardColor};">
           ${label}（${w.distance.toFixed(1)}m）
         </strong><br>
-        ${w.a.layer}：${w.a.name}<br>
-        × ${w.b.layer}：${w.b.name}<br>
+        ${escapeHtml(w.a.layer)}：${escapeHtml(w.a.name)}<br>
+× ${escapeHtml(w.b.layer)}：${escapeHtml(w.b.name)}<br>
         → ${message}
       </div>
     `;
@@ -1384,8 +1434,8 @@ const y = Math.max(edgePadding, Math.min(height - edgePadding, rawY));
 
     dot.addEventListener("mouseenter", () => {
   tooltip.innerHTML = `
-    <strong>${p.layer || "POI"}</strong><br>
-    ${p.name || "名称なし"}
+    <strong>${escapeHtml(p.layer || "POI")}</strong><br>
+${escapeHtml(p.name || "名称なし")}
   `;
 
   tooltip.style.left = `${x}px`;
