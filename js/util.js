@@ -560,17 +560,31 @@ function classifyType(type = "", name = "", layer = "") {
   const typeText = String(type || "").toUpperCase();
 
   // CSVの gameEntity を最優先
-  if (typeText === "GYM") {
-    return "gym";
-  }
+  if (
+  typeText === "GYM" ||
+  typeText === "ジム"
+) {
+  return "gym";
+}
 
-  if (typeText === "POWERSPOT" || typeText === "POWER_SPOT") {
-    return "power";
-  }
+if (
+  typeText === "POWERSPOT" ||
+  typeText === "POWER_SPOT" ||
+  typeText === "POWER" ||
+  typeText === "パワースポット" ||
+  typeText === "パワスポ"
+) {
+  return "power";
+}
 
-  if (typeText === "POKESTOP" || typeText === "POKE_STOP") {
-    return "pokestop";
-  }
+if (
+  typeText === "POKESTOP" ||
+  typeText === "POKE_STOP" ||
+  typeText === "ポケストップ" ||
+  typeText === "ポケスト"
+) {
+  return "pokestop";
+}
 
   // KML / KMZなど、typeが取れない場合だけ名前・レイヤーで補助判定
   const text = `${name} ${layer}`.toLowerCase();
