@@ -415,7 +415,6 @@ function pickBalancedCandidatePoints(points, count) {
 
   return picked;
 }
-
 function buildCandidatePoiKml(grouped) {
   const allPoints = [
     ...grouped.pokestop.map((p, i) => ({
