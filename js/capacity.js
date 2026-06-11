@@ -789,7 +789,14 @@ function renderCapacityMap(polygon, poi) {
       maxZoom: 18
     }
   );
-
+  const osmLayer = L.tileLayer(
+    "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+    {
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors',
+      maxZoom: 19
+    }
+  );
   paleLayer.addTo(capacityMapInstance);
 
   L.control.layers(
@@ -803,7 +810,18 @@ function renderCapacityMap(polygon, poi) {
       collapsed: true
     }
   ).addTo(capacityMapInstance);
-
+  L.control.layers(
+    {
+      "淡色地図": paleLayer,
+      "航空写真": photoLayer,
+      "OpenStreetMap": osmLayer
+    },
+    null,
+    {
+      position: "topright",
+      collapsed: true
+    }
+  ).addTo(capacityMapInstance);
   const polygonLatLngs = polygon.map(point => [
     point.lat,
     point.lng
