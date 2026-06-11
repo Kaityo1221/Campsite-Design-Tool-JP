@@ -151,15 +151,8 @@ async function analyzePlacementCapacity() {
     ></div>
 
     <div class="note" style="margin-top:8px;">
-      出典：
-      <a
-        href="https://maps.gsi.go.jp/development/ichiran.html"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        地理院タイル
-      </a>
-    </div>
+  背景地図は右上のボタンから切り替えられます。
+</div>
   </div>
 </div>
 </div>
@@ -814,15 +807,24 @@ function renderCapacityMap(polygon, poi) {
   }).addTo(capacityMapInstance);
 
   poi.forEach(point => {
+    const isAdd = point.type === "add";
+
     const label =
-      point.type === "add"
-        ? `追加：${point.name}`
+      isAdd
+        ? `追加希望：${point.name}`
         : `既存：${point.name}`;
 
+    const markerColor =
+      isAdd
+        ? "#f59e0b"
+        : "#3b82f6";
+
     L.circleMarker([point.lat, point.lng], {
-      radius: point.type === "add" ? 7 : 5,
+      radius: isAdd ? 8 : 6,
+      color: markerColor,
+      fillColor: markerColor,
       weight: 2,
-      fillOpacity: 0.85
+      fillOpacity: 0.9
     })
       .bindPopup(`
         <strong>${escapeCapacityHtml(label)}</strong><br>
