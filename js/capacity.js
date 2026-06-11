@@ -350,31 +350,67 @@ async function generateCandidatePoiKMZ() {
 }
 
 function pickBalancedCandidatePoints(points, count) {
-  const pool = [...points].sort(() => Math.random() - 0.5);
+  const pool = [...points];
   const picked = [];
 
+  const preferredEdgeDistance = 30;
+  const randomTopCount = 6;
+
   while (picked.length < count && pool.length) {
-    let bestIndex = 0;
-    let bestScore = -1;
+    const scoredCandidates = pool
+      .map((point, index) => {
+        const edgeDistance =
+          Number.isFinite(point.edgeDistance)
+            ? point.edgeDistance
+            : 0;
 
-    pool.forEach((p, index) => {
-      if (!picked.length) {
-        bestScore = Infinity;
-        bestIndex = index;
-        return;
-      }
+        const spreadScore =
+          picked.length === 0
+            ? edgeDistance
+            : Math.min(
+                ...picked.map(existing =>
+                  getCapacityDistance(point, existing)
+                )
+              );
 
-      const nearest = Math.min(
-        ...picked.map(existing => getCapacityDistance(p, existing))
+        const edgePenalty =
+          Math.max(
+            0,
+            preferredEdgeDistance - edgeDistance
+          ) * 3;
+
+        const interiorBonus =
+          Math.min(edgeDistance, 50) * 0.5;
+
+        return {
+          index,
+          score:
+            spreadScore +
+            interiorBonus -
+            edgePenalty
+        };
+      })
+      .sort((a, b) => b.score - a.score);
+
+    const topCandidates =
+      scoredCandidates.slice(
+        0,
+        Math.min(
+          randomTopCount,
+          scoredCandidates.length
+        )
       );
 
-      if (nearest > bestScore) {
-        bestScore = nearest;
-        bestIndex = index;
-      }
-    });
+    const selected =
+      topCandidates[
+        Math.floor(
+          Math.random() * topCandidates.length
+        )
+      ];
 
-    picked.push(pool.splice(bestIndex, 1)[0]);
+    picked.push(
+      pool.splice(selected.index, 1)[0]
+    );
   }
 
   return picked;
@@ -632,30 +668,21 @@ function estimateCapacityRandom(polygon, blockingPoints, minDistance, trialCount
     const x = minX + Math.random() * (maxX - minX);
     const y = minY + Math.random() * (maxY - minY);
 
-    const candidate = { x, y };
+  const candidate = { x, y };
+const candidate = { x, y };
 
-    if (!isCapacityPointInPolygon(candidate, projectedPolygon)) continue;
-    if (
-  getCapacityDistanceToPolygonEdge(candidate, projectedPolygon) <
-  boundaryMargin
-) {
+if (!isCapacityPointInPolygon(candidate, projectedPolygon)) continue;
+
+const edgeDistance =
+  getCapacityDistanceToPolygonEdge(
+    candidate,
+    projectedPolygon
+  );
+
+if (edgeDistance < boundaryMargin) {
   continue;
 }
-    const nearBlocking = projectedBlocking.some(p =>
-      getCapacityDistance(candidate, p) < minDistance + safetyMargin
-    );
 
-    if (nearBlocking) continue;
-
-    const nearAccepted = accepted.some(p =>
-      getCapacityDistance(candidate, p) < minDistance
-    );
-
-    if (nearAccepted) continue;
-
-    accepted.push({
-      x,
-      y,
       lat: y / metersPerLat,
       lng: x / metersPerLng
     });
