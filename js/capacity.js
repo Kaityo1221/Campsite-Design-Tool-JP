@@ -12,6 +12,12 @@ const CAPACITY_LABELS = {
   power: "パワースポット"
 };
 
+/* Supabase 疎通確認用
+   ※ブラウザには Publishable key のみ記載する
+   ※Secret key / service_role は絶対に記載しない */
+const CAMPSITE_SUPABASE_URL = "https://azkshxjgsbtjgwbapcfw.supabase.co";
+const CAMPSITE_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_rWbeIqdWJJHHBtphER8bdg__CaS_xGK";
+
 async function analyzePlacementCapacity() {
   const file = document.getElementById("capacityFile")?.files?.[0];
   const result = document.getElementById("capacityResult");
@@ -124,8 +130,12 @@ async function analyzePlacementCapacity() {
   </button>
 
   <div id="candidateKmlResult"></div>
+    <div id="capacitySupabaseStatus" class="note" style="margin-top:14px;">
+    ⚪ Supabase接続確認中...
+  </div>
 </div>
     `;
+        pingCapacitySupabase();
   } catch (error) {
     console.error(error);
     result.innerHTML = `<div class="distance-warning">解析に失敗しました。</div>`;
@@ -662,4 +672,49 @@ function downloadCapacityBlob(blob, fileName) {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   }, 0);
+}
+
+async function pingCapacitySupabase() {
+  const status = document.getElementById("capacitySupabaseStatus");
+
+  if (!status) return;
+
+  if (
+    !CAMPSITE_SUPABASE_URL ||
+    !CAMPSITE_SUPABASE_PUBLISHABLE_KEY ||
+    CAMPSITE_SUPABASE_PUBLISHABLE_KEY.includes("ここに")
+  ) {
+    status.innerHTML = "⚪ Supabase未設定";
+    return;
+  }
+
+  try {
+    const response = await fetch(
+      `${CAMPSITE_SUPABASE_URL}/rest/v1/rpc/ping_campsite_lab`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": CAMPSITE_SUPABASE_PUBLISHABLE_KEY
+        },
+        body: "{}"
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Supabase ping failed: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (Array.isArray(data) && data[0]?.ok === true) {
+      status.innerHTML = "🟢 Supabase接続OK";
+      return;
+    }
+
+    throw new Error("Unexpected response");
+  } catch (error) {
+    console.warn("Supabase ping error:", error);
+    status.innerHTML = "⚪ Supabase未接続";
+  }
 }
