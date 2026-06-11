@@ -801,9 +801,10 @@ function renderCapacityMap(polygon, poi) {
     point.lng
   ]);
 
-  const areaLayer = L.polygon(polygonLatLngs, {
-    weight: 3,
-    fillOpacity: 0.12
+    const areaLayer = L.polygon(polygonLatLngs, {
+    weight: 2,
+    opacity: 0.75,
+    fillOpacity: 0.03
   }).addTo(capacityMapInstance);
 
   poi.forEach(point => {
