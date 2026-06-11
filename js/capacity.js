@@ -802,17 +802,6 @@ function renderCapacityMap(polygon, poi) {
   L.control.layers(
     {
       "淡色地図": paleLayer,
-      "航空写真": photoLayer
-    },
-    null,
-    {
-      position: "topright",
-      collapsed: true
-    }
-  ).addTo(capacityMapInstance);
-  L.control.layers(
-    {
-      "淡色地図": paleLayer,
       "航空写真": photoLayer,
       "OpenStreetMap": osmLayer
     },
