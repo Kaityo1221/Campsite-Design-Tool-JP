@@ -626,6 +626,7 @@ function estimateCapacityRandom(polygon, blockingPoints, minDistance, trialCount
 
   const accepted = [];
   const safetyMargin = 0;
+  const boundaryMargin = 15;
 
   for (let i = 0; i < trialCount; i++) {
     const x = minX + Math.random() * (maxX - minX);
@@ -634,7 +635,12 @@ function estimateCapacityRandom(polygon, blockingPoints, minDistance, trialCount
     const candidate = { x, y };
 
     if (!isCapacityPointInPolygon(candidate, projectedPolygon)) continue;
-
+    if (
+  getCapacityDistanceToPolygonEdge(candidate, projectedPolygon) <
+  boundaryMargin
+) {
+  continue;
+}
     const nearBlocking = projectedBlocking.some(p =>
       getCapacityDistance(candidate, p) < minDistance + safetyMargin
     );
@@ -1124,4 +1130,55 @@ function previewCandidatePoiPlacement() {
       </div>
     `;
   }
+}
+function getCapacityDistanceToPolygonEdge(point, polygon) {
+  let minDistance = Infinity;
+
+  for (let i = 0; i < polygon.length; i++) {
+    const start = polygon[i];
+    const end = polygon[(i + 1) % polygon.length];
+
+    const distance = getCapacityDistanceToSegment(
+      point,
+      start,
+      end
+    );
+
+    if (distance < minDistance) {
+      minDistance = distance;
+    }
+  }
+
+  return minDistance;
+}
+
+function getCapacityDistanceToSegment(point, start, end) {
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+
+  if (dx === 0 && dy === 0) {
+    return getCapacityDistance(point, start);
+  }
+
+  const t = Math.max(
+    0,
+    Math.min(
+      1,
+      (
+        (point.x - start.x) * dx +
+        (point.y - start.y) * dy
+      ) /
+      (
+        dx * dx +
+        dy * dy
+      )
+    )
+  );
+
+  const nearest = {
+    x: start.x + t * dx,
+    y: start.y + t * dy
+  };
+
+  return getCapacityDistance(point, nearest);
 }
