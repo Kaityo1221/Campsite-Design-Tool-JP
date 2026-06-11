@@ -162,6 +162,7 @@ async function analyzePlacementCapacity() {
     </div>
   </div>
 </div>
+</div>
     `;
             pingCapacitySupabase();
     renderCapacityMap(polygon, poi);
