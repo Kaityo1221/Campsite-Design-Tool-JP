@@ -772,16 +772,7 @@ function renderCapacityMap(polygon, poi) {
     zoomControl: true
   });
 
-    const paleLayer = L.tileLayer(
-    "https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png",
-    {
-      attribution:
-        '<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener noreferrer">地理院タイル</a>',
-      maxZoom: 18
-    }
-  );
-
-  const photoLayer = L.tileLayer(
+      const photoLayer = L.tileLayer(
     "https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg",
     {
       attribution:
@@ -789,6 +780,7 @@ function renderCapacityMap(polygon, poi) {
       maxZoom: 18
     }
   );
+
   const osmLayer = L.tileLayer(
     "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
     {
@@ -797,13 +789,13 @@ function renderCapacityMap(polygon, poi) {
       maxZoom: 19
     }
   );
-  paleLayer.addTo(capacityMapInstance);
+
+  osmLayer.addTo(capacityMapInstance);
 
   L.control.layers(
     {
-      "淡色地図": paleLayer,
-      "航空写真": photoLayer,
-      "OpenStreetMap": osmLayer
+      "OpenStreetMap": osmLayer,
+      "航空写真": photoLayer
     },
     null,
     {
