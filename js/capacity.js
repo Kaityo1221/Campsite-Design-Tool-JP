@@ -1,4 +1,5 @@
 let capacityState = null;
+let capacityMapInstance = null;
 let capacityMode = "manual";
 const CAPACITY_LIMITS = {
   pokestop: 12,
@@ -133,9 +134,37 @@ async function analyzePlacementCapacity() {
     <div id="capacitySupabaseStatus" class="note" style="margin-top:14px;">
     ⚪ Supabase接続確認中...
   </div>
+    <div class="capacity-map-section" style="margin-top:18px;">
+    <div class="capacity-section-title">
+      3. 活動範囲マップ
+    </div>
+
+    <div
+      id="capacityMap"
+      style="
+        height:360px;
+        margin-top:10px;
+        border-radius:14px;
+        overflow:hidden;
+        border:1px solid #475569;
+      "
+    ></div>
+
+    <div class="note" style="margin-top:8px;">
+      出典：
+      <a
+        href="https://maps.gsi.go.jp/development/ichiran.html"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        地理院タイル
+      </a>
+    </div>
+  </div>
 </div>
     `;
-        pingCapacitySupabase();
+            pingCapacitySupabase();
+    renderCapacityMap(polygon, poi);
   } catch (error) {
     console.error(error);
     result.innerHTML = `<div class="distance-warning">解析に失敗しました。</div>`;
@@ -717,4 +746,86 @@ async function pingCapacitySupabase() {
     console.warn("Supabase ping error:", error);
     status.innerHTML = "⚪ Supabase未接続";
   }
+}
+
+function renderCapacityMap(polygon, poi) {
+  const mapElement = document.getElementById("capacityMap");
+
+  if (!mapElement) return;
+
+  if (typeof L === "undefined") {
+    mapElement.innerHTML = `
+      <div class="distance-warning">
+        地図ライブラリを読み込めませんでした。
+      </div>
+    `;
+    return;
+  }
+
+  if (capacityMapInstance) {
+    capacityMapInstance.remove();
+    capacityMapInstance = null;
+  }
+
+  capacityMapInstance = L.map("capacityMap", {
+    zoomControl: true
+  });
+
+  L.tileLayer(
+    "https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png",
+    {
+      attribution:
+        '<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener noreferrer">地理院タイル</a>',
+      maxZoom: 18
+    }
+  ).addTo(capacityMapInstance);
+
+  const polygonLatLngs = polygon.map(point => [
+    point.lat,
+    point.lng
+  ]);
+
+  const areaLayer = L.polygon(polygonLatLngs, {
+    weight: 3,
+    fillOpacity: 0.12
+  }).addTo(capacityMapInstance);
+
+  poi.forEach(point => {
+    const label =
+      point.type === "add"
+        ? `追加：${point.name}`
+        : `既存：${point.name}`;
+
+    L.circleMarker([point.lat, point.lng], {
+      radius: point.type === "add" ? 7 : 5,
+      weight: 2,
+      fillOpacity: 0.85
+    })
+      .bindPopup(`
+        <strong>${escapeCapacityHtml(label)}</strong><br>
+        種別：${escapeCapacityHtml(CAPACITY_LABELS[point.kind] || point.kind)}<br>
+        レイヤー：${escapeCapacityHtml(point.layer || "未設定")}
+      `)
+      .addTo(capacityMapInstance);
+  });
+
+  capacityMapInstance.fitBounds(
+    areaLayer.getBounds(),
+    {
+      padding: [18, 18]
+    }
+  );
+
+  setTimeout(() => {
+    capacityMapInstance?.invalidateSize();
+  }, 100);
+}
+
+function escapeCapacityHtml(text) {
+  return String(text || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
