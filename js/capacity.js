@@ -70,7 +70,7 @@ async function analyzePlacementCapacity() {
       power: Math.max(0, CAPACITY_LIMITS.power - addCounts.power)
     };
 
-    const estimate = estimateCapacityRandom(polygon, poi, 40, 12000);
+    const estimate = estimateCapacityRandom(polygon, poi, 40, 30000);
 
     capacityState = {
       polygon,
@@ -631,7 +631,12 @@ function detectCapacityKind(layerName, name) {
   return "pokestop";
 }
 
-function estimateCapacityRandom(polygon, blockingPoints, minDistance, trialCount = 30000) {
+function estimateCapacityRandom(
+  polygon,
+  blockingPoints,
+  minDistance,
+  trialCount = 30000
+) {
   const meanLat =
     polygon.reduce((sum, p) => sum + p.lat, 0) / polygon.length;
 
@@ -667,23 +672,45 @@ function estimateCapacityRandom(polygon, blockingPoints, minDistance, trialCount
     const x = minX + Math.random() * (maxX - minX);
     const y = minY + Math.random() * (maxY - minY);
 
-  const candidate = { x, y };
-const candidate = { x, y };
+    const candidate = { x, y };
 
-if (!isCapacityPointInPolygon(candidate, projectedPolygon)) continue;
+    if (!isCapacityPointInPolygon(candidate, projectedPolygon)) {
+      continue;
+    }
 
-const edgeDistance =
-  getCapacityDistanceToPolygonEdge(
-    candidate,
-    projectedPolygon
-  );
+    const edgeDistance =
+      getCapacityDistanceToPolygonEdge(
+        candidate,
+        projectedPolygon
+      );
 
-if (edgeDistance < boundaryMargin) {
-  continue;
-}
+    if (edgeDistance < boundaryMargin) {
+      continue;
+    }
 
+    const nearBlocking = projectedBlocking.some(p =>
+      getCapacityDistance(candidate, p) <
+      minDistance + safetyMargin
+    );
+
+    if (nearBlocking) {
+      continue;
+    }
+
+    const nearAccepted = accepted.some(p =>
+      getCapacityDistance(candidate, p) < minDistance
+    );
+
+    if (nearAccepted) {
+      continue;
+    }
+
+    accepted.push({
+      x,
+      y,
       lat: y / metersPerLat,
-      lng: x / metersPerLng
+      lng: x / metersPerLng,
+      edgeDistance
     });
   }
 
