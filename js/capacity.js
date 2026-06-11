@@ -785,27 +785,22 @@ function renderCapacityMap(polygon, poi) {
 
   osmLayer.addTo(capacityMapInstance);
 
-  L.control.layers(
-    {
-      "OpenStreetMap": osmLayer,
-      "航空写真": photoLayer
-    },
-    null,
-    {
-      position: "topright",
-      collapsed: true
-    }
-  ).addTo(capacityMapInstance);
-  const polygonLatLngs = polygon.map(point => [
+     const polygonLatLngs = polygon.map(point => [
     point.lat,
     point.lng
   ]);
 
-    const areaLayer = L.polygon(polygonLatLngs, {
+  const areaLayer = L.polygon(polygonLatLngs, {
     weight: 2,
     opacity: 0.75,
     fillOpacity: 0.03
   }).addTo(capacityMapInstance);
+
+  const existingPoiLayer = L.layerGroup()
+    .addTo(capacityMapInstance);
+
+  const addPoiLayer = L.layerGroup()
+    .addTo(capacityMapInstance);
 
   poi.forEach(point => {
     const isAdd = point.type === "add";
@@ -820,7 +815,7 @@ function renderCapacityMap(polygon, poi) {
         ? "#f59e0b"
         : "#3b82f6";
 
-        L.circleMarker([point.lat, point.lng], {
+    const marker = L.circleMarker([point.lat, point.lng], {
       radius: isAdd ? 6 : 4,
       color: markerColor,
       fillColor: markerColor,
@@ -831,9 +826,30 @@ function renderCapacityMap(polygon, poi) {
         <strong>${escapeCapacityHtml(label)}</strong><br>
         種別：${escapeCapacityHtml(CAPACITY_LABELS[point.kind] || point.kind)}<br>
         レイヤー：${escapeCapacityHtml(point.layer || "未設定")}
-      `)
-      .addTo(capacityMapInstance);
+      `);
+
+    marker.addTo(
+      isAdd
+        ? addPoiLayer
+        : existingPoiLayer
+    );
   });
+
+  L.control.layers(
+    {
+      "OpenStreetMap": osmLayer,
+      "航空写真": photoLayer
+    },
+    {
+      "活動範囲": areaLayer,
+      "既存POI": existingPoiLayer,
+      "追加希望POI": addPoiLayer
+    },
+    {
+      position: "topright",
+      collapsed: true
+    }
+  ).addTo(capacityMapInstance);
 
   capacityMapInstance.fitBounds(
     areaLayer.getBounds(),
