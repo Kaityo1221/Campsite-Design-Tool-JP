@@ -23,6 +23,19 @@
 <link rel="apple-touch-icon" sizes="180x180" href="assets/icon.png">
 <link rel="manifest" href="./manifest.json">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+  crossorigin=""
+>
+
+<script
+  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+  crossorigin=""
+></script>
+
 </head>
 
   
@@ -605,13 +618,23 @@ v6.0<br>
       <li>POI種別</li>
     </ul>
 
-    <p class="note">
-      POI種別には、
-      <strong>pokestop</strong>、
-      <strong>gym</strong>、
-      <strong>power</strong>
-      のいずれかを入力してください。
-    </p>
+    <p<p class="note">
+  POI種別には、次のいずれかを入力してください。
+</p>
+
+<ul>
+  <li><strong>ポケストップ</strong></li>
+  <li><strong>ジム</strong></li>
+  <li><strong>パワースポット</strong></li>
+</ul>
+
+<p class="note">
+  または、
+  <strong>pokestop</strong>、
+  <strong>gym</strong>、
+  <strong>powerspot</strong>
+  と入力しても判定できます。
+</p>
   </div>
 
   <p class="note">

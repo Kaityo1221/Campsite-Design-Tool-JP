@@ -1,4 +1,5 @@
 let capacityState = null;
+let capacityMapInstance = null;
 let capacityMode = "manual";
 const CAPACITY_LIMITS = {
   pokestop: 12,
@@ -11,6 +12,12 @@ const CAPACITY_LABELS = {
   gym: "ジム",
   power: "パワースポット"
 };
+
+/* Supabase 疎通確認用
+   ※ブラウザには Publishable key のみ記載する
+   ※Secret key / service_role は絶対に記載しない */
+const CAMPSITE_SUPABASE_URL = "https://azkshxjgsbtjgwbapcfw.supabase.co";
+const CAMPSITE_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_rWbeIqdWJJHHBtphER8bdg__CaS_xGK";
 
 async function analyzePlacementCapacity() {
   const file = document.getElementById("capacityFile")?.files?.[0];
@@ -124,8 +131,34 @@ async function analyzePlacementCapacity() {
   </button>
 
   <div id="candidateKmlResult"></div>
+    <div id="capacitySupabaseStatus" class="note" style="margin-top:14px;">
+    ⚪ Supabase接続確認中...
+  </div>
+    <div class="capacity-map-section" style="margin-top:18px;">
+    <div class="capacity-section-title">
+      3. 活動範囲マップ
+    </div>
+
+    <div
+      id="capacityMap"
+      style="
+        height:360px;
+        margin-top:10px;
+        border-radius:14px;
+        overflow:hidden;
+        border:1px solid #475569;
+      "
+    ></div>
+
+    <div class="note" style="margin-top:8px;">
+  背景地図は右上のボタンから切り替えられます。
+</div>
+  </div>
+</div>
 </div>
     `;
+            pingCapacitySupabase();
+    renderCapacityMap(polygon, poi);
   } catch (error) {
     console.error(error);
     result.innerHTML = `<div class="distance-warning">解析に失敗しました。</div>`;
@@ -662,4 +695,163 @@ function downloadCapacityBlob(blob, fileName) {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   }, 0);
+}
+
+async function pingCapacitySupabase() {
+  const status = document.getElementById("capacitySupabaseStatus");
+
+  if (!status) return;
+
+  if (
+    !CAMPSITE_SUPABASE_URL ||
+    !CAMPSITE_SUPABASE_PUBLISHABLE_KEY ||
+    CAMPSITE_SUPABASE_PUBLISHABLE_KEY.includes("ここに")
+  ) {
+    status.innerHTML = "⚪ Supabase未設定";
+    return;
+  }
+
+  try {
+    const response = await fetch(
+      `${CAMPSITE_SUPABASE_URL}/rest/v1/rpc/ping_campsite_lab`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": CAMPSITE_SUPABASE_PUBLISHABLE_KEY
+        },
+        body: "{}"
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Supabase ping failed: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (Array.isArray(data) && data[0]?.ok === true) {
+      status.innerHTML = "🟢 Supabase接続OK";
+      return;
+    }
+
+    throw new Error("Unexpected response");
+  } catch (error) {
+    console.warn("Supabase ping error:", error);
+    status.innerHTML = "⚪ Supabase未接続";
+  }
+}
+
+function renderCapacityMap(polygon, poi) {
+  const mapElement = document.getElementById("capacityMap");
+
+  if (!mapElement) return;
+
+  if (typeof L === "undefined") {
+    mapElement.innerHTML = `
+      <div class="distance-warning">
+        地図ライブラリを読み込めませんでした。
+      </div>
+    `;
+    return;
+  }
+
+  if (capacityMapInstance) {
+    capacityMapInstance.remove();
+    capacityMapInstance = null;
+  }
+
+  capacityMapInstance = L.map("capacityMap", {
+    zoomControl: true
+  });
+
+      const photoLayer = L.tileLayer(
+    "https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg",
+    {
+      attribution:
+        '<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener noreferrer">地理院タイル</a>',
+      maxZoom: 18
+    }
+  );
+
+  const osmLayer = L.tileLayer(
+    "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+    {
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors',
+      maxZoom: 19
+    }
+  );
+
+  osmLayer.addTo(capacityMapInstance);
+
+  L.control.layers(
+    {
+      "OpenStreetMap": osmLayer,
+      "航空写真": photoLayer
+    },
+    null,
+    {
+      position: "topright",
+      collapsed: true
+    }
+  ).addTo(capacityMapInstance);
+  const polygonLatLngs = polygon.map(point => [
+    point.lat,
+    point.lng
+  ]);
+
+    const areaLayer = L.polygon(polygonLatLngs, {
+    weight: 2,
+    opacity: 0.75,
+    fillOpacity: 0.03
+  }).addTo(capacityMapInstance);
+
+  poi.forEach(point => {
+    const isAdd = point.type === "add";
+
+    const label =
+      isAdd
+        ? `追加希望：${point.name}`
+        : `既存：${point.name}`;
+
+    const markerColor =
+      isAdd
+        ? "#f59e0b"
+        : "#3b82f6";
+
+        L.circleMarker([point.lat, point.lng], {
+      radius: isAdd ? 6 : 4,
+      color: markerColor,
+      fillColor: markerColor,
+      weight: 1.5,
+      fillOpacity: 0.85
+    })
+      .bindPopup(`
+        <strong>${escapeCapacityHtml(label)}</strong><br>
+        種別：${escapeCapacityHtml(CAPACITY_LABELS[point.kind] || point.kind)}<br>
+        レイヤー：${escapeCapacityHtml(point.layer || "未設定")}
+      `)
+      .addTo(capacityMapInstance);
+  });
+
+  capacityMapInstance.fitBounds(
+    areaLayer.getBounds(),
+    {
+      padding: [18, 18]
+    }
+  );
+
+  setTimeout(() => {
+    capacityMapInstance?.invalidateSize();
+  }, 100);
+}
+
+function escapeCapacityHtml(text) {
+  return String(text || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
