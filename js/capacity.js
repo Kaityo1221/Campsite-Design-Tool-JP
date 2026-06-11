@@ -772,12 +772,35 @@ function renderCapacityMap(polygon, poi) {
     zoomControl: true
   });
 
-  L.tileLayer(
+    const paleLayer = L.tileLayer(
     "https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png",
     {
       attribution:
         '<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener noreferrer">地理院タイル</a>',
       maxZoom: 18
+    }
+  );
+
+  const photoLayer = L.tileLayer(
+    "https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg",
+    {
+      attribution:
+        '<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener noreferrer">地理院タイル</a>',
+      maxZoom: 18
+    }
+  );
+
+  paleLayer.addTo(capacityMapInstance);
+
+  L.control.layers(
+    {
+      "淡色地図": paleLayer,
+      "航空写真": photoLayer
+    },
+    null,
+    {
+      position: "topright",
+      collapsed: true
     }
   ).addTo(capacityMapInstance);
 
