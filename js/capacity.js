@@ -819,12 +819,12 @@ function renderCapacityMap(polygon, poi) {
         ? "#f59e0b"
         : "#3b82f6";
 
-    L.circleMarker([point.lat, point.lng], {
-      radius: isAdd ? 8 : 6,
+        L.circleMarker([point.lat, point.lng], {
+      radius: isAdd ? 6 : 4,
       color: markerColor,
       fillColor: markerColor,
-      weight: 2,
-      fillOpacity: 0.9
+      weight: 1.5,
+      fillOpacity: 0.85
     })
       .bindPopup(`
         <strong>${escapeCapacityHtml(label)}</strong><br>
