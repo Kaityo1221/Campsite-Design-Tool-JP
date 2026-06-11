@@ -28,13 +28,25 @@ async function analyzePlacementCapacity() {
 
   if (!result) return;
 
-  if (!file) {
+    if (!file) {
     result.innerHTML = `<div class="distance-warning">KMZ / KMLファイルを選択してください。</div>`;
     return;
   }
 
-  result.innerHTML = `<div class="distance-warning">解析中...</div>`;
+  capacityPreviewState = null;
 
+  if (capacityPreviewCandidateLayer) {
+    capacityPreviewCandidateLayer.remove();
+    capacityPreviewCandidateLayer = null;
+  }
+
+  const mapCompare = document.getElementById("capacityMapCompare");
+
+  if (mapCompare) {
+    mapCompare.style.display = "none";
+  }
+
+  result.innerHTML = `<div class="distance-warning">解析中...</div>`;
   try {
     const kmlText = await getCapacityKmlText(file);
 
@@ -155,7 +167,6 @@ async function analyzePlacementCapacity() {
 </div>
       `;
 
-    const mapCompare = document.getElementById("capacityMapCompare");
 
     if (mapCompare) {
       mapCompare.style.display = "grid";
