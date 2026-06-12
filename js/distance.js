@@ -293,7 +293,20 @@ function renderPoiCountHtml(counts) {
       ${renderPoiCountRow("ジム", counts.gym, POI_LIMITS.gym, "🟡", "gym")}
       ${renderPoiCountRow("パワースポット", counts.power, POI_LIMITS.power, "🟣", "power")}
     </div>
-
+    <div style="
+      margin:10px 0 0;
+      padding:10px 12px;
+      border-radius:10px;
+      background:rgba(245,158,11,0.10);
+      border:1px solid rgba(245,158,11,0.30);
+      color:#fde68a;
+      font-size:13px;
+      line-height:1.7;
+    ">
+      ※追加POIは最大25件です。<br>
+      必ず25件追加されるわけではありません。<br>
+      実際の追加件数は、キャンプサイトの広さや既存POIの密度などにより調整されます。
+    </div>
     <div style="
       margin:18px 0 8px;
       padding:16px;
