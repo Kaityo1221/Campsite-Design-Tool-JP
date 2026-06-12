@@ -246,13 +246,9 @@ function countExistingAndAddedPoi(pointsByLayer) {
   Object.entries(pointsByLayer || {}).forEach(([layerName, points]) => {
     if (!Array.isArray(points)) return;
 
-    if (
-      layerName.includes("円") ||
-      layerName.includes("30m") ||
-      layerName.includes("40m")
-    ) {
-      return;
-    }
+    if (isAuxiliaryLayer(layerName)) {
+  return;
+}
 
     const isExisting = layerName.includes("既存");
 
@@ -297,7 +293,20 @@ function renderPoiCountHtml(counts) {
       ${renderPoiCountRow("ジム", counts.gym, POI_LIMITS.gym, "🟡", "gym")}
       ${renderPoiCountRow("パワースポット", counts.power, POI_LIMITS.power, "🟣", "power")}
     </div>
-
+    <div style="
+      margin:10px 0 0;
+      padding:10px 12px;
+      border-radius:10px;
+      background:rgba(245,158,11,0.10);
+      border:1px solid rgba(245,158,11,0.30);
+      color:#fde68a;
+      font-size:13px;
+      line-height:1.7;
+    ">
+      ※追加POIは最大25件です。<br>
+      必ず25件追加されるわけではありません。<br>
+      実際の追加件数は、キャンプサイトの広さや既存POIの密度などにより調整されます。
+    </div>
     <div style="
       margin:18px 0 8px;
       padding:16px;
@@ -408,13 +417,35 @@ function getPoiLimitWarningHtml(counts) {
   `;
 }
 
-function isDistanceTargetLayer(layerName) {
-  const name = String(layerName || "").toLowerCase();
+function isAuxiliaryLayer(layerName) {
+  const name = String(layerName || "")
+    .toLowerCase()
+    .replace(/\s+/g, "");
 
   return (
-    layerName.includes("既存") ||
-    layerName.includes("追加") ||
-    layerName.includes("追加希望") ||
+    name.includes("円") ||
+    name.includes("30m") ||
+    name.includes("40m") ||
+    name.includes("buffer") ||
+    name.includes("100ft") ||
+    name.includes("100feet") ||
+    name.includes("100フィート") ||
+    name.includes("ダミー")
+  );
+}
+
+function isDistanceTargetLayer(layerName) {
+  const originalName = String(layerName || "");
+  const name = originalName.toLowerCase();
+
+  if (isAuxiliaryLayer(originalName)) {
+    return false;
+  }
+
+  return (
+    originalName.includes("既存") ||
+    originalName.includes("追加") ||
+    originalName.includes("追加希望") ||
     name.includes("current") ||
     name.includes("existing") ||
     name.includes("addition") ||
@@ -424,7 +455,6 @@ function isDistanceTargetLayer(layerName) {
     name.includes("ebene")
   );
 }
-
   async function loadDistanceFile() {
   const fileInput = document.getElementById("distanceFile");
   const container = document.getElementById("distanceLayerList");
@@ -609,11 +639,11 @@ function getTargetLayerDebugInfo() {
   const layerPoints = window._layerPoints || {};
   const allLayerNames = Object.keys(layerPoints);
 
-  const targetLayerNames = allLayerNames.filter(name =>
-    !name.includes("円") &&
-    !name.includes("30m") &&
-    !name.includes("40m")
-  );
+  const targetLayerNames = allLayerNames.filter(layerName => {
+    if (layerName === "CSV_POI") return true;
+
+    return isDistanceTargetLayer(layerName);
+  });
 
   let allPointCount = 0;
   let targetPointCount = 0;
@@ -1066,13 +1096,13 @@ async function runDistanceCheck() {
   const points = [];
 
   Object.entries(window._layerPoints || {}).forEach(([layerName, layerPoints]) => {
-    if (
-      layerName.includes("円") ||
-      layerName.includes("30m") ||
-      layerName.includes("40m")
-    ) return;
+  const isCsvLayer = layerName === "CSV_POI";
 
-    layerPoints.forEach(p => {
+  if (!isCsvLayer && !isDistanceTargetLayer(layerName)) {
+    return;
+  }
+
+  layerPoints.forEach(p => {
       points.push({
         ...p,
         layer: cleanLayerName(layerName),
