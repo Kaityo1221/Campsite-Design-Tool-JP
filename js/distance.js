@@ -291,13 +291,64 @@ function renderPoiCountRow(label, current, limit, icon, type) {
 
 function renderPoiCountHtml(counts) {
   return `
-  <div class="poi-count-box">
-    <h3>追加POI内訳</h3>
+    <div class="poi-count-box">
+      <h3>追加POI内訳</h3>
       ${renderPoiCountRow("ポケストップ", counts.pokestop, POI_LIMITS.pokestop, "🔵", "pokestop")}
       ${renderPoiCountRow("ジム", counts.gym, POI_LIMITS.gym, "🟡", "gym")}
       ${renderPoiCountRow("パワースポット", counts.power, POI_LIMITS.power, "🟣", "power")}
     </div>
+
+    <div style="
+      margin:18px 0 8px;
+      padding:16px;
+      border:1px solid rgba(56,189,248,0.55);
+      border-radius:14px;
+      background:rgba(14,165,233,0.10);
+      color:#e5e7eb;
+      line-height:1.7;
+    ">
+      <strong style="
+        display:block;
+        margin-bottom:6px;
+        color:#7dd3fc;
+        font-size:17px;
+      ">
+        ✅ STEP 1：事前チェック完了
+      </strong>
+
+      読み込み内容と追加POI内訳を確認しました。<br>
+      続いて、下の「距離チェック」へ進んでください。
+
+      <button
+        type="button"
+        onclick="scrollToDistanceCheckStep()"
+        style="
+          width:100%;
+          margin-top:14px;
+          padding:14px 16px;
+          border:none;
+          border-radius:12px;
+          background:linear-gradient(135deg, #2563eb, #7c3aed);
+          color:white;
+          font-weight:800;
+          font-size:16px;
+          cursor:pointer;
+        "
+      >
+        ↓ STEP 2：距離チェックへ進む
+      </button>
+    </div>
   `;
+}
+function scrollToDistanceCheckStep() {
+  const target = document.getElementById("distanceCheckStep");
+
+  if (!target) return;
+
+  target.scrollIntoView({
+    behavior: "smooth",
+    block: "start"
+  });
 }
 function getPoiLimitWarningHtml(counts) {
   const warnings = [];
