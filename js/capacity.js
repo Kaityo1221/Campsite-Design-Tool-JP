@@ -1,5 +1,8 @@
 let capacityState = null;
 let capacityMapInstance = null;
+let capacityPreviewMapInstance = null;
+let capacityPreviewCandidateLayer = null;
+let capacityPreviewState = null;
 let capacityMode = "manual";
 const CAPACITY_LIMITS = {
   pokestop: 12,
@@ -25,13 +28,25 @@ async function analyzePlacementCapacity() {
 
   if (!result) return;
 
-  if (!file) {
+    if (!file) {
     result.innerHTML = `<div class="distance-warning">KMZ / KMLファイルを選択してください。</div>`;
     return;
   }
 
-  result.innerHTML = `<div class="distance-warning">解析中...</div>`;
+  capacityPreviewState = null;
 
+  if (capacityPreviewCandidateLayer) {
+    capacityPreviewCandidateLayer.remove();
+    capacityPreviewCandidateLayer = null;
+  }
+
+  const mapCompare = document.getElementById("capacityMapCompare");
+
+  if (mapCompare) {
+    mapCompare.style.display = "none";
+  }
+
+  result.innerHTML = `<div class="distance-warning">解析中...</div>`;
   try {
     const kmlText = await getCapacityKmlText(file);
 
@@ -67,7 +82,7 @@ async function analyzePlacementCapacity() {
       power: Math.max(0, CAPACITY_LIMITS.power - addCounts.power)
     };
 
-    const estimate = estimateCapacityRandom(polygon, poi, 40, 12000);
+    const estimate = estimateCapacityRandom(polygon, poi, 40, 30000);
 
     capacityState = {
       polygon,
@@ -126,39 +141,40 @@ async function analyzePlacementCapacity() {
 
   <br>
 
-  <button class="generate" onclick="generateCandidatePoiKMZ()">
-    候補POI KMZを生成
-  </button>
+<button
+  class="generate"
+  onclick="previewCandidatePoiPlacement()"
+>
+  候補配置をプレビュー
+</button>
 
-  <div id="candidateKmlResult"></div>
+<button
+  id="generateCandidatePoiButton"
+  class="generate"
+  onclick="generateCandidatePoiKMZ()"
+  style="display:none; margin-top:10px;"
+>
+  候補POI KMZを生成
+</button>
+
+<div id="candidatePreviewResult"></div>
+<div id="candidateKmlResult"></div>
     <div id="capacitySupabaseStatus" class="note" style="margin-top:14px;">
     ⚪ Supabase接続確認中...
   </div>
-    <div class="capacity-map-section" style="margin-top:18px;">
-    <div class="capacity-section-title">
-      3. 活動範囲マップ
-    </div>
+   
+</div>
+</div>
+      `;
 
-    <div
-      id="capacityMap"
-      style="
-        height:360px;
-        margin-top:10px;
-        border-radius:14px;
-        overflow:hidden;
-        border:1px solid #475569;
-      "
-    ></div>
 
-    <div class="note" style="margin-top:8px;">
-  背景地図は右上のボタンから切り替えられます。
-</div>
-  </div>
-</div>
-</div>
-    `;
-            pingCapacitySupabase();
+    if (mapCompare) {
+      mapCompare.style.display = "grid";
+    }
+
+    pingCapacitySupabase();
     renderCapacityMap(polygon, poi);
+    renderCapacityPreviewBaseMap(polygon, poi);
   } catch (error) {
     console.error(error);
     result.innerHTML = `<div class="distance-warning">解析に失敗しました。</div>`;
@@ -282,45 +298,42 @@ async function generateCandidatePoiKMZ() {
     return;
   }
 
-  const counts = {
-    pokestop: Number(document.getElementById("capacitySelect_pokestop")?.value || 0),
-    gym: Number(document.getElementById("capacitySelect_gym")?.value || 0),
-    power: Number(document.getElementById("capacitySelect_power")?.value || 0)
-  };
-
-  const total = counts.pokestop + counts.gym + counts.power;
-
-  if (total <= 0) {
-    alert("生成する候補数を1件以上選択してください。");
+  if (!capacityPreviewState) {
+    alert("先に候補配置をプレビューしてください。");
     return;
   }
 
-  if (capacityState.estimate.points.length < total) {
-    alert("選択数に対して配置余地が不足しています。");
+  const currentCounts = {
+    pokestop: Number(
+      document.getElementById("capacitySelect_pokestop")?.value || 0
+    ),
+    gym: Number(
+      document.getElementById("capacitySelect_gym")?.value || 0
+    ),
+    power: Number(
+      document.getElementById("capacitySelect_power")?.value || 0
+    )
+  };
+
+  const previewCounts = capacityPreviewState.counts;
+
+  const selectionChanged =
+    currentCounts.pokestop !== previewCounts.pokestop ||
+    currentCounts.gym !== previewCounts.gym ||
+    currentCounts.power !== previewCounts.power;
+
+  if (selectionChanged) {
+    alert(
+      "候補数がプレビュー後に変更されています。\n" +
+      "もう一度「候補配置をプレビュー」を押してください。"
+    );
     return;
   }
 
-  const selectedPoints = pickBalancedCandidatePoints(
-    capacityState.estimate.points,
-    total
-  );
-
-  let index = 0;
-
-  const grouped = {
-    pokestop: [],
-    gym: [],
-    power: []
-  };
-
-  ["pokestop", "gym", "power"].forEach(kind => {
-    for (let i = 0; i < counts[kind]; i++) {
-      grouped[kind].push(selectedPoints[index]);
-      index++;
-    }
-  });
+  const grouped = capacityPreviewState.grouped;
 
   const kml = buildCandidatePoiKml(grouped);
+
   const zip = new JSZip();
   zip.file("doc.kml", kml);
 
@@ -333,48 +346,86 @@ async function generateCandidatePoiKMZ() {
 
   if (output) {
     output.innerHTML = `
-      <div class="distance-warning">
-        候補POI KMZを生成しました。<br><br>
-        ポケストップ候補：${counts.pokestop}件<br>
-        ジム候補：${counts.gym}件<br>
-        パワースポット候補：${counts.power}件<br><br>
-        Google My Mapsにインポートして、現地状況を確認してください。
+      <div class="distance-warning" style="margin-top:14px;">
+        <strong>候補POI KMZを生成しました。</strong><br><br>
+
+        ポケストップ候補：${previewCounts.pokestop}件<br>
+        ジム候補：${previewCounts.gym}件<br>
+        パワースポット候補：${previewCounts.power}件<br><br>
+
+        右側のプレビューで確認した候補地点を、そのままKMZへ書き出しました。<br>
+        Google My Mapsへインポートして、現地状況を確認してください。
       </div>
     `;
   }
 }
 
 function pickBalancedCandidatePoints(points, count) {
-  const pool = [...points].sort(() => Math.random() - 0.5);
+  const pool = [...points];
   const picked = [];
 
+  const preferredEdgeDistance = 30;
+  const randomTopCount = 6;
+
   while (picked.length < count && pool.length) {
-    let bestIndex = 0;
-    let bestScore = -1;
+    const scoredCandidates = pool
+      .map((point, index) => {
+        const edgeDistance =
+          Number.isFinite(point.edgeDistance)
+            ? point.edgeDistance
+            : 0;
 
-    pool.forEach((p, index) => {
-      if (!picked.length) {
-        bestScore = Infinity;
-        bestIndex = index;
-        return;
-      }
+        const spreadScore =
+          picked.length === 0
+            ? edgeDistance
+            : Math.min(
+                ...picked.map(existing =>
+                  getCapacityDistance(point, existing)
+                )
+              );
 
-      const nearest = Math.min(
-        ...picked.map(existing => getCapacityDistance(p, existing))
+        const edgePenalty =
+          Math.max(
+            0,
+            preferredEdgeDistance - edgeDistance
+          ) * 3;
+
+        const interiorBonus =
+          Math.min(edgeDistance, 50) * 0.5;
+
+        return {
+          index,
+          score:
+            spreadScore +
+            interiorBonus -
+            edgePenalty
+        };
+      })
+      .sort((a, b) => b.score - a.score);
+
+    const topCandidates =
+      scoredCandidates.slice(
+        0,
+        Math.min(
+          randomTopCount,
+          scoredCandidates.length
+        )
       );
 
-      if (nearest > bestScore) {
-        bestScore = nearest;
-        bestIndex = index;
-      }
-    });
+    const selected =
+      topCandidates[
+        Math.floor(
+          Math.random() * topCandidates.length
+        )
+      ];
 
-    picked.push(pool.splice(bestIndex, 1)[0]);
+    picked.push(
+      pool.splice(selected.index, 1)[0]
+    );
   }
 
   return picked;
 }
-
 function buildCandidatePoiKml(grouped) {
   const allPoints = [
     ...grouped.pokestop.map((p, i) => ({
@@ -591,7 +642,12 @@ function detectCapacityKind(layerName, name) {
   return "pokestop";
 }
 
-function estimateCapacityRandom(polygon, blockingPoints, minDistance, trialCount = 12000) {
+function estimateCapacityRandom(
+  polygon,
+  blockingPoints,
+  minDistance,
+  trialCount = 30000
+) {
   const meanLat =
     polygon.reduce((sum, p) => sum + p.lat, 0) / polygon.length;
 
@@ -621,6 +677,7 @@ function estimateCapacityRandom(polygon, blockingPoints, minDistance, trialCount
 
   const accepted = [];
   const safetyMargin = 0;
+  const boundaryMargin = 15;
 
   for (let i = 0; i < trialCount; i++) {
     const x = minX + Math.random() * (maxX - minX);
@@ -628,25 +685,43 @@ function estimateCapacityRandom(polygon, blockingPoints, minDistance, trialCount
 
     const candidate = { x, y };
 
-    if (!isCapacityPointInPolygon(candidate, projectedPolygon)) continue;
+    if (!isCapacityPointInPolygon(candidate, projectedPolygon)) {
+      continue;
+    }
+
+    const edgeDistance =
+      getCapacityDistanceToPolygonEdge(
+        candidate,
+        projectedPolygon
+      );
+
+    if (edgeDistance < boundaryMargin) {
+      continue;
+    }
 
     const nearBlocking = projectedBlocking.some(p =>
-      getCapacityDistance(candidate, p) < minDistance + safetyMargin
+      getCapacityDistance(candidate, p) <
+      minDistance + safetyMargin
     );
 
-    if (nearBlocking) continue;
+    if (nearBlocking) {
+      continue;
+    }
 
     const nearAccepted = accepted.some(p =>
       getCapacityDistance(candidate, p) < minDistance
     );
 
-    if (nearAccepted) continue;
+    if (nearAccepted) {
+      continue;
+    }
 
     accepted.push({
       x,
       y,
       lat: y / metersPerLat,
-      lng: x / metersPerLng
+      lng: x / metersPerLng,
+      edgeDistance
     });
   }
 
@@ -870,4 +945,304 @@ function escapeCapacityHtml(text) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
+}
+function renderCapacityPreviewBaseMap(polygon, poi) {
+  const mapElement = document.getElementById("capacityPreviewMap");
+
+  if (!mapElement) return;
+
+  if (typeof L === "undefined") {
+    mapElement.innerHTML = `
+      <div class="distance-warning">
+        地図ライブラリを読み込めませんでした。
+      </div>
+    `;
+    return;
+  }
+
+  if (capacityPreviewMapInstance) {
+    capacityPreviewMapInstance.remove();
+    capacityPreviewMapInstance = null;
+  }
+
+  capacityPreviewMapInstance = L.map("capacityPreviewMap", {
+    zoomControl: true
+  });
+
+  const photoLayer = L.tileLayer(
+    "https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg",
+    {
+      attribution:
+        '<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener noreferrer">地理院タイル</a>',
+      maxZoom: 18
+    }
+  );
+
+  const osmLayer = L.tileLayer(
+    "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+    {
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors',
+      maxZoom: 19
+    }
+  );
+
+  osmLayer.addTo(capacityPreviewMapInstance);
+
+  const polygonLatLngs = polygon.map(point => [
+    point.lat,
+    point.lng
+  ]);
+
+  const areaLayer = L.polygon(polygonLatLngs, {
+    weight: 2,
+    opacity: 0.75,
+    fillOpacity: 0.03
+  }).addTo(capacityPreviewMapInstance);
+
+  const existingPoiLayer = L.layerGroup()
+    .addTo(capacityPreviewMapInstance);
+
+  const addPoiLayer = L.layerGroup()
+    .addTo(capacityPreviewMapInstance);
+
+  poi.forEach(point => {
+    const isAdd = point.type === "add";
+
+    const label =
+      isAdd
+        ? `追加希望：${point.name}`
+        : `既存：${point.name}`;
+
+    const markerColor =
+      isAdd
+        ? "#f59e0b"
+        : "#3b82f6";
+
+    const marker = L.circleMarker([point.lat, point.lng], {
+      radius: isAdd ? 6 : 4,
+      color: markerColor,
+      fillColor: markerColor,
+      weight: 1.5,
+      fillOpacity: 0.85
+    })
+      .bindPopup(`
+        <strong>${escapeCapacityHtml(label)}</strong><br>
+        種別：${escapeCapacityHtml(CAPACITY_LABELS[point.kind] || point.kind)}<br>
+        レイヤー：${escapeCapacityHtml(point.layer || "未設定")}
+      `);
+
+    marker.addTo(
+      isAdd
+        ? addPoiLayer
+        : existingPoiLayer
+    );
+  });
+
+  L.control.layers(
+    {
+      "OpenStreetMap": osmLayer,
+      "航空写真": photoLayer
+    },
+    {
+      "活動範囲": areaLayer,
+      "既存POI": existingPoiLayer,
+      "追加希望POI": addPoiLayer
+    },
+    {
+      position: "topright",
+      collapsed: true
+    }
+  ).addTo(capacityPreviewMapInstance);
+
+  capacityPreviewMapInstance.fitBounds(
+    areaLayer.getBounds(),
+    {
+      padding: [18, 18]
+    }
+  );
+
+  setTimeout(() => {
+    capacityPreviewMapInstance?.invalidateSize();
+  }, 100);
+}
+function previewCandidatePoiPlacement() {
+  const output = document.getElementById("candidatePreviewResult");
+  const generateButton =
+    document.getElementById("generateCandidatePoiButton");
+
+  if (!capacityState) {
+    alert("先に配置余地を確認してください。");
+    return;
+  }
+
+  if (!capacityPreviewMapInstance) {
+    alert("プレビューマップを読み込めませんでした。");
+    return;
+  }
+
+  const counts = {
+    pokestop: Number(
+      document.getElementById("capacitySelect_pokestop")?.value || 0
+    ),
+    gym: Number(
+      document.getElementById("capacitySelect_gym")?.value || 0
+    ),
+    power: Number(
+      document.getElementById("capacitySelect_power")?.value || 0
+    )
+  };
+
+  const total =
+    counts.pokestop +
+    counts.gym +
+    counts.power;
+
+  if (total <= 0) {
+    alert("プレビューする候補数を1件以上選択してください。");
+    return;
+  }
+
+  if (capacityState.estimate.points.length < total) {
+    alert("選択数に対して配置余地が不足しています。");
+    return;
+  }
+
+  const selectedPoints = pickBalancedCandidatePoints(
+    capacityState.estimate.points,
+    total
+  );
+
+  let index = 0;
+
+  const grouped = {
+    pokestop: [],
+    gym: [],
+    power: []
+  };
+
+  ["pokestop", "gym", "power"].forEach(kind => {
+    for (let i = 0; i < counts[kind]; i++) {
+      grouped[kind].push(selectedPoints[index]);
+      index++;
+    }
+  });
+
+  if (capacityPreviewCandidateLayer) {
+    capacityPreviewCandidateLayer.remove();
+  }
+
+  capacityPreviewCandidateLayer = L.layerGroup()
+    .addTo(capacityPreviewMapInstance);
+
+  const candidatePoints = [
+    ...grouped.pokestop.map((point, i) => ({
+      ...point,
+      kind: "pokestop",
+      name: `候補ポケストップ${i + 1}`
+    })),
+
+    ...grouped.gym.map((point, i) => ({
+      ...point,
+      kind: "gym",
+      name: `候補ジム${i + 1}`
+    })),
+
+    ...grouped.power.map((point, i) => ({
+      ...point,
+      kind: "power",
+      name: `候補パワースポット${i + 1}`
+    }))
+  ];
+
+  candidatePoints.forEach(point => {
+    L.circleMarker([point.lat, point.lng], {
+      radius: 7,
+      color: "#a855f7",
+      fillColor: "#a855f7",
+      weight: 2,
+      fillOpacity: 0.92
+    })
+      .bindPopup(`
+        <strong>${escapeCapacityHtml(point.name)}</strong><br>
+        種別：${escapeCapacityHtml(
+          CAPACITY_LABELS[point.kind] || point.kind
+        )}<br>
+        状態：今回生成する候補
+      `)
+      .addTo(capacityPreviewCandidateLayer);
+  });
+
+  capacityPreviewState = {
+    counts,
+    grouped
+  };
+
+  if (generateButton) {
+    generateButton.style.display = "block";
+  }
+
+  if (output) {
+    output.innerHTML = `
+      <div class="distance-warning" style="margin-top:14px;">
+        <strong>候補POIをプレビューしました。</strong><br><br>
+        ポケストップ候補：${counts.pokestop}件<br>
+        ジム候補：${counts.gym}件<br>
+        パワースポット候補：${counts.power}件<br><br>
+        右側の地図で配置を確認してください。<br>
+        再度プレビューボタンを押すと、別の配置案を表示できます。
+      </div>
+    `;
+  }
+}
+function getCapacityDistanceToPolygonEdge(point, polygon) {
+  let minDistance = Infinity;
+
+  for (let i = 0; i < polygon.length; i++) {
+    const start = polygon[i];
+    const end = polygon[(i + 1) % polygon.length];
+
+    const distance = getCapacityDistanceToSegment(
+      point,
+      start,
+      end
+    );
+
+    if (distance < minDistance) {
+      minDistance = distance;
+    }
+  }
+
+  return minDistance;
+}
+
+function getCapacityDistanceToSegment(point, start, end) {
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+
+  if (dx === 0 && dy === 0) {
+    return getCapacityDistance(point, start);
+  }
+
+  const t = Math.max(
+    0,
+    Math.min(
+      1,
+      (
+        (point.x - start.x) * dx +
+        (point.y - start.y) * dy
+      ) /
+      (
+        dx * dx +
+        dy * dy
+      )
+    )
+  );
+
+  const nearest = {
+    x: start.x + t * dx,
+    y: start.y + t * dy
+  };
+
+  return getCapacityDistance(point, nearest);
 }

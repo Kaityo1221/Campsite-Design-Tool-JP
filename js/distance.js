@@ -291,14 +291,123 @@ function renderPoiCountRow(label, current, limit, icon, type) {
 
 function renderPoiCountHtml(counts) {
   return `
-  <div class="poi-count-box">
-    <h3>追加POI内訳</h3>
+    <div class="poi-count-box">
+      <h3>追加POI内訳</h3>
       ${renderPoiCountRow("ポケストップ", counts.pokestop, POI_LIMITS.pokestop, "🔵", "pokestop")}
       ${renderPoiCountRow("ジム", counts.gym, POI_LIMITS.gym, "🟡", "gym")}
       ${renderPoiCountRow("パワースポット", counts.power, POI_LIMITS.power, "🟣", "power")}
     </div>
+
+    <div style="
+      margin:18px 0 8px;
+      padding:16px;
+      border:1px solid rgba(56,189,248,0.55);
+      border-radius:14px;
+      background:rgba(14,165,233,0.10);
+      color:#e5e7eb;
+      line-height:1.7;
+    ">
+      <strong style="
+        display:block;
+        margin-bottom:6px;
+        color:#7dd3fc;
+        font-size:17px;
+      ">
+        ✅ STEP 1：事前チェック完了
+      </strong>
+
+      読み込み内容と追加POI内訳を確認しました。<br>
+      続いて、下の「距離チェック」へ進んでください。
+
+      <button
+        type="button"
+        onclick="scrollToDistanceCheckStep()"
+        style="
+          width:100%;
+          margin-top:14px;
+          padding:14px 16px;
+          border:none;
+          border-radius:12px;
+          background:linear-gradient(135deg, #2563eb, #7c3aed);
+          color:white;
+          font-weight:800;
+          font-size:16px;
+          cursor:pointer;
+        "
+      >
+        ↓ STEP 2：距離チェックへ進む
+      </button>
+    </div>
   `;
 }
+function scrollToDistanceCheckStep() {
+  const target = document.getElementById("distanceCheckStep");
+
+  if (!target) return;
+
+  target.scrollIntoView({
+    behavior: "smooth",
+    block: "start"
+  });
+}
+function getPoiLimitWarningHtml(counts) {
+  const warnings = [];
+
+  if (counts.pokestop > POI_LIMITS.pokestop) {
+    warnings.push(
+      `ポケストップ：${counts.pokestop}件 / 上限${POI_LIMITS.pokestop}件`
+    );
+  }
+
+  if (counts.gym > POI_LIMITS.gym) {
+    warnings.push(
+      `ジム：${counts.gym}件 / 上限${POI_LIMITS.gym}件`
+    );
+  }
+
+  if (counts.power > POI_LIMITS.power) {
+    warnings.push(
+      `パワースポット：${counts.power}件 / 上限${POI_LIMITS.power}件`
+    );
+  }
+
+  const total =
+    counts.pokestop +
+    counts.gym +
+    counts.power;
+
+  if (total > 25) {
+    warnings.push(
+      `追加POI合計：${total}件 / 上限25件`
+    );
+  }
+
+  if (warnings.length === 0) {
+    return "";
+  }
+
+  return `
+    <div style="
+      margin:12px 0;
+      padding:12px 14px;
+      border:1px solid rgba(239,68,68,0.75);
+      border-radius:10px;
+      background:rgba(239,68,68,0.14);
+      color:#fecaca;
+      line-height:1.7;
+    ">
+      <strong style="color:#f87171;">
+        ⚠ 追加POIの上限を超えています
+      </strong><br>
+      ${warnings.map(w => `・${w}`).join("<br>")}
+      <br>
+      <span style="color:#e5e7eb;">
+        内訳を調整してから提出してください。
+      </span>
+    </div>
+  `;
+}
+
 function isDistanceTargetLayer(layerName) {
   const name = String(layerName || "").toLowerCase();
 
@@ -1028,6 +1137,13 @@ const expansionRate =
     ? Math.round((poiVolumeCounts.added / points.length) * 1000) / 10
     : 0;
 const poiCountHtml = renderPoiCountHtml(poiCounts);
+const poiLimitWarningHtml = getPoiLimitWarningHtml(poiCounts);
+
+const poiLimitExceeded =
+  poiCounts.pokestop > POI_LIMITS.pokestop ||
+  poiCounts.gym > POI_LIMITS.gym ||
+  poiCounts.power > POI_LIMITS.power ||
+  poiCounts.pokestop + poiCounts.gym + poiCounts.power > 25;
 const sectionTitleHtml = (title, sub = "") => `
   <div style="
     margin:22px 0 10px;
@@ -1065,8 +1181,9 @@ const sectionTitleHtml = (title, sub = "") => `
       </div>
 ${poiCountHtml}
       <br>
-      <strong>総評</strong><br>
-      ${campsite.summary}<br><br>
+     <strong>総評</strong><br>
+${poiLimitWarningHtml}
+${campsite.summary}<br><br>
 
       密集：${campsite.under20}件<br>
       滞留：${campsite.under30}件<br>
@@ -1119,7 +1236,7 @@ const adjustableCount = displayCounts.light;
   let resultStatusColor = "#22c55e";
   let resultStatusIcon = "✅";
 
-  if (targetWarningCount > 0) {
+  if (targetWarningCount > 0 || poiLimitExceeded) {
   resultStatus = "調整あり";
   resultStatusColor = "#ef4444";
   resultStatusIcon = "⚠";

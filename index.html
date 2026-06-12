@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="css/tabs.css?v=29">
 <link rel="stylesheet" href="css/admin.css?v=25">
 <link rel="stylesheet" href="css/distance.css?v=32">
-<link rel="stylesheet" href="css/capacity.css?v=3">
+<link rel="stylesheet" href="css/capacity.css?v=5">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/icon.png">
 <link rel="manifest" href="./manifest.json">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -884,59 +884,78 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
     現地の導線・安全性・遊びやすさを優先してください。
   </p>
 
-  <div class="capacity-pc-layout">
+ <div class="capacity-control-top">
 
-  <!-- 左側：操作パネル -->
-  <div class="capacity-control-column">
-
-    <div class="capacity-section-title">
-      1. キャンプサイトKMZを読み込む
-    </div>
-
-    <p>キャンプサイトKMZ / KMLを選択します。</p>
-
-    <input type="file" id="capacityFile">
-
-    <button class="generate" onclick="analyzePlacementCapacity()">
-      配置余地を確認する
-    </button>
-
-    <div id="capacityResult"></div>
-
+  <div class="capacity-section-title">
+    1. キャンプサイトKMZを読み込む
   </div>
 
-  <!-- 右側：PC専用プレビュー枠 -->
-  <div class="capacity-preview-column">
+  <p>キャンプサイトKMZ / KMLを選択します。</p>
 
-    <div class="capacity-section-title">
-      配置プレビュー
-    </div>
+  <input type="file" id="capacityFile">
 
-    <div class="capacity-preview-placeholder">
-      <div class="capacity-preview-icon">🗺️</div>
-
-      <strong>配置プレビュー準備中</strong>
-
-      <p>
-        ここには、均等配置モードの確認用プレビューを表示する予定です。
-      </p>
-
-      <p class="note">
-        現在は候補POI KMZを生成後、Google My Mapsへインポートして確認してください。
-      </p>
-    </div>
-
-    <div class="capacity-result-placeholder">
-      <strong>配置余地の推定結果</strong>
-
-      <p class="note">
-        KMZを読み込むと、左側に現在の追加POI数、残容量、生成数設定が表示されます。
-      </p>
-    </div>
-
-  </div>
+  <button class="generate" onclick="analyzePlacementCapacity()">
+    配置余地を確認する
+  </button>
 
 </div>
+
+<div
+  id="capacityMapCompare"
+  class="capacity-map-compare"
+  style="display:none;"
+>
+  <div class="capacity-map-card">
+
+    <div class="capacity-section-title">
+      現在の配置状況
+    </div>
+
+    <div
+      id="capacityMap"
+      style="
+        height:420px;
+        margin-top:10px;
+        border-radius:14px;
+        overflow:hidden;
+        border:1px solid #475569;
+        background:#0f172a;
+      "
+    ></div>
+
+    <p class="note" style="margin-top:10px;">
+      現在の活動範囲・既存POI・追加希望POIを表示します。
+    </p>
+
+  </div>
+
+  <div class="capacity-map-card">
+
+    <div class="capacity-section-title">
+      候補POIプレビュー
+    </div>
+
+    <div
+      id="capacityPreviewMap"
+      style="
+        height:420px;
+        margin-top:10px;
+        border-radius:14px;
+        overflow:hidden;
+        border:1px solid #475569;
+        background:#0f172a;
+      "
+    ></div>
+
+    <p class="note" style="margin-top:10px;">
+      候補数を選択して「候補配置をプレビュー」を押すと、<br>
+      今回生成する候補POIを地図上で確認できます。
+    </p>
+
+  </div>
+</div>
+
+<div id="capacityResult"></div>
 </div>
 
   </div> <!-- panel -->
@@ -1363,7 +1382,7 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
     <div id="distancePoiSummary"></div>
   </div>
 
-    <div class="step">
+   <div class="step" id="distanceCheckStep">
       <div class="step-no">STEP 2</div>
       <p class="note">
   読み込んだKMZから、<br>
@@ -1790,11 +1809,11 @@ GOロケット団の出現率が3倍になる
 </div>
 <script src="js/util.js?v=18"></script>
 <script src="js/tabs.js?v=8"></script>
-<script src="js/distance.js?v=48"></script>
+<script src="js/distance.js?v=50"></script>
 <script src="js/admin.js?v=10"></script>
 <script src="js/main.js?v=56"></script>
 <script src="js/kmz.js?v=27"></script>
 <script src="js/deduplicate.js?v=3"></script>
-<script src="js/capacity.js?v=7"></script>
+<script src="js/capacity.js?v=6"></script>
 </body>
 </html>
