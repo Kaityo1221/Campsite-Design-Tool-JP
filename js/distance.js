@@ -1130,8 +1130,9 @@ const sectionTitleHtml = (title, sub = "") => `
       </div>
 ${poiCountHtml}
       <br>
-      <strong>総評</strong><br>
-      ${campsite.summary}<br><br>
+     <strong>総評</strong><br>
+${poiLimitWarningHtml}
+${campsite.summary}<br><br>
 
       密集：${campsite.under20}件<br>
       滞留：${campsite.under30}件<br>
