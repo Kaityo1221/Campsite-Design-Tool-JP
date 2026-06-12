@@ -1185,7 +1185,7 @@ const adjustableCount = displayCounts.light;
   let resultStatusColor = "#22c55e";
   let resultStatusIcon = "✅";
 
-  if (targetWarningCount > 0) {
+  if (targetWarningCount > 0 || poiLimitExceeded) {
   resultStatus = "調整あり";
   resultStatusColor = "#ef4444";
   resultStatusIcon = "⚠";
