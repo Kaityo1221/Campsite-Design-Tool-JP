@@ -299,6 +299,64 @@ function renderPoiCountHtml(counts) {
     </div>
   `;
 }
+function getPoiLimitWarningHtml(counts) {
+  const warnings = [];
+
+  if (counts.pokestop > POI_LIMITS.pokestop) {
+    warnings.push(
+      `ポケストップ：${counts.pokestop}件 / 上限${POI_LIMITS.pokestop}件`
+    );
+  }
+
+  if (counts.gym > POI_LIMITS.gym) {
+    warnings.push(
+      `ジム：${counts.gym}件 / 上限${POI_LIMITS.gym}件`
+    );
+  }
+
+  if (counts.power > POI_LIMITS.power) {
+    warnings.push(
+      `パワースポット：${counts.power}件 / 上限${POI_LIMITS.power}件`
+    );
+  }
+
+  const total =
+    counts.pokestop +
+    counts.gym +
+    counts.power;
+
+  if (total > 25) {
+    warnings.push(
+      `追加POI合計：${total}件 / 上限25件`
+    );
+  }
+
+  if (warnings.length === 0) {
+    return "";
+  }
+
+  return `
+    <div style="
+      margin:12px 0;
+      padding:12px 14px;
+      border:1px solid rgba(239,68,68,0.75);
+      border-radius:10px;
+      background:rgba(239,68,68,0.14);
+      color:#fecaca;
+      line-height:1.7;
+    ">
+      <strong style="color:#f87171;">
+        ⚠ 追加POIの上限を超えています
+      </strong><br>
+      ${warnings.map(w => `・${w}`).join("<br>")}
+      <br>
+      <span style="color:#e5e7eb;">
+        内訳を調整してから提出してください。
+      </span>
+    </div>
+  `;
+}
+
 function isDistanceTargetLayer(layerName) {
   const name = String(layerName || "").toLowerCase();
 
@@ -1028,6 +1086,13 @@ const expansionRate =
     ? Math.round((poiVolumeCounts.added / points.length) * 1000) / 10
     : 0;
 const poiCountHtml = renderPoiCountHtml(poiCounts);
+const poiLimitWarningHtml = getPoiLimitWarningHtml(poiCounts);
+
+const poiLimitExceeded =
+  poiCounts.pokestop > POI_LIMITS.pokestop ||
+  poiCounts.gym > POI_LIMITS.gym ||
+  poiCounts.power > POI_LIMITS.power ||
+  poiCounts.pokestop + poiCounts.gym + poiCounts.power > 25;
 const sectionTitleHtml = (title, sub = "") => `
   <div style="
     margin:22px 0 10px;
