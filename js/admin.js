@@ -148,7 +148,8 @@ async function runAdminDashboardReview() {
 
     const pointsByLayer =
       extracted.pointsByLayer || {};
-
+const polygons =
+  extracted.polygons || [];
     const allPoints = [];
     let dummyCount = 0;
 
@@ -1005,8 +1006,39 @@ const renderReviewCheckRow = (
   line-height:1.75;
 ">
   ※右上のレイヤーボタンから、地理院航空写真とOpenStreetMapを切り替えられます。<br>
-  ※黄色い点線は、30〜40mの調整可能距離で、追加POIの近接が1件だけの場合に表示する参考方向です。<br>
-  ※複数のPOIと近接している場合は方向を表示しません。Niantic側の正確なPOIデータをもとに調整してください。
+
+  ※黄色い点線は、
+  <strong style="
+    color:#fde68a;
+    text-decoration:underline;
+    text-underline-offset:3px;
+  ">
+    30〜40mの調整可能距離
+  </strong>
+  で、
+  <strong style="
+    color:#fde68a;
+    text-decoration:underline;
+    text-underline-offset:3px;
+  ">
+    追加POIの近接が1件だけの場合
+  </strong>
+  に表示する参考方向です。<br>
+
+  ※
+  <strong style="
+    color:#fca5a5;
+    text-decoration:underline;
+    text-underline-offset:3px;
+  ">
+    複数のPOIと近接している場合は方向を表示しません。
+  </strong>
+  <strong style="
+    color:#93c5fd;
+  ">
+    Niantic側の正確なPOIデータ
+  </strong>
+  をもとに調整してください。
 </div>
 
         <div
@@ -1069,7 +1101,8 @@ const renderReviewCheckRow = (
    renderAdminReviewBaseMap(
   usablePoints,
   under30Pairs,
-  adjustablePairs
+  adjustablePairs,
+  polygons
 );
 
   } catch (error) {
@@ -1087,7 +1120,8 @@ const renderReviewCheckRow = (
 function renderAdminReviewBaseMap(
   points = [],
   under30Pairs = [],
-  adjustablePairs = []
+  adjustablePairs = [],
+  polygons = []
 ) {
   const mapElement =
     document.getElementById("adminReviewMap");
@@ -1170,6 +1204,10 @@ const adviceDirectionLayer =
   L.layerGroup().addTo(
     adminReviewMapInstance
   );
+  const activityPolygonLayer =
+  L.layerGroup().addTo(
+    adminReviewMapInstance
+  );
 L.control.layers(
   {
     "OpenStreetMap":
@@ -1192,7 +1230,10 @@ L.control.layers(
       cautionDistanceLayer,
 
     "🟡 参考調整方向":
-      adviceDirectionLayer
+  adviceDirectionLayer,
+
+"🟢 活動範囲":
+  activityPolygonLayer
   },
   {
     collapsed: true
@@ -1202,7 +1243,42 @@ L.control.layers(
 );
 
 const markerBounds = [];
+polygons.forEach(polygonLatLngs => {
+  if (
+    !Array.isArray(polygonLatLngs) ||
+    polygonLatLngs.length < 3
+  ) {
+    return;
+  }
 
+  L.polygon(
+    polygonLatLngs,
+    {
+      color: "#22c55e",
+      weight: 3,
+      opacity: 0.9,
+      fillColor: "#22c55e",
+      fillOpacity: 0.12
+    }
+  )
+    .bindPopup(`
+      <strong style="
+        color:#16a34a;
+      ">
+        活動範囲ポリゴン
+      </strong><br>
+      実際に歩く範囲・活動エリアです。
+    `)
+    .addTo(
+      activityPolygonLayer
+    );
+
+  polygonLatLngs.forEach(latLng => {
+    markerBounds.push(
+      latLng
+    );
+  });
+});
 points.forEach(point => {
   const lat =
     Number(point.lat);
@@ -1621,18 +1697,18 @@ adjustablePairs.forEach(pair => {
     );
 
   L.circleMarker(
-    [
-      adjustedPoint.lat,
-      adjustedPoint.lng
-    ],
-    {
-      radius: 7,
-      color: "#eab308",
-      fillColor: "#facc15",
-      fillOpacity: 0.42,
-      weight: 3
-    }
-  )
+  [
+    adjustedPoint.lat,
+    adjustedPoint.lng
+  ],
+  {
+    radius: 4,
+    color: "#eab308",
+    fillColor: "#facc15",
+    fillOpacity: 0.52,
+    weight: 2
+  }
+)
     .bindPopup(
       advicePopupHtml
     )
