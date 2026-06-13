@@ -43,6 +43,93 @@ function getDistanceMeters(a, b) {
   return R * c;
 }
 
+function getPrecheckDuplicatePois() {
+  const points = [];
+
+  Object.entries(window._layerPoints || {}).forEach(([layerName, layerPoints]) => {
+    const isCsvLayer = layerName === "CSV_POI";
+
+    if (!isCsvLayer && !isDistanceTargetLayer(layerName)) {
+      return;
+    }
+
+    (layerPoints || []).forEach(p => {
+      points.push({
+        ...p,
+        layer: cleanLayerName(layerName),
+        originalLayer: layerName
+      });
+    });
+  });
+
+  const duplicates = [];
+
+  for (let i = 0; i < points.length; i++) {
+    for (let j = i + 1; j < points.length; j++) {
+      const a = points[i];
+      const b = points[j];
+      const distance = getDistanceMeters(a, b);
+
+      if (distance < 1) {
+        duplicates.push({
+          a,
+          b,
+          distance
+        });
+      }
+    }
+  }
+function renderPrecheckDuplicatePoiHtml() {
+  const duplicates = getPrecheckDuplicatePois();
+
+  if (duplicates.length === 0) {
+    return `
+      <div style="
+        margin:12px 0 0;
+        padding:12px 14px;
+        border-radius:12px;
+        background:rgba(34,197,94,0.12);
+        border:1px solid rgba(34,197,94,0.42);
+        color:#dcfce7;
+        line-height:1.7;
+      ">
+        <strong>✅ 重複POI候補はありません。</strong>
+      </div>
+    `;
+  }
+
+  return `
+    <div style="
+      margin:12px 0 0;
+      padding:12px 14px;
+      border-radius:12px;
+      background:rgba(239,68,68,0.14);
+      border:1px solid rgba(239,68,68,0.55);
+      color:#fecaca;
+      line-height:1.7;
+    ">
+      <strong style="color:#f87171;">
+        ⚠ 重複POI候補：${duplicates.length}件
+      </strong><br>
+      距離チェックへ進む前に、同じ場所へ複数のPOIが入っていないか確認してください。<br><br>
+
+      ${duplicates.map(item => `
+        <div style="
+          margin-top:8px;
+          padding:10px;
+          border-radius:10px;
+          background:rgba(15,23,42,0.55);
+        ">
+          <strong>${item.distance.toFixed(1)}m</strong><br>
+          ${escapeHtml(item.a.layer)}：${escapeHtml(item.a.name)}<br>
+          × ${escapeHtml(item.b.layer)}：${escapeHtml(item.b.name)}
+        </div>
+      `).join("")}
+    </div>
+  `;
+}
+  return duplicates;
+}
 function getUserId() {
   let userId = localStorage.getItem("campsiteUserId");
 
@@ -307,6 +394,15 @@ function renderPoiCountHtml(counts) {
       必ず25件追加されるわけではありません。<br>
       実際の追加件数は、キャンプサイトの広さや既存POIの密度などにより調整されます。
     </div>
+    
+        ${renderPrecheckDuplicatePoiHtml()}
+    
+  `;
+}
+function renderDistancePrecheckFooterHtml() {
+  return `
+    ${renderPrecheckDuplicatePoiHtml()}
+
     <div style="
       margin:18px 0 8px;
       padding:16px;
@@ -482,7 +578,8 @@ function isDistanceTargetLayer(layerName) {
       const counts = countPoiTypesFromLayers(window._layerPoints);
       summary.innerHTML =
   renderDistanceUploadSummary() +
-  renderPoiCountHtml(counts);
+  renderPoiCountHtml(counts) +
+  renderDistancePrecheckFooterHtml();
     }
 
     return;
@@ -496,6 +593,8 @@ function isDistanceTargetLayer(layerName) {
     const counts = countPoiTypesFromLayers(window._layerPoints);
     summary.innerHTML =
   renderDistanceUploadSummary() +
+  renderPoiCountHtml(counts) +
+  renderDistancePrecheckFooterHtml();
   renderPoiCountHtml(counts);
   }
 }
