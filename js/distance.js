@@ -43,6 +43,95 @@ function getDistanceMeters(a, b) {
   return R * c;
 }
 
+function getPrecheckDuplicatePois() {
+  const points = [];
+
+  Object.entries(window._layerPoints || {}).forEach(([layerName, layerPoints]) => {
+    const isCsvLayer = layerName === "CSV_POI";
+
+    if (!isCsvLayer && !isDistanceTargetLayer(layerName)) {
+      return;
+    }
+
+    (layerPoints || []).forEach(p => {
+      points.push({
+        ...p,
+        layer: cleanLayerName(layerName),
+        originalLayer: layerName
+      });
+    });
+  });
+
+  const duplicates = [];
+
+  for (let i = 0; i < points.length; i++) {
+    for (let j = i + 1; j < points.length; j++) {
+      const a = points[i];
+      const b = points[j];
+      const distance = getDistanceMeters(a, b);
+
+      if (distance < 1) {
+        duplicates.push({
+          a,
+          b,
+          distance
+        });
+      }
+    }
+  }
+
+  return duplicates;
+}
+
+function renderPrecheckDuplicatePoiHtml() {
+  const duplicates = getPrecheckDuplicatePois();
+
+  if (duplicates.length === 0) {
+    return `
+      <div style="
+        margin:12px 0 0;
+        padding:12px 14px;
+        border-radius:12px;
+        background:rgba(34,197,94,0.12);
+        border:1px solid rgba(34,197,94,0.42);
+        color:#dcfce7;
+        line-height:1.7;
+      ">
+        <strong>✅ 重複POI候補はありません。</strong>
+      </div>
+    `;
+  }
+
+  return `
+    <div style="
+      margin:12px 0 0;
+      padding:12px 14px;
+      border-radius:12px;
+      background:rgba(239,68,68,0.14);
+      border:1px solid rgba(239,68,68,0.55);
+      color:#fecaca;
+      line-height:1.7;
+    ">
+      <strong style="color:#f87171;">
+        ⚠ 重複POI候補：${duplicates.length}件
+      </strong><br>
+      距離チェックへ進む前に、同じ場所へ複数のPOIが入っていないか確認してください。<br><br>
+
+      ${duplicates.map(item => `
+        <div style="
+          margin-top:8px;
+          padding:10px;
+          border-radius:10px;
+          background:rgba(15,23,42,0.55);
+        ">
+          <strong>${item.distance.toFixed(1)}m</strong><br>
+          ${escapeHtml(item.a.layer)}：${escapeHtml(item.a.name)}<br>
+          × ${escapeHtml(item.b.layer)}：${escapeHtml(item.b.name)}
+        </div>
+      `).join("")}
+    </div>
+  `;
+}
 function getUserId() {
   let userId = localStorage.getItem("campsiteUserId");
 
@@ -307,6 +396,12 @@ function renderPoiCountHtml(counts) {
       必ず25件追加されるわけではありません。<br>
       実際の追加件数は、キャンプサイトの広さや既存POIの密度などにより調整されます。
     </div>
+  `;
+}
+function renderDistancePrecheckFooterHtml() {
+  return `
+    ${renderPrecheckDuplicatePoiHtml()}
+
     <div style="
       margin:18px 0 8px;
       padding:16px;
@@ -455,48 +550,193 @@ function isDistanceTargetLayer(layerName) {
     name.includes("ebene")
   );
 }
+function renderDistanceLoadErrorHtml(title, message = "") {
+  return `
+    <div class="distance-warning" style="
+      margin-top:12px;
+      padding:14px;
+      border:1px solid rgba(239,68,68,0.65);
+      border-radius:12px;
+      background:rgba(239,68,68,0.14);
+      color:#fecaca;
+      line-height:1.7;
+    ">
+      <strong style="color:#f87171;">
+        ⚠ ${escapeHtml(title)}
+      </strong>
+
+      ${message ? `
+        <div style="
+          margin-top:8px;
+          color:#e5e7eb;
+          font-size:13px;
+        ">
+          ${message}
+        </div>
+      ` : ""}
+    </div>
+  `;
+}
   async function loadDistanceFile() {
   const fileInput = document.getElementById("distanceFile");
   const container = document.getElementById("distanceLayerList");
   const summary = document.getElementById("distancePoiSummary");
+  const distanceResult = document.getElementById("distanceResult");
 
-  if (!fileInput.files.length) return;
+  if (!fileInput.files.length) {
+    return;
+  }
 
   const file = fileInput.files[0];
   const fileName = file.name.toLowerCase();
 
   window._layerPoints = {};
   window._hasPolygon = false;
-  window._inputType = fileName.endsWith(".csv") ? "csv" : "kmz";
+
+  if (container) {
+    container.innerHTML = "";
+  }
+
   if (summary) {
     summary.innerHTML = "";
   }
 
-  if (fileName.endsWith(".csv")) {
-    const text = await file.text();
-    const points = parseCSV(text);
-    window._layerPoints["CSV_POI"] = points;
-    renderLayerSelector(["CSV_POI"], container);
+  if (distanceResult) {
+    distanceResult.innerHTML = "";
+  }
 
+  const isKmz = fileName.endsWith(".kmz");
+  const isIphoneKmzZip =
+    fileName.endsWith(".kmz.zip");
+
+  if (isIphoneKmzZip) {
     if (summary) {
-      const counts = countPoiTypesFromLayers(window._layerPoints);
-      summary.innerHTML =
-  renderDistanceUploadSummary() +
-  renderPoiCountHtml(counts);
+      summary.innerHTML = renderDistanceLoadErrorHtml(
+        "末尾の .zip を削除してください",
+        `
+          iPhoneでは、KMZファイルが <strong>.kmz.zip</strong> として保存される場合があります。<br>
+          「ファイル」アプリで対象ファイルを長押しし、<br>
+          「名称変更」から末尾の <strong>.zip</strong> だけを削除してください。<br><br>
+
+          例：<strong>campsite_2026612.kmz.zip</strong><br>
+          ↓<br>
+          <strong>campsite_2026612.kmz</strong>
+        `
+      );
     }
 
     return;
   }
 
-  const result = await extractLayersFromKML(file);
-  window._layerPoints = result.pointsByLayer;
-  renderLayerSelector(result.layers, container);
+  if (!isKmz) {
+    if (summary) {
+      summary.innerHTML = renderDistanceLoadErrorHtml(
+        "完成KMZを選択してください",
+        `
+          距離チェックでは、Google My Mapsから書き出した<br>
+          <strong>.kmz</strong> 形式の完成ファイルを読み込みます。<br>
+          選択されたファイル：${escapeHtml(file.name)}
+        `
+      );
+    }
 
-  if (summary) {
-    const counts = countPoiTypesFromLayers(window._layerPoints);
-    summary.innerHTML =
-  renderDistanceUploadSummary() +
-  renderPoiCountHtml(counts);
+    return;
+  }
+
+  window._inputType = "kmz";
+
+  try {
+    const result =
+      await extractLayersFromKML(file);
+
+    if (result.errorCode === "KML_NOT_FOUND") {
+      if (summary) {
+        summary.innerHTML = renderDistanceLoadErrorHtml(
+          "KMZ内にKMLファイルが見つかりません",
+          `
+            Google My Mapsから書き出した完成KMZか確認してください。<br>
+            KMZ内にKMLファイルが見つからないため、読み込めません。
+          `
+        );
+      }
+
+      return;
+    }
+
+    const layerNames =
+      Object.keys(result.pointsByLayer || {});
+
+    if (layerNames.length === 0) {
+      if (summary) {
+        summary.innerHTML = renderDistanceLoadErrorHtml(
+          "KMZ内にPOIレイヤーが見つかりません",
+          `
+            Google My Mapsから書き出した完成KMZか確認してください。<br>
+            KML内にPOIレイヤーがない場合や、POIが登録されていない場合は読み込めません。
+          `
+        );
+      }
+
+      return;
+    }
+
+    window._layerPoints =
+      result.pointsByLayer;
+
+    const debugInfo =
+      getTargetLayerDebugInfo();
+
+    if (
+      debugInfo.targetLayerCount === 0 ||
+      debugInfo.targetPointCount === 0
+    ) {
+      if (summary) {
+        summary.innerHTML = renderDistanceLoadErrorHtml(
+          "判定対象となるPOIが見つかりません",
+          `
+            「既存」「追加」「追加希望」などのPOIレイヤーが含まれているか確認してください。<br>
+            円・Buffers・活動範囲ポリゴンなどの補助レイヤーだけでは距離判定できません。
+          `
+        );
+      }
+
+      return;
+    }
+
+    if (container) {
+      renderLayerSelector(
+        result.layers,
+        container
+      );
+    }
+
+    if (summary) {
+      const counts =
+        countPoiTypesFromLayers(
+          window._layerPoints
+        );
+
+      summary.innerHTML =
+        renderDistanceUploadSummary() +
+        renderPoiCountHtml(counts) +
+        renderDistancePrecheckFooterHtml();
+    }
+
+  } catch (error) {
+    console.error(
+      "距離チェック用ファイルの読込に失敗しました",
+      error
+    );
+
+    if (summary) {
+      summary.innerHTML = renderDistanceLoadErrorHtml(
+        "ファイルを開けませんでした",
+        `
+          ファイルが破損しているか、正しい形式で保存されていない可能性があります。<br>
+          Google My Mapsから完成KMZを書き出し直して、もう一度お試しください。
+        `
+      );
+    }
   }
 }
 
@@ -530,8 +770,12 @@ async function extractLayersFromKML(file) {
   }
 
   if (!kmlText) {
-    return { layers: [], pointsByLayer: {} };
-  }
+  return {
+    layers: [],
+    pointsByLayer: {},
+    errorCode: "KML_NOT_FOUND"
+  };
+}
 
   const xml = new DOMParser().parseFromString(kmlText, "application/xml");
   window._hasPolygon =
@@ -1117,6 +1361,7 @@ async function runDistanceCheck() {
   }
 
   const warnings = [];
+const duplicatePois = [];
 
   for (let i = 0; i < points.length; i++) {
     for (let j = i + 1; j < points.length; j++) {
@@ -1139,7 +1384,13 @@ if (
   continue;
 }
       const distance = getDistanceMeters(a, b);
-
+if (distance < 1) {
+  duplicatePois.push({
+    a,
+    b,
+    distance
+  });
+}
       if (distance < 40) {
         warnings.push({
           a,
@@ -1152,7 +1403,31 @@ if (
   }
 
   warnings.sort((a, b) => a.distance - b.distance);
-
+const duplicatePoiHtml =
+  duplicatePois.length === 0
+    ? `
+      <div class="distance-warning" style="
+        border:1px solid rgba(34,197,94,0.45);
+        background:rgba(34,197,94,0.12);
+      ">
+        ✅ 重複POI候補はありません。
+      </div>
+    `
+    : duplicatePois.map(item => `
+      <div class="distance-warning" style="
+        border:1px solid rgba(239,68,68,0.55);
+        background:rgba(239,68,68,0.14);
+      ">
+        <strong style="color:#f87171;">
+          ⚠ 重複POI候補（${item.distance.toFixed(1)}m）
+        </strong><br>
+        ${escapeHtml(item.a.layer)}：${escapeHtml(item.a.name)}<br>
+        × ${escapeHtml(item.b.layer)}：${escapeHtml(item.b.name)}<br>
+        <span style="font-size:12px; opacity:0.85;">
+          同じ場所に複数のPOIが配置されている可能性があります。
+        </span>
+      </div>
+    `).join("");
   const campsite = calculateCampsiteScore(points, warnings);
   const riskAccordionHtml = getRiskAccordionHtml(warnings);
 
@@ -1266,7 +1541,11 @@ const adjustableCount = displayCounts.light;
   let resultStatusColor = "#22c55e";
   let resultStatusIcon = "✅";
 
-  if (targetWarningCount > 0 || poiLimitExceeded) {
+  if (
+  targetWarningCount > 0 ||
+  poiLimitExceeded ||
+  duplicatePois.length > 0
+) {
   resultStatus = "調整あり";
   resultStatusColor = "#ef4444";
   resultStatusIcon = "⚠";
@@ -1336,6 +1615,8 @@ const simpleMapGuideHtml = `
     sectionTitleHtml("判定結果", "20m未満／20〜30m／30〜40mの近接件数を確認します。") +
 debugHtml +
 resultHeaderHtml +
+sectionTitleHtml("重複POIチェック", "同じ場所に複数のPOIが入っていないか確認します。") +
+duplicatePoiHtml +
     `✅ 問題なし（${points.length}件）<br><br>` +
     sectionTitleHtml("PC版簡易マップ", "読み込んだPOIの分布を点で確認できます。") +
     simpleMapGuideHtml;
@@ -1401,12 +1682,14 @@ return;
     `;
   }).join("");
 
-  result.innerHTML =
+result.innerHTML =
   sectionTitleHtml("拠点充実度", "距離・通行・広場・回遊性などをもとにした総合評価です。") +
   scoreHtml +
   sectionTitleHtml("判定結果", "20m未満／20〜30m／30〜40mの近接件数を確認します。") +
-debugHtml +
-resultHeaderHtml +
+  debugHtml +
+  resultHeaderHtml +
+  sectionTitleHtml("重複POIチェック", "同じ場所に複数のPOIが入っていないか確認します。") +
+  duplicatePoiHtml +
   sectionTitleHtml("分類別チェック", "近接内容を密集・滞留・軽微に分けて確認します。") +
   riskAccordionHtml + `
     40m未満の組み合わせがあります。<br><br>

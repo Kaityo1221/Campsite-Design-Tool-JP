@@ -1,4 +1,4 @@
-window.APP_VERSION = "v1.8.0";
+window.APP_VERSION = "v6.0.0";
 window.APP_UPDATED = "2026-06-13";
 window.ENABLE_QUIZ = true;
 window.QUIZ_VERSION = "beta1";
