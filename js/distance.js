@@ -739,7 +739,102 @@ function renderDistanceLoadErrorHtml(title, message = "") {
     }
   }
 }
+function extractPolygonsFromXml(xml) {
+  const polygons = [];
 
+  const polygonNodes =
+    Array.from(
+      xml.getElementsByTagName("Polygon")
+    );
+
+  polygonNodes.forEach(polygonNode => {
+    let parent =
+      polygonNode.parentElement;
+
+    let folderName = "";
+
+    while (parent) {
+      if (
+        parent.localName === "Folder" ||
+        parent.tagName === "Folder"
+      ) {
+        const folderNameNode =
+          Array.from(parent.children)
+            .find(child => {
+              return (
+                child.localName === "name" ||
+                child.tagName === "name"
+              );
+            });
+
+        folderName =
+          folderNameNode?.textContent || "";
+
+        break;
+      }
+
+      parent =
+        parent.parentElement;
+    }
+
+    /*
+      30m円・40m円・Buffersなどは、
+      活動範囲ポリゴンとして表示しない。
+    */
+    if (
+      folderName &&
+      isAuxiliaryLayer(folderName)
+    ) {
+      return;
+    }
+
+    const coordinatesNode =
+      polygonNode
+        .getElementsByTagName("coordinates")[0];
+
+    if (!coordinatesNode) {
+      return;
+    }
+
+    const latLngs =
+      coordinatesNode
+        .textContent
+        .trim()
+        .split(/\s+/)
+        .map(coordText => {
+          const [
+            lng,
+            lat
+          ] =
+            coordText
+              .split(",")
+              .map(Number);
+
+          if (
+            !Number.isFinite(lat) ||
+            !Number.isFinite(lng)
+          ) {
+            return null;
+          }
+
+          return [
+            lat,
+            lng
+          ];
+        })
+        .filter(Boolean);
+
+    if (latLngs.length < 3) {
+      return;
+    }
+
+    polygons.push(
+      latLngs
+    );
+  });
+
+  return polygons;
+}
 async function extractLayersFromKML(file) {
   let kmlText = null;
   const fileName = file.name.toLowerCase();
@@ -771,22 +866,43 @@ async function extractLayersFromKML(file) {
 
   if (!kmlText) {
   return {
-    layers: [],
-    pointsByLayer: {},
-    errorCode: "KML_NOT_FOUND"
-  };
+  layers: [],
+  pointsByLayer: {},
+  polygons: [],
+  errorCode: "KML_NOT_FOUND"
+};
 }
 
-  const xml = new DOMParser().parseFromString(kmlText, "application/xml");
-  window._hasPolygon =
-  xml.getElementsByTagName("Polygon").length > 0;
-  const pointsByLayer = extractPointsByLayer(xml);
-  const layers = Object.keys(pointsByLayer);
+const xml =
+  new DOMParser()
+    .parseFromString(
+      kmlText,
+      "application/xml"
+    );
 
-  return {
-    layers,
+const polygons =
+  extractPolygonsFromXml(
+    xml
+  );
+
+window._hasPolygon =
+  polygons.length > 0;
+
+const pointsByLayer =
+  extractPointsByLayer(
+    xml
+  );
+
+const layers =
+  Object.keys(
     pointsByLayer
-  };
+  );
+
+return {
+  layers,
+  pointsByLayer,
+  polygons
+};
 }
 function getExtendedDataValue(pm, keyName) {
   const dataNodes = Array.from(pm.getElementsByTagName("Data"));
