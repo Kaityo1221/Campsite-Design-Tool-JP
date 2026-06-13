@@ -79,6 +79,10 @@ function getPrecheckDuplicatePois() {
       }
     }
   }
+
+  return duplicates;
+}
+
 function renderPrecheckDuplicatePoiHtml() {
   const duplicates = getPrecheckDuplicatePois();
 
@@ -127,8 +131,6 @@ function renderPrecheckDuplicatePoiHtml() {
       `).join("")}
     </div>
   `;
-}
-  return duplicates;
 }
 function getUserId() {
   let userId = localStorage.getItem("campsiteUserId");
@@ -394,9 +396,6 @@ function renderPoiCountHtml(counts) {
       必ず25件追加されるわけではありません。<br>
       実際の追加件数は、キャンプサイトの広さや既存POIの密度などにより調整されます。
     </div>
-    
-        ${renderPrecheckDuplicatePoiHtml()}
-    
   `;
 }
 function renderDistancePrecheckFooterHtml() {
@@ -595,7 +594,6 @@ function isDistanceTargetLayer(layerName) {
   renderDistanceUploadSummary() +
   renderPoiCountHtml(counts) +
   renderDistancePrecheckFooterHtml();
-  renderPoiCountHtml(counts);
   }
 }
 
