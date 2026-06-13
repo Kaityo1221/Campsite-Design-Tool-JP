@@ -951,14 +951,35 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
   </div> <!-- panel -->
 </section> <!-- parts -->
 
-<section id="admin" class="tab-content">
-  <div class="panel">
-    <h2>管理者ツール</h2>
+<div class="step" style="
+  border:1px solid rgba(168,85,247,0.55);
+  background:rgba(88,28,135,0.14);
+">
+  <div class="step-no">管理者レビュー</div>
 
-    <p class="note">
-      会長専用の確認・レビュー補助機能です。<br>
-      他CAから受け取ったMy Maps / KMZの内容確認や、レビュー前の整理に使います。
-    </p>
+  <h3>提出KMZ 総合レビュー</h3>
+
+  <p class="note">
+    他CAから受け取った完成KMZを読み込み、<br>
+    提出前に優先して確認する項目をまとめて表示します。
+  </p>
+
+  <p>レビューする完成KMZを選択してください。</p>
+
+  <input
+    type="file"
+    id="adminReviewFile"
+  >
+
+  <button
+    class="generate"
+    onclick="runAdminDashboardReview()"
+  >
+    管理者レビューを実行
+  </button>
+
+  <div id="adminReviewResult"></div>
+</div>
 
     <div class="step">
   <div class="step-no">管理者機能</div>
@@ -1823,7 +1844,7 @@ GOロケット団の出現率が3倍になる
 <script src="js/util.js?v=18"></script>
 <script src="js/tabs.js?v=8"></script>
 <script src="js/distance.js?v=60"></script>
-<script src="js/admin.js?v=10"></script>
+<script src="js/admin.js?v=12"></script>
 <script src="js/main.js?v=56"></script>
 <script src="js/kmz.js?v=27"></script>
 <script src="js/deduplicate.js?v=3"></script>
