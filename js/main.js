@@ -1,5 +1,5 @@
-window.APP_VERSION = "6.0";
-
+window.APP_VERSION = "v1.8.0";
+window.APP_UPDATED = "2026-06-13";
 window.ENABLE_QUIZ = true;
 window.QUIZ_VERSION = "beta1";
 const ADMIN_CODE = "she1ep";
@@ -470,3 +470,21 @@ function openGoogleMyMaps() {
     "_blank"
   );
 }
+function toggleVersionHistory() {
+  const modal =
+    document.getElementById("versionHistoryModal");
+
+  modal.style.display =
+    modal.style.display === "flex"
+      ? "none"
+      : "flex";
+}
+document.addEventListener("DOMContentLoaded", () => {
+  const versionInfo =
+    document.getElementById("versionInfo");
+
+  if (versionInfo) {
+    versionInfo.textContent =
+      APP_VERSION + " ℹ";
+  }
+});

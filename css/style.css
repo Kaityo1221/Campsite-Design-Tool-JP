@@ -2406,3 +2406,34 @@ button.generate:active {
     font-size:11px;
   }
 }
+#versionInfo{
+  position:fixed;
+  right:12px;
+  bottom:12px;
+  font-size:11px;
+  color:#94a3b8;
+  background:rgba(15,23,42,.85);
+  padding:6px 10px;
+  border-radius:8px;
+  cursor:pointer;
+  z-index:9999;
+}
+
+.version-modal{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.65);
+  z-index:10000;
+  align-items:center;
+  justify-content:center;
+}
+
+.version-card{
+  width:320px;
+  max-width:90%;
+  background:#0f172a;
+  color:white;
+  border-radius:16px;
+  padding:20px;
+}
