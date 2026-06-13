@@ -674,6 +674,19 @@ function renderDistanceLoadErrorHtml(title, message = "") {
     const result =
       await extractLayersFromKML(file);
 
+if (result.errorCode === "KML_NOT_FOUND") {
+  if (summary) {
+    summary.innerHTML = renderDistanceLoadErrorHtml(
+      "ZIP / KMZ内にKMLファイルが見つかりません",
+      `
+        Google My Mapsから書き出した完成KMZか確認してください。<br>
+        ZIP内にテキストや画像だけが入っている場合は読み込めません。
+      `
+    );
+  }
+
+  return;
+}
     const layerNames =
       Object.keys(result.pointsByLayer || {});
 
@@ -779,8 +792,12 @@ async function extractLayersFromKML(file) {
   }
 
   if (!kmlText) {
-    return { layers: [], pointsByLayer: {} };
-  }
+  return {
+    layers: [],
+    pointsByLayer: {},
+    errorCode: "KML_NOT_FOUND"
+  };
+}
 
   const xml = new DOMParser().parseFromString(kmlText, "application/xml");
   window._hasPolygon =
