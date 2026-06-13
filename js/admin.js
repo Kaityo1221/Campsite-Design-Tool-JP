@@ -87,7 +87,958 @@ function analyzePoiDuplicates(points) {
     duplicateCoordGroups
   };
 }
+async function runAdminDashboardReview() {
+  const input =
+    document.getElementById("adminReviewFile");
 
+  const result =
+    document.getElementById("adminReviewResult");
+
+  if (!input || !input.files.length) {
+    alert("完成KMZを選択してください");
+    return;
+  }
+
+  const file = input.files[0];
+  const fileName = file.name.toLowerCase();
+
+  if (
+    !fileName.endsWith(".kml") &&
+    !fileName.endsWith(".kmz") &&
+    !fileName.endsWith(".zip")
+  ) {
+    result.innerHTML = `
+      <div class="distance-warning">
+        ⚠ KML / KMZ形式のファイルを選択してください。
+      </div>
+    `;
+
+    return;
+  }
+
+  result.innerHTML = `
+    <div class="distance-warning" style="
+      background:rgba(59,130,246,0.12);
+      border:1px solid rgba(96,165,250,0.35);
+    ">
+      <span class="loading">
+        <span class="spinner"></span>
+        管理者レビュー中…
+      </span>
+    </div>
+  `;
+
+  try {
+    const extracted =
+      await extractLayersFromKML(file);
+
+    if (extracted.errorCode === "KML_NOT_FOUND") {
+      result.innerHTML = `
+        <div class="distance-warning">
+          ⚠ KMZ内にKMLファイルが見つかりません。
+        </div>
+      `;
+
+      return;
+    }
+
+    const layers =
+      extracted.layers || [];
+
+    const pointsByLayer =
+      extracted.pointsByLayer || {};
+
+    const allPoints = [];
+    let dummyCount = 0;
+
+    layers.forEach(layerName => {
+      const points =
+        pointsByLayer[layerName] || [];
+
+      points.forEach(p => {
+        const point = {
+          ...p,
+          layer: layerName
+        };
+
+        if (isDummyPoint(point)) {
+          dummyCount++;
+        }
+
+        allPoints.push(point);
+      });
+    });
+
+    const usablePoints =
+      allPoints.filter(p => !isDummyPoint(p));
+
+    const existingPoints =
+      usablePoints.filter(p => {
+        return getAdminLayerInfo(
+          p.layer || ""
+        ).isExisting;
+      });
+
+    const addedPoints =
+      usablePoints.filter(p => {
+        return getAdminLayerInfo(
+          p.layer || ""
+        ).isAdd;
+      });
+
+    const circleLayers =
+      layers.filter(layerName => {
+        return getAdminLayerInfo(
+          layerName
+        ).isCircle;
+      });
+
+    const duplicateInfo =
+      analyzePoiDuplicates(
+        usablePoints
+      );
+
+    const hasPolygon =
+      window._hasPolygon === true;
+const addedPoiCounts = {
+  pokestop: 0,
+  gym: 0,
+  power: 0
+};
+
+addedPoints.forEach(p => {
+  const kind =
+    classifyType(
+      p.type,
+      p.name,
+      p.layer
+    );
+
+  if (kind === "gym") {
+    addedPoiCounts.gym++;
+  } else if (kind === "power") {
+    addedPoiCounts.power++;
+  } else {
+    addedPoiCounts.pokestop++;
+  }
+});
+
+const addedPoiTotal =
+  addedPoiCounts.pokestop +
+  addedPoiCounts.gym +
+  addedPoiCounts.power;
+
+const poiLimitDetails = [];
+
+if (addedPoiTotal > 25) {
+  poiLimitDetails.push(
+    `合計 ${addedPoiTotal}件 / 上限25件`
+  );
+}
+
+if (addedPoiCounts.pokestop > 12) {
+  poiLimitDetails.push(
+    `ポケストップ ${addedPoiCounts.pokestop}件 / 上限12件`
+  );
+}
+
+if (addedPoiCounts.gym > 8) {
+  poiLimitDetails.push(
+    `ジム ${addedPoiCounts.gym}件 / 上限8件`
+  );
+}
+
+if (addedPoiCounts.power > 5) {
+  poiLimitDetails.push(
+    `パワースポット ${addedPoiCounts.power}件 / 上限5件`
+  );
+}
+
+const addedPoiLimitOk =
+  poiLimitDetails.length === 0;
+
+const under30Pairs = [];
+const adjustablePairs = [];
+const existingReferencePairs = [];
+
+for (
+  let i = 0;
+  i < usablePoints.length;
+  i++
+) {
+  for (
+    let j = i + 1;
+    j < usablePoints.length;
+    j++
+  ) {
+    const a = usablePoints[i];
+    const b = usablePoints[j];
+
+    const aInfo =
+      getAdminLayerInfo(
+        a.layer || ""
+      );
+
+    const bInfo =
+      getAdminLayerInfo(
+        b.layer || ""
+      );
+
+    const distance =
+      getDistanceMeters(a, b);
+
+    /*
+      1m未満は重複POI側で扱う。
+      距離警告として二重計上しない。
+    */
+    if (distance < 1) {
+      continue;
+    }
+
+    const involvesAddedPoi =
+      aInfo.isAdd ||
+      bInfo.isAdd;
+
+    if (!involvesAddedPoi) {
+      if (distance < 40) {
+        existingReferencePairs.push({
+          a,
+          b,
+          distance
+        });
+      }
+
+      continue;
+    }
+
+    if (distance < 30) {
+      under30Pairs.push({
+        a,
+        b,
+        distance
+      });
+    } else if (distance < 40) {
+      adjustablePairs.push({
+        a,
+        b,
+        distance
+      });
+    }
+  }
+}
+    const criticalMessages = [];
+    const cautionMessages = [];
+    const referenceMessages = [];
+
+    if (!hasPolygon) {
+      criticalMessages.push(
+        "活動範囲ポリゴンがありません"
+      );
+    }
+if (!addedPoiLimitOk) {
+  criticalMessages.push(
+    `追加POI上限超過：${
+      poiLimitDetails.join(" / ")
+    }`
+  );
+}
+
+if (under30Pairs.length > 0) {
+  criticalMessages.push(
+    `追加POIに関係する30m未満の近接：${
+      under30Pairs.length
+    }件`
+  );
+}
+
+if (adjustablePairs.length > 0) {
+  cautionMessages.push(
+    `追加POIに関係する30〜40mの調整可能距離：${
+      adjustablePairs.length
+    }件`
+  );
+}
+
+if (existingReferencePairs.length > 0) {
+  referenceMessages.push(
+    `既存POI同士の40m未満近接：${
+      existingReferencePairs.length
+    }件`
+  );
+}
+    if (
+      duplicateInfo
+        .duplicateCoordGroups
+        .length > 0
+    ) {
+      criticalMessages.push(
+        `座標完全一致の重複POI：${
+          duplicateInfo
+            .duplicateCoordGroups
+            .length
+        }グループ`
+      );
+    }
+
+    if (addedPoints.length === 0) {
+      cautionMessages.push(
+        "追加希望POIが見つかりません"
+      );
+    }
+
+    if (dummyCount > 0) {
+      cautionMessages.push(
+        `ダミーポイント：${dummyCount}件`
+      );
+    }
+
+    if (circleLayers.length > 0) {
+      referenceMessages.push(
+        `円レイヤー：${circleLayers.length}件`
+      );
+    }
+
+    let status = "提出前確認OK";
+    let statusIcon = "✅";
+    let statusColor = "#22c55e";
+
+    if (criticalMessages.length > 0) {
+      status = "要修正";
+      statusIcon = "🚨";
+      statusColor = "#ef4444";
+    } else if (cautionMessages.length > 0) {
+      status = "要確認";
+      statusIcon = "⚠";
+      statusColor = "#f97316";
+    }
+
+    const renderMetric = (
+      label,
+      value
+    ) => `
+      <div style="
+        padding:12px;
+        border-radius:12px;
+        background:rgba(15,23,42,0.66);
+        border:1px solid rgba(148,163,184,0.20);
+      ">
+        <div style="
+          color:#94a3b8;
+          font-size:12px;
+        ">
+          ${escapeAdminHtml(label)}
+        </div>
+
+        <strong style="
+          display:block;
+          margin-top:4px;
+          color:#f8fafc;
+          font-size:20px;
+        ">
+          ${escapeAdminHtml(value)}
+        </strong>
+      </div>
+    `;
+    const renderPoiLimitCheckRow = () => {
+  const statusColor =
+    addedPoiLimitOk
+      ? "#22c55e"
+      : "#ef4444";
+
+  const statusBackground =
+    addedPoiLimitOk
+      ? "rgba(34,197,94,0.10)"
+      : "rgba(239,68,68,0.10)";
+
+  const statusIcon =
+    addedPoiLimitOk
+      ? "○"
+      : "×";
+
+  const exceededItems = [];
+
+  if (addedPoiTotal > 25) {
+    exceededItems.push(
+      `合計 ${addedPoiTotal} / 25件`
+    );
+  }
+
+  if (addedPoiCounts.pokestop > 12) {
+    exceededItems.push(
+      `ポケストップ ${addedPoiCounts.pokestop} / 12件`
+    );
+  }
+
+  if (addedPoiCounts.gym > 8) {
+    exceededItems.push(
+      `ジム ${addedPoiCounts.gym} / 8件`
+    );
+  }
+
+  if (addedPoiCounts.power > 5) {
+    exceededItems.push(
+      `パワースポット ${addedPoiCounts.power} / 5件`
+    );
+  }
+
+  const summaryText =
+    addedPoiLimitOk
+      ? `合計 ${addedPoiTotal} / 25件`
+      : `超過：${exceededItems.join("・")}`;
+
+  const renderPoiDetail = (
+    label,
+    current,
+    limit
+  ) => {
+    const isOver =
+      current > limit;
+
+    return `
+      <div style="
+        display:grid;
+        grid-template-columns:
+          minmax(130px, 1fr) auto 22px;
+        gap:8px;
+        margin-top:6px;
+        color:#cbd5e1;
+        font-size:13px;
+      ">
+        <span>
+          ${escapeAdminHtml(label)}
+        </span>
+
+        <span>
+          ${current} / ${limit}件
+        </span>
+
+        <strong style="
+          color:${
+            isOver
+              ? "#ef4444"
+              : "#22c55e"
+          };
+        ">
+          ${isOver ? "×" : "○"}
+        </strong>
+      </div>
+    `;
+  };
+
+  return `
+    <div style="
+      margin-top:8px;
+      padding:10px 12px;
+      border-radius:10px;
+      background:${statusBackground};
+      border:1px solid ${statusColor};
+    ">
+      <div style="
+        display:grid;
+        grid-template-columns:
+          34px minmax(130px, 1fr) 2fr;
+        gap:8px;
+        align-items:center;
+      ">
+        <strong style="
+          color:${statusColor};
+          font-size:24px;
+          line-height:1;
+        ">
+          ${statusIcon}
+        </strong>
+
+        <strong style="
+          color:#f8fafc;
+        ">
+          追加POI上限
+        </strong>
+
+        <span style="
+          color:#cbd5e1;
+          font-size:13px;
+        ">
+          ${escapeAdminHtml(summaryText)}
+        </span>
+      </div>
+
+      <details style="
+        margin-top:8px;
+        padding-left:42px;
+      ">
+        <summary style="
+          cursor:pointer;
+          color:#93c5fd;
+          font-size:13px;
+          font-weight:bold;
+        ">
+          内訳を見る
+        </summary>
+
+        <div style="
+          margin-top:8px;
+          max-width:420px;
+        ">
+          ${renderPoiDetail(
+            "ポケストップ",
+            addedPoiCounts.pokestop,
+            12
+          )}
+
+          ${renderPoiDetail(
+            "ジム",
+            addedPoiCounts.gym,
+            8
+          )}
+
+          ${renderPoiDetail(
+            "パワースポット",
+            addedPoiCounts.power,
+            5
+          )}
+        </div>
+      </details>
+    </div>
+  `;
+};
+const renderDistancePairCheckRow = (
+  label,
+  pairs,
+  status
+) => {
+  const settings = {
+    caution: {
+      icon: "△",
+      color: "#f97316",
+      background:
+        "rgba(249,115,22,0.10)"
+    },
+
+    danger: {
+      icon: "×",
+      color: "#ef4444",
+      background:
+        "rgba(239,68,68,0.10)"
+    }
+  };
+
+  const setting =
+    settings[status];
+
+  const sortedPairs =
+    [...pairs].sort(
+      (a, b) =>
+        a.distance - b.distance
+    );
+
+  const visiblePairs =
+    sortedPairs.slice(0, 10);
+
+  const detailHtml =
+    visiblePairs.map(pair => `
+      <div style="
+        margin-top:8px;
+        padding:8px 10px;
+        border-radius:8px;
+        background:rgba(15,23,42,0.55);
+        color:#cbd5e1;
+        font-size:13px;
+        line-height:1.65;
+      ">
+        <strong style="
+          color:${setting.color};
+        ">
+          ${pair.distance.toFixed(1)}m
+        </strong><br>
+
+        ${escapeAdminHtml(
+          pair.a.name || "名称なし"
+        )}
+        <span style="opacity:0.68;">
+          （${escapeAdminHtml(
+            pair.a.layer || "不明"
+          )}）
+        </span><br>
+
+        × ${escapeAdminHtml(
+          pair.b.name || "名称なし"
+        )}
+        <span style="opacity:0.68;">
+          （${escapeAdminHtml(
+            pair.b.layer || "不明"
+          )}）
+        </span>
+      </div>
+    `).join("");
+
+  const moreText =
+    sortedPairs.length > 10
+      ? `
+        <div style="
+          margin-top:8px;
+          color:#94a3b8;
+          font-size:12px;
+        ">
+          ほか ${sortedPairs.length - 10}件
+        </div>
+      `
+      : "";
+
+  return `
+    <div style="
+      margin-top:8px;
+      padding:10px 12px;
+      border-radius:10px;
+      background:${setting.background};
+      border:1px solid ${setting.color};
+    ">
+      <div style="
+        display:grid;
+        grid-template-columns:
+          34px minmax(130px, 1fr) 2fr;
+        gap:8px;
+        align-items:center;
+      ">
+        <strong style="
+          color:${setting.color};
+          font-size:24px;
+          line-height:1;
+        ">
+          ${setting.icon}
+        </strong>
+
+        <strong style="
+          color:#f8fafc;
+        ">
+          ${escapeAdminHtml(label)}
+        </strong>
+
+        <span style="
+          color:#cbd5e1;
+          font-size:13px;
+        ">
+          ${pairs.length}件
+        </span>
+      </div>
+
+      <details style="
+        margin-top:8px;
+        padding-left:42px;
+      ">
+        <summary style="
+          cursor:pointer;
+          color:#93c5fd;
+          font-size:13px;
+          font-weight:bold;
+        ">
+          内訳を見る
+        </summary>
+
+        <div style="
+          margin-top:8px;
+          max-width:680px;
+        ">
+          ${detailHtml}
+          ${moreText}
+        </div>
+      </details>
+    </div>
+  `;
+};
+const renderReviewCheckRow = (
+  label,
+  status,
+  note
+) => {
+  const settings = {
+    ok: {
+      icon: "○",
+      color: "#22c55e",
+      background:
+        "rgba(34,197,94,0.10)"
+    },
+
+    caution: {
+      icon: "△",
+      color: "#f97316",
+      background:
+        "rgba(249,115,22,0.10)"
+    },
+
+    danger: {
+      icon: "×",
+      color: "#ef4444",
+      background:
+        "rgba(239,68,68,0.10)"
+    }
+  };
+
+  const setting =
+    settings[status];
+
+  return `
+    <div style="
+      display:grid;
+      grid-template-columns:
+        34px minmax(150px, 1fr) 2fr;
+      gap:8px;
+      align-items:center;
+      margin-top:8px;
+      padding:10px 12px;
+      border-radius:10px;
+      background:${setting.background};
+      border:1px solid ${setting.color};
+    ">
+      <strong style="
+        color:${setting.color};
+        font-size:24px;
+        line-height:1;
+      ">
+        ${setting.icon}
+      </strong>
+
+      <strong style="
+        color:#f8fafc;
+      ">
+        ${escapeAdminHtml(label)}
+      </strong>
+
+      <span style="
+        color:#cbd5e1;
+        font-size:13px;
+      ">
+        ${escapeAdminHtml(note)}
+      </span>
+    </div>
+  `;
+};
+    
+    const renderMessageList = (
+      items,
+      emptyText
+    ) => {
+      if (items.length === 0) {
+        return `
+          <div style="
+            margin-top:8px;
+            opacity:0.72;
+          ">
+            ${escapeAdminHtml(emptyText)}
+          </div>
+        `;
+      }
+
+      return items
+        .map(message => `
+          <div style="
+            margin-top:8px;
+          ">
+            ・${escapeAdminHtml(message)}
+          </div>
+        `)
+        .join("");
+    };
+
+    result.innerHTML = `
+      <div class="distance-warning" style="
+        border:1px solid ${statusColor};
+        background:rgba(15,23,42,0.72);
+      ">
+        <strong style="
+          color:${statusColor};
+          font-size:22px;
+        ">
+          ${statusIcon} 総合判定：${status}
+        </strong>
+
+        <div style="
+          margin-top:8px;
+          color:#cbd5e1;
+          font-size:13px;
+        ">
+          ${escapeAdminHtml(file.name)}
+        </div>
+      </div>
+
+      <div style="
+        display:grid;
+        grid-template-columns:
+          repeat(
+            auto-fit,
+            minmax(140px, 1fr)
+          );
+        gap:10px;
+        margin-top:14px;
+      ">
+        ${renderMetric(
+          "重大警告",
+          criticalMessages.length + "件"
+        )}
+
+        ${renderMetric(
+          "要確認",
+          cautionMessages.length + "件"
+        )}
+
+        ${renderMetric(
+          "参考情報",
+          referenceMessages.length + "件"
+        )}
+
+        ${renderMetric(
+          "既存POI",
+          existingPoints.length + "件"
+        )}
+
+        ${renderMetric(
+          "追加POI",
+          addedPoints.length + "件"
+        )}
+
+        ${renderMetric(
+  "活動範囲ポリゴン",
+  hasPolygon ? "○" : "×"
+)}
+
+        ${renderMetric(
+          "レイヤー",
+          layers.length + "件"
+        )}
+
+                ${renderMetric(
+          "全ポイント",
+          allPoints.length + "件"
+        )}
+      </div>
+
+      <div class="distance-warning" style="
+        margin-top:14px;
+        border:1px solid rgba(56,189,248,0.38);
+        background:rgba(14,165,233,0.08);
+      ">
+        <strong style="
+          color:#7dd3fc;
+          font-size:18px;
+        ">
+          提出前チェック
+        </strong>
+
+        ${renderReviewCheckRow(
+          "活動範囲ポリゴン",
+          hasPolygon
+            ? "ok"
+            : "danger",
+          hasPolygon
+            ? "設定済み"
+            : "未設定"
+        )}
+
+                ${renderPoiLimitCheckRow()}
+
+        ${renderReviewCheckRow(
+          "重複POI",
+          duplicateInfo
+            .duplicateCoordGroups
+            .length === 0
+            ? "ok"
+            : "danger",
+          duplicateInfo
+            .duplicateCoordGroups
+            .length === 0
+            ? "問題なし"
+            : `${
+                duplicateInfo
+                  .duplicateCoordGroups
+                  .length
+              }グループ`
+        )}
+
+        ${
+  under30Pairs.length === 0
+    ? renderReviewCheckRow(
+        "30m未満の近接",
+        "ok",
+        "問題なし"
+      )
+    : renderDistancePairCheckRow(
+        "30m未満の近接",
+        under30Pairs,
+        "danger"
+      )
+}
+
+        ${
+  adjustablePairs.length === 0
+    ? renderReviewCheckRow(
+        "30〜40mの調整距離",
+        "ok",
+        "問題なし"
+      )
+    : renderDistancePairCheckRow(
+        "30〜40mの調整距離",
+        adjustablePairs,
+        "caution"
+      )
+}
+      </div>
+
+      <div class="distance-warning" style="
+        margin-top:14px;
+        border:1px solid rgba(239,68,68,0.38);
+        background:rgba(239,68,68,0.10);
+      ">
+        <strong style="color:#fca5a5;">
+          🔴 要修正
+        </strong>
+
+        ${renderMessageList(
+          criticalMessages,
+          "重大な問題は見つかりませんでした。"
+        )}
+      </div>
+
+      <div class="distance-warning" style="
+        margin-top:12px;
+        border:1px solid rgba(249,115,22,0.38);
+        background:rgba(249,115,22,0.10);
+      ">
+        <strong style="color:#fdba74;">
+          🟠 要確認
+        </strong>
+
+        ${renderMessageList(
+          cautionMessages,
+          "追加の確認事項はありません。"
+        )}
+      </div>
+
+      <div class="distance-warning" style="
+        margin-top:12px;
+        border:1px solid rgba(148,163,184,0.30);
+        background:rgba(148,163,184,0.08);
+      ">
+        <strong style="color:#cbd5e1;">
+          ⚪ 参考情報
+        </strong>
+
+        ${renderMessageList(
+          referenceMessages,
+          "参考情報はありません。"
+        )}
+      </div>
+    `;
+
+  } catch (error) {
+    console.error(error);
+
+    result.innerHTML = `
+      <div class="distance-warning">
+        ⚠ 管理者レビュー中にエラーが発生しました。<br>
+        ファイル形式またはKMZ内の構成を確認してください。
+      </div>
+    `;
+  }
+}
 async function runAdminFileCheck() {
   const input = document.getElementById("adminCheckFile");
   const result = document.getElementById("adminCheckResult");
