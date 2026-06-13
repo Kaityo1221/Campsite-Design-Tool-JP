@@ -605,30 +605,45 @@ function renderDistanceLoadErrorHtml(title, message = "") {
     distanceResult.innerHTML = "";
   }
 
-  const isCsv = fileName.endsWith(".csv");
-  const isKml = fileName.endsWith(".kml");
   const isKmz = fileName.endsWith(".kmz");
-  const isZip = fileName.endsWith(".zip");
+const isIphoneKmzZip =
+  fileName.endsWith(".kmz.zip");
 
-  if (!isCsv && !isKml && !isKmz && !isZip) {
-    if (summary) {
-      summary.innerHTML = renderDistanceLoadErrorHtml(
-        "対応していないファイル形式です",
-        `
-          CSV・KML・KMZ・ZIP形式のファイルを選択してください。<br>
-          選択されたファイル：${escapeHtml(file.name)}
-        `
-      );
-    }
+if (isIphoneKmzZip) {
+  if (summary) {
+    summary.innerHTML = renderDistanceLoadErrorHtml(
+      "末尾の .zip を削除してください",
+      `
+        iPhoneでは、KMZファイルが <strong>.kmz.zip</strong> として保存される場合があります。<br>
+        「ファイル」アプリで対象ファイルを長押しし、<br>
+        「名称変更」から末尾の <strong>.zip</strong> だけを削除してください。<br><br>
 
-    return;
+        例：<strong>campsite_2026612.kmz.zip</strong><br>
+        ↓<br>
+        <strong>campsite_2026612.kmz</strong>
+      `
+    );
   }
 
-  window._inputType =
-    isCsv ? "csv" :
-    isKml ? "kml" :
-    isZip ? "zip" :
-    "kmz";
+  return;
+}
+
+if (!isKmz) {
+  if (summary) {
+    summary.innerHTML = renderDistanceLoadErrorHtml(
+      "完成KMZを選択してください",
+      `
+        距離チェックでは、Google My Mapsから書き出した<br>
+        <strong>.kmz</strong> 形式の完成ファイルを読み込みます。<br>
+        選択されたファイル：${escapeHtml(file.name)}
+      `
+    );
+  }
+
+  return;
+}
+
+window._inputType = "kmz";
 
   try {
     if (isCsv) {
