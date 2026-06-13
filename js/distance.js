@@ -606,102 +606,79 @@ function renderDistanceLoadErrorHtml(title, message = "") {
   }
 
   const isKmz = fileName.endsWith(".kmz");
-const isIphoneKmzZip =
-  fileName.endsWith(".kmz.zip");
+  const isIphoneKmzZip =
+    fileName.endsWith(".kmz.zip");
 
-if (isIphoneKmzZip) {
-  if (summary) {
-    summary.innerHTML = renderDistanceLoadErrorHtml(
-      "末尾の .zip を削除してください",
-      `
-        iPhoneでは、KMZファイルが <strong>.kmz.zip</strong> として保存される場合があります。<br>
-        「ファイル」アプリで対象ファイルを長押しし、<br>
-        「名称変更」から末尾の <strong>.zip</strong> だけを削除してください。<br><br>
+  if (isIphoneKmzZip) {
+    if (summary) {
+      summary.innerHTML = renderDistanceLoadErrorHtml(
+        "末尾の .zip を削除してください",
+        `
+          iPhoneでは、KMZファイルが <strong>.kmz.zip</strong> として保存される場合があります。<br>
+          「ファイル」アプリで対象ファイルを長押しし、<br>
+          「名称変更」から末尾の <strong>.zip</strong> だけを削除してください。<br><br>
 
-        例：<strong>campsite_2026612.kmz.zip</strong><br>
-        ↓<br>
-        <strong>campsite_2026612.kmz</strong>
-      `
-    );
+          例：<strong>campsite_2026612.kmz.zip</strong><br>
+          ↓<br>
+          <strong>campsite_2026612.kmz</strong>
+        `
+      );
+    }
+
+    return;
   }
 
-  return;
-}
+  if (!isKmz) {
+    if (summary) {
+      summary.innerHTML = renderDistanceLoadErrorHtml(
+        "完成KMZを選択してください",
+        `
+          距離チェックでは、Google My Mapsから書き出した<br>
+          <strong>.kmz</strong> 形式の完成ファイルを読み込みます。<br>
+          選択されたファイル：${escapeHtml(file.name)}
+        `
+      );
+    }
 
-if (!isKmz) {
-  if (summary) {
-    summary.innerHTML = renderDistanceLoadErrorHtml(
-      "完成KMZを選択してください",
-      `
-        距離チェックでは、Google My Mapsから書き出した<br>
-        <strong>.kmz</strong> 形式の完成ファイルを読み込みます。<br>
-        選択されたファイル：${escapeHtml(file.name)}
-      `
-    );
+    return;
   }
 
-  return;
-}
-
-window._inputType = "kmz";
+  window._inputType = "kmz";
 
   try {
-    
+    const result =
+      await extractLayersFromKML(file);
 
-      window._layerPoints["CSV_POI"] = points;
-
-      renderLayerSelector(
-        ["CSV_POI"],
-        container
-      );
-
+    if (result.errorCode === "KML_NOT_FOUND") {
       if (summary) {
-        const counts =
-          countPoiTypesFromLayers(
-            window._layerPoints
-          );
-
-        summary.innerHTML =
-          renderDistanceUploadSummary() +
-          renderPoiCountHtml(counts) +
-          renderDistancePrecheckFooterHtml();
+        summary.innerHTML = renderDistanceLoadErrorHtml(
+          "KMZ内にKMLファイルが見つかりません",
+          `
+            Google My Mapsから書き出した完成KMZか確認してください。<br>
+            KMZ内にKMLファイルが見つからないため、読み込めません。
+          `
+        );
       }
 
       return;
     }
 
-    const result =
-      await extractLayersFromKML(file);
-
-if (result.errorCode === "KML_NOT_FOUND") {
-  if (summary) {
-    summary.innerHTML = renderDistanceLoadErrorHtml(
-      "KMZ内にKMLファイルが見つかりません"
-      `
-        Google My Mapsから書き出した完成KMZか確認してください。<br>
-        ZIP内にテキストや画像だけが入っている場合は読み込めません。
-      `
-    );
-  }
-
-  return;
-}
     const layerNames =
       Object.keys(result.pointsByLayer || {});
 
     if (layerNames.length === 0) {
-  if (summary) {
-    summary.innerHTML = renderDistanceLoadErrorHtml(
-      "KMZ内にPOIレイヤーが見つかりません",
-      `
-        Google My Mapsから書き出した完成KMZか確認してください。<br>
-        KML内にPOIレイヤーがない場合や、POIが登録されていない場合は読み込めません。
-      `
-    );
-  }
+      if (summary) {
+        summary.innerHTML = renderDistanceLoadErrorHtml(
+          "KMZ内にPOIレイヤーが見つかりません",
+          `
+            Google My Mapsから書き出した完成KMZか確認してください。<br>
+            KML内にPOIレイヤーがない場合や、POIが登録されていない場合は読み込めません。
+          `
+        );
+      }
 
-  return;
-}
+      return;
+    }
 
     window._layerPoints =
       result.pointsByLayer;
@@ -726,10 +703,12 @@ if (result.errorCode === "KML_NOT_FOUND") {
       return;
     }
 
-    renderLayerSelector(
-      result.layers,
-      container
-    );
+    if (container) {
+      renderLayerSelector(
+        result.layers,
+        container
+      );
+    }
 
     if (summary) {
       const counts =
