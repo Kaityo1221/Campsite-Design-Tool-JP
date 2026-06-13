@@ -1159,7 +1159,31 @@ if (distance < 1) {
   }
 
   warnings.sort((a, b) => a.distance - b.distance);
-
+const duplicatePoiHtml =
+  duplicatePois.length === 0
+    ? `
+      <div class="distance-warning" style="
+        border:1px solid rgba(34,197,94,0.45);
+        background:rgba(34,197,94,0.12);
+      ">
+        ✅ 重複POI候補はありません。
+      </div>
+    `
+    : duplicatePois.map(item => `
+      <div class="distance-warning" style="
+        border:1px solid rgba(239,68,68,0.55);
+        background:rgba(239,68,68,0.14);
+      ">
+        <strong style="color:#f87171;">
+          ⚠ 重複POI候補（${item.distance.toFixed(1)}m）
+        </strong><br>
+        ${escapeHtml(item.a.layer)}：${escapeHtml(item.a.name)}<br>
+        × ${escapeHtml(item.b.layer)}：${escapeHtml(item.b.name)}<br>
+        <span style="font-size:12px; opacity:0.85;">
+          同じ場所に複数のPOIが配置されている可能性があります。
+        </span>
+      </div>
+    `).join("");
   const campsite = calculateCampsiteScore(points, warnings);
   const riskAccordionHtml = getRiskAccordionHtml(warnings);
 
@@ -1343,6 +1367,10 @@ const simpleMapGuideHtml = `
     sectionTitleHtml("判定結果", "20m未満／20〜30m／30〜40mの近接件数を確認します。") +
 debugHtml +
 resultHeaderHtml +
+sectionTitleHtml("重複POIチェック", "同じ場所に複数のPOIが入っていないか確認します。") +
+duplicatePoiHtml +
+sectionTitleHtml("重複POIチェック", "同じ場所に複数のPOIが入っていないか確認します。") +
+duplicatePoiHtml +
     `✅ 問題なし（${points.length}件）<br><br>` +
     sectionTitleHtml("PC版簡易マップ", "読み込んだPOIの分布を点で確認できます。") +
     simpleMapGuideHtml;
