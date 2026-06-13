@@ -646,23 +646,7 @@ if (!isKmz) {
 window._inputType = "kmz";
 
   try {
-    if (isCsv) {
-      const text = await file.text();
-      const points = parseCSV(text);
-
-      if (!Array.isArray(points) || points.length === 0) {
-        if (summary) {
-          summary.innerHTML = renderDistanceLoadErrorHtml(
-            "CSVからPOIを読み込めませんでした",
-            `
-              POI名・緯度・経度が入力されているか確認してください。<br>
-              空のCSVや列名が異なるCSVは読み込めません。
-            `
-          );
-        }
-
-        return;
-      }
+    
 
       window._layerPoints["CSV_POI"] = points;
 
@@ -692,7 +676,7 @@ window._inputType = "kmz";
 if (result.errorCode === "KML_NOT_FOUND") {
   if (summary) {
     summary.innerHTML = renderDistanceLoadErrorHtml(
-      "ZIP / KMZ内にKMLファイルが見つかりません",
+      "KMZ内にKMLファイルが見つかりません"
       `
         Google My Mapsから書き出した完成KMZか確認してください。<br>
         ZIP内にテキストや画像だけが入っている場合は読み込めません。
