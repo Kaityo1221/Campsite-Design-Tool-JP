@@ -691,18 +691,18 @@ if (result.errorCode === "KML_NOT_FOUND") {
       Object.keys(result.pointsByLayer || {});
 
     if (layerNames.length === 0) {
-      if (summary) {
-        summary.innerHTML = renderDistanceLoadErrorHtml(
-          "KMZ内にPOIレイヤーが見つかりません",
-          `
-            Google My Mapsから書き出した完成KMZか確認してください。<br>
-            KMZ内にKMLファイルがない場合や、POIが登録されていない場合も読み込めません。
-          `
-        );
-      }
+  if (summary) {
+    summary.innerHTML = renderDistanceLoadErrorHtml(
+      "KMZ内にPOIレイヤーが見つかりません",
+      `
+        Google My Mapsから書き出した完成KMZか確認してください。<br>
+        KML内にPOIレイヤーがない場合や、POIが登録されていない場合は読み込めません。
+      `
+    );
+  }
 
-      return;
-    }
+  return;
+}
 
     window._layerPoints =
       result.pointsByLayer;
