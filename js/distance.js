@@ -550,50 +550,202 @@ function isDistanceTargetLayer(layerName) {
     name.includes("ebene")
   );
 }
+function renderDistanceLoadErrorHtml(title, message = "") {
+  return `
+    <div class="distance-warning" style="
+      margin-top:12px;
+      padding:14px;
+      border:1px solid rgba(239,68,68,0.65);
+      border-radius:12px;
+      background:rgba(239,68,68,0.14);
+      color:#fecaca;
+      line-height:1.7;
+    ">
+      <strong style="color:#f87171;">
+        ⚠ ${escapeHtml(title)}
+      </strong>
+
+      ${message ? `
+        <div style="
+          margin-top:8px;
+          color:#e5e7eb;
+          font-size:13px;
+        ">
+          ${message}
+        </div>
+      ` : ""}
+    </div>
+  `;
+}
   async function loadDistanceFile() {
   const fileInput = document.getElementById("distanceFile");
   const container = document.getElementById("distanceLayerList");
   const summary = document.getElementById("distancePoiSummary");
+  const distanceResult = document.getElementById("distanceResult");
 
-  if (!fileInput.files.length) return;
+  if (!fileInput.files.length) {
+    return;
+  }
 
   const file = fileInput.files[0];
   const fileName = file.name.toLowerCase();
 
   window._layerPoints = {};
   window._hasPolygon = false;
-  window._inputType = fileName.endsWith(".csv") ? "csv" : "kmz";
+
+  if (container) {
+    container.innerHTML = "";
+  }
+
   if (summary) {
     summary.innerHTML = "";
   }
 
-  if (fileName.endsWith(".csv")) {
-    const text = await file.text();
-    const points = parseCSV(text);
-    window._layerPoints["CSV_POI"] = points;
-    renderLayerSelector(["CSV_POI"], container);
+  if (distanceResult) {
+    distanceResult.innerHTML = "";
+  }
 
+  const isCsv = fileName.endsWith(".csv");
+  const isKml = fileName.endsWith(".kml");
+  const isKmz = fileName.endsWith(".kmz");
+  const isZip = fileName.endsWith(".zip");
+
+  if (!isCsv && !isKml && !isKmz && !isZip) {
     if (summary) {
-      const counts = countPoiTypesFromLayers(window._layerPoints);
-      summary.innerHTML =
-  renderDistanceUploadSummary() +
-  renderPoiCountHtml(counts) +
-  renderDistancePrecheckFooterHtml();
+      summary.innerHTML = renderDistanceLoadErrorHtml(
+        "対応していないファイル形式です",
+        `
+          CSV・KML・KMZ・ZIP形式のファイルを選択してください。<br>
+          選択されたファイル：${escapeHtml(file.name)}
+        `
+      );
     }
 
     return;
   }
 
-  const result = await extractLayersFromKML(file);
-  window._layerPoints = result.pointsByLayer;
-  renderLayerSelector(result.layers, container);
+  window._inputType =
+    isCsv ? "csv" :
+    isKml ? "kml" :
+    isZip ? "zip" :
+    "kmz";
 
-  if (summary) {
-    const counts = countPoiTypesFromLayers(window._layerPoints);
-    summary.innerHTML =
-  renderDistanceUploadSummary() +
-  renderPoiCountHtml(counts) +
-  renderDistancePrecheckFooterHtml();
+  try {
+    if (isCsv) {
+      const text = await file.text();
+      const points = parseCSV(text);
+
+      if (!Array.isArray(points) || points.length === 0) {
+        if (summary) {
+          summary.innerHTML = renderDistanceLoadErrorHtml(
+            "CSVからPOIを読み込めませんでした",
+            `
+              POI名・緯度・経度が入力されているか確認してください。<br>
+              空のCSVや列名が異なるCSVは読み込めません。
+            `
+          );
+        }
+
+        return;
+      }
+
+      window._layerPoints["CSV_POI"] = points;
+
+      renderLayerSelector(
+        ["CSV_POI"],
+        container
+      );
+
+      if (summary) {
+        const counts =
+          countPoiTypesFromLayers(
+            window._layerPoints
+          );
+
+        summary.innerHTML =
+          renderDistanceUploadSummary() +
+          renderPoiCountHtml(counts) +
+          renderDistancePrecheckFooterHtml();
+      }
+
+      return;
+    }
+
+    const result =
+      await extractLayersFromKML(file);
+
+    const layerNames =
+      Object.keys(result.pointsByLayer || {});
+
+    if (layerNames.length === 0) {
+      if (summary) {
+        summary.innerHTML = renderDistanceLoadErrorHtml(
+          "KMZ内にPOIレイヤーが見つかりません",
+          `
+            Google My Mapsから書き出した完成KMZか確認してください。<br>
+            KMZ内にKMLファイルがない場合や、POIが登録されていない場合も読み込めません。
+          `
+        );
+      }
+
+      return;
+    }
+
+    window._layerPoints =
+      result.pointsByLayer;
+
+    const debugInfo =
+      getTargetLayerDebugInfo();
+
+    if (
+      debugInfo.targetLayerCount === 0 ||
+      debugInfo.targetPointCount === 0
+    ) {
+      if (summary) {
+        summary.innerHTML = renderDistanceLoadErrorHtml(
+          "判定対象となるPOIが見つかりません",
+          `
+            「既存」「追加」「追加希望」などのPOIレイヤーが含まれているか確認してください。<br>
+            円・Buffers・活動範囲ポリゴンなどの補助レイヤーだけでは距離判定できません。
+          `
+        );
+      }
+
+      return;
+    }
+
+    renderLayerSelector(
+      result.layers,
+      container
+    );
+
+    if (summary) {
+      const counts =
+        countPoiTypesFromLayers(
+          window._layerPoints
+        );
+
+      summary.innerHTML =
+        renderDistanceUploadSummary() +
+        renderPoiCountHtml(counts) +
+        renderDistancePrecheckFooterHtml();
+    }
+
+  } catch (error) {
+    console.error(
+      "距離チェック用ファイルの読込に失敗しました",
+      error
+    );
+
+    if (summary) {
+      summary.innerHTML = renderDistanceLoadErrorHtml(
+        "ファイルを開けませんでした",
+        `
+          ファイルが破損しているか、正しい形式で保存されていない可能性があります。<br>
+          Google My Mapsから完成KMZを書き出し直して、もう一度お試しください。
+        `
+      );
+    }
   }
 }
 
