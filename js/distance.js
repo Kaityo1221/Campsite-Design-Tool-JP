@@ -1297,7 +1297,11 @@ const adjustableCount = displayCounts.light;
   let resultStatusColor = "#22c55e";
   let resultStatusIcon = "✅";
 
-  if (targetWarningCount > 0 || poiLimitExceeded) {
+  if (
+  targetWarningCount > 0 ||
+  poiLimitExceeded ||
+  duplicatePois.length > 0
+) {
   resultStatus = "調整あり";
   resultStatusColor = "#ef4444";
   resultStatusIcon = "⚠";
@@ -1369,8 +1373,6 @@ debugHtml +
 resultHeaderHtml +
 sectionTitleHtml("重複POIチェック", "同じ場所に複数のPOIが入っていないか確認します。") +
 duplicatePoiHtml +
-sectionTitleHtml("重複POIチェック", "同じ場所に複数のPOIが入っていないか確認します。") +
-duplicatePoiHtml +
     `✅ 問題なし（${points.length}件）<br><br>` +
     sectionTitleHtml("PC版簡易マップ", "読み込んだPOIの分布を点で確認できます。") +
     simpleMapGuideHtml;
@@ -1436,12 +1438,14 @@ return;
     `;
   }).join("");
 
-  result.innerHTML =
+result.innerHTML =
   sectionTitleHtml("拠点充実度", "距離・通行・広場・回遊性などをもとにした総合評価です。") +
   scoreHtml +
   sectionTitleHtml("判定結果", "20m未満／20〜30m／30〜40mの近接件数を確認します。") +
-debugHtml +
-resultHeaderHtml +
+  debugHtml +
+  resultHeaderHtml +
+  sectionTitleHtml("重複POIチェック", "同じ場所に複数のPOIが入っていないか確認します。") +
+  duplicatePoiHtml +
   sectionTitleHtml("分類別チェック", "近接内容を密集・滞留・軽微に分けて確認します。") +
   riskAccordionHtml + `
     40m未満の組み合わせがあります。<br><br>
