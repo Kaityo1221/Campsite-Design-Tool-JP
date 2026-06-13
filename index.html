@@ -40,18 +40,7 @@
 
   
 <body>
- <div class="version-badge" onclick="toggleUpdateLog(event)">v6.0</div>
-<div id="updateLog" class="update-log">
-  <strong>更新内容</strong><br>
-v6.0<br>
-・PC版メイン画面をネオン看板型のダッシュボードデザインへ変更しました。<br>
-・事前準備、メインフロー、補助ツール、その他を目的別に整理しました。<br>
-・各ボタンにネオン発光する線画アイコンと補足説明を追加しました。<br>
-・メインフローをAdventure Routeとして強調し、作業順を視覚的に分かりやすくしました。<br>
-・スマホでは縦並び表示へ自動調整されるレスポンシブデザインにしました。<br>
 
-<br>
-</div>
 <audio id="loginSound" src="assets/login.mp3"></audio>
 <audio id="successSound" src="assets/success.mp3"></audio>
   <div id="loadingOverlay" class="loading-overlay">
@@ -68,7 +57,8 @@ v6.0<br>
 <input
   id="accessCodeInput"
   type="text"
-  inputmode="text"
+  inputmode="latin"
+  lang="en"
   name="accessCode"
   autocomplete="off"
   autocorrect="off"
@@ -1838,5 +1828,34 @@ GOロケット団の出現率が3倍になる
 <script src="js/kmz.js?v=27"></script>
 <script src="js/deduplicate.js?v=3"></script>
 <script src="js/capacity.js?v=6"></script>
+<div id="versionInfo" onclick="toggleVersionHistory()">
+</div>
+<div id="versionHistoryModal" class="version-modal">
+  <div class="version-card">
+  <h3>更新履歴</h3>
+
+<div style="
+  margin-bottom:16px;
+  padding:10px;
+  border-radius:10px;
+  background:rgba(56,189,248,.12);
+  border:1px solid rgba(56,189,248,.25);
+">
+ <strong>最新更新</strong><br>
+v1.8.0（2026-06-13）
+</div>
+
+    <strong>v1.8.0</strong><br>
+    ・iPhone .kmz.zip案内追加<br>
+    ・追加POI上限説明追加<br>
+    ・Buffers除外対応<br><br>
+
+    <strong>v1.7.9</strong><br>
+    ・活動範囲ポリゴン表示<br>
+    ・レイヤー判定改善<br><br>
+
+    <button onclick="toggleVersionHistory()">閉じる</button>
+  </div>
+</div>
 </body>
 </html>
