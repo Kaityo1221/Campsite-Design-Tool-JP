@@ -1,4 +1,5 @@
 window._densityAreas = [];
+let adminReviewMapInstance = null;
 function escapeAdminHtml(text) {
   return String(text || "")
     .replace(/&/g, "&amp;")
@@ -981,7 +982,44 @@ const renderReviewCheckRow = (
       )
 }
       </div>
+      <div class="distance-warning" style="
+        margin-top:14px;
+        border:1px solid rgba(56,189,248,0.38);
+        background:rgba(14,165,233,0.08);
+      ">
+        <strong style="
+          color:#7dd3fc;
+          font-size:18px;
+        ">
+          管理者レビュー地図
+        </strong>
 
+        <div style="
+  margin-top:8px;
+  padding:10px 12px;
+  border-radius:10px;
+  background:rgba(15,23,42,0.48);
+  border:1px solid rgba(148,163,184,0.18);
+  color:#cbd5e1;
+  font-size:12px;
+  line-height:1.75;
+">
+  ※右上のレイヤーボタンから、地理院航空写真とOpenStreetMapを切り替えられます。<br>
+  ※黄色い点線は、30〜40mの調整可能距離で、追加POIの近接が1件だけの場合に表示する参考方向です。<br>
+  ※複数のPOIと近接している場合は方向を表示しません。Niantic側の正確なPOIデータをもとに調整してください。
+</div>
+
+        <div
+          id="adminReviewMap"
+          style="
+            width:100%;
+            height:460px;
+            margin-top:12px;
+            border-radius:12px;
+            overflow:hidden;
+          "
+        ></div>
+      </div>
       <div class="distance-warning" style="
         margin-top:14px;
         border:1px solid rgba(239,68,68,0.38);
@@ -1028,6 +1066,12 @@ const renderReviewCheckRow = (
       </div>
     `;
 
+   renderAdminReviewBaseMap(
+  usablePoints,
+  under30Pairs,
+  adjustablePairs
+);
+
   } catch (error) {
     console.error(error);
 
@@ -1038,6 +1082,578 @@ const renderReviewCheckRow = (
       </div>
     `;
   }
+}
+
+function renderAdminReviewBaseMap(
+  points = [],
+  under30Pairs = [],
+  adjustablePairs = []
+) {
+  const mapElement =
+    document.getElementById("adminReviewMap");
+
+  if (!mapElement) {
+    return;
+  }
+
+  if (typeof L === "undefined") {
+    console.error(
+      "Leafletが読み込まれていません"
+    );
+
+    mapElement.innerHTML = `
+      <div style="
+        padding:16px;
+        color:#fecaca;
+      ">
+        地図ライブラリを読み込めませんでした。
+      </div>
+    `;
+
+    return;
+  }
+
+  if (adminReviewMapInstance) {
+    adminReviewMapInstance.remove();
+    adminReviewMapInstance = null;
+  }
+
+  adminReviewMapInstance =
+    L.map("adminReviewMap", {
+      zoomControl: true
+    });
+
+  const adminPhotoLayer =
+    L.tileLayer(
+      "https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg",
+      {
+        attribution:
+          '<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener noreferrer">地理院タイル</a>',
+        maxZoom: 18
+      }
+    );
+
+  const adminOsmLayer =
+    L.tileLayer(
+      "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+      {
+        attribution:
+          '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors',
+        maxZoom: 19
+      }
+    );
+
+adminOsmLayer.addTo(
+  adminReviewMapInstance
+);
+
+  const existingPoiLayer =
+  L.layerGroup().addTo(
+    adminReviewMapInstance
+  );
+
+const addedPoiLayer =
+  L.layerGroup().addTo(
+    adminReviewMapInstance
+  );
+
+const dangerDistanceLayer =
+  L.layerGroup().addTo(
+    adminReviewMapInstance
+  );
+
+const cautionDistanceLayer =
+  L.layerGroup().addTo(
+    adminReviewMapInstance
+  );
+const adviceDirectionLayer =
+  L.layerGroup().addTo(
+    adminReviewMapInstance
+  );
+L.control.layers(
+  {
+    "OpenStreetMap":
+      adminOsmLayer,
+
+    "地理院航空写真":
+      adminPhotoLayer
+  },
+  {
+    "🔵 既存POI":
+      existingPoiLayer,
+
+    "🟣 追加POI":
+      addedPoiLayer,
+
+    "🔴 30m未満":
+      dangerDistanceLayer,
+
+    "🟠 30〜40m":
+      cautionDistanceLayer,
+
+    "🟡 参考調整方向":
+      adviceDirectionLayer
+  },
+  {
+    collapsed: true
+  }
+).addTo(
+  adminReviewMapInstance
+);
+
+const markerBounds = [];
+
+points.forEach(point => {
+  const lat =
+    Number(point.lat);
+
+  const lng =
+    Number(point.lng);
+
+  if (
+    !Number.isFinite(lat) ||
+    !Number.isFinite(lng)
+  ) {
+    return;
+  }
+
+  const info =
+    getAdminLayerInfo(
+      point.layer || ""
+    );
+
+  const markerColor =
+    info.isAdd
+      ? "#a855f7"
+      : "#3b82f6";
+
+  const marker =
+    L.circleMarker(
+      [lat, lng],
+      {
+        radius:
+          info.isAdd ? 7 : 5,
+
+        color:
+          markerColor,
+
+        fillColor:
+          markerColor,
+
+        fillOpacity:
+          info.isAdd ? 0.92 : 0.72,
+
+        weight: 2
+      }
+    );
+
+  marker.bindPopup(`
+    <strong>
+      ${escapeAdminHtml(
+        point.name || "名称なし"
+      )}
+    </strong><br>
+
+    ${escapeAdminHtml(
+      point.layer || "レイヤー不明"
+    )}
+  `);
+
+  if (info.isAdd) {
+    marker.addTo(
+      addedPoiLayer
+    );
+  } else {
+    marker.addTo(
+      existingPoiLayer
+    );
+  }
+
+  markerBounds.push(
+    [lat, lng]
+  );
+});
+
+const addDistanceLines = (
+  pairs,
+  layer,
+  color
+) => {
+  pairs.forEach(pair => {
+    const aLat =
+      Number(pair.a.lat);
+
+    const aLng =
+      Number(pair.a.lng);
+
+    const bLat =
+      Number(pair.b.lat);
+
+    const bLng =
+      Number(pair.b.lng);
+
+    if (
+      !Number.isFinite(aLat) ||
+      !Number.isFinite(aLng) ||
+      !Number.isFinite(bLat) ||
+      !Number.isFinite(bLng)
+    ) {
+      return;
+    }
+
+    const line =
+      L.polyline(
+        [
+          [aLat, aLng],
+          [bLat, bLng]
+        ],
+        {
+          color,
+          weight: 4,
+          opacity: 0.84,
+          dashArray: "8 6"
+        }
+      );
+
+    line.bindPopup(`
+      <strong>
+        ${pair.distance.toFixed(1)}m
+      </strong><br>
+
+      ${escapeAdminHtml(
+        pair.a.name || "名称なし"
+      )}<br>
+
+      × ${escapeAdminHtml(
+        pair.b.name || "名称なし"
+      )}
+    `);
+
+    line.addTo(layer);
+  });
+};
+
+addDistanceLines(
+  under30Pairs,
+  dangerDistanceLayer,
+  "#ef4444"
+);
+
+addDistanceLines(
+  adjustablePairs,
+  cautionDistanceLayer,
+  "#f97316"
+);
+
+/*
+  単一近接の追加POIだけに、
+  参考となる調整方向を黄色い点線で表示する。
+
+  ・対象は30〜40mのみ
+  ・相手が既存POIの場合のみ
+  ・追加POIが複数のPOIと近接する場合は表示しない
+  ・40mぴったりではなく、概算で2mの余裕を持たせる
+*/
+
+const getAdminPointKey = point => {
+  return [
+    point.layer || "",
+    point.name || "",
+    Number(point.lat).toFixed(7),
+    Number(point.lng).toFixed(7)
+  ].join("::");
+};
+
+const proximityCountByAddedPoi =
+  new Map();
+
+[
+  ...under30Pairs,
+  ...adjustablePairs
+].forEach(pair => {
+  const aInfo =
+    getAdminLayerInfo(
+      pair.a.layer || ""
+    );
+
+  const bInfo =
+    getAdminLayerInfo(
+      pair.b.layer || ""
+    );
+
+  if (aInfo.isAdd) {
+    const key =
+      getAdminPointKey(pair.a);
+
+    proximityCountByAddedPoi.set(
+      key,
+      (
+        proximityCountByAddedPoi
+          .get(key) || 0
+      ) + 1
+    );
+  }
+
+  if (bInfo.isAdd) {
+    const key =
+      getAdminPointKey(pair.b);
+
+    proximityCountByAddedPoi.set(
+      key,
+      (
+        proximityCountByAddedPoi
+          .get(key) || 0
+      ) + 1
+    );
+  }
+});
+
+const calculateAdjustedPoint = (
+  fixedPoint,
+  movingPoint,
+  moveMeters
+) => {
+  const fixedLat =
+    Number(fixedPoint.lat);
+
+  const fixedLng =
+    Number(fixedPoint.lng);
+
+  const movingLat =
+    Number(movingPoint.lat);
+
+  const movingLng =
+    Number(movingPoint.lng);
+
+  if (
+    !Number.isFinite(fixedLat) ||
+    !Number.isFinite(fixedLng) ||
+    !Number.isFinite(movingLat) ||
+    !Number.isFinite(movingLng)
+  ) {
+    return null;
+  }
+
+  const meanLat =
+    (fixedLat + movingLat) / 2;
+
+  const metersPerLat =
+    111320;
+
+  const metersPerLng =
+    111320 *
+    Math.cos(
+      meanLat * Math.PI / 180
+    );
+
+  const dx =
+    (movingLng - fixedLng) *
+    metersPerLng;
+
+  const dy =
+    (movingLat - fixedLat) *
+    metersPerLat;
+
+  const length =
+    Math.hypot(dx, dy);
+
+  if (!length) {
+    return null;
+  }
+
+  const unitX =
+    dx / length;
+
+  const unitY =
+    dy / length;
+
+  return {
+    lat:
+      movingLat +
+      (
+        unitY *
+        moveMeters
+      ) /
+      metersPerLat,
+
+    lng:
+      movingLng +
+      (
+        unitX *
+        moveMeters
+      ) /
+      metersPerLng
+  };
+};
+
+adjustablePairs.forEach(pair => {
+  const aInfo =
+    getAdminLayerInfo(
+      pair.a.layer || ""
+    );
+
+  const bInfo =
+    getAdminLayerInfo(
+      pair.b.layer || ""
+    );
+
+  let movingPoint = null;
+  let fixedPoint = null;
+
+  /*
+    追加POIと既存POIの組み合わせだけ対象にする。
+    追加POI同士の組み合わせには方向を表示しない。
+  */
+  if (
+    aInfo.isAdd &&
+    bInfo.isExisting
+  ) {
+    movingPoint = pair.a;
+    fixedPoint = pair.b;
+  } else if (
+    bInfo.isAdd &&
+    aInfo.isExisting
+  ) {
+    movingPoint = pair.b;
+    fixedPoint = pair.a;
+  } else {
+    return;
+  }
+
+  const movingPointKey =
+    getAdminPointKey(
+      movingPoint
+    );
+
+  /*
+    同じ追加POIに複数の近接がある場合は、
+    Ryota側で判断してもらう。
+  */
+  if (
+    proximityCountByAddedPoi
+      .get(movingPointKey) !== 1
+  ) {
+    return;
+  }
+
+  const remainingMeters =
+    Math.max(
+      0,
+      40 - pair.distance
+    );
+
+  /*
+    Wayfarer Map由来の概算座標なので、
+    40mぴったりではなく2m余裕を持たせる。
+  */
+  const suggestedMoveMeters =
+    Math.ceil(
+      (
+        remainingMeters + 2
+      ) * 10
+    ) / 10;
+
+  const adjustedPoint =
+    calculateAdjustedPoint(
+      fixedPoint,
+      movingPoint,
+      suggestedMoveMeters
+    );
+
+  if (!adjustedPoint) {
+    return;
+  }
+
+  const advicePopupHtml = `
+    <strong style="
+      color:#eab308;
+    ">
+      △ 参考：調整候補方向
+    </strong><br><br>
+
+    ${escapeAdminHtml(
+      movingPoint.name ||
+      "名称なし"
+    )}<br>
+
+    現在距離：
+    ${pair.distance.toFixed(1)}m<br>
+
+    40m確保まで：
+    約${remainingMeters.toFixed(1)}m<br>
+
+    参考移動量：
+    約${suggestedMoveMeters.toFixed(1)}m<br><br>
+
+    <span style="
+      font-size:12px;
+      color:#64748b;
+    ">
+      ※Wayfarer Map由来の概算です。<br>
+      最終調整はNiantic側の正確な
+      POIデータで確認してください。
+    </span>
+  `;
+
+  L.polyline(
+    [
+      [
+        Number(movingPoint.lat),
+        Number(movingPoint.lng)
+      ],
+      [
+        adjustedPoint.lat,
+        adjustedPoint.lng
+      ]
+    ],
+    {
+      color: "#eab308",
+      weight: 4,
+      opacity: 0.95,
+      dashArray: "4 7"
+    }
+  )
+    .bindPopup(
+      advicePopupHtml
+    )
+    .addTo(
+      adviceDirectionLayer
+    );
+
+  L.circleMarker(
+    [
+      adjustedPoint.lat,
+      adjustedPoint.lng
+    ],
+    {
+      radius: 7,
+      color: "#eab308",
+      fillColor: "#facc15",
+      fillOpacity: 0.42,
+      weight: 3
+    }
+  )
+    .bindPopup(
+      advicePopupHtml
+    )
+    .addTo(
+      adviceDirectionLayer
+    );
+});
+if (markerBounds.length > 0) {
+  adminReviewMapInstance.fitBounds(
+    markerBounds,
+    {
+      padding: [28, 28],
+      maxZoom: 18
+    }
+  );
+}
+
+  setTimeout(() => {
+    adminReviewMapInstance
+      .invalidateSize();
+  }, 0);
 }
 async function runAdminFileCheck() {
   const input = document.getElementById("adminCheckFile");
