@@ -1117,6 +1117,7 @@ async function runDistanceCheck() {
   }
 
   const warnings = [];
+const duplicatePois = [];
 
   for (let i = 0; i < points.length; i++) {
     for (let j = i + 1; j < points.length; j++) {
@@ -1139,7 +1140,13 @@ if (
   continue;
 }
       const distance = getDistanceMeters(a, b);
-
+if (distance < 1) {
+  duplicatePois.push({
+    a,
+    b,
+    distance
+  });
+}
       if (distance < 40) {
         warnings.push({
           a,
