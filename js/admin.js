@@ -1382,18 +1382,17 @@ const addDistanceLines = (
     }
 
     const line =
-      L.polyline(
-        [
-          [aLat, aLng],
-          [bLat, bLng]
-        ],
-        {
-          color,
-          weight: 4,
-          opacity: 0.84,
-          dashArray: "8 6"
-        }
-      );
+  L.polyline(
+    [
+      [aLat, aLng],
+      [bLat, bLng]
+    ],
+    {
+      color,
+      weight: 4,
+      opacity: 0.9
+    }
+  );
 
     line.bindPopup(`
       <strong>
