@@ -1100,7 +1100,6 @@ ${referenceMessages.length ? referenceMessages.map(m => "・" + m).join("\n") : 
           共有文をコピー
         </button>
       </div>
-      </div>
       
       
       <div class="distance-warning" style="
