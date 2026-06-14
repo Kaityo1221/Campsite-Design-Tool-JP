@@ -454,7 +454,12 @@ if (existingReferencePairs.length > 0) {
       statusIcon = "⚠";
       statusColor = "#f97316";
     }
-
+    const nextActionText =
+      criticalMessages.length > 0
+        ? "赤い要修正項目を先に確認し、活動範囲ポリゴン・30m未満近接・POI上限超過を優先して直してください。"
+        : cautionMessages.length > 0
+          ? "提出は可能そうですが、30〜40mの調整距離やダミーポイントを確認してください。"
+          : "大きな問題は見つかりません。提出前の最終確認として、地図と活動範囲を確認してください。";
     const renderMetric = (
       label,
       value
@@ -910,7 +915,7 @@ ${referenceMessages.length ? referenceMessages.map(m => "・" + m).join("\n") : 
     window._adminReviewSummaryText =
       reviewShareText;
     result.innerHTML = `
-      <div class="distance-warning" style="
+            <div class="distance-warning" style="
         border:1px solid ${statusColor};
         background:rgba(15,23,42,0.72);
       ">
@@ -927,6 +932,31 @@ ${referenceMessages.length ? referenceMessages.map(m => "・" + m).join("\n") : 
           font-size:13px;
         ">
           ${escapeAdminHtml(file.name)}
+        </div>
+
+        <div style="
+          margin-top:12px;
+          padding:10px 12px;
+          border-radius:10px;
+          background:rgba(15,23,42,0.58);
+          border:1px solid rgba(148,163,184,0.20);
+        ">
+          <strong style="
+            display:block;
+            margin-bottom:4px;
+            color:#e2e8f0;
+            font-size:14px;
+          ">
+            次にやること
+          </strong>
+
+          <div style="
+            color:#cbd5e1;
+            font-size:13px;
+            line-height:1.7;
+          ">
+            ${escapeAdminHtml(nextActionText)}
+          </div>
         </div>
       </div>
 
