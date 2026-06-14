@@ -148,6 +148,7 @@ async function runAdminDashboardReview() {
 
     const pointsByLayer =
       extracted.pointsByLayer || {};
+      
 const polygons =
   extracted.polygons || [];
     const allPoints = [];
@@ -1204,6 +1205,7 @@ const adviceDirectionLayer =
   L.layerGroup().addTo(
     adminReviewMapInstance
   );
+
   const activityPolygonLayer =
   L.layerGroup().addTo(
     adminReviewMapInstance
@@ -1231,6 +1233,8 @@ L.control.layers(
 
     "🟡 参考調整方向":
   adviceDirectionLayer,
+  
+    
 
 "🟢 活動範囲":
   activityPolygonLayer
