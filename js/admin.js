@@ -891,6 +891,9 @@ const renderReviewCheckRow = (
 
 総合判定：${status}
 
+次にやること：
+${nextActionText}
+
 ファイル名：
 ${file.name}
 
