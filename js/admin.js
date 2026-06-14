@@ -1648,7 +1648,7 @@ adjustablePairs.forEach(pair => {
     <strong style="
       color:#eab308;
     ">
-      △ 参考：調整候補方向
+      △ 参考：調整方向
     </strong><br><br>
 
     ${escapeAdminHtml(
