@@ -1008,38 +1008,50 @@ const renderReviewCheckRow = (
 ">
   ※右上のレイヤーボタンから、地理院航空写真とOpenStreetMapを切り替えられます。<br>
 
-  ※黄色い点線は、
-  <strong style="
-    color:#fde68a;
-    text-decoration:underline;
-    text-underline-offset:3px;
-  ">
-    30〜40mの調整可能距離
-  </strong>
-  で、
-  <strong style="
-    color:#fde68a;
-    text-decoration:underline;
-    text-underline-offset:3px;
-  ">
-    追加POIの近接が1件だけの場合
-  </strong>
-  に表示する調整方向です。<br>
+※
+<strong style="
+  color:#fca5a5;
+  text-decoration:underline;
+  text-underline-offset:3px;
+">
+  赤い実線
+</strong>
+は30m未満の近接です。提出前に優先して修正してください。<br>
 
-  ※
-  <strong style="
-    color:#fca5a5;
-    text-decoration:underline;
-    text-underline-offset:3px;
-  ">
-    複数のPOIと近接している場合は方向を表示しません。
-  </strong>
-  <strong style="
-    color:#93c5fd;
-  ">
-    Niantic側の正確なPOIデータ
-  </strong>
-  をもとに調整してください。
+※
+<strong style="
+  color:#67e8f9;
+  text-decoration:underline;
+  text-underline-offset:3px;
+">
+  水色の実線
+</strong>
+は30〜40mの調整可能距離です。配置調整の候補として確認してください。<br>
+
+※
+<strong style="
+  color:#fde68a;
+  text-decoration:underline;
+  text-underline-offset:3px;
+">
+  黄色い点線
+</strong>
+は、追加POIの近接が1件だけの場合に表示する調整方向です。<br>
+
+※
+<strong style="
+  color:#fca5a5;
+  text-decoration:underline;
+  text-underline-offset:3px;
+">
+  複数のPOIと近接している場合は方向を表示しません。
+</strong>
+<strong style="
+  color:#93c5fd;
+">
+  Niantic側の正確なPOIデータ
+</strong>
+をもとに調整してください。。
 </div>
 
         <div
