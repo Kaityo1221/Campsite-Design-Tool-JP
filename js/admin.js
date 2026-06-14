@@ -1169,7 +1169,7 @@ ${referenceMessages.length ? referenceMessages.map(m => "・" + m).join("\n") : 
 ">
   Niantic側の正確なPOIデータ
 </strong>
-をもとに調整してください。。
+をもとに調整してください。
 </div>
 
         <div
