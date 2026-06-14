@@ -1371,7 +1371,7 @@ const addDistanceLines = (
   layer,
   color,
   weight = 4
-) => {{
+) => {
   pairs.forEach(pair => {
     const aLat =
       Number(pair.a.lat);
