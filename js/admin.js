@@ -881,7 +881,34 @@ const renderReviewCheckRow = (
         `)
         .join("");
     };
+    const reviewShareText = `
+【Campsite提出KMZレビュー】
 
+総合判定：${status}
+
+ファイル名：
+${file.name}
+
+確認結果：
+・活動範囲ポリゴン：${hasPolygon ? "あり" : "なし"}
+・追加POI：${addedPoints.length}件
+・30m未満の近接：${under30Pairs.length}件
+・30〜40mの調整距離：${adjustablePairs.length}件
+・重複POI：${duplicateInfo.duplicateCoordGroups.length}グループ
+・追加POI上限：${addedPoiLimitOk ? "問題なし" : "超過あり"}
+
+要修正：
+${criticalMessages.length ? criticalMessages.map(m => "・" + m).join("\n") : "・特になし"}
+
+要確認：
+${cautionMessages.length ? cautionMessages.map(m => "・" + m).join("\n") : "・特になし"}
+
+参考情報：
+${referenceMessages.length ? referenceMessages.map(m => "・" + m).join("\n") : "・特になし"}
+`.trim();
+
+    window._adminReviewSummaryText =
+      reviewShareText;
     result.innerHTML = `
       <div class="distance-warning" style="
         border:1px solid ${statusColor};
