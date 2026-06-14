@@ -1228,7 +1228,7 @@ L.control.layers(
     '<span style="display:inline-block;width:28px;border-top:4px solid #ef4444;vertical-align:middle;margin-right:6px;"></span>30m未満':
   dangerDistanceLayer,
 
-'<span style="display:inline-block;width:28px;border-top:4px solid #f97316;vertical-align:middle;margin-right:6px;"></span>30〜40m':
+'<span style="display:inline-block;width:28px;border-top:4px solid #06b6d4;vertical-align:middle;margin-right:6px;"></span>30〜40m':
   cautionDistanceLayer,
 
 '<span style="display:inline-block;width:28px;border-top:4px dashed #eab308;vertical-align:middle;margin-right:6px;"></span>調整方向':
@@ -1421,7 +1421,7 @@ addDistanceLines(
 addDistanceLines(
   adjustablePairs,
   cautionDistanceLayer,
-  "#f97316"
+  "#06b6d4"
 );
 
 /*
