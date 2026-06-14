@@ -1369,8 +1369,9 @@ points.forEach(point => {
 const addDistanceLines = (
   pairs,
   layer,
-  color
-) => {
+  color,
+  weight = 4
+) => {{
   pairs.forEach(pair => {
     const aLat =
       Number(pair.a.lat);
@@ -1400,10 +1401,10 @@ const addDistanceLines = (
       [bLat, bLng]
     ],
     {
-      color,
-      weight: 4,
-      opacity: 0.9
-    }
+  color,
+  weight,
+  opacity: 0.9
+}
   );
 
     line.bindPopup(`
@@ -1427,13 +1428,15 @@ const addDistanceLines = (
 addDistanceLines(
   under30Pairs,
   dangerDistanceLayer,
-  "#ef4444"
+  "#ef4444",
+  6
 );
 
 addDistanceLines(
   adjustablePairs,
   cautionDistanceLayer,
-  "#06b6d4"
+  "#06b6d4",
+  3
 );
 
 /*
