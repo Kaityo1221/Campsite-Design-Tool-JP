@@ -8,6 +8,46 @@ function escapeAdminHtml(text) {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
 }
+function copyAdminReviewSummary() {
+  const text =
+    window._adminReviewSummaryText || "";
+
+  if (!text.trim()) {
+    alert("コピーするレビュー文がありません");
+    return;
+  }
+
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text)
+      .then(() => {
+        alert("レビュー共有文をコピーしました");
+      })
+      .catch(() => {
+        fallbackCopyAdminReviewSummary();
+      });
+
+    return;
+  }
+
+  fallbackCopyAdminReviewSummary();
+}
+
+function fallbackCopyAdminReviewSummary() {
+  const textarea =
+    document.getElementById("adminReviewShareText");
+
+  if (!textarea) {
+    alert("コピーできませんでした");
+    return;
+  }
+
+  textarea.focus();
+  textarea.select();
+
+  document.execCommand("copy");
+
+  alert("レビュー共有文をコピーしました");
+}
 
 function getAdminLayerInfo(layerName) {
   const name = layerName || "";
@@ -148,6 +188,7 @@ async function runAdminDashboardReview() {
 
     const pointsByLayer =
       extracted.pointsByLayer || {};
+      
 const polygons =
   extracted.polygons || [];
     const allPoints = [];
@@ -840,7 +881,34 @@ const renderReviewCheckRow = (
         `)
         .join("");
     };
+    const reviewShareText = `
+【Campsite提出KMZレビュー】
 
+総合判定：${status}
+
+ファイル名：
+${file.name}
+
+確認結果：
+・活動範囲ポリゴン：${hasPolygon ? "あり" : "なし"}
+・追加POI：${addedPoints.length}件
+・30m未満の近接：${under30Pairs.length}件
+・30〜40mの調整距離：${adjustablePairs.length}件
+・重複POI：${duplicateInfo.duplicateCoordGroups.length}グループ
+・追加POI上限：${addedPoiLimitOk ? "問題なし" : "超過あり"}
+
+要修正：
+${criticalMessages.length ? criticalMessages.map(m => "・" + m).join("\n") : "・特になし"}
+
+要確認：
+${cautionMessages.length ? cautionMessages.map(m => "・" + m).join("\n") : "・特になし"}
+
+参考情報：
+${referenceMessages.length ? referenceMessages.map(m => "・" + m).join("\n") : "・特になし"}
+`.trim();
+
+    window._adminReviewSummaryText =
+      reviewShareText;
     result.innerHTML = `
       <div class="distance-warning" style="
         border:1px solid ${statusColor};
@@ -983,6 +1051,57 @@ const renderReviewCheckRow = (
       )
 }
       </div>
+
+      <div class="distance-warning" style="
+        margin-top:14px;
+        border:1px solid rgba(147,197,253,0.38);
+        background:rgba(30,64,175,0.12);
+      ">
+        <strong style="
+          color:#bfdbfe;
+          font-size:18px;
+        ">
+          Ryota共有用メモ
+        </strong>
+
+        <p style="
+          margin-top:8px;
+          color:#cbd5e1;
+          font-size:12px;
+          line-height:1.7;
+        ">
+          レビュー結果をそのまま共有できる短文です。
+        </p>
+
+        <textarea
+          id="adminReviewShareText"
+          readonly
+          style="
+            width:100%;
+            min-height:190px;
+            margin-top:10px;
+            padding:12px;
+            border-radius:10px;
+            border:1px solid rgba(148,163,184,0.30);
+            background:rgba(15,23,42,0.85);
+            color:#e5e7eb;
+            font-size:13px;
+            line-height:1.65;
+            resize:vertical;
+          "
+        >${escapeAdminHtml(reviewShareText)}</textarea>
+
+        <button
+          type="button"
+          class="generate"
+          onclick="copyAdminReviewSummary()"
+          style="margin-top:10px;"
+        >
+          共有文をコピー
+        </button>
+      </div>
+      
+      
       <div class="distance-warning" style="
         margin-top:14px;
         border:1px solid rgba(56,189,248,0.38);
@@ -1007,38 +1126,50 @@ const renderReviewCheckRow = (
 ">
   ※右上のレイヤーボタンから、地理院航空写真とOpenStreetMapを切り替えられます。<br>
 
-  ※黄色い点線は、
-  <strong style="
-    color:#fde68a;
-    text-decoration:underline;
-    text-underline-offset:3px;
-  ">
-    30〜40mの調整可能距離
-  </strong>
-  で、
-  <strong style="
-    color:#fde68a;
-    text-decoration:underline;
-    text-underline-offset:3px;
-  ">
-    追加POIの近接が1件だけの場合
-  </strong>
-  に表示する参考方向です。<br>
+※
+<strong style="
+  color:#fca5a5;
+  text-decoration:underline;
+  text-underline-offset:3px;
+">
+  赤い実線
+</strong>
+は30m未満の近接です。提出前に優先して修正してください。<br>
 
-  ※
-  <strong style="
-    color:#fca5a5;
-    text-decoration:underline;
-    text-underline-offset:3px;
-  ">
-    複数のPOIと近接している場合は方向を表示しません。
-  </strong>
-  <strong style="
-    color:#93c5fd;
-  ">
-    Niantic側の正確なPOIデータ
-  </strong>
-  をもとに調整してください。
+※
+<strong style="
+  color:#67e8f9;
+  text-decoration:underline;
+  text-underline-offset:3px;
+">
+  水色の実線
+</strong>
+は30〜40mの調整可能距離です。配置調整の候補として確認してください。<br>
+
+※
+<strong style="
+  color:#fde68a;
+  text-decoration:underline;
+  text-underline-offset:3px;
+">
+  黄色い点線
+</strong>
+は、追加POIの近接が1件だけの場合に表示する調整方向です。<br>
+
+※
+<strong style="
+  color:#fca5a5;
+  text-decoration:underline;
+  text-underline-offset:3px;
+">
+  複数のPOIと近接している場合は方向を表示しません。
+</strong>
+<strong style="
+  color:#93c5fd;
+">
+  Niantic側の正確なPOIデータ
+</strong>
+をもとに調整してください。
 </div>
 
         <div
@@ -1051,6 +1182,71 @@ const renderReviewCheckRow = (
             overflow:hidden;
           "
         ></div>
+        <div style="
+  margin-top:10px;
+  padding:10px 12px;
+  border-radius:10px;
+  background:rgba(15,23,42,0.58);
+  border:1px solid rgba(148,163,184,0.20);
+  color:#cbd5e1;
+  font-size:12px;
+  line-height:1.8;
+">
+  <strong style="
+    display:block;
+    margin-bottom:6px;
+    color:#e2e8f0;
+    font-size:13px;
+  ">
+    地図凡例
+  </strong>
+
+  <div>
+    <span style="
+      display:inline-block;
+      width:34px;
+      border-top:6px solid #ef4444;
+      vertical-align:middle;
+      margin-right:8px;
+    "></span>
+    30m未満：最優先で修正
+  </div>
+
+  <div>
+    <span style="
+      display:inline-block;
+      width:34px;
+      border-top:3px solid #06b6d4;
+      vertical-align:middle;
+      margin-right:8px;
+    "></span>
+    30〜40m：調整候補
+  </div>
+
+  <div>
+    <span style="
+      display:inline-block;
+      width:34px;
+      border-top:4px dashed #eab308;
+      vertical-align:middle;
+      margin-right:8px;
+    "></span>
+    調整方向：追加POIの参考移動方向
+  </div>
+
+  <div>
+    <span style="
+      display:inline-block;
+      width:18px;
+      height:12px;
+      border:2px solid #22c55e;
+      background:rgba(34,197,94,0.18);
+      vertical-align:middle;
+      margin-right:16px;
+    "></span>
+    活動範囲：実際に歩く・遊ぶエリア
+  </div>
+</div>
       </div>
       <div class="distance-warning" style="
         margin-top:14px;
@@ -1204,6 +1400,7 @@ const adviceDirectionLayer =
   L.layerGroup().addTo(
     adminReviewMapInstance
   );
+
   const activityPolygonLayer =
   L.layerGroup().addTo(
     adminReviewMapInstance
@@ -1223,14 +1420,16 @@ L.control.layers(
     "🟣 追加POI":
       addedPoiLayer,
 
-    "🔴 30m未満":
-      dangerDistanceLayer,
+    '<span style="display:inline-block;width:28px;border-top:4px solid #ef4444;vertical-align:middle;margin-right:6px;"></span>30m未満':
+  dangerDistanceLayer,
 
-    "🟠 30〜40m":
-      cautionDistanceLayer,
+'<span style="display:inline-block;width:28px;border-top:4px solid #06b6d4;vertical-align:middle;margin-right:6px;"></span>30〜40m':
+  cautionDistanceLayer,
 
-    "🟡 参考調整方向":
+'<span style="display:inline-block;width:28px;border-top:4px dashed #eab308;vertical-align:middle;margin-right:6px;"></span>調整方向':
   adviceDirectionLayer,
+  
+    
 
 "🟢 活動範囲":
   activityPolygonLayer
@@ -1353,7 +1552,8 @@ points.forEach(point => {
 const addDistanceLines = (
   pairs,
   layer,
-  color
+  color,
+  weight = 4
 ) => {
   pairs.forEach(pair => {
     const aLat =
@@ -1378,18 +1578,17 @@ const addDistanceLines = (
     }
 
     const line =
-      L.polyline(
-        [
-          [aLat, aLng],
-          [bLat, bLng]
-        ],
-        {
-          color,
-          weight: 4,
-          opacity: 0.84,
-          dashArray: "8 6"
-        }
-      );
+  L.polyline(
+    [
+      [aLat, aLng],
+      [bLat, bLng]
+    ],
+    {
+  color,
+  weight,
+  opacity: 0.9
+}
+  );
 
     line.bindPopup(`
       <strong>
@@ -1412,13 +1611,15 @@ const addDistanceLines = (
 addDistanceLines(
   under30Pairs,
   dangerDistanceLayer,
-  "#ef4444"
+  "#ef4444",
+  6
 );
 
 addDistanceLines(
   adjustablePairs,
   cautionDistanceLayer,
-  "#f97316"
+  "#06b6d4",
+  3
 );
 
 /*
@@ -1644,7 +1845,7 @@ adjustablePairs.forEach(pair => {
     <strong style="
       color:#eab308;
     ">
-      △ 参考：調整候補方向
+      △ 調整方向
     </strong><br><br>
 
     ${escapeAdminHtml(
