@@ -1050,6 +1050,8 @@ ${referenceMessages.length ? referenceMessages.map(m => "・" + m).join("\n") : 
         "caution"
       )
 }
+      </div>
+
       <div class="distance-warning" style="
         margin-top:14px;
         border:1px solid rgba(147,197,253,0.38);
@@ -1099,6 +1101,8 @@ ${referenceMessages.length ? referenceMessages.map(m => "・" + m).join("\n") : 
         </button>
       </div>
       </div>
+      
+      
       <div class="distance-warning" style="
         margin-top:14px;
         border:1px solid rgba(56,189,248,0.38);
