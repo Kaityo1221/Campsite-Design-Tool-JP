@@ -1024,7 +1024,7 @@ const renderReviewCheckRow = (
   ">
     追加POIの近接が1件だけの場合
   </strong>
-  に表示する参考方向です。<br>
+  に表示する調整方向です。<br>
 
   ※
   <strong style="
@@ -1225,13 +1225,13 @@ L.control.layers(
     "🟣 追加POI":
       addedPoiLayer,
 
-    "🔴 30m未満":
-      dangerDistanceLayer,
+    '<span style="display:inline-block;width:28px;border-top:4px solid #ef4444;vertical-align:middle;margin-right:6px;"></span>30m未満':
+  dangerDistanceLayer,
 
-    "🟠 30〜40m":
-      cautionDistanceLayer,
+'<span style="display:inline-block;width:28px;border-top:4px solid #f97316;vertical-align:middle;margin-right:6px;"></span>30〜40m':
+  cautionDistanceLayer,
 
-    "🟡 参考調整方向":
+'<span style="display:inline-block;width:28px;border-top:4px dashed #eab308;vertical-align:middle;margin-right:6px;"></span>調整方向':
   adviceDirectionLayer,
   
     
