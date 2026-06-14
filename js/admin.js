@@ -455,11 +455,59 @@ if (existingReferencePairs.length > 0) {
       statusColor = "#f97316";
     }
     const nextActionText =
-      criticalMessages.length > 0
-        ? "赤い要修正項目を先に確認し、活動範囲ポリゴン・30m未満近接・POI上限超過を優先して直してください。"
-        : cautionMessages.length > 0
-          ? "提出は可能そうですが、30〜40mの調整距離やダミーポイントを確認してください。"
-          : "大きな問題は見つかりません。提出前の最終確認として、地図と活動範囲を確認してください。";
+  criticalMessages.length > 0
+    ? "赤い要修正項目を先に確認し、表示されているタグの内容を優先して直してください。"
+    : cautionMessages.length > 0
+      ? "提出は可能そうですが、30〜40mの調整距離やダミーポイントを確認してください。"
+      : "大きな問題は見つかりません。提出前の最終確認として、地図と活動範囲を確認してください。";
+              const nextActionItems = [];
+
+    if (!hasPolygon) {
+      nextActionItems.push("活動範囲ポリゴンを追加");
+    }
+
+    if (!addedPoiLimitOk) {
+      nextActionItems.push("追加POI上限を調整");
+    }
+
+    if (under30Pairs.length > 0) {
+      nextActionItems.push("30m未満の近接を修正");
+    }
+
+    if (
+      duplicateInfo
+        .duplicateCoordGroups
+        .length > 0
+    ) {
+      nextActionItems.push("重複POIを確認");
+    }
+
+    if (adjustablePairs.length > 0) {
+      nextActionItems.push("30〜40mを確認");
+    }
+
+    if (nextActionItems.length === 0) {
+      nextActionItems.push("地図と活動範囲を最終確認");
+    }
+
+    const nextActionItemsHtml =
+      nextActionItems
+        .map(item => `
+          <span style="
+            display:inline-block;
+            margin:6px 6px 0 0;
+            padding:5px 9px;
+            border-radius:999px;
+            background:rgba(59,130,246,0.14);
+            border:1px solid rgba(147,197,253,0.35);
+            color:#bfdbfe;
+            font-size:12px;
+            font-weight:bold;
+          ">
+            ${escapeAdminHtml(item)}
+          </span>
+        `)
+        .join("");
     const renderMetric = (
       label,
       value
@@ -959,6 +1007,11 @@ ${referenceMessages.length ? referenceMessages.map(m => "・" + m).join("\n") : 
             line-height:1.7;
           ">
             ${escapeAdminHtml(nextActionText)}
+          </div>
+                    <div style="
+            margin-top:8px;
+          ">
+            ${nextActionItemsHtml}
           </div>
         </div>
       </div>
