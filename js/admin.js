@@ -8,6 +8,46 @@ function escapeAdminHtml(text) {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
 }
+function copyAdminReviewSummary() {
+  const text =
+    window._adminReviewSummaryText || "";
+
+  if (!text.trim()) {
+    alert("コピーするレビュー文がありません");
+    return;
+  }
+
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text)
+      .then(() => {
+        alert("レビュー共有文をコピーしました");
+      })
+      .catch(() => {
+        fallbackCopyAdminReviewSummary();
+      });
+
+    return;
+  }
+
+  fallbackCopyAdminReviewSummary();
+}
+
+function fallbackCopyAdminReviewSummary() {
+  const textarea =
+    document.getElementById("adminReviewShareText");
+
+  if (!textarea) {
+    alert("コピーできませんでした");
+    return;
+  }
+
+  textarea.focus();
+  textarea.select();
+
+  document.execCommand("copy");
+
+  alert("レビュー共有文をコピーしました");
+}
 
 function getAdminLayerInfo(layerName) {
   const name = layerName || "";
@@ -983,6 +1023,54 @@ const renderReviewCheckRow = (
         "caution"
       )
 }
+      <div class="distance-warning" style="
+        margin-top:14px;
+        border:1px solid rgba(147,197,253,0.38);
+        background:rgba(30,64,175,0.12);
+      ">
+        <strong style="
+          color:#bfdbfe;
+          font-size:18px;
+        ">
+          Ryota共有用メモ
+        </strong>
+
+        <p style="
+          margin-top:8px;
+          color:#cbd5e1;
+          font-size:12px;
+          line-height:1.7;
+        ">
+          レビュー結果をそのまま共有できる短文です。
+        </p>
+
+        <textarea
+          id="adminReviewShareText"
+          readonly
+          style="
+            width:100%;
+            min-height:190px;
+            margin-top:10px;
+            padding:12px;
+            border-radius:10px;
+            border:1px solid rgba(148,163,184,0.30);
+            background:rgba(15,23,42,0.85);
+            color:#e5e7eb;
+            font-size:13px;
+            line-height:1.65;
+            resize:vertical;
+          "
+        >${escapeAdminHtml(reviewShareText)}</textarea>
+
+        <button
+          type="button"
+          class="generate"
+          onclick="copyAdminReviewSummary()"
+          style="margin-top:10px;"
+        >
+          共有文をコピー
+        </button>
+      </div>
       </div>
       <div class="distance-warning" style="
         margin-top:14px;
@@ -1064,6 +1152,71 @@ const renderReviewCheckRow = (
             overflow:hidden;
           "
         ></div>
+        <div style="
+  margin-top:10px;
+  padding:10px 12px;
+  border-radius:10px;
+  background:rgba(15,23,42,0.58);
+  border:1px solid rgba(148,163,184,0.20);
+  color:#cbd5e1;
+  font-size:12px;
+  line-height:1.8;
+">
+  <strong style="
+    display:block;
+    margin-bottom:6px;
+    color:#e2e8f0;
+    font-size:13px;
+  ">
+    地図凡例
+  </strong>
+
+  <div>
+    <span style="
+      display:inline-block;
+      width:34px;
+      border-top:6px solid #ef4444;
+      vertical-align:middle;
+      margin-right:8px;
+    "></span>
+    30m未満：最優先で修正
+  </div>
+
+  <div>
+    <span style="
+      display:inline-block;
+      width:34px;
+      border-top:3px solid #06b6d4;
+      vertical-align:middle;
+      margin-right:8px;
+    "></span>
+    30〜40m：調整候補
+  </div>
+
+  <div>
+    <span style="
+      display:inline-block;
+      width:34px;
+      border-top:4px dashed #eab308;
+      vertical-align:middle;
+      margin-right:8px;
+    "></span>
+    調整方向：追加POIの参考移動方向
+  </div>
+
+  <div>
+    <span style="
+      display:inline-block;
+      width:18px;
+      height:12px;
+      border:2px solid #22c55e;
+      background:rgba(34,197,94,0.18);
+      vertical-align:middle;
+      margin-right:16px;
+    "></span>
+    活動範囲：実際に歩く・遊ぶエリア
+  </div>
+</div>
       </div>
       <div class="distance-warning" style="
         margin-top:14px;
