@@ -454,34 +454,124 @@ if (existingReferencePairs.length > 0) {
       statusIcon = "⚠";
       statusColor = "#f97316";
     }
+    const nextActionText =
+  criticalMessages.length > 0
+    ? "赤い要修正項目を先に確認し、表示されているタグの内容を優先して直してください。"
+    : cautionMessages.length > 0
+      ? "提出は可能そうですが、30〜40mの調整距離やダミーポイントを確認してください。"
+      : "大きな問題は見つかりません。提出前の最終確認として、地図と活動範囲を確認してください。";
+              const nextActionItems = [];
 
+    if (!hasPolygon) {
+      nextActionItems.push("活動範囲ポリゴンを追加");
+    }
+
+    if (!addedPoiLimitOk) {
+      nextActionItems.push("追加POI上限を調整");
+    }
+
+    if (under30Pairs.length > 0) {
+      nextActionItems.push("30m未満の近接を修正");
+    }
+
+    if (
+      duplicateInfo
+        .duplicateCoordGroups
+        .length > 0
+    ) {
+      nextActionItems.push("重複POIを確認");
+    }
+
+    if (adjustablePairs.length > 0) {
+      nextActionItems.push("30〜40mを確認");
+    }
+
+    if (nextActionItems.length === 0) {
+      nextActionItems.push("地図と活動範囲を最終確認");
+    }
+
+    const nextActionItemsHtml =
+      nextActionItems
+        .map(item => `
+          <span style="
+            display:inline-block;
+            margin:6px 6px 0 0;
+            padding:5px 9px;
+            border-radius:999px;
+            background:rgba(59,130,246,0.14);
+            border:1px solid rgba(147,197,253,0.35);
+            color:#bfdbfe;
+            font-size:12px;
+            font-weight:bold;
+          ">
+            ${escapeAdminHtml(item)}
+          </span>
+        `)
+        .join("");
     const renderMetric = (
-      label,
-      value
-    ) => `
-      <div style="
-        padding:12px;
-        border-radius:12px;
-        background:rgba(15,23,42,0.66);
-        border:1px solid rgba(148,163,184,0.20);
-      ">
-        <div style="
-          color:#94a3b8;
-          font-size:12px;
-        ">
-          ${escapeAdminHtml(label)}
-        </div>
+  label,
+  value,
+  type = "neutral"
+) => {
+  const styles = {
+    ok: {
+      color: "#22c55e",
+      background: "rgba(34,197,94,0.10)",
+      border: "rgba(34,197,94,0.35)"
+    },
 
-        <strong style="
-          display:block;
-          margin-top:4px;
-          color:#f8fafc;
-          font-size:20px;
-        ">
-          ${escapeAdminHtml(value)}
-        </strong>
+    caution: {
+      color: "#f97316",
+      background: "rgba(249,115,22,0.10)",
+      border: "rgba(249,115,22,0.35)"
+    },
+
+    danger: {
+      color: "#ef4444",
+      background: "rgba(239,68,68,0.10)",
+      border: "rgba(239,68,68,0.38)"
+    },
+reference: {
+  color: "#7dd3fc",
+  background: "rgba(14,165,233,0.10)",
+  border: "rgba(56,189,248,0.35)"
+},
+    neutral: {
+      color: "#f8fafc",
+      background: "rgba(15,23,42,0.66)",
+      border: "rgba(148,163,184,0.20)"
+    }
+  };
+
+  const style =
+    styles[type] || styles.neutral;
+
+  return `
+    <div style="
+      padding:12px;
+      border-radius:12px;
+      background:${style.background};
+      border:1px solid ${style.border};
+    ">
+      <div style="
+        color:#94a3b8;
+        font-size:12px;
+      ">
+        ${escapeAdminHtml(label)}
       </div>
-    `;
+
+      <strong style="
+        display:block;
+        margin-top:4px;
+        color:${style.color};
+        font-size:20px;
+      ">
+        ${escapeAdminHtml(value)}
+      </strong>
+    </div>
+  `;
+};
+
     const renderPoiLimitCheckRow = () => {
   const statusColor =
     addedPoiLimitOk
@@ -857,34 +947,95 @@ const renderReviewCheckRow = (
 };
     
     const renderMessageList = (
-      items,
-      emptyText
-    ) => {
-      if (items.length === 0) {
-        return `
-          <div style="
-            margin-top:8px;
-            opacity:0.72;
-          ">
-            ${escapeAdminHtml(emptyText)}
-          </div>
-        `;
-      }
+  items,
+  emptyText,
+  type = "reference"
+) => {
+  const settings = {
+    danger: {
+      icon: "×",
+      color: "#ef4444",
+      background: "rgba(239,68,68,0.10)",
+      border: "rgba(239,68,68,0.42)"
+    },
 
-      return items
-        .map(message => `
-          <div style="
-            margin-top:8px;
-          ">
-            ・${escapeAdminHtml(message)}
-          </div>
-        `)
-        .join("");
-    };
+    caution: {
+      icon: "△",
+      color: "#f97316",
+      background: "rgba(249,115,22,0.10)",
+      border: "rgba(249,115,22,0.42)"
+    },
+
+    reference: {
+      icon: "i",
+      color: "#94a3b8",
+      background: "rgba(148,163,184,0.08)",
+      border: "rgba(148,163,184,0.28)"
+    }
+  };
+
+  const setting =
+    settings[type] || settings.reference;
+
+  if (items.length === 0) {
+    return `
+      <div style="
+        margin-top:8px;
+        padding:10px 12px;
+        border-radius:10px;
+        background:rgba(34,197,94,0.08);
+        border:1px solid rgba(34,197,94,0.25);
+        color:#bbf7d0;
+        font-size:13px;
+      ">
+        ○ ${escapeAdminHtml(emptyText)}
+      </div>
+    `;
+  }
+
+  return items
+    .map((message, index) => `
+      <div style="
+        display:grid;
+        grid-template-columns:28px 1fr;
+        gap:8px;
+        align-items:start;
+        margin-top:8px;
+        padding:10px 12px;
+        border-radius:10px;
+        background:${setting.background};
+        border:1px solid ${setting.border};
+      ">
+        <strong style="
+          color:${setting.color};
+          font-size:18px;
+          line-height:1.2;
+          text-align:center;
+        ">
+          ${setting.icon}
+        </strong>
+
+        <div style="
+          color:#e5e7eb;
+          font-size:13px;
+          line-height:1.65;
+        ">
+          <span style="opacity:0.72;">
+            ${index + 1}.
+          </span>
+          ${escapeAdminHtml(message)}
+        </div>
+      </div>
+    `)
+    .join("");
+};
     const reviewShareText = `
 【Campsite提出KMZレビュー】
 
 総合判定：${status}
+
+次にやること：
+${nextActionText}
 
 ファイル名：
 ${file.name}
@@ -910,7 +1061,7 @@ ${referenceMessages.length ? referenceMessages.map(m => "・" + m).join("\n") : 
     window._adminReviewSummaryText =
       reviewShareText;
     result.innerHTML = `
-      <div class="distance-warning" style="
+            <div class="distance-warning" style="
         border:1px solid ${statusColor};
         background:rgba(15,23,42,0.72);
       ">
@@ -928,6 +1079,36 @@ ${referenceMessages.length ? referenceMessages.map(m => "・" + m).join("\n") : 
         ">
           ${escapeAdminHtml(file.name)}
         </div>
+
+        <div style="
+          margin-top:12px;
+          padding:10px 12px;
+          border-radius:10px;
+          background:rgba(15,23,42,0.58);
+          border:1px solid rgba(148,163,184,0.20);
+        ">
+          <strong style="
+            display:block;
+            margin-bottom:4px;
+            color:#e2e8f0;
+            font-size:14px;
+          ">
+            次にやること
+          </strong>
+
+          <div style="
+            color:#cbd5e1;
+            font-size:13px;
+            line-height:1.7;
+          ">
+            ${escapeAdminHtml(nextActionText)}
+          </div>
+                    <div style="
+            margin-top:8px;
+          ">
+            ${nextActionItemsHtml}
+          </div>
+        </div>
       </div>
 
       <div style="
@@ -941,19 +1122,28 @@ ${referenceMessages.length ? referenceMessages.map(m => "・" + m).join("\n") : 
         margin-top:14px;
       ">
         ${renderMetric(
-          "重大警告",
-          criticalMessages.length + "件"
-        )}
+  "重大警告",
+  criticalMessages.length + "件",
+  criticalMessages.length > 0
+    ? "danger"
+    : "ok"
+)}
 
         ${renderMetric(
-          "要確認",
-          cautionMessages.length + "件"
-        )}
+  "要確認",
+  cautionMessages.length + "件",
+  cautionMessages.length > 0
+    ? "caution"
+    : "ok"
+)}
 
         ${renderMetric(
-          "参考情報",
-          referenceMessages.length + "件"
-        )}
+  "参考情報",
+  referenceMessages.length + "件",
+  referenceMessages.length > 0
+    ? "reference"
+    : "neutral"
+)}
 
         ${renderMetric(
           "既存POI",
@@ -961,13 +1151,19 @@ ${referenceMessages.length ? referenceMessages.map(m => "・" + m).join("\n") : 
         )}
 
         ${renderMetric(
-          "追加POI",
-          addedPoints.length + "件"
-        )}
+  "追加POI",
+  addedPoints.length + "件",
+  addedPoiLimitOk
+    ? "neutral"
+    : "danger"
+)}
 
         ${renderMetric(
   "活動範囲ポリゴン",
-  hasPolygon ? "○" : "×"
+  hasPolygon ? "○" : "×",
+  hasPolygon
+    ? "ok"
+    : "danger"
 )}
 
         ${renderMetric(
@@ -1258,9 +1454,10 @@ ${referenceMessages.length ? referenceMessages.map(m => "・" + m).join("\n") : 
         </strong>
 
         ${renderMessageList(
-          criticalMessages,
-          "重大な問題は見つかりませんでした。"
-        )}
+  criticalMessages,
+  "重大な問題は見つかりませんでした。",
+  "danger"
+)}
       </div>
 
       <div class="distance-warning" style="
@@ -1272,10 +1469,11 @@ ${referenceMessages.length ? referenceMessages.map(m => "・" + m).join("\n") : 
           🟠 要確認
         </strong>
 
-        ${renderMessageList(
-          cautionMessages,
-          "追加の確認事項はありません。"
-        )}
+${renderMessageList(
+  cautionMessages,
+  "追加の確認事項はありません。",
+  "caution"
+)}
       </div>
 
       <div class="distance-warning" style="
@@ -1288,9 +1486,10 @@ ${referenceMessages.length ? referenceMessages.map(m => "・" + m).join("\n") : 
         </strong>
 
         ${renderMessageList(
-          referenceMessages,
-          "参考情報はありません。"
-        )}
+  referenceMessages,
+  "参考情報はありません。",
+  "reference"
+)}
       </div>
     `;
 
