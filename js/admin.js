@@ -1025,27 +1025,6 @@ const renderReviewCheckRow = (
     `)
     .join("");
 };
-      if (items.length === 0) {
-        return `
-          <div style="
-            margin-top:8px;
-            opacity:0.72;
-          ">
-            ${escapeAdminHtml(emptyText)}
-          </div>
-        `;
-      }
-
-      return items
-        .map(message => `
-          <div style="
-            margin-top:8px;
-          ">
-            ・${escapeAdminHtml(message)}
-          </div>
-        `)
-        .join("");
-    };
     const reviewShareText = `
 【Campsite提出KMZレビュー】
 
