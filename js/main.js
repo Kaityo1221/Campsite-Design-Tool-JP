@@ -503,3 +503,378 @@ document.addEventListener("DOMContentLoaded", () => {
       APP_VERSION + " ℹ";
   }
 });
+/* =========================
+   Campsite Lab Research Engine
+   CSV → Existing POI KMZ
+========================= */
+
+async function runLabCsvToKmzEngine() {
+  const input =
+    document.getElementById("labResearchCsvFile");
+
+  const result =
+    document.getElementById("labEngineResult");
+
+  const machine =
+    document.getElementById("labEngineMachine");
+
+  if (!input || !input.files.length) {
+    alert("研究するCSVファイルを選択してください");
+    return;
+  }
+
+  const files = Array.from(input.files);
+
+  const invalidFiles =
+    files.filter(file => {
+      return !file.name.toLowerCase().endsWith(".csv");
+    });
+
+  if (invalidFiles.length) {
+    alert("Wayfarer Mapから出力したCSVだけを選択してください");
+    input.value = "";
+    return;
+  }
+
+  if (machine) {
+    machine.classList.remove("complete");
+    machine.classList.add("running");
+  }
+
+  startLabEngineSound();
+
+  if (result) {
+    result.innerHTML = `
+      <div class="distance-warning" style="
+        background:rgba(59,130,246,0.12);
+        border:1px solid rgba(96,165,250,0.35);
+      ">
+        <span class="loading">
+          <span class="spinner"></span>
+          LAB ENGINE 起動中… 複数CSVを統合し、重複を削除しています。
+        </span>
+      </div>
+    `;
+  }
+
+  try {
+    let allPoints = [];
+
+    for (const file of files) {
+      const text = await file.text();
+
+      const points = parseCSV(text)
+        .map(p => ({
+          ...p,
+          _sourceFile: file.name
+        }))
+        .filter(p => {
+          const lat = Number(p.lat);
+          const lng = Number(p.lng);
+
+          return (
+            Number.isFinite(lat) &&
+            Number.isFinite(lng)
+          );
+        });
+
+      allPoints = allPoints.concat(points);
+    }
+
+    const dedupeResult =
+      dedupeLabPoiPoints(allPoints);
+
+    const points =
+      dedupeResult.points;
+
+    if (!points.length) {
+      if (machine) {
+        machine.classList.remove("running");
+      }
+
+      stopLabEngineSound();
+
+      if (result) {
+        result.innerHTML = `
+          <div class="distance-warning">
+            ⚠ 有効なPOI座標が見つかりませんでした。<br>
+            CSVの緯度・経度列を確認してください。
+          </div>
+        `;
+      }
+
+      return;
+    }
+
+    await new Promise(resolve => {
+      setTimeout(resolve, 1600);
+    });
+
+    const sourceName =
+      files.map(file => file.name).join(" / ");
+
+    const kmzBlob =
+      await createLabExistingPoiKmz(
+        points,
+        sourceName
+      );
+
+    const today =
+      new Date().toISOString().slice(0, 10).replace(/-/g, "");
+
+    const guessedParkName =
+  guessLabParkName(points);
+
+const parkName =
+  sanitizeFileNamePart(guessedParkName);
+
+const downloadName =
+  `Lab_${parkName}_${today}.kmz`;
+
+    downloadBlob(
+      kmzBlob,
+      downloadName
+    );
+
+    if (machine) {
+      machine.classList.remove("running");
+      machine.classList.add("complete");
+    }
+
+    stopLabEngineSound();
+
+    if (result) {
+      result.innerHTML = `
+        <div class="distance-warning" style="
+          background:rgba(34,197,94,0.12);
+          border:1px solid rgba(34,197,94,0.35);
+          color:#bbf7d0;
+        ">
+          ✅ LAB ENGINE COMPLETE<br><br>
+          複数CSVを統合し、研究用KMZを生成しました。<br>
+          ファイル名：${escapeHtml(downloadName)}<br>
+          投入CSV：${files.length}件<br>
+          読み込みPOI：${allPoints.length}件<br>
+          重複削除：${dedupeResult.removed}件<br>
+          出力POI：${points.length}件<br><br>
+          このKMZを保存して、Campsite Labの研究アーカイブへ登録してください。
+        </div>
+      `;
+    }
+
+  } catch (error) {
+    console.error(error);
+
+    stopLabEngineSound();
+
+    if (machine) {
+      machine.classList.remove("running");
+    }
+
+    if (result) {
+      result.innerHTML = `
+        <div class="distance-warning">
+          ⚠ LAB ENGINEでエラーが発生しました。<br>
+          CSV形式を確認してください。
+        </div>
+      `;
+    }
+  }
+}
+function dedupeLabPoiPoints(points) {
+  const seen = new Map();
+  const unique = [];
+
+  points.forEach(point => {
+    const lat = Number(point.lat);
+    const lng = Number(point.lng);
+
+    /*
+      約0.1m単位で座標を丸める。
+      Wayfarer Mapの重複抽出対策としては十分細かい。
+    */
+    const key =
+      `${lat.toFixed(6)},${lng.toFixed(6)}`;
+
+    if (!seen.has(key)) {
+      seen.set(key, true);
+      unique.push(point);
+    }
+  });
+
+  return {
+    points: unique,
+    removed: points.length - unique.length
+  };
+}
+
+function guessLabParkName(points) {
+  const counts = new Map();
+
+  points.forEach(point => {
+    const texts = [
+      point.name,
+      point.title,
+      point.description
+    ]
+      .filter(Boolean)
+      .map(text => String(text));
+
+    texts.forEach(text => {
+      const matches = text.match(
+        /[ぁ-んァ-ヶ一-龠A-Za-z0-9ー・（）()]+(?:公園|広場|庭園|緑地|遊園|運動公園|森林公園|臨海公園|中央公園|総合公園)/g
+      );
+
+      if (!matches) return;
+
+      matches.forEach(name => {
+        const cleaned = name
+          .replace(/[「」『』【】\[\]]/g, "")
+          .trim();
+
+        if (!cleaned) return;
+
+        counts.set(
+          cleaned,
+          (counts.get(cleaned) || 0) + 1
+        );
+      });
+    });
+  });
+
+  if (!counts.size) {
+    return "研究KMZ";
+  }
+
+  return Array.from(counts.entries())
+    .sort((a, b) => b[1] - a[1])[0][0];
+}
+
+function sanitizeFileNamePart(text) {
+  return String(text || "研究KMZ")
+    .replace(/[\\/:*?"<>|]/g, "")
+    .replace(/\s+/g, "_")
+    .slice(0, 40);
+}
+async function createLabExistingPoiKmz(points, sourceName) {
+  const kml = createLabExistingPoiKml(
+    points,
+    sourceName
+  );
+
+  const zip = new JSZip();
+
+  zip.file("doc.kml", kml);
+
+  return await zip.generateAsync({
+    type: "blob",
+    mimeType: "application/vnd.google-earth.kmz"
+  });
+}
+
+function createLabExistingPoiKml(points, sourceName) {
+  const placemarks =
+    points.map((p, index) => {
+      const lat = Number(p.lat);
+      const lng = Number(p.lng);
+
+      const name =
+        escapeKmlText(
+          p.name ||
+          p.title ||
+          `POI_${index + 1}`
+        );
+
+      const type =
+        escapeKmlText(
+          p.type ||
+          classifyType(
+            p.type,
+            p.name,
+            "CSV_POI"
+          ) ||
+          "poi"
+        );
+
+      return `
+<Placemark>
+  <name>${name}</name>
+  <styleUrl>#labExistingPoi</styleUrl>
+  <description><![CDATA[
+研究用KMZ<br>
+source: ${escapeKmlText(p._sourceFile || sourceName)}<br>
+type: ${type}<br>
+lat: ${lat}<br>
+lng: ${lng}
+  ]]></description>
+  <Point>
+    <coordinates>${lng},${lat},0</coordinates>
+  </Point>
+</Placemark>`;
+    })
+    .join("");
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+<Document>
+  <name>Campsite Lab Research KMZ</name>
+
+  <Style id="labExistingPoi">
+    <IconStyle>
+      <scale>1.0</scale>
+      <Icon>
+        <href>http://maps.google.com/mapfiles/kml/paddle/blu-circle.png</href>
+      </Icon>
+    </IconStyle>
+  </Style>
+
+  ${placemarks}
+</Document>
+</kml>`;
+}
+
+function downloadBlob(blob, fileName) {
+  const a = document.createElement("a");
+
+  a.href = URL.createObjectURL(blob);
+  a.download = fileName;
+
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+
+  URL.revokeObjectURL(a.href);
+}
+
+function escapeKmlText(text) {
+  return String(text || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+function startLabEngineSound() {
+  const audio = document.getElementById("labEngineSound");
+
+  if (!audio) return;
+
+  audio.currentTime = 0;
+  audio.loop = true;
+  audio.volume = 0.45;
+
+  const playPromise = audio.play();
+
+  if (playPromise && typeof playPromise.catch === "function") {
+    playPromise.catch(() => {
+      console.log("音声再生はブラウザにブロックされました");
+    });
+  }
+}
+
+function stopLabEngineSound() {
+  const audio = document.getElementById("labEngineSound");
+
+  if (!audio) return;
+
+  audio.pause();
+  audio.currentTime = 0;
+}

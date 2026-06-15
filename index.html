@@ -14,7 +14,7 @@
     background: #020617;
   }
 </style>
-<link rel="stylesheet" href="css/style.css?v=72">
+<link rel="stylesheet" href="css/style.css?v=74">
 <link rel="stylesheet" href="css/splash.css?v=97">
 <link rel="stylesheet" href="css/tabs.css?v=29">
 <link rel="stylesheet" href="css/admin.css?v=25">
@@ -856,7 +856,65 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
   Campsite Design Tool の実験機能をまとめた秘密の研究室です。<br>
   配置余地チェック、候補POI生成、今後追加される検証機能などを利用できます。
 </p>
-    
+    <div class="step lab-engine-step">
+  <div class="step-no">LAB-001</div>
+
+  <h3>CSV → 研究用KMZ生成</h3>
+
+  <p class="note">
+    研究員ミッション用のエンジンです。<br>
+    Wayfarer Mapから取得したCSVを投入すると、既存POIだけを研究用KMZとして自動生成します。
+  </p>
+
+  <div class="lab-mission-box">
+  <strong>🔬 研究員ミッション</strong><br>
+  1. 今日研究する公園を決める<br>
+  2. Wayfarer Mapで Nearby Wayspots を Export CSV<br>
+  3. CSVをLab Engineへ投入<br>
+  4. 研究用KMZを保存<br>
+  5. 休憩・滞在・回遊・注意ポイントを観察し、キャンプサイト適性を研究する
+</div>
+
+  <div class="lab-engine-machine" id="labEngineMachine">
+    <div class="lab-csv-card" id="labCsvCard">
+      📄<br>
+      CSV
+    </div>
+
+    <div class="lab-engine-core">
+      <div class="lab-gear gear-left">⚙️</div>
+      <div class="lab-engine-label">LAB ENGINE</div>
+      <div class="lab-gear gear-right">⚙️</div>
+    </div>
+
+    <div class="lab-kmz-card" id="labKmzCard">
+      📦<br>
+      KMZ
+    </div>
+  </div>
+
+  <p>研究する公園のCSVを選択します。</p>
+
+  <input
+  type="file"
+  id="labResearchCsvFile"
+  accept=".csv,text/csv"
+  multiple
+>
+<audio
+  id="labEngineSound"
+  src="assets/audio/CarEngine.wav"
+  preload="auto"
+></audio>
+  <button
+    class="generate lab-engine-button"
+    onclick="runLabCsvToKmzEngine()"
+  >
+    ⚙️ LAB ENGINE START
+  </button>
+
+  <div id="labEngineResult"></div>
+</div>
    <div class="step">
   <div class="step-no">Experimental</div>
   <h3>配置余地チェック（実験）</h3>
@@ -1881,7 +1939,7 @@ GOロケット団の出現率が3倍になる
 <script src="js/tabs.js?v=8"></script>
 <script src="js/distance.js?v=61"></script>
 <script src="js/admin.js?v=32"></script>
-<script src="js/main.js?v=57"></script>
+<script src="js/main.js?v=63"></script>
 <script src="js/kmz.js?v=27"></script>
 <script src="js/deduplicate.js?v=3"></script>
 <script src="js/capacity.js?v=6"></script>
