@@ -943,9 +943,88 @@ const renderReviewCheckRow = (
 };
     
     const renderMessageList = (
-      items,
-      emptyText
-    ) => {
+  items,
+  emptyText,
+  type = "reference"
+) => {
+  const settings = {
+    danger: {
+      icon: "×",
+      color: "#ef4444",
+      background: "rgba(239,68,68,0.10)",
+      border: "rgba(239,68,68,0.42)"
+    },
+
+    caution: {
+      icon: "△",
+      color: "#f97316",
+      background: "rgba(249,115,22,0.10)",
+      border: "rgba(249,115,22,0.42)"
+    },
+
+    reference: {
+      icon: "i",
+      color: "#94a3b8",
+      background: "rgba(148,163,184,0.08)",
+      border: "rgba(148,163,184,0.28)"
+    }
+  };
+
+  const setting =
+    settings[type] || settings.reference;
+
+  if (items.length === 0) {
+    return `
+      <div style="
+        margin-top:8px;
+        padding:10px 12px;
+        border-radius:10px;
+        background:rgba(34,197,94,0.08);
+        border:1px solid rgba(34,197,94,0.25);
+        color:#bbf7d0;
+        font-size:13px;
+      ">
+        ○ ${escapeAdminHtml(emptyText)}
+      </div>
+    `;
+  }
+
+  return items
+    .map((message, index) => `
+      <div style="
+        display:grid;
+        grid-template-columns:28px 1fr;
+        gap:8px;
+        align-items:start;
+        margin-top:8px;
+        padding:10px 12px;
+        border-radius:10px;
+        background:${setting.background};
+        border:1px solid ${setting.border};
+      ">
+        <strong style="
+          color:${setting.color};
+          font-size:18px;
+          line-height:1.2;
+          text-align:center;
+        ">
+          ${setting.icon}
+        </strong>
+
+        <div style="
+          color:#e5e7eb;
+          font-size:13px;
+          line-height:1.65;
+        ">
+          <span style="opacity:0.72;">
+            ${index + 1}.
+          </span>
+          ${escapeAdminHtml(message)}
+        </div>
+      </div>
+    `)
+    .join("");
+};
       if (items.length === 0) {
         return `
           <div style="
@@ -1383,9 +1462,10 @@ ${referenceMessages.length ? referenceMessages.map(m => "・" + m).join("\n") : 
         </strong>
 
         ${renderMessageList(
-          criticalMessages,
-          "重大な問題は見つかりませんでした。"
-        )}
+  criticalMessages,
+  "重大な問題は見つかりませんでした。",
+  "danger"
+)}
       </div>
 
       <div class="distance-warning" style="
@@ -1397,10 +1477,11 @@ ${referenceMessages.length ? referenceMessages.map(m => "・" + m).join("\n") : 
           🟠 要確認
         </strong>
 
-        ${renderMessageList(
-          cautionMessages,
-          "追加の確認事項はありません。"
-        )}
+${renderMessageList(
+  cautionMessages,
+  "追加の確認事項はありません。",
+  "caution"
+)}
       </div>
 
       <div class="distance-warning" style="
@@ -1413,9 +1494,10 @@ ${referenceMessages.length ? referenceMessages.map(m => "・" + m).join("\n") : 
         </strong>
 
         ${renderMessageList(
-          referenceMessages,
-          "参考情報はありません。"
-        )}
+  referenceMessages,
+  "参考情報はありません。",
+  "reference"
+)}
       </div>
     `;
 
