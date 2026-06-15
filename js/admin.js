@@ -460,6 +460,12 @@ if (existingReferencePairs.length > 0) {
     : cautionMessages.length > 0
       ? "提出は可能そうですが、30〜40mの調整距離やダミーポイントを確認してください。"
       : "大きな問題は見つかりません。提出前の最終確認として、地図と活動範囲を確認してください。";
+    const reviewerCommentText =
+  criticalMessages.length > 0
+    ? "現時点では提出前に修正が必要です。要修正項目を調整したうえで、再度KMZを確認してください。"
+    : cautionMessages.length > 0
+      ? "大きな問題はありませんが、提出前に要確認項目を見直してください。"
+      : "提出前チェックでは大きな問題は見つかりませんでした。最終確認後に提出へ進めます。";
               const nextActionItems = [];
 
     if (!hasPolygon) {
@@ -1037,6 +1043,9 @@ const renderReviewCheckRow = (
 次にやること：
 ${nextActionText}
 
+レビューコメント：
+${reviewerCommentText}
+
 ファイル名：
 ${file.name}
 
@@ -1310,7 +1319,7 @@ ${referenceMessages.length ? referenceMessages.map(m => "・" + m).join("\n") : 
           管理者レビュー地図
         </strong>
 
-        <div style="
+        <details style="
   margin-top:8px;
   padding:10px 12px;
   border-radius:10px;
@@ -1320,6 +1329,18 @@ ${referenceMessages.length ? referenceMessages.map(m => "・" + m).join("\n") : 
   font-size:12px;
   line-height:1.75;
 ">
+  <summary style="
+    cursor:pointer;
+    color:#7dd3fc;
+    font-weight:bold;
+    font-size:13px;
+  ">
+    地図の見方を開く
+  </summary>
+
+  <div style="
+    margin-top:8px;
+  ">
   ※右上のレイヤーボタンから、地理院航空写真とOpenStreetMapを切り替えられます。<br>
 
 ※
@@ -1366,7 +1387,8 @@ ${referenceMessages.length ? referenceMessages.map(m => "・" + m).join("\n") : 
   Niantic側の正確なPOIデータ
 </strong>
 をもとに調整してください。
-</div>
+  </div>
+</details>
 
         <div
           id="adminReviewMap"
@@ -1378,7 +1400,7 @@ ${referenceMessages.length ? referenceMessages.map(m => "・" + m).join("\n") : 
             overflow:hidden;
           "
         ></div>
-        <div style="
+        <details style="
   margin-top:10px;
   padding:10px 12px;
   border-radius:10px;
@@ -1388,14 +1410,18 @@ ${referenceMessages.length ? referenceMessages.map(m => "・" + m).join("\n") : 
   font-size:12px;
   line-height:1.8;
 ">
-  <strong style="
-    display:block;
-    margin-bottom:6px;
+  <summary style="
+    cursor:pointer;
     color:#e2e8f0;
+    font-weight:bold;
     font-size:13px;
   ">
-    地図凡例
-  </strong>
+    地図凡例を開く
+  </summary>
+
+  <div style="
+    margin-top:8px;
+  ">
 
   <div>
     <span style="
@@ -1441,8 +1467,10 @@ ${referenceMessages.length ? referenceMessages.map(m => "・" + m).join("\n") : 
       margin-right:16px;
     "></span>
     活動範囲：実際に歩く・遊ぶエリア
+   </div>
+
   </div>
-</div>
+</details>
       </div>
       <div class="distance-warning" style="
         margin-top:14px;
@@ -2118,12 +2146,12 @@ adjustablePairs.forEach(pair => {
 });
 if (markerBounds.length > 0) {
   adminReviewMapInstance.fitBounds(
-    markerBounds,
-    {
-      padding: [28, 28],
-      maxZoom: 18
-    }
-  );
+  markerBounds,
+  {
+    padding: [36, 36],
+    maxZoom: 17
+  }
+);
 }
 
   setTimeout(() => {

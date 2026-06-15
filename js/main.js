@@ -1,5 +1,5 @@
-window.APP_VERSION = "v6.0.0";
-window.APP_UPDATED = "2026-06-13";
+window.APP_VERSION = "v6.1.0";
+window.APP_UPDATED = "2026-06-15";
 window.ENABLE_QUIZ = true;
 window.QUIZ_VERSION = "beta1";
 const ADMIN_CODE = "she1ep";
@@ -130,14 +130,29 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   const distanceInput =
-    document.getElementById("distanceFile");
+  document.getElementById("distanceFile");
 
-  if (distanceInput) {
-    distanceInput.addEventListener(
-      "change",
-      loadDistanceFile
-    );
-  }
+if (distanceInput) {
+  distanceInput.addEventListener("change", function () {
+    const file = distanceInput.files[0];
+
+    if (!file) return;
+
+    const fileName = file.name.toLowerCase();
+
+    if (
+      !fileName.endsWith(".kmz") &&
+      !fileName.endsWith(".kml") &&
+      !fileName.endsWith(".zip")
+    ) {
+      alert("完成KMZ / KML / ZIP ファイルを選択してください。PDFやJSONは読み込めません。");
+      distanceInput.value = "";
+      return;
+    }
+
+    loadDistanceFile();
+  });
+}
 
 });
 
