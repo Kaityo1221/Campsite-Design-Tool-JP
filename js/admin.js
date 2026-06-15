@@ -1144,9 +1144,12 @@ ${referenceMessages.length ? referenceMessages.map(m => "・" + m).join("\n") : 
         )}
 
         ${renderMetric(
-          "追加POI",
-          addedPoints.length + "件"
-        )}
+  "追加POI",
+  addedPoints.length + "件",
+  addedPoiLimitOk
+    ? "neutral"
+    : "danger"
+)}
 
         ${renderMetric(
   "活動範囲ポリゴン",
