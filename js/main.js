@@ -783,7 +783,29 @@ function getLabPoiCategoryLabel(name = "") {
     ? labels.join("・")
     : "未分類";
 }
+function getLabPoiStyleId(name = "") {
+  /*
+    注意系は最優先。
+    休憩にも見えるけど駐車場・階段・水辺などなら赤にする。
+  */
+  if (isCautionPoi(name)) {
+    return "labCautionPoi";
+  }
 
+  if (isRestPoi(name)) {
+    return "labRestPoi";
+  }
+
+  if (isStayPoi(name)) {
+    return "labStayPoi";
+  }
+
+  if (isLoopPoi(name)) {
+    return "labLoopPoi";
+  }
+
+  return "labUnknownPoi";
+}
 function isRestPoi(name = "") {
   return /ベンチ|東屋|四阿|あずまや|休憩|休憩所|水飲み|水飲場|藤棚|パーゴラ|トイレ/.test(String(name));
 }
@@ -838,11 +860,12 @@ function createLabExistingPoiKml(points, sourceName) {
 
       const categoryLabel =
         getLabPoiCategoryLabel(rawName);
-
+const styleId =
+  getLabPoiStyleId(rawName);
       return `
 <Placemark>
   <name>${name}</name>
-  <styleUrl>#labExistingPoi</styleUrl>
+  <styleUrl>#${styleId}</styleUrl>
   <description><![CDATA[
 <strong>${name}</strong><br><br>
 
@@ -872,11 +895,47 @@ lng：${lng}<br><br>
 <Document>
   <name>Campsite Lab Research KMZ</name>
 
-  <Style id="labExistingPoi">
+    <Style id="labRestPoi">
+    <IconStyle>
+      <scale>1.0</scale>
+      <Icon>
+        <href>http://maps.google.com/mapfiles/kml/paddle/grn-circle.png</href>
+      </Icon>
+    </IconStyle>
+  </Style>
+
+  <Style id="labStayPoi">
+    <IconStyle>
+      <scale>1.0</scale>
+      <Icon>
+        <href>http://maps.google.com/mapfiles/kml/paddle/ylw-circle.png</href>
+      </Icon>
+    </IconStyle>
+  </Style>
+
+  <Style id="labLoopPoi">
     <IconStyle>
       <scale>1.0</scale>
       <Icon>
         <href>http://maps.google.com/mapfiles/kml/paddle/blu-circle.png</href>
+      </Icon>
+    </IconStyle>
+  </Style>
+
+  <Style id="labCautionPoi">
+    <IconStyle>
+      <scale>1.0</scale>
+      <Icon>
+        <href>http://maps.google.com/mapfiles/kml/paddle/red-circle.png</href>
+      </Icon>
+    </IconStyle>
+  </Style>
+
+  <Style id="labUnknownPoi">
+    <IconStyle>
+      <scale>1.0</scale>
+      <Icon>
+        <href>http://maps.google.com/mapfiles/kml/paddle/wht-circle.png</href>
       </Icon>
     </IconStyle>
   </Style>
