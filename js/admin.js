@@ -567,29 +567,7 @@ if (existingReferencePairs.length > 0) {
     </div>
   `;
 };
-      <div style="
-        padding:12px;
-        border-radius:12px;
-        background:rgba(15,23,42,0.66);
-        border:1px solid rgba(148,163,184,0.20);
-      ">
-        <div style="
-          color:#94a3b8;
-          font-size:12px;
-        ">
-          ${escapeAdminHtml(label)}
-        </div>
 
-        <strong style="
-          display:block;
-          margin-top:4px;
-          color:#f8fafc;
-          font-size:20px;
-        ">
-          ${escapeAdminHtml(value)}
-        </strong>
-      </div>
-    `;
     const renderPoiLimitCheckRow = () => {
   const statusColor =
     addedPoiLimitOk
