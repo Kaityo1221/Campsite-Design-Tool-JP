@@ -771,41 +771,94 @@ async function createLabExistingPoiKmz(points, sourceName) {
     mimeType: "application/vnd.google-earth.kmz"
   });
 }
+function getLabPoiCategoryLabel(name = "") {
+  const labels = [];
 
+  if (isRestPoi(name)) labels.push("休憩");
+  if (isStayPoi(name)) labels.push("滞在");
+  if (isLoopPoi(name)) labels.push("回遊");
+  if (isCautionPoi(name)) labels.push("注意");
+
+  return labels.length
+    ? labels.join("・")
+    : "未分類";
+}
+
+function isRestPoi(name = "") {
+  return /ベンチ|東屋|四阿|あずまや|休憩|休憩所|水飲み|水飲場|藤棚|パーゴラ|トイレ/.test(String(name));
+}
+
+function isStayPoi(name = "") {
+  return /広場|芝生|ステージ|交流|集会|噴水|時計|モニュメント|花壇|休憩広場/.test(String(name));
+}
+
+function isLoopPoi(name = "") {
+  return /遊歩道|園路|橋|案内板|案内図|入口|出入口|散策|歩道|通路|門|マップ/.test(String(name));
+}
+
+function isCautionPoi(name = "") {
+  return /駐車場|駐輪場|車道|道路|学校|病院|坂|階段|工事|水辺|池|川|喫煙|立入禁止|管理棟/.test(String(name));
+}
 function createLabExistingPoiKml(points, sourceName) {
   const placemarks =
     points.map((p, index) => {
       const lat = Number(p.lat);
       const lng = Number(p.lng);
 
-      const name =
-        escapeKmlText(
-          p.name ||
-          p.title ||
-          `POI_${index + 1}`
-        );
+      const rawName =
+        p.name ||
+        p.title ||
+        `POI_${index + 1}`;
 
-      const type =
-        escapeKmlText(
-          p.type ||
-          classifyType(
-            p.type,
-            p.name,
-            "CSV_POI"
-          ) ||
-          "poi"
-        );
+      const name =
+        escapeKmlText(rawName);
+
+      const kind =
+        classifyType(
+          p.type,
+          rawName,
+          p.layer || "CSV_POI"
+        ) ||
+        "poi";
+
+      const sourceFile =
+        p._sourceFile || sourceName;
+
+      const rest =
+        isRestPoi(rawName) ? "○" : "×";
+
+      const stay =
+        isStayPoi(rawName) ? "○" : "×";
+
+      const loop =
+        isLoopPoi(rawName) ? "○" : "×";
+
+      const caution =
+        isCautionPoi(rawName) ? "○" : "×";
+
+      const categoryLabel =
+        getLabPoiCategoryLabel(rawName);
 
       return `
 <Placemark>
   <name>${name}</name>
   <styleUrl>#labExistingPoi</styleUrl>
   <description><![CDATA[
+<strong>${name}</strong><br><br>
+
 研究用KMZ<br>
-source: ${escapeKmlText(p._sourceFile || sourceName)}<br>
-type: ${type}<br>
-lat: ${lat}<br>
-lng: ${lng}
+推定カテゴリ：${escapeKmlText(categoryLabel)}<br>
+種別：${escapeKmlText(kind)}<br>
+元CSV：${escapeKmlText(sourceFile)}<br><br>
+
+座標<br>
+lat：${lat}<br>
+lng：${lng}<br><br>
+
+休憩：${rest}<br>
+滞在：${stay}<br>
+回遊：${loop}<br>
+注意：${caution}
   ]]></description>
   <Point>
     <coordinates>${lng},${lat},0</coordinates>
@@ -831,6 +884,7 @@ lng: ${lng}
   ${placemarks}
 </Document>
 </kml>`;
+}
 }
 
 function downloadBlob(blob, fileName) {
