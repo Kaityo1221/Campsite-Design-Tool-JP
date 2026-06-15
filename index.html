@@ -772,7 +772,12 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
       </p>
 
       <p>円を作成したいファイルを選択します。</p>
-      <input type="file" id="circleOnlyFileInput" multiple>
+     <input
+  type="file"
+  id="circleOnlyFileInput"
+  multiple
+  accept=".csv,.kmz,.kml,.zip,text/csv,application/vnd.google-earth.kmz,application/vnd.google-earth.kml+xml,application/zip"
+>
 
       <div class="checks">
         <label>
@@ -825,11 +830,10 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
 
       <p>整理したいCSV / KML / KMZファイルを選択します。</p>
 
-      <input
-        type="file"
-        id="deduplicatePoiFile"
-      >
-
+     <input type="file"
+  id="deduplicatePoiFile"
+  accept=".csv,.kmz,.kml,.zip,text/csv,application/vnd.google-earth.kmz,application/vnd.google-earth.kml+xml,application/zip"
+>
     <button
   class="generate"
   onclick="generateDeduplicatedPoiKMZ()"
@@ -882,7 +886,11 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
 
   <p>キャンプサイトKMZ / KMLを選択します。</p>
 
-  <input type="file" id="capacityFile">
+  <input
+  type="file"
+  id="capacityFile"
+  accept=".kmz,.kml,.zip,application/vnd.google-earth.kmz,application/vnd.google-earth.kml+xml,application/zip"
+>
 
   <button class="generate" onclick="analyzePlacementCapacity()">
     配置余地を確認する
@@ -975,10 +983,11 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
 
   <p>レビューする完成KMZを選択してください。</p>
 
-  <input
-    type="file"
-    id="adminReviewFile"
-  >
+ <input
+  type="file"
+  id="adminReviewFile"
+  accept=".kmz,.kml,.zip,application/vnd.google-earth.kmz,application/vnd.google-earth.kml+xml,application/zip"
+>
 
   <button
     class="generate"
@@ -1000,7 +1009,11 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
   </p>
 
   <p>チェックしたいファイルを選択します。</p>
-  <input type="file" id="adminCheckFile">
+  <input
+  type="file"
+  id="adminCheckFile"
+  accept=".csv,.kmz,.kml,.zip,text/csv,application/vnd.google-earth.kmz,application/vnd.google-earth.kml+xml,application/zip"
+>
 
   <button class="generate" onclick="runAdminFileCheck()">
     内容をチェック
@@ -1019,7 +1032,11 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
   </p>
 
   <p>チェックしたいKML / KMZファイルを選択します。</p>
-  <input type="file" id="adminDensityFile">
+  <input
+  type="file"
+  id="adminDensityFile"
+  accept=".kmz,.kml,.zip,application/vnd.google-earth.kmz,application/vnd.google-earth.kml+xml,application/zip"
+>
 
   <div class="checks">
     <label>
@@ -1404,10 +1421,10 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
 ">
   ※CSVや途中確認用KMZではなく、提出直前の完成KMZを選択してください。
 </p>
-    <input
+<input
   type="file"
   id="distanceFile"
-  accept=".kmz,.kml,.zip,application/vnd.google-earth.kmz,application/vnd.google-earth.kml+xml"
+  accept=".kmz,.kml,.zip,application/vnd.google-earth.kmz,application/vnd.google-earth.kml+xml,application/zip"
 >
       <div style="
   margin-top:12px;
