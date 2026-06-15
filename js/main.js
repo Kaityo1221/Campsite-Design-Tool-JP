@@ -130,14 +130,29 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   const distanceInput =
-    document.getElementById("distanceFile");
+  document.getElementById("distanceFile");
 
-  if (distanceInput) {
-    distanceInput.addEventListener(
-      "change",
-      loadDistanceFile
-    );
-  }
+if (distanceInput) {
+  distanceInput.addEventListener("change", function () {
+    const file = distanceInput.files[0];
+
+    if (!file) return;
+
+    const fileName = file.name.toLowerCase();
+
+    if (
+      !fileName.endsWith(".kmz") &&
+      !fileName.endsWith(".kml") &&
+      !fileName.endsWith(".zip")
+    ) {
+      alert("完成KMZ / KML / ZIP ファイルを選択してください。PDFやJSONは読み込めません。");
+      distanceInput.value = "";
+      return;
+    }
+
+    loadDistanceFile();
+  });
+}
 
 });
 
