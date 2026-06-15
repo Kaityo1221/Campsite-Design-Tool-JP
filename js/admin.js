@@ -460,6 +460,12 @@ if (existingReferencePairs.length > 0) {
     : cautionMessages.length > 0
       ? "提出は可能そうですが、30〜40mの調整距離やダミーポイントを確認してください。"
       : "大きな問題は見つかりません。提出前の最終確認として、地図と活動範囲を確認してください。";
+    const reviewerCommentText =
+  criticalMessages.length > 0
+    ? "現時点では提出前に修正が必要です。要修正項目を調整したうえで、再度KMZを確認してください。"
+    : cautionMessages.length > 0
+      ? "大きな問題はありませんが、提出前に要確認項目を見直してください。"
+      : "提出前チェックでは大きな問題は見つかりませんでした。最終確認後に提出へ進めます。";
               const nextActionItems = [];
 
     if (!hasPolygon) {
@@ -1036,6 +1042,9 @@ const renderReviewCheckRow = (
 
 次にやること：
 ${nextActionText}
+
+レビューコメント：
+${reviewerCommentText}
 
 ファイル名：
 ${file.name}
