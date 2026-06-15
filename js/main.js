@@ -944,7 +944,6 @@ lng：${lng}<br><br>
 </Document>
 </kml>`;
 }
-}
 
 function downloadBlob(blob, fileName) {
   const a = document.createElement("a");
