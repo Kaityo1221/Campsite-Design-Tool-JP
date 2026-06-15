@@ -1310,7 +1310,7 @@ ${referenceMessages.length ? referenceMessages.map(m => "・" + m).join("\n") : 
           管理者レビュー地図
         </strong>
 
-        <div style="
+        <details style="
   margin-top:8px;
   padding:10px 12px;
   border-radius:10px;
@@ -1320,6 +1320,18 @@ ${referenceMessages.length ? referenceMessages.map(m => "・" + m).join("\n") : 
   font-size:12px;
   line-height:1.75;
 ">
+  <summary style="
+    cursor:pointer;
+    color:#7dd3fc;
+    font-weight:bold;
+    font-size:13px;
+  ">
+    地図の見方を開く
+  </summary>
+
+  <div style="
+    margin-top:8px;
+  ">
   ※右上のレイヤーボタンから、地理院航空写真とOpenStreetMapを切り替えられます。<br>
 
 ※
@@ -1366,7 +1378,8 @@ ${referenceMessages.length ? referenceMessages.map(m => "・" + m).join("\n") : 
   Niantic側の正確なPOIデータ
 </strong>
 をもとに調整してください。
-</div>
+  </div>
+</details>
 
         <div
           id="adminReviewMap"
