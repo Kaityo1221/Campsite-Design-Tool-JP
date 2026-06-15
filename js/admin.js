@@ -509,9 +509,64 @@ if (existingReferencePairs.length > 0) {
         `)
         .join("");
     const renderMetric = (
-      label,
-      value
-    ) => `
+  label,
+  value,
+  type = "neutral"
+) => {
+  const styles = {
+    ok: {
+      color: "#22c55e",
+      background: "rgba(34,197,94,0.10)",
+      border: "rgba(34,197,94,0.35)"
+    },
+
+    caution: {
+      color: "#f97316",
+      background: "rgba(249,115,22,0.10)",
+      border: "rgba(249,115,22,0.35)"
+    },
+
+    danger: {
+      color: "#ef4444",
+      background: "rgba(239,68,68,0.10)",
+      border: "rgba(239,68,68,0.38)"
+    },
+
+    neutral: {
+      color: "#f8fafc",
+      background: "rgba(15,23,42,0.66)",
+      border: "rgba(148,163,184,0.20)"
+    }
+  };
+
+  const style =
+    styles[type] || styles.neutral;
+
+  return `
+    <div style="
+      padding:12px;
+      border-radius:12px;
+      background:${style.background};
+      border:1px solid ${style.border};
+    ">
+      <div style="
+        color:#94a3b8;
+        font-size:12px;
+      ">
+        ${escapeAdminHtml(label)}
+      </div>
+
+      <strong style="
+        display:block;
+        margin-top:4px;
+        color:${style.color};
+        font-size:20px;
+      ">
+        ${escapeAdminHtml(value)}
+      </strong>
+    </div>
+  `;
+};
       <div style="
         padding:12px;
         border-radius:12px;
@@ -1027,14 +1082,17 @@ ${referenceMessages.length ? referenceMessages.map(m => "・" + m).join("\n") : 
         margin-top:14px;
       ">
         ${renderMetric(
-          "重大警告",
-          criticalMessages.length + "件"
-        )}
+  "重大警告",
+  criticalMessages.length + "件",
+  criticalMessages.length > 0
+    ? "danger"
+    : "ok"
+)}
 
         ${renderMetric(
-          "要確認",
-          cautionMessages.length + "件"
-        )}
+  "要確認",
+  cautionMessages.length + "件"
+)}
 
         ${renderMetric(
           "参考情報",
@@ -1053,7 +1111,10 @@ ${referenceMessages.length ? referenceMessages.map(m => "・" + m).join("\n") : 
 
         ${renderMetric(
   "活動範囲ポリゴン",
-  hasPolygon ? "○" : "×"
+  hasPolygon ? "○" : "×",
+  hasPolygon
+    ? "ok"
+    : "danger"
 )}
 
         ${renderMetric(
