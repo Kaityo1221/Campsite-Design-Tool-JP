@@ -1127,7 +1127,10 @@ ${referenceMessages.length ? referenceMessages.map(m => "・" + m).join("\n") : 
 
         ${renderMetric(
   "要確認",
-  cautionMessages.length + "件"
+  cautionMessages.length + "件",
+  cautionMessages.length > 0
+    ? "caution"
+    : "ok"
 )}
 
         ${renderMetric(
