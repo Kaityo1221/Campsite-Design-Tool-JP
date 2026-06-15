@@ -1459,6 +1459,8 @@ ${referenceMessages.length ? referenceMessages.map(m => "・" + m).join("\n") : 
     "></span>
     活動範囲：実際に歩く・遊ぶエリア
    </div>
+
+  </div>
 </details>
       </div>
       <div class="distance-warning" style="
