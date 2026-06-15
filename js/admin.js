@@ -531,7 +531,11 @@ if (existingReferencePairs.length > 0) {
       background: "rgba(239,68,68,0.10)",
       border: "rgba(239,68,68,0.38)"
     },
-
+reference: {
+  color: "#7dd3fc",
+  background: "rgba(14,165,233,0.10)",
+  border: "rgba(56,189,248,0.35)"
+},
     neutral: {
       color: "#f8fafc",
       background: "rgba(15,23,42,0.66)",
@@ -1134,9 +1138,12 @@ ${referenceMessages.length ? referenceMessages.map(m => "・" + m).join("\n") : 
 )}
 
         ${renderMetric(
-          "参考情報",
-          referenceMessages.length + "件"
-        )}
+  "参考情報",
+  referenceMessages.length + "件",
+  referenceMessages.length > 0
+    ? "reference"
+    : "neutral"
+)}
 
         ${renderMetric(
           "既存POI",
