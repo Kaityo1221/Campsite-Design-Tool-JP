@@ -2118,12 +2118,12 @@ adjustablePairs.forEach(pair => {
 });
 if (markerBounds.length > 0) {
   adminReviewMapInstance.fitBounds(
-    markerBounds,
-    {
-      padding: [28, 28],
-      maxZoom: 18
-    }
-  );
+  markerBounds,
+  {
+    padding: [36, 36],
+    maxZoom: 17
+  }
+);
 }
 
   setTimeout(() => {
