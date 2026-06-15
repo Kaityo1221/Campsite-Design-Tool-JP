@@ -1391,7 +1391,7 @@ ${referenceMessages.length ? referenceMessages.map(m => "・" + m).join("\n") : 
             overflow:hidden;
           "
         ></div>
-        <div style="
+        <details style="
   margin-top:10px;
   padding:10px 12px;
   border-radius:10px;
@@ -1401,14 +1401,18 @@ ${referenceMessages.length ? referenceMessages.map(m => "・" + m).join("\n") : 
   font-size:12px;
   line-height:1.8;
 ">
-  <strong style="
-    display:block;
-    margin-bottom:6px;
+  <summary style="
+    cursor:pointer;
     color:#e2e8f0;
+    font-weight:bold;
     font-size:13px;
   ">
-    地図凡例
-  </strong>
+    地図凡例を開く
+  </summary>
+
+  <div style="
+    margin-top:8px;
+  ">
 
   <div>
     <span style="
@@ -1454,8 +1458,8 @@ ${referenceMessages.length ? referenceMessages.map(m => "・" + m).join("\n") : 
       margin-right:16px;
     "></span>
     活動範囲：実際に歩く・遊ぶエリア
-  </div>
-</div>
+   </div>
+</details>
       </div>
       <div class="distance-warning" style="
         margin-top:14px;
