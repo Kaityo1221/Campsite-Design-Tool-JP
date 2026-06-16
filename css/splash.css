@@ -348,3 +348,88 @@ body.opening-mode .container {
     opacity: 0;
   }
 }
+.policy-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10040;
+
+  display: none;
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+
+  background: rgba(2, 6, 23, 0.72);
+  backdrop-filter: blur(8px);
+}
+
+.policy-modal.show {
+  display: flex;
+}
+
+.policy-modal-card {
+  position: relative;
+  width: min(92vw, 440px);
+
+  padding: 24px 20px;
+  border-radius: 22px;
+
+  background: rgba(15, 23, 42, 0.96);
+  border: 1px solid rgba(148, 163, 184, 0.32);
+
+  color: #e5e7eb;
+
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.42);
+}
+
+.policy-modal-card h3 {
+  margin: 0 0 14px;
+  color: #bfdbfe;
+  font-size: 18px;
+}
+
+.policy-modal-card p {
+  margin: 0;
+  color: #dbeafe;
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.policy-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+
+  width: 32px;
+  height: 32px;
+
+  border: none;
+  border-radius: 999px;
+
+  background: rgba(255, 255, 255, 0.10);
+  color: white;
+
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.opening-policy-btn {
+  position: fixed;
+  right: 12px;
+  bottom: 12px;
+  z-index: 10030;
+
+  padding: 8px 12px;
+  border-radius: 999px;
+
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  background: rgba(15, 23, 42, 0.62);
+  color: rgba(226, 232, 240, 0.82);
+
+  font-size: 11px;
+  font-weight: 700;
+
+  backdrop-filter: blur(8px);
+  cursor: pointer;
+}
