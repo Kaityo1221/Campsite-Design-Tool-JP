@@ -14,12 +14,12 @@
     background: #020617;
   }
 </style>
-<link rel="stylesheet" href="css/style.css?v=75">
+<link rel="stylesheet" href="css/style.css?v=77">
 <link rel="stylesheet" href="css/splash.css?v=98">
 <link rel="stylesheet" href="css/tabs.css?v=29">
 <link rel="stylesheet" href="css/admin.css?v=27">
 <link rel="stylesheet" href="css/distance.css?v=33">
-<link rel="stylesheet" href="css/capacity.css?v=5">
+<link rel="stylesheet" href="css/capacity.css?v=6">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/icon.png">
 <link rel="manifest" href="./manifest.json">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -918,12 +918,32 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
     <div class="lab-gear gear-right">⚙️</div>
   </div>
 
-  <div class="lab-kmz-card" id="labKmzCard">
-    📦<br>
-    KMZ
-  </div>
+ <button
+  id="researchKmzButton"
+  class="lab-file-card lab-file-card-kmz disabled"
+  type="button"
+  onclick="downloadResearchKmz()"
+  disabled
+>
+  <div class="lab-file-icon">📦</div>
+  <div class="lab-file-main">研究KMZを保存</div>
+  <small>CSV解析後に保存できます</small>
+</button>
 </div>
+<div id="researchMapPanel" class="research-map-panel" style="display:none;">
+  <div class="capacity-section-title">
+    🗺 研究結果マップ
+  </div>
 
+  <p class="note">
+    CSVから読み込んだPOIを、休憩・滞在・回遊・注意・未分類に分けて地図上に表示します。<br>
+    ここではキャンプサイト設計前の「公園研究」を確認できます。
+  </p>
+
+  <div id="researchResultMap" class="research-result-map"></div>
+
+  <div id="researchMapSummary" class="research-map-summary"></div>
+</div>
 <div class="lab-legend-box">
   <strong>🗺️ KMZアイコン凡例</strong>
 
@@ -956,9 +976,10 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
     ⚙️ LAB ENGINE START
   </button>
 
-  <div id="labEngineResult"></div>
+   <div id="labEngineResult"></div>
 </div>
-   <div class="step">
+
+<div class="step">
   <div class="step-no">Experimental</div>
   <h3>配置余地チェック（実験）</h3>
 
@@ -2005,7 +2026,7 @@ GOロケット団の出現率が3倍になる
 <script src="js/tabs.js?v=1"></script>
 <script src="js/distance.js?v=1"></script>
 <script src="js/admin.js?v=1"></script>
-<script src="js/main.js?v=4"></script>
+<script src="js/main.js?v=6"></script>
 <script src="js/kmz.js?v=1"></script>
 <script src="js/deduplicate.js?v=1"></script>
 <script src="js/capacity.js?v=3"></script>

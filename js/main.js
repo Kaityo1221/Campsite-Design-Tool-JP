@@ -556,11 +556,14 @@ async function runLabCsvToKmzEngine() {
   }
 
   if (machine) {
-    machine.classList.remove("complete");
-    machine.classList.add("running");
-  }
+  machine.classList.remove("complete");
+  machine.classList.add("running");
+}
 
-  startLabEngineSound();
+hideLabResearchMapOnStart();
+scrollToLabEngineMachine();
+
+startLabEngineSound();
 
   if (result) {
     result.innerHTML = `
@@ -624,7 +627,8 @@ async function runLabCsvToKmzEngine() {
 
       return;
     }
-
+renderLabResearchMap(points);
+setLabResearchKmzReady(points);
     await new Promise(resolve => {
   setTimeout(resolve, 2200);
 });
@@ -632,11 +636,11 @@ async function runLabCsvToKmzEngine() {
     const sourceName =
       files.map(file => file.name).join(" / ");
 
-    const kmzBlob =
-      await createLabExistingPoiKmz(
-        points,
-        sourceName
-      );
+    // const kmzBlob =
+//   await createLabExistingPoiKmz(
+//     points,
+//     sourceName
+//   );
 
     const today =
       new Date().toISOString().slice(0, 10).replace(/-/g, "");
@@ -650,10 +654,10 @@ const parkName =
 const downloadName =
   `Lab_${parkName}_${today}.kmz`;
 
-    downloadBlob(
-      kmzBlob,
-      downloadName
-    );
+    // downloadBlob(
+//   kmzBlob,
+//   downloadName
+// );
 
     if (machine) {
       machine.classList.remove("running");
@@ -699,6 +703,25 @@ const downloadName =
         </div>
       `;
     }
+  }
+}
+function scrollToLabEngineMachine() {
+  const machine = document.getElementById("labEngineMachine");
+
+  if (!machine) return;
+
+  setTimeout(() => {
+    machine.scrollIntoView({
+      behavior: "smooth",
+      block: "center"
+    });
+  }, 80);
+}
+function hideLabResearchMapOnStart() {
+  const panel = document.getElementById("researchMapPanel");
+
+  if (panel) {
+    panel.style.display = "none";
   }
 }
 function dedupeLabPoiPoints(points) {
@@ -1107,3 +1130,186 @@ document.addEventListener("click", function(event) {
     closePolicyModal();
   }
 });
+let labResearchKmzPoints = [];
+let labResearchMapInstance = null;
+let labResearchLayerGroup = null;
+
+function setLabResearchKmzReady(points) {
+  labResearchKmzPoints = points;
+
+  const button = document.getElementById("researchKmzButton");
+  if (!button) return;
+
+  button.disabled = false;
+  button.classList.remove("disabled");
+
+  const note = button.querySelector("small");
+  if (note) {
+    note.textContent = "研究結果をKMZで保存";
+  }
+}
+
+function downloadResearchKmz() {
+  if (!labResearchKmzPoints.length) {
+    alert("先にCSVをLab Engineへ投入してください。");
+    return;
+  }
+
+  const sourceName = "Campsite Lab Research";
+
+  createLabExistingPoiKmz(
+    labResearchKmzPoints,
+    sourceName
+  ).then(blob => {
+    const today =
+      new Date().toISOString().slice(0, 10).replace(/-/g, "");
+
+    const parkName =
+      sanitizeFileNamePart(
+        guessLabParkName(labResearchKmzPoints)
+      );
+
+    downloadBlob(
+      blob,
+      `Lab_${parkName}_${today}.kmz`
+    );
+  });
+}
+
+function renderLabResearchMap(points) {
+  const panel = document.getElementById("researchMapPanel");
+  const mapElement = document.getElementById("researchResultMap");
+  const summary = document.getElementById("researchMapSummary");
+
+  if (!panel || !mapElement) return;
+
+  panel.style.display = "block";
+
+  if (typeof L === "undefined") {
+    mapElement.innerHTML = `
+      <div class="distance-warning">
+        地図ライブラリを読み込めませんでした。
+      </div>
+    `;
+    return;
+  }
+
+  if (labResearchMapInstance) {
+    labResearchMapInstance.remove();
+    labResearchMapInstance = null;
+  }
+
+  labResearchMapInstance = L.map("researchResultMap", {
+    zoomControl: true
+  });
+
+  const osmLayer = L.tileLayer(
+    "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+    {
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors',
+      maxZoom: 19
+    }
+  );
+
+  osmLayer.addTo(labResearchMapInstance);
+
+  labResearchLayerGroup = L.layerGroup()
+    .addTo(labResearchMapInstance);
+
+  const bounds = [];
+
+  points.forEach(point => {
+    const lat = Number(point.lat);
+    const lng = Number(point.lng);
+
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+
+    const name =
+      point.name ||
+      point.title ||
+      "POI";
+
+    const categoryKey =
+      getLabPoiCategoryKey(name);
+
+    const color =
+      getLabResearchCategoryColor(categoryKey);
+
+    const label =
+      getLabPoiFolderName(categoryKey);
+
+    L.circleMarker([lat, lng], {
+      radius: 6,
+      color,
+      fillColor: color,
+      weight: 1.5,
+      fillOpacity: 0.9
+    })
+      .bindPopup(`
+        <strong>${escapeHtml(name)}</strong><br>
+        分類：${escapeHtml(label)}
+      `)
+      .addTo(labResearchLayerGroup);
+
+    bounds.push([lat, lng]);
+  });
+
+  if (bounds.length) {
+    labResearchMapInstance.fitBounds(bounds, {
+      padding: [24, 24]
+    });
+  }
+
+  setTimeout(() => {
+    labResearchMapInstance?.invalidateSize();
+  }, 100);
+
+  if (summary) {
+    summary.innerHTML = renderLabResearchSummary(points);
+  }
+}
+
+function getLabResearchCategoryColor(categoryKey) {
+  const colors = {
+    rest: "#22c55e",
+    stay: "#facc15",
+    loop: "#3b82f6",
+    caution: "#ef4444",
+    unknown: "#f8fafc"
+  };
+
+  return colors[categoryKey] || colors.unknown;
+}
+
+function renderLabResearchSummary(points) {
+  const counts = {
+    rest: 0,
+    stay: 0,
+    loop: 0,
+    caution: 0,
+    unknown: 0
+  };
+
+  points.forEach(point => {
+    const name =
+      point.name ||
+      point.title ||
+      "";
+
+    const key =
+      getLabPoiCategoryKey(name);
+
+    counts[key] =
+      (counts[key] || 0) + 1;
+  });
+
+  return `
+    <strong>研究結果</strong><br>
+    🟢 休憩：${counts.rest}件　
+    🟡 滞在：${counts.stay}件　
+    🔵 回遊：${counts.loop}件　
+    🔴 注意：${counts.caution}件　
+    ⚪ 未分類：${counts.unknown}件
+  `;
+}
