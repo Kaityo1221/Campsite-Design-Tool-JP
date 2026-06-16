@@ -2534,16 +2534,16 @@ button.generate:active {
   animation: labGearSpin 0.55s linear infinite;
 }
 
-.lab-engine-machine.running .gear-right {
-  animation-direction: reverse;
-}
-
 .lab-engine-machine.running .lab-csv-card {
-  animation: labCsvIn 1.2s ease-in-out infinite;
+  animation: labCsvIn 1.6s ease-in-out infinite;
 }
 
 .lab-engine-machine.running .lab-kmz-card {
-  animation: labKmzOut 1.2s ease-in-out infinite;
+  animation: labKmzOut 1.6s ease-in-out infinite;
+}
+
+.lab-engine-core::after {
+  animation: labEngineFlow 1.8s linear infinite;
 }
 
 .lab-engine-machine.complete .lab-kmz-card {

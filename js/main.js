@@ -626,8 +626,8 @@ async function runLabCsvToKmzEngine() {
     }
 
     await new Promise(resolve => {
-      setTimeout(resolve, 1600);
-    });
+  setTimeout(resolve, 2200);
+});
 
     const sourceName =
       files.map(file => file.name).join(" / ");
