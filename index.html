@@ -18,7 +18,7 @@
 <link rel="stylesheet" href="css/splash.css?v=98">
 <link rel="stylesheet" href="css/tabs.css?v=29">
 <link rel="stylesheet" href="css/admin.css?v=27">
-<link rel="stylesheet" href="css/distance.css?v=32">
+<link rel="stylesheet" href="css/distance.css?v=33">
 <link rel="stylesheet" href="css/capacity.css?v=5">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/icon.png">
 <link rel="manifest" href="./manifest.json">
@@ -1588,11 +1588,24 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
   </label>
 </div>
     <div class="step">
-      <div class="step-no">STEP 3</div>
-      <button class="generate" onclick="runDistanceCheck()">距離チェック実行</button>
-      <div id="distanceResult"></div>
-      <div id="distanceMap"></div>
-    </div>
+  <div class="step-no">STEP 3</div>
+  <button class="generate" onclick="runDistanceCheck()">距離チェック実行</button>
+
+  <div class="rank-guide-box">
+  <strong>距離判定の見方</strong><br><br>
+
+  🔴 密集：20m未満。近すぎるため、配置の見直し確定です。<br><br>
+
+  🟠 滞留：20m以上30m未満。人が止まりやすい場所では注意しましょう。<br><br>
+
+  🟡 軽微：30m以上40m未満。NIAの調整余地として確認します。<br><br>
+
+  ⚪ 40m以上：距離上は余裕があります。いいですね。
+</div>
+
+  <div id="distanceResult"></div>
+  <div id="distanceMap"></div>
+</div>
 
   </div> <!-- panel -->
 </section>
@@ -1985,7 +1998,7 @@ GOロケット団の出現率が3倍になる
 </div>
 <script src="js/util.js?v=18"></script>
 <script src="js/tabs.js?v=8"></script>
-<script src="js/distance.js?v=61"></script>
+<script src="js/distance.js?v=62"></script>
 <script src="js/admin.js?v=33"></script>
 <script src="js/main.js?v=68"></script>
 <script src="js/kmz.js?v=27"></script>

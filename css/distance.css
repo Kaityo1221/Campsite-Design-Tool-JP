@@ -289,3 +289,22 @@
     font-size: 14px;
   }
 }
+.rank-guide-box {
+  margin: 14px 0 16px;
+  padding: 13px 15px;
+
+  border-radius: 14px;
+  border: 1px solid rgba(250, 204, 21, 0.30);
+
+  background: rgba(24, 18, 6, 0.46);
+  color: #fef3c7;
+
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.rank-guide-box strong {
+  display: inline-block;
+  margin-bottom: 4px;
+  color: #fde68a;
+}

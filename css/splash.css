@@ -414,22 +414,37 @@ body.opening-mode .container {
   cursor: pointer;
 }
 
-.opening-policy-btn {
-  position: fixed;
-  right: 12px;
-  bottom: 12px;
-  z-index: 10030;
+.opening-policy-btn{
+  position:absolute;
 
-  padding: 8px 12px;
-  border-radius: 999px;
+  left:50%;
+  bottom:8px;
 
-  border: 1px solid rgba(148, 163, 184, 0.28);
-  background: rgba(15, 23, 42, 0.62);
-  color: rgba(226, 232, 240, 0.82);
+  transform:translateX(-50%);
 
-  font-size: 11px;
-  font-weight: 700;
+  padding:0;
 
-  backdrop-filter: blur(8px);
-  cursor: pointer;
+  border:none;
+  background:none;
+
+  color:rgba(255,255,255,.45);
+
+  font-size:11px;
+  font-weight:500;
+
+  letter-spacing:.05em;
+
+  cursor:pointer;
+
+  transition:
+    color .2s ease,
+    opacity .2s ease;
+}
+
+.opening-policy-btn:hover{
+  color:rgba(255,255,255,.75);
+}
+
+.opening-policy-btn:active{
+  opacity:.7;
 }
