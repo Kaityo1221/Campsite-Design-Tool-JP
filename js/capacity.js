@@ -124,7 +124,6 @@ async function analyzePlacementCapacity() {
 ジム：${capacityText(addCounts.gym, CAPACITY_LIMITS.gym)}<br>
 パワースポット：${capacityText(addCounts.power, CAPACITY_LIMITS.power)}<br><br>
        <strong>
-<strong>
 推定配置余地：約${estimate.points.length}地点
 （目安：${Math.max(0, estimate.points.length - 1)}～${estimate.points.length + 1}地点程度）
 </strong><br><br>
@@ -1298,7 +1297,7 @@ function renderPlacementSummaryCard(data) {
 
         <div class="placement-detail-row">
           <strong>既存POI密度</strong>
-          <span>${scoreData.densityLabel} / 既存 ${scoreData.existingCount}件</span>
+          <span>${scoreData.densityLabel} / 既存 ${scoreData.existingCount}件 / ${scoreData.densityValueLabel}</span>
         </div>
 
         <div class="placement-detail-row">
@@ -1389,27 +1388,57 @@ const effectiveRate = effectiveFree.freeRatio;
 }
 
   const hectare = area > 0 ? area / 10000 : 1;
-  const density = existingCount / hectare;
+const density = existingCount / hectare;
 
-  let densityScore = 0;
-  let densityLabel = "標準";
+let densityScore = 0;
+let densityLabel = "標準";
+let densityRiskLevel = "normal";
+let densityCap = 100;
 
-  if (density <= 3) {
-    densityScore = 25;
-    densityLabel = "低め";
-  } else if (density <= 8) {
-    densityScore = 22;
-    densityLabel = "適正";
-  } else if (density <= 14) {
-    densityScore = 16;
-    densityLabel = "やや高い";
-  } else if (density <= 22) {
-    densityScore = 10;
-    densityLabel = "高い";
-  } else {
-    densityScore = 5;
-    densityLabel = "かなり高い";
-  }
+/*
+  既存POI密度補正
+  上野公園のような「広いけど既存POIが多すぎる場所」が満点にならないようにする
+*/
+if (density <= 1.5) {
+  densityScore = 25;
+  densityLabel = "低め";
+} else if (density <= 3.5) {
+  densityScore = 22;
+  densityLabel = "適正";
+} else if (density <= 5.5) {
+  densityScore = 14;
+  densityLabel = "やや高い";
+  densityRiskLevel = "caution";
+  densityCap = 79;
+} else if (density <= 8) {
+  densityScore = 7;
+  densityLabel = "高い";
+  densityRiskLevel = "high";
+  densityCap = 69;
+} else {
+  densityScore = 2;
+  densityLabel = "かなり高い";
+  densityRiskLevel = "critical";
+  densityCap = 59;
+}
+
+/*
+  総数補正
+  面積が広くても、既存POI数が多すぎる場合は評価上限を下げる
+*/
+if (existingCount >= 250 && density >= 5.5) {
+  densityRiskLevel = "critical";
+  densityLabel = "かなり高い";
+  densityCap = 59;
+} else if (existingCount >= 200 && density >= 5) {
+  densityRiskLevel = "high";
+  densityLabel = "高い";
+  densityCap = 64;
+} else if (existingCount >= 120 && density >= 4.5) {
+  densityRiskLevel = "caution";
+  densityLabel = "やや高い";
+  densityCap = Math.min(densityCap, 74);
+}
 
   let addRoomScore = 0;
 let addRoomLabel = "少ない";
@@ -1447,13 +1476,17 @@ if (effectiveRate >= 0.65 && estimateCount >= 12) {
 
   walkScore = Math.min(10, walkScore);
 
-  const score = Math.max(
-    0,
-    Math.min(
-      100,
-      Math.round(areaScore + densityScore + addRoomScore + walkScore)
-    )
-  );
+  const rawScore = Math.round(
+  areaScore + densityScore + addRoomScore + walkScore
+);
+
+const score = Math.max(
+  0,
+  Math.min(
+    densityCap,
+    rawScore
+  )
+);
 
   let stars = "★☆☆☆☆";
   let rank = "別候補地も検討";
@@ -1480,6 +1513,53 @@ if (effectiveRate >= 0.65 && estimateCount >= 12) {
   rank = "配置余地は少なめ";
   comment = "活動範囲内の有効配置余地は少なめです。別候補地や活動範囲の見直しも検討してください。";
 }
+if (densityRiskLevel === "critical") {
+  if (score >= 40) {
+    stars = "★★★☆☆";
+    rank = "密度リスク高";
+    comment =
+      "この候補地は活動範囲が広く、40m条件後の配置余地はあります。ただし既存POI密度が非常に高いため、追加POIは密集エリアを避け、歩行分散に使える場所へ限定する必要があります。";
+  } else if (score >= 20) {
+    stars = "★★☆☆☆";
+    rank = "密度リスク高・配置余地少なめ";
+    comment =
+      "既存POI密度が非常に高く、40m条件後の配置余地も限られます。追加POIの配置はかなり慎重に確認してください。";
+  } else {
+    stars = "★☆☆☆☆";
+    rank = "別候補地も検討";
+    comment =
+      "既存POI密度が非常に高く、有効配置余地も少ないため、別候補地や活動範囲の見直しを検討してください。";
+  }
+} else if (densityRiskLevel === "high") {
+  if (score >= 60) {
+    stars = "★★★★☆";
+    rank = "注意";
+    comment =
+      "この候補地は配置余地がありますが、既存POI密度が高めです。追加POIは既存POIが少ない外周部や、歩行分散につながる場所を優先してください。";
+  } else if (score >= 40) {
+    stars = "★★★☆☆";
+    rank = "工夫が必要";
+    comment =
+      "既存POI密度が高めで、配置余地にも注意が必要です。追加位置は密集エリアを避けて慎重に選定してください。";
+  } else if (score >= 20) {
+    stars = "★★☆☆☆";
+    rank = "配置余地は少なめ";
+    comment =
+      "既存POI密度が高めで、40m条件後の配置余地も少なめです。追加POIの配置は慎重に確認してください。";
+  } else {
+    stars = "★☆☆☆☆";
+    rank = "別候補地も検討";
+    comment =
+      "既存POI密度が高く、有効配置余地も少ないため、別候補地や活動範囲の見直しを検討してください。";
+  }
+} else if (densityRiskLevel === "caution") {
+  if (score >= 75) {
+    stars = "★★★★☆";
+    rank = "やや注意";
+    comment =
+      "この候補地は配置余地がありますが、既存POI密度がやや高めです。追加POIは既存POIが少ない場所や、歩行分散につながる位置を優先してください。";
+  }
+}
 
   return {
   score,
@@ -1488,6 +1568,7 @@ if (effectiveRate >= 0.65 && estimateCount >= 12) {
   comment,
   areaLabel: `${areaLabel} / ${formatCapacityArea(area)}`,
   densityLabel,
+  densityValueLabel: `${density.toFixed(1)}件/ha`,
   addRoomLabel,
   effectiveAreaLabel: formatCapacityArea(effectiveArea),
   effectiveRateLabel: formatCapacityPercent(effectiveRate),
