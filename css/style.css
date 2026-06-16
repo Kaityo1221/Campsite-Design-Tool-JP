@@ -2642,3 +2642,66 @@ button.generate:active {
     transform: translateX(120%);
   }
 }
+
+/* =========================
+   Lab KMZ Legend
+========================= */
+
+.lab-legend-box {
+  margin: 14px 0 18px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(15,23,42,0.72);
+  border: 1px solid rgba(148,163,184,0.28);
+  color: #e5e7eb;
+  line-height: 1.8;
+}
+
+.lab-legend-box strong {
+  display: block;
+  margin-bottom: 8px;
+  color: #fde68a;
+}
+
+.lab-legend-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 14px;
+  font-size: 13px;
+}
+
+.legend-dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 7px;
+  border-radius: 50%;
+  vertical-align: -1px;
+  box-shadow: 0 0 10px rgba(255,255,255,0.18);
+}
+
+.legend-dot.rest {
+  background: #22c55e;
+}
+
+.legend-dot.stay {
+  background: #facc15;
+}
+
+.legend-dot.loop {
+  background: #3b82f6;
+}
+
+.legend-dot.caution {
+  background: #ef4444;
+}
+
+.legend-dot.unknown {
+  background: #f8fafc;
+}
+
+@media (max-width: 640px) {
+  .lab-legend-grid {
+    grid-template-columns: 1fr;
+  }
+}
