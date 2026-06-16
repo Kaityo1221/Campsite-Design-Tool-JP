@@ -2828,3 +2828,48 @@ button.generate:active {
   line-height: 1.6;
   font-size: 0.9rem;
 }
+.research-map-panel {
+  margin-top: 24px;
+  padding: 18px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 18px;
+  background: rgba(15, 23, 42, 0.82);
+}
+
+.research-result-map {
+  width: 100%;
+  height: 420px;
+  margin-top: 14px;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: #0f172a;
+}
+
+.research-map-summary {
+  margin-top: 12px;
+  color: #dbeafe;
+  line-height: 1.8;
+  font-size: 14px;
+}
+
+.lab-file-card-kmz {
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.lab-file-card-kmz.disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  filter: grayscale(0.4);
+}
+
+.lab-file-card-kmz:not(.disabled):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 18px rgba(168, 85, 247, 0.35);
+}
+
+.lab-file-main {
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
