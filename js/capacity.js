@@ -1274,8 +1274,7 @@ function renderPlacementSummaryCard(data) {
           <div class="placement-title">🌿 配置余地</div>
           <div class="placement-stars">${scoreData.stars}</div>
         </div>
-        <div class="placement-score">${scoreData.score}点</div>
-      </div>
+          </div>
 
       <div class="placement-rank">${scoreData.rank}</div>
 
@@ -1293,9 +1292,9 @@ function renderPlacementSummaryCard(data) {
 
       <div id="placementDetail" class="placement-detail">
         <div class="placement-detail-row">
-          <strong>活動範囲</strong>
-          <span>${scoreData.areaLabel}</span>
-        </div>
+  <strong>活動範囲</strong>
+  <span>${scoreData.areaLabel}・POI数${scoreData.poiVolumeLabel}</span>
+</div>
 
         <div class="placement-detail-row">
           <strong>既存POI密度</strong>
@@ -1339,6 +1338,17 @@ const addPoi = poi.filter(p => p.type === "add");
 
 const existingCount = existingPoi.length;
 const addCount = addPoi.length;
+let poiVolumeLabel = "標準";
+
+if (existingCount >= 120) {
+  poiVolumeLabel = "かなり多め";
+} else if (existingCount >= 80) {
+  poiVolumeLabel = "多め";
+} else if (existingCount >= 40) {
+  poiVolumeLabel = "やや多め";
+} else if (existingCount <= 10) {
+  poiVolumeLabel = "少なめ";
+}
 
 const area = calculateCapacityPolygonArea(polygon);
 
@@ -1481,6 +1491,7 @@ if (effectiveRate >= 0.65 && estimateCount >= 12) {
   addRoomLabel,
   effectiveAreaLabel: formatCapacityArea(effectiveArea),
   effectiveRateLabel: formatCapacityPercent(effectiveRate),
+  poiVolumeLabel,
   existingCount,
   addCount
 };
