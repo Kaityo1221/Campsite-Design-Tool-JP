@@ -1081,3 +1081,29 @@ function stopLabEngineSound() {
   audio.pause();
   audio.currentTime = 0;
 }
+
+function togglePolicyModal() {
+  const modal = document.getElementById("policyModal");
+  if (!modal) return;
+
+  modal.classList.add("show");
+}
+
+function closePolicyModal() {
+  const modal = document.getElementById("policyModal");
+  if (!modal) return;
+
+  modal.classList.remove("show");
+}
+
+document.addEventListener("click", function(event) {
+  const modal = document.getElementById("policyModal");
+
+  if (!modal || !modal.classList.contains("show")) {
+    return;
+  }
+
+  if (event.target.id === "policyModal") {
+    closePolicyModal();
+  }
+});
