@@ -652,6 +652,7 @@ const downloadName =
         ">
           ✅ LAB ENGINE COMPLETE<br><br>
           複数CSVを統合し、研究用KMZを生成しました。<br>
+          推定公園名：${escapeHtml(parkName)}<br>
           ファイル名：${escapeHtml(downloadName)}<br>
           投入CSV：${files.length}件<br>
           読み込みPOI：${allPoints.length}件<br>
@@ -806,6 +807,41 @@ function getLabPoiStyleId(name = "") {
 
   return "labUnknownPoi";
 }
+function getLabPoiCategoryKey(name = "") {
+  /*
+    注意系は最優先。
+    安全面・滞留リスクの確認に使うため。
+  */
+  if (isCautionPoi(name)) {
+    return "caution";
+  }
+
+  if (isRestPoi(name)) {
+    return "rest";
+  }
+
+  if (isStayPoi(name)) {
+    return "stay";
+  }
+
+  if (isLoopPoi(name)) {
+    return "loop";
+  }
+
+  return "unknown";
+}
+
+function getLabPoiFolderName(categoryKey) {
+  const names = {
+    rest: "🟢 休憩",
+    stay: "🟡 滞在",
+    loop: "🔵 回遊",
+    caution: "🔴 注意",
+    unknown: "⚪ 未分類"
+  };
+
+  return names[categoryKey] || names.unknown;
+}
 function isRestPoi(name = "") {
   return /ベンチ|東屋|四阿|あずまや|休憩|休憩所|水飲み|水飲場|藤棚|パーゴラ|トイレ/.test(String(name));
 }
@@ -822,47 +858,59 @@ function isCautionPoi(name = "") {
   return /駐車場|駐輪場|車道|道路|学校|病院|坂|階段|工事|水辺|池|川|喫煙|立入禁止|管理棟/.test(String(name));
 }
 function createLabExistingPoiKml(points, sourceName) {
-  const placemarks =
-    points.map((p, index) => {
-      const lat = Number(p.lat);
-      const lng = Number(p.lng);
+  const groups = {
+    rest: [],
+    stay: [],
+    loop: [],
+    caution: [],
+    unknown: []
+  };
 
-      const rawName =
-        p.name ||
-        p.title ||
-        `POI_${index + 1}`;
+  points.forEach((p, index) => {
+    const lat = Number(p.lat);
+    const lng = Number(p.lng);
 
-      const name =
-        escapeKmlText(rawName);
+    const rawName =
+      p.name ||
+      p.title ||
+      `POI_${index + 1}`;
 
-      const kind =
-        classifyType(
-          p.type,
-          rawName,
-          p.layer || "CSV_POI"
-        ) ||
-        "poi";
+    const name =
+      escapeKmlText(rawName);
 
-      const sourceFile =
-        p._sourceFile || sourceName;
+    const kind =
+      classifyType(
+        p.type,
+        rawName,
+        p.layer || "CSV_POI"
+      ) ||
+      "poi";
 
-      const rest =
-        isRestPoi(rawName) ? "○" : "×";
+    const sourceFile =
+      p._sourceFile || sourceName;
 
-      const stay =
-        isStayPoi(rawName) ? "○" : "×";
+    const rest =
+      isRestPoi(rawName) ? "○" : "×";
 
-      const loop =
-        isLoopPoi(rawName) ? "○" : "×";
+    const stay =
+      isStayPoi(rawName) ? "○" : "×";
 
-      const caution =
-        isCautionPoi(rawName) ? "○" : "×";
+    const loop =
+      isLoopPoi(rawName) ? "○" : "×";
 
-      const categoryLabel =
-        getLabPoiCategoryLabel(rawName);
-const styleId =
-  getLabPoiStyleId(rawName);
-      return `
+    const caution =
+      isCautionPoi(rawName) ? "○" : "×";
+
+    const categoryLabel =
+      getLabPoiCategoryLabel(rawName);
+
+    const categoryKey =
+      getLabPoiCategoryKey(rawName);
+
+    const styleId =
+      getLabPoiStyleId(rawName);
+
+    const placemark = `
 <Placemark>
   <name>${name}</name>
   <styleUrl>#${styleId}</styleUrl>
@@ -887,15 +935,39 @@ lng：${lng}<br><br>
     <coordinates>${lng},${lat},0</coordinates>
   </Point>
 </Placemark>`;
-    })
-    .join("");
+
+    groups[categoryKey].push(placemark);
+  });
+
+  const folders =
+    ["rest", "stay", "loop", "caution", "unknown"]
+      .map(key => {
+        if (!groups[key].length) {
+          return "";
+        }
+
+        return `
+<Folder>
+  <name>${getLabPoiFolderName(key)}</name>
+  ${groups[key].join("")}
+</Folder>`;
+      })
+      .join("");
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2">
 <Document>
   <name>Campsite Lab Research KMZ</name>
+  <description><![CDATA[
+<strong>KMZアイコン凡例</strong><br><br>
+🟢 休憩：ベンチ・東屋・トイレなど<br>
+🟡 滞在：広場・芝生・噴水など<br>
+🔵 回遊：遊歩道・橋・案内板など<br>
+🔴 注意：駐車場・階段・水辺など<br>
+⚪ 未分類：辞書追加候補
+  ]]></description>
 
-    <Style id="labRestPoi">
+  <Style id="labRestPoi">
     <IconStyle>
       <scale>1.0</scale>
       <Icon>
@@ -940,7 +1012,7 @@ lng：${lng}<br><br>
     </IconStyle>
   </Style>
 
-  ${placemarks}
+  ${folders}
 </Document>
 </kml>`;
 }
