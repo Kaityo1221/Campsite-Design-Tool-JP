@@ -25,13 +25,17 @@ const CAMPSITE_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_rWbeIqdWJJHHBtphER8bdg
 async function analyzePlacementCapacity() {
   const file = document.getElementById("capacityFile")?.files?.[0];
   const result = document.getElementById("capacityResult");
+  const placementResult = document.getElementById("placementResult");
 
-  if (!result) return;
+  if (!file) {
+  result.innerHTML = `<div class="distance-warning">KMZ / KMLファイルを選択してください。</div>`;
 
-    if (!file) {
-    result.innerHTML = `<div class="distance-warning">KMZ / KMLファイルを選択してください。</div>`;
-    return;
+  if (placementResult) {
+    placementResult.innerHTML = `KMZ / KMLファイルを選択してください。`;
   }
+
+  return;
+}
 
   capacityPreviewState = null;
 
@@ -47,6 +51,9 @@ async function analyzePlacementCapacity() {
   }
 
   result.innerHTML = `<div class="distance-warning">解析中...</div>`;
+  if (placementResult) {
+  placementResult.innerHTML = `配置余地を解析中...`;
+}
   try {
     const kmlText = await getCapacityKmlText(file);
 
@@ -90,6 +97,13 @@ async function analyzePlacementCapacity() {
       estimate,
       remaining
     };
+    renderPlacementSummaryCard({
+  polygon,
+  poi,
+  addCounts,
+  remaining,
+  estimate
+});
 
     result.innerHTML = `
       <div class="distance-warning">
@@ -110,7 +124,6 @@ async function analyzePlacementCapacity() {
 ジム：${capacityText(addCounts.gym, CAPACITY_LIMITS.gym)}<br>
 パワースポット：${capacityText(addCounts.power, CAPACITY_LIMITS.power)}<br><br>
        <strong>
-<strong>
 推定配置余地：約${estimate.points.length}地点
 （目安：${Math.max(0, estimate.points.length - 1)}～${estimate.points.length + 1}地点程度）
 </strong><br><br>
@@ -1245,4 +1258,461 @@ function getCapacityDistanceToSegment(point, start, end) {
   };
 
   return getCapacityDistance(point, nearest);
+}
+function renderPlacementSummaryCard(data) {
+  const container = document.getElementById("placementResult");
+  if (!container) return;
+
+  const scoreData = calculatePlacementScore(data);
+
+  container.className = "";
+  container.innerHTML = `
+    <div class="placement-card">
+      <div class="placement-head">
+        <div>
+          <div class="placement-title">🌿 配置余地</div>
+          <div class="placement-stars">${scoreData.stars}</div>
+        </div>
+          </div>
+
+      <div class="placement-rank">${scoreData.rank}</div>
+
+      <div class="placement-comment">
+        ${scoreData.comment}
+      </div>
+
+      <button
+        class="placement-detail-button"
+        type="button"
+        onclick="togglePlacementDetail()"
+      >
+        詳細を見る
+      </button>
+
+      <div id="placementDetail" class="placement-detail">
+        <div class="placement-detail-row">
+  <strong>活動範囲</strong>
+  <span>${scoreData.areaLabel}・POI数${scoreData.poiVolumeLabel}</span>
+</div>
+
+        <div class="placement-detail-row">
+          <strong>既存POI密度</strong>
+          <span>${scoreData.densityLabel} / 既存 ${scoreData.existingCount}件 / ${scoreData.densityValueLabel}</span>
+        </div>
+
+        <div class="placement-detail-row">
+  <strong>有効配置余地</strong>
+  <span>
+    ${scoreData.addRoomLabel} /
+    約${scoreData.effectiveAreaLabel}
+    （活動範囲の${scoreData.effectiveRateLabel}・既存POI40m円除外後）
+  </span>
+</div>
+
+<div class="placement-detail-row">
+  <strong>推定配置地点</strong>
+  <span>40m条件後 約${data.estimate.points.length}地点</span>
+</div>
+
+        <div class="placement-detail-row">
+          <strong>残容量</strong>
+          <span>
+            ポケストップ ${data.remaining.pokestop}件 /
+            ジム ${data.remaining.gym}件 /
+            パワースポット ${data.remaining.power}件
+          </span>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function calculatePlacementScore(data) {
+  const polygon = data.polygon || [];
+const poi = data.poi || [];
+const estimateCount = data.estimate?.points?.length || 0;
+
+const existingPoi = poi.filter(p => p.type !== "add");
+const addPoi = poi.filter(p => p.type === "add");
+
+const existingCount = existingPoi.length;
+const addCount = addPoi.length;
+let poiVolumeLabel = "標準";
+
+if (existingCount >= 120) {
+  poiVolumeLabel = "かなり多め";
+} else if (existingCount >= 80) {
+  poiVolumeLabel = "多め";
+} else if (existingCount >= 40) {
+  poiVolumeLabel = "やや多め";
+} else if (existingCount <= 10) {
+  poiVolumeLabel = "少なめ";
+}
+
+const area = calculateCapacityPolygonArea(polygon);
+
+const effectiveFree = estimateEffectiveFreeAreaGrid(
+  polygon,
+  existingPoi,
+  40,
+  10
+);
+
+const effectiveArea = effectiveFree.effectiveArea;
+const effectiveRate = effectiveFree.freeRatio;
+
+  let areaScore = 0;
+  let areaLabel = "未計算";
+
+  if (area >= 750000) {
+  areaScore = 40;
+  areaLabel = "非常に広い";
+} else if (area >= 400000) {
+  areaScore = 37;
+  areaLabel = "かなり広い";
+} else if (area >= 200000) {
+  areaScore = 34;
+  areaLabel = "広い";
+} else if (area >= 80000) {
+  areaScore = 28;
+  areaLabel = "標準";
+} else if (area >= 30000) {
+  areaScore = 22;
+  areaLabel = "小さめ";
+} else if (area >= 10000) {
+  areaScore = 15;
+  areaLabel = "狭い";
+} else {
+  areaScore = 8;
+  areaLabel = "非常に狭い";
+}
+
+  const hectare = area > 0 ? area / 10000 : 1;
+const density = existingCount / hectare;
+
+let densityScore = 0;
+let densityLabel = "標準";
+let densityRiskLevel = "normal";
+let densityCap = 100;
+
+/*
+  既存POI密度補正
+  上野公園のような「広いけど既存POIが多すぎる場所」が満点にならないようにする
+*/
+if (density <= 1.5) {
+  densityScore = 25;
+  densityLabel = "低め";
+} else if (density <= 3.5) {
+  densityScore = 22;
+  densityLabel = "適正";
+} else if (density <= 5.5) {
+  densityScore = 14;
+  densityLabel = "やや高い";
+  densityRiskLevel = "caution";
+  densityCap = 79;
+} else if (density <= 8) {
+  densityScore = 7;
+  densityLabel = "高い";
+  densityRiskLevel = "high";
+  densityCap = 69;
+} else {
+  densityScore = 2;
+  densityLabel = "かなり高い";
+  densityRiskLevel = "critical";
+  densityCap = 59;
+}
+
+/*
+  総数補正
+  面積が広くても、既存POI数が多すぎる場合は評価上限を下げる
+*/
+if (existingCount >= 250 && density >= 5.5) {
+  densityRiskLevel = "critical";
+  densityLabel = "かなり高い";
+  densityCap = 59;
+} else if (existingCount >= 200 && density >= 5) {
+  densityRiskLevel = "high";
+  densityLabel = "高い";
+  densityCap = 64;
+} else if (existingCount >= 120 && density >= 4.5) {
+  densityRiskLevel = "caution";
+  densityLabel = "やや高い";
+  densityCap = Math.min(densityCap, 74);
+}
+
+  let addRoomScore = 0;
+let addRoomLabel = "少ない";
+
+if (effectiveRate >= 0.65 && estimateCount >= 12) {
+  addRoomScore = 25;
+  addRoomLabel = "十分";
+} else if (effectiveRate >= 0.45 && estimateCount >= 7) {
+  addRoomScore = 20;
+  addRoomLabel = "標準以上";
+} else if (effectiveRate >= 0.25 && estimateCount >= 4) {
+  addRoomScore = 15;
+  addRoomLabel = "標準";
+} else if (effectiveRate >= 0.10 && estimateCount >= 1) {
+  addRoomScore = 8;
+  addRoomLabel = "少なめ";
+} else {
+  addRoomScore = 2;
+  addRoomLabel = "ほぼなし";
+}
+
+  let walkScore = 5;
+
+  if (polygon.length >= 3 && area >= 20000) {
+    walkScore += 2;
+  }
+
+  if (estimateCount >= 8) {
+    walkScore += 3;
+  } else if (estimateCount >= 4) {
+    walkScore += 2;
+  } else if (estimateCount >= 1) {
+    walkScore += 1;
+  }
+
+  walkScore = Math.min(10, walkScore);
+
+  const rawScore = Math.round(
+  areaScore + densityScore + addRoomScore + walkScore
+);
+
+const score = Math.max(
+  0,
+  Math.min(
+    densityCap,
+    rawScore
+  )
+);
+
+  let stars = "★☆☆☆☆";
+  let rank = "別候補地も検討";
+  let comment = "活動範囲内の余白が少なく、追加POIの配置自由度は低めです。別候補地や活動範囲の見直しも検討してください。";
+
+  if (score >= 85) {
+  stars = "★★★★★";
+  rank = "かなり余地あり";
+  comment = "この候補地は、既存POIの40m圏を除外しても有効配置余地が大きく、イベント時の分散歩行にも向いています。";
+} else if (score >= 75) {
+  stars = "★★★★★";
+  rank = "良好";
+  comment = "この候補地は、既存POIの40m圏を除外しても一定の有効配置余地があり、イベント時の分散歩行にも向いています。";
+} else if (score >= 60) {
+  stars = "★★★★☆";
+  rank = "余地あり";
+  comment = "この候補地は、40m条件後も配置余地があります。配置を工夫すれば、バランスの良いキャンプサイトにできます。";
+} else if (score >= 40) {
+  stars = "★★★☆☆";
+  rank = "工夫が必要";
+  comment = "40m条件後の配置余地は限られます。既存POI密度や追加位置の選定に注意が必要です。";
+} else if (score >= 20) {
+  stars = "★★☆☆☆";
+  rank = "配置余地は少なめ";
+  comment = "活動範囲内の有効配置余地は少なめです。別候補地や活動範囲の見直しも検討してください。";
+}
+if (densityRiskLevel === "critical") {
+  if (score >= 40) {
+    stars = "★★★☆☆";
+    rank = "密度リスク高";
+    comment =
+      "この候補地は活動範囲が広く、40m条件後の配置余地はあります。ただし既存POI密度が非常に高いため、追加POIは密集エリアを避け、歩行分散に使える場所へ限定する必要があります。";
+  } else if (score >= 20) {
+    stars = "★★☆☆☆";
+    rank = "密度リスク高・配置余地少なめ";
+    comment =
+      "既存POI密度が非常に高く、40m条件後の配置余地も限られます。追加POIの配置はかなり慎重に確認してください。";
+  } else {
+    stars = "★☆☆☆☆";
+    rank = "別候補地も検討";
+    comment =
+      "既存POI密度が非常に高く、有効配置余地も少ないため、別候補地や活動範囲の見直しを検討してください。";
+  }
+} else if (densityRiskLevel === "high") {
+  if (score >= 60) {
+    stars = "★★★★☆";
+    rank = "注意";
+    comment =
+      "この候補地は配置余地がありますが、既存POI密度が高めです。追加POIは既存POIが少ない外周部や、歩行分散につながる場所を優先してください。";
+  } else if (score >= 40) {
+    stars = "★★★☆☆";
+    rank = "工夫が必要";
+    comment =
+      "既存POI密度が高めで、配置余地にも注意が必要です。追加位置は密集エリアを避けて慎重に選定してください。";
+  } else if (score >= 20) {
+    stars = "★★☆☆☆";
+    rank = "配置余地は少なめ";
+    comment =
+      "既存POI密度が高めで、40m条件後の配置余地も少なめです。追加POIの配置は慎重に確認してください。";
+  } else {
+    stars = "★☆☆☆☆";
+    rank = "別候補地も検討";
+    comment =
+      "既存POI密度が高く、有効配置余地も少ないため、別候補地や活動範囲の見直しを検討してください。";
+  }
+} else if (densityRiskLevel === "caution") {
+  if (score >= 75) {
+    stars = "★★★★☆";
+    rank = "やや注意";
+    comment =
+      "この候補地は配置余地がありますが、既存POI密度がやや高めです。追加POIは既存POIが少ない場所や、歩行分散につながる位置を優先してください。";
+  }
+}
+
+  return {
+  score,
+  stars,
+  rank,
+  comment,
+  areaLabel: `${areaLabel} / ${formatCapacityArea(area)}`,
+  densityLabel,
+  densityValueLabel: `${density.toFixed(1)}件/ha`,
+  addRoomLabel,
+  effectiveAreaLabel: formatCapacityArea(effectiveArea),
+  effectiveRateLabel: formatCapacityPercent(effectiveRate),
+  poiVolumeLabel,
+  existingCount,
+  addCount
+};
+}
+
+function calculateCapacityPolygonArea(points) {
+  if (!Array.isArray(points) || points.length < 3) return 0;
+
+  const R = 6378137;
+  let area = 0;
+
+  for (let i = 0; i < points.length; i++) {
+    const p1 = points[i];
+    const p2 = points[(i + 1) % points.length];
+
+    const lon1 = p1.lng * Math.PI / 180;
+    const lon2 = p2.lng * Math.PI / 180;
+    const lat1 = p1.lat * Math.PI / 180;
+    const lat2 = p2.lat * Math.PI / 180;
+
+    area += (lon2 - lon1) * (2 + Math.sin(lat1) + Math.sin(lat2));
+  }
+
+  return Math.abs(area * R * R / 2);
+}
+
+function formatCapacityArea(area) {
+  if (!area) return "未計算";
+  if (area >= 10000) return `${(area / 10000).toFixed(1)}ha`;
+  return `${Math.round(area).toLocaleString()}㎡`;
+}
+function estimateEffectiveFreeAreaGrid(
+  polygon,
+  existingPoi,
+  radiusMeters = 40,
+  gridMeters = 10
+) {
+  if (!Array.isArray(polygon) || polygon.length < 3) {
+    return {
+      effectiveArea: 0,
+      blockedArea: 0,
+      freeRatio: 0,
+      sampleCount: 0,
+      freeCount: 0,
+      blockedCount: 0
+    };
+  }
+
+  const polygonArea = calculateCapacityPolygonArea(polygon);
+
+  if (!polygonArea) {
+    return {
+      effectiveArea: 0,
+      blockedArea: 0,
+      freeRatio: 0,
+      sampleCount: 0,
+      freeCount: 0,
+      blockedCount: 0
+    };
+  }
+
+  const meanLat =
+    polygon.reduce((sum, p) => sum + p.lat, 0) / polygon.length;
+
+  const metersPerLat = 111320;
+  const metersPerLng =
+    111320 * Math.cos(meanLat * Math.PI / 180);
+
+  const projectedPolygon = polygon.map(p => ({
+    x: p.lng * metersPerLng,
+    y: p.lat * metersPerLat
+  }));
+
+  const projectedExisting = existingPoi.map(p => ({
+    x: p.lng * metersPerLng,
+    y: p.lat * metersPerLat
+  }));
+
+  const xs = projectedPolygon.map(p => p.x);
+  const ys = projectedPolygon.map(p => p.y);
+
+  const minX = Math.min(...xs);
+  const maxX = Math.max(...xs);
+  const minY = Math.min(...ys);
+  const maxY = Math.max(...ys);
+
+  let sampleCount = 0;
+  let freeCount = 0;
+  let blockedCount = 0;
+
+  for (let x = minX; x <= maxX; x += gridMeters) {
+    for (let y = minY; y <= maxY; y += gridMeters) {
+      const sample = {
+        x: x + gridMeters / 2,
+        y: y + gridMeters / 2
+      };
+
+      if (!isCapacityPointInPolygon(sample, projectedPolygon)) {
+        continue;
+      }
+
+      sampleCount++;
+
+      const blocked = projectedExisting.some(p =>
+        getCapacityDistance(sample, p) < radiusMeters
+      );
+
+      if (blocked) {
+        blockedCount++;
+      } else {
+        freeCount++;
+      }
+    }
+  }
+
+  const freeRatio =
+    sampleCount > 0
+      ? freeCount / sampleCount
+      : 0;
+
+  const effectiveArea = polygonArea * freeRatio;
+  const blockedArea = polygonArea - effectiveArea;
+
+  return {
+    effectiveArea,
+    blockedArea,
+    freeRatio,
+    sampleCount,
+    freeCount,
+    blockedCount
+  };
+}
+
+function formatCapacityPercent(value) {
+  if (!Number.isFinite(value)) return "0%";
+  return `${Math.round(value * 100)}%`;
+}
+function togglePlacementDetail() {
+  const detail = document.getElementById("placementDetail");
+  if (!detail) return;
+
+  detail.classList.toggle("show");
 }

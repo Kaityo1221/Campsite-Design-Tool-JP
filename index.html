@@ -14,11 +14,11 @@
     background: #020617;
   }
 </style>
-<link rel="stylesheet" href="css/style.css?v=72">
-<link rel="stylesheet" href="css/splash.css?v=97">
+<link rel="stylesheet" href="css/style.css?v=75">
+<link rel="stylesheet" href="css/splash.css?v=98">
 <link rel="stylesheet" href="css/tabs.css?v=29">
-<link rel="stylesheet" href="css/admin.css?v=25">
-<link rel="stylesheet" href="css/distance.css?v=32">
+<link rel="stylesheet" href="css/admin.css?v=27">
+<link rel="stylesheet" href="css/distance.css?v=33">
 <link rel="stylesheet" href="css/capacity.css?v=5">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/icon.png">
 <link rel="manifest" href="./manifest.json">
@@ -176,6 +176,37 @@
 
     <!-- 幻想的な光 -->
 <div id="sceneMagicGlow" class="scene-magic-glow"></div>
+
+<button
+  type="button"
+  class="opening-policy-btn"
+  onclick="togglePolicyModal()"
+>
+  利用規約・研究について
+</button>
+
+</div> <!-- opening-scene-wrap -->
+
+</div> <!-- openingScreen -->
+
+<div id="policyModal" class="policy-modal">
+
+  <div class="policy-modal-card">
+
+    <button
+      class="policy-close"
+      onclick="closePolicyModal()"
+    >
+      ×
+    </button>
+
+    <h3>利用規約・研究について</h3>
+
+    <p>
+      みなさんの設計データは、
+      より良いキャンプサイト作成支援のための
+      研究・改善に役立てることがあります。
+    </p>
 
   </div>
 
@@ -856,7 +887,77 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
   Campsite Design Tool の実験機能をまとめた秘密の研究室です。<br>
   配置余地チェック、候補POI生成、今後追加される検証機能などを利用できます。
 </p>
-    
+    <div class="step lab-engine-step">
+  <div class="step-no">LAB-001</div>
+
+  <h3>CSV → 研究用KMZ生成</h3>
+
+  <p class="note">
+    研究員ミッション用のエンジンです。<br>
+    Wayfarer Mapから取得したCSVを投入すると、既存POIだけを研究用KMZとして自動生成します。
+  </p>
+
+  <div class="lab-mission-box">
+  <strong>🔬 研究員ミッション</strong><br>
+  1. 今日研究する公園を決める<br>
+  2. Wayfarer Mapで Nearby Wayspots を Export CSV<br>
+  3. CSVをLab Engineへ投入<br>
+  4. 研究用KMZを保存<br>
+  5. 休憩・滞在・回遊・注意ポイントを観察し、キャンプサイト適性を研究する
+</div>
+
+<div class="lab-engine-machine" id="labEngineMachine">
+  <div class="lab-csv-card" id="labCsvCard">
+    📄<br>
+    CSV
+  </div>
+
+  <div class="lab-engine-core">
+    <div class="lab-gear gear-left">⚙️</div>
+    <div class="lab-engine-label">LAB ENGINE</div>
+    <div class="lab-gear gear-right">⚙️</div>
+  </div>
+
+  <div class="lab-kmz-card" id="labKmzCard">
+    📦<br>
+    KMZ
+  </div>
+</div>
+
+<div class="lab-legend-box">
+  <strong>🗺️ KMZアイコン凡例</strong>
+
+  <div class="lab-legend-grid">
+    <div><span class="legend-dot rest"></span>休憩：ベンチ・東屋・トイレなど</div>
+    <div><span class="legend-dot stay"></span>滞在：広場・芝生・噴水など</div>
+    <div><span class="legend-dot loop"></span>回遊：遊歩道・橋・案内板など</div>
+    <div><span class="legend-dot caution"></span>注意：駐車場・階段・水辺など</div>
+    <div><span class="legend-dot unknown"></span>未分類：今後辞書に追加する候補</div>
+  </div>
+</div>
+
+  <p>研究する公園のCSVを選択します。</p>
+
+  <input
+  type="file"
+  id="labResearchCsvFile"
+  accept=".csv,text/csv"
+  multiple
+>
+<audio
+  id="labEngineSound"
+  src="assets/audio/CarEngine.wav"
+  preload="auto"
+></audio>
+  <button
+    class="generate lab-engine-button"
+    onclick="runLabCsvToKmzEngine()"
+  >
+    ⚙️ LAB ENGINE START
+  </button>
+
+  <div id="labEngineResult"></div>
+</div>
    <div class="step">
   <div class="step-no">Experimental</div>
   <h3>配置余地チェック（実験）</h3>
@@ -887,14 +988,18 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
   <p>キャンプサイトKMZ / KMLを選択します。</p>
 
   <input
-  type="file"
-  id="capacityFile"
-  accept=".kmz,.kml,.zip,application/vnd.google-earth.kmz,application/vnd.google-earth.kml+xml,application/zip"
->
+    type="file"
+    id="capacityFile"
+    accept=".kmz,.kml,.zip,application/vnd.google-earth.kmz,application/vnd.google-earth.kml+xml,application/zip"
+  >
 
   <button class="generate" onclick="analyzePlacementCapacity()">
     配置余地を確認する
   </button>
+
+  <div id="placementResult" class="placement-empty">
+    キャンプサイトKMZを読み込むと、配置余地を評価します。
+  </div>
 
 </div>
 
@@ -986,7 +1091,6 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
  <input
   type="file"
   id="adminReviewFile"
-  accept=".kmz,.kml,.zip,application/vnd.google-earth.kmz,application/vnd.google-earth.kml+xml,application/zip"
 >
 
   <button
@@ -1012,7 +1116,6 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
   <input
   type="file"
   id="adminCheckFile"
-  accept=".csv,.kmz,.kml,.zip,text/csv,application/vnd.google-earth.kmz,application/vnd.google-earth.kml+xml,application/zip"
 >
 
   <button class="generate" onclick="runAdminFileCheck()">
@@ -1035,7 +1138,6 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
   <input
   type="file"
   id="adminDensityFile"
-  accept=".kmz,.kml,.zip,application/vnd.google-earth.kmz,application/vnd.google-earth.kml+xml,application/zip"
 >
 
   <div class="checks">
@@ -1400,6 +1502,7 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
 </section>
      
     <section id="distance" class="tab-content">
+  
   <div class="panel">
   <h2>距離チェック</h2>
 
@@ -1424,7 +1527,6 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
 <input
   type="file"
   id="distanceFile"
-  accept=".kmz,.kml,.zip,application/vnd.google-earth.kmz,application/vnd.google-earth.kml+xml,application/zip"
 >
       <div style="
   margin-top:12px;
@@ -1491,11 +1593,24 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
   </label>
 </div>
     <div class="step">
-      <div class="step-no">STEP 3</div>
-      <button class="generate" onclick="runDistanceCheck()">距離チェック実行</button>
-      <div id="distanceResult"></div>
-      <div id="distanceMap"></div>
-    </div>
+  <div class="step-no">STEP 3</div>
+  <button class="generate" onclick="runDistanceCheck()">距離チェック実行</button>
+
+  <div class="rank-guide-box">
+  <strong>距離判定の見方</strong><br><br>
+
+  🔴 密集：20m未満。近すぎるため、配置の見直し確定です。<br><br>
+
+  🟠 滞留：20m以上30m未満。人が止まりやすい場所では注意しましょう。<br><br>
+
+  🟡 軽微：30m以上40m未満。NIAの調整余地として確認します。<br><br>
+
+  ⚪ 40m以上：距離上は余裕があります。いいですね。
+</div>
+
+  <div id="distanceResult"></div>
+  <div id="distanceMap"></div>
+</div>
 
   </div> <!-- panel -->
 </section>
@@ -1756,18 +1871,27 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
   "
 >
 
-  <button
+<button
   type="button"
-  class="main-btn"
+  class="admin-login-open-btn"
   onclick="checkAdminCode()"
-  style="width:100%;"
 >
-  管理者画面を開く
+  <span class="admin-login-open-btn-icon">🛡️</span>
+  <span class="admin-login-open-btn-text">
+    管理者画面を開く
+  </span>
+  <span class="admin-login-open-btn-sub">
+    ADMIN ACCESS
+  </span>
 </button>
 
-    <button type="button" class="guide-btn" onclick="closeAdminLogin()" style="width:100%;">
-      閉じる
-    </button>
+<button
+  type="button"
+  class="admin-login-close-btn"
+  onclick="closeAdminLogin()"
+>
+  閉じる
+</button>
 
     <p id="adminLoginError" class="error"></p>
   </div>
@@ -1877,14 +2001,14 @@ GOロケット団の出現率が3倍になる
 
   </div>
 </div>
-<script src="js/util.js?v=18"></script>
-<script src="js/tabs.js?v=8"></script>
-<script src="js/distance.js?v=61"></script>
-<script src="js/admin.js?v=32"></script>
-<script src="js/main.js?v=57"></script>
-<script src="js/kmz.js?v=27"></script>
-<script src="js/deduplicate.js?v=3"></script>
-<script src="js/capacity.js?v=6"></script>
+<script src="js/util.js?v=1"></script>
+<script src="js/tabs.js?v=1"></script>
+<script src="js/distance.js?v=1"></script>
+<script src="js/admin.js?v=1"></script>
+<script src="js/main.js?v=4"></script>
+<script src="js/kmz.js?v=1"></script>
+<script src="js/deduplicate.js?v=1"></script>
+<script src="js/capacity.js?v=3"></script>
 <div id="versionInfo" onclick="toggleVersionHistory()">
 </div>
 <div id="versionHistoryModal" class="version-modal">
