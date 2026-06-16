@@ -988,14 +988,18 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
   <p>キャンプサイトKMZ / KMLを選択します。</p>
 
   <input
-  type="file"
-  id="capacityFile"
-  accept=".kmz,.kml,.zip,application/vnd.google-earth.kmz,application/vnd.google-earth.kml+xml,application/zip"
->
+    type="file"
+    id="capacityFile"
+    accept=".kmz,.kml,.zip,application/vnd.google-earth.kmz,application/vnd.google-earth.kml+xml,application/zip"
+  >
 
   <button class="generate" onclick="analyzePlacementCapacity()">
     配置余地を確認する
   </button>
+
+  <div id="placementResult" class="placement-empty">
+    キャンプサイトKMZを読み込むと、配置余地を評価します。
+  </div>
 
 </div>
 
@@ -1498,6 +1502,7 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
 </section>
      
     <section id="distance" class="tab-content">
+  
   <div class="panel">
   <h2>距離チェック</h2>
 
@@ -1996,14 +2001,14 @@ GOロケット団の出現率が3倍になる
 
   </div>
 </div>
-<script src="js/util.js?v=18"></script>
-<script src="js/tabs.js?v=8"></script>
-<script src="js/distance.js?v=62"></script>
-<script src="js/admin.js?v=33"></script>
-<script src="js/main.js?v=68"></script>
-<script src="js/kmz.js?v=27"></script>
-<script src="js/deduplicate.js?v=3"></script>
-<script src="js/capacity.js?v=6"></script>
+<script src="js/util.js?v=1"></script>
+<script src="js/tabs.js?v=1"></script>
+<script src="js/distance.js?v=1"></script>
+<script src="js/admin.js?v=1"></script>
+<script src="js/main.js?v=1"></script>
+<script src="js/kmz.js?v=1"></script>
+<script src="js/deduplicate.js?v=1"></script>
+<script src="js/capacity.js?v=1"></script>
 <div id="versionInfo" onclick="toggleVersionHistory()">
 </div>
 <div id="versionHistoryModal" class="version-modal">
