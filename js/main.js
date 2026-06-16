@@ -128,7 +128,26 @@ document.addEventListener("DOMContentLoaded", function () {
 
     });
   }
+  /*
+    iPhone / Chrome 対策:
+    KMZ / KML / ZIP は accept 指定があると選択不可になる場合があるため、
+    ファイル選択制限は外し、読み込み時にJS側で判定する。
+  */
+  [
+    "distanceFile",
+    "adminReviewFile",
+    "adminCheckFile",
+    "adminDensityFile",
+    "capacityFile",
+    "circleOnlyFileInput",
+    "deduplicatePoiFile"
+  ].forEach(id => {
+    const input = document.getElementById(id);
 
+    if (input) {
+      input.removeAttribute("accept");
+    }
+  });
   const distanceInput =
   document.getElementById("distanceFile");
 
