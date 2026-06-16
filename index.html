@@ -1826,18 +1826,27 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
   "
 >
 
-  <button
+<button
   type="button"
-  class="main-btn"
+  class="admin-login-open-btn"
   onclick="checkAdminCode()"
-  style="width:100%;"
 >
-  管理者画面を開く
+  <span class="admin-login-open-btn-icon">🛡️</span>
+  <span class="admin-login-open-btn-text">
+    管理者画面を開く
+  </span>
+  <span class="admin-login-open-btn-sub">
+    ADMIN ACCESS
+  </span>
 </button>
 
-    <button type="button" class="guide-btn" onclick="closeAdminLogin()" style="width:100%;">
-      閉じる
-    </button>
+<button
+  type="button"
+  class="admin-login-close-btn"
+  onclick="closeAdminLogin()"
+>
+  閉じる
+</button>
 
     <p id="adminLoginError" class="error"></p>
   </div>
