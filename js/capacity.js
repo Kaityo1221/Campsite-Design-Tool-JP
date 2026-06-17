@@ -16,12 +16,6 @@ const CAPACITY_LABELS = {
   power: "パワースポット"
 };
 
-/* Supabase 疎通確認用
-   ※ブラウザには Publishable key のみ記載する
-   ※Secret key / service_role は絶対に記載しない */
-const CAMPSITE_SUPABASE_URL = "https://azkshxjgsbtjgwbapcfw.supabase.co";
-const CAMPSITE_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_rWbeIqdWJJHHBtphER8bdg__CaS_xGK";
-
 async function analyzePlacementCapacity() {
   const file = document.getElementById("capacityFile")?.files?.[0];
   const result = document.getElementById("capacityResult");

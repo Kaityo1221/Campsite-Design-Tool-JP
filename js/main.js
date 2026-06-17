@@ -560,6 +560,8 @@ async function runLabCsvToKmzEngine() {
   machine.classList.add("running");
 }
 
+resetLabResearchKmzOutput();
+
 hideLabResearchMapOnStart();
 scrollToLabEngineMachine();
 
@@ -606,8 +608,8 @@ startLabEngineSound();
     const dedupeResult =
       dedupeLabPoiPoints(allPoints);
 
-    const points =
-      dedupeResult.points;
+    let points =
+  dedupeResult.points;
 
     if (!points.length) {
       if (machine) {
@@ -627,6 +629,10 @@ startLabEngineSound();
 
       return;
     }
+    if (typeof window.enrichLabPointsWithPoiDatabank === "function") {
+  points = await window.enrichLabPointsWithPoiDatabank(points);
+  console.log("Lab Engine POI分類完了:", points);
+}
 renderLabResearchMap(points);
 setLabResearchKmzReady(points);
     await new Promise(resolve => {
@@ -814,7 +820,16 @@ async function createLabExistingPoiKmz(points, sourceName) {
     mimeType: "application/vnd.google-earth.kmz"
   });
 }
-function getLabPoiCategoryLabel(name = "") {
+function getLabPoiCategoryLabel(input = "") {
+  if (input && typeof input === "object" && input._labCategoryLabel) {
+    return input._labCategoryLabel;
+  }
+
+  const name =
+    input && typeof input === "object"
+      ? input.name || input.title || ""
+      : input;
+
   const labels = [];
 
   if (isRestPoi(name)) labels.push("休憩");
@@ -826,34 +841,37 @@ function getLabPoiCategoryLabel(name = "") {
     ? labels.join("・")
     : "未分類";
 }
-function getLabPoiStyleId(name = "") {
-  /*
-    注意系は最優先。
-    休憩にも見えるけど駐車場・階段・水辺などなら赤にする。
-  */
-  if (isCautionPoi(name)) {
+function getLabPoiStyleId(input = "") {
+  const categoryKey = getLabPoiCategoryKey(input);
+
+  if (categoryKey === "caution") {
     return "labCautionPoi";
   }
 
-  if (isRestPoi(name)) {
+  if (categoryKey === "rest") {
     return "labRestPoi";
   }
 
-  if (isStayPoi(name)) {
+  if (categoryKey === "stay") {
     return "labStayPoi";
   }
 
-  if (isLoopPoi(name)) {
+  if (categoryKey === "loop") {
     return "labLoopPoi";
   }
 
   return "labUnknownPoi";
 }
-function getLabPoiCategoryKey(name = "") {
-  /*
-    注意系は最優先。
-    安全面・滞留リスクの確認に使うため。
-  */
+function getLabPoiCategoryKey(input = "") {
+  if (input && typeof input === "object" && input._labCategoryKey) {
+    return input._labCategoryKey;
+  }
+
+  const name =
+    input && typeof input === "object"
+      ? input.name || input.title || ""
+      : input;
+
   if (isCautionPoi(name)) {
     return "caution";
   }
@@ -931,26 +949,26 @@ function createLabExistingPoiKml(points, sourceName) {
     const sourceFile =
       p._sourceFile || sourceName;
 
-    const rest =
-      isRestPoi(rawName) ? "○" : "×";
-
-    const stay =
-      isStayPoi(rawName) ? "○" : "×";
-
-    const loop =
-      isLoopPoi(rawName) ? "○" : "×";
-
-    const caution =
-      isCautionPoi(rawName) ? "○" : "×";
-
     const categoryLabel =
-      getLabPoiCategoryLabel(rawName);
+  getLabPoiCategoryLabel(p);
 
-    const categoryKey =
-      getLabPoiCategoryKey(rawName);
+const categoryKey =
+  getLabPoiCategoryKey(p);
 
-    const styleId =
-      getLabPoiStyleId(rawName);
+const styleId =
+  getLabPoiStyleId(p);
+
+const rest =
+  categoryKey === "rest" ? "○" : "×";
+
+const stay =
+  categoryKey === "stay" ? "○" : "×";
+
+const loop =
+  categoryKey === "loop" ? "○" : "×";
+
+const caution =
+  categoryKey === "caution" ? "○" : "×";
 
     const placemark = `
 <Placemark>
@@ -1134,6 +1152,23 @@ let labResearchKmzPoints = [];
 let labResearchMapInstance = null;
 let labResearchLayerGroup = null;
 
+function resetLabResearchKmzOutput() {
+  labResearchKmzPoints = [];
+
+  const button = document.getElementById("researchKmzButton");
+
+  if (!button) return;
+
+  button.disabled = true;
+  button.classList.add("disabled");
+
+  const note = button.querySelector("small");
+
+  if (note) {
+    note.textContent = "CSV解析後に保存できます";
+  }
+}
+
 function setLabResearchKmzReady(points) {
   labResearchKmzPoints = points;
 
@@ -1231,7 +1266,7 @@ function renderLabResearchMap(points) {
       "POI";
 
     const categoryKey =
-      getLabPoiCategoryKey(name);
+  getLabPoiCategoryKey(point);
 
     const color =
       getLabResearchCategoryColor(categoryKey);
@@ -1268,6 +1303,7 @@ function renderLabResearchMap(points) {
   if (summary) {
     summary.innerHTML = renderLabResearchSummary(points);
   }
+  renderUnknownPoiReview(points);
 }
 
 function getLabResearchCategoryColor(categoryKey) {
@@ -1292,14 +1328,8 @@ function renderLabResearchSummary(points) {
   };
 
   points.forEach(point => {
-    const name =
-      point.name ||
-      point.title ||
-      "";
-
     const key =
-      getLabPoiCategoryKey(name);
-
+  getLabPoiCategoryKey(point);
     counts[key] =
       (counts[key] || 0) + 1;
   });
@@ -1313,3 +1343,198 @@ function renderLabResearchSummary(points) {
     ⚪ 未分類：${counts.unknown}件
   `;
 }
+
+// ===============================
+// CAMP-096：未分類POIレビュー候補
+// ===============================
+
+let latestUnknownPoiReviewItems = [];
+
+function normalizePoiNameForReview(name) {
+  return String(name || "")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+function isUnknownPoiForReview(point) {
+  if (!point) return false;
+
+  const categoryKey = getLabPoiCategoryKey(point);
+
+  return categoryKey === "unknown";
+}
+
+function buildUnknownPoiReviewItems(points) {
+  const map = new Map();
+
+  (points || []).forEach((point) => {
+    if (!isUnknownPoiForReview(point)) return;
+
+    const rawName =
+      point.name ||
+      point.title ||
+      point.poi_name ||
+      point.displayName ||
+      "";
+
+    const normalizedName = normalizePoiNameForReview(rawName);
+    if (!normalizedName) return;
+
+    if (!map.has(normalizedName)) {
+      map.set(normalizedName, {
+        poi_name: rawName,
+        normalized_name: normalizedName,
+        count: 0,
+        samples: [],
+        review_status: "pending",
+        suggested_category: "",
+        review_note: ""
+      });
+    }
+
+    const item = map.get(normalizedName);
+    item.count += 1;
+
+    if (item.samples.length < 3) {
+      item.samples.push({
+        lat: point.lat || point.latitude || "",
+        lng: point.lng || point.lon || point.longitude || ""
+      });
+    }
+  });
+
+  return Array.from(map.values()).sort((a, b) => {
+    if (b.count !== a.count) return b.count - a.count;
+    return a.normalized_name.localeCompare(b.normalized_name, "ja");
+  });
+}
+
+function renderUnknownPoiReview(points) {
+  const box = document.getElementById("unknownPoiReviewBox");
+  const summary = document.getElementById("unknownPoiSummary");
+  const list = document.getElementById("unknownPoiList");
+
+  if (!box || !summary || !list) return;
+
+  const items = buildUnknownPoiReviewItems(points);
+  latestUnknownPoiReviewItems = items;
+
+  box.style.display = "block";
+
+  if (!items.length) {
+    summary.textContent =
+      "未分類POIはありません。現在の辞書で全件分類できています。";
+    list.innerHTML = "";
+    return;
+  }
+
+  const totalCount = items.reduce((sum, item) => sum + item.count, 0);
+
+  summary.textContent =
+  `未分類：${totalCount}件 / 名称 ${items.length}種類（画面表示は上位20件）`;
+
+const DISPLAY_LIMIT = 20;
+const visibleItems = items.slice(0, DISPLAY_LIMIT);
+const hiddenTypeCount = Math.max(items.length - DISPLAY_LIMIT, 0);
+
+list.innerHTML = `
+  ${visibleItems.map((item) => {
+    return `
+      <div class="unknown-poi-item">
+        <div
+          class="unknown-poi-name"
+          title="${escapeHtml(item.normalized_name)}"
+        >
+          ${escapeHtml(item.normalized_name)}
+        </div>
+        <div class="unknown-poi-count">${item.count}件</div>
+      </div>
+    `;
+  }).join("")}
+
+  ${
+    hiddenTypeCount > 0
+      ? `
+        <div class="unknown-poi-more">
+          ほか ${hiddenTypeCount} 種類はCSVで確認できます
+        </div>
+      `
+      : ""
+  }
+`;
+}
+function downloadUnknownPoiReviewCsv() {
+  const items = latestUnknownPoiReviewItems || [];
+
+  if (!items.length) {
+    alert("出力できる未分類POIがありません。");
+    return;
+  }
+
+  const headers = [
+    "poi_name",
+    "normalized_name",
+    "count",
+    "sample_lat",
+    "sample_lng",
+    "source",
+    "review_status",
+    "suggested_category",
+    "review_note"
+  ];
+
+  const rows = items.map((item) => {
+    const sample = item.samples?.[0] || {};
+
+    return [
+      item.poi_name,
+      item.normalized_name,
+      item.count,
+      sample.lat || "",
+      sample.lng || "",
+      "lab_engine_unknown_poi",
+      item.review_status || "pending",
+      item.suggested_category || "",
+      item.review_note || ""
+    ];
+  });
+
+  const csv = [
+    headers.join(","),
+    ...rows.map(row => row.map(csvEscape).join(","))
+  ].join("\n");
+
+  const blob = new Blob(["\uFEFF" + csv], {
+    type: "text/csv;charset=utf-8;"
+  });
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+
+  const date = new Date()
+    .toISOString()
+    .slice(0, 10)
+    .replaceAll("-", "");
+
+  a.download = `unknown_poi_review_${date}.csv`;
+
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+
+  URL.revokeObjectURL(url);
+}
+
+function csvEscape(value) {
+  const text = String(value ?? "");
+  return `"${text.replaceAll('"', '""')}"`;
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("downloadUnknownPoiCsvBtn");
+
+  if (btn) {
+    btn.addEventListener("click", downloadUnknownPoiReviewCsv);
+  }
+});
