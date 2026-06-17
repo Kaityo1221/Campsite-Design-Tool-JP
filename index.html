@@ -14,7 +14,10 @@
     background: #020617;
   }
 </style>
-<link rel="stylesheet" href="css/style.css?v=77">
+<link rel="preload" as="image" href="assets/story-left.PNG">
+<link rel="preload" as="image" href="assets/story-right.PNG">
+<link rel="preload" as="image" href="assets/icon.png">
+<link rel="stylesheet" href="css/style.css?v=78">
 <link rel="stylesheet" href="css/splash.css?v=98">
 <link rel="stylesheet" href="css/tabs.css?v=29">
 <link rel="stylesheet" href="css/admin.css?v=27">
@@ -22,7 +25,10 @@
 <link rel="stylesheet" href="css/capacity.css?v=6">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/icon.png">
 <link rel="manifest" href="./manifest.json">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"
+  defer
+></script>
 <link
   rel="stylesheet"
   href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -34,6 +40,7 @@
   src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
   integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
   crossorigin=""
+  defer
 ></script>
 
 </head>
@@ -80,11 +87,14 @@
 
   <div class="opening-scene-wrap">
 
-    <img
+  <img
   id="openingSceneLeft"
   class="opening-scene active"
   src="assets/story-left.PNG"
   alt="Campsite Design Tool opening"
+  loading="eager"
+  decoding="async"
+  fetchpriority="high"
 >
 
 <img
@@ -92,6 +102,8 @@
   class="opening-scene"
   src="assets/story-right.PNG"
   alt="Campsite Design Tool campfire"
+  loading="eager"
+  decoding="async"
 >
 <!-- CAMP隠しボタン -->
 <button
@@ -108,6 +120,8 @@
   id="soulIcon"
   class="soul-icon"
   alt=""
+  loading="lazy"
+  decoding="async"
 >
     <!-- 羊タップ範囲 -->
     <button
@@ -1130,6 +1144,7 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
  <input
   type="file"
   id="adminReviewFile"
+  accept=".kmz,.kml,.zip,application/vnd.google-earth.kmz,application/vnd.google-earth.kml+xml,application/zip"
 >
 
   <button
@@ -1155,6 +1170,7 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
   <input
   type="file"
   id="adminCheckFile"
+  accept=".kmz,.kml,.zip,application/vnd.google-earth.kmz,application/vnd.google-earth.kml+xml,application/zip"
 >
 
   <button class="generate" onclick="runAdminFileCheck()">
@@ -1177,6 +1193,7 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
   <input
   type="file"
   id="adminDensityFile"
+  accept=".kmz,.kml,.zip,application/vnd.google-earth.kmz,application/vnd.google-earth.kml+xml,application/zip"
 >
 
   <div class="checks">
@@ -1563,6 +1580,13 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
 ">
   ※CSVや途中確認用KMZではなく、提出直前の完成KMZを選択してください。
 </p>
+<p class="note">
+  完成KMZの書き出し方法が分からない場合は、
+  <a href="docs/campsite-guide.pdf" target="_blank" rel="noopener">
+    マニュアルPDF
+  </a>
+  を確認してください。
+</p>
 <input
   type="file"
   id="distanceFile"
@@ -1740,6 +1764,8 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
   data-src="assets/return-back-icon.PNG"
   alt="おかえりなさいと迎える羊"
   class="return-modal-sheep"
+  loading="lazy"
+  decoding="async"
 >
 
     <p class="return-modal-label">
