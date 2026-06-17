@@ -663,18 +663,18 @@ const downloadName =
 const unknownPoiCount =
   countUnknownLabPois(points);
 
-const historySaveResult =
-  await saveLabResearchHistory({
-    parkName,
-    csvCount: files.length,
-    loadedPoiCount: allPoints.length,
-    dedupedPoiCount: points.length,
-    removedDuplicateCount: dedupeResult.removed,
-    unknownPoiCount,
-    kmzFilename: downloadName
-  });
-  const aliasReviewSaveResult =
-  await saveAliasReviewQueue(points);
+pendingLabResearchReport = {
+  parkName,
+  csvCount: files.length,
+  loadedPoiCount: allPoints.length,
+  dedupedPoiCount: points.length,
+  removedDuplicateCount: dedupeResult.removed,
+  unknownPoiCount,
+  kmzFilename: downloadName,
+  points
+};
+
+showLabResearchSubmitBox();
 
     // downloadBlob(
 //   kmzBlob,
@@ -703,10 +703,9 @@ const historySaveResult =
           読み込みPOI：${allPoints.length}件<br>
           重複削除：${dedupeResult.removed}件<br>
           出力POI：${points.length}件<br>
-未分類POI：${unknownPoiCount}件<br>
-研究履歴：${escapeHtml(historySaveResult.message)}<br>
-未分類レビューキュー：${escapeHtml(aliasReviewSaveResult.message)}<br><br>
-このKMZを保存して、Campsite Labの研究アーカイブへ登録してください。
+未分類POI：${unknownPoiCount}件<br><br>
+まだSupabaseには送信されていません。<br>
+研究KMZを保存して会長のDiscord DMへ送り、一言メモを書いてから「研究結果を送信」を押してください。
         </div>
       `;
     }
@@ -742,14 +741,16 @@ async function saveLabResearchHistory(data) {
   const { error } = await window.campsiteSupabase
     .from("lab_research_history")
     .insert({
-      park_name: data.parkName,
-      csv_count: data.csvCount,
-      loaded_poi_count: data.loadedPoiCount,
-      deduped_poi_count: data.dedupedPoiCount,
-      removed_duplicate_count: data.removedDuplicateCount,
-      unknown_poi_count: data.unknownPoiCount,
-      kmz_filename: data.kmzFilename
-    });
+  park_name: data.parkName,
+  csv_count: data.csvCount,
+  loaded_poi_count: data.loadedPoiCount,
+  deduped_poi_count: data.dedupedPoiCount,
+  removed_duplicate_count: data.removedDuplicateCount,
+  unknown_poi_count: data.unknownPoiCount,
+  kmz_filename: data.kmzFilename,
+  researcher_note: data.researcherNote || "",
+  submitted_at: new Date().toISOString()
+});
 
   if (error) {
     console.error("研究履歴保存エラー:", error);
@@ -826,6 +827,122 @@ async function saveAliasReviewQueue(points) {
     message: `${rows.length}件保存済み`,
     savedCount: rows.length
   };
+}
+function showLabResearchSubmitBox() {
+  const box = document.getElementById("labResearchSubmitBox");
+  const status = document.getElementById("labResearchSubmitStatus");
+  const note = document.getElementById("labResearchNote");
+  const button = document.getElementById("labResearchSubmitButton");
+
+  if (box) {
+    box.style.display = "block";
+  }
+
+  if (status) {
+    status.innerHTML = "";
+  }
+
+  if (note) {
+    note.value = "";
+  }
+
+  if (button) {
+    button.disabled = false;
+    button.textContent = "📮 研究結果を送信";
+  }
+}
+
+async function submitLabResearchReport() {
+  const status = document.getElementById("labResearchSubmitStatus");
+  const noteInput = document.getElementById("labResearchNote");
+  const button = document.getElementById("labResearchSubmitButton");
+
+  if (!pendingLabResearchReport) {
+    alert("先にLAB ENGINE STARTでCSVを解析してください。");
+    return;
+  }
+
+  const researcherNote =
+    String(noteInput?.value || "").trim();
+
+  if (!researcherNote) {
+    alert("公園について気づいたことを一言だけ入力してください。");
+    return;
+  }
+
+  if (button) {
+    button.disabled = true;
+    button.textContent = "送信中…";
+  }
+
+  if (status) {
+    status.innerHTML = `
+      <div class="distance-warning" style="
+        margin-top:12px;
+        background:rgba(59,130,246,0.12);
+        border:1px solid rgba(96,165,250,0.35);
+      ">
+        研究結果を送信中です…
+      </div>
+    `;
+  }
+
+  try {
+    const historySaveResult =
+      await saveLabResearchHistory({
+        parkName: pendingLabResearchReport.parkName,
+        csvCount: pendingLabResearchReport.csvCount,
+        loadedPoiCount: pendingLabResearchReport.loadedPoiCount,
+        dedupedPoiCount: pendingLabResearchReport.dedupedPoiCount,
+        removedDuplicateCount: pendingLabResearchReport.removedDuplicateCount,
+        unknownPoiCount: pendingLabResearchReport.unknownPoiCount,
+        kmzFilename: pendingLabResearchReport.kmzFilename,
+        researcherNote
+      });
+
+    const aliasReviewSaveResult =
+      await saveAliasReviewQueue(
+        pendingLabResearchReport.points
+      );
+
+    if (status) {
+      status.innerHTML = `
+        <div class="distance-warning" style="
+          margin-top:12px;
+          background:rgba(34,197,94,0.12);
+          border:1px solid rgba(34,197,94,0.35);
+          color:#bbf7d0;
+        ">
+          ✅ 研究結果を送信しました。<br><br>
+          研究履歴：${escapeHtml(historySaveResult.message)}<br>
+          未分類レビューキュー：${escapeHtml(aliasReviewSaveResult.message)}
+        </div>
+      `;
+    }
+
+    pendingLabResearchReport = null;
+
+    if (button) {
+      button.textContent = "送信済み";
+    }
+
+  } catch (error) {
+    console.error(error);
+
+    if (status) {
+      status.innerHTML = `
+        <div class="distance-warning" style="margin-top:12px;">
+          ⚠ 研究結果の送信に失敗しました。<br>
+          ConsoleまたはSupabase設定を確認してください。
+        </div>
+      `;
+    }
+
+    if (button) {
+      button.disabled = false;
+      button.textContent = "📮 研究結果を送信";
+    }
+  }
 }
 
 function scrollToLabEngineMachine() {
@@ -1268,6 +1385,7 @@ document.addEventListener("click", function(event) {
 let labResearchKmzPoints = [];
 let labResearchMapInstance = null;
 let labResearchLayerGroup = null;
+let pendingLabResearchReport = null;
 
 function resetLabResearchKmzOutput() {
   labResearchKmzPoints = [];
@@ -1580,78 +1698,3 @@ list.innerHTML = `
   }
 `;
 }
-function downloadUnknownPoiReviewCsv() {
-  const items = latestUnknownPoiReviewItems || [];
-
-  if (!items.length) {
-    alert("出力できる未分類POIがありません。");
-    return;
-  }
-
-  const headers = [
-    "poi_name",
-    "normalized_name",
-    "count",
-    "sample_lat",
-    "sample_lng",
-    "source",
-    "review_status",
-    "suggested_category",
-    "review_note"
-  ];
-
-  const rows = items.map((item) => {
-    const sample = item.samples?.[0] || {};
-
-    return [
-      item.poi_name,
-      item.normalized_name,
-      item.count,
-      sample.lat || "",
-      sample.lng || "",
-      "lab_engine_unknown_poi",
-      item.review_status || "pending",
-      item.suggested_category || "",
-      item.review_note || ""
-    ];
-  });
-
-  const csv = [
-    headers.join(","),
-    ...rows.map(row => row.map(csvEscape).join(","))
-  ].join("\n");
-
-  const blob = new Blob(["\uFEFF" + csv], {
-    type: "text/csv;charset=utf-8;"
-  });
-
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-
-  const date = new Date()
-    .toISOString()
-    .slice(0, 10)
-    .replaceAll("-", "");
-
-  a.download = `unknown_poi_review_${date}.csv`;
-
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-
-  URL.revokeObjectURL(url);
-}
-
-function csvEscape(value) {
-  const text = String(value ?? "");
-  return `"${text.replaceAll('"', '""')}"`;
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-  const btn = document.getElementById("downloadUnknownPoiCsvBtn");
-
-  if (btn) {
-    btn.addEventListener("click", downloadUnknownPoiReviewCsv);
-  }
-});
