@@ -592,6 +592,7 @@ function renderDistanceLoadErrorHtml(title, message = "") {
 
   window._layerPoints = {};
   window._hasPolygon = false;
+  window._activityPolygons = [];
 
   if (container) {
     container.innerHTML = "";
@@ -681,7 +682,13 @@ function renderDistanceLoadErrorHtml(title, message = "") {
     }
 
     window._layerPoints =
-      result.pointsByLayer;
+  result.pointsByLayer;
+
+window._activityPolygons =
+  result.polygons || [];
+
+window._hasPolygon =
+  window._activityPolygons.length > 0;
 
     const debugInfo =
       getTargetLayerDebugInfo();
@@ -976,23 +983,37 @@ function extractPointsByLayer(xml) {
 function renderLayerSelector(layers, container) {
   container.innerHTML = "";
 
-  const targetLayers = layers.filter(name =>
-    !name.includes("円") &&
-    !name.includes("30m") &&
-    !name.includes("40m")
-  );
+  const targetLayers = layers.filter(name => {
+    const points = window._layerPoints[name] || [];
 
-  if (targetLayers.length === 0) {
+    if (!points.length) {
+      return false;
+    }
+
+    return isDistanceTargetLayer(name);
+  });
+
+  const polygonCount =
+    window._activityPolygons?.length || 0;
+
+  if (targetLayers.length === 0 && polygonCount === 0) {
     container.innerHTML = "判定できるPOIレイヤーがありません。";
     return;
   }
 
-  container.innerHTML = targetLayers.map(name => `
+  container.innerHTML = `
+    ${targetLayers.map(name => `
+      <div class="layer-row">
+        <strong>${escapeHtml(cleanLayerName(name))}</strong>
+        <span class="note">（${window._layerPoints[name]?.length || 0}件）</span>
+      </div>
+    `).join("")}
+
     <div class="layer-row">
-      <strong>${escapeHtml(cleanLayerName(name))}</strong>
-      <span class="note">（${window._layerPoints[name]?.length || 0}件）</span>
+      <strong>活動範囲ポリゴン</strong>
+      <span class="note">（${polygonCount}件）</span>
     </div>
-  `).join("");
+  `;
 }
 
 function getTargetLayerDebugInfo() {
@@ -1038,7 +1059,7 @@ function renderDistanceUploadSummary() {
       判定対象レイヤー数：${info.targetLayerCount}件<br>
       全POI数：${info.allPointCount}件<br>
       判定対象POI数：${info.targetPointCount}件<br>
-活動範囲ポリゴン：${window._hasPolygon ? "あり" : "なし"}<br>
+活動範囲ポリゴン：${window._hasPolygon ? `あり（${window._activityPolygons?.length || 0}件）` : "なし"}<br>
 
 ${window._hasPolygon ? "" : `
   <div style="
@@ -1686,7 +1707,8 @@ const debugHtml = `
     全レイヤー数：${debugInfo.allLayerCount}件<br>
     判定対象レイヤー数：${debugInfo.targetLayerCount}件<br>
     全POI数：${debugInfo.allPointCount}件<br>
-    判定対象POI数：${debugInfo.targetPointCount}件<br><br>
+    判定対象POI数：${debugInfo.targetPointCount}件<br>
+活動範囲ポリゴン：${window._hasPolygon ? `あり（${window._activityPolygons?.length || 0}件）` : "なし"}<br><br>
     <strong>判定対象レイヤー</strong><br>
     ${debugInfo.targetLayerNames.map(name => escapeHtml(name)).join("<br>") || "なし"}
   </div>
