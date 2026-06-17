@@ -17,7 +17,7 @@
 <link rel="preload" as="image" href="assets/story-left.PNG">
 <link rel="preload" as="image" href="assets/story-right.PNG">
 <link rel="preload" as="image" href="assets/icon.png">
-<link rel="stylesheet" href="css/style.css?v=78">
+<link rel="stylesheet" href="css/style.css?v=83">
 <link rel="stylesheet" href="css/splash.css?v=98">
 <link rel="stylesheet" href="css/tabs.css?v=29">
 <link rel="stylesheet" href="css/admin.css?v=27">
@@ -653,7 +653,7 @@
       <li>POI種別</li>
     </ul>
 
-    <p<p class="note">
+    <p class="note">
   POI種別には、次のいずれかを入力してください。
 </p>
 
@@ -892,15 +892,65 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
  <section id="parts" class="tab-content">
   <div class="panel">
     <h2>🧪 Campsite Lab</h2>
+  <div class="lab-secret-tag">CLASSIFIED / RESEARCH UNIT</div>
 
-    <p class="note">
-      Experimental & Utility Tools（補助機能・実験機能）
-    </p>
+<div class="lab-legend-box lab-user-guide">
+ <strong class="lab-mission-title">
+  🔬 今月の研究員ミッション
+  <span class="lab-live-dot"></span>
+</strong>
 
-    <p class="note">
-  Campsite Design Tool の実験機能をまとめた秘密の研究室です。<br>
-  配置余地チェック、候補POI生成、今後追加される検証機能などを利用できます。
-</p>
+  <p class="note">
+    研究員は、CAが使えそうな公園のNearby Wayspots CSVを集め、Campsite Labで研究データを作成します。<br>
+    今月はポリゴン作成は必須ではありません。まずはCSVから公園研究を進めます。
+  </p>
+
+  <div class="lab-guide-steps">
+    <div><span>1</span> 好きな公園・CAが使えそうな公園を1か所選ぶ</div>
+    <div><span>2</span> Nearby Wayspots をCSV出力する</div>
+    <div><span>3</span> CSVを投入(ファイル選択)する</div>
+    <div><span>4</span> 「⚙️ LAB ENGINE START」を押す</div>
+    <div><span>5</span> ギアが回ったあと、研究KMZを保存する</div>
+    <div><span>6</span> 下に出てくる未分類POI CSVを保存する</div>
+  </div>
+
+  <div class="lab-mission-box" style="margin-top:14px;">
+    <strong>📦 会長へ送るもの</strong><br>
+    ・Nearby Wayspots CSV<br>
+    ・研究KMZ<br>
+    ・未分類POI CSV<br><br>
+
+    保存したファイルは、DiscordのDMで会長へ提出してください。<br>
+    DMには、その公園について気づいたことを一言だけ添えてください。<br>
+    例：駅から近い／広場がある／CAイベントに使えそう／日陰が少ない
+  </div>
+</div>
+<div class="step lab-dev-only" style="display:none;">
+  <div class="step-no">Supabase接続テスト</div>
+  <h3>POI名称データバンク読込テスト</h3>
+
+  <p class="note">
+    Supabaseに登録したPOI名称データバンクを、Campsite Labから読み込めるか確認します。<br>
+    成功すると、category_master から数件読み込みます。
+  </p>
+
+  <button
+    type="button"
+    class="generate"
+    onclick="testLoadPoiDatabank()"
+  >
+    Supabase辞書読込テスト
+  </button>
+
+  <button
+  type="button"
+  class="generate"
+  onclick="testClassifyPoiNames()"
+  style="margin-top:10px;"
+>
+  POI分類テスト
+</button>
+</div>
 <details class="lab-legend-box">
   <summary><strong>更新履歴 v6.1.1</strong></summary>
   ・配置余地カードを追加しました。<br>
@@ -910,47 +960,80 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
   ・iPhoneでKMZが.zip保存された場合の案内を追加しました。
 </details>
     <div class="step lab-engine-step">
-  <div class="step-no">LAB-001</div>
+  <div class="step-no">公園研究</div>
 
-  <h3>CSV → 研究用KMZ生成</h3>
+<h3>公園研究CSVを読み込む</h3>
 
-  <p class="note">
-    研究員ミッション用のエンジンです。<br>
-    Wayfarer Mapから取得したCSVを投入すると、既存POIだけを研究用KMZとして自動生成します。
-  </p>
+<p class="note">
+  Wayfarer MapでCSV出力したデータを読み込み、POIを休憩・滞在・回遊・注意・未分類に分類します。<br>
+  複数CSVを選んだ場合は、同じ座標のPOIを自動で重複削除してから分類します。
+</p>
 
   <div class="lab-mission-box">
-  <strong>🔬 研究員ミッション</strong><br>
-  1. 今日研究する公園を決める<br>
-  2. Wayfarer Mapで Nearby Wayspots を Export CSV<br>
-  3. CSVをLab Engineへ投入<br>
-  4. 研究用KMZを保存<br>
-  5. 休憩・滞在・回遊・注意ポイントを観察し、キャンプサイト適性を研究する
+  <strong>🔬 研究員メモ</strong><br>
+  ファイルを送る時に、気づいたことを一言だけ添えてください。<br><br>
+  例：駅から近い／広場がある／日陰が少ない／CAイベントに使えそう
 </div>
 
-<div class="lab-engine-machine" id="labEngineMachine">
-  <div class="lab-csv-card" id="labCsvCard">
-    📄<br>
-    CSV
+<div class="lab-engine-machine lab-heavy-engine" id="labEngineMachine">
+
+  <div class="engine-bolt bolt-tl"></div>
+  <div class="engine-bolt bolt-tr"></div>
+  <div class="engine-bolt bolt-bl"></div>
+  <div class="engine-bolt bolt-br"></div>
+
+  <div class="lab-csv-card engine-input-port" id="labCsvCard">
+    <div class="engine-port-label">INPUT</div>
+    <div class="engine-port-icon">📄</div>
+    <div class="engine-port-main">CSV DATA</div>
   </div>
 
-  <div class="lab-engine-core">
-    <div class="lab-gear gear-left">⚙️</div>
-    <div class="lab-engine-label">LAB ENGINE</div>
-    <div class="lab-gear gear-right">⚙️</div>
+  <div class="lab-engine-core engine-reactor-core">
+    <div class="engine-status-strip">
+      <span></span>
+      LAB ENGINE CORE
+      <span></span>
+    </div>
+
+    <div class="engine-gauge-row">
+      <div class="engine-gauge">
+        <div class="engine-gauge-needle"></div>
+      </div>
+
+      <div class="engine-power-core">
+        <div class="engine-core-ring"></div>
+        <div class="engine-core-light"></div>
+        <div class="engine-core-label">ANALYZING</div>
+      </div>
+
+      <div class="engine-gauge">
+        <div class="engine-gauge-needle right"></div>
+      </div>
+    </div>
+
+    <div class="engine-gear-row">
+      <div class="lab-gear gear-left engine-metal-gear">⚙️</div>
+      <div class="lab-engine-label engine-main-label">LAB ENGINE</div>
+      <div class="lab-gear gear-right engine-metal-gear">⚙️</div>
+    </div>
   </div>
 
- <button
-  id="researchKmzButton"
-  class="lab-file-card lab-file-card-kmz disabled"
-  type="button"
-  onclick="downloadResearchKmz()"
-  disabled
+  <button
+    id="researchKmzButton"
+    class="lab-file-card lab-file-card-kmz disabled engine-output-port"
+    type="button"
+    onclick="downloadResearchKmz()"
+    disabled
+  >
+    <div class="engine-port-label">OUTPUT</div>
+    <img
+  src="assets/lab-output-drum.png"
+  alt="研究出力ドラム"
+  class="engine-output-image"
 >
-  <div class="lab-file-icon">📦</div>
-  <div class="lab-file-main">研究KMZを保存</div>
-  <small>CSV解析後に保存できます</small>
-</button>
+    <div class="lab-file-main">研究KMZを保存</div>
+    <small>CSV解析後に保存できます</small>
+  </button>
 </div>
 <div id="researchMapPanel" class="research-map-panel" style="display:none;">
   <div class="capacity-section-title">
@@ -965,6 +1048,37 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
   <div id="researchResultMap" class="research-result-map"></div>
 
   <div id="researchMapSummary" class="research-map-summary"></div>
+</div>
+<div
+  id="unknownPoiReviewBox"
+  class="lab-legend-box unknown-poi-review-box"
+  style="display:none;"
+>
+  <strong>🧩 未分類POIレビュー候補</strong>
+
+  <p class="note">
+    Supabase辞書で分類できなかったPOI名を、次回レビュー候補として一覧化します。<br>
+    ここでは辞書へ自動登録せず、レビュー用CSVとして出力します。
+  </p>
+
+  <div
+    id="unknownPoiSummary"
+    class="unknown-poi-summary"
+  ></div>
+
+  <div
+    id="unknownPoiList"
+    class="unknown-poi-list"
+  ></div>
+
+  <button
+    id="downloadUnknownPoiCsvBtn"
+    type="button"
+    class="generate"
+    style="margin-top:12px;"
+  >
+    未分類POIをCSV出力
+  </button>
 </div>
 <div class="lab-legend-box">
   <strong>🗺️ KMZアイコン凡例</strong>
@@ -2070,10 +2184,13 @@ GOロケット団の出現率が3倍になる
 <script src="js/tabs.js?v=1"></script>
 <script src="js/distance.js?v=2"></script>
 <script src="js/admin.js?v=1"></script>
-<script src="js/main.js?v=6"></script>
+<script src="js/main.js?v=13"></script>
 <script src="js/kmz.js?v=1"></script>
 <script src="js/deduplicate.js?v=1"></script>
-<script src="js/capacity.js?v=3"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/lab-supabase.js?v=1"></script>
+<script src="js/poi-dictionary-db.js?v=5"></script>
+<script src="js/capacity.js?v=4"></script>
 <div id="versionInfo" onclick="toggleVersionHistory()">
 </div>
 <div id="versionHistoryModal" class="version-modal">
