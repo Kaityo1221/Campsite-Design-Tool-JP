@@ -673,6 +673,8 @@ const historySaveResult =
     unknownPoiCount,
     kmzFilename: downloadName
   });
+  const aliasReviewSaveResult =
+  await saveAliasReviewQueue(points);
 
     // downloadBlob(
 //   kmzBlob,
@@ -700,8 +702,11 @@ const historySaveResult =
           投入CSV：${files.length}件<br>
           読み込みPOI：${allPoints.length}件<br>
           重複削除：${dedupeResult.removed}件<br>
-          出力POI：${points.length}件<br><br>
-          このKMZを保存して、Campsite Labの研究アーカイブへ登録してください。
+          出力POI：${points.length}件<br>
+未分類POI：${unknownPoiCount}件<br>
+研究履歴：${escapeHtml(historySaveResult.message)}<br>
+未分類レビューキュー：${escapeHtml(aliasReviewSaveResult.message)}<br><br>
+このKMZを保存して、Campsite Labの研究アーカイブへ登録してください。
         </div>
       `;
     }
@@ -766,6 +771,63 @@ function countUnknownLabPois(points) {
     return getLabPoiCategoryKey(point) === "unknown";
   }).length;
 }
+async function saveAliasReviewQueue(points) {
+  if (!window.campsiteSupabase) {
+    console.warn("Supabase未接続のため、未分類POIレビューキューは保存されませんでした。");
+    return {
+      success: false,
+      message: "Supabase未接続",
+      savedCount: 0
+    };
+  }
+
+  const items = buildUnknownPoiReviewItems(points);
+
+  if (!items.length) {
+    return {
+      success: true,
+      message: "未分類POIなし",
+      savedCount: 0
+    };
+  }
+
+  const rows = items.map(item => {
+    const sample = item.samples?.[0] || {};
+
+    return {
+      poi_name: item.poi_name,
+      normalized_name: item.normalized_name,
+      count: item.count,
+      sample_lat: sample.lat || null,
+      sample_lng: sample.lng || null,
+      source: "lab_engine",
+      review_status: "pending",
+      suggested_category: item.suggested_category || null,
+      review_note: item.review_note || null
+    };
+  });
+
+  const { error } = await window.campsiteSupabase
+    .from("alias_review_queue")
+    .insert(rows);
+
+  if (error) {
+    console.error("未分類POIレビューキュー保存エラー:", error);
+
+    return {
+      success: false,
+      message: error.message || "保存失敗",
+      savedCount: 0
+    };
+  }
+
+  return {
+    success: true,
+    message: `${rows.length}件保存済み`,
+    savedCount: rows.length
+  };
+}
+
 function scrollToLabEngineMachine() {
   const machine = document.getElementById("labEngineMachine");
 
