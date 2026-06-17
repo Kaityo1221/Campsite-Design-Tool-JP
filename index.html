@@ -887,6 +887,14 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
   Campsite Design Tool の実験機能をまとめた秘密の研究室です。<br>
   配置余地チェック、候補POI生成、今後追加される検証機能などを利用できます。
 </p>
+<details class="lab-legend-box">
+  <summary><strong>更新履歴 v6.1.1</strong></summary>
+  ・配置余地カードを追加しました。<br>
+  ・有効配置余地を、既存POI40m円除外後の面積として表示しました。<br>
+  ・配置余地の点数表示を非表示にしました。<br>
+  ・最大25件は保証ではない旨を追記しました。<br>
+  ・iPhoneでKMZが.zip保存された場合の案内を追加しました。
+</details>
     <div class="step lab-engine-step">
   <div class="step-no">LAB-001</div>
 
@@ -999,6 +1007,11 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
     無理やり敷き詰めるための機能ではありません。<br>
     現地の導線・安全性・遊びやすさを優先してください。
   </p>
+  <div class="lab-legend-box">
+  <strong>追加POI数について</strong>
+  追加POIは最大25件までですが、必ず25件追加されるわけではありません。<br>
+  活動範囲の広さ、既存POI密度、40m条件、現地の安全性や導線により、実際の追加数は変わります。
+</div>
 
  <div class="capacity-control-top">
 
@@ -1013,6 +1026,11 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
     id="capacityFile"
     accept=".kmz,.kml,.zip,application/vnd.google-earth.kmz,application/vnd.google-earth.kml+xml,application/zip"
   >
+  <p class="note">
+  iPhoneでKMZが.zipとして保存された場合は、ファイル名の末尾を
+  <strong>.kmz</strong>
+  に変更してから読み込んでください。
+</p>
 
   <button class="generate" onclick="analyzePlacementCapacity()">
     配置余地を確認する
