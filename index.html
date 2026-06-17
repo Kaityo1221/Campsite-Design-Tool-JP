@@ -895,36 +895,41 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
   <div class="lab-secret-tag">CLASSIFIED / RESEARCH UNIT</div>
 
 <div class="lab-legend-box lab-user-guide">
- <strong class="lab-mission-title">
-  🔬 今月の研究員ミッション
-  <span class="lab-live-dot"></span>
-</strong>
+  <strong class="lab-mission-title">
+    🔬 今月の研究員ミッション
+    <span class="lab-live-dot"></span>
+  </strong>
 
   <p class="note">
-    研究員は、CAが使えそうな公園のNearby Wayspots CSVを集め、Campsite Labで研究データを作成します。<br>
-    今月はポリゴン作成は必須ではありません。まずはCSVから公園研究を進めます。
+    研究員は、CAイベントに使えそうな公園を探し、Wayfarer MapのNearby Wayspots CSVをCampsite Labへ投入します。<br>
+    LAB ENGINEで公園のPOIを分類し、研究KMZと一言メモを送信してください。
   </p>
 
   <div class="lab-guide-steps">
-    <div><span>1</span> 好きな公園・CAが使えそうな公園を1か所選ぶ</div>
-    <div><span>2</span> Nearby Wayspots をCSV出力する</div>
-    <div><span>3</span> CSVを投入(ファイル選択)する</div>
+    <div><span>1</span> CAイベントに使えそうな公園を1か所選ぶ</div>
+    <div><span>2</span> Wayfarer MapでNearby Wayspots CSVを出力する</div>
+    <div><span>3</span> Campsite LabでCSVを選択する</div>
     <div><span>4</span> 「⚙️ LAB ENGINE START」を押す</div>
-    <div><span>5</span> ギアが回ったあと、研究KMZを保存する</div>
-    <div><span>6</span> 下に出てくる未分類POI CSVを保存する</div>
+    <div><span>5</span> 研究結果マップと未分類POIを確認する</div>
+    <div><span>6</span> 研究KMZを保存する</div>
+    <div><span>7</span> 一言メモを書いて「研究結果を送信」を押す</div>
   </div>
 
-  <div class="lab-mission-box" style="margin-top:14px;">
-    <strong>📦 会長へ送るもの</strong><br>
-    ・Nearby Wayspots CSV<br>
-    ・研究KMZ<br>
-    ・未分類POI CSV<br><br>
+  <div class="lab-mission-box">
+  <strong>🔬 研究員メモ</strong><br>
+  LAB ENGINEの解析が終わったら、右側の「研究KMZを保存」からKMZを端末に保存してください。<br>
+  保存した研究KMZは、会長のDiscord DMへ送ってください。<br>
+  その後、下に表示される入力欄に公園の一言メモを書き、<br>
+  「研究結果を送信」を押してください。<br><br>
 
-    保存したファイルは、DiscordのDMで会長へ提出してください。<br>
-    DMには、その公園について気づいたことを一言だけ添えてください。<br>
-    例：駅から近い／広場がある／CAイベントに使えそう／日陰が少ない
-  </div>
+  送信ボタンでは、研究履歴と未分類POIレビュー候補が保存されます。<br>
+  CSVや未分類POI CSVをDMで送る必要はありません。<br><br>
+
+    例：駅から近い／広場がある／日陰が少ない／CAイベントに使えそう
 </div>
+
+</div>
+
 <div class="step lab-dev-only" style="display:none;">
   <div class="step-no">Supabase接続テスト</div>
   <h3>POI名称データバンク読込テスト</h3>
@@ -968,12 +973,6 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
   Wayfarer MapでCSV出力したデータを読み込み、POIを休憩・滞在・回遊・注意・未分類に分類します。<br>
   複数CSVを選んだ場合は、同じ座標のPOIを自動で重複削除してから分類します。
 </p>
-
-  <div class="lab-mission-box">
-  <strong>🔬 研究員メモ</strong><br>
-  ファイルを送る時に、気づいたことを一言だけ添えてください。<br><br>
-  例：駅から近い／広場がある／日陰が少ない／CAイベントに使えそう
-</div>
 
 <div class="lab-engine-machine lab-heavy-engine" id="labEngineMachine">
 
@@ -1057,8 +1056,8 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
   <strong>🧩 未分類POIレビュー候補</strong>
 
   <p class="note">
-    Supabase辞書で分類できなかったPOI名を、次回レビュー候補として一覧化します。<br>
-    ここでは辞書へ自動登録せず、レビュー用CSVとして出力します。
+    データベースの辞書で分類できなかったPOI名を、次回レビュー候補として一覧化します。<br>
+    「研究結果を送信」を押すと、未分類POIレビュー候補も自動で保存されます。
   </p>
 
   <div
@@ -1070,15 +1069,6 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
     id="unknownPoiList"
     class="unknown-poi-list"
   ></div>
-
-  <button
-    id="downloadUnknownPoiCsvBtn"
-    type="button"
-    class="generate"
-    style="margin-top:12px;"
-  >
-    未分類POIをCSV出力
-  </button>
 </div>
 <div class="lab-legend-box">
   <strong>🗺️ KMZアイコン凡例</strong>
@@ -1113,6 +1103,48 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
   </button>
 
    <div id="labEngineResult"></div>
+
+<div
+  id="labResearchSubmitBox"
+  class="lab-legend-box"
+  style="display:none;"
+>
+  <strong>📮 研究結果を送信</strong>
+
+  <p class="note">
+  研究KMZを会長のDiscord DMへ送ったら、この公園について気づいたことを一言だけ書いて送信してください。<br>
+  送信ボタンを押すまで、Supabaseには保存されません。
+</p>
+
+  <textarea
+    id="labResearchNote"
+    rows="3"
+    placeholder="例：駅から近い／広場あり／CAイベントに使えそう／日陰が少ない"
+    style="
+      width:100%;
+      padding:12px;
+      border-radius:12px;
+      border:1px solid rgba(148,163,184,0.35);
+      background:#0f172a;
+      color:white;
+      font-size:14px;
+      line-height:1.6;
+      resize:vertical;
+    "
+  ></textarea>
+
+  <button
+    id="labResearchSubmitButton"
+    type="button"
+    class="generate"
+    onclick="submitLabResearchReport()"
+  >
+    📮 研究結果を送信
+  </button>
+
+  <div id="labResearchSubmitStatus"></div>
+</div>
+
 </div>
 
 <div class="step">
@@ -2184,7 +2216,7 @@ GOロケット団の出現率が3倍になる
 <script src="js/tabs.js?v=1"></script>
 <script src="js/distance.js?v=2"></script>
 <script src="js/admin.js?v=1"></script>
-<script src="js/main.js?v=13"></script>
+<script src="js/main.js?v=22"></script>
 <script src="js/kmz.js?v=1"></script>
 <script src="js/deduplicate.js?v=1"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
