@@ -660,6 +660,20 @@ const parkName =
 const downloadName =
   `Lab_${parkName}_${today}.kmz`;
 
+const unknownPoiCount =
+  countUnknownLabPois(points);
+
+const historySaveResult =
+  await saveLabResearchHistory({
+    parkName,
+    csvCount: files.length,
+    loadedPoiCount: allPoints.length,
+    dedupedPoiCount: points.length,
+    removedDuplicateCount: dedupeResult.removed,
+    unknownPoiCount,
+    kmzFilename: downloadName
+  });
+
     // downloadBlob(
 //   kmzBlob,
 //   downloadName
@@ -710,6 +724,47 @@ const downloadName =
       `;
     }
   }
+}
+async function saveLabResearchHistory(data) {
+  if (!window.campsiteSupabase) {
+    console.warn("Supabaseクライアントが未初期化のため、研究履歴は保存されませんでした。");
+    return {
+      success: false,
+      message: "Supabase未接続"
+    };
+  }
+
+  const { error } = await window.campsiteSupabase
+    .from("lab_research_history")
+    .insert({
+      park_name: data.parkName,
+      csv_count: data.csvCount,
+      loaded_poi_count: data.loadedPoiCount,
+      deduped_poi_count: data.dedupedPoiCount,
+      removed_duplicate_count: data.removedDuplicateCount,
+      unknown_poi_count: data.unknownPoiCount,
+      kmz_filename: data.kmzFilename
+    });
+
+  if (error) {
+    console.error("研究履歴保存エラー:", error);
+
+    return {
+      success: false,
+      message: error.message || "保存失敗"
+    };
+  }
+
+  return {
+    success: true,
+    message: "保存済み"
+  };
+}
+
+function countUnknownLabPois(points) {
+  return (points || []).filter(point => {
+    return getLabPoiCategoryKey(point) === "unknown";
+  }).length;
 }
 function scrollToLabEngineMachine() {
   const machine = document.getElementById("labEngineMachine");
