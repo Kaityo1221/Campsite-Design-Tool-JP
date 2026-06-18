@@ -358,42 +358,95 @@
   }
 }
 /* =========================
-   CAMP-102：距離チェックマップ凡例
+   CAMP-102：距離チェックマップ凡例 折り畳み統合版
 ========================= */
 
 .distance-leaflet-legend {
-  min-width: 148px;
-  padding: 10px 12px;
   border-radius: 14px;
-
   background: rgba(15, 23, 42, 0.92);
   border: 1px solid rgba(148, 163, 184, 0.35);
-
   color: #e5e7eb;
   font-size: 12px;
   line-height: 1.65;
-
   box-shadow:
     0 12px 28px rgba(0, 0, 0, 0.38),
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
-
   backdrop-filter: blur(8px);
 }
 
-.distance-leaflet-legend strong {
+/* 閉じている時：小さいボタンだけ */
+.distance-leaflet-legend.is-collapsed {
+  width: auto;
+  min-width: auto;
+  max-width: none;
+  padding: 7px;
+}
+
+/* 開いている時：大きい凡例カード */
+.distance-leaflet-legend:not(.is-collapsed) {
+  width: 220px;
+  min-width: 220px;
+  max-width: 220px;
+  padding: 12px 14px;
+}
+
+/* 開閉ボタン */
+.distance-legend-toggle {
+  appearance: none;
+  -webkit-appearance: none;
+  border: none;
+  border-radius: 999px;
+  padding: 8px 12px;
+  background: rgba(56, 189, 248, 0.18);
+  color: #e0f2fe;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.12),
+    0 6px 14px rgba(0,0,0,0.28);
+}
+
+.distance-legend-toggle::before {
+  content: "▸ ";
+}
+
+.distance-leaflet-legend:not(.is-collapsed) .distance-legend-toggle::before {
+  content: "▾ ";
+}
+
+/* 閉じている時は中身を隠す */
+.distance-leaflet-legend.is-collapsed .distance-legend-body {
+  display: none;
+}
+
+/* 開いている時は縦並び */
+.distance-leaflet-legend:not(.is-collapsed) .distance-legend-body {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+/* タイトル */
+.distance-legend-body strong {
   display: block;
-  margin-bottom: 6px;
+  margin-bottom: 2px;
   color: #f8fafc;
   font-size: 13px;
 }
 
-.distance-leaflet-legend div {
+/* 各行 */
+.distance-legend-body > div {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
+  width: 100%;
   white-space: nowrap;
 }
 
+/* 点 */
 .distance-legend-dot {
   width: 10px;
   height: 10px;
@@ -412,8 +465,9 @@
   box-shadow: 0 0 8px rgba(34, 197, 94, 0.85);
 }
 
+/* 線 */
 .distance-legend-line {
-  width: 18px;
+  width: 20px;
   height: 0;
   border-top: 3px solid #94a3b8;
   display: inline-block;
@@ -447,109 +501,22 @@
 }
 
 @media (max-width: 720px) {
-  .distance-leaflet-legend {
-    max-width: 138px;
-    padding: 8px 10px;
-    font-size: 11px;
-    line-height: 1.55;
+  .distance-leaflet-legend:not(.is-collapsed) {
+    width: 210px;
+    min-width: 210px;
+    max-width: 210px;
+    padding: 11px 13px;
   }
 
-  .distance-leaflet-legend strong {
+  .distance-legend-body {
     font-size: 12px;
-  }
-}
-/* =========================
-   CAMP-102：距離チェックマップ凡例 折り畳み
-========================= */
-
-.distance-leaflet-legend {
-  min-width: auto;
-  padding: 8px;
-  border-radius: 14px;
-  background: rgba(15, 23, 42, 0.92);
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  color: #e5e7eb;
-  font-size: 12px;
-  line-height: 1.65;
-  box-shadow:
-    0 12px 28px rgba(0, 0, 0, 0.38),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(8px);
-}
-
-.distance-legend-toggle {
-  appearance: none;
-  -webkit-appearance: none;
-  border: none;
-  border-radius: 999px;
-  padding: 8px 12px;
-  background: rgba(56, 189, 248, 0.18);
-  color: #e0f2fe;
-  font-size: 13px;
-  font-weight: 800;
-  cursor: pointer;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.12),
-    0 6px 14px rgba(0,0,0,0.28);
-}
-
-.distance-legend-toggle::before {
-  content: "▸ ";
-}
-
-.distance-leaflet-legend:not(.is-collapsed) .distance-legend-toggle::before {
-  content: "▾ ";
-}
-
-.distance-legend-body {
-  margin-top: 8px;
-  min-width: 148px;
-}
-
-.distance-leaflet-legend.is-collapsed .distance-legend-body {
-  display: none;
-}
-
-.distance-legend-body strong {
-  display: block;
-  margin-bottom: 6px;
-  color: #f8fafc;
-  font-size: 13px;
-}
-
-.distance-legend-body div {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  white-space: nowrap;
-}
-
-@media (max-width: 720px) {
-  .distance-leaflet-legend {
-    padding: 7px;
+    line-height: 1.65;
   }
 
   .distance-legend-toggle {
     padding: 7px 11px;
     font-size: 12px;
   }
-
-  .distance-legend-body {
-    min-width: 138px;
-    font-size: 11px;
-    line-height: 1.55;
-  }
-}
-/* =========================
-   CAMP-102：凡例は閉じた時は小さく、開いた時は大きく
-========================= */
-
-/* 閉じている時：小さいボタンだけ */
-.distance-leaflet-legend.is-collapsed {
-  width: auto;
-  min-width: auto;
-  max-width: none;
-  padding: 7px;
 }
 
 /* 開いている時：以前の大きさに戻す */
