@@ -1155,6 +1155,84 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
 
   <div id="labResearchSubmitStatus"></div>
 </div>
+<div
+  id="aliasReviewAdminBox"
+  class="lab-admin-review-box"
+>
+  <button
+    id="aliasReviewToggleButton"
+    type="button"
+    class="lab-admin-mini-button"
+  >
+    🧩 未分類レビュー
+  </button>
+
+  <div
+    id="aliasReviewPanel"
+    class="alias-review-panel"
+    style="display:none;"
+  >
+    <div class="alias-review-header">
+      <strong>🧩 未分類POIレビュー</strong>
+      <span id="aliasReviewRemainingCount">未読込</span>
+    </div>
+
+    <p class="note">
+      研究員が送信した未分類POIを、会長がスマホで分類します。<br>
+      判定結果はレビューキューに保存されます。辞書本体にはまだ反映しません。
+    </p>
+
+    <div
+      id="aliasReviewStatus"
+      class="alias-review-status"
+    ></div>
+
+    <div
+      id="aliasReviewCard"
+      class="alias-review-card"
+      style="display:none;"
+    >
+      <div class="alias-review-label">POI名</div>
+
+      <div
+        id="aliasReviewPoiName"
+        class="alias-review-poi-name"
+      ></div>
+
+      <div
+        id="aliasReviewMeta"
+        class="alias-review-meta"
+      ></div>
+
+      <a
+        id="aliasReviewMapLink"
+        class="alias-review-map-link"
+        href="#"
+        target="_blank"
+        rel="noopener noreferrer"
+        style="display:none;"
+      >
+        📍 地図で見る
+      </a>
+
+      <textarea
+        id="aliasReviewNote"
+        class="alias-review-note"
+        rows="2"
+        placeholder="任意メモ：例）石碑系なので滞在／入口案内なので回遊"
+      ></textarea>
+
+      <div class="alias-review-actions">
+        <button type="button" data-review-category="REST">休憩</button>
+        <button type="button" data-review-category="STAY">滞在</button>
+        <button type="button" data-review-category="LOOP">回遊</button>
+        <button type="button" data-review-category="CAUTION">注意</button>
+        <button type="button" data-review-category="EXCLUDE">除外</button>
+        <button type="button" data-review-category="HOLD">保留</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 </div>
 
