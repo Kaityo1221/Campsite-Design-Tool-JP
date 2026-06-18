@@ -1088,7 +1088,28 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
         研究員が送信した未分類POIを、会長がスマホで分類します。<br>
         判定結果はレビューキューに保存されます。辞書本体にはまだ反映しません。
       </p>
+<div class="alias-review-guide">
+  <strong>判断基準</strong>
 
+  <p class="note">
+    地図・ストリートビューで現地の文脈を見て、いちばん強い役割で判定します。<br>
+    レビュー結果は一次判定です。辞書本体にはまだ反映されません。
+  </p>
+
+  <div class="alias-review-guide-list">
+    <div>⚠️ <strong>注意</strong>：危険・水辺・階段・道路・駐車場・立入禁止など</div>
+    <div>🟢 <strong>休憩</strong>：ベンチ・東屋・トイレ・水飲み場など</div>
+    <div>🔵 <strong>回遊</strong>：入口・案内板・案内図・橋・園路・通路など</div>
+    <div>🟡 <strong>滞在</strong>：広場・芝生・石碑・像・説明板・花壇など</div>
+    <div>⏸ <strong>保留</strong>：意味は分かるが混在・判断に迷うもの</div>
+    <div>🚫 <strong>辞書不要</strong>：意味不明・一時的・広告・誤検知・辞書化すると危ないもの</div>
+  </div>
+
+  <p class="note">
+    迷ったら無理に決めず、<strong>保留＋メモ</strong>で残します。<br>
+    混在する場合は、原則 <strong>注意 ＞ 休憩 ＞ 回遊 ＞ 滞在</strong> の順で安全側を優先します。
+  </p>
+</div>
       <div
         id="aliasReviewStatus"
         class="alias-review-status"
@@ -1134,7 +1155,7 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
           <button type="button" data-review-category="STAY">滞在</button>
           <button type="button" data-review-category="LOOP">回遊</button>
           <button type="button" data-review-category="CAUTION">注意</button>
-          <button type="button" data-review-category="EXCLUDE">除外</button>
+         <button type="button" data-review-category="EXCLUDE">辞書不要</button>
           <button type="button" data-review-category="HOLD">保留</button>
         </div>
       </div>
@@ -2305,7 +2326,7 @@ GOロケット団の出現率が3倍になる
 <script src="js/tabs.js?v=1"></script>
 <script src="js/distance.js?v=2"></script>
 <script src="js/admin.js?v=1"></script>
-<script src="js/main.js?v=25"></script>
+<script src="js/main.js?v=26"></script>
 <script src="js/kmz.js?v=1"></script>
 <script src="js/deduplicate.js?v=1"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

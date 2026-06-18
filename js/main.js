@@ -1174,21 +1174,11 @@ async function submitAliasReview(category) {
     reviewed_by: "会長"
   };
 
-  const normalizedName =
-    currentAliasReviewItem.normalized_name;
-
-  let query = window.campsiteSupabase
-    .from("alias_review_queue")
-    .update(updatePayload)
-    .eq("review_status", "pending");
-
-  if (normalizedName) {
-    query = query.eq("normalized_name", normalizedName);
-  } else {
-    query = query.eq("id", currentAliasReviewItem.id);
-  }
-
-  const { error } = await query;
+  const { error } = await window.campsiteSupabase
+  .from("alias_review_queue")
+  .update(updatePayload)
+  .eq("id", currentAliasReviewItem.id)
+  .eq("review_status", "pending");
 
   if (error) {
     console.error("未分類レビュー保存エラー:", error);
@@ -1240,29 +1230,26 @@ function setupAliasReviewAdminUi() {
       }
     });
   }
-actionButtons.forEach(button => {
-  const pressOn = () => button.classList.add("is-pressed");
-  const pressOff = () => button.classList.remove("is-pressed");
 
-  button.addEventListener("touchstart", pressOn, { passive: true });
-  button.addEventListener("touchend", pressOff);
-  button.addEventListener("touchcancel", pressOff);
-  button.addEventListener("mousedown", pressOn);
-  button.addEventListener("mouseup", pressOff);
-  button.addEventListener("mouseleave", pressOff);
-
-  button.addEventListener("click", async () => {
-    const category =
-      button.getAttribute("data-review-category");
-
-    if (!category || aliasReviewIsLoading) {
-      return;
-    }
-
-    await submitAliasReview(category);
-  });
-});
   actionButtons.forEach(button => {
+    const pressOn = () => {
+      button.classList.add("is-pressed");
+    };
+
+    const pressOff = () => {
+      button.classList.remove("is-pressed");
+    };
+
+    button.addEventListener("touchstart", pressOn, {
+      passive: true
+    });
+
+    button.addEventListener("touchend", pressOff);
+    button.addEventListener("touchcancel", pressOff);
+    button.addEventListener("mousedown", pressOn);
+    button.addEventListener("mouseup", pressOff);
+    button.addEventListener("mouseleave", pressOff);
+
     button.addEventListener("click", async () => {
       const category =
         button.getAttribute("data-review-category");
