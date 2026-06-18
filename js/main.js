@@ -525,21 +525,21 @@ document.addEventListener("DOMContentLoaded", () => {
   const versionInfo =
     document.getElementById("versionInfo");
 
-  setupAliasReviewAdminUi();
+  if (typeof setupAliasReviewAdminUi === "function") {
+    setupAliasReviewAdminUi();
+  }
 
   localStorage.removeItem("campsiteAdminUnlocked");
 
-if (isCampsiteAdminUnlocked()) {
-  showAliasReviewAdminBox();
-} else {
-  hideAliasReviewAdminBox();
-}
-  if (versionInfo) {
-  versionInfo.textContent =
-    APP_VERSION + " ℹ";
-}
-});
+  if (typeof hideAliasReviewAdminBox === "function") {
+    hideAliasReviewAdminBox();
+  }
 
+  if (versionInfo) {
+    versionInfo.textContent =
+      APP_VERSION + " ℹ";
+  }
+});
 /* =========================
    Campsite Lab Research Engine
    CSV → Existing POI KMZ
