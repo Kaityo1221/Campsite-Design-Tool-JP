@@ -1030,10 +1030,43 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
   alt="研究出力ドラム"
   class="engine-output-image"
 >
-    <div class="lab-file-main">研究KMZを保存</div>
+        <div class="lab-file-main">研究KMZを保存</div>
     <small>CSV解析後に保存できます</small>
   </button>
+
+  <div class="lab-engine-control-port">
+    <div class="engine-port-label">FUEL</div>
+
+    <p class="lab-engine-fuel-title">
+      研究する公園のCSVを投入します。
+    </p>
+
+    <div class="lab-engine-file-box">
+      <input
+        type="file"
+        id="labResearchCsvFile"
+        accept=".csv,text/csv"
+        multiple
+      >
+    </div>
+
+    <button
+      class="generate lab-engine-button"
+      onclick="runLabCsvToKmzEngine()"
+    >
+      ⚙️ LAB ENGINE START
+    </button>
+
+    <div id="labEngineResult" class="lab-engine-result-slot"></div>
+  </div>
 </div>
+
+<audio
+  id="labEngineSound"
+  src="assets/audio/CarEngine.wav"
+  preload="auto"
+></audio>
+
 <div id="researchMapPanel" class="research-map-panel" style="display:none;">
   <div class="capacity-section-title">
     🗺 研究結果マップ
@@ -1081,28 +1114,6 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
     <div><span class="legend-dot unknown"></span>未分類：今後辞書に追加する候補</div>
   </div>
 </div>
-
-  <p>研究する公園のCSVを選択します。</p>
-
-  <input
-  type="file"
-  id="labResearchCsvFile"
-  accept=".csv,text/csv"
-  multiple
->
-<audio
-  id="labEngineSound"
-  src="assets/audio/CarEngine.wav"
-  preload="auto"
-></audio>
-  <button
-    class="generate lab-engine-button"
-    onclick="runLabCsvToKmzEngine()"
-  >
-    ⚙️ LAB ENGINE START
-  </button>
-
-   <div id="labEngineResult"></div>
 
 <div
   id="labResearchSubmitBox"
