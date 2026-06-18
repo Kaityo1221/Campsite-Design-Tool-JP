@@ -404,10 +404,11 @@ function renderDistancePrecheckCompactHtml(counts) {
   const info = getTargetLayerDebugInfo();
   const duplicates = getPrecheckDuplicatePois();
 
+  const poiVolumeCounts =
+    countExistingAndAddedPoi(window._layerPoints);
+
   const addedTotal =
-    counts.pokestop +
-    counts.gym +
-    counts.power;
+    poiVolumeCounts.added;
 
   const hasDuplicate =
     duplicates.length > 0;
@@ -415,11 +416,22 @@ function renderDistancePrecheckCompactHtml(counts) {
   const hasPolygon =
     window._hasPolygon === true;
 
+  const poiLimitExceeded =
+    addedTotal > 25 ||
+    counts.pokestop > POI_LIMITS.pokestop ||
+    counts.gym > POI_LIMITS.gym ||
+    counts.power > POI_LIMITS.power;
+
+  const hasWarning =
+    hasDuplicate ||
+    !hasPolygon ||
+    poiLimitExceeded;
+
   const statusIcon =
-    hasDuplicate || !hasPolygon ? "⚠" : "✅";
+    hasWarning ? "⚠" : "✅";
 
   const statusText =
-    hasDuplicate || !hasPolygon
+    hasWarning
       ? "事前チェック注意"
       : "事前チェック完了";
 
@@ -433,8 +445,13 @@ function renderDistancePrecheckCompactHtml(counts) {
       ? `あり（${window._activityPolygons?.length || 0}件）`
       : "なし";
 
+  const addedPoiText =
+    poiLimitExceeded
+      ? `${addedTotal}件 ⚠`
+      : `${addedTotal}件`;
+
   return `
-    <div class="distance-precheck-compact">
+    <div class="distance-precheck-compact ${hasWarning ? "is-warning" : "is-ok"}">
       <div class="distance-precheck-head">
         <strong>${statusIcon} ${statusText}</strong>
         <span>STEP 1</span>
@@ -446,12 +463,12 @@ function renderDistancePrecheckCompactHtml(counts) {
           <strong>${info.targetPointCount}件</strong>
         </div>
 
-        <div>
+        <div class="${poiLimitExceeded ? "is-warning" : "is-ok"}">
           <small>追加POI</small>
-          <strong>${addedTotal}件</strong>
+          <strong>${addedPoiText}</strong>
         </div>
 
-        <div>
+        <div class="${hasPolygon ? "is-ok" : "is-warning"}">
           <small>活動範囲</small>
           <strong>${polygonText}</strong>
         </div>
@@ -462,11 +479,23 @@ function renderDistancePrecheckCompactHtml(counts) {
         </div>
       </div>
 
+      ${
+        poiLimitExceeded
+          ? `
+            <div class="distance-precheck-alert">
+              ⚠ 追加POIが上限を超えています。<br>
+              追加POIは最大25件です。内訳を調整してください。
+            </div>
+          `
+          : ""
+      }
+
       <details class="distance-precheck-details">
         <summary>詳細を見る</summary>
 
         ${renderDistanceUploadSummary()}
         ${renderPoiCountHtml(counts)}
+        ${getPoiLimitWarningHtml(counts, addedTotal)}
 
         ${
           hasDuplicate
@@ -549,7 +578,7 @@ function scrollToDistanceCheckStep() {
     block: "start"
   });
 }
-function getPoiLimitWarningHtml(counts) {
+function getPoiLimitWarningHtml(counts, addedTotalOverride = null) {
   const warnings = [];
 
   if (counts.pokestop > POI_LIMITS.pokestop) {
@@ -570,10 +599,15 @@ function getPoiLimitWarningHtml(counts) {
     );
   }
 
-  const total =
+  const countedTotal =
     counts.pokestop +
     counts.gym +
     counts.power;
+
+  const total =
+    Number.isFinite(Number(addedTotalOverride))
+      ? Number(addedTotalOverride)
+      : countedTotal;
 
   if (total > 25) {
     warnings.push(
