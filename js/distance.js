@@ -10,6 +10,8 @@ const POI_LIMITS = {
   gym: 8,
   power: 5
 };
+let distanceLeafletMap = null;
+let distanceLeafletLayerGroup = null;
 function escapeHtml(text) {
   return String(text || "")
     .replace(/&/g, "&amp;")
@@ -398,6 +400,128 @@ function renderPoiCountHtml(counts) {
     </div>
   `;
 }
+function renderDistancePrecheckCompactHtml(counts) {
+  const info = getTargetLayerDebugInfo();
+  const duplicates = getPrecheckDuplicatePois();
+
+  const poiVolumeCounts =
+    countExistingAndAddedPoi(window._layerPoints);
+
+  const addedTotal =
+    poiVolumeCounts.added;
+
+  const hasDuplicate =
+    duplicates.length > 0;
+
+  const hasPolygon =
+    window._hasPolygon === true;
+
+  const poiLimitExceeded =
+    addedTotal > 25 ||
+    counts.pokestop > POI_LIMITS.pokestop ||
+    counts.gym > POI_LIMITS.gym ||
+    counts.power > POI_LIMITS.power;
+
+  const hasWarning =
+    hasDuplicate ||
+    !hasPolygon ||
+    poiLimitExceeded;
+
+  const statusIcon =
+    hasWarning ? "⚠" : "✅";
+
+  const statusText =
+    hasWarning
+      ? "事前チェック注意"
+      : "事前チェック完了";
+
+  const duplicateText =
+    hasDuplicate
+      ? `あり（${duplicates.length}件）`
+      : "なし";
+
+  const polygonText =
+    hasPolygon
+      ? `あり（${window._activityPolygons?.length || 0}件）`
+      : "なし";
+
+  const addedPoiText =
+    poiLimitExceeded
+      ? `${addedTotal}件 ⚠`
+      : `${addedTotal}件`;
+
+  return `
+    <div class="distance-precheck-compact ${hasWarning ? "is-warning" : "is-ok"}">
+      <div class="distance-precheck-head">
+        <strong>${statusIcon} ${statusText}</strong>
+        <span>STEP 1</span>
+      </div>
+
+      <div class="distance-precheck-grid">
+        <div>
+          <small>判定対象POI</small>
+          <strong>${info.targetPointCount}件</strong>
+        </div>
+
+        <div class="${poiLimitExceeded ? "is-warning" : "is-ok"}">
+          <small>追加POI</small>
+          <strong>${addedPoiText}</strong>
+        </div>
+
+        <div class="${hasPolygon ? "is-ok" : "is-warning"}">
+          <small>活動範囲</small>
+          <strong>${polygonText}</strong>
+        </div>
+
+        <div class="${hasDuplicate ? "is-warning" : "is-ok"}">
+          <small>重複POI</small>
+          <strong>${duplicateText}</strong>
+        </div>
+      </div>
+
+      ${
+        poiLimitExceeded
+          ? `
+            <div class="distance-precheck-alert">
+              ⚠ 追加POIが上限を超えています。<br>
+              追加POIは最大25件です。内訳を調整してください。
+            </div>
+          `
+          : ""
+      }
+
+      <details class="distance-precheck-details">
+        <summary>詳細を見る</summary>
+
+        ${renderDistanceUploadSummary()}
+        ${renderPoiCountHtml(counts)}
+        ${getPoiLimitWarningHtml(counts, addedTotal)}
+
+        ${
+          hasDuplicate
+            ? renderPrecheckDuplicatePoiHtml()
+            : `
+              <div class="distance-warning" style="
+                border:1px solid rgba(34,197,94,0.45);
+                background:rgba(34,197,94,0.12);
+              ">
+                ✅ 重複POIはありません。
+              </div>
+            `
+        }
+      </details>
+
+      <div class="distance-precheck-next">
+        <button
+          type="button"
+          onclick="scrollToDistanceCheckStep()"
+        >
+          ↓ STEP 2：距離チェックへ進む
+        </button>
+      </div>
+    </div>
+  `;
+}
 function renderDistancePrecheckFooterHtml() {
   return `
     ${renderPrecheckDuplicatePoiHtml()}
@@ -454,7 +578,7 @@ function scrollToDistanceCheckStep() {
     block: "start"
   });
 }
-function getPoiLimitWarningHtml(counts) {
+function getPoiLimitWarningHtml(counts, addedTotalOverride = null) {
   const warnings = [];
 
   if (counts.pokestop > POI_LIMITS.pokestop) {
@@ -475,10 +599,15 @@ function getPoiLimitWarningHtml(counts) {
     );
   }
 
-  const total =
+  const countedTotal =
     counts.pokestop +
     counts.gym +
     counts.power;
+
+  const total =
+    Number.isFinite(Number(addedTotalOverride))
+      ? Number(addedTotalOverride)
+      : countedTotal;
 
   if (total > 25) {
     warnings.push(
@@ -724,9 +853,7 @@ window._hasPolygon =
         );
 
       summary.innerHTML =
-        renderDistanceUploadSummary() +
-        renderPoiCountHtml(counts) +
-        renderDistancePrecheckFooterHtml();
+  renderDistancePrecheckCompactHtml(counts);
     }
 
   } catch (error) {
@@ -1621,7 +1748,6 @@ const sectionTitleHtml = (title, sub = "") => `
       <div style="margin-top:6px; font-size:13px; opacity:0.8;">
         スコア：${campsite.score}点
       </div>
-${poiCountHtml}
       <br>
      <strong>総評</strong><br>
 ${poiLimitWarningHtml}
@@ -1743,7 +1869,8 @@ const debugHtml = `
   `;
 const simpleMapGuideHtml = `
   <div class="distance-warning">
-    ※簡易マップはPC版で表示されます。
+    ※地図はOSM / 航空写真を切り替えて確認できます。<br>
+    既存POI・追加POI・活動範囲ポリゴン・近接ラインを表示します。
   </div><br>
 `;
   if (warnings.length === 0) {
@@ -1751,15 +1878,14 @@ const simpleMapGuideHtml = `
     sectionTitleHtml("拠点充実度", "距離・通行・広場・回遊性などをもとにした総合評価です。") +
     scoreHtml +
     sectionTitleHtml("判定結果", "20m未満／20〜30m／30〜40mの近接件数を確認します。") +
-debugHtml +
 resultHeaderHtml +
 sectionTitleHtml("重複POIチェック", "同じ場所に複数のPOIが入っていないか確認します。") +
 duplicatePoiHtml +
     `✅ 問題なし（${points.length}件）<br><br>` +
-    sectionTitleHtml("PC版簡易マップ", "読み込んだPOIの分布を点で確認できます。") +
+    sectionTitleHtml("距離チェックマップ", "OSM / 航空写真でPOI・活動範囲・近接ラインを確認できます。") +
     simpleMapGuideHtml;
 
-  renderSimpleDistanceMap(points);
+  renderSimpleDistanceMap(points, warnings);
 
 sendDistanceCheckAnalytics(
   points,
@@ -1824,7 +1950,6 @@ result.innerHTML =
   sectionTitleHtml("拠点充実度", "距離・通行・広場・回遊性などをもとにした総合評価です。") +
   scoreHtml +
   sectionTitleHtml("判定結果", "20m未満／20〜30m／30〜40mの近接件数を確認します。") +
-  debugHtml +
   resultHeaderHtml +
   sectionTitleHtml("重複POIチェック", "同じ場所に複数のPOIが入っていないか確認します。") +
   duplicatePoiHtml +
@@ -1839,10 +1964,10 @@ result.innerHTML =
   ` +
   sectionTitleHtml("追加・変更対象の近接", "既存POI同士ではなく、追加・変更対象に関係する近接を確認します。") +
   targetWarningListHtml +
-  sectionTitleHtml("PC版簡易マップ", "読み込んだPOIの分布を点で確認できます。") +
+  sectionTitleHtml("距離チェックマップ", "OSM / 航空写真でPOI・活動範囲・近接ラインを確認できます。") +
   simpleMapGuideHtml;
 
-  renderSimpleDistanceMap(points);
+  renderSimpleDistanceMap(points, warnings);
 sendDistanceCheckAnalytics(
   points,
   poiVolumeCounts,
@@ -1852,67 +1977,164 @@ sendDistanceCheckAnalytics(
   campsite
 );
 }
-
-function renderSimpleDistanceMap(points = []) {
-  const map = document.getElementById("distanceMap");
-  if (!map) return;
-
-  map.innerHTML = "";
-
-  // スマホでは描画しない
-  if (window.innerWidth <= 720) {
+function addDistanceMapLegend() {
+  if (!distanceLeafletMap || typeof L === "undefined") {
     return;
   }
-  const legend = document.createElement("div");
-  legend.className = "distance-map-legend";
-  legend.innerHTML = `
-    <div class="distance-map-legend-row">
-      <span class="distance-map-legend-dot existing"></span>
-      既存POI
-    </div>
-    <div class="distance-map-legend-row">
-      <span class="distance-map-legend-dot add"></span>
-      追加希望POI
-    </div>
-  `;
-  map.appendChild(legend);
-function pickNumber(p, keys) {
-  for (const key of keys) {
-    if (p[key] !== undefined && p[key] !== null && p[key] !== "") {
-      const value = Number(String(p[key]).trim());
-      if (!isNaN(value)) return value;
-    }
-  }
-  return NaN;
-}
-const validPoints = points
-  .map(p => ({
-    ...p,
 
-    lat: pickNumber(p, [
+  const legend = L.control({
+    position: "bottomright"
+  });
+
+  legend.onAdd = function () {
+    const div = L.DomUtil.create(
+      "div",
+      "distance-leaflet-legend is-collapsed"
+    );
+
+    div.innerHTML = `
+      <button
+        type="button"
+        class="distance-legend-toggle"
+        aria-expanded="false"
+      >
+        凡例
+      </button>
+
+      <div class="distance-legend-body">
+        <strong>凡例</strong>
+
+        <div>
+          <span class="distance-legend-dot existing"></span>
+          既存POI
+        </div>
+
+        <div>
+          <span class="distance-legend-dot add"></span>
+          追加POI
+        </div>
+
+        <div>
+          <span class="distance-legend-line area"></span>
+          活動範囲
+        </div>
+
+        <div>
+          <span class="distance-legend-line dense"></span>
+          20m未満
+        </div>
+
+        <div>
+          <span class="distance-legend-line stay"></span>
+          20〜30m
+        </div>
+
+        <div>
+          <span class="distance-legend-line light"></span>
+          30〜40m
+        </div>
+
+        <div>
+          <span class="distance-legend-line reference"></span>
+          既存同士参考
+        </div>
+      </div>
+    `;
+
+    const toggleButton =
+      div.querySelector(".distance-legend-toggle");
+
+    toggleButton.addEventListener("click", () => {
+      const isCollapsed =
+        div.classList.toggle("is-collapsed");
+
+      toggleButton.setAttribute(
+        "aria-expanded",
+        String(!isCollapsed)
+      );
+    });
+
+    L.DomEvent.disableClickPropagation(div);
+    L.DomEvent.disableScrollPropagation(div);
+
+    return div;
+  };
+
+  legend.addTo(distanceLeafletMap);
+}
+function renderSimpleDistanceMap(points = [], warnings = []) {
+  const mapElement = document.getElementById("distanceMap");
+
+  if (!mapElement) {
+    return;
+  }
+
+  mapElement.innerHTML = "";
+  mapElement.style.display = "block";
+
+  if (typeof L === "undefined") {
+    mapElement.innerHTML = `
+      <div class="distance-map-empty">
+        地図ライブラリを読み込めませんでした。
+      </div>
+    `;
+    return;
+  }
+
+  function pickNumber(p, keys) {
+    for (const key of keys) {
+      if (p[key] !== undefined && p[key] !== null && p[key] !== "") {
+        const value = Number(String(p[key]).trim());
+        if (!isNaN(value)) return value;
+      }
+    }
+
+    return NaN;
+  }
+
+  function getPointLatLng(p) {
+    const lat = pickNumber(p, [
       "lat",
       "latitude",
       "Latitude",
       "LAT",
       "緯度"
-    ]),
+    ]);
 
-    lng: pickNumber(p, [
+    const lng = pickNumber(p, [
       "lng",
       "lon",
       "longitude",
       "Longitude",
       "LON",
       "経度"
-    ])
-  }))
-  .filter(p =>
-    !isNaN(p.lat) &&
-    !isNaN(p.lng)
-  );
+    ]);
 
-if (!validPoints.length) {
-    map.innerHTML = `
+    if (isNaN(lat) || isNaN(lng)) {
+      return null;
+    }
+
+    return [lat, lng];
+  }
+
+  const validPoints = points
+    .map(p => {
+      const latLng = getPointLatLng(p);
+
+      if (!latLng) {
+        return null;
+      }
+
+      return {
+        ...p,
+        lat: latLng[0],
+        lng: latLng[1]
+      };
+    })
+    .filter(Boolean);
+
+  if (!validPoints.length) {
+    mapElement.innerHTML = `
       <div class="distance-map-empty">
         表示できるPOIがありません。
       </div>
@@ -1920,101 +2142,168 @@ if (!validPoints.length) {
     return;
   }
 
-  const padding = 42;
-  const width = map.clientWidth;
-  const height = map.clientHeight;
+  if (distanceLeafletMap) {
+    distanceLeafletMap.remove();
+    distanceLeafletMap = null;
+    distanceLeafletLayerGroup = null;
+  }
 
-  const meanLat =
-    validPoints.reduce((sum, p) => sum + p.lat, 0) / validPoints.length;
+  distanceLeafletMap = L.map("distanceMap", {
+    zoomControl: true
+  });
 
-  const metersPerLat = 111320;
-  const metersPerLng =
-    111320 * Math.cos(meanLat * Math.PI / 180);
-
-  const projected = validPoints.map(p => ({
-    ...p,
-    mx: p.lng * metersPerLng,
-    my: p.lat * metersPerLat
-  }));
-
-const xs = projected.map(p => p.mx);
-const ys = projected.map(p => p.my);
-
-// 全POIが画面内に入るように範囲を取る
-let minX = Math.min(...xs);
-let maxX = Math.max(...xs);
-let minY = Math.min(...ys);
-let maxY = Math.max(...ys);
-
-// 端のPOIが枠に貼り付かないよう、少し余白を足す
-const marginRate = 0.08;
-
-const marginX = (maxX - minX || 1) * marginRate;
-const marginY = (maxY - minY || 1) * marginRate;
-
-minX -= marginX;
-maxX += marginX;
-minY -= marginY;
-maxY += marginY;
-
-  const rangeX = maxX - minX || 1;
-  const rangeY = maxY - minY || 1;
-
-  const scale = Math.min(
-    (width - padding * 2) / rangeX,
-    (height - padding * 2) / rangeY
+  const osmLayer = L.tileLayer(
+    "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+    {
+      maxZoom: 19,
+      attribution: "&copy; OpenStreetMap contributors"
+    }
   );
 
-  const mapContentWidth = rangeX * scale;
-  const mapContentHeight = rangeY * scale;
+  const aerialLayer = L.tileLayer(
+    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    {
+      maxZoom: 19,
+      attribution: "Tiles &copy; Esri"
+    }
+  );
 
-  const offsetX = (width - mapContentWidth) / 2;
-  const offsetY = (height - mapContentHeight) / 2;
-const tooltip = document.createElement("div");
-tooltip.className = "distance-map-tooltip";
-map.appendChild(tooltip);
+  osmLayer.addTo(distanceLeafletMap);
 
-projected.forEach(p => {
-    const rawX =
-  offsetX +
-  (p.mx - minX) * scale;
+  L.control.layers(
+    {
+      "OSM": osmLayer,
+      "航空写真": aerialLayer
+    },
+    null,
+    {
+      collapsed: false
+    }
+  ).addTo(distanceLeafletMap);
+  addDistanceMapLegend();
 
-const rawY =
-  offsetY +
-  mapContentHeight -
-  (p.my - minY) * scale;
+  distanceLeafletLayerGroup =
+    L.layerGroup().addTo(distanceLeafletMap);
 
-const edgePadding = 14;
+  const bounds = [];
 
-const x = Math.max(edgePadding, Math.min(width - edgePadding, rawX));
-const y = Math.max(edgePadding, Math.min(height - edgePadding, rawY));
+  /*
+    活動範囲ポリゴン
+  */
+  (window._activityPolygons || []).forEach((polygon, index) => {
+    if (!Array.isArray(polygon) || polygon.length < 3) {
+      return;
+    }
 
-    const dot = document.createElement("div");
+    L.polygon(polygon, {
+      color: "#a855f7",
+      fillColor: "#a855f7",
+      fillOpacity: 0.18,
+      weight: 2
+    })
+      .bindPopup(`活動範囲ポリゴン ${index + 1}`)
+      .addTo(distanceLeafletLayerGroup);
+
+    polygon.forEach(latLng => bounds.push(latLng));
+  });
+
+  /*
+    POI
+  */
+  validPoints.forEach(p => {
+    const latLng = [p.lat, p.lng];
+
+    const layerName =
+      p.originalLayer ||
+      p.layer ||
+      "";
 
     const isAdd =
-      (p.originalLayer || p.layer || "").includes("追加");
+      isAddedLayerName(layerName);
 
-    dot.className =
-      `distance-map-point ${isAdd ? "add" : "existing"}`;
+    const color =
+      isAdd ? "#22c55e" : "#38bdf8";
 
-    dot.style.left = `${x}px`;
-    dot.style.top = `${y}px`;
+    const label =
+      isAdd ? "追加POI" : "既存POI";
 
-    dot.addEventListener("mouseenter", () => {
-  tooltip.innerHTML = `
-    <strong>${escapeHtml(p.layer || "POI")}</strong><br>
-${escapeHtml(p.name || "名称なし")}
-  `;
+    L.circleMarker(latLng, {
+      radius: isAdd ? 8 : 6,
+      color,
+      fillColor: color,
+      fillOpacity: 0.92,
+      weight: 2
+    })
+      .bindPopup(`
+        <strong>${escapeHtml(p.name || "名称なし")}</strong><br>
+        ${escapeHtml(label)}<br>
+        レイヤー：${escapeHtml(layerName || "-")}
+      `)
+      .addTo(distanceLeafletLayerGroup);
 
-  tooltip.style.left = `${x}px`;
-  tooltip.style.top = `${y}px`;
-  tooltip.classList.add("show");
-});
-
-dot.addEventListener("mouseleave", () => {
-  tooltip.classList.remove("show");
-});
-
-map.appendChild(dot);
+    bounds.push(latLng);
   });
+
+  /*
+    近接ライン
+  */
+  (warnings || []).forEach(w => {
+    const aLatLng = getPointLatLng(w.a);
+    const bLatLng = getPointLatLng(w.b);
+
+    if (!aLatLng || !bLatLng) {
+      return;
+    }
+
+    const isExistingA =
+      String(w.a.originalLayer || "").includes("既存");
+
+    const isExistingB =
+      String(w.b.originalLayer || "").includes("既存");
+
+    const isReference =
+      isExistingA && isExistingB;
+
+    let color = "#facc15";
+    let label = "軽微";
+
+    if (w.distance < 20) {
+      color = "#ef4444";
+      label = "密集";
+    } else if (w.distance < 30) {
+      color = "#f97316";
+      label = "滞留";
+    }
+
+    if (isReference) {
+      color = "#94a3b8";
+      label = "参考";
+    }
+
+    L.polyline([aLatLng, bLatLng], {
+      color,
+      weight: isReference ? 2 : 3,
+      opacity: isReference ? 0.55 : 0.85,
+      dashArray: isReference || w.distance >= 30 ? "6,6" : null
+    })
+      .bindPopup(`
+        <strong>${escapeHtml(label)}：${w.distance.toFixed(1)}m</strong><br>
+        ${escapeHtml(w.a.layer || "-")}：${escapeHtml(w.a.name || "名称なし")}<br>
+        × ${escapeHtml(w.b.layer || "-")}：${escapeHtml(w.b.name || "名称なし")}
+      `)
+      .addTo(distanceLeafletLayerGroup);
+
+    bounds.push(aLatLng);
+    bounds.push(bLatLng);
+  });
+
+  if (bounds.length) {
+    distanceLeafletMap.fitBounds(bounds, {
+      padding: [28, 28]
+    });
+  }
+
+  setTimeout(() => {
+    distanceLeafletMap?.invalidateSize();
+  }, 160);
 }

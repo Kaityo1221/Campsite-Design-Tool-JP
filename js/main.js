@@ -86,6 +86,8 @@ function checkAdminCode() {
     closeAdminLogin();
 
     openTab("admin", null);
+      localStorage.setItem("campsiteAdminUnlocked", "true");
+  showAliasReviewAdminBox();
 
     document.querySelectorAll(".tab-button").forEach(btn => {
       btn.classList.remove("active");
@@ -517,6 +519,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const versionInfo =
     document.getElementById("versionInfo");
 
+  setupAliasReviewAdminUi();
+
+  if (localStorage.getItem("campsiteAdminUnlocked") === "true") {
+    showAliasReviewAdminBox();
+  } else {
+    hideAliasReviewAdminBox();
+  }
   if (versionInfo) {
     versionInfo.textContent =
       APP_VERSION + " ℹ";
@@ -943,6 +952,317 @@ async function submitLabResearchReport() {
     }
   }
 }
+let currentAliasReviewItem = null;
+let aliasReviewIsLoading = false;
+
+function getAliasReviewCategoryLabel(category) {
+  const labels = {
+    REST: "休憩",
+    STAY: "滞在",
+    LOOP: "回遊",
+    CAUTION: "注意",
+    EXCLUDE: "除外",
+    HOLD: "保留"
+  };
+
+  return labels[category] || category;
+}
+
+function getAliasReviewStatusForCategory(category) {
+  if (category === "EXCLUDE") {
+    return "excluded";
+  }
+
+  if (category === "HOLD") {
+    return "hold";
+  }
+
+  return "reviewed";
+}
+
+function setAliasReviewStatus(message, type = "info") {
+  const status = document.getElementById("aliasReviewStatus");
+
+  if (!status) {
+    return;
+  }
+
+  const color =
+    type === "error"
+      ? "#fecaca"
+      : type === "success"
+        ? "#bbf7d0"
+        : "#cbd5e1";
+
+  status.innerHTML = `
+    <div style="color:${color};">
+      ${escapeHtml(message)}
+    </div>
+  `;
+}
+
+async function fetchAliasReviewRemainingCount() {
+  if (!window.campsiteSupabase) {
+    return 0;
+  }
+
+  const { count, error } = await window.campsiteSupabase
+    .from("alias_review_queue")
+    .select("id", {
+      count: "exact",
+      head: true
+    })
+    .eq("review_status", "pending");
+
+  if (error) {
+    console.error("未分類レビュー残数取得エラー:", error);
+    return 0;
+  }
+
+  return count || 0;
+}
+
+async function fetchNextAliasReviewItem() {
+  if (!window.campsiteSupabase) {
+    setAliasReviewStatus("Supabaseに接続されていません。", "error");
+    return null;
+  }
+
+  const { data, error } = await window.campsiteSupabase
+    .from("alias_review_queue")
+    .select(`
+      id,
+      poi_name,
+      normalized_name,
+      count,
+      sample_lat,
+      sample_lng,
+      source,
+      review_status,
+      suggested_category,
+      review_note,
+      created_at
+    `)
+    .eq("review_status", "pending")
+    .order("count", { ascending: false })
+    .order("created_at", { ascending: true })
+    .limit(1);
+
+  if (error) {
+    console.error("未分類レビュー取得エラー:", error);
+    setAliasReviewStatus("未分類POIの取得に失敗しました。", "error");
+    return null;
+  }
+
+  return data?.[0] || null;
+}
+
+function renderAliasReviewItem(item, remainingCount) {
+  const card = document.getElementById("aliasReviewCard");
+  const nameEl = document.getElementById("aliasReviewPoiName");
+  const metaEl = document.getElementById("aliasReviewMeta");
+  const mapLink = document.getElementById("aliasReviewMapLink");
+  const noteEl = document.getElementById("aliasReviewNote");
+  const remainingEl = document.getElementById("aliasReviewRemainingCount");
+
+  if (remainingEl) {
+    remainingEl.textContent = `残り ${remainingCount}件`;
+  }
+
+  if (!item) {
+    currentAliasReviewItem = null;
+
+    if (card) {
+      card.style.display = "none";
+    }
+
+    setAliasReviewStatus("レビュー待ちの未分類POIはありません。", "success");
+    return;
+  }
+
+  currentAliasReviewItem = item;
+
+  if (card) {
+    card.style.display = "block";
+  }
+
+  if (nameEl) {
+    nameEl.textContent = item.poi_name || "名称なし";
+  }
+
+  if (metaEl) {
+    metaEl.innerHTML = `
+      出現数：${escapeHtml(item.count || 1)}件<br>
+      正規化名：${escapeHtml(item.normalized_name || "-")}<br>
+      source：${escapeHtml(item.source || "-")}
+    `;
+  }
+
+  if (noteEl) {
+    noteEl.value = "";
+  }
+
+  const lat = Number(item.sample_lat);
+  const lng = Number(item.sample_lng);
+
+  if (
+    mapLink &&
+    Number.isFinite(lat) &&
+    Number.isFinite(lng)
+  ) {
+    mapLink.href = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+    mapLink.style.display = "inline-flex";
+  } else if (mapLink) {
+    mapLink.href = "#";
+    mapLink.style.display = "none";
+  }
+
+  setAliasReviewStatus("分類ボタンを押すと保存して次へ進みます。");
+}
+
+async function loadAliasReviewCard() {
+  if (aliasReviewIsLoading) {
+    return;
+  }
+
+  aliasReviewIsLoading = true;
+
+  setAliasReviewStatus("未分類POIを読み込み中です…");
+
+  try {
+    const remainingCount =
+      await fetchAliasReviewRemainingCount();
+
+    const item =
+      await fetchNextAliasReviewItem();
+
+    renderAliasReviewItem(item, remainingCount);
+  } catch (error) {
+    console.error(error);
+    setAliasReviewStatus("未分類レビューの読み込みに失敗しました。", "error");
+  } finally {
+    aliasReviewIsLoading = false;
+  }
+}
+
+async function submitAliasReview(category) {
+  if (!currentAliasReviewItem) {
+    alert("レビュー対象がありません。");
+    return;
+  }
+
+  if (!window.campsiteSupabase) {
+    alert("Supabaseに接続されていません。");
+    return;
+  }
+
+  const noteEl = document.getElementById("aliasReviewNote");
+  const reviewNote = String(noteEl?.value || "").trim();
+
+  const reviewStatus =
+    getAliasReviewStatusForCategory(category);
+
+  setAliasReviewStatus(
+    `${getAliasReviewCategoryLabel(category)}として保存中です…`
+  );
+
+  const updatePayload = {
+    review_status: reviewStatus,
+    suggested_category: category,
+    review_note: reviewNote,
+    reviewed_at: new Date().toISOString(),
+    reviewed_by: "会長"
+  };
+
+  const { error } = await window.campsiteSupabase
+  .from("alias_review_queue")
+  .update(updatePayload)
+  .eq("id", currentAliasReviewItem.id)
+  .eq("review_status", "pending");
+
+  if (error) {
+    console.error("未分類レビュー保存エラー:", error);
+    setAliasReviewStatus("レビュー結果の保存に失敗しました。", "error");
+    return;
+  }
+
+  setAliasReviewStatus(
+    `${getAliasReviewCategoryLabel(category)}として保存しました。次を読み込みます。`,
+    "success"
+  );
+
+  await loadAliasReviewCard();
+}
+function showAliasReviewAdminBox() {
+  const box = document.getElementById("aliasReviewAdminBox");
+
+  if (box) {
+    box.style.display = "block";
+  }
+}
+
+function hideAliasReviewAdminBox() {
+  const box = document.getElementById("aliasReviewAdminBox");
+
+  if (box) {
+    box.style.display = "none";
+  }
+}
+function setupAliasReviewAdminUi() {
+  const toggleButton =
+    document.getElementById("aliasReviewToggleButton");
+
+  const panel =
+    document.getElementById("aliasReviewPanel");
+
+  const actionButtons =
+    document.querySelectorAll("[data-review-category]");
+
+  if (toggleButton && panel) {
+    toggleButton.addEventListener("click", async () => {
+      const isHidden =
+        panel.style.display === "none" || !panel.style.display;
+
+      panel.style.display = isHidden ? "block" : "none";
+
+      if (isHidden) {
+        await loadAliasReviewCard();
+      }
+    });
+  }
+
+  actionButtons.forEach(button => {
+    const pressOn = () => {
+      button.classList.add("is-pressed");
+    };
+
+    const pressOff = () => {
+      button.classList.remove("is-pressed");
+    };
+
+    button.addEventListener("touchstart", pressOn, {
+      passive: true
+    });
+
+    button.addEventListener("touchend", pressOff);
+    button.addEventListener("touchcancel", pressOff);
+    button.addEventListener("mousedown", pressOn);
+    button.addEventListener("mouseup", pressOff);
+    button.addEventListener("mouseleave", pressOff);
+
+    button.addEventListener("click", async () => {
+      const category =
+        button.getAttribute("data-review-category");
+
+      if (!category || aliasReviewIsLoading) {
+        return;
+      }
+
+      await submitAliasReview(category);
+    });
+  });
+}
+
 
 function scrollToLabEngineMachine() {
   const machine = document.getElementById("labEngineMachine");
@@ -1690,7 +2010,7 @@ list.innerHTML = `
     hiddenTypeCount > 0
       ? `
         <div class="unknown-poi-more">
-          ほか ${hiddenTypeCount} 種類はCSVで確認できます
+          ほか ${hiddenTypeCount} 種類は、研究結果送信後に未分類レビューで確認できます
         </div>
       `
       : ""

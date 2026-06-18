@@ -3566,3 +3566,175 @@ button.generate:active {
     font-size: 17px;
   }
 }
+/* ==============================
+   CAMP-101：未分類POIレビュー
+============================== */
+
+.lab-admin-review-box {
+  margin-top: 18px;
+}
+
+.lab-admin-mini-button {
+  width: auto;
+  min-width: 160px;
+  padding: 9px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(15, 23, 42, 0.92);
+  color: #e5e7eb;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.25);
+}
+
+.lab-admin-mini-button:hover {
+  background: rgba(30, 41, 59, 0.96);
+}
+
+.alias-review-panel {
+  margin-top: 12px;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  background: rgba(15, 23, 42, 0.92);
+}
+
+.alias-review-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.alias-review-header strong {
+  color: #f8fafc;
+  font-size: 16px;
+}
+
+#aliasReviewRemainingCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 68px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: rgba(59, 130, 246, 0.16);
+  color: #bfdbfe;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.alias-review-status {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #cbd5e1;
+}
+
+.alias-review-card {
+  margin-top: 14px;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(96, 165, 250, 0.28);
+  background: rgba(2, 6, 23, 0.68);
+}
+
+.alias-review-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #93c5fd;
+  margin-bottom: 6px;
+}
+
+.alias-review-poi-name {
+  font-size: 20px;
+  font-weight: 800;
+  color: #f8fafc;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.alias-review-meta {
+  margin-top: 10px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #cbd5e1;
+}
+
+.alias-review-map-link {
+  display: inline-flex;
+  margin-top: 10px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(34, 197, 94, 0.14);
+  color: #bbf7d0;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.alias-review-note {
+  width: 100%;
+  margin-top: 12px;
+  padding: 11px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: #0f172a;
+  color: #f8fafc;
+  font-size: 14px;
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.alias-review-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.alias-review-actions button {
+  min-height: 48px;
+  border: none;
+  border-radius: 14px;
+  background: rgba(59, 130, 246, 0.18);
+  color: #e0f2fe;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.alias-review-actions button:hover {
+  background: rgba(59, 130, 246, 0.28);
+}
+
+.alias-review-actions button[data-review-category="EXCLUDE"] {
+  background: rgba(239, 68, 68, 0.16);
+  color: #fecaca;
+}
+
+.alias-review-actions button[data-review-category="HOLD"] {
+  background: rgba(148, 163, 184, 0.16);
+  color: #e5e7eb;
+}
+
+@media (max-width: 640px) {
+  .alias-review-panel {
+    padding: 14px;
+    border-radius: 16px;
+  }
+
+  .alias-review-card {
+    padding: 14px;
+  }
+
+  .alias-review-poi-name {
+    font-size: 18px;
+  }
+
+  .alias-review-actions button {
+    min-height: 52px;
+    font-size: 15px;
+  }
+}

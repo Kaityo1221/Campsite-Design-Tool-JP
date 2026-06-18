@@ -20,8 +20,8 @@
 <link rel="stylesheet" href="css/style.css?v=84">
 <link rel="stylesheet" href="css/splash.css?v=98">
 <link rel="stylesheet" href="css/tabs.css?v=29">
-<link rel="stylesheet" href="css/admin.css?v=27">
-<link rel="stylesheet" href="css/distance.css?v=33">
+<link rel="stylesheet" href="css/admin.css?v=28">
+<link rel="stylesheet" href="css/distance.css?v=40">
 <link rel="stylesheet" href="css/capacity.css?v=6">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/icon.png">
 <link rel="manifest" href="./manifest.json">
@@ -967,199 +967,298 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
     <div class="step lab-engine-step">
   <div class="step-no">公園研究</div>
 
-<h3>公園研究CSVを読み込む</h3>
+  <h3>公園研究CSVを読み込む</h3>
 
-<p class="note">
-  Wayfarer MapでCSV出力したデータを読み込み、POIを休憩・滞在・回遊・注意・未分類に分類します。<br>
-  複数CSVを選んだ場合は、同じ座標のPOIを自動で重複削除してから分類します。
-</p>
+  <p class="note">
+    Wayfarer MapでCSV出力したデータを読み込み、POIを休憩・滞在・回遊・注意・未分類に分類します。<br>
+    複数CSVを選んだ場合は、同じ座標のPOIを自動で重複削除してから分類します。
+  </p>
 
-<div class="lab-engine-machine lab-heavy-engine" id="labEngineMachine">
+  <div class="lab-engine-machine lab-heavy-engine" id="labEngineMachine">
 
-  <div class="engine-bolt bolt-tl"></div>
-  <div class="engine-bolt bolt-tr"></div>
-  <div class="engine-bolt bolt-bl"></div>
-  <div class="engine-bolt bolt-br"></div>
+    <div class="engine-bolt bolt-tl"></div>
+    <div class="engine-bolt bolt-tr"></div>
+    <div class="engine-bolt bolt-bl"></div>
+    <div class="engine-bolt bolt-br"></div>
 
-  <div class="lab-csv-card engine-input-port" id="labCsvCard">
-    <div class="engine-port-label">INPUT</div>
-    <div class="engine-port-icon">📄</div>
-    <div class="engine-port-main">CSV DATA</div>
-  </div>
-
-  <div class="lab-engine-core engine-reactor-core">
-    <div class="engine-status-strip">
-      <span></span>
-      LAB ENGINE CORE
-      <span></span>
+    <div class="lab-csv-card engine-input-port" id="labCsvCard">
+      <div class="engine-port-label">INPUT</div>
+      <div class="engine-port-icon">📄</div>
+      <div class="engine-port-main">CSV DATA</div>
     </div>
 
-    <div class="engine-gauge-row">
-      <div class="engine-gauge">
-        <div class="engine-gauge-needle"></div>
+    <div class="lab-engine-core engine-reactor-core">
+      <div class="engine-status-strip">
+        <span></span>
+        LAB ENGINE CORE
+        <span></span>
       </div>
 
-      <div class="engine-power-core">
-        <div class="engine-core-ring"></div>
-        <div class="engine-core-light"></div>
-        <div class="engine-core-label">ANALYZING</div>
+      <div class="engine-gauge-row">
+        <div class="engine-gauge">
+          <div class="engine-gauge-needle"></div>
+        </div>
+
+        <div class="engine-power-core">
+          <div class="engine-core-ring"></div>
+          <div class="engine-core-light"></div>
+          <div class="engine-core-label">ANALYZING</div>
+        </div>
+
+        <div class="engine-gauge">
+          <div class="engine-gauge-needle right"></div>
+        </div>
       </div>
 
-      <div class="engine-gauge">
-        <div class="engine-gauge-needle right"></div>
+      <div class="engine-gear-row">
+        <div class="lab-gear gear-left engine-metal-gear">⚙️</div>
+        <div class="lab-engine-label engine-main-label">LAB ENGINE</div>
+        <div class="lab-gear gear-right engine-metal-gear">⚙️</div>
       </div>
-    </div>
-
-    <div class="engine-gear-row">
-      <div class="lab-gear gear-left engine-metal-gear">⚙️</div>
-      <div class="lab-engine-label engine-main-label">LAB ENGINE</div>
-      <div class="lab-gear gear-right engine-metal-gear">⚙️</div>
-    </div>
-  </div>
-
-  <button
-    id="researchKmzButton"
-    class="lab-file-card lab-file-card-kmz disabled engine-output-port"
-    type="button"
-    onclick="downloadResearchKmz()"
-    disabled
-  >
-    <div class="engine-port-label">OUTPUT</div>
-    <img
-  src="assets/lab-output-drum.png"
-  alt="研究出力ドラム"
-  class="engine-output-image"
->
-        <div class="lab-file-main">研究KMZを保存</div>
-    <small>CSV解析後に保存できます</small>
-  </button>
-
-  <div class="lab-engine-control-port">
-    <div class="engine-port-label">FUEL</div>
-
-    <p class="lab-engine-fuel-title">
-      研究する公園のCSVを投入します。
-    </p>
-
-    <div class="lab-engine-file-box">
-      <input
-        type="file"
-        id="labResearchCsvFile"
-        accept=".csv,text/csv"
-        multiple
-      >
     </div>
 
     <button
-      class="generate lab-engine-button"
-      onclick="runLabCsvToKmzEngine()"
+      id="researchKmzButton"
+      class="lab-file-card lab-file-card-kmz disabled engine-output-port"
+      type="button"
+      onclick="downloadResearchKmz()"
+      disabled
     >
-      ⚙️ LAB ENGINE START
+      <div class="engine-port-label">OUTPUT</div>
+      <img
+        src="assets/lab-output-drum.png"
+        alt="研究出力ドラム"
+        class="engine-output-image"
+      >
+      <div class="lab-file-main">研究KMZを保存</div>
+      <small>CSV解析後に保存できます</small>
     </button>
 
-    <div id="labEngineResult" class="lab-engine-result-slot"></div>
+    <div class="lab-engine-control-port">
+      <div class="engine-port-label">FUEL</div>
+
+      <p class="lab-engine-fuel-title">
+        研究する公園のCSVを投入します。
+      </p>
+
+      <div class="lab-engine-file-box">
+        <input
+          type="file"
+          id="labResearchCsvFile"
+          accept=".csv,text/csv"
+          multiple
+        >
+      </div>
+
+      <button
+        class="generate lab-engine-button"
+        onclick="runLabCsvToKmzEngine()"
+      >
+        ⚙️ LAB ENGINE START
+      </button>
+
+      <div id="labEngineResult" class="lab-engine-result-slot"></div>
+    </div>
   </div>
-</div>
-
-<audio
-  id="labEngineSound"
-  src="assets/audio/CarEngine.wav"
-  preload="auto"
-></audio>
-
-<div id="researchMapPanel" class="research-map-panel" style="display:none;">
-  <div class="capacity-section-title">
-    🗺 研究結果マップ
-  </div>
-
-  <p class="note">
-    CSVから読み込んだPOIを、休憩・滞在・回遊・注意・未分類に分けて地図上に表示します。<br>
-    ここではキャンプサイト設計前の「公園研究」を確認できます。
-  </p>
-
-  <div id="researchResultMap" class="research-result-map"></div>
-
-  <div id="researchMapSummary" class="research-map-summary"></div>
-</div>
-<div
-  id="unknownPoiReviewBox"
-  class="lab-legend-box unknown-poi-review-box"
-  style="display:none;"
->
-  <strong>🧩 未分類POIレビュー候補</strong>
-
-  <p class="note">
-    データベースの辞書で分類できなかったPOI名を、次回レビュー候補として一覧化します。<br>
-    「研究結果を送信」を押すと、未分類POIレビュー候補も自動で保存されます。
-  </p>
 
   <div
-    id="unknownPoiSummary"
-    class="unknown-poi-summary"
-  ></div>
-
-  <div
-    id="unknownPoiList"
-    class="unknown-poi-list"
-  ></div>
-</div>
-<div class="lab-legend-box">
-  <strong>🗺️ KMZアイコン凡例</strong>
-
-  <div class="lab-legend-grid">
-    <div><span class="legend-dot rest"></span>休憩：ベンチ・東屋・トイレなど</div>
-    <div><span class="legend-dot stay"></span>滞在：広場・芝生・噴水など</div>
-    <div><span class="legend-dot loop"></span>回遊：遊歩道・橋・案内板など</div>
-    <div><span class="legend-dot caution"></span>注意：駐車場・階段・水辺など</div>
-    <div><span class="legend-dot unknown"></span>未分類：今後辞書に追加する候補</div>
-  </div>
-</div>
-
-<div
-  id="labResearchSubmitBox"
-  class="lab-legend-box"
+  id="aliasReviewAdminBox"
+  class="lab-admin-review-box"
   style="display:none;"
 >
-  <strong>📮 研究結果を送信</strong>
+    <button
+      id="aliasReviewToggleButton"
+      type="button"
+      class="lab-admin-mini-button"
+    >
+      🧩 未分類レビュー
+    </button>
+
+    <div
+      id="aliasReviewPanel"
+      class="alias-review-panel"
+      style="display:none;"
+    >
+      <div class="alias-review-header">
+        <strong>🧩 未分類POIレビュー</strong>
+        <span id="aliasReviewRemainingCount">未読込</span>
+      </div>
+
+      <p class="note">
+        研究員が送信した未分類POIを、会長がスマホで分類します。<br>
+        判定結果はレビューキューに保存されます。辞書本体にはまだ反映しません。
+      </p>
+<div class="alias-review-guide">
+  <strong>判断基準</strong>
 
   <p class="note">
-  研究KMZを会長のDiscord DMへ送ったら、この公園について気づいたことを一言だけ書いて送信してください。<br>
-  送信ボタンを押すまで、Supabaseには保存されません。
-</p>
+    地図・ストリートビューで現地の文脈を見て、いちばん強い役割で判定します。<br>
+    レビュー結果は一次判定です。辞書本体にはまだ反映されません。
+  </p>
 
-  <textarea
-    id="labResearchNote"
-    rows="3"
-    placeholder="例：駅から近い／広場あり／CAイベントに使えそう／日陰が少ない"
-    style="
-      width:100%;
-      padding:12px;
-      border-radius:12px;
-      border:1px solid rgba(148,163,184,0.35);
-      background:#0f172a;
-      color:white;
-      font-size:14px;
-      line-height:1.6;
-      resize:vertical;
-    "
-  ></textarea>
+  <div class="alias-review-guide-list">
+    <div>⚠️ <strong>注意</strong>：危険・水辺・階段・道路・駐車場・立入禁止など</div>
+    <div>🟢 <strong>休憩</strong>：ベンチ・東屋・トイレ・水飲み場など</div>
+    <div>🔵 <strong>回遊</strong>：入口・案内板・案内図・橋・園路・通路など</div>
+    <div>🟡 <strong>滞在</strong>：広場・芝生・石碑・像・説明板・花壇など</div>
+    <div>⏸ <strong>保留</strong>：意味は分かるが混在・判断に迷うもの</div>
+    <div>🚫 <strong>辞書不要</strong>：意味不明・一時的・広告・誤検知・辞書化すると危ないもの</div>
+  </div>
 
-  <button
-    id="labResearchSubmitButton"
-    type="button"
-    class="generate"
-    onclick="submitLabResearchReport()"
+  <p class="note">
+    迷ったら無理に決めず、<strong>保留＋メモ</strong>で残します。<br>
+    混在する場合は、原則 <strong>注意 ＞ 休憩 ＞ 回遊 ＞ 滞在</strong> の順で安全側を優先します。
+  </p>
+</div>
+      <div
+        id="aliasReviewStatus"
+        class="alias-review-status"
+      ></div>
+
+      <div
+        id="aliasReviewCard"
+        class="alias-review-card"
+        style="display:none;"
+      >
+        <div class="alias-review-label">POI名</div>
+
+        <div
+          id="aliasReviewPoiName"
+          class="alias-review-poi-name"
+        ></div>
+
+        <div
+          id="aliasReviewMeta"
+          class="alias-review-meta"
+        ></div>
+
+        <a
+          id="aliasReviewMapLink"
+          class="alias-review-map-link"
+          href="#"
+          target="_blank"
+          rel="noopener noreferrer"
+          style="display:none;"
+        >
+          📍 地図で見る
+        </a>
+
+        <textarea
+          id="aliasReviewNote"
+          class="alias-review-note"
+          rows="2"
+          placeholder="任意メモ：例）石碑系なので滞在／入口案内なので回遊"
+        ></textarea>
+
+        <div class="alias-review-actions">
+          <button type="button" data-review-category="REST">休憩</button>
+          <button type="button" data-review-category="STAY">滞在</button>
+          <button type="button" data-review-category="LOOP">回遊</button>
+          <button type="button" data-review-category="CAUTION">注意</button>
+         <button type="button" data-review-category="EXCLUDE">辞書不要</button>
+          <button type="button" data-review-category="HOLD">保留</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <audio
+    id="labEngineSound"
+    src="assets/audio/CarEngine.wav"
+    preload="auto"
+  ></audio>
+
+  <div id="researchMapPanel" class="research-map-panel" style="display:none;">
+    <div class="capacity-section-title">
+      🗺 研究結果マップ
+    </div>
+
+    <p class="note">
+      CSVから読み込んだPOIを、休憩・滞在・回遊・注意・未分類に分けて地図上に表示します。<br>
+      ここではキャンプサイト設計前の「公園研究」を確認できます。
+    </p>
+
+    <div id="researchResultMap" class="research-result-map"></div>
+
+    <div id="researchMapSummary" class="research-map-summary"></div>
+  </div>
+
+  <div
+    id="unknownPoiReviewBox"
+    class="lab-legend-box unknown-poi-review-box"
+    style="display:none;"
   >
-    📮 研究結果を送信
-  </button>
+    <strong>🧩 未分類POIレビュー候補</strong>
 
-  <div id="labResearchSubmitStatus"></div>
+    <p class="note">
+      データベースの辞書で分類できなかったPOI名を、次回レビュー候補として一覧化します。<br>
+      「研究結果を送信」を押すと、未分類POIレビュー候補も自動で保存されます。
+    </p>
+
+    <div
+      id="unknownPoiSummary"
+      class="unknown-poi-summary"
+    ></div>
+
+    <div
+      id="unknownPoiList"
+      class="unknown-poi-list"
+    ></div>
+  </div>
+
+  <div class="lab-legend-box">
+    <strong>🗺️ KMZアイコン凡例</strong>
+
+    <div class="lab-legend-grid">
+      <div><span class="legend-dot rest"></span>休憩：ベンチ・東屋・トイレなど</div>
+      <div><span class="legend-dot stay"></span>滞在：広場・芝生・噴水など</div>
+      <div><span class="legend-dot loop"></span>回遊：遊歩道・橋・案内板など</div>
+      <div><span class="legend-dot caution"></span>注意：駐車場・階段・水辺など</div>
+      <div><span class="legend-dot unknown"></span>未分類：今後辞書に追加する候補</div>
+    </div>
+  </div>
+
+  <div
+    id="labResearchSubmitBox"
+    class="lab-legend-box"
+    style="display:none;"
+  >
+    <strong>📮 研究結果を送信</strong>
+
+    <p class="note">
+      研究KMZを会長のDiscord DMへ送ったら、この公園について気づいたことを一言だけ書いて送信してください。<br>
+      送信ボタンを押すまで、Supabaseには保存されません。
+    </p>
+
+    <textarea
+      id="labResearchNote"
+      rows="3"
+      placeholder="例：駅から近い／広場あり／CAイベントに使えそう／日陰が少ない"
+      style="
+        width:100%;
+        padding:12px;
+        border-radius:12px;
+        border:1px solid rgba(148,163,184,0.35);
+        background:#0f172a;
+        color:white;
+        font-size:14px;
+        line-height:1.6;
+        resize:vertical;
+      "
+    ></textarea>
+
+    <button
+      id="labResearchSubmitButton"
+      type="button"
+      class="generate"
+      onclick="submitLabResearchReport()"
+    >
+      📮 研究結果を送信
+    </button>
+
+    <div id="labResearchSubmitStatus"></div>
+  </div>
 </div>
-
-</div>
-
-<div class="step">
-  <div class="step-no">Experimental</div>
   <h3>配置余地チェック（実験）</h3>
 
   <p class="note">
@@ -1744,6 +1843,22 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
   </a>
   を確認してください。
 </p>
+
+<p class="note" style="
+  margin-top:8px;
+  padding:12px 14px;
+  border-radius:12px;
+  background:rgba(245,158,11,0.12);
+  border:1px solid rgba(245,158,11,0.35);
+  color:#fde68a;
+  font-weight:bold;
+  line-height:1.8;
+">
+  ※距離チェックを正しく行うため、Google My Mapsのレイヤー名には<br>
+  「既存」または「追加」を入れてください。<br>
+  例：既存ポケストップ／既存ジム／追加ポケストップ／追加ジム
+</p>
+
 <input
   type="file"
   id="distanceFile"
@@ -1778,13 +1893,26 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
       <div class="step-no">STEP 2</div>
       <p class="note">
   読み込んだKMZから、<br>
-既存POIと追加POIを自動抽出して距離判定を行います。<br><br>
+  既存POIと追加POIを自動抽出して距離判定を行います。<br><br>
 
-・ポケストップ<br>
-・ジム<br>
-・パワースポット<br><br>
+  対象となるPOIは以下です。<br>
+  ・ポケストップ<br>
+  ・ジム<br>
+  ・パワースポット<br><br>
 
-※円レイヤーや30m・40mなどの補助レイヤーは自動的に除外されます。
+  <strong>重要：</strong><br>
+  距離チェックを正しく行うため、Google My Mapsのレイヤー名には<br>
+  <strong>「既存」</strong> または <strong>「追加」</strong> を入れてください。<br><br>
+
+  例：<br>
+  ・既存ポケストップ<br>
+  ・既存ジム<br>
+  ・既存パワースポット<br>
+  ・追加ポケストップ<br>
+  ・追加ジム<br>
+  ・追加パワースポット<br><br>
+
+  ※円レイヤーや30m・40mなどの補助レイヤーは自動的に除外されます。
 </p>
       <div id="distanceLayerList"></div>
     </div>
@@ -2225,9 +2353,9 @@ GOロケット団の出現率が3倍になる
 </div>
 <script src="js/util.js?v=1"></script>
 <script src="js/tabs.js?v=1"></script>
-<script src="js/distance.js?v=2"></script>
+<script src="js/distance.js?v=8"></script>
 <script src="js/admin.js?v=1"></script>
-<script src="js/main.js?v=23"></script>
+<script src="js/main.js?v=26"></script>
 <script src="js/kmz.js?v=1"></script>
 <script src="js/deduplicate.js?v=1"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
