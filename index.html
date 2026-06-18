@@ -17,7 +17,7 @@
 <link rel="preload" as="image" href="assets/story-left.PNG">
 <link rel="preload" as="image" href="assets/story-right.PNG">
 <link rel="preload" as="image" href="assets/icon.png">
-<link rel="stylesheet" href="css/style.css?v=83">
+<link rel="stylesheet" href="css/style.css?v=84">
 <link rel="stylesheet" href="css/splash.css?v=98">
 <link rel="stylesheet" href="css/tabs.css?v=29">
 <link rel="stylesheet" href="css/admin.css?v=27">
@@ -907,8 +907,8 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
 
   <div class="lab-guide-steps">
     <div><span>1</span> CAイベントに使えそうな公園を1か所選ぶ</div>
-    <div><span>2</span> Wayfarer MapでNearby Wayspots CSVを出力する</div>
-    <div><span>3</span> Campsite LabでCSVを選択する</div>
+    <div><span>2</span> Wayfarer MapでCSVを抽出する</div>
+    <div><span>3</span> LAB ENGINEにCSVを投入（選択）する</div>
     <div><span>4</span> 「⚙️ LAB ENGINE START」を押す</div>
     <div><span>5</span> 研究結果マップと未分類POIを確認する</div>
     <div><span>6</span> 研究KMZを保存する</div>
@@ -917,12 +917,12 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
 
   <div class="lab-mission-box">
   <strong>🔬 研究員メモ</strong><br>
-  LAB ENGINEの解析が終わったら、右側の「研究KMZを保存」からKMZを端末に保存してください。<br>
-  保存した研究KMZは、会長のDiscord DMへ送ってください。<br>
-  その後、下に表示される入力欄に公園の一言メモを書き、<br>
+  ①LAB ENGINEの解析が終わったら、右側の「研究KMZを保存」から端末に保存してください。<br>
+  ②保存した研究KMZは、会長のDiscord DMへ送ってください。<br>
+  ③下に表示される入力欄に公園の一言メモを書き、<br>
   「研究結果を送信」を押してください。<br><br>
 
-  送信ボタンでは、研究履歴と未分類POIレビュー候補が保存されます。<br>
+  ※送信ボタンでは、研究履歴と未分類POIレビュー候補が保存されます。<br>
   CSVや未分類POI CSVをDMで送る必要はありません。<br><br>
 
     例：駅から近い／広場がある／日陰が少ない／CAイベントに使えそう
@@ -1030,10 +1030,43 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
   alt="研究出力ドラム"
   class="engine-output-image"
 >
-    <div class="lab-file-main">研究KMZを保存</div>
+        <div class="lab-file-main">研究KMZを保存</div>
     <small>CSV解析後に保存できます</small>
   </button>
+
+  <div class="lab-engine-control-port">
+    <div class="engine-port-label">FUEL</div>
+
+    <p class="lab-engine-fuel-title">
+      研究する公園のCSVを投入します。
+    </p>
+
+    <div class="lab-engine-file-box">
+      <input
+        type="file"
+        id="labResearchCsvFile"
+        accept=".csv,text/csv"
+        multiple
+      >
+    </div>
+
+    <button
+      class="generate lab-engine-button"
+      onclick="runLabCsvToKmzEngine()"
+    >
+      ⚙️ LAB ENGINE START
+    </button>
+
+    <div id="labEngineResult" class="lab-engine-result-slot"></div>
+  </div>
 </div>
+
+<audio
+  id="labEngineSound"
+  src="assets/audio/CarEngine.wav"
+  preload="auto"
+></audio>
+
 <div id="researchMapPanel" class="research-map-panel" style="display:none;">
   <div class="capacity-section-title">
     🗺 研究結果マップ
@@ -1081,28 +1114,6 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
     <div><span class="legend-dot unknown"></span>未分類：今後辞書に追加する候補</div>
   </div>
 </div>
-
-  <p>研究する公園のCSVを選択します。</p>
-
-  <input
-  type="file"
-  id="labResearchCsvFile"
-  accept=".csv,text/csv"
-  multiple
->
-<audio
-  id="labEngineSound"
-  src="assets/audio/CarEngine.wav"
-  preload="auto"
-></audio>
-  <button
-    class="generate lab-engine-button"
-    onclick="runLabCsvToKmzEngine()"
-  >
-    ⚙️ LAB ENGINE START
-  </button>
-
-   <div id="labEngineResult"></div>
 
 <div
   id="labResearchSubmitBox"
@@ -2216,7 +2227,7 @@ GOロケット団の出現率が3倍になる
 <script src="js/tabs.js?v=1"></script>
 <script src="js/distance.js?v=2"></script>
 <script src="js/admin.js?v=1"></script>
-<script src="js/main.js?v=22"></script>
+<script src="js/main.js?v=23"></script>
 <script src="js/kmz.js?v=1"></script>
 <script src="js/deduplicate.js?v=1"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
