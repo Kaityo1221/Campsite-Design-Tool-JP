@@ -560,3 +560,126 @@
     line-height: 1.6;
   }
 }
+/* =========================
+   CAMP-102：距離チェック 事前チェックコンパクト化
+========================= */
+
+.distance-precheck-compact {
+  margin-top: 18px;
+  padding: 16px;
+  border-radius: 18px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(14, 165, 233, 0.12),
+      rgba(15, 23, 42, 0.82)
+    );
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: #e5e7eb;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.06),
+    0 14px 30px rgba(0,0,0,0.26);
+}
+
+.distance-precheck-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.distance-precheck-head strong {
+  font-size: 18px;
+  color: #e0f2fe;
+}
+
+.distance-precheck-head span {
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: rgba(59, 130, 246, 0.20);
+  color: #bfdbfe;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.distance-precheck-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.distance-precheck-grid > div {
+  padding: 12px;
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.72);
+  border: 1px solid rgba(148, 163, 184, 0.24);
+}
+
+.distance-precheck-grid small {
+  display: block;
+  margin-bottom: 4px;
+  color: #93c5fd;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.distance-precheck-grid strong {
+  display: block;
+  color: #f8fafc;
+  font-size: 17px;
+}
+
+.distance-precheck-grid .is-ok strong {
+  color: #86efac;
+}
+
+.distance-precheck-grid .is-warning strong {
+  color: #facc15;
+}
+
+.distance-precheck-details {
+  margin-top: 14px;
+  padding: 12px;
+  border-radius: 14px;
+  background: rgba(2, 6, 23, 0.45);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+}
+
+.distance-precheck-details summary {
+  cursor: pointer;
+  color: #bae6fd;
+  font-weight: 800;
+}
+
+.distance-precheck-next button {
+  width: 100%;
+  margin-top: 14px;
+  padding: 14px 16px;
+  border: none;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  color: white;
+  font-weight: 900;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+@media (max-width: 720px) {
+  .distance-precheck-compact {
+    padding: 14px;
+  }
+
+  .distance-precheck-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .distance-precheck-grid > div {
+    padding: 10px;
+  }
+
+  .distance-precheck-grid strong {
+    font-size: 15px;
+  }
+}
