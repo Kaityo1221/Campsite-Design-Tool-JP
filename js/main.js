@@ -563,7 +563,6 @@ async function runLabCsvToKmzEngine() {
 resetLabResearchKmzOutput();
 
 hideLabResearchMapOnStart();
-scrollToLabEngineMachine();
 
 startLabEngineSound();
 
