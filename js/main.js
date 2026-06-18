@@ -1240,7 +1240,28 @@ function setupAliasReviewAdminUi() {
       }
     });
   }
+actionButtons.forEach(button => {
+  const pressOn = () => button.classList.add("is-pressed");
+  const pressOff = () => button.classList.remove("is-pressed");
 
+  button.addEventListener("touchstart", pressOn, { passive: true });
+  button.addEventListener("touchend", pressOff);
+  button.addEventListener("touchcancel", pressOff);
+  button.addEventListener("mousedown", pressOn);
+  button.addEventListener("mouseup", pressOff);
+  button.addEventListener("mouseleave", pressOff);
+
+  button.addEventListener("click", async () => {
+    const category =
+      button.getAttribute("data-review-category");
+
+    if (!category || aliasReviewIsLoading) {
+      return;
+    }
+
+    await submitAliasReview(category);
+  });
+});
   actionButtons.forEach(button => {
     button.addEventListener("click", async () => {
       const category =
