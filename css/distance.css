@@ -683,3 +683,26 @@
     font-size: 15px;
   }
 }
+/* 事前チェック：注意表示 */
+.distance-precheck-compact.is-warning {
+  border-color: rgba(250, 204, 21, 0.48);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(245, 158, 11, 0.16),
+      rgba(15, 23, 42, 0.84)
+    );
+}
+
+.distance-precheck-alert {
+  margin-top: 12px;
+  padding: 11px 12px;
+  border-radius: 12px;
+  background: rgba(245, 158, 11, 0.14);
+  border: 1px solid rgba(245, 158, 11, 0.38);
+  color: #fde68a;
+  font-size: 13px;
+  line-height: 1.7;
+  font-weight: 800;
+}
+
