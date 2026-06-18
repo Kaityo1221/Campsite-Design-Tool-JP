@@ -540,3 +540,56 @@
     line-height: 1.55;
   }
 }
+/* =========================
+   CAMP-102：凡例は閉じた時は小さく、開いた時は大きく
+========================= */
+
+/* 閉じている時：小さいボタンだけ */
+.distance-leaflet-legend.is-collapsed {
+  width: auto;
+  min-width: auto;
+  max-width: none;
+  padding: 7px;
+}
+
+/* 開いている時：以前の大きさに戻す */
+.distance-leaflet-legend:not(.is-collapsed) {
+  width: 190px;
+  min-width: 190px;
+  max-width: 190px;
+  padding: 10px 12px;
+}
+
+/* 開いた中身は縦に並べる */
+.distance-leaflet-legend:not(.is-collapsed) .distance-legend-body {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  margin-top: 8px;
+}
+
+/* 各行を横並びにしつつ、はみ出させない */
+.distance-leaflet-legend:not(.is-collapsed) .distance-legend-body div {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  white-space: nowrap;
+  overflow: visible;
+}
+
+/* スマホでも開いた時はちゃんと読める幅にする */
+@media (max-width: 720px) {
+  .distance-leaflet-legend:not(.is-collapsed) {
+    width: 176px;
+    min-width: 176px;
+    max-width: 176px;
+    padding: 10px 12px;
+  }
+
+  .distance-leaflet-legend:not(.is-collapsed) .distance-legend-body {
+    font-size: 11px;
+    line-height: 1.6;
+  }
+}
