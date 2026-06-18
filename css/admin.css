@@ -256,3 +256,143 @@
     0 2px 0 rgba(51, 65, 85, 0.82),
     0 6px 12px rgba(2, 6, 23, 0.20);
 }
+/* =========================
+   未分類POIレビュー ボタン立体化
+========================= */
+
+.alias-review-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.alias-review-actions button {
+  appearance: none;
+  -webkit-appearance: none;
+  border: none;
+  border-radius: 18px;
+  min-height: 84px;
+  padding: 18px 12px;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #f8fbff;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+
+  /* 立体感 */
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.05) 18%, rgba(12,35,83,0.96) 100%);
+  border: 1px solid rgba(120, 170, 255, 0.28);
+  box-shadow:
+    inset 0 2px 0 rgba(255,255,255,0.14),
+    inset 0 -2px 0 rgba(0,0,0,0.28),
+    0 8px 0 rgba(8, 22, 56, 0.95),
+    0 14px 24px rgba(0,0,0,0.34);
+
+  transition:
+    transform 0.08s ease,
+    box-shadow 0.08s ease,
+    filter 0.12s ease,
+    background 0.12s ease;
+}
+
+/* ホバー（PC） */
+.alias-review-actions button:hover {
+  filter: brightness(1.08);
+}
+
+/* 押した瞬間 */
+.alias-review-actions button:active,
+.alias-review-actions button.is-pressed {
+  transform: translateY(6px) scale(0.98);
+  box-shadow:
+    inset 0 2px 0 rgba(255,255,255,0.10),
+    inset 0 -1px 0 rgba(0,0,0,0.24),
+    0 3px 0 rgba(8, 22, 56, 0.95),
+    0 7px 12px rgba(0,0,0,0.28);
+  filter: brightness(0.96);
+}
+
+/* フォーカス */
+.alias-review-actions button:focus-visible {
+  outline: 2px solid #7dd3fc;
+  outline-offset: 3px;
+}
+
+/* カテゴリ別の色味 */
+.alias-review-actions button[data-review-category="REST"] {
+  background:
+    linear-gradient(180deg, rgba(110,255,170,0.28) 0%, rgba(34,197,94,0.18) 18%, #0b3c27 100%);
+  box-shadow:
+    inset 0 2px 0 rgba(255,255,255,0.15),
+    inset 0 -2px 0 rgba(0,0,0,0.28),
+    0 8px 0 #072d1d,
+    0 14px 24px rgba(0,0,0,0.34);
+}
+
+.alias-review-actions button[data-review-category="STAY"] {
+  background:
+    linear-gradient(180deg, rgba(255,230,120,0.28) 0%, rgba(250,204,21,0.18) 18%, #4a3507 100%);
+  box-shadow:
+    inset 0 2px 0 rgba(255,255,255,0.15),
+    inset 0 -2px 0 rgba(0,0,0,0.28),
+    0 8px 0 #2d2205,
+    0 14px 24px rgba(0,0,0,0.34);
+}
+
+.alias-review-actions button[data-review-category="LOOP"] {
+  background:
+    linear-gradient(180deg, rgba(120,180,255,0.28) 0%, rgba(59,130,246,0.18) 18%, #0c2d6f 100%);
+  box-shadow:
+    inset 0 2px 0 rgba(255,255,255,0.15),
+    inset 0 -2px 0 rgba(0,0,0,0.28),
+    0 8px 0 #0a1f49,
+    0 14px 24px rgba(0,0,0,0.34);
+}
+
+.alias-review-actions button[data-review-category="CAUTION"] {
+  background:
+    linear-gradient(180deg, rgba(255,125,125,0.30) 0%, rgba(239,68,68,0.18) 18%, #5a1010 100%);
+  box-shadow:
+    inset 0 2px 0 rgba(255,255,255,0.15),
+    inset 0 -2px 0 rgba(0,0,0,0.28),
+    0 8px 0 #390909,
+    0 14px 24px rgba(0,0,0,0.34);
+}
+
+.alias-review-actions button[data-review-category="EXCLUDE"] {
+  background:
+    linear-gradient(180deg, rgba(255,100,170,0.28) 0%, rgba(190,24,93,0.18) 18%, #4a102a 100%);
+  box-shadow:
+    inset 0 2px 0 rgba(255,255,255,0.15),
+    inset 0 -2px 0 rgba(0,0,0,0.28),
+    0 8px 0 #2d0a19,
+    0 14px 24px rgba(0,0,0,0.34);
+}
+
+.alias-review-actions button[data-review-category="HOLD"] {
+  background:
+    linear-gradient(180deg, rgba(190,200,220,0.18) 0%, rgba(100,116,139,0.18) 18%, #243247 100%);
+  box-shadow:
+    inset 0 2px 0 rgba(255,255,255,0.12),
+    inset 0 -2px 0 rgba(0,0,0,0.28),
+    0 8px 0 #172131,
+    0 14px 24px rgba(0,0,0,0.34);
+}
+
+/* スマホで少し見やすく */
+@media (max-width: 640px) {
+  .alias-review-actions {
+    gap: 12px;
+  }
+
+  .alias-review-actions button {
+    min-height: 76px;
+    font-size: 17px;
+    border-radius: 16px;
+  }
+}
