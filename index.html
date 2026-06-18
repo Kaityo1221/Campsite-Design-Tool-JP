@@ -17,11 +17,11 @@
 <link rel="preload" as="image" href="assets/story-left.PNG">
 <link rel="preload" as="image" href="assets/story-right.PNG">
 <link rel="preload" as="image" href="assets/icon.png">
-<link rel="stylesheet" href="css/style.css?v=84時間">
+<link rel="stylesheet" href="css/style.css?v=84">
 <link rel="stylesheet" href="css/splash.css?v=98">
 <link rel="stylesheet" href="css/tabs.css?v=29">
 <link rel="stylesheet" href="css/admin.css?v=28">
-<link rel="stylesheet" href="css/distance.css?v=33">
+<link rel="stylesheet" href="css/distance.css?v=35">
 <link rel="stylesheet" href="css/capacity.css?v=6">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/icon.png">
 <link rel="manifest" href="./manifest.json">
@@ -1843,6 +1843,22 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
   </a>
   を確認してください。
 </p>
+
+<p class="note" style="
+  margin-top:8px;
+  padding:12px 14px;
+  border-radius:12px;
+  background:rgba(245,158,11,0.12);
+  border:1px solid rgba(245,158,11,0.35);
+  color:#fde68a;
+  font-weight:bold;
+  line-height:1.8;
+">
+  ※距離チェックを正しく行うため、Google My Mapsのレイヤー名には<br>
+  「既存」または「追加」を入れてください。<br>
+  例：既存ポケストップ／既存ジム／追加ポケストップ／追加ジム
+</p>
+
 <input
   type="file"
   id="distanceFile"
@@ -1877,13 +1893,26 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
       <div class="step-no">STEP 2</div>
       <p class="note">
   読み込んだKMZから、<br>
-既存POIと追加POIを自動抽出して距離判定を行います。<br><br>
+  既存POIと追加POIを自動抽出して距離判定を行います。<br><br>
 
-・ポケストップ<br>
-・ジム<br>
-・パワースポット<br><br>
+  対象となるPOIは以下です。<br>
+  ・ポケストップ<br>
+  ・ジム<br>
+  ・パワースポット<br><br>
 
-※円レイヤーや30m・40mなどの補助レイヤーは自動的に除外されます。
+  <strong>重要：</strong><br>
+  距離チェックを正しく行うため、Google My Mapsのレイヤー名には<br>
+  <strong>「既存」</strong> または <strong>「追加」</strong> を入れてください。<br><br>
+
+  例：<br>
+  ・既存ポケストップ<br>
+  ・既存ジム<br>
+  ・既存パワースポット<br>
+  ・追加ポケストップ<br>
+  ・追加ジム<br>
+  ・追加パワースポット<br><br>
+
+  ※円レイヤーや30m・40mなどの補助レイヤーは自動的に除外されます。
 </p>
       <div id="distanceLayerList"></div>
     </div>
@@ -2324,7 +2353,7 @@ GOロケット団の出現率が3倍になる
 </div>
 <script src="js/util.js?v=1"></script>
 <script src="js/tabs.js?v=1"></script>
-<script src="js/distance.js?v=2"></script>
+<script src="js/distance.js?v=5"></script>
 <script src="js/admin.js?v=1"></script>
 <script src="js/main.js?v=26"></script>
 <script src="js/kmz.js?v=1"></script>
