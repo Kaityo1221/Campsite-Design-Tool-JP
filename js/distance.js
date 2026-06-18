@@ -400,6 +400,99 @@ function renderPoiCountHtml(counts) {
     </div>
   `;
 }
+function renderDistancePrecheckCompactHtml(counts) {
+  const info = getTargetLayerDebugInfo();
+  const duplicates = getPrecheckDuplicatePois();
+
+  const addedTotal =
+    counts.pokestop +
+    counts.gym +
+    counts.power;
+
+  const hasDuplicate =
+    duplicates.length > 0;
+
+  const hasPolygon =
+    window._hasPolygon === true;
+
+  const statusIcon =
+    hasDuplicate || !hasPolygon ? "⚠" : "✅";
+
+  const statusText =
+    hasDuplicate || !hasPolygon
+      ? "事前チェック注意"
+      : "事前チェック完了";
+
+  const duplicateText =
+    hasDuplicate
+      ? `あり（${duplicates.length}件）`
+      : "なし";
+
+  const polygonText =
+    hasPolygon
+      ? `あり（${window._activityPolygons?.length || 0}件）`
+      : "なし";
+
+  return `
+    <div class="distance-precheck-compact">
+      <div class="distance-precheck-head">
+        <strong>${statusIcon} ${statusText}</strong>
+        <span>STEP 1</span>
+      </div>
+
+      <div class="distance-precheck-grid">
+        <div>
+          <small>判定対象POI</small>
+          <strong>${info.targetPointCount}件</strong>
+        </div>
+
+        <div>
+          <small>追加POI</small>
+          <strong>${addedTotal}件</strong>
+        </div>
+
+        <div>
+          <small>活動範囲</small>
+          <strong>${polygonText}</strong>
+        </div>
+
+        <div class="${hasDuplicate ? "is-warning" : "is-ok"}">
+          <small>重複POI</small>
+          <strong>${duplicateText}</strong>
+        </div>
+      </div>
+
+      <details class="distance-precheck-details">
+        <summary>詳細を見る</summary>
+
+        ${renderDistanceUploadSummary()}
+        ${renderPoiCountHtml(counts)}
+
+        ${
+          hasDuplicate
+            ? renderPrecheckDuplicatePoiHtml()
+            : `
+              <div class="distance-warning" style="
+                border:1px solid rgba(34,197,94,0.45);
+                background:rgba(34,197,94,0.12);
+              ">
+                ✅ 重複POIはありません。
+              </div>
+            `
+        }
+      </details>
+
+      <div class="distance-precheck-next">
+        <button
+          type="button"
+          onclick="scrollToDistanceCheckStep()"
+        >
+          ↓ STEP 2：距離チェックへ進む
+        </button>
+      </div>
+    </div>
+  `;
+}
 function renderDistancePrecheckFooterHtml() {
   return `
     ${renderPrecheckDuplicatePoiHtml()}
@@ -726,9 +819,7 @@ window._hasPolygon =
         );
 
       summary.innerHTML =
-        renderDistanceUploadSummary() +
-        renderPoiCountHtml(counts) +
-        renderDistancePrecheckFooterHtml();
+  renderDistancePrecheckCompactHtml(counts);
     }
 
   } catch (error) {
@@ -1623,7 +1714,6 @@ const sectionTitleHtml = (title, sub = "") => `
       <div style="margin-top:6px; font-size:13px; opacity:0.8;">
         スコア：${campsite.score}点
       </div>
-${poiCountHtml}
       <br>
      <strong>総評</strong><br>
 ${poiLimitWarningHtml}
@@ -1754,7 +1844,6 @@ const simpleMapGuideHtml = `
     sectionTitleHtml("拠点充実度", "距離・通行・広場・回遊性などをもとにした総合評価です。") +
     scoreHtml +
     sectionTitleHtml("判定結果", "20m未満／20〜30m／30〜40mの近接件数を確認します。") +
-debugHtml +
 resultHeaderHtml +
 sectionTitleHtml("重複POIチェック", "同じ場所に複数のPOIが入っていないか確認します。") +
 duplicatePoiHtml +
@@ -1827,7 +1916,6 @@ result.innerHTML =
   sectionTitleHtml("拠点充実度", "距離・通行・広場・回遊性などをもとにした総合評価です。") +
   scoreHtml +
   sectionTitleHtml("判定結果", "20m未満／20〜30m／30〜40mの近接件数を確認します。") +
-  debugHtml +
   resultHeaderHtml +
   sectionTitleHtml("重複POIチェック", "同じ場所に複数のPOIが入っていないか確認します。") +
   duplicatePoiHtml +
