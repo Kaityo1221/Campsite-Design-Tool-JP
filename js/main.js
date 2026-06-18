@@ -1,4 +1,4 @@
-window.APP_VERSION = "v6.1.0";
+？indow.APP_VERSION = "v6.1.0";
 window.APP_UPDATED = "2026-06-15";
 window.ENABLE_QUIZ = true;
 window.QUIZ_VERSION = "beta1";
@@ -86,8 +86,9 @@ function checkAdminCode() {
     closeAdminLogin();
 
     openTab("admin", null);
-      localStorage.setItem("campsiteAdminUnlocked", "true");
-  showAliasReviewAdminBox();
+      localStorage.removeItem("campsiteAdminUnlocked");
+sessionStorage.setItem("campsiteAdminUnlocked", "true");
+showAliasReviewAdminBox();
 
     document.querySelectorAll(".tab-button").forEach(btn => {
       btn.classList.remove("active");
@@ -394,9 +395,14 @@ function openCampsiteLab() {
     if (labTab) {
       labTab.classList.add("active");
     }
+
+    if (isCampsiteAdminUnlocked()) {
+      showAliasReviewAdminBox();
+    } else {
+      hideAliasReviewAdminBox();
+    }
   }, 140);
 }
-
 /* オープニングへ戻った時にLabタブを再び隠す */
 function resetCampsiteLabTab() {
   const labTab =
@@ -521,16 +527,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
   setupAliasReviewAdminUi();
 
-  if (localStorage.getItem("campsiteAdminUnlocked") === "true") {
-    showAliasReviewAdminBox();
-  } else {
-    hideAliasReviewAdminBox();
-  }
+  localStorage.removeItem("campsiteAdminUnlocked");
+
+if (isCampsiteAdminUnlocked()) {
+  showAliasReviewAdminBox();
+} else {
+  hideAliasReviewAdminBox();
+}
   if (versionInfo) {
-    versionInfo.textContent =
-      APP_VERSION + " ℹ";
-  }
+  versionInfo.textContent =
+    APP_VERSION + " ℹ";
+}
 });
+
 /* =========================
    Campsite Lab Research Engine
    CSV → Existing POI KMZ
@@ -1193,6 +1202,10 @@ async function submitAliasReview(category) {
 
   await loadAliasReviewCard();
 }
+function isCampsiteAdminUnlocked() {
+  return sessionStorage.getItem("campsiteAdminUnlocked") === "true";
+}
+
 function showAliasReviewAdminBox() {
   const box = document.getElementById("aliasReviewAdminBox");
 
@@ -1203,9 +1216,14 @@ function showAliasReviewAdminBox() {
 
 function hideAliasReviewAdminBox() {
   const box = document.getElementById("aliasReviewAdminBox");
+  const panel = document.getElementById("aliasReviewPanel");
 
   if (box) {
     box.style.display = "none";
+  }
+
+  if (panel) {
+    panel.style.display = "none";
   }
 }
 function setupAliasReviewAdminUi() {
