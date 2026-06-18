@@ -86,6 +86,8 @@ function checkAdminCode() {
     closeAdminLogin();
 
     openTab("admin", null);
+      localStorage.setItem("campsiteAdminUnlocked", "true");
+  showAliasReviewAdminBox();
 
     document.querySelectorAll(".tab-button").forEach(btn => {
       btn.classList.remove("active");
@@ -516,7 +518,14 @@ function toggleVersionHistory() {
 document.addEventListener("DOMContentLoaded", () => {
   const versionInfo =
     document.getElementById("versionInfo");
-setupAliasReviewAdminUi();
+
+  setupAliasReviewAdminUi();
+
+  if (localStorage.getItem("campsiteAdminUnlocked") === "true") {
+    showAliasReviewAdminBox();
+  } else {
+    hideAliasReviewAdminBox();
+  }
   if (versionInfo) {
     versionInfo.textContent =
       APP_VERSION + " ℹ";
@@ -1194,7 +1203,21 @@ async function submitAliasReview(category) {
 
   await loadAliasReviewCard();
 }
+function showAliasReviewAdminBox() {
+  const box = document.getElementById("aliasReviewAdminBox");
 
+  if (box) {
+    box.style.display = "block";
+  }
+}
+
+function hideAliasReviewAdminBox() {
+  const box = document.getElementById("aliasReviewAdminBox");
+
+  if (box) {
+    box.style.display = "none";
+  }
+}
 function setupAliasReviewAdminUi() {
   const toggleButton =
     document.getElementById("aliasReviewToggleButton");
