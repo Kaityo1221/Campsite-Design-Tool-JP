@@ -1867,47 +1867,70 @@ function addDistanceMapLegend() {
   legend.onAdd = function () {
     const div = L.DomUtil.create(
       "div",
-      "distance-leaflet-legend"
+      "distance-leaflet-legend is-collapsed"
     );
 
     div.innerHTML = `
-      <strong>凡例</strong>
+      <button
+        type="button"
+        class="distance-legend-toggle"
+        aria-expanded="false"
+      >
+        凡例
+      </button>
 
-      <div>
-        <span class="distance-legend-dot existing"></span>
-        既存POI
-      </div>
+      <div class="distance-legend-body">
+        <strong>凡例</strong>
 
-      <div>
-        <span class="distance-legend-dot add"></span>
-        追加POI
-      </div>
+        <div>
+          <span class="distance-legend-dot existing"></span>
+          既存POI
+        </div>
 
-      <div>
-        <span class="distance-legend-line area"></span>
-        活動範囲
-      </div>
+        <div>
+          <span class="distance-legend-dot add"></span>
+          追加POI
+        </div>
 
-      <div>
-        <span class="distance-legend-line dense"></span>
-        20m未満
-      </div>
+        <div>
+          <span class="distance-legend-line area"></span>
+          活動範囲
+        </div>
 
-      <div>
-        <span class="distance-legend-line stay"></span>
-        20〜30m
-      </div>
+        <div>
+          <span class="distance-legend-line dense"></span>
+          20m未満
+        </div>
 
-      <div>
-        <span class="distance-legend-line light"></span>
-        30〜40m
-      </div>
+        <div>
+          <span class="distance-legend-line stay"></span>
+          20〜30m
+        </div>
 
-      <div>
-        <span class="distance-legend-line reference"></span>
-        既存同士参考
+        <div>
+          <span class="distance-legend-line light"></span>
+          30〜40m
+        </div>
+
+        <div>
+          <span class="distance-legend-line reference"></span>
+          既存同士参考
+        </div>
       </div>
     `;
+
+    const toggleButton =
+      div.querySelector(".distance-legend-toggle");
+
+    toggleButton.addEventListener("click", () => {
+      const isCollapsed =
+        div.classList.toggle("is-collapsed");
+
+      toggleButton.setAttribute(
+        "aria-expanded",
+        String(!isCollapsed)
+      );
+    });
 
     L.DomEvent.disableClickPropagation(div);
     L.DomEvent.disableScrollPropagation(div);
