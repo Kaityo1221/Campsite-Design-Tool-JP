@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="googlebot" content="noindex, nofollow">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+  <title>Campsite Lab Review</title>
+
+  <link rel="stylesheet" href="css/review-test.css?v=6">
+</head>
+
+<body>
+  <div id="celebrationLayer" class="celebration-layer" aria-hidden="true"></div>
+  <main class="review-page">
+    <section class="review-hero">
+      <div class="review-badge">Campsite Lab</div>
+      <h1>POIレビュー実験</h1>
+      <p id="reviewIntro">
+        招待リンクを確認しています…
+      </p>
+    </section>
+
+    <section id="reviewStatusBox" class="review-status">
+      読み込み中…
+    </section>
+
+    <section id="reviewCard" class="review-card" style="display:none;">
+      <div class="review-progress">
+        <span id="reviewProgressText">0 / 0</span>
+        <span id="reviewRoleText"></span>
+      </div>
+
+      <h2 id="reviewPoiName">POI名</h2>
+
+      <div id="reviewMeta" class="review-meta"></div>
+
+      <a
+        id="reviewMapLink"
+        class="review-map-link"
+        href="#"
+        target="_blank"
+        rel="noopener noreferrer"
+        style="display:none;"
+      >
+        地図で確認する
+      </a>
+
+      <div class="review-section-title">分類</div>
+
+      <div class="review-category-grid">
+        <button type="button" data-category="REST">休憩</button>
+        <button type="button" data-category="STAY">滞在</button>
+        <button type="button" data-category="LOOP">回遊</button>
+        <button type="button" data-category="CAUTION">注意</button>
+        <button type="button" data-category="HOLD">保留</button>
+        <button type="button" data-category="EXCLUDE">辞書不要</button>
+      </div>
+
+      <div class="review-section-title">自信度</div>
+
+      <div class="review-confidence-grid">
+        <button type="button" data-confidence="high">自信あり</button>
+        <button type="button" data-confidence="maybe">たぶん</button>
+        <button type="button" data-confidence="unsure">迷う</button>
+        <button type="button" data-confidence="unknown">判断不可</button>
+      </div>
+
+      <label class="review-note-label" for="reviewNote">
+        メモ
+      </label>
+
+      <textarea
+        id="reviewNote"
+        rows="4"
+        placeholder="迷った理由、現地感覚、Wayfarer視点など"
+      ></textarea>
+
+      <div class="review-actions">
+  <button id="saveReviewButton" class="save-review-button">
+    保存して次へ
+  </button>
+</div>
+    </section>
+
+    <section id="reviewCompleteBox" class="review-complete" style="display:none;">
+  <h2>Complete!!</h2>
+  <p>
+    いつもありがとう
+  </p>
+</section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/lab-supabase.js?v=1"></script>
+  <script src="js/review-test.js?v=6"></script>
+</body>
+</html>
