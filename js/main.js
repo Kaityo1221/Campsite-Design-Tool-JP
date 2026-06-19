@@ -1845,9 +1845,15 @@ async function updateAliasDictionaryCandidateStatus(id, status) {
     return;
   }
 
-  if (status === "adopted") {
-    alert("辞書に反映しました。");
-  }
+if (status === "adopted") {
+  alert("辞書に反映しました。");
+} else if (status === "later") {
+  alert("後で確認にしました。");
+} else if (status === "rejected") {
+  alert("見送りにしました。");
+}
+
+await loadAliasDictionaryCandidates();
 
   await loadAliasDictionaryCandidates();
 }
