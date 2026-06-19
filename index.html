@@ -17,7 +17,7 @@
 <link rel="preload" as="image" href="assets/story-left.PNG">
 <link rel="preload" as="image" href="assets/story-right.PNG">
 <link rel="preload" as="image" href="assets/icon.png">
-<link rel="stylesheet" href="css/style.css?v=86">
+<link rel="stylesheet" href="css/style.css?v=89">
 <link rel="stylesheet" href="css/splash.css?v=98">
 <link rel="stylesheet" href="css/tabs.css?v=29">
 <link rel="stylesheet" href="css/admin.css?v=28">
@@ -1300,8 +1300,6 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
       style="display:none;"
     >
       <div class="alias-review-header">
-  <strong>🧩 未分類POIレビュー</strong>
-
   <div style="display:flex; align-items:center; gap:8px;">
     <span id="aliasReviewRemainingCount">未読込</span>
 
@@ -1406,9 +1404,44 @@ Ryotaさん、<br>
   この候補をあとで見る
 </button>
       </div>
+
+      <div class="alias-review-history-box">
+        <h3 class="alias-review-history-title">
+          📝 Recent Reviews
+        </h3>
+
+        <div
+          id="aliasReviewHistoryList"
+          class="alias-review-history-list"
+        >
+          <div class="alias-review-history-empty">
+            レビュー履歴を読み込み中...
+          </div>
+        </div>
+      </div>
+
+        <div class="alias-dictionary-candidate-box">
+        <h3 class="alias-dictionary-candidate-title">
+          📚 Dictionary Candidates
+        </h3>
+
+        <p class="note">
+          レビュー済みの未分類POIから、辞書反映候補を表示します。<br>
+          保留・辞書不要は候補から除外されます。
+        </p>
+
+        <div
+          id="aliasDictionaryCandidateList"
+          class="alias-dictionary-candidate-list"
+        >
+          <div class="alias-dictionary-candidate-empty">
+            辞書反映候補を読み込み中...
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
-
 <div class="step" style="
   border:1px solid rgba(168,85,247,0.55);
   background:rgba(88,28,135,0.14);
@@ -2382,7 +2415,7 @@ GOロケット団の出現率が3倍になる
 <script src="js/tabs.js?v=1"></script>
 <script src="js/distance.js?v=8"></script>
 <script src="js/admin.js?v=1"></script>
-<script src="js/main.js?v=29"></script>
+<script src="js/main.js?v=31"></script>
 <script src="js/kmz.js?v=1"></script>
 <script src="js/deduplicate.js?v=1"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

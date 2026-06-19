@@ -3799,3 +3799,204 @@ button.generate:active {
     font-size: 14px;
   }
 }
+/* ===============================
+   CAMP-102：レビュー履歴表示
+================================ */
+
+.alias-review-history-box {
+  margin-top: 18px;
+  padding: 14px;
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.72);
+}
+
+.alias-review-history-title {
+  margin: 0 0 12px;
+  color: #e0f2fe;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+}
+
+.alias-review-history-list {
+  display: grid;
+  gap: 10px;
+}
+
+.alias-review-history-empty {
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(2, 6, 23, 0.45);
+  color: #94a3b8;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.alias-review-history-item {
+  padding: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 14px;
+  background: rgba(2, 6, 23, 0.42);
+}
+
+.alias-review-history-main {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.alias-review-history-name {
+  min-width: 0;
+  flex: 1 1 220px;
+  color: #f8fafc;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.alias-review-history-result {
+  flex: 0 1 auto;
+  max-width: 100%;
+  color: #bfdbfe;
+  font-size: 13px;
+  font-weight: 800;
+  white-space: normal;
+  text-align: right;
+}
+
+.alias-review-history-meta {
+  margin-top: 6px;
+  color: #94a3b8;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.alias-review-history-note {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(30, 41, 59, 0.72);
+  color: #cbd5e1;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+@media (max-width: 520px) {
+  .alias-review-history-box {
+    padding: 12px;
+  }
+
+  .alias-review-history-main {
+    display: block;
+  }
+
+  .alias-review-history-result {
+    margin-top: 4px;
+    white-space: normal;
+  }
+}
+/* ===============================
+   CAMP-104：辞書反映候補一覧
+================================ */
+
+.alias-dictionary-candidate-box {
+  margin-top: 18px;
+  padding: 14px;
+  border: 1px solid rgba(34, 197, 94, 0.28);
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.72);
+}
+
+.alias-dictionary-candidate-title {
+  margin: 0 0 12px;
+  color: #dcfce7;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+}
+
+.alias-dictionary-candidate-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.alias-dictionary-candidate-empty {
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(2, 6, 23, 0.45);
+  color: #94a3b8;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.alias-dictionary-candidate-item {
+  padding: 12px;
+  border: 1px solid rgba(74, 222, 128, 0.24);
+  border-radius: 14px;
+  background: rgba(2, 6, 23, 0.42);
+}
+
+.alias-dictionary-candidate-main {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.alias-dictionary-candidate-name {
+  min-width: 0;
+  flex: 1 1 220px;
+  color: #f8fafc;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.alias-dictionary-candidate-result {
+  flex: 0 1 auto;
+  max-width: 100%;
+  color: #bbf7d0;
+  font-size: 13px;
+  font-weight: 800;
+  white-space: normal;
+  text-align: right;
+}
+
+.alias-dictionary-candidate-meta {
+  margin-top: 6px;
+  color: #94a3b8;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.alias-dictionary-candidate-note {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(30, 41, 59, 0.72);
+  color: #cbd5e1;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+@media (max-width: 520px) {
+  .alias-dictionary-candidate-box {
+    padding: 12px;
+  }
+
+  .alias-dictionary-candidate-main {
+    display: block;
+  }
+
+  .alias-dictionary-candidate-result {
+    margin-top: 4px;
+    white-space: normal;
+  }
+}

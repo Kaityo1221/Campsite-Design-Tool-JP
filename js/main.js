@@ -1222,6 +1222,251 @@ async function submitAliasReview(category) {
   );
 
   await loadAliasReviewCard();
+  await loadAliasReviewHistory();
+  await loadAliasDictionaryCandidates();
+}
+/* =========================
+   CAMP-102: レビュー履歴表示
+========================= */
+
+async function loadAliasReviewHistory() {
+  const list =
+    document.getElementById("aliasReviewHistoryList");
+
+  if (!list) {
+    return;
+  }
+
+  if (!window.campsiteSupabase) {
+    list.innerHTML = `
+      <div class="alias-review-history-empty">
+        Supabaseに接続されていません。
+      </div>
+    `;
+    return;
+  }
+
+  list.innerHTML = `
+    <div class="alias-review-history-empty">
+      レビュー履歴を読み込み中...
+    </div>
+  `;
+
+  const { data, error } = await window.campsiteSupabase
+    .from("alias_review_queue")
+    .select(`
+      id,
+      poi_name,
+      normalized_name,
+      suggested_category,
+      review_status,
+      review_note,
+      reviewed_by,
+      reviewed_at
+    `)
+    .not("reviewed_at", "is", null)
+    .order("reviewed_at", { ascending: false })
+    .limit(20);
+
+  if (error) {
+    console.error("レビュー履歴取得エラー:", error);
+
+    list.innerHTML = `
+      <div class="alias-review-history-empty">
+        レビュー履歴の取得に失敗しました。
+      </div>
+    `;
+    return;
+  }
+
+  if (!data || !data.length) {
+    list.innerHTML = `
+      <div class="alias-review-history-empty">
+        まだレビュー履歴はありません。
+      </div>
+    `;
+    return;
+  }
+
+  list.innerHTML = data.map(item => {
+    const label =
+      getAliasReviewCategoryLabel(
+        item.suggested_category || item.review_status
+      );
+
+    const reviewedAt =
+      formatAliasReviewDate(item.reviewed_at);
+
+    const name =
+      item.poi_name ||
+      item.normalized_name ||
+      "名称なし";
+
+    const note =
+      item.review_note
+        ? `<div class="alias-review-history-note">メモ：${escapeHtml(item.review_note)}</div>`
+        : "";
+
+    return `
+      <div class="alias-review-history-item">
+        <div class="alias-review-history-main">
+          <div class="alias-review-history-name">
+            ${escapeHtml(name)}
+          </div>
+
+          <div class="alias-review-history-result">
+            → ${escapeHtml(label)}
+          </div>
+        </div>
+
+        <div class="alias-review-history-meta">
+          ${escapeHtml(reviewedAt)}
+          ${
+            item.reviewed_by
+              ? ` / ${escapeHtml(item.reviewed_by)}`
+              : ""
+          }
+        </div>
+
+        ${note}
+      </div>
+    `;
+  }).join("");
+}
+
+function formatAliasReviewDate(value) {
+  if (!value) {
+    return "-";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "-";
+  }
+
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const dd = String(date.getDate()).padStart(2, "0");
+  const hh = String(date.getHours()).padStart(2, "0");
+  const mi = String(date.getMinutes()).padStart(2, "0");
+
+  return `${yyyy}/${mm}/${dd} ${hh}:${mi}`;
+}
+/* =========================
+   CAMP-104: 辞書反映候補一覧
+========================= */
+
+async function loadAliasDictionaryCandidates() {
+  const list =
+    document.getElementById("aliasDictionaryCandidateList");
+
+  if (!list) {
+    return;
+  }
+
+  if (!window.campsiteSupabase) {
+    list.innerHTML = `
+      <div class="alias-dictionary-candidate-empty">
+        Supabaseに接続されていません。
+      </div>
+    `;
+    return;
+  }
+
+  list.innerHTML = `
+    <div class="alias-dictionary-candidate-empty">
+      辞書反映候補を読み込み中...
+    </div>
+  `;
+
+  const { data, error } = await window.campsiteSupabase
+    .from("alias_review_queue")
+    .select(`
+      id,
+      poi_name,
+      normalized_name,
+      suggested_category,
+      review_status,
+      review_note,
+      reviewed_by,
+      reviewed_at
+    `)
+    .eq("review_status", "reviewed")
+    .order("reviewed_at", { ascending: false })
+    .limit(50);
+
+  if (error) {
+    console.error("辞書反映候補取得エラー:", error);
+
+    list.innerHTML = `
+      <div class="alias-dictionary-candidate-empty">
+        辞書反映候補の取得に失敗しました。
+      </div>
+    `;
+    return;
+  }
+
+  const candidates = (data || []).filter(item => {
+    return (
+      item.suggested_category &&
+      item.suggested_category !== "HOLD" &&
+      item.suggested_category !== "EXCLUDE"
+    );
+  });
+
+  if (!candidates.length) {
+    list.innerHTML = `
+      <div class="alias-dictionary-candidate-empty">
+        まだ辞書反映候補はありません。<br>
+        未分類レビューで「休憩・滞在・回遊・注意」に分類すると、ここに表示されます。
+      </div>
+    `;
+    return;
+  }
+
+  list.innerHTML = candidates.map(item => {
+    const label =
+      getAliasReviewCategoryLabel(item.suggested_category);
+
+    const reviewedAt =
+      formatAliasReviewDate(item.reviewed_at);
+
+    const name =
+      item.poi_name ||
+      item.normalized_name ||
+      "名称なし";
+
+    const note =
+      item.review_note
+        ? `<div class="alias-dictionary-candidate-note">メモ：${escapeHtml(item.review_note)}</div>`
+        : "";
+
+    return `
+      <div class="alias-dictionary-candidate-item">
+        <div class="alias-dictionary-candidate-main">
+          <div class="alias-dictionary-candidate-name">
+            ${escapeHtml(name)}
+          </div>
+
+          <div class="alias-dictionary-candidate-result">
+            → ${escapeHtml(label)}
+          </div>
+        </div>
+
+        <div class="alias-dictionary-candidate-meta">
+          ${escapeHtml(reviewedAt)}
+          ${
+            item.reviewed_by
+              ? ` / ${escapeHtml(item.reviewed_by)}`
+              : ""
+          }
+        </div>
+
+        ${note}
+      </div>
+    `;
+  }).join("");
 }
 function closeAliasReviewPanel() {
   const panel = document.getElementById("aliasReviewPanel");
@@ -1241,7 +1486,9 @@ async function skipCurrentAliasReviewItem() {
 
   setAliasReviewStatus("この候補をあとで見るにしました。次を読み込みます。");
 
-  await loadAliasReviewCard();
+      await loadAliasReviewCard();
+  await loadAliasReviewHistory();
+  await loadAliasDictionaryCandidates();
 }
 function isCampsiteAdminUnlocked() {
   return sessionStorage.getItem("campsiteAdminUnlocked") === "true";
@@ -1291,9 +1538,11 @@ function setupAliasReviewAdminUi() {
       panel.style.display = isHidden ? "block" : "none";
 
       if (isHidden) {
-        aliasReviewSkippedIds = [];
-        await loadAliasReviewCard();
-      }
+  aliasReviewSkippedIds = [];
+  await loadAliasReviewCard();
+  await loadAliasReviewHistory();
+  await loadAliasDictionaryCandidates();
+}
     });
   }
 
