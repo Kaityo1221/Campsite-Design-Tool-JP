@@ -444,22 +444,29 @@ if (submitButton) {
   }
 
   function showComplete() {
-    const card = document.getElementById("reviewCard");
-    const complete = document.getElementById("reviewCompleteBox");
+  const card = document.getElementById("reviewCard");
+  const complete = document.getElementById("reviewCompleteBox");
 
-    if (card) {
-      card.style.display = "none";
-    }
-
-    if (complete) {
-      complete.style.display = "block";
-    }
-
-    showStatus(
-  "Complate!! いつもありがとう",
-  "success"
-);
+  if (card) {
+    card.style.display = "none";
   }
+
+  if (complete) {
+    complete.style.display = "block";
+  }
+
+  showStatus(
+    "Complate!! いつもありがとう",
+    "success"
+  );
+
+  triggerCompletionCelebration();
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+}
 
   function showStatus(message, type = "info") {
     const box = document.getElementById("reviewStatusBox");
@@ -490,7 +497,66 @@ function wait(ms) {
       ? number
       : null;
   }
+function triggerCompletionCelebration() {
+  const layer = document.getElementById("celebrationLayer");
+  if (!layer) return;
 
+  layer.innerHTML = "";
+
+  const colors = [
+    "#facc15", "#fb7185", "#38bdf8", "#34d399",
+    "#a78bfa", "#f97316", "#ffffff", "#fde68a"
+  ];
+
+  const shapes = ["square", "circle", "ribbon"];
+
+  for (let i = 0; i < 70; i++) {
+    layer.appendChild(createBurstPiece("left", colors, shapes, i));
+    layer.appendChild(createBurstPiece("right", colors, shapes, i));
+  }
+
+  const emoji = document.createElement("div");
+  emoji.className = "completion-emoji";
+  emoji.textContent = "🎉🎊";
+  layer.appendChild(emoji);
+
+  if (navigator.vibrate) {
+    navigator.vibrate([80, 60, 120]);
+  }
+
+  setTimeout(() => {
+    layer.innerHTML = "";
+  }, 1800);
+}
+
+function createBurstPiece(side, colors, shapes, index) {
+  const piece = document.createElement("div");
+  const color = colors[Math.floor(Math.random() * colors.length)];
+  const shape = shapes[Math.floor(Math.random() * shapes.length)];
+  const spreadY = `${Math.floor(Math.random() * 220) - 110}px`;
+  const delay = `${Math.random() * 220}ms`;
+
+  piece.className = `completion-burst ${side} ${shape}`;
+  piece.style.background = color;
+  piece.style.setProperty("--spread-y", spreadY);
+  piece.style.animationDelay = delay;
+  piece.style.top = `${42 + Math.random() * 18}%`;
+
+  if (shape === "circle") {
+    piece.style.borderRadius = "999px";
+  }
+
+  if (shape === "ribbon") {
+    piece.style.width = `${8 + Math.random() * 6}px`;
+    piece.style.height = `${16 + Math.random() * 12}px`;
+  } else {
+    const size = `${8 + Math.random() * 8}px`;
+    piece.style.width = size;
+    piece.style.height = size;
+  }
+
+  return piece;
+}
   function escapeHtml(text) {
     return String(text ?? "")
       .replace(/&/g, "&amp;")
