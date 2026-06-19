@@ -545,6 +545,204 @@ document.addEventListener("DOMContentLoaded", () => {
    CSV → Existing POI KMZ
 ========================= */
 
+/* =========================
+   CAMP-107: Supabase alias_master 辞書をLab Engine分類に反映
+========================= */
+
+function normalizeLabAliasText(text) {
+  return String(text || "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLowerCase();
+}
+
+function getLabCategoryFromAliasDictionary(row) {
+  const dictionaryId =
+    String(row.dictionary_id || "").toUpperCase();
+
+  const canonicalName =
+    String(row.canonical_name || "");
+
+  const categoryKey =
+    String(row.category_key || "").toUpperCase();
+
+  if (
+    dictionaryId.includes("REST") ||
+    categoryKey === "REST" ||
+    canonicalName === "休憩"
+  ) {
+    return {
+      key: "rest",
+      label: "休憩"
+    };
+  }
+
+  if (
+    dictionaryId.includes("STAY") ||
+    categoryKey === "STAY" ||
+    canonicalName === "滞在"
+  ) {
+    return {
+      key: "stay",
+      label: "滞在"
+    };
+  }
+
+  if (
+    dictionaryId.includes("LOOP") ||
+    categoryKey === "LOOP" ||
+    canonicalName === "回遊"
+  ) {
+    return {
+      key: "loop",
+      label: "回遊"
+    };
+  }
+
+  if (
+    dictionaryId.includes("CAUTION") ||
+    categoryKey === "CAUTION" ||
+    canonicalName === "注意"
+  ) {
+    return {
+      key: "caution",
+      label: "注意"
+    };
+  }
+
+  return null;
+}
+
+function findLabAliasDictionaryMatch(name, aliases) {
+  const normalizedName =
+    normalizeLabAliasText(name);
+
+  if (!normalizedName) {
+    return null;
+  }
+
+  const exactMatch = aliases.find(row => {
+    const alias =
+      normalizeLabAliasText(
+        row.normalized_alias ||
+        row.alias_name
+      );
+
+    return alias && normalizedName === alias;
+  });
+
+  if (exactMatch) {
+    return exactMatch;
+  }
+
+  const partialMatch = aliases.find(row => {
+    const matchType =
+      String(row.match_type || "exact").toLowerCase();
+
+    if (matchType !== "partial") {
+      return false;
+    }
+
+    const alias =
+      normalizeLabAliasText(
+        row.normalized_alias ||
+        row.alias_name
+      );
+
+    return alias && normalizedName.includes(alias);
+  });
+
+  return partialMatch || null;
+}
+
+async function loadLabAliasDictionaryFromSupabase() {
+  if (!window.campsiteSupabase) {
+    console.warn("Supabase未接続のため、alias_master辞書は読み込みません。");
+    return [];
+  }
+
+  const { data, error } = await window.campsiteSupabase
+    .from("alias_master")
+    .select(`
+      alias_id,
+      dictionary_id,
+      canonical_name,
+      alias_name,
+      normalized_alias,
+      match_type,
+      source_type,
+      review_status,
+      active,
+      category_key
+    `)
+    .eq("active", true)
+    .eq("review_status", "active")
+    .limit(2000);
+
+  if (error) {
+    console.error("alias_master辞書読み込みエラー:", error);
+    return [];
+  }
+
+  return Array.isArray(data) ? data : [];
+}
+
+window.enrichLabPointsWithPoiDatabank = async function(points) {
+  const aliases =
+    await loadLabAliasDictionaryFromSupabase();
+
+  if (!aliases.length) {
+    console.log("alias_master辞書は0件でした。既存ルールで分類します。");
+    return points;
+  }
+
+  let matchedCount = 0;
+
+  const enrichedPoints = (points || []).map(point => {
+    const name =
+      point.name ||
+      point.title ||
+      point.poi_name ||
+      point.displayName ||
+      "";
+
+    const matchedAlias =
+      findLabAliasDictionaryMatch(name, aliases);
+
+    if (!matchedAlias) {
+      return point;
+    }
+
+    const category =
+      getLabCategoryFromAliasDictionary(matchedAlias);
+
+    if (!category) {
+      return point;
+    }
+
+    matchedCount += 1;
+
+    return {
+      ...point,
+      _labCategoryKey: category.key,
+      _labCategoryLabel: category.label,
+      _labAliasMatched: true,
+      _labAliasName:
+        matchedAlias.alias_name ||
+        matchedAlias.normalized_alias ||
+        "",
+      _labDictionaryId:
+        matchedAlias.dictionary_id ||
+        ""
+    };
+  });
+
+  console.log(
+    `alias_master辞書分類: ${matchedCount}件ヒット / ${points.length}件`
+  );
+
+  return enrichedPoints;
+};
 async function runLabCsvToKmzEngine() {
   const input =
     document.getElementById("labResearchCsvFile");
@@ -1381,8 +1579,8 @@ async function loadAliasDictionaryCandidates() {
   `;
 
   const { data, error } = await window.campsiteSupabase
-    .from("alias_review_queue")
-    .select(`
+  .from("alias_review_queue")
+  .select(`
       id,
       poi_name,
       normalized_name,
@@ -1390,11 +1588,14 @@ async function loadAliasDictionaryCandidates() {
       review_status,
       review_note,
       reviewed_by,
-      reviewed_at
+      reviewed_at,
+      dictionary_status,
+      dictionary_reviewed_at,
+      dictionary_reviewed_by
     `)
-    .eq("review_status", "reviewed")
-    .order("reviewed_at", { ascending: false })
-    .limit(50);
+  .eq("review_status", "reviewed")
+  .order("reviewed_at", { ascending: false })
+  .limit(50);
 
   if (error) {
     console.error("辞書反映候補取得エラー:", error);
@@ -1408,12 +1609,14 @@ async function loadAliasDictionaryCandidates() {
   }
 
   const candidates = (data || []).filter(item => {
-    return (
-      item.suggested_category &&
-      item.suggested_category !== "HOLD" &&
-      item.suggested_category !== "EXCLUDE"
-    );
-  });
+  return (
+    item.suggested_category &&
+    item.suggested_category !== "HOLD" &&
+    item.suggested_category !== "EXCLUDE" &&
+    item.dictionary_status !== "adopted" &&
+    item.dictionary_status !== "rejected"
+  );
+});
 
   if (!candidates.length) {
     list.innerHTML = `
@@ -1441,7 +1644,15 @@ async function loadAliasDictionaryCandidates() {
       item.review_note
         ? `<div class="alias-dictionary-candidate-note">メモ：${escapeHtml(item.review_note)}</div>`
         : "";
+const dictionaryStatus =
+  item.dictionary_status || "none";
 
+const dictionaryStatusLabel = {
+  adopted: "採用済み",
+  later: "後で確認",
+  rejected: "見送り",
+  none: "未判断"
+}[dictionaryStatus] || "未判断";
     return `
       <div class="alias-dictionary-candidate-item">
         <div class="alias-dictionary-candidate-main">
@@ -1463,11 +1674,184 @@ async function loadAliasDictionaryCandidates() {
           }
         </div>
 
-        ${note}
+                ${note}
+
+        <div class="alias-dictionary-candidate-status">
+          辞書判断：${escapeHtml(dictionaryStatusLabel)}
+        </div>
+
+        <div class="alias-dictionary-candidate-actions">
+          <button
+            type="button"
+            onclick="updateAliasDictionaryCandidateStatus('${escapeHtml(item.id)}', 'adopted')"
+          >
+            ✅ 採用
+          </button>
+
+          <button
+            type="button"
+            onclick="updateAliasDictionaryCandidateStatus('${escapeHtml(item.id)}', 'later')"
+          >
+            🕓 後で確認
+          </button>
+
+          <button
+            type="button"
+            onclick="updateAliasDictionaryCandidateStatus('${escapeHtml(item.id)}', 'rejected')"
+          >
+            🚫 見送り
+          </button>
+        </div>
       </div>
     `;
   }).join("");
 }
+/* =========================
+   CAMP-105: 辞書反映候補ステータス管理
+========================= */
+
+async function updateAliasDictionaryCandidateStatus(id, status) {
+  if (!id) {
+    alert("候補IDが取得できませんでした。");
+    return;
+  }
+
+  if (!window.campsiteSupabase) {
+    alert("Supabaseに接続されていません。");
+    return;
+  }
+
+  const labels = {
+    adopted: "採用",
+    later: "後で確認",
+    rejected: "見送り"
+  };
+
+  const label = labels[status] || status;
+
+  const ok = confirm(
+    `この候補を「${label}」にしますか？`
+  );
+
+  if (!ok) {
+    return;
+  }
+
+  const { data: item, error: fetchError } =
+    await window.campsiteSupabase
+      .from("alias_review_queue")
+      .select(`
+        id,
+        poi_name,
+        normalized_name,
+        suggested_category,
+        review_note
+      `)
+      .eq("id", id)
+      .single();
+
+  if (fetchError || !item) {
+    console.error("辞書候補取得エラー:", fetchError);
+    alert("辞書候補の取得に失敗しました。");
+    return;
+  }
+
+  if (status === "adopted") {
+    const aliasName =
+      item.poi_name ||
+      item.normalized_name ||
+      "";
+
+    const normalizedAlias =
+      item.normalized_name ||
+      item.poi_name ||
+      "";
+
+    const dictionaryMap = {
+      REST: {
+        dictionary_id: "LAB_REST",
+        canonical_name: "休憩"
+      },
+      STAY: {
+        dictionary_id: "LAB_STAY",
+        canonical_name: "滞在"
+      },
+      LOOP: {
+        dictionary_id: "LAB_LOOP",
+        canonical_name: "回遊"
+      },
+      CAUTION: {
+        dictionary_id: "LAB_CAUTION",
+        canonical_name: "注意"
+      }
+    };
+
+    const dictionary =
+      dictionaryMap[item.suggested_category];
+
+    if (!aliasName || !normalizedAlias || !dictionary) {
+      alert("辞書登録に必要な情報が不足しています。");
+      return;
+    }
+
+    const aliasId =
+      `ALIAS_${dictionary.dictionary_id}_${Date.now()}`;
+
+    const { error: upsertError } =
+      await window.campsiteSupabase
+        .from("alias_master")
+        .upsert(
+          {
+            alias_id: aliasId,
+            dictionary_id: dictionary.dictionary_id,
+            canonical_name: dictionary.canonical_name,
+            alias_name: aliasName,
+            normalized_alias: normalizedAlias,
+            match_type: "exact",
+            source_type: "admin_review",
+            review_status: "active",
+            active: true,
+            note: item.review_note || ""
+          },
+          {
+            onConflict: "normalized_alias,dictionary_id"
+          }
+        );
+
+    if (upsertError) {
+  console.error("辞書反映エラー:", upsertError);
+
+  alert(
+    "辞書への反映に失敗しました。\n\n" +
+    (upsertError.message || JSON.stringify(upsertError))
+  );
+
+  return;
+}
+  }
+
+  const { error } = await window.campsiteSupabase
+    .from("alias_review_queue")
+    .update({
+      dictionary_status: status,
+      dictionary_reviewed_at: new Date().toISOString(),
+      dictionary_reviewed_by: "会長"
+    })
+    .eq("id", id);
+
+  if (error) {
+    console.error("辞書候補ステータス更新エラー:", error);
+    alert("辞書候補ステータスの更新に失敗しました。");
+    return;
+  }
+
+  if (status === "adopted") {
+    alert("辞書に反映しました。");
+  }
+
+  await loadAliasDictionaryCandidates();
+}
+
 function closeAliasReviewPanel() {
   const panel = document.getElementById("aliasReviewPanel");
 
@@ -1486,10 +1870,11 @@ async function skipCurrentAliasReviewItem() {
 
   setAliasReviewStatus("この候補をあとで見るにしました。次を読み込みます。");
 
-      await loadAliasReviewCard();
+  await loadAliasReviewCard();
   await loadAliasReviewHistory();
   await loadAliasDictionaryCandidates();
 }
+
 function isCampsiteAdminUnlocked() {
   return sessionStorage.getItem("campsiteAdminUnlocked") === "true";
 }
