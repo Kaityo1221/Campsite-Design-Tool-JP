@@ -8,7 +8,7 @@
 
   <title>Campsite Lab Review</title>
 
-  <link rel="stylesheet" href="css/review-test.css?v=1">
+  <link rel="stylesheet" href="css/review-test.css?v=2">
 </head>
 
 <body>
@@ -76,13 +76,11 @@
         placeholder="迷った理由、現地感覚、Wayfarer視点など"
       ></textarea>
 
-      <button
-        type="button"
-        id="reviewSubmitButton"
-        class="review-submit-button"
-      >
-        保存して次へ
-      </button>
+      <div class="review-actions">
+  <button id="saveReviewButton" class="save-review-button">
+    保存して次へ
+  </button>
+</div>
     </section>
 
     <section id="reviewCompleteBox" class="review-complete" style="display:none;">
