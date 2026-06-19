@@ -963,6 +963,7 @@ async function submitLabResearchReport() {
 }
 let currentAliasReviewItem = null;
 let aliasReviewIsLoading = false;
+let aliasReviewSkippedIds = [];
 
 function getAliasReviewCategoryLabel(category) {
   const labels = {
@@ -1055,7 +1056,7 @@ async function fetchNextAliasReviewItem() {
     .eq("review_status", "pending")
     .order("count", { ascending: false })
     .order("created_at", { ascending: true })
-    .limit(1);
+    .limit(30);
 
   if (error) {
     console.error("未分類レビュー取得エラー:", error);
@@ -1063,7 +1064,27 @@ async function fetchNextAliasReviewItem() {
     return null;
   }
 
-  return data?.[0] || null;
+  const items = Array.isArray(data) ? data : [];
+
+  if (!items.length) {
+    return null;
+  }
+
+  const nextItem = items.find(item => {
+    return !aliasReviewSkippedIds.includes(String(item.id));
+  });
+
+  if (nextItem) {
+    return nextItem;
+  }
+
+  /*
+    30件すべてを「あとで見る」した場合は、
+    スキップリストを一度リセットして先頭に戻る。
+  */
+  aliasReviewSkippedIds = [];
+
+  return items[0];
 }
 
 function renderAliasReviewItem(item, remainingCount) {
@@ -1202,6 +1223,26 @@ async function submitAliasReview(category) {
 
   await loadAliasReviewCard();
 }
+function closeAliasReviewPanel() {
+  const panel = document.getElementById("aliasReviewPanel");
+
+  if (panel) {
+    panel.style.display = "none";
+  }
+}
+
+async function skipCurrentAliasReviewItem() {
+  if (!currentAliasReviewItem) {
+    await loadAliasReviewCard();
+    return;
+  }
+
+  aliasReviewSkippedIds.push(String(currentAliasReviewItem.id));
+
+  setAliasReviewStatus("この候補をあとで見るにしました。次を読み込みます。");
+
+  await loadAliasReviewCard();
+}
 function isCampsiteAdminUnlocked() {
   return sessionStorage.getItem("campsiteAdminUnlocked") === "true";
 }
@@ -1230,6 +1271,12 @@ function setupAliasReviewAdminUi() {
   const toggleButton =
     document.getElementById("aliasReviewToggleButton");
 
+  const closeButton =
+    document.getElementById("aliasReviewCloseButton");
+
+  const skipButton =
+    document.getElementById("aliasReviewSkipButton");
+
   const panel =
     document.getElementById("aliasReviewPanel");
 
@@ -1244,8 +1291,25 @@ function setupAliasReviewAdminUi() {
       panel.style.display = isHidden ? "block" : "none";
 
       if (isHidden) {
+        aliasReviewSkippedIds = [];
         await loadAliasReviewCard();
       }
+    });
+  }
+
+  if (closeButton) {
+    closeButton.addEventListener("click", () => {
+      closeAliasReviewPanel();
+    });
+  }
+
+  if (skipButton) {
+    skipButton.addEventListener("click", async () => {
+      if (aliasReviewIsLoading) {
+        return;
+      }
+
+      await skipCurrentAliasReviewItem();
     });
   }
 

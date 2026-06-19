@@ -17,7 +17,7 @@
 <link rel="preload" as="image" href="assets/story-left.PNG">
 <link rel="preload" as="image" href="assets/story-right.PNG">
 <link rel="preload" as="image" href="assets/icon.png">
-<link rel="stylesheet" href="css/style.css?v=84">
+<link rel="stylesheet" href="css/style.css?v=86">
 <link rel="stylesheet" href="css/splash.css?v=98">
 <link rel="stylesheet" href="css/tabs.css?v=29">
 <link rel="stylesheet" href="css/admin.css?v=28">
@@ -1061,106 +1061,6 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
     </div>
   </div>
 
-  <div
-  id="aliasReviewAdminBox"
-  class="lab-admin-review-box"
-  style="display:none;"
->
-    <button
-      id="aliasReviewToggleButton"
-      type="button"
-      class="lab-admin-mini-button"
-    >
-      🧩 未分類レビュー
-    </button>
-
-    <div
-      id="aliasReviewPanel"
-      class="alias-review-panel"
-      style="display:none;"
-    >
-      <div class="alias-review-header">
-        <strong>🧩 未分類POIレビュー</strong>
-        <span id="aliasReviewRemainingCount">未読込</span>
-      </div>
-
-      <p class="note">
-        研究員が送信した未分類POIを、会長がスマホで分類します。<br>
-        判定結果はレビューキューに保存されます。辞書本体にはまだ反映しません。
-      </p>
-<div class="alias-review-guide">
-  <strong>判断基準</strong>
-
-  <p class="note">
-    地図・ストリートビューで現地の文脈を見て、いちばん強い役割で判定します。<br>
-    レビュー結果は一次判定です。辞書本体にはまだ反映されません。
-  </p>
-
-  <div class="alias-review-guide-list">
-    <div>⚠️ <strong>注意</strong>：危険・水辺・階段・道路・駐車場・立入禁止など</div>
-    <div>🟢 <strong>休憩</strong>：ベンチ・東屋・トイレ・水飲み場など</div>
-    <div>🔵 <strong>回遊</strong>：入口・案内板・案内図・橋・園路・通路など</div>
-    <div>🟡 <strong>滞在</strong>：広場・芝生・石碑・像・説明板・花壇など</div>
-    <div>⏸ <strong>保留</strong>：意味は分かるが混在・判断に迷うもの</div>
-    <div>🚫 <strong>辞書不要</strong>：意味不明・一時的・広告・誤検知・辞書化すると危ないもの</div>
-  </div>
-
-  <p class="note">
-    迷ったら無理に決めず、<strong>保留＋メモ</strong>で残します。<br>
-    混在する場合は、原則 <strong>注意 ＞ 休憩 ＞ 回遊 ＞ 滞在</strong> の順で安全側を優先します。
-  </p>
-</div>
-      <div
-        id="aliasReviewStatus"
-        class="alias-review-status"
-      ></div>
-
-      <div
-        id="aliasReviewCard"
-        class="alias-review-card"
-        style="display:none;"
-      >
-        <div class="alias-review-label">POI名</div>
-
-        <div
-          id="aliasReviewPoiName"
-          class="alias-review-poi-name"
-        ></div>
-
-        <div
-          id="aliasReviewMeta"
-          class="alias-review-meta"
-        ></div>
-
-        <a
-          id="aliasReviewMapLink"
-          class="alias-review-map-link"
-          href="#"
-          target="_blank"
-          rel="noopener noreferrer"
-          style="display:none;"
-        >
-          📍 地図で見る
-        </a>
-
-        <textarea
-          id="aliasReviewNote"
-          class="alias-review-note"
-          rows="2"
-          placeholder="任意メモ：例）石碑系なので滞在／入口案内なので回遊"
-        ></textarea>
-
-        <div class="alias-review-actions">
-          <button type="button" data-review-category="REST">休憩</button>
-          <button type="button" data-review-category="STAY">滞在</button>
-          <button type="button" data-review-category="LOOP">回遊</button>
-          <button type="button" data-review-category="CAUTION">注意</button>
-         <button type="button" data-review-category="EXCLUDE">辞書不要</button>
-          <button type="button" data-review-category="HOLD">保留</button>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <audio
     id="labEngineSound"
@@ -1381,6 +1281,133 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
       管理者専用の確認・レビュー補助機能です。<br>
       他CAから受け取ったMy Maps / KMZの内容確認や、レビュー前の整理に使います。
     </p>
+  <div
+  id="aliasReviewAdminBox"
+  class="lab-admin-review-box"
+  style="display:none;"
+>
+    <button
+      id="aliasReviewToggleButton"
+      type="button"
+      class="lab-admin-mini-button"
+    >
+      🧩 未分類レビュー
+    </button>
+
+    <div
+      id="aliasReviewPanel"
+      class="alias-review-panel"
+      style="display:none;"
+    >
+      <div class="alias-review-header">
+  <strong>🧩 未分類POIレビュー</strong>
+
+  <div style="display:flex; align-items:center; gap:8px;">
+    <span id="aliasReviewRemainingCount">未読込</span>
+
+    <button
+      type="button"
+      id="aliasReviewCloseButton"
+      class="alias-review-close-button"
+      aria-label="未分類POIレビューを閉じる"
+    >
+      ×
+    </button>
+  </div>
+</div>
+
+      <p class="note">
+🧩 <strong>Research Review Room</strong><br><br>
+
+この部屋は研究者専用です。<br><br>
+
+研究員が送信した未分類POIを確認し、<br>
+辞書の未来を少しずつ育てています。<br><br>
+
+Ryotaさん、<br>
+ここはまだ見なくて大丈夫。<br>
+完成したら、自慢しに行きます。
+</p>
+<div class="alias-review-guide">
+  <strong>判断基準</strong>
+
+  <p class="note">
+    地図・ストリートビューで現地の文脈を見て、いちばん強い役割で判定します。<br>
+    レビュー結果は一次判定です。辞書本体にはまだ反映されません。
+  </p>
+
+  <div class="alias-review-guide-list">
+    <div>⚠️ <strong>注意</strong>：危険・水辺・階段・道路・駐車場・立入禁止など</div>
+    <div>🟢 <strong>休憩</strong>：ベンチ・東屋・トイレ・水飲み場など</div>
+    <div>🔵 <strong>回遊</strong>：入口・案内板・案内図・橋・園路・通路など</div>
+    <div>🟡 <strong>滞在</strong>：広場・芝生・石碑・像・説明板・花壇など</div>
+    <div>⏸ <strong>保留</strong>：意味は分かるが混在・判断に迷うもの</div>
+    <div>🚫 <strong>辞書不要</strong>：意味不明・一時的・広告・誤検知・辞書化すると危ないもの</div>
+  </div>
+
+  <p class="note">
+    迷ったら無理に決めず、<strong>保留＋メモ</strong>で残します。<br>
+    混在する場合は、原則 <strong>注意 ＞ 休憩 ＞ 回遊 ＞ 滞在</strong> の順で安全側を優先します。
+  </p>
+</div>
+      <div
+        id="aliasReviewStatus"
+        class="alias-review-status"
+      ></div>
+
+      <div
+        id="aliasReviewCard"
+        class="alias-review-card"
+        style="display:none;"
+      >
+        <div class="alias-review-label">POI名</div>
+
+        <div
+          id="aliasReviewPoiName"
+          class="alias-review-poi-name"
+        ></div>
+
+        <div
+          id="aliasReviewMeta"
+          class="alias-review-meta"
+        ></div>
+
+        <a
+          id="aliasReviewMapLink"
+          class="alias-review-map-link"
+          href="#"
+          target="_blank"
+          rel="noopener noreferrer"
+          style="display:none;"
+        >
+          📍 地図で見る
+        </a>
+
+        <textarea
+          id="aliasReviewNote"
+          class="alias-review-note"
+          rows="2"
+          placeholder="任意メモ：例）石碑系なので滞在／入口案内なので回遊"
+        ></textarea>
+
+        <div class="alias-review-actions">
+          <button type="button" data-review-category="REST">休憩</button>
+          <button type="button" data-review-category="STAY">滞在</button>
+          <button type="button" data-review-category="LOOP">回遊</button>
+          <button type="button" data-review-category="CAUTION">注意</button>
+          <button type="button" data-review-category="EXCLUDE">辞書不要</button>
+          <button type="button" data-review-category="HOLD">保留</button>
+        </div>
+        <button
+  type="button"
+  id="aliasReviewSkipButton"
+  class="alias-review-skip-button"
+>
+  この候補をあとで見る
+</button>
+      </div>
+    </div>
+  </div>
 
 <div class="step" style="
   border:1px solid rgba(168,85,247,0.55);
@@ -2355,7 +2382,7 @@ GOロケット団の出現率が3倍になる
 <script src="js/tabs.js?v=1"></script>
 <script src="js/distance.js?v=8"></script>
 <script src="js/admin.js?v=1"></script>
-<script src="js/main.js?v=28"></script>
+<script src="js/main.js?v=29"></script>
 <script src="js/kmz.js?v=1"></script>
 <script src="js/deduplicate.js?v=1"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

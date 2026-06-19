@@ -3738,3 +3738,64 @@ button.generate:active {
     font-size: 15px;
   }
 }
+/* ===============================
+   CAMP-101：閉じる・あとで見るボタン
+================================ */
+
+.alias-review-close-button {
+  width: 32px;
+  height: 32px;
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.85);
+  color: #e5e7eb;
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.alias-review-close-button:hover {
+  background: rgba(239, 68, 68, 0.22);
+  border-color: rgba(248, 113, 113, 0.65);
+  color: #fecaca;
+}
+
+.alias-review-skip-button {
+  width: 100%;
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.82);
+  color: #cbd5e1;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.alias-review-skip-button:hover {
+  background: rgba(59, 130, 246, 0.18);
+  border-color: rgba(96, 165, 250, 0.55);
+  color: #bfdbfe;
+}
+
+.alias-review-actions button:disabled,
+.alias-review-skip-button:disabled,
+.alias-review-close-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@media (max-width: 520px) {
+  .alias-review-close-button {
+    width: 34px;
+    height: 34px;
+    font-size: 21px;
+  }
+
+  .alias-review-skip-button {
+    min-height: 46px;
+    font-size: 14px;
+  }
+}
