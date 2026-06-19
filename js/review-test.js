@@ -60,7 +60,15 @@
     const params = new URLSearchParams(window.location.search);
     const parkKey = params.get("park") || "";
     const inviteCode = params.get("invite") || "";
+if (params.get("complete") === "1") {
+  appState.parkConfig = PARK_CONFIGS[parkKey] || PARK_CONFIGS.sugaya;
+  appState.inviteConfig =
+    INVITE_CONFIGS[inviteCode] || INVITE_CONFIGS["JUNPOKO-LOCAL"];
 
+  setIntroText();
+  showComplete();
+  return;
+}
     const parkConfig = PARK_CONFIGS[parkKey];
     const inviteConfig = INVITE_CONFIGS[inviteCode];
 
@@ -448,9 +456,9 @@ if (submitButton) {
     }
 
     showStatus(
-      `${appState.inviteConfig.reviewerName}さんのレビューは完了しています。`,
-      "success"
-    );
+  "Complate!! いつもありがとう",
+  "success"
+);
   }
 
   function showStatus(message, type = "info") {
