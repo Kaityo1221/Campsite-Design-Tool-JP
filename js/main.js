@@ -1615,7 +1615,6 @@ async function loadAliasDictionaryCandidates() {
     item.suggested_category !== "EXCLUDE" &&
     item.dictionary_status !== "adopted" &&
 item.dictionary_status !== "rejected" &&
-item.dictionary_status !== "later"
   );
 });
 
