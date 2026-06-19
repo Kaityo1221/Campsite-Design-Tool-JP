@@ -1855,7 +1855,6 @@ if (status === "adopted") {
 
 await loadAliasDictionaryCandidates();
 
-  await loadAliasDictionaryCandidates();
 }
 
 function closeAliasReviewPanel() {
