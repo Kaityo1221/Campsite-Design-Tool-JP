@@ -41,6 +41,7 @@
   };
 
   let appState = {
+    
     parkConfig: null,
     inviteConfig: null,
     items: [],
@@ -49,6 +50,7 @@
     selectedCategory: "",
     selectedConfidence: ""
   };
+  let isSavingReview = false;
 
   document.addEventListener("DOMContentLoaded", initReviewPage);
 
@@ -297,92 +299,132 @@
       });
     });
 
-    const submitButton =
-      document.getElementById("reviewSubmitButton");
+    const submitButton = document.getElementById("saveReviewButton");
 
-    if (submitButton) {
-      submitButton.addEventListener("click", submitCurrentReview);
-    }
+if (submitButton) {
+  submitButton.addEventListener("click", submitCurrentReview);
+}
   }
 
   async function submitCurrentReview() {
-    const item = appState.items[appState.currentIndex];
+  if (isSavingReview) return;
 
-    if (!item) {
-      showStatus("レビュー対象がありません。", "error");
-      return;
-    }
+  const item = appState.items[appState.currentIndex];
 
-    if (!appState.selectedCategory) {
-      alert("分類を選んでください。");
-      return;
-    }
+  if (!item) {
+    showStatus("レビュー対象がありません。", "error");
+    return;
+  }
 
-    if (!appState.selectedConfidence) {
-      alert("自信度を選んでください。");
-      return;
-    }
+  if (!appState.selectedCategory) {
+    alert("分類を選んでください。");
+    return;
+  }
 
-    const note =
-      String(document.getElementById("reviewNote")?.value || "").trim();
+  if (!appState.selectedConfidence) {
+    alert("自信度を選んでください。");
+    return;
+  }
 
-    const submitButton =
-      document.getElementById("reviewSubmitButton");
+  const submitButton = document.getElementById("saveReviewButton");
 
-    if (submitButton) {
-      submitButton.disabled = true;
-      submitButton.textContent = "保存中…";
-    }
+  isSavingReview = true;
 
-    const payload = {
-      test_batch_id: appState.parkConfig.testBatchId,
-      park_key: appState.parkConfig.parkKey,
-      park_name: appState.parkConfig.parkName,
+  if (submitButton) {
+    submitButton.disabled = true;
+    submitButton.classList.remove("is-saved");
+    submitButton.classList.add("is-saving");
+    submitButton.textContent = "保存中…";
+  }
 
-      source_queue_id: item.id,
-      poi_name: item.poi_name || item.normalized_name || "",
-      normalized_name: item.normalized_name || item.poi_name || "",
-      sample_lat: toNullableNumber(item.sample_lat),
-      sample_lng: toNullableNumber(item.sample_lng),
+  const note =
+    String(document.getElementById("reviewNote")?.value || "").trim();
 
-      reviewer_name: appState.inviteConfig.reviewerName,
-      reviewer_type: appState.inviteConfig.reviewerType,
+  const payload = {
+    test_batch_id: appState.parkConfig.testBatchId,
+    park_key: appState.parkConfig.parkKey,
+    park_name: appState.parkConfig.parkName,
 
-      selected_category: appState.selectedCategory,
-      confidence: appState.selectedConfidence,
-      review_note: note,
-      reviewed_at: new Date().toISOString()
-    };
+    source_queue_id: item.id,
+    poi_name: item.poi_name || item.normalized_name || "",
+    normalized_name: item.normalized_name || item.poi_name || "",
+    sample_lat: toNullableNumber(item.sample_lat),
+    sample_lng: toNullableNumber(item.sample_lng),
 
-    try {
-      const { error } = await window.campsiteSupabase
-        .from("poi_review_test_results")
-        .upsert(payload, {
-          onConflict: "test_batch_id,normalized_name,reviewer_name"
-        });
+    reviewer_name: appState.inviteConfig.reviewerName,
+    reviewer_type: appState.inviteConfig.reviewerType,
 
-      if (error) {
-        console.error(error);
-        showStatus("レビュー結果の保存に失敗しました。", "error");
-        return;
-      }
+    selected_category: appState.selectedCategory,
+    confidence: appState.selectedConfidence,
+    review_note: note,
+    reviewed_at: new Date().toISOString()
+  };
 
-      appState.reviewedNames.add(item.normalized_name);
+  try {
+    const { error } = await window.campsiteSupabase
+      .from("poi_review_test_results")
+      .upsert(payload, {
+        onConflict: "test_batch_id,normalized_name,reviewer_name"
+      });
 
-      showStatus("保存しました。次のPOIへ進みます。", "success");
-
-      renderCurrentItem();
-
-    } catch (error) {
+    if (error) {
       console.error(error);
-      showStatus("保存中にエラーが発生しました。", "error");
-    } finally {
+      showStatus("レビュー結果の保存に失敗しました。", "error");
+
       if (submitButton) {
         submitButton.disabled = false;
-        submitButton.textContent = "保存して次へ";
+        submitButton.classList.remove("is-saving");
+        submitButton.textContent = "もう一度保存する";
       }
+
+      isSavingReview = false;
+      return;
     }
+
+    appState.reviewedNames.add(item.normalized_name);
+
+    showStatus("保存しました。次のPOIへ進みます。", "success");
+
+    if (submitButton) {
+      submitButton.classList.remove("is-saving");
+      submitButton.classList.add("is-saved");
+      submitButton.textContent = "保存しました";
+    }
+
+    if (navigator.vibrate) {
+      navigator.vibrate(30);
+    }
+
+    await wait(450);
+
+    renderCurrentItem();
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+
+    if (submitButton) {
+      submitButton.disabled = false;
+      submitButton.classList.remove("is-saved");
+      submitButton.textContent = "保存して次へ";
+    }
+
+    isSavingReview = false;
+
+  } catch (error) {
+    console.error(error);
+    showStatus("保存中にエラーが発生しました。", "error");
+
+    if (submitButton) {
+      submitButton.disabled = false;
+      submitButton.classList.remove("is-saving");
+      submitButton.textContent = "もう一度保存する";
+    }
+
+    isSavingReview = false;
   }
+}
 
   function resetSelections() {
     appState.selectedCategory = "";
@@ -428,7 +470,11 @@
 
     box.innerHTML = escapeHtml(message).replace(/\n/g, "<br>");
   }
-
+function wait(ms) {
+  return new Promise(resolve => {
+    setTimeout(resolve, ms);
+  });
+}
   function toNullableNumber(value) {
     const number = Number(value);
 
