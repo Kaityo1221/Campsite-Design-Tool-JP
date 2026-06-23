@@ -114,22 +114,21 @@
 
     try {
       const { data, error } = await window.campsiteSupabase
-        .from("alias_review_queue")
-        .select(`
-          id,
-          poi_name,
-          normalized_name,
-          count,
-          sample_lat,
-          sample_lng,
-          source,
-          review_status,
-          created_at
-        `)
-        .gte("created_at", appState.parkConfig.createdAtStartUtc)
-        .lt("created_at", appState.parkConfig.createdAtEndUtc)
-        .order("count", { ascending: false })
-        .order("normalized_name", { ascending: true });
+  .from("poi_review_test_items")
+  .select(`
+    id,
+    source_queue_id,
+    poi_name,
+    normalized_name,
+    count,
+    sample_lat,
+    sample_lng,
+    source,
+    original_created_at
+  `)
+  .eq("test_batch_id", appState.parkConfig.testBatchId)
+  .order("count", { ascending: false })
+  .order("normalized_name", { ascending: true });
 
       if (error) {
         console.error(error);
@@ -345,7 +344,7 @@ if (submitButton) {
     park_key: appState.parkConfig.parkKey,
     park_name: appState.parkConfig.parkName,
 
-    source_queue_id: item.id,
+    source_queue_id: item.source_queue_id || item.id,
     poi_name: item.poi_name || item.normalized_name || "",
     normalized_name: item.normalized_name || item.poi_name || "",
     sample_lat: toNullableNumber(item.sample_lat),
