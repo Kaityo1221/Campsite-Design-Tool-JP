@@ -1469,6 +1469,12 @@ function renderLabLearningBreakdown() {
     return;
   }
 
+  // CAMP-109: 既存カードがページ下部にある場合でも、完了結果の直下へ移動する
+  const resultBox = document.getElementById("labEngineResult");
+  if (resultBox) {
+    resultBox.insertAdjacentElement("afterend", box);
+  }
+
   box.hidden = false;
 
   if (!window.LabEngineLearningStats) {
