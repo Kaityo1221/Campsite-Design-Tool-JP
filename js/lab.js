@@ -1417,4 +1417,45 @@ list.innerHTML = `
   }
 `;
 }
+// ======================================================
+// CAMP-109: LabEngine 学習判定内訳 表示
+// ======================================================
 
+function renderLabLearningBreakdown() {
+  const box = document.getElementById("labLearningBreakdown");
+  const body = document.getElementById("labLearningBreakdownBody");
+
+  if (!box || !body || !window.LabEngineLearningStats) return;
+
+  const stats = window.LabEngineLearningStats.getBreakdown();
+
+  box.hidden = false;
+
+  body.innerHTML = `
+    <div class="lab-learning-breakdown">
+      <p><strong>学習判定：</strong>${stats.learningHit}件</p>
+
+      <ul>
+        <li>辞書ヒット：${stats.dictionaryHit}件</li>
+        <li>推論ルールヒット：${stats.inferenceRuleHit}件</li>
+        <li>未一致：${stats.unmatched}件</li>
+      </ul>
+
+      <hr>
+
+      <ul>
+        <li>読込辞書件数：${stats.dictionaryCount}件</li>
+        <li>読込ルール件数：${stats.ruleCount}件</li>
+        <li>判定対象POI：${stats.totalJudged}件</li>
+      </ul>
+
+      <p class="note">${stats.diagnosis}</p>
+
+      ${
+        stats.lastError
+          ? `<p class="note warning">読込エラー：${String(stats.lastError)}</p>`
+          : ""
+      }
+    </div>
+  `;
+}
