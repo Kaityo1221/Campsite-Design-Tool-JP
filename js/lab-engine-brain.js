@@ -257,3 +257,123 @@ window.enrichLabPointsWithLabEngineBrain = async function(points) {
 
   return enrichedPoints;
 };
+
+// ======================================================
+// CAMP-109: LabEngine 学習判定 内訳カウンター
+// ======================================================
+
+window.LabEngineLearningStats = (() => {
+  const state = {
+    dictionaryCount: 0,
+    ruleCount: 0,
+    dictionaryHit: 0,
+    inferenceRuleHit: 0,
+    unmatched: 0,
+    totalJudged: 0,
+    dictionaryLoadOk: false,
+    ruleLoadOk: false,
+    lastError: ""
+  };
+
+  function reset() {
+    state.dictionaryHit = 0;
+    state.inferenceRuleHit = 0;
+    state.unmatched = 0;
+    state.totalJudged = 0;
+    state.lastError = "";
+  }
+
+  function setLoadCounts({ dictionaryCount = 0, ruleCount = 0 } = {}) {
+    state.dictionaryCount = Number(dictionaryCount || 0);
+    state.ruleCount = Number(ruleCount || 0);
+    state.dictionaryLoadOk = state.dictionaryCount > 0;
+    state.ruleLoadOk = state.ruleCount > 0;
+  }
+
+  function setLoadError(error) {
+    state.lastError = error ? String(error) : "";
+  }
+
+  function recordDecision(result) {
+    state.totalJudged += 1;
+
+    const source = String(
+      result?.source ||
+      result?.matchSource ||
+      result?.decisionSource ||
+      result?.learningSource ||
+      result?.type ||
+      ""
+    ).toLowerCase();
+
+    const hasDictionaryId =
+      !!result?.dictionary_id ||
+      !!result?.dictionaryId ||
+      !!result?.alias_id ||
+      !!result?.aliasId;
+
+    const hasRuleId =
+      !!result?.rule_id ||
+      !!result?.ruleId ||
+      !!result?.inference_rule_id ||
+      !!result?.inferenceRuleId;
+
+    if (
+      hasDictionaryId ||
+      source.includes("dictionary") ||
+      source.includes("dict") ||
+      source.includes("辞書")
+    ) {
+      state.dictionaryHit += 1;
+      return;
+    }
+
+    if (
+      hasRuleId ||
+      source.includes("inference") ||
+      source.includes("rule") ||
+      source.includes("推論")
+    ) {
+      state.inferenceRuleHit += 1;
+      return;
+    }
+
+    state.unmatched += 1;
+  }
+
+  function getBreakdown() {
+    const learningHit = state.dictionaryHit + state.inferenceRuleHit;
+
+    let diagnosis = "";
+
+    if (state.dictionaryCount === 0 && state.ruleCount === 0) {
+      diagnosis = "辞書・推論ルールが読み込まれていない可能性があります。Supabase接続または読込処理を確認してください。";
+    } else if (learningHit === 0) {
+      diagnosis = "辞書・推論ルールは読み込まれていますが、今回のPOI名には一致しませんでした。";
+    } else {
+      diagnosis = "学習済みデータによる判定が使用されています。";
+    }
+
+    return {
+      dictionaryCount: state.dictionaryCount,
+      ruleCount: state.ruleCount,
+      dictionaryHit: state.dictionaryHit,
+      inferenceRuleHit: state.inferenceRuleHit,
+      unmatched: state.unmatched,
+      totalJudged: state.totalJudged,
+      learningHit,
+      dictionaryLoadOk: state.dictionaryLoadOk,
+      ruleLoadOk: state.ruleLoadOk,
+      lastError: state.lastError,
+      diagnosis
+    };
+  }
+
+  return {
+    reset,
+    setLoadCounts,
+    setLoadError,
+    recordDecision,
+    getBreakdown
+  };
+})();
