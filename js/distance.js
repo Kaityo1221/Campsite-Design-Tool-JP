@@ -823,23 +823,6 @@ const isIphoneKmzZip =
       return;
     }
 
-    const layerNames =
-      Object.keys(result.pointsByLayer || {});
-
-    if (layerNames.length === 0) {
-      if (summary) {
-        summary.innerHTML = renderDistanceLoadErrorHtml(
-          "KMZ内にPOIレイヤーが見つかりません",
-          `
-            Google My Mapsから書き出した完成KMZか確認してください。<br>
-            KML内にPOIレイヤーがない場合や、POIが登録されていない場合は読み込めません。
-          `
-        );
-      }
-
-      return;
-    }
-
     window._layerPoints =
   result.pointsByLayer;
 
@@ -2472,13 +2455,13 @@ function createKmlKmzErrorMessage(errorType, detail = "") {
       ${detailText}
     `,
 
-  const messages = {
-    no_file: `
-      ⚠ ファイルが選択されていません。<br>
-      KML または KMZ ファイルを選択してください。
+    KML_NOT_FOUND: `
+      ⚠ KMZ内にKMLファイルが見つかりませんでした。<br>
+      Google My Mapsから書き出した完成KMZか確認してください。<br>
+      KMZ内にKMLファイルが見つからないため、読み込めません。
+      ${detailText}
     `,
 
-    unsupported_extension: `
     empty_kml: `
       ⚠ KMLの中身が空、または読み取れるデータがありません。<br>
       My Maps上にPOI・線・ポリゴンが入っているか確認してください。
