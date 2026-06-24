@@ -1474,6 +1474,15 @@ function renderLabLearningBreakdown() {
   if (resultBox) {
     resultBox.insertAdjacentElement("afterend", box);
   }
+  
+    // CAMP-109: スマホ表示で「学習判定の内訳」が不自然に改行されないよう調整
+  const title = box.querySelector("h2");
+  if (title) {
+    title.style.whiteSpace = "nowrap";
+    title.style.fontSize = "clamp(24px, 6vw, 34px)";
+    title.style.lineHeight = "1.25";
+    title.style.letterSpacing = "-0.04em";
+  }
 
   box.hidden = false;
 
