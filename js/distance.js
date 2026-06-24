@@ -876,20 +876,21 @@ window._hasPolygon =
   renderDistancePrecheckCompactHtml(counts);
     }
 
-  } catch (error) {
+    } catch (error) {
     console.error(
       "距離チェック用ファイルの読込に失敗しました",
       error
     );
 
     if (summary) {
-      summary.innerHTML = renderDistanceLoadErrorHtml(
-        "ファイルを開けませんでした",
-        `
-          ファイルが破損しているか、正しい形式で保存されていない可能性があります。<br>
-          Google My Mapsから完成KMZを書き出し直して、もう一度お試しください。
-        `
-      );
+      summary.innerHTML = `
+        <div class="distance-warning">
+          ${createKmlKmzErrorMessage(
+            "parse_failed",
+            error?.message || String(error)
+          )}
+        </div>
+      `;
     }
   }
 }
@@ -1079,7 +1080,6 @@ async function extractLayersFromKML(file) {
     };
   }
 
-  const xml =
   const xml =
     new DOMParser()
       .parseFromString(
