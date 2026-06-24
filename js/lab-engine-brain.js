@@ -72,13 +72,19 @@ async function loadLabEngineBrainFromSupabase() {
 
   labEngineBrainLoadingPromise = (async () => {
     if (!window.campsiteSupabase) {
-      console.warn("Supabase未接続のため、LabEngine学習辞書と推論ルールは読み込みません。");
-      labEngineBrainCache = {
-        dictionary: [],
-        rules: []
-      };
-      return labEngineBrainCache;
-    }
+  console.warn("Supabase未接続のため、LabEngine学習辞書と推論ルールは読み込みません。");
+
+  window.LabEngineLearningStats?.setLoadCounts({
+    dictionaryCount: 0,
+    ruleCount: 0
+  });
+
+  labEngineBrainCache = {
+    dictionary: [],
+    rules: []
+  };
+  return labEngineBrainCache;
+}
 
     try {
       const [dictionaryResult, rulesResult] = await Promise.all([
@@ -113,12 +119,18 @@ async function loadLabEngineBrainFromSupabase() {
       ]);
 
       if (dictionaryResult.error) {
-        console.warn("LabEngine学習辞書の読み込みに失敗しました:", dictionaryResult.error);
-      }
+  console.warn("LabEngine学習辞書の読み込みに失敗しました:", dictionaryResult.error);
+  window.LabEngineLearningStats?.setLoadError(
+    dictionaryResult.error.message || dictionaryResult.error
+  );
+}
 
-      if (rulesResult.error) {
-        console.warn("LabEngine推論ルールの読み込みに失敗しました:", rulesResult.error);
-      }
+if (rulesResult.error) {
+  console.warn("LabEngine推論ルールの読み込みに失敗しました:", rulesResult.error);
+  window.LabEngineLearningStats?.setLoadError(
+    rulesResult.error.message || rulesResult.error
+  );
+}
 
       const dictionary = Array.isArray(dictionaryResult.data)
         ? dictionaryResult.data
@@ -127,7 +139,10 @@ async function loadLabEngineBrainFromSupabase() {
       const rules = Array.isArray(rulesResult.data)
         ? rulesResult.data
         : [];
-
+window.LabEngineLearningStats?.setLoadCounts({
+  dictionaryCount: dictionary.length,
+  ruleCount: rules.length
+});
       labEngineBrainCache = {
         dictionary,
         rules
@@ -139,13 +154,21 @@ async function loadLabEngineBrainFromSupabase() {
 
       return labEngineBrainCache;
     } catch (error) {
-      console.warn("LabEngine Brain読込エラー。既存ルールだけで続行します:", error);
-      labEngineBrainCache = {
-        dictionary: [],
-        rules: []
-      };
-      return labEngineBrainCache;
-    }
+  console.warn("LabEngine Brain読込エラー。既存ルールだけで続行します:", error);
+
+  window.LabEngineLearningStats?.setLoadError(error);
+
+  window.LabEngineLearningStats?.setLoadCounts({
+    dictionaryCount: 0,
+    ruleCount: 0
+  });
+
+  labEngineBrainCache = {
+    dictionary: [],
+    rules: []
+  };
+  return labEngineBrainCache;
+}
   })();
 
   return labEngineBrainLoadingPromise;
