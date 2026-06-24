@@ -323,9 +323,19 @@ startLabEngineSound();
       return;
     }
     if (typeof window.enrichLabPointsWithPoiDatabank === "function") {
-  points = await window.enrichLabPointsWithPoiDatabank(points);
-  console.log("Lab Engine POI分類完了:", points);
-}
+      points = await window.enrichLabPointsWithPoiDatabank(points);
+    }
+
+    // CAMP-108:
+    // 3人レビューで承認済みの辞書と推論ルールをLabEngine本体へ投入。
+    // ここで付ける分類はLabEngine画面・研究KMZ用であり、
+    // index.html側の距離チェック、マップ表示制御、マイマップコメントには接続しない。
+    if (typeof window.enrichLabPointsWithLabEngineBrain === "function") {
+      points = await window.enrichLabPointsWithLabEngineBrain(points);
+    }
+
+    console.log("Lab Engine POI分類完了:", points);
+
 renderLabResearchMap(points);
 setLabResearchKmzReady(points);
     await new Promise(resolve => {
@@ -356,6 +366,9 @@ const downloadName =
 const unknownPoiCount =
   countUnknownLabPois(points);
 
+const labEngineBrainMatchedCount =
+  countLabEngineBrainMatchedPois(points);
+
 pendingLabResearchReport = {
   parkName,
   csvCount: files.length,
@@ -363,6 +376,7 @@ pendingLabResearchReport = {
   dedupedPoiCount: points.length,
   removedDuplicateCount: dedupeResult.removed,
   unknownPoiCount,
+  labEngineBrainMatchedCount,
   kmzFilename: downloadName,
   points
 };
@@ -396,6 +410,7 @@ showLabResearchSubmitBox();
           読み込みPOI：${allPoints.length}件<br>
           重複削除：${dedupeResult.removed}件<br>
           出力POI：${points.length}件<br>
+LabEngine学習判定：${labEngineBrainMatchedCount}件<br>
 未分類POI：${unknownPoiCount}件<br><br>
 まだSupabaseには送信されていません。<br>
 研究KMZを保存して会長のDiscord DMへ送り、一言メモを書いてから「研究結果を送信」を押してください。
@@ -463,6 +478,12 @@ async function saveLabResearchHistory(data) {
 function countUnknownLabPois(points) {
   return (points || []).filter(point => {
     return getLabPoiCategoryKey(point) === "unknown";
+  }).length;
+}
+
+function countLabEngineBrainMatchedPois(points) {
+  return (points || []).filter(point => {
+    return Boolean(point._labEngineBrainMatched);
   }).length;
 }
 async function saveAliasReviewQueue(points) {
