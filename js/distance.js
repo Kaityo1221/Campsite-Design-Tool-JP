@@ -2462,6 +2462,13 @@ function createKmlKmzErrorMessage(errorType, detail = "") {
       ${detailText}
     `,
 
+  const messages = {
+    no_file: `
+      ⚠ ファイルが選択されていません。<br>
+      KML または KMZ ファイルを選択してください。
+    `,
+
+    unsupported_extension: `
     empty_kml: `
       ⚠ KMLの中身が空、または読み取れるデータがありません。<br>
       My Maps上にPOI・線・ポリゴンが入っているか確認してください。
