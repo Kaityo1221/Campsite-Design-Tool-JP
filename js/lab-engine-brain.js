@@ -318,52 +318,68 @@ window.LabEngineLearningStats = (() => {
   }
 
   function recordDecision(result) {
-    state.totalJudged += 1;
+  state.totalJudged += 1;
 
-    const source = String(
-      result?.source ||
-      result?.matchSource ||
-      result?.decisionSource ||
-      result?.learningSource ||
-      result?.type ||
-      ""
-    ).toLowerCase();
+  const source = String(
+    result?.source ||
+    result?.matchSource ||
+    result?.decisionSource ||
+    result?.learningSource ||
+    result?.type ||
+    result?._labEngineBrainSource ||
+    result?._labEngineBrainMatchSource ||
+    result?._labEngineBrainDecisionSource ||
+    ""
+  ).toLowerCase();
 
-    const hasDictionaryId =
-      !!result?.dictionary_id ||
-      !!result?.dictionaryId ||
-      !!result?.alias_id ||
-      !!result?.aliasId;
+  const hasDictionaryId =
+    !!result?.dictionary_id ||
+    !!result?.dictionaryId ||
+    !!result?._labEngineBrainDictionaryId ||
+    !!result?._labEngineBrainDictionaryVersion;
 
-    const hasRuleId =
-      !!result?.rule_id ||
-      !!result?.ruleId ||
-      !!result?.inference_rule_id ||
-      !!result?.inferenceRuleId;
+  const hasRuleId =
+    !!result?.rule_id ||
+    !!result?.ruleId ||
+    !!result?.inference_rule_id ||
+    !!result?.inferenceRuleId ||
+    !!result?._labEngineBrainRuleId ||
+    !!result?._labEngineBrainRuleName;
 
-    if (
-      hasDictionaryId ||
-      source.includes("dictionary") ||
-      source.includes("dict") ||
-      source.includes("辞書")
-    ) {
-      state.dictionaryHit += 1;
-      return;
-    }
+  const isBrainMatched =
+    result?.matched === true ||
+    result?._labEngineBrainMatched === true;
 
-    if (
-      hasRuleId ||
-      source.includes("inference") ||
-      source.includes("rule") ||
-      source.includes("推論")
-    ) {
-      state.inferenceRuleHit += 1;
-      return;
-    }
-
-    state.unmatched += 1;
+  if (
+    hasDictionaryId ||
+    source.includes("dictionary") ||
+    source.includes("dict") ||
+    source.includes("辞書")
+  ) {
+    state.dictionaryHit += 1;
+    return;
   }
 
+  if (
+    hasRuleId ||
+    source.includes("inference") ||
+    source.includes("rule") ||
+    source.includes("推論")
+  ) {
+    state.inferenceRuleHit += 1;
+    return;
+  }
+
+  // CAMP-109:
+  // LabEngine Brainで一致しているが、辞書/ルール種別フィールドが無い場合は
+  // 推論ルール側として扱い、学習判定0件にならないようにする。
+  if (isBrainMatched) {
+    state.inferenceRuleHit += 1;
+    return;
+  }
+
+  state.unmatched += 1;
+}
   function getBreakdown() {
     const learningHit = state.dictionaryHit + state.inferenceRuleHit;
 
