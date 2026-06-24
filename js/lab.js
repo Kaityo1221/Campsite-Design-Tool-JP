@@ -422,7 +422,7 @@ LabEngine学習判定：${labEngineBrainMatchedCount}件<br>
         </div>
       `;
     }
-
+renderLabLearningBreakdown();
   } catch (error) {
     console.error(error);
 
