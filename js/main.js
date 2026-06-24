@@ -1,5 +1,5 @@
-window.APP_VERSION = "v6.1.1";
-window.APP_UPDATED = "2026-06-19";
+window.APP_VERSION = "v6.2.0";
+window.APP_UPDATED = "2026-06-25";
 window.ENABLE_QUIZ = true;
 window.QUIZ_VERSION = "beta2";
 const ADMIN_CODE = "she1ep";
