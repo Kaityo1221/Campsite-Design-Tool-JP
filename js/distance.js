@@ -775,6 +775,14 @@ function renderDistanceLoadErrorHtml(title, message = "") {
 
   window._inputType = "kmz";
 
+  if (summary) {
+    summary.innerHTML = `
+      <div class="distance-warning">
+        KMZ/KMLを読み込み中です...<br>
+        <small>${escapeHtml(file.name || "")}</small>
+      </div>
+    `;
+  }
   try {
     const result =
       await extractLayersFromKML(file);
