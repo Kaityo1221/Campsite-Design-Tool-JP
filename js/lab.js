@@ -1479,7 +1479,7 @@ function renderLabLearningBreakdown() {
   const title = box.querySelector("h2");
   if (title) {
     title.style.whiteSpace = "nowrap";
-    title.style.fontSize = "clamp(24px, 6vw, 34px)";
+    title.style.fontSize = "clamp(22px, 5.4vw, 30px)";
     title.style.lineHeight = "1.25";
     title.style.letterSpacing = "-0.04em";
   }
@@ -1502,30 +1502,79 @@ function renderLabLearningBreakdown() {
   const stats = window.LabEngineLearningStats.getBreakdown();
 
   body.innerHTML = `
-    <div class="lab-learning-breakdown">
-      <p><strong>学習判定：</strong>${stats.learningHit}件</p>
+  <div class="lab-learning-breakdown">
+    <p style="
+      margin:0 0 18px;
+      font-weight:800;
+      white-space:nowrap;
+      font-size:clamp(20px, 5vw, 28px);
+    ">
+      学習判定：${stats.learningHit}件
+    </p>
 
-      <ul>
-        <li>辞書ヒット：${stats.dictionaryHit}件</li>
-        <li>推論ルールヒット：${stats.inferenceRuleHit}件</li>
-        <li>未一致：${stats.unmatched}件</li>
-      </ul>
+    <div style="
+      display:grid;
+      gap:14px;
+      font-weight:800;
+      font-size:clamp(18px, 4.8vw, 26px);
+      line-height:1.45;
+    ">
+      <div style="display:grid; grid-template-columns:1em 1fr auto; gap:8px; align-items:center;">
+        <span>・</span>
+        <span style="white-space:nowrap;">辞書ヒット</span>
+        <span style="white-space:nowrap;">${stats.dictionaryHit}件</span>
+      </div>
 
-      <hr>
+      <div style="display:grid; grid-template-columns:1em 1fr auto; gap:8px; align-items:center;">
+        <span>・</span>
+        <span style="white-space:nowrap;">推論ルールヒット</span>
+        <span style="white-space:nowrap;">${stats.inferenceRuleHit}件</span>
+      </div>
 
-      <ul>
-        <li>読込辞書件数：${stats.dictionaryCount}件</li>
-        <li>読込ルール件数：${stats.ruleCount}件</li>
-        <li>判定対象POI：${stats.totalJudged}件</li>
-      </ul>
-
-      <p class="note">${stats.diagnosis}</p>
-
-      ${
-        stats.lastError
-          ? `<p class="note warning">読込エラー：${String(stats.lastError)}</p>`
-          : ""
-      }
+      <div style="display:grid; grid-template-columns:1em 1fr auto; gap:8px; align-items:center;">
+        <span>・</span>
+        <span style="white-space:nowrap;">未一致</span>
+        <span style="white-space:nowrap;">${stats.unmatched}件</span>
+      </div>
     </div>
-  `;
+
+    <hr style="margin:22px 0;">
+
+    <div style="
+      display:grid;
+      gap:14px;
+      font-weight:800;
+      font-size:clamp(18px, 4.8vw, 26px);
+      line-height:1.45;
+    ">
+      <div style="display:grid; grid-template-columns:1em 1fr auto; gap:8px; align-items:center;">
+        <span>・</span>
+        <span style="white-space:nowrap;">読込辞書件数</span>
+        <span style="white-space:nowrap;">${stats.dictionaryCount}件</span>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1em 1fr auto; gap:8px; align-items:center;">
+        <span>・</span>
+        <span style="white-space:nowrap;">読込ルール件数</span>
+        <span style="white-space:nowrap;">${stats.ruleCount}件</span>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1em 1fr auto; gap:8px; align-items:center;">
+        <span>・</span>
+        <span style="white-space:nowrap;">判定対象POI</span>
+        <span style="white-space:nowrap;">${stats.totalJudged}件</span>
+      </div>
+    </div>
+
+    <p class="note" style="margin-top:22px;">
+      ${stats.diagnosis}
+    </p>
+
+    ${
+      stats.lastError
+        ? `<p class="note warning">読込エラー：${String(stats.lastError)}</p>`
+        : ""
+    }
+  </div>
+`;
 }
