@@ -327,14 +327,19 @@ startLabEngineSound();
     }
 
     // CAMP-108:
-    // 3人レビューで承認済みの辞書と推論ルールをLabEngine本体へ投入。
-    // ここで付ける分類はLabEngine画面・研究KMZ用であり、
-    // index.html側の距離チェック、マップ表示制御、マイマップコメントには接続しない。
-    if (typeof window.enrichLabPointsWithLabEngineBrain === "function") {
-      points = await window.enrichLabPointsWithLabEngineBrain(points);
-    }
+// 3人レビューで承認済みの辞書と推論ルールをLabEngine本体へ投入。
+// ここで付ける分類はLabEngine画面・研究KMZ用であり、
+// index.html側の距離チェック、マップ表示制御、マイマップコメントには接続しない。
+if (typeof window.enrichLabPointsWithLabEngineBrain === "function") {
+  points = await window.enrichLabPointsWithLabEngineBrain(points);
+}
 
-    console.log("Lab Engine POI分類完了:", points);
+// CAMP-109: LabEngine学習判定の内訳をカウント
+(points || []).forEach(point => {
+  window.LabEngineLearningStats?.recordDecision(point);
+});
+
+console.log("Lab Engine POI分類完了:", points);
 
 renderLabResearchMap(points);
 setLabResearchKmzReady(points);
@@ -1108,6 +1113,15 @@ let pendingLabResearchReport = null;
 
 function resetLabResearchKmzOutput() {
   labResearchKmzPoints = [];
+
+  // CAMP-109: LabEngine 学習判定カウンターをリセット
+  window.LabEngineLearningStats?.reset();
+
+  // CAMP-109: 前回の学習判定内訳カードを非表示に戻す
+  const learningBreakdownBox = document.getElementById("labLearningBreakdown");
+  if (learningBreakdownBox) {
+    learningBreakdownBox.hidden = true;
+  }
 
   const button = document.getElementById("researchKmzButton");
 
