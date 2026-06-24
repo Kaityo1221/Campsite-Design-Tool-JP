@@ -422,6 +422,7 @@ LabEngine学習判定：${labEngineBrainMatchedCount}件<br>
         </div>
       `;
     }
+
 renderLabLearningBreakdown();
   } catch (error) {
     console.error(error);
@@ -1436,14 +1437,54 @@ list.innerHTML = `
 // ======================================================
 
 function renderLabLearningBreakdown() {
-  const box = document.getElementById("labLearningBreakdown");
-  const body = document.getElementById("labLearningBreakdownBody");
+  let box = document.getElementById("labLearningBreakdown");
+  let body = document.getElementById("labLearningBreakdownBody");
 
-  if (!box || !body || !window.LabEngineLearningStats) return;
+  // CAMP-109:
+  // lab.html側にカードが無い、または位置が遠い場合でも
+  // LAB ENGINE COMPLETE の直下に自動生成する
+  if (!box || !body) {
+    const result = document.getElementById("labEngineResult");
 
-  const stats = window.LabEngineLearningStats.getBreakdown();
+    if (!result) {
+      return;
+    }
+
+    box = document.createElement("div");
+    box.id = "labLearningBreakdown";
+    box.className = "panel";
+    box.style.marginTop = "16px";
+
+    box.innerHTML = `
+      <h2>学習判定の内訳</h2>
+      <div id="labLearningBreakdownBody"></div>
+    `;
+
+    result.insertAdjacentElement("afterend", box);
+
+    body = document.getElementById("labLearningBreakdownBody");
+  }
+
+  if (!body) {
+    return;
+  }
 
   box.hidden = false;
+
+  if (!window.LabEngineLearningStats) {
+    body.innerHTML = `
+      <div class="lab-learning-breakdown">
+        <p><strong>学習判定の内訳を取得できませんでした。</strong></p>
+        <p class="note warning">
+          LabEngineLearningStats が見つかりません。<br>
+          lab-engine-brain.js の読み込み順、またはキャッシュを確認してください。
+        </p>
+      </div>
+    `;
+    return;
+  }
+
+  const stats = window.LabEngineLearningStats.getBreakdown();
 
   body.innerHTML = `
     <div class="lab-learning-breakdown">
