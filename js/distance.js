@@ -735,10 +735,12 @@ function renderDistanceLoadErrorHtml(title, message = "") {
     distanceResult.innerHTML = "";
   }
 
-  const isKmz = fileName.endsWith(".kmz");
-  const isIphoneKmzZip =
-    fileName.endsWith(".kmz.zip");
-
+const isKml = fileName.endsWith(".kml");
+const isKmz = fileName.endsWith(".kmz");
+const isZip = fileName.endsWith(".zip");
+const isIphoneKmzZip =
+  fileName.endsWith(".kmz.zip");
+  
   if (isIphoneKmzZip) {
     if (summary) {
       summary.innerHTML = renderDistanceLoadErrorHtml(
@@ -758,20 +760,20 @@ function renderDistanceLoadErrorHtml(title, message = "") {
     return;
   }
 
-  if (!isKmz) {
-    if (summary) {
-      summary.innerHTML = renderDistanceLoadErrorHtml(
-        "完成KMZを選択してください",
-        `
-          距離チェックでは、Google My Mapsから書き出した<br>
-          <strong>.kmz</strong> 形式の完成ファイルを読み込みます。<br>
-          選択されたファイル：${escapeHtml(file.name)}
-        `
-      );
-    }
-
-    return;
+  if (!isKml && !isKmz && !isZip) {
+  if (summary) {
+    summary.innerHTML = `
+      <div class="distance-warning">
+        ${createKmlKmzErrorMessage(
+          "unsupported_extension",
+          file.name || ""
+        )}
+      </div>
+    `;
   }
+
+  return;
+}
 
   window._inputType = "kmz";
 
