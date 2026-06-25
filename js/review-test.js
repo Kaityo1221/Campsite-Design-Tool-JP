@@ -129,13 +129,27 @@ function renderDecisionButtons(){
 }
 
 function chooseDecision(code){
-  const poi=POIS[currentIndex];
-  const d=DECISIONS.find(x=>x.code===code);
-  setAnswer(poi.id, { decisionCode: code, decisionLabel: d.label, memo: qs('#memoInput').value || '' });
-  renderPoi(); renderProgress(); renderList(); renderExport();
-  if(currentIndex < POIS.length-1) { setTimeout(()=>{ currentIndex++; renderPoi(); renderProgress(); renderList(); window.scrollTo({top:0,behavior:'smooth'}); }, 180); }
-}
+  const poi = POIS[currentIndex];
+  const d = DECISIONS.find(x => x.code === code);
 
+  setAnswer(poi.id, {
+    decisionCode: code,
+    decisionLabel: d.label,
+    memo: qs('#memoInput').value || ''
+  });
+
+  renderPoi();
+  renderProgress();
+  renderList();
+  renderExport();
+
+  const hint = qs('#afterDecisionHint');
+  if (hint) {
+    hint.textContent =
+      '判定を保存しました。必要ならメモを書いてから「次のPOIへ」を押してください。';
+    hint.hidden = false;
+  }
+}
 function renderPoi(){
   const poi=POIS[currentIndex];
   const role=ROLES[currentRoleKey];
