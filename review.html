@@ -1,99 +1,128 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="robots" content="noindex, nofollow">
-  <meta name="googlebot" content="noindex, nofollow">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-
-  <title>Campsite Lab Review</title>
-
-  <link rel="stylesheet" href="css/review-test.css?v=6">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#111827" />
+  <title>葛西臨海公園 POIレビュー比較テスト</title>
+  <link rel="stylesheet" href="css/review-test.css" />
 </head>
-
 <body>
-  <div id="celebrationLayer" class="celebration-layer" aria-hidden="true"></div>
-  <main class="review-page">
-    <section class="review-hero">
-      <div class="review-badge">Campsite Lab</div>
-      <h1>POIレビュー実験</h1>
-      <p id="reviewIntro">
-        招待リンクを確認しています…
-      </p>
+  <header class="app-header">
+    <div>
+      <p class="eyebrow">Campsite Lab / POI Dictionary Review</p>
+      <h1>葛西臨海公園<br class="sp-only">POIレビュー比較テスト</h1>
+      <p class="lead">1件ずつ確認して、当てはまる判定を選んでください。入力内容はこの端末に自動保存され、最後に送信できます。</p>
+    </div>
+  </header>
+
+  <main class="app-shell">
+    <section class="role-panel" id="rolePanel">
+      <h2>レビュー担当を選択</h2>
+      <p class="muted">共有されたリンクから開いた場合は、担当が自動で選ばれます。</p>
+      <div class="role-grid" id="roleGrid"></div>
     </section>
 
-    <section id="reviewStatusBox" class="review-status">
-      読み込み中…
+    <section class="status-card" id="statusCard" hidden>
+      <div class="status-main">
+        <div>
+          <p class="current-role" id="currentRole"></p>
+          <p class="role-instruction" id="roleInstruction"></p>
+        </div>
+        <button class="ghost-btn" id="changeRoleBtn" type="button">担当を変更</button>
+      </div>
+      <div class="progress-wrap" aria-label="進捗">
+        <div class="progress-bar"><span id="progressBar"></span></div>
+        <p id="progressText">0 / 0</p>
+      </div>
     </section>
 
-    <section id="reviewCard" class="review-card" style="display:none;">
-      <div class="review-progress">
-        <span id="reviewProgressText">0 / 0</span>
-        <span id="reviewRoleText"></span>
+    <section class="guide-card" id="guideCard" hidden>
+      <button class="guide-toggle" type="button" id="guideToggle" aria-expanded="true">
+        判定ガイド：保留と除外の違い
+        <span>開閉</span>
+      </button>
+      <div class="guide-body" id="guideBody">
+        <div class="judge-rule strong">
+          <b>保留 = あとで写真・地図・現地確認を見れば使えるかもしれない</b>
+          <small>情報が足りないだけ。可能性を残す。</small>
+        </div>
+        <div class="judge-rule danger">
+          <b>除外 = 情報が増えても使わない</b>
+          <small>学習に入れるとノイズになる。キャンプサイト設計に使わない。</small>
+        </div>
       </div>
-
-      <h2 id="reviewPoiName">POI名</h2>
-
-      <div id="reviewMeta" class="review-meta"></div>
-
-      <a
-        id="reviewMapLink"
-        class="review-map-link"
-        href="#"
-        target="_blank"
-        rel="noopener noreferrer"
-        style="display:none;"
-      >
-        地図で確認する
-      </a>
-
-      <div class="review-section-title">分類</div>
-
-      <div class="review-category-grid">
-        <button type="button" data-category="REST">休憩</button>
-        <button type="button" data-category="STAY">滞在</button>
-        <button type="button" data-category="LOOP">回遊</button>
-        <button type="button" data-category="CAUTION">注意</button>
-        <button type="button" data-category="HOLD">保留</button>
-        <button type="button" data-category="EXCLUDE">辞書不要</button>
-      </div>
-
-      <div class="review-section-title">自信度</div>
-
-      <div class="review-confidence-grid">
-        <button type="button" data-confidence="high">自信あり</button>
-        <button type="button" data-confidence="maybe">たぶん</button>
-        <button type="button" data-confidence="unsure">迷う</button>
-        <button type="button" data-confidence="unknown">判断不可</button>
-      </div>
-
-      <label class="review-note-label" for="reviewNote">
-        メモ
-      </label>
-
-      <textarea
-        id="reviewNote"
-        rows="4"
-        placeholder="迷った理由、現地感覚、Wayfarer視点など"
-      ></textarea>
-
-      <div class="review-actions">
-  <button id="saveReviewButton" class="save-review-button">
-    保存して次へ
-  </button>
-</div>
     </section>
 
-    <section id="reviewCompleteBox" class="review-complete" style="display:none;">
-  <h2>Complete!!</h2>
-  <p>
-    いつもありがとう
-  </p>
-</section>
+    <section class="review-card" id="reviewCard" hidden>
+      <div class="card-topline">
+        <span id="poiCounter" class="pill">1 / 132</span>
+      </div>
+
+      <h2 id="poiName" class="poi-name"></h2>
+      <div id="metaBox" class="meta-box"></div>
+
+      <div class="decision-area">
+        <p class="section-title">このPOIの使い方を選ぶ</p>
+        <div id="decisionButtons" class="decision-buttons"></div>
+      </div>
+
+      <label class="memo-label" for="memoInput">メモ（任意）</label>
+      <textarea id="memoInput" rows="3" placeholder="迷った理由、現地確認したい点、除外理由など"></textarea>
+
+      <div class="mobile-actions">
+        <button type="button" class="secondary-btn" id="prevBtn">前へ</button>
+        <button type="button" class="primary-btn" id="nextBtn">次へ</button>
+      </div>
+    </section>
+
+    <section class="list-card" id="listCard" hidden>
+      <button class="list-toggle" type="button" id="listToggle" aria-expanded="false">
+        POI一覧を開く
+        <span id="listSummary"></span>
+      </button>
+      <div class="list-body" id="listBody" hidden>
+        <div class="list-tools">
+          <button type="button" id="goUnansweredBtn">次の未判定へ</button>
+          <button type="button" id="showAllBtn">全件</button>
+          <button type="button" id="showUnansweredBtn">未判定のみ</button>
+        </div>
+        <div id="poiList" class="poi-list"></div>
+      </div>
+    </section>
+
+    <section class="export-card" id="exportCard" hidden>
+      <h2>レビューを送信する</h2>
+      <p class="muted">判定が終わったら「送信する」を押してください。会長側の集計に自動で反映されます。</p>
+      <div class="submit-summary">
+        <b id="submitProgress">0 / 0 件判定済み</b>
+        <span>未判定が残っていても途中送信できます。あとで同じ端末から続きを入力できます。</span>
+      </div>
+      <div class="export-actions">
+        <button type="button" class="primary-btn" id="submitResultBtn">送信する</button>
+        <button type="button" class="danger-btn" id="resetBtn">入力をやり直す</button>
+      </div>
+      <p id="submitStatus" class="submit-status" hidden></p>
+      <details class="backup-output">
+        <summary>通信できない時だけ開く</summary>
+        <p class="muted">送信できない場合は、予備ファイルを保存して会長に送ってください。</p>
+        <div class="backup-actions">
+          <button type="button" class="secondary-btn" id="downloadResultBtn">予備ファイルを保存</button>
+          <button type="button" class="secondary-btn" id="copyResultBtn">予備データをコピー</button>
+        </div>
+        <textarea id="resultOutput" rows="8" readonly placeholder="予備データがここに表示されます"></textarea>
+      </details>
+    </section>
   </main>
 
+  <nav class="bottom-nav" id="bottomNav" hidden>
+    <button type="button" id="bottomPrevBtn">前へ</button>
+    <button type="button" id="bottomUnansweredBtn">未判定へ</button>
+    <button type="button" id="bottomExportBtn">提出画面へ</button>
+  </nav>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/lab-supabase.js?v=1"></script>
-  <script src="js/review-test.js?v=7"></script>
+  <script src="js/lab-supabase.js"></script>
+  <script src="js/review-test.js"></script>
 </body>
 </html>
