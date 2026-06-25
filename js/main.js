@@ -4,6 +4,10 @@ window.ENABLE_QUIZ = true;
 window.QUIZ_VERSION = "beta2";
 const ADMIN_CODE = "she1ep";
 
+let currentAliasReviewItem = null;
+let aliasReviewIsLoading = false;
+let aliasReviewSkippedIds = [];
+
 window._layerPoints = {};
 
 let distanceData = {
