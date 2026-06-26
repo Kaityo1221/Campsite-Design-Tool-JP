@@ -150,6 +150,20 @@ function chooseDecision(code){
     hint.hidden = false;
   }
 }
+function saveCurrentMemo(){
+  const poi = POIS[currentIndex];
+  if(!poi) return;
+
+  const memoInput = qs('#memoInput');
+  if(!memoInput) return;
+
+  const current = getAnswer(poi.id) || {};
+
+  setAnswer(poi.id, {
+    ...current,
+    memo: memoInput.value || ''
+  });
+}
 function renderPoi(){
   const poi=POIS[currentIndex];
   const role=ROLES[currentRoleKey];
@@ -166,6 +180,13 @@ function renderPoi(){
   }
   qs('#metaBox').innerHTML=meta.join('');
   qs('#memoInput').value=ans?.memo || '';
+  const nextBtn = qs('#nextBtn');
+if(nextBtn){
+  nextBtn.textContent =
+    currentIndex >= POIS.length - 1
+      ? '提出画面へ'
+      : '次のPOIへ';
+}
   qsa('.decision-btn').forEach(btn=>btn.classList.toggle('selected', ans?.decisionCode === btn.dataset.code));
 }
 
@@ -194,7 +215,37 @@ function renderList(){
   });
 }
 
-function nextPoi(){ if(currentIndex<POIS.length-1){ currentIndex++; renderPoi(); renderProgress(); renderList(); window.scrollTo({top:0,behavior:'smooth'}); } }
+function nextPoi(){
+  saveCurrentMemo();
+
+  if(currentIndex >= POIS.length - 1){
+    renderProgress();
+    renderList();
+    renderExport();
+
+    const exportCard = qs('#exportCard');
+    if(exportCard){
+      exportCard.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+
+    return;
+  }
+
+  currentIndex++;
+
+  renderPoi();
+  renderProgress();
+  renderList();
+  renderExport();
+
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+  });
+}
 function prevPoi(){ if(currentIndex>0){ currentIndex--; renderPoi(); renderProgress(); renderList(); window.scrollTo({top:0,behavior:'smooth'}); } }
 function goNextUnanswered(){
   const answers=loadAnswers();
@@ -212,6 +263,21 @@ function buildPoiUuid(id){
 function answeredPois(){
   const answers=loadAnswers();
   return POIS.filter(p=>answers[p.id]?.decisionCode).map(p=>({ poi:p, answer:answers[p.id] }));
+}
+function unansweredPois(){
+  const answers = loadAnswers();
+
+  return POIS.filter(p => {
+    return !answers[p.id]?.decisionCode;
+  });
+}
+
+function getPoiNumber(poi){
+  return POIS.findIndex(p => p.id === poi.id) + 1;
+}
+
+function getPoiName(poi){
+  return poi.name || poi.poiName || poi.title || poi.normalized_name || `POI ${poi.id}`;
 }
 function buildSupabaseRows(){
   const role=ROLES[currentRoleKey];
@@ -238,7 +304,7 @@ function buildBackupResult(){
   return {
     testId: SUPABASE_CONFIG.testBatchId,
     target: SUPABASE_CONFIG.parkName,
-    version:'v11-source-queue-uuid-fix',
+    version:'v14-source-queue-uuid-fix',
     exportedAt:nowIso(),
     roleKey:currentRoleKey,
     reviewer:role.name,
@@ -255,14 +321,94 @@ function buildBackupResult(){
       updatedAt:answers[p.id]?.updatedAt || ''
     }))
   };
-}
-function renderExport(){
+}function renderExport(){
   if(!currentRoleKey) return;
-  const result=buildBackupResult();
-  const output=qs('#resultOutput');
-  if(output) output.value=JSON.stringify(result,null,2);
-  const progress=qs('#submitProgress');
-  if(progress) progress.textContent=`${result.answered} / ${result.total} 件判定済み`;
+
+  const result = buildBackupResult();
+  const output = qs('#resultOutput');
+
+  if(output) {
+    output.value = JSON.stringify(result, null, 2);
+  }
+
+  const progress = qs('#submitProgress');
+
+  if(progress) {
+    progress.textContent = `${result.answered} / ${result.total} 件判定済み`;
+  }
+
+  renderMissingBox();
+}
+function renderMissingBox(){
+  const exportCard = qs('#exportCard');
+  if(!exportCard) return;
+
+  let box = qs('#missingBox');
+
+  if(!box){
+    box = document.createElement('div');
+    box.id = 'missingBox';
+    box.className = 'missing-box';
+
+    const exportActions = qs('.export-actions');
+
+    if(exportActions){
+      exportActions.insertAdjacentElement('beforebegin', box);
+    }else{
+      exportCard.appendChild(box);
+    }
+  }
+
+  const missing = unansweredPois();
+
+  if(missing.length === 0){
+    box.hidden = false;
+    box.innerHTML = `
+      <p class="missing-ok">全件判定済みです。このまま送信できます。</p>
+    `;
+    return;
+  }
+
+  const listHtml = missing
+    .slice(0, 10)
+    .map(poi => {
+      return `${getPoiNumber(poi)}番：${escapeHtml(getPoiName(poi))}`;
+    })
+    .join('<br>');
+
+  box.hidden = false;
+  box.innerHTML = `
+    <p class="missing-alert">未判定が ${missing.length} 件あります。</p>
+    <p class="missing-list">${listHtml}</p>
+    <button type="button" class="primary-btn" id="goMissingBtn">
+      未判定のPOIへ移動
+    </button>
+  `;
+
+  const goMissingBtn = qs('#goMissingBtn');
+
+  if(goMissingBtn){
+    goMissingBtn.addEventListener('click', () => {
+      const first = missing[0];
+      const index = POIS.findIndex(p => p.id === first.id);
+
+      if(index >= 0){
+        saveCurrentMemo();
+
+        currentIndex = index;
+
+        renderPoi();
+        renderProgress();
+        renderList();
+        renderExport();
+
+        qs('#reviewCard').scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }
+    });
+  }
 }
 function setSubmitStatus(type, message){
   const box=qs('#submitStatus');
