@@ -370,11 +370,10 @@ function renderMissingBox(){
   }
 
   const listHtml = missing
-    .slice(0, 10)
-    .map(poi => {
-      return `${getPoiNumber(poi)}番：${escapeHtml(getPoiName(poi))}`;
-    })
-    .join('<br>');
+  .map(poi => {
+    return `${getPoiNumber(poi)}番：${escapeHtml(getPoiName(poi))}`;
+  })
+  .join('<br>');
 
   box.hidden = false;
   box.innerHTML = `

@@ -25,6 +25,8 @@
 
 .missing-list {
   margin: 8px 0 12px;
+  max-height: 260px;
+  overflow-y: auto;
   line-height: 1.7;
   color: #374151;
 }
