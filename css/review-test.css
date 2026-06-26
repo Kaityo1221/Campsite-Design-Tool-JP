@@ -3,3 +3,28 @@
 
 .submit-status{margin:12px 0 0;padding:12px 14px;border-radius:14px;background:#f3f4f6;color:#374151;line-height:1.5;font-weight:700}.submit-status.ok{background:#ecfdf5;color:#047857}.submit-status.error{background:#fef2f2;color:#991b1b}.submit-status.sending{background:#eff6ff;color:#1d4ed8}.backup-output summary{cursor:pointer;font-weight:800;margin-top:14px}.backup-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}.backup-output textarea{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
 @media(max-width:700px){.backup-actions{grid-template-columns:1fr}}
+.missing-box {
+  margin: 16px 0;
+  padding: 16px;
+  border-radius: 16px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+}
+
+.missing-alert {
+  margin: 0 0 8px;
+  font-weight: 800;
+  color: #9a3412;
+}
+
+.missing-ok {
+  margin: 0;
+  font-weight: 800;
+  color: #166534;
+}
+
+.missing-list {
+  margin: 8px 0 12px;
+  line-height: 1.7;
+  color: #374151;
+}
