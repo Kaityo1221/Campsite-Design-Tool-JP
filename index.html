@@ -849,18 +849,19 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
     <h2>🧹 重複POI整理</h2>
 
     <p class="note">
-      CSV / KML / KMZを読み込み、重複している既存POIを整理します。<br>
-      完成済みデータの修正や、複数回のインポートで既存POIが重なってしまった場合に利用してください。
-    </p>
+  CSVを複数読み込み、同じ座標に重複している既存POIを1件にまとめます。<br>
+  一地域を複数箇所から抽出したCSVを整理し、重複削除済みKMZを生成できます。<br>
+  KML / KMZは従来どおり、1ファイル内の重複整理に対応します。
+</p>
 
     <div class="step">
       <div class="step-no">補助機能</div>
       <h3>既存POIの重複を削除する</h3>
 
       <p class="note">
-        同じ座標に重複している既存POIを1件にまとめます。<br>
-        追加希望POI、30m円、40m円、ダミーポイントは削除対象になりません。
-      </p>
+  複数CSVをまとめて読み込み、同じ座標に重複している既存POIを1件にまとめます。<br>
+  追加希望POI、30m円、40m円、ダミーポイントは削除対象になりません。
+</p>
 
       <p class="note" style="
         padding:12px;
@@ -875,9 +876,11 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
 
       <p>整理したいCSV / KML / KMZファイルを選択します。</p>
 
-     <input type="file"
+     <input
+  type="file"
   id="deduplicatePoiFile"
-  accept=".csv,.kmz,.kml,.zip,text/csv,application/vnd.google-earth.kmz,application/vnd.google-earth.kml+xml,application/zip"
+  multiple
+  accept=".csv,.kmz,.kml,.zip"
 >
     <button
   class="generate"
