@@ -98,10 +98,13 @@
       <h2>レビューを送信する</h2>
       <p class="muted">判定が終わったら「送信する」を押してください。会長側の集計に自動で反映されます。</p>
       <div class="submit-summary">
-        <b id="submitProgress">0 / 0 件判定済み</b>
-        <span>未判定が残っていても途中送信できます。あとで同じ端末から続きを入力できます。</span>
-      </div>
-      <div class="export-actions">
+  <b id="submitProgress">0 / 0 件判定済み</b>
+  <span>未判定が残っていても途中送信できます。あとで同じ端末から続きを入力できます。</span>
+</div>
+
+<div id="missingBox" class="missing-box" hidden></div>
+
+<div class="export-actions">
         <button type="button" class="primary-btn" id="submitResultBtn">送信する</button>
         <button type="button" class="danger-btn" id="resetBtn">入力をやり直す</button>
       </div>
