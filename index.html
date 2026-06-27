@@ -849,18 +849,19 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
     <h2>🧹 重複POI整理</h2>
 
     <p class="note">
-      CSV / KML / KMZを読み込み、重複している既存POIを整理します。<br>
-      完成済みデータの修正や、複数回のインポートで既存POIが重なってしまった場合に利用してください。
-    </p>
+  CSVを複数読み込み、同じ座標に重複している既存POIを1件にまとめます。<br>
+  一地域を複数箇所から抽出したCSVを整理し、重複削除済みKMZを生成できます。<br>
+  KML / KMZは従来どおり、1ファイル内の重複整理に対応します。
+</p>
 
     <div class="step">
       <div class="step-no">補助機能</div>
       <h3>既存POIの重複を削除する</h3>
 
       <p class="note">
-        同じ座標に重複している既存POIを1件にまとめます。<br>
-        追加希望POI、30m円、40m円、ダミーポイントは削除対象になりません。
-      </p>
+  複数CSVをまとめて読み込み、同じ座標に重複している既存POIを1件にまとめます。<br>
+  追加希望POI、30m円、40m円、ダミーポイントは削除対象になりません。
+</p>
 
       <p class="note" style="
         padding:12px;
@@ -875,9 +876,11 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
 
       <p>整理したいCSV / KML / KMZファイルを選択します。</p>
 
-     <input type="file"
+     <input
+  type="file"
   id="deduplicatePoiFile"
-  accept=".csv,.kmz,.kml,.zip,text/csv,application/vnd.google-earth.kmz,application/vnd.google-earth.kml+xml,application/zip"
+  multiple
+  accept=".csv,.kmz,.kml,.zip"
 >
     <button
   class="generate"
@@ -889,389 +892,8 @@ CSVの使用を推奨します。KML / KMZでは分類できない場合があ�
     </div>
   </div>
 </section>
- <section id="parts" class="tab-content">
-  <div class="panel">
-    <h2>🧪 Campsite Lab</h2>
-  <div class="lab-secret-tag">CLASSIFIED / RESEARCH UNIT</div>
+ <!-- Campsite Labは lab.html に分離。入口は羊→Lab看板のまま。 -->
 
-<div class="lab-legend-box lab-user-guide">
-  <strong class="lab-mission-title">
-    🔬 今月の研究員ミッション
-    <span class="lab-live-dot"></span>
-  </strong>
-
-  <p class="note">
-    研究員は、CAイベントに使えそうな公園を探し、Wayfarer MapのNearby Wayspots CSVをCampsite Labへ投入します。<br>
-    LAB ENGINEで公園のPOIを分類し、研究KMZと一言メモを送信してください。
-  </p>
-
-  <div class="lab-guide-steps">
-    <div><span>1</span> CAイベントに使えそうな公園を1か所選ぶ</div>
-    <div><span>2</span> Wayfarer MapでCSVを抽出する</div>
-    <div><span>3</span> LAB ENGINEにCSVを投入（選択）する</div>
-    <div><span>4</span> 「⚙️ LAB ENGINE START」を押す</div>
-    <div><span>5</span> 研究結果マップと未分類POIを確認する</div>
-    <div><span>6</span> 研究KMZを保存する</div>
-    <div><span>7</span> 一言メモを書いて「研究結果を送信」を押す</div>
-  </div>
-
-  <div class="lab-mission-box">
-  <strong>🔬 研究員メモ</strong><br>
-  ①LAB ENGINEの解析が終わったら、右側の「研究KMZを保存」から端末に保存してください。<br>
-  ②保存した研究KMZは、会長のDiscord DMへ送ってください。<br>
-  ③下に表示される入力欄に公園の一言メモを書き、<br>
-  「研究結果を送信」を押してください。<br><br>
-
-  ※送信ボタンでは、研究履歴と未分類POIレビュー候補が保存されます。<br>
-  CSVや未分類POI CSVをDMで送る必要はありません。<br><br>
-
-    例：駅から近い／広場がある／日陰が少ない／CAイベントに使えそう
-</div>
-
-</div>
-
-<div class="step lab-dev-only" style="display:none;">
-  <div class="step-no">Supabase接続テスト</div>
-  <h3>POI名称データバンク読込テスト</h3>
-
-  <p class="note">
-    Supabaseに登録したPOI名称データバンクを、Campsite Labから読み込めるか確認します。<br>
-    成功すると、category_master から数件読み込みます。
-  </p>
-
-  <button
-    type="button"
-    class="generate"
-    onclick="testLoadPoiDatabank()"
-  >
-    Supabase辞書読込テスト
-  </button>
-
-  <button
-  type="button"
-  class="generate"
-  onclick="testClassifyPoiNames()"
-  style="margin-top:10px;"
->
-  POI分類テスト
-</button>
-</div>
-<details class="lab-legend-box">
-  <summary><strong>更新履歴 v6.1.1</strong></summary>
-  ・配置余地カードを追加しました。<br>
-  ・有効配置余地を、既存POI40m円除外後の面積として表示しました。<br>
-  ・配置余地の点数表示を非表示にしました。<br>
-  ・最大25件は保証ではない旨を追記しました。<br>
-  ・iPhoneでKMZが.zip保存された場合の案内を追加しました。
-</details>
-    <div class="step lab-engine-step">
-  <div class="step-no">公園研究</div>
-
-  <h3>公園研究CSVを読み込む</h3>
-
-  <p class="note">
-    Wayfarer MapでCSV出力したデータを読み込み、POIを休憩・滞在・回遊・注意・未分類に分類します。<br>
-    複数CSVを選んだ場合は、同じ座標のPOIを自動で重複削除してから分類します。
-  </p>
-
-  <div class="lab-engine-machine lab-heavy-engine" id="labEngineMachine">
-
-    <div class="engine-bolt bolt-tl"></div>
-    <div class="engine-bolt bolt-tr"></div>
-    <div class="engine-bolt bolt-bl"></div>
-    <div class="engine-bolt bolt-br"></div>
-
-    <div class="lab-csv-card engine-input-port" id="labCsvCard">
-      <div class="engine-port-label">INPUT</div>
-      <div class="engine-port-icon">📄</div>
-      <div class="engine-port-main">CSV DATA</div>
-    </div>
-
-    <div class="lab-engine-core engine-reactor-core">
-      <div class="engine-status-strip">
-        <span></span>
-        LAB ENGINE CORE
-        <span></span>
-      </div>
-
-      <div class="engine-gauge-row">
-        <div class="engine-gauge">
-          <div class="engine-gauge-needle"></div>
-        </div>
-
-        <div class="engine-power-core">
-          <div class="engine-core-ring"></div>
-          <div class="engine-core-light"></div>
-          <div class="engine-core-label">ANALYZING</div>
-        </div>
-
-        <div class="engine-gauge">
-          <div class="engine-gauge-needle right"></div>
-        </div>
-      </div>
-
-      <div class="engine-gear-row">
-        <div class="lab-gear gear-left engine-metal-gear">⚙️</div>
-        <div class="lab-engine-label engine-main-label">LAB ENGINE</div>
-        <div class="lab-gear gear-right engine-metal-gear">⚙️</div>
-      </div>
-    </div>
-
-    <button
-      id="researchKmzButton"
-      class="lab-file-card lab-file-card-kmz disabled engine-output-port"
-      type="button"
-      onclick="downloadResearchKmz()"
-      disabled
-    >
-      <div class="engine-port-label">OUTPUT</div>
-      <img
-        src="assets/lab-output-drum.png"
-        alt="研究出力ドラム"
-        class="engine-output-image"
-      >
-      <div class="lab-file-main">研究KMZを保存</div>
-      <small>CSV解析後に保存できます</small>
-    </button>
-
-    <div class="lab-engine-control-port">
-      <div class="engine-port-label">FUEL</div>
-
-      <p class="lab-engine-fuel-title">
-        研究する公園のCSVを投入します。
-      </p>
-
-      <div class="lab-engine-file-box">
-        <input
-          type="file"
-          id="labResearchCsvFile"
-          accept=".csv,text/csv"
-          multiple
-        >
-      </div>
-
-      <button
-        class="generate lab-engine-button"
-        onclick="runLabCsvToKmzEngine()"
-      >
-        ⚙️ LAB ENGINE START
-      </button>
-
-      <div id="labEngineResult" class="lab-engine-result-slot"></div>
-    </div>
-  </div>
-
-
-  <audio
-    id="labEngineSound"
-    src="assets/audio/CarEngine.wav"
-    preload="auto"
-  ></audio>
-
-  <div id="researchMapPanel" class="research-map-panel" style="display:none;">
-    <div class="capacity-section-title">
-      🗺 研究結果マップ
-    </div>
-
-    <p class="note">
-      CSVから読み込んだPOIを、休憩・滞在・回遊・注意・未分類に分けて地図上に表示します。<br>
-      ここではキャンプサイト設計前の「公園研究」を確認できます。
-    </p>
-
-    <div id="researchResultMap" class="research-result-map"></div>
-
-    <div id="researchMapSummary" class="research-map-summary"></div>
-  </div>
-
-  <div
-    id="unknownPoiReviewBox"
-    class="lab-legend-box unknown-poi-review-box"
-    style="display:none;"
-  >
-    <strong>🧩 未分類POIレビュー候補</strong>
-
-    <p class="note">
-      データベースの辞書で分類できなかったPOI名を、次回レビュー候補として一覧化します。<br>
-      「研究結果を送信」を押すと、未分類POIレビュー候補も自動で保存されます。
-    </p>
-
-    <div
-      id="unknownPoiSummary"
-      class="unknown-poi-summary"
-    ></div>
-
-    <div
-      id="unknownPoiList"
-      class="unknown-poi-list"
-    ></div>
-  </div>
-
-  <div class="lab-legend-box">
-    <strong>🗺️ KMZアイコン凡例</strong>
-
-    <div class="lab-legend-grid">
-      <div><span class="legend-dot rest"></span>休憩：ベンチ・東屋・トイレなど</div>
-      <div><span class="legend-dot stay"></span>滞在：広場・芝生・噴水など</div>
-      <div><span class="legend-dot loop"></span>回遊：遊歩道・橋・案内板など</div>
-      <div><span class="legend-dot caution"></span>注意：駐車場・階段・水辺など</div>
-      <div><span class="legend-dot unknown"></span>未分類：今後辞書に追加する候補</div>
-    </div>
-  </div>
-
-  <div
-    id="labResearchSubmitBox"
-    class="lab-legend-box"
-    style="display:none;"
-  >
-    <strong>📮 研究結果を送信</strong>
-
-    <p class="note">
-      研究KMZを会長のDiscord DMへ送ったら、この公園について気づいたことを一言だけ書いて送信してください。<br>
-      送信ボタンを押すまで、Supabaseには保存されません。
-    </p>
-
-    <textarea
-      id="labResearchNote"
-      rows="3"
-      placeholder="例：駅から近い／広場あり／CAイベントに使えそう／日陰が少ない"
-      style="
-        width:100%;
-        padding:12px;
-        border-radius:12px;
-        border:1px solid rgba(148,163,184,0.35);
-        background:#0f172a;
-        color:white;
-        font-size:14px;
-        line-height:1.6;
-        resize:vertical;
-      "
-    ></textarea>
-
-    <button
-      id="labResearchSubmitButton"
-      type="button"
-      class="generate"
-      onclick="submitLabResearchReport()"
-    >
-      📮 研究結果を送信
-    </button>
-
-    <div id="labResearchSubmitStatus"></div>
-  </div>
-</div>
-  <h3>配置余地チェック（実験）</h3>
-
-  <p class="note">
-    出来上がったキャンプサイトKMZ、または追加POIがまだ入っていないKMZを読み込み、<br>
-    40m間隔をもとに配置余地を概算し、候補POIをKMZで生成します。
-  </p>
-
-  <p class="note" style="
-    padding:12px;
-    border-radius:12px;
-    background:rgba(168,85,247,0.12);
-    border:1px solid rgba(168,85,247,0.35);
-    color:#ddd6fe;
-  ">
-    🧪 実験機能<br>
-    無理やり敷き詰めるための機能ではありません。<br>
-    現地の導線・安全性・遊びやすさを優先してください。
-  </p>
-  <div class="lab-legend-box">
-  <strong>追加POI数について</strong>
-  追加POIは最大25件までですが、必ず25件追加されるわけではありません。<br>
-  活動範囲の広さ、既存POI密度、40m条件、現地の安全性や導線により、実際の追加数は変わります。
-</div>
-
- <div class="capacity-control-top">
-
-  <div class="capacity-section-title">
-    1. キャンプサイトKMZを読み込む
-  </div>
-
-  <p>キャンプサイトKMZ / KMLを選択します。</p>
-
-  <input
-    type="file"
-    id="capacityFile"
-    accept=".kmz,.kml,.zip,application/vnd.google-earth.kmz,application/vnd.google-earth.kml+xml,application/zip"
-  >
-  <p class="note">
-  iPhoneでKMZが.zipとして保存された場合は、ファイル名の末尾を
-  <strong>.kmz</strong>
-  に変更してから読み込んでください。
-</p>
-
-  <button class="generate" onclick="analyzePlacementCapacity()">
-    配置余地を確認する
-  </button>
-
-  <div id="placementResult" class="placement-empty">
-    キャンプサイトKMZを読み込むと、配置余地を評価します。
-  </div>
-
-</div>
-
-<div
-  id="capacityMapCompare"
-  class="capacity-map-compare"
-  style="display:none;"
->
-  <div class="capacity-map-card">
-
-    <div class="capacity-section-title">
-      現在の配置状況
-    </div>
-
-    <div
-      id="capacityMap"
-      style="
-        height:420px;
-        margin-top:10px;
-        border-radius:14px;
-        overflow:hidden;
-        border:1px solid #475569;
-        background:#0f172a;
-      "
-    ></div>
-
-    <p class="note" style="margin-top:10px;">
-      現在の活動範囲・既存POI・追加希望POIを表示します。
-    </p>
-
-  </div>
-
-  <div class="capacity-map-card">
-
-    <div class="capacity-section-title">
-      候補POIプレビュー
-    </div>
-
-    <div
-      id="capacityPreviewMap"
-      style="
-        height:420px;
-        margin-top:10px;
-        border-radius:14px;
-        overflow:hidden;
-        border:1px solid #475569;
-        background:#0f172a;
-      "
-    ></div>
-
-    <p class="note" style="margin-top:10px;">
-      候補数を選択して「候補配置をプレビュー」を押すと、<br>
-      今回生成する候補POIを地図上で確認できます。
-    </p>
-
-  </div>
-</div>
-
-<div id="capacityResult"></div>
-</div>
-
-  </div> <!-- panel -->
-</section> <!-- parts -->
 
 <section id="admin" class="tab-content">
   <div class="panel">
@@ -2413,9 +2035,9 @@ GOロケット団の出現率が3倍になる
 </div>
 <script src="js/util.js?v=2"></script>
 <script src="js/tabs.js?v=1"></script>
-<script src="js/distance.js?v=8"></script>
+<script src="js/distance.js?v=11"></script>
 <script src="js/admin.js?v=1"></script>
-<script src="js/main.js?v=2"></script>
+<script src="js/main.js?v=4"></script>
 <script src="js/kmz.js?v=1"></script>
 <script src="js/deduplicate.js?v=1"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -2435,18 +2057,30 @@ GOロケット団の出現率が3倍になる
   background:rgba(56,189,248,.12);
   border:1px solid rgba(56,189,248,.25);
 ">
- <strong>最新更新</strong><br>
-v6.0.0（2026-06-13）
+ <div class="update-latest">
+  <strong>最新更新</strong><br>
+  v6.2.0（2026-06-25）
 </div>
 
-    <strong>v6.0.0</strong><br>
-    ・iPhone .kmz.zip案内追加<br>
-    ・追加POI上限説明追加<br>
-    ・Buffers除外対応<br><br>
+<h3>v6.2.0</h3>
+<ul>
+  <li>KML / KMZ読込エラー表示を改善</li>
+  <li>原因別メッセージに対応</li>
+  <li>提出前チェックの案内を改善</li>
+</ul>
 
-    <strong>v1.7.9</strong><br>
-    ・活動範囲ポリゴン表示<br>
-    ・レイヤー判定改善<br><br>
+<h3>v6.0.0</h3>
+<ul>
+  <li>iPhone .kmz.zip案内追加</li>
+  <li>追加POI上限説明追加</li>
+  <li>Buffers除外対応</li>
+</ul>
+
+<h3>v1.7.9</h3>
+<ul>
+  <li>活動範囲ポリゴン表示</li>
+  <li>レイヤー判定改善</li>
+</ul>
 
     <button onclick="toggleVersionHistory()">閉じる</button>
   </div>

@@ -735,10 +735,12 @@ function renderDistanceLoadErrorHtml(title, message = "") {
     distanceResult.innerHTML = "";
   }
 
-  const isKmz = fileName.endsWith(".kmz");
-  const isIphoneKmzZip =
-    fileName.endsWith(".kmz.zip");
-
+const isKml = fileName.endsWith(".kml");
+const isKmz = fileName.endsWith(".kmz");
+const isZip = fileName.endsWith(".zip");
+const isIphoneKmzZip =
+  fileName.endsWith(".kmz.zip");
+  
   if (isIphoneKmzZip) {
     if (summary) {
       summary.innerHTML = renderDistanceLoadErrorHtml(
@@ -758,36 +760,46 @@ function renderDistanceLoadErrorHtml(title, message = "") {
     return;
   }
 
-  if (!isKmz) {
-    if (summary) {
-      summary.innerHTML = renderDistanceLoadErrorHtml(
-        "完成KMZを選択してください",
-        `
-          距離チェックでは、Google My Mapsから書き出した<br>
-          <strong>.kmz</strong> 形式の完成ファイルを読み込みます。<br>
-          選択されたファイル：${escapeHtml(file.name)}
-        `
-      );
-    }
-
-    return;
+  if (!isKml && !isKmz && !isZip) {
+  if (summary) {
+    summary.innerHTML = `
+      <div class="distance-warning">
+        ${createKmlKmzErrorMessage(
+          "unsupported_extension",
+          file.name || ""
+        )}
+      </div>
+    `;
   }
+
+  return;
+}
 
   window._inputType = "kmz";
 
+  if (summary) {
+    summary.innerHTML = `
+      <div class="distance-warning">
+        KMZ/KMLを読み込み中です...<br>
+        <small>${escapeHtml(file.name || "")}</small>
+      </div>
+    `;
+  }
   try {
     const result =
       await extractLayersFromKML(file);
 
-    if (result.errorCode === "KML_NOT_FOUND") {
+        // CAMP-009: KML/KMZの異常系を原因別に表示
+    if (result.errorCode) {
       if (summary) {
-        summary.innerHTML = renderDistanceLoadErrorHtml(
-          "KMZ内にKMLファイルが見つかりません",
-          `
-            Google My Mapsから書き出した完成KMZか確認してください。<br>
-            KMZ内にKMLファイルが見つからないため、読み込めません。
-          `
-        );
+        summary.innerHTML = `
+          <div class="distance-warning">
+            ${createKmlKmzErrorMessage(
+              result.errorCode,
+              result.errorDetail || ""
+            )}
+          </div>
+        `;
       }
 
       return;
@@ -798,13 +810,14 @@ function renderDistanceLoadErrorHtml(title, message = "") {
 
     if (layerNames.length === 0) {
       if (summary) {
-        summary.innerHTML = renderDistanceLoadErrorHtml(
-          "KMZ内にPOIレイヤーが見つかりません",
-          `
-            Google My Mapsから書き出した完成KMZか確認してください。<br>
-            KML内にPOIレイヤーがない場合や、POIが登録されていない場合は読み込めません。
-          `
-        );
+        summary.innerHTML = `
+          <div class="distance-warning">
+            ${createKmlKmzErrorMessage(
+              "no_poi",
+              "POIレイヤーが0件です"
+            )}
+          </div>
+        `;
       }
 
       return;
@@ -856,20 +869,21 @@ window._hasPolygon =
   renderDistancePrecheckCompactHtml(counts);
     }
 
-  } catch (error) {
+    } catch (error) {
     console.error(
       "距離チェック用ファイルの読込に失敗しました",
       error
     );
 
     if (summary) {
-      summary.innerHTML = renderDistanceLoadErrorHtml(
-        "ファイルを開けませんでした",
-        `
-          ファイルが破損しているか、正しい形式で保存されていない可能性があります。<br>
-          Google My Mapsから完成KMZを書き出し直して、もう一度お試しください。
-        `
-      );
+      summary.innerHTML = `
+        <div class="distance-warning">
+          ${createKmlKmzErrorMessage(
+            "parse_failed",
+            error?.message || String(error)
+          )}
+        </div>
+      `;
     }
   }
 }
@@ -971,72 +985,170 @@ function extractPolygonsFromXml(xml) {
 }
 async function extractLayersFromKML(file) {
   let kmlText = null;
-  const fileName = file.name.toLowerCase();
 
-  if (fileName.endsWith(".kml")) {
-    kmlText = await file.text();
-  } else if (fileName.endsWith(".kmz") || fileName.endsWith(".zip")) {
-    const zip = await JSZip.loadAsync(file);
+  if (!file) {
+    return {
+      layers: [],
+      pointsByLayer: {},
+      polygons: [],
+      errorCode: "no_file",
+      errorDetail: ""
+    };
+  }
 
-    for (const name in zip.files) {
-      if (name.toLowerCase().endsWith(".kml")) {
-        kmlText = await zip.files[name].async("text");
-        break;
-      }
+  const fileName = String(file.name || "").toLowerCase();
 
-      if (name.toLowerCase().endsWith(".kmz")) {
-        const kmzBlob = await zip.files[name].async("blob");
-        const kmzZip = await JSZip.loadAsync(kmzBlob);
+  // CAMP-009: 拡張子チェック
+  if (!fileName.endsWith(".kml") && !fileName.endsWith(".kmz") && !fileName.endsWith(".zip")) {
+    return {
+      layers: [],
+      pointsByLayer: {},
+      polygons: [],
+      errorCode: "unsupported_extension",
+      errorDetail: file.name || ""
+    };
+  }
 
-        for (const innerName in kmzZip.files) {
-          if (innerName.toLowerCase().endsWith(".kml")) {
-            kmlText = await kmzZip.files[innerName].async("text");
-            break;
+  // CAMP-009:
+  // zipも技術的には読めるが、ユーザーにはKMZ推奨として扱う。
+  // ただし中にKMLがあれば処理は続行する。
+  const isZipFile = fileName.endsWith(".zip");
+
+  try {
+    if (fileName.endsWith(".kml")) {
+      kmlText = await file.text();
+    } else if (fileName.endsWith(".kmz") || isZipFile) {
+      const zip = await JSZip.loadAsync(file);
+
+      for (const name in zip.files) {
+        if (name.toLowerCase().endsWith(".kml")) {
+          kmlText = await zip.files[name].async("text");
+          break;
+        }
+
+        if (name.toLowerCase().endsWith(".kmz")) {
+          const kmzBlob = await zip.files[name].async("blob");
+          const kmzZip = await JSZip.loadAsync(kmzBlob);
+
+          for (const innerName in kmzZip.files) {
+            if (innerName.toLowerCase().endsWith(".kml")) {
+              kmlText = await kmzZip.files[innerName].async("text");
+              break;
+            }
           }
+        }
+
+        if (kmlText) {
+          break;
         }
       }
     }
+  } catch (error) {
+    return {
+      layers: [],
+      pointsByLayer: {},
+      polygons: [],
+      errorCode: "parse_failed",
+      errorDetail: error?.message || String(error)
+    };
   }
 
   if (!kmlText) {
-  return {
-  layers: [],
-  pointsByLayer: {},
-  polygons: [],
-  errorCode: "KML_NOT_FOUND"
-};
-}
+    return {
+      layers: [],
+      pointsByLayer: {},
+      polygons: [],
+      errorCode: isZipFile ? "zip_instead_of_kmz" : "kmz_without_kml",
+      errorDetail: file.name || ""
+    };
+  }
 
-const xml =
-  new DOMParser()
-    .parseFromString(
-      kmlText,
-      "application/xml"
+  if (!String(kmlText).trim()) {
+    return {
+      layers: [],
+      pointsByLayer: {},
+      polygons: [],
+      errorCode: "empty_kml",
+      errorDetail: file.name || ""
+    };
+  }
+
+  const xml =
+    new DOMParser()
+      .parseFromString(
+        kmlText,
+        "application/xml"
+      );
+
+  // CAMP-009: XMLとして壊れている場合
+  const parserError =
+    xml.getElementsByTagName("parsererror")[0];
+
+  if (parserError) {
+    return {
+      layers: [],
+      pointsByLayer: {},
+      polygons: [],
+      errorCode: "parse_failed",
+      errorDetail: parserError.textContent || "XML parse error"
+    };
+  }
+
+  // CAMP-009: KML内にPlacemarkがない場合
+  const placemarks =
+    Array.from(
+      xml.getElementsByTagName("Placemark")
     );
 
-const polygons =
-  extractPolygonsFromXml(
-    xml
-  );
+  if (placemarks.length === 0) {
+    return {
+      layers: [],
+      pointsByLayer: {},
+      polygons: [],
+      errorCode: "no_placemark",
+      errorDetail: ""
+    };
+  }
 
-window._hasPolygon =
-  polygons.length > 0;
+  const polygons =
+    extractPolygonsFromXml(
+      xml
+    );
 
-const pointsByLayer =
-  extractPointsByLayer(
-    xml
-  );
+  window._hasPolygon =
+    polygons.length > 0;
 
-const layers =
-  Object.keys(
-    pointsByLayer
-  );
+  const pointsByLayer =
+    extractPointsByLayer(
+      xml
+    );
 
-return {
-  layers,
-  pointsByLayer,
-  polygons
-};
+  const layers =
+    Object.keys(
+      pointsByLayer
+    );
+
+  // CAMP-009: Placemarkはあるが、POIとして読める地点がない場合
+  const totalPointCount =
+    Object.values(pointsByLayer)
+      .reduce((sum, points) => sum + points.length, 0);
+
+  if (totalPointCount === 0) {
+    return {
+      layers,
+      pointsByLayer,
+      polygons,
+      errorCode: "no_poi",
+      errorDetail: `Placemark: ${placemarks.length}件 / Polygon: ${polygons.length}件`
+    };
+  }
+
+  return {
+    layers,
+    pointsByLayer,
+    polygons,
+    errorCode: ""
+  };
 }
 function getExtendedDataValue(pm, keyName) {
   const dataNodes = Array.from(pm.getElementsByTagName("Data"));
@@ -2306,4 +2418,101 @@ function renderSimpleDistanceMap(points = [], warnings = []) {
   setTimeout(() => {
     distanceLeafletMap?.invalidateSize();
   }, 160);
+}
+// ======================================================
+// CAMP-009: KML/KMZ 異常系メッセージ整理
+// ======================================================
+
+function createKmlKmzErrorMessage(errorType, detail = "") {
+  const detailText = detail
+    ? `<br><small>${escapeHtml(String(detail))}</small>`
+    : "";
+
+  const messages = {
+    no_file: `
+      ⚠ ファイルが選択されていません。<br>
+      KML または KMZ ファイルを選択してください。
+    `,
+
+    unsupported_extension: `
+      ⚠ 対応していないファイル形式です。<br>
+      読み込めるのは <strong>.kml</strong> または <strong>.kmz</strong> です。<br>
+      Google My Maps から出力した完成KMZを選択してください。
+      ${detailText}
+    `,
+
+    zip_instead_of_kmz: `
+      ⚠ ZIPファイルはそのままでは読み込めません。<br>
+      Google My Maps からエクスポートした <strong>.kmz</strong> ファイルを選択してください。<br>
+      もしZIPとして保存されている場合は、拡張子や出力方法を確認してください。
+      ${detailText}
+    `,
+
+    kmz_without_kml: `
+      ⚠ KMZの中にKMLファイルが見つかりませんでした。<br>
+      Google My Maps から再度エクスポートしてください。<br>
+      「レイヤをKML/KMZにエクスポート」ではなく、完成版のKMZを使ってください。
+      ${detailText}
+    `,
+
+    KML_NOT_FOUND: `
+      ⚠ KMZ内にKMLファイルが見つかりませんでした。<br>
+      Google My Mapsから書き出した完成KMZか確認してください。<br>
+      KMZ内にKMLファイルが見つからないため、読み込めません。
+      ${detailText}
+    `,
+
+    empty_kml: `
+      ⚠ KMLの中身が空、または読み取れるデータがありません。<br>
+      My Maps上にPOI・線・ポリゴンが入っているか確認してください。
+      ${detailText}
+    `,
+
+    parse_failed: `
+      ⚠ KML/KMZの解析に失敗しました。<br>
+      ファイルが壊れているか、対応していない形式の可能性があります。<br>
+      Google My Maps から再エクスポートして、もう一度試してください。
+      ${detailText}
+    `,
+
+    no_placemark: `
+      ⚠ KML内にPlacemarkが見つかりませんでした。<br>
+      POI、ルート線、活動範囲ポリゴンが入っているか確認してください。
+      ${detailText}
+    `,
+
+    no_poi: `
+      ⚠ POIとして読み取れる地点が見つかりませんでした。<br>
+      My Maps上の地点データ、またはレイヤー名を確認してください。
+      ${detailText}
+    `,
+
+    unknown: `
+      ⚠ ファイルの読み込み中にエラーが発生しました。<br>
+      KML/KMZの形式を確認してください。
+      ${detailText}
+    `
+  };
+
+  return messages[errorType] || messages.unknown;
+}
+
+function showKmlKmzError(targetElementId, errorType, detail = "") {
+  const target = document.getElementById(targetElementId);
+
+  const html = `
+    <div class="distance-warning">
+      ${createKmlKmzErrorMessage(errorType, detail)}
+    </div>
+  `;
+
+  if (target) {
+    target.innerHTML = html;
+  } else {
+    alert(
+      createKmlKmzErrorMessage(errorType, detail)
+        .replace(/<br>/g, "\n")
+        .replace(/<[^>]+>/g, "")
+    );
+  }
 }
