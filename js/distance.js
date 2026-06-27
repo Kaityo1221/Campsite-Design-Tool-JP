@@ -246,23 +246,51 @@ function getPoiTypeFromLayerName(layerName) {
 function normalizeLayerNameText(text) {
   return String(text || "")
     .toLowerCase()
-    .replace(/[Ａ-Ｚａ-ｚ０-９]/g, s =>
-      String.fromCharCode(s.charCodeAt(0) - 0xFEE0)
-    );
+    .normalize("NFKC")
+    .replace(/\s+/g, "")
+    .replace(/[＿_－ー\-]/g, "");
 }
 
 function isAddedLayerName(layerName) {
   const name = normalizeLayerNameText(layerName);
 
-  return (
-    name.includes("追加") ||
-    name.includes("新規") ||
-    name.includes("希望") ||
-    name.includes("proposed") ||
-    name.includes("new") ||
-    name.includes("add")
+  const keywords = [
+    "追加",
+    "追加希望",
+    "新規",
+    "希望",
+    "候補",
+    "proposed",
+    "candidate",
+    "new",
+    "add",
+    "capokestop",
+    "capokestops",
+    "cagym",
+    "cagyms",
+    "capowerspot",
+    "capowerspots"
+  ];
+
+  return keywords.some(keyword =>
+    name.includes(normalizeLayerNameText(keyword))
   );
 }
+function isExistingLayerName(layerName) {
+  const name = normalizeLayerNameText(layerName);
+
+  const keywords = [
+    "既存",
+    "既存poi",
+    "existing",
+    "current"
+  ];
+
+  return keywords.some(keyword =>
+    name.includes(normalizeLayerNameText(keyword))
+  );
+}
+
 function extractParkNameFromText(text) {
   const value = String(text || "");
 
@@ -313,9 +341,7 @@ function countPoiTypesFromLayers(pointsByLayer) {
     if (!Array.isArray(points)) return;
 
     const isAddLayer =
-      layerName.includes("追加") ||
-      layerName.includes("新規") ||
-      layerName.includes("CA ");
+  isAddedLayerName(layerName);
 
     if (!isAddLayer) return;
 
@@ -341,12 +367,10 @@ function countExistingAndAddedPoi(pointsByLayer) {
   return;
 }
 
-    const isExisting = layerName.includes("既存");
+    const isExisting = isExistingLayerName(layerName);
 
     const isAdded =
-      layerName.includes("追加") ||
-      layerName.includes("新規") ||
-      layerName.includes("CA ");
+  isAddedLayerName(layerName);
 
     if (isExisting) {
       counts.existing += points.length;
@@ -2368,10 +2392,10 @@ function renderSimpleDistanceMap(points = [], warnings = []) {
     }
 
     const isExistingA =
-      String(w.a.originalLayer || "").includes("既存");
+      isExistingLayerName(w.a.originalLayer || w.a.layer || "");
 
     const isExistingB =
-      String(w.b.originalLayer || "").includes("既存");
+      isExistingLayerName(w.b.originalLayer || w.b.layer || "");
 
     const isReference =
       isExistingA && isExistingB;
