@@ -472,7 +472,7 @@ function renderPoiBreakdownHtml(breakdown) {
 
       <div style="
         display:grid;
-        grid-template-columns:1.4fr 0.8fr 0.8fr 0.8fr;
+        grid-template-columns:1.7fr 0.7fr 0.7fr 0.7fr;
         gap:6px;
         align-items:center;
         font-size:13px;
@@ -488,12 +488,17 @@ function renderPoiBreakdownHtml(breakdown) {
   padding:8px 0;
   border-top:1px solid rgba(148,163,184,0.18);
   font-weight:700;
-  line-height:1.35;
+  line-height:1.25;
 ">
   <div style="font-size:22px; line-height:1;">
     ${row.icon}
   </div>
-  <div>
+  <div style="
+    margin-top:4px;
+    font-size:13px;
+    white-space:nowrap;
+    letter-spacing:-0.04em;
+  ">
     ${row.label}
   </div>
 </div>
