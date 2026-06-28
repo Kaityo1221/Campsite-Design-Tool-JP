@@ -12,6 +12,10 @@ const POI_LIMITS = {
 };
 let distanceLeafletMap = null;
 let distanceLeafletLayerGroup = null;
+let distancePolygonLayerGroup = null;
+let distanceWarningLineLayers = new Map();
+let latestDistanceWarnings = [];
+
 function escapeHtml(text) {
   return String(text || "")
     .replace(/&/g, "&amp;")
@@ -246,23 +250,51 @@ function getPoiTypeFromLayerName(layerName) {
 function normalizeLayerNameText(text) {
   return String(text || "")
     .toLowerCase()
-    .replace(/[Ａ-Ｚａ-ｚ０-９]/g, s =>
-      String.fromCharCode(s.charCodeAt(0) - 0xFEE0)
-    );
+    .normalize("NFKC")
+    .replace(/\s+/g, "")
+    .replace(/[＿_－ー\-]/g, "");
 }
 
 function isAddedLayerName(layerName) {
   const name = normalizeLayerNameText(layerName);
 
-  return (
-    name.includes("追加") ||
-    name.includes("新規") ||
-    name.includes("希望") ||
-    name.includes("proposed") ||
-    name.includes("new") ||
-    name.includes("add")
+  const keywords = [
+    "追加",
+    "追加希望",
+    "新規",
+    "希望",
+    "候補",
+    "proposed",
+    "candidate",
+    "new",
+    "add",
+    "capokestop",
+    "capokestops",
+    "cagym",
+    "cagyms",
+    "capowerspot",
+    "capowerspots"
+  ];
+
+  return keywords.some(keyword =>
+    name.includes(normalizeLayerNameText(keyword))
   );
 }
+function isExistingLayerName(layerName) {
+  const name = normalizeLayerNameText(layerName);
+
+  const keywords = [
+    "既存",
+    "既存poi",
+    "existing",
+    "current"
+  ];
+
+  return keywords.some(keyword =>
+    name.includes(normalizeLayerNameText(keyword))
+  );
+}
+
 function extractParkNameFromText(text) {
   const value = String(text || "");
 
@@ -313,9 +345,7 @@ function countPoiTypesFromLayers(pointsByLayer) {
     if (!Array.isArray(points)) return;
 
     const isAddLayer =
-      layerName.includes("追加") ||
-      layerName.includes("新規") ||
-      layerName.includes("CA ");
+  isAddedLayerName(layerName);
 
     if (!isAddLayer) return;
 
@@ -341,12 +371,10 @@ function countExistingAndAddedPoi(pointsByLayer) {
   return;
 }
 
-    const isExisting = layerName.includes("既存");
+    const isExisting = isExistingLayerName(layerName);
 
     const isAdded =
-      layerName.includes("追加") ||
-      layerName.includes("新規") ||
-      layerName.includes("CA ");
+  isAddedLayerName(layerName);
 
     if (isExisting) {
       counts.existing += points.length;
@@ -356,6 +384,191 @@ function countExistingAndAddedPoi(pointsByLayer) {
   });
 
   return counts;
+}
+function countPoiBreakdownByRoleAndType(pointsByLayer) {
+  const result = {
+    existing: {
+      pokestop: 0,
+      gym: 0,
+      power: 0,
+      unknown: 0,
+      total: 0
+    },
+    added: {
+      pokestop: 0,
+      gym: 0,
+      power: 0,
+      unknown: 0,
+      total: 0
+    },
+    total: {
+      pokestop: 0,
+      gym: 0,
+      power: 0,
+      unknown: 0,
+      total: 0
+    }
+  };
+
+  Object.entries(pointsByLayer || {}).forEach(([layerName, points]) => {
+    if (!Array.isArray(points)) return;
+
+    if (isAuxiliaryLayer(layerName)) {
+      return;
+    }
+
+    let role = null;
+
+    if (isExistingLayerName(layerName)) {
+      role = "existing";
+    } else if (isAddedLayerName(layerName)) {
+      role = "added";
+    }
+
+    if (!role) return;
+
+    const type =
+      getPoiTypeFromLayerName(layerName) || "unknown";
+
+    const count = points.length;
+
+    result[role][type] += count;
+    result[role].total += count;
+
+    result.total[type] += count;
+    result.total.total += count;
+  });
+
+  return result;
+}
+
+function renderPoiBreakdownHtml(breakdown) {
+  const rows = [
+    {
+      label: "ポケストップ",
+      icon: "🔵",
+      key: "pokestop"
+    },
+    {
+      label: "ジム",
+      icon: "🟡",
+      key: "gym"
+    },
+    {
+      label: "パワースポット",
+      icon: "🟣",
+      key: "power"
+    },
+    {
+      label: "未分類",
+      icon: "⚪",
+      key: "unknown"
+    }
+  ].filter(row => breakdown.total[row.key] > 0);
+
+  return `
+    <div class="poi-count-box">
+      <h3>POI内訳サマリー</h3>
+
+      <div style="
+        display:grid;
+        grid-template-columns:1.7fr 0.7fr 0.7fr 0.7fr;
+        gap:6px;
+        align-items:center;
+        font-size:13px;
+        color:#e5e7eb;
+      ">
+        <div style="opacity:0.75;">種別</div>
+        <div style="text-align:right; opacity:0.75;">既存</div>
+        <div style="text-align:right; opacity:0.75;">追加</div>
+        <div style="text-align:right; opacity:0.75;">合計</div>
+
+        ${rows.map(row => `
+          <div style="
+  padding:8px 0;
+  border-top:1px solid rgba(148,163,184,0.18);
+  font-weight:700;
+  line-height:1.25;
+">
+  <div style="font-size:22px; line-height:1;">
+    ${row.icon}
+  </div>
+  <div style="
+    margin-top:4px;
+    font-size:13px;
+    white-space:nowrap;
+    letter-spacing:-0.04em;
+  ">
+    ${row.label}
+  </div>
+</div>
+
+          <div style="
+            padding:8px 0;
+            border-top:1px solid rgba(148,163,184,0.18);
+            text-align:right;
+          ">
+            ${breakdown.existing[row.key]}
+          </div>
+
+          <div style="
+            padding:8px 0;
+            border-top:1px solid rgba(148,163,184,0.18);
+            text-align:right;
+            font-weight:800;
+            color:#bfdbfe;
+          ">
+            ${breakdown.added[row.key]}
+          </div>
+
+          <div style="
+            padding:8px 0;
+            border-top:1px solid rgba(148,163,184,0.18);
+            text-align:right;
+            font-weight:800;
+          ">
+            ${breakdown.total[row.key]}
+          </div>
+        `).join("")}
+
+        <div style="
+          padding-top:10px;
+          border-top:2px solid rgba(56,189,248,0.45);
+          font-weight:900;
+        ">
+          合計
+        </div>
+
+        <div style="
+          padding-top:10px;
+          border-top:2px solid rgba(56,189,248,0.45);
+          text-align:right;
+          font-weight:900;
+        ">
+          ${breakdown.existing.total}
+        </div>
+
+        <div style="
+          padding-top:10px;
+          border-top:2px solid rgba(56,189,248,0.45);
+          text-align:right;
+          font-weight:900;
+          color:#bfdbfe;
+        ">
+          ${breakdown.added.total}
+        </div>
+
+        <div style="
+          padding-top:10px;
+          border-top:2px solid rgba(56,189,248,0.45);
+          text-align:right;
+          font-weight:900;
+        ">
+          ${breakdown.total.total}
+        </div>
+      </div>
+    </div>
+  `;
 }
 function renderPoiCountRow(label, current, limit, icon, type) {
   const isOver = current > limit;
@@ -494,9 +707,9 @@ function renderDistancePrecheckCompactHtml(counts) {
         <summary>詳細を見る</summary>
 
         ${renderDistanceUploadSummary()}
-        ${renderPoiCountHtml(counts)}
-        ${getPoiLimitWarningHtml(counts, addedTotal)}
-
+${renderPoiBreakdownHtml(countPoiBreakdownByRoleAndType(window._layerPoints))}
+${renderPoiCountHtml(counts)}
+${getPoiLimitWarningHtml(counts, addedTotal)}
         ${
           hasDuplicate
             ? renderPrecheckDuplicatePoiHtml()
@@ -1779,6 +1992,9 @@ if (distance < 1) {
   }
 
   warnings.sort((a, b) => a.distance - b.distance);
+  warnings.forEach((warning, index) => {
+  warning.warningIndex = index;
+});
 const duplicatePoiHtml =
   duplicatePois.length === 0
     ? `
@@ -2054,6 +2270,23 @@ return;
         ${escapeHtml(w.a.layer)}：${escapeHtml(w.a.name)}<br>
 × ${escapeHtml(w.b.layer)}：${escapeHtml(w.b.name)}<br>
         → ${message}
+        <br>
+<button
+  type="button"
+  onclick="focusDistanceWarning(${w.warningIndex})"
+  style="
+    margin-top:10px;
+    padding:8px 12px;
+    border:none;
+    border-radius:999px;
+    background:#2563eb;
+    color:white;
+    font-weight:bold;
+    cursor:pointer;
+  "
+>
+  🗺️ 地図で見る
+</button>
       </div>
     `;
   }).join("");
@@ -2174,7 +2407,83 @@ function addDistanceMapLegend() {
 
   legend.addTo(distanceLeafletMap);
 }
+
+function focusDistanceWarning(warningIndex) {
+  const warning =
+    latestDistanceWarnings[Number(warningIndex)];
+
+  if (!warning || !distanceLeafletMap) {
+    return;
+  }
+
+  const aLatLng = [
+    Number(warning.a.lat),
+    Number(warning.a.lng)
+  ];
+
+  const bLatLng = [
+    Number(warning.b.lat),
+    Number(warning.b.lng)
+  ];
+
+  if (
+    !Number.isFinite(aLatLng[0]) ||
+    !Number.isFinite(aLatLng[1]) ||
+    !Number.isFinite(bLatLng[0]) ||
+    !Number.isFinite(bLatLng[1])
+  ) {
+    return;
+  }
+
+  const mapElement =
+    document.getElementById("distanceMap");
+
+  if (mapElement) {
+    mapElement.scrollIntoView({
+      behavior: "smooth",
+      block: "center"
+    });
+  }
+
+  setTimeout(() => {
+    distanceLeafletMap.fitBounds(
+      [aLatLng, bLatLng],
+      {
+        padding: [80, 80],
+        maxZoom: 19
+      }
+    );
+
+    const line =
+      distanceWarningLineLayers.get(String(warningIndex));
+
+    if (line) {
+      const originalWeight =
+        line.options.weight || 3;
+
+      const originalOpacity =
+        line.options.opacity ?? 0.85;
+
+      line.setStyle({
+        weight: 8,
+        opacity: 1
+      });
+
+      line.openPopup();
+
+      setTimeout(() => {
+        line.setStyle({
+          weight: originalWeight,
+          opacity: originalOpacity
+        });
+      }, 1800);
+    }
+  }, 280);
+}
+
 function renderSimpleDistanceMap(points = [], warnings = []) {
+  latestDistanceWarnings = warnings || [];
+distanceWarningLineLayers = new Map();
   const mapElement = document.getElementById("distanceMap");
 
   if (!mapElement) {
@@ -2255,10 +2564,11 @@ function renderSimpleDistanceMap(points = [], warnings = []) {
   }
 
   if (distanceLeafletMap) {
-    distanceLeafletMap.remove();
-    distanceLeafletMap = null;
-    distanceLeafletLayerGroup = null;
-  }
+  distanceLeafletMap.remove();
+  distanceLeafletMap = null;
+  distanceLeafletLayerGroup = null;
+  distancePolygonLayerGroup = null;
+}
 
   distanceLeafletMap = L.map("distanceMap", {
     zoomControl: true
@@ -2282,20 +2592,26 @@ function renderSimpleDistanceMap(points = [], warnings = []) {
 
   osmLayer.addTo(distanceLeafletMap);
 
-  L.control.layers(
-    {
-      "OSM": osmLayer,
-      "航空写真": aerialLayer
-    },
-    null,
-    {
-      collapsed: false
-    }
-  ).addTo(distanceLeafletMap);
-  addDistanceMapLegend();
+distanceLeafletLayerGroup =
+  L.layerGroup().addTo(distanceLeafletMap);
 
-  distanceLeafletLayerGroup =
-    L.layerGroup().addTo(distanceLeafletMap);
+distancePolygonLayerGroup =
+  L.layerGroup().addTo(distanceLeafletMap);
+
+L.control.layers(
+  {
+    "OSM": osmLayer,
+    "航空写真": aerialLayer
+  },
+  {
+    "活動範囲": distancePolygonLayerGroup
+  },
+  {
+    collapsed: false
+  }
+).addTo(distanceLeafletMap);
+
+addDistanceMapLegend();
 
   const bounds = [];
 
@@ -2308,13 +2624,14 @@ function renderSimpleDistanceMap(points = [], warnings = []) {
     }
 
     L.polygon(polygon, {
-      color: "#a855f7",
-      fillColor: "#a855f7",
-      fillOpacity: 0.18,
-      weight: 2
-    })
-      .bindPopup(`活動範囲ポリゴン ${index + 1}`)
-      .addTo(distanceLeafletLayerGroup);
+  color: "#a855f7",
+  fillColor: "#a855f7",
+  fillOpacity: 0.18,
+  weight: 2,
+  interactive: false
+})
+  .bindPopup(`活動範囲ポリゴン ${index + 1}`)
+  .addTo(distancePolygonLayerGroup);
 
     polygon.forEach(latLng => bounds.push(latLng));
   });
@@ -2359,7 +2676,7 @@ function renderSimpleDistanceMap(points = [], warnings = []) {
   /*
     近接ライン
   */
-  (warnings || []).forEach(w => {
+(warnings || []).forEach((w, index) => {
     const aLatLng = getPointLatLng(w.a);
     const bLatLng = getPointLatLng(w.b);
 
@@ -2368,10 +2685,10 @@ function renderSimpleDistanceMap(points = [], warnings = []) {
     }
 
     const isExistingA =
-      String(w.a.originalLayer || "").includes("既存");
+      isExistingLayerName(w.a.originalLayer || w.a.layer || "");
 
     const isExistingB =
-      String(w.b.originalLayer || "").includes("既存");
+      isExistingLayerName(w.b.originalLayer || w.b.layer || "");
 
     const isReference =
       isExistingA && isExistingB;
@@ -2392,18 +2709,28 @@ function renderSimpleDistanceMap(points = [], warnings = []) {
       label = "参考";
     }
 
-    L.polyline([aLatLng, bLatLng], {
-      color,
-      weight: isReference ? 2 : 3,
-      opacity: isReference ? 0.55 : 0.85,
-      dashArray: isReference || w.distance >= 30 ? "6,6" : null
-    })
-      .bindPopup(`
-        <strong>${escapeHtml(label)}：${w.distance.toFixed(1)}m</strong><br>
-        ${escapeHtml(w.a.layer || "-")}：${escapeHtml(w.a.name || "名称なし")}<br>
-        × ${escapeHtml(w.b.layer || "-")}：${escapeHtml(w.b.name || "名称なし")}
-      `)
-      .addTo(distanceLeafletLayerGroup);
+   const warningIndex =
+  Number.isFinite(Number(w.warningIndex))
+    ? Number(w.warningIndex)
+    : index;
+
+const warningLine = L.polyline([aLatLng, bLatLng], {
+  color,
+  weight: isReference ? 2 : 3,
+  opacity: isReference ? 0.55 : 0.85,
+  dashArray: isReference || w.distance >= 30 ? "6,6" : null
+})
+  .bindPopup(`
+    <strong>${escapeHtml(label)}：${w.distance.toFixed(1)}m</strong><br>
+    ${escapeHtml(w.a.layer || "-")}：${escapeHtml(w.a.name || "名称なし")}<br>
+    × ${escapeHtml(w.b.layer || "-")}：${escapeHtml(w.b.name || "名称なし")}
+  `)
+  .addTo(distanceLeafletLayerGroup);
+
+distanceWarningLineLayers.set(
+  String(warningIndex),
+  warningLine
+);
 
     bounds.push(aLatLng);
     bounds.push(bLatLng);
