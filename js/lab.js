@@ -1477,12 +1477,13 @@ function renderLabLearningBreakdown() {
   
     // CAMP-109: スマホ表示で「学習判定の内訳」が不自然に改行されないよう調整
   const title = box.querySelector("h2");
-  if (title) {
-    title.style.whiteSpace = "nowrap";
-    title.style.fontSize = "clamp(22px, 5.4vw, 30px)";
-    title.style.lineHeight = "1.25";
-    title.style.letterSpacing = "-0.04em";
-  }
+if (title) {
+  title.style.whiteSpace = "normal";
+  title.style.wordBreak = "break-word";
+  title.style.fontSize = "clamp(22px, 5.4vw, 30px)";
+  title.style.lineHeight = "1.25";
+  title.style.letterSpacing = "-0.04em";
+}
 
   box.hidden = false;
 
@@ -1506,8 +1507,9 @@ function renderLabLearningBreakdown() {
     <p style="
       margin:0 0 18px;
       font-weight:800;
-      white-space:nowrap;
       font-size:clamp(20px, 5vw, 28px);
+      line-height:1.4;
+      word-break:break-word;
     ">
       学習判定：${stats.learningHit}件
     </p>
@@ -1519,22 +1521,37 @@ function renderLabLearningBreakdown() {
       font-size:clamp(18px, 4.8vw, 26px);
       line-height:1.45;
     ">
-      <div style="display:grid; grid-template-columns:1em 1fr auto; gap:8px; align-items:center;">
+      <div style="
+        display:grid;
+        grid-template-columns:1em minmax(0,1fr) auto;
+        gap:8px;
+        align-items:start;
+      ">
         <span>・</span>
-        <span style="white-space:nowrap;">辞書ヒット</span>
-        <span style="white-space:nowrap;">${stats.dictionaryHit}件</span>
+        <span style="min-width:0; overflow-wrap:anywhere;">辞書ヒット</span>
+        <span>${stats.dictionaryHit}件</span>
       </div>
 
-      <div style="display:grid; grid-template-columns:1em 1fr auto; gap:8px; align-items:center;">
+      <div style="
+        display:grid;
+        grid-template-columns:1em minmax(0,1fr) auto;
+        gap:8px;
+        align-items:start;
+      ">
         <span>・</span>
-        <span style="white-space:nowrap;">推論ルールヒット</span>
-        <span style="white-space:nowrap;">${stats.inferenceRuleHit}件</span>
+        <span style="min-width:0; overflow-wrap:anywhere;">推論ルールヒット</span>
+        <span>${stats.inferenceRuleHit}件</span>
       </div>
 
-      <div style="display:grid; grid-template-columns:1em 1fr auto; gap:8px; align-items:center;">
+      <div style="
+        display:grid;
+        grid-template-columns:1em minmax(0,1fr) auto;
+        gap:8px;
+        align-items:start;
+      ">
         <span>・</span>
-        <span style="white-space:nowrap;">未一致</span>
-        <span style="white-space:nowrap;">${stats.unmatched}件</span>
+        <span style="min-width:0; overflow-wrap:anywhere;">未一致</span>
+        <span>${stats.unmatched}件</span>
       </div>
     </div>
 
@@ -1547,32 +1564,47 @@ function renderLabLearningBreakdown() {
       font-size:clamp(18px, 4.8vw, 26px);
       line-height:1.45;
     ">
-      <div style="display:grid; grid-template-columns:1em 1fr auto; gap:8px; align-items:center;">
+      <div style="
+        display:grid;
+        grid-template-columns:1em minmax(0,1fr) auto;
+        gap:8px;
+        align-items:start;
+      ">
         <span>・</span>
-        <span style="white-space:nowrap;">読込辞書件数</span>
-        <span style="white-space:nowrap;">${stats.dictionaryCount}件</span>
+        <span style="min-width:0; overflow-wrap:anywhere;">読込辞書件数</span>
+        <span>${stats.dictionaryCount}件</span>
       </div>
 
-      <div style="display:grid; grid-template-columns:1em 1fr auto; gap:8px; align-items:center;">
+      <div style="
+        display:grid;
+        grid-template-columns:1em minmax(0,1fr) auto;
+        gap:8px;
+        align-items:start;
+      ">
         <span>・</span>
-        <span style="white-space:nowrap;">読込ルール件数</span>
-        <span style="white-space:nowrap;">${stats.ruleCount}件</span>
+        <span style="min-width:0; overflow-wrap:anywhere;">読込ルール件数</span>
+        <span>${stats.ruleCount}件</span>
       </div>
 
-      <div style="display:grid; grid-template-columns:1em 1fr auto; gap:8px; align-items:center;">
+      <div style="
+        display:grid;
+        grid-template-columns:1em minmax(0,1fr) auto;
+        gap:8px;
+        align-items:start;
+      ">
         <span>・</span>
-        <span style="white-space:nowrap;">判定対象POI</span>
-        <span style="white-space:nowrap;">${stats.totalJudged}件</span>
+        <span style="min-width:0; overflow-wrap:anywhere;">判定対象POI</span>
+        <span>${stats.totalJudged}件</span>
       </div>
     </div>
 
-    <p class="note" style="margin-top:22px;">
+    <p class="note" style="margin-top:22px; overflow-wrap:anywhere;">
       ${stats.diagnosis}
     </p>
 
     ${
       stats.lastError
-        ? `<p class="note warning">読込エラー：${String(stats.lastError)}</p>`
+        ? `<p class="note warning" style="overflow-wrap:anywhere;">読込エラー：${String(stats.lastError)}</p>`
         : ""
     }
   </div>
