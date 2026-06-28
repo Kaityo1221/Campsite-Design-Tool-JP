@@ -485,12 +485,18 @@ function renderPoiBreakdownHtml(breakdown) {
 
         ${rows.map(row => `
           <div style="
-            padding:8px 0;
-            border-top:1px solid rgba(148,163,184,0.18);
-            font-weight:700;
-          ">
-            ${row.icon} ${row.label}
-          </div>
+  padding:8px 0;
+  border-top:1px solid rgba(148,163,184,0.18);
+  font-weight:700;
+  line-height:1.35;
+">
+  <div style="font-size:22px; line-height:1;">
+    ${row.icon}
+  </div>
+  <div>
+    ${row.label}
+  </div>
+</div>
 
           <div style="
             padding:8px 0;
