@@ -1204,3 +1204,25 @@ html, body {
     radial-gradient(circle at top left, rgba(56, 189, 248, 0.12), transparent 42%),
     rgba(15, 23, 42, 0.82);
 }
+
+@media (max-width: 720px) {
+  #labEngineResult,
+  #labLearningBreakdown,
+  #labLearningBreakdownBody,
+  .lab-learning-breakdown,
+  .research-map-panel,
+  .panel,
+  .distance-warning {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  #labEngineResult,
+  .distance-warning,
+  .lab-learning-breakdown,
+  .research-map-panel {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+}
