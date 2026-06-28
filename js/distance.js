@@ -12,6 +12,7 @@ const POI_LIMITS = {
 };
 let distanceLeafletMap = null;
 let distanceLeafletLayerGroup = null;
+let distancePolygonLayerGroup = null;
 let distanceWarningLineLayers = new Map();
 let latestDistanceWarnings = [];
 
@@ -2378,10 +2379,11 @@ distanceWarningLineLayers = new Map();
   }
 
   if (distanceLeafletMap) {
-    distanceLeafletMap.remove();
-    distanceLeafletMap = null;
-    distanceLeafletLayerGroup = null;
-  }
+  distanceLeafletMap.remove();
+  distanceLeafletMap = null;
+  distanceLeafletLayerGroup = null;
+  distancePolygonLayerGroup = null;
+}
 
   distanceLeafletMap = L.map("distanceMap", {
     zoomControl: true
@@ -2405,20 +2407,26 @@ distanceWarningLineLayers = new Map();
 
   osmLayer.addTo(distanceLeafletMap);
 
-  L.control.layers(
-    {
-      "OSM": osmLayer,
-      "航空写真": aerialLayer
-    },
-    null,
-    {
-      collapsed: false
-    }
-  ).addTo(distanceLeafletMap);
-  addDistanceMapLegend();
+distanceLeafletLayerGroup =
+  L.layerGroup().addTo(distanceLeafletMap);
 
-  distanceLeafletLayerGroup =
-    L.layerGroup().addTo(distanceLeafletMap);
+distancePolygonLayerGroup =
+  L.layerGroup().addTo(distanceLeafletMap);
+
+L.control.layers(
+  {
+    "OSM": osmLayer,
+    "航空写真": aerialLayer
+  },
+  {
+    "活動範囲ポリゴン": distancePolygonLayerGroup
+  },
+  {
+    collapsed: false
+  }
+).addTo(distanceLeafletMap);
+
+addDistanceMapLegend();
 
   const bounds = [];
 
@@ -2431,13 +2439,14 @@ distanceWarningLineLayers = new Map();
     }
 
     L.polygon(polygon, {
-      color: "#a855f7",
-      fillColor: "#a855f7",
-      fillOpacity: 0.18,
-      weight: 2
-    })
-      .bindPopup(`活動範囲ポリゴン ${index + 1}`)
-      .addTo(distanceLeafletLayerGroup);
+  color: "#a855f7",
+  fillColor: "#a855f7",
+  fillOpacity: 0.18,
+  weight: 2,
+  interactive: false
+})
+  .bindPopup(`活動範囲ポリゴン ${index + 1}`)
+  .addTo(distancePolygonLayerGroup);
 
     polygon.forEach(latLng => bounds.push(latLng));
   });
