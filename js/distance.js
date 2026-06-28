@@ -2419,7 +2419,7 @@ L.control.layers(
     "航空写真": aerialLayer
   },
   {
-    "活動範囲ポリゴン": distancePolygonLayerGroup
+    "活動範囲": distancePolygonLayerGroup
   },
   {
     collapsed: false
