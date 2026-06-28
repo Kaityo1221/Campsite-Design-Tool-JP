@@ -12,6 +12,9 @@ const POI_LIMITS = {
 };
 let distanceLeafletMap = null;
 let distanceLeafletLayerGroup = null;
+let distanceWarningLineLayers = new Map();
+let latestDistanceWarnings = [];
+
 function escapeHtml(text) {
   return String(text || "")
     .replace(/&/g, "&amp;")
@@ -1803,6 +1806,9 @@ if (distance < 1) {
   }
 
   warnings.sort((a, b) => a.distance - b.distance);
+  warnings.forEach((warning, index) => {
+  warning.warningIndex = index;
+});
 const duplicatePoiHtml =
   duplicatePois.length === 0
     ? `
@@ -2078,6 +2084,23 @@ return;
         ${escapeHtml(w.a.layer)}：${escapeHtml(w.a.name)}<br>
 × ${escapeHtml(w.b.layer)}：${escapeHtml(w.b.name)}<br>
         → ${message}
+        <br>
+<button
+  type="button"
+  onclick="focusDistanceWarning(${w.warningIndex})"
+  style="
+    margin-top:10px;
+    padding:8px 12px;
+    border:none;
+    border-radius:999px;
+    background:#2563eb;
+    color:white;
+    font-weight:bold;
+    cursor:pointer;
+  "
+>
+  🗺️ 地図で見る
+</button>
       </div>
     `;
   }).join("");
@@ -2198,7 +2221,83 @@ function addDistanceMapLegend() {
 
   legend.addTo(distanceLeafletMap);
 }
+
+function focusDistanceWarning(warningIndex) {
+  const warning =
+    latestDistanceWarnings[Number(warningIndex)];
+
+  if (!warning || !distanceLeafletMap) {
+    return;
+  }
+
+  const aLatLng = [
+    Number(warning.a.lat),
+    Number(warning.a.lng)
+  ];
+
+  const bLatLng = [
+    Number(warning.b.lat),
+    Number(warning.b.lng)
+  ];
+
+  if (
+    !Number.isFinite(aLatLng[0]) ||
+    !Number.isFinite(aLatLng[1]) ||
+    !Number.isFinite(bLatLng[0]) ||
+    !Number.isFinite(bLatLng[1])
+  ) {
+    return;
+  }
+
+  const mapElement =
+    document.getElementById("distanceMap");
+
+  if (mapElement) {
+    mapElement.scrollIntoView({
+      behavior: "smooth",
+      block: "center"
+    });
+  }
+
+  setTimeout(() => {
+    distanceLeafletMap.fitBounds(
+      [aLatLng, bLatLng],
+      {
+        padding: [80, 80],
+        maxZoom: 19
+      }
+    );
+
+    const line =
+      distanceWarningLineLayers.get(String(warningIndex));
+
+    if (line) {
+      const originalWeight =
+        line.options.weight || 3;
+
+      const originalOpacity =
+        line.options.opacity ?? 0.85;
+
+      line.setStyle({
+        weight: 8,
+        opacity: 1
+      });
+
+      line.openPopup();
+
+      setTimeout(() => {
+        line.setStyle({
+          weight: originalWeight,
+          opacity: originalOpacity
+        });
+      }, 1800);
+    }
+  }, 280);
+}
+
 function renderSimpleDistanceMap(points = [], warnings = []) {
+  latestDistanceWarnings = warnings || [];
+distanceWarningLineLayers = new Map();
   const mapElement = document.getElementById("distanceMap");
 
   if (!mapElement) {
@@ -2383,7 +2482,7 @@ function renderSimpleDistanceMap(points = [], warnings = []) {
   /*
     近接ライン
   */
-  (warnings || []).forEach(w => {
+(warnings || []).forEach((w, index) => {
     const aLatLng = getPointLatLng(w.a);
     const bLatLng = getPointLatLng(w.b);
 
@@ -2416,18 +2515,28 @@ function renderSimpleDistanceMap(points = [], warnings = []) {
       label = "参考";
     }
 
-    L.polyline([aLatLng, bLatLng], {
-      color,
-      weight: isReference ? 2 : 3,
-      opacity: isReference ? 0.55 : 0.85,
-      dashArray: isReference || w.distance >= 30 ? "6,6" : null
-    })
-      .bindPopup(`
-        <strong>${escapeHtml(label)}：${w.distance.toFixed(1)}m</strong><br>
-        ${escapeHtml(w.a.layer || "-")}：${escapeHtml(w.a.name || "名称なし")}<br>
-        × ${escapeHtml(w.b.layer || "-")}：${escapeHtml(w.b.name || "名称なし")}
-      `)
-      .addTo(distanceLeafletLayerGroup);
+   const warningIndex =
+  Number.isFinite(Number(w.warningIndex))
+    ? Number(w.warningIndex)
+    : index;
+
+const warningLine = L.polyline([aLatLng, bLatLng], {
+  color,
+  weight: isReference ? 2 : 3,
+  opacity: isReference ? 0.55 : 0.85,
+  dashArray: isReference || w.distance >= 30 ? "6,6" : null
+})
+  .bindPopup(`
+    <strong>${escapeHtml(label)}：${w.distance.toFixed(1)}m</strong><br>
+    ${escapeHtml(w.a.layer || "-")}：${escapeHtml(w.a.name || "名称なし")}<br>
+    × ${escapeHtml(w.b.layer || "-")}：${escapeHtml(w.b.name || "名称なし")}
+  `)
+  .addTo(distanceLeafletLayerGroup);
+
+distanceWarningLineLayers.set(
+  String(warningIndex),
+  warningLine
+);
 
     bounds.push(aLatLng);
     bounds.push(bLatLng);
