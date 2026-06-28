@@ -385,6 +385,180 @@ function countExistingAndAddedPoi(pointsByLayer) {
 
   return counts;
 }
+function countPoiBreakdownByRoleAndType(pointsByLayer) {
+  const result = {
+    existing: {
+      pokestop: 0,
+      gym: 0,
+      power: 0,
+      unknown: 0,
+      total: 0
+    },
+    added: {
+      pokestop: 0,
+      gym: 0,
+      power: 0,
+      unknown: 0,
+      total: 0
+    },
+    total: {
+      pokestop: 0,
+      gym: 0,
+      power: 0,
+      unknown: 0,
+      total: 0
+    }
+  };
+
+  Object.entries(pointsByLayer || {}).forEach(([layerName, points]) => {
+    if (!Array.isArray(points)) return;
+
+    if (isAuxiliaryLayer(layerName)) {
+      return;
+    }
+
+    let role = null;
+
+    if (isExistingLayerName(layerName)) {
+      role = "existing";
+    } else if (isAddedLayerName(layerName)) {
+      role = "added";
+    }
+
+    if (!role) return;
+
+    const type =
+      getPoiTypeFromLayerName(layerName) || "unknown";
+
+    const count = points.length;
+
+    result[role][type] += count;
+    result[role].total += count;
+
+    result.total[type] += count;
+    result.total.total += count;
+  });
+
+  return result;
+}
+
+function renderPoiBreakdownHtml(breakdown) {
+  const rows = [
+    {
+      label: "ポケストップ",
+      icon: "🔵",
+      key: "pokestop"
+    },
+    {
+      label: "ジム",
+      icon: "🟡",
+      key: "gym"
+    },
+    {
+      label: "パワースポット",
+      icon: "🟣",
+      key: "power"
+    },
+    {
+      label: "未分類",
+      icon: "⚪",
+      key: "unknown"
+    }
+  ].filter(row => breakdown.total[row.key] > 0);
+
+  return `
+    <div class="poi-count-box">
+      <h3>POI内訳サマリー</h3>
+
+      <div style="
+        display:grid;
+        grid-template-columns:1.4fr 0.8fr 0.8fr 0.8fr;
+        gap:6px;
+        align-items:center;
+        font-size:13px;
+        color:#e5e7eb;
+      ">
+        <div style="opacity:0.75;">種別</div>
+        <div style="text-align:right; opacity:0.75;">既存</div>
+        <div style="text-align:right; opacity:0.75;">追加</div>
+        <div style="text-align:right; opacity:0.75;">合計</div>
+
+        ${rows.map(row => `
+          <div style="
+            padding:8px 0;
+            border-top:1px solid rgba(148,163,184,0.18);
+            font-weight:700;
+          ">
+            ${row.icon} ${row.label}
+          </div>
+
+          <div style="
+            padding:8px 0;
+            border-top:1px solid rgba(148,163,184,0.18);
+            text-align:right;
+          ">
+            ${breakdown.existing[row.key]}
+          </div>
+
+          <div style="
+            padding:8px 0;
+            border-top:1px solid rgba(148,163,184,0.18);
+            text-align:right;
+            font-weight:800;
+            color:#bfdbfe;
+          ">
+            ${breakdown.added[row.key]}
+          </div>
+
+          <div style="
+            padding:8px 0;
+            border-top:1px solid rgba(148,163,184,0.18);
+            text-align:right;
+            font-weight:800;
+          ">
+            ${breakdown.total[row.key]}
+          </div>
+        `).join("")}
+
+        <div style="
+          padding-top:10px;
+          border-top:2px solid rgba(56,189,248,0.45);
+          font-weight:900;
+        ">
+          合計
+        </div>
+
+        <div style="
+          padding-top:10px;
+          border-top:2px solid rgba(56,189,248,0.45);
+          text-align:right;
+          font-weight:900;
+        ">
+          ${breakdown.existing.total}
+        </div>
+
+        <div style="
+          padding-top:10px;
+          border-top:2px solid rgba(56,189,248,0.45);
+          text-align:right;
+          font-weight:900;
+          color:#bfdbfe;
+        ">
+          ${breakdown.added.total}
+        </div>
+
+        <div style="
+          padding-top:10px;
+          border-top:2px solid rgba(56,189,248,0.45);
+          text-align:right;
+          font-weight:900;
+        ">
+          ${breakdown.total.total}
+        </div>
+      </div>
+    </div>
+  `;
+}
 function renderPoiCountRow(label, current, limit, icon, type) {
   const isOver = current > limit;
   const percent = Math.min(100, Math.round((current / limit) * 100));
@@ -522,9 +696,9 @@ function renderDistancePrecheckCompactHtml(counts) {
         <summary>詳細を見る</summary>
 
         ${renderDistanceUploadSummary()}
-        ${renderPoiCountHtml(counts)}
-        ${getPoiLimitWarningHtml(counts, addedTotal)}
-
+${renderPoiBreakdownHtml(countPoiBreakdownByRoleAndType(window._layerPoints))}
+${renderPoiCountHtml(counts)}
+${getPoiLimitWarningHtml(counts, addedTotal)}
         ${
           hasDuplicate
             ? renderPrecheckDuplicatePoiHtml()
