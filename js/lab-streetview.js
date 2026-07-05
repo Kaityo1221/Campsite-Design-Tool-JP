@@ -1,21 +1,24 @@
 /*
   Lab Street View URL Preview / No API
   - Google Maps JavaScript API は使わない
-  - KMZ / KML の walk_route を読み、Google Maps URLs の Street Viewリンクを生成する
+  - KMZ / KML のルートを一覧化し、選択したルートでGoogle Maps URLsのStreet Viewリンクを生成する
   - stops ピンが近い地点では説明カードに表示する
 */
 
 (function () {
   const state = {
-    route: [],
-    stops: [],
-    points: [],
-    currentIndex: 0,
-    map: null,
-    routeLayer: null,
-    markerLayer: null,
-    currentMarker: null
-  };
+  routes: [],
+  selectedRouteIndex: 0,
+  route: [],
+  stops: [],
+  points: [],
+  currentIndex: 0,
+  viewerWindow: null,
+  map: null,
+  routeLayer: null,
+  markerLayer: null,
+  currentMarker: null
+};
 
   function $(id) {
     return document.getElementById(id);
@@ -47,15 +50,21 @@
 
   function enableButtons(enabled) {
     const ids = [
-      "labStreetViewStartButton",
-      "labStreetViewStepButton",
-      "labStreetViewStopButton"
-    ];
+  "labStreetViewStartButton",
+  "labStreetViewStepButton",
+  "labStreetViewPrevButton",
+  "labStreetViewStopButton"
+];
 
     ids.forEach((id) => {
       const el = $(id);
       if (el) el.disabled = !enabled;
     });
+  }
+
+  function enableRouteSelect(enabled) {
+    const select = $("labStreetViewRouteSelect");
+    if (select) select.disabled = !enabled;
   }
 
   async function readKmlText(file) {
@@ -128,9 +137,11 @@
     const stops = [];
 
     placemarks.forEach((pm, index) => {
-      const name = textOf(pm, "name") || `地点${index + 1}`;
+      const name = textOf(pm, "name") || `ルート${index + 1}`;
       const desc = textOf(pm, "description");
-      const folder = folderNameOf(pm).toLowerCase();
+      const folder = folderNameOf(pm);
+      const folderLower = folder.toLowerCase();
+
       const line = pm.getElementsByTagName("LineString")[0];
       const point = pm.getElementsByTagName("Point")[0];
 
@@ -139,9 +150,12 @@
         const coords = coordsNode ? parseCoordinates(coordsNode.textContent) : [];
 
         if (coords.length >= 2) {
-          const routeText = `${folder} ${name.toLowerCase()}`;
-          const score = /walk|route|ルート|導線|下見|さんぽ|散歩/.test(routeText) ? 2 : 1;
-          routes.push({ name, folder, coords, score });
+          routes.push({
+            name,
+            folder,
+            coords,
+            distance: routeLengthMeters(coords)
+          });
         }
       }
 
@@ -150,7 +164,7 @@
         const coords = coordsNode ? parseCoordinates(coordsNode.textContent) : [];
 
         if (coords.length) {
-          const stopText = `${folder} ${name.toLowerCase()}`;
+          const stopText = `${folderLower} ${name.toLowerCase()}`;
           const isStop =
             /stop|stops|説明|確認|立ち止|チェック|下見/.test(stopText) ||
             /^\d+[_＿\-.]/.test(name);
@@ -166,10 +180,7 @@
       }
     });
 
-    routes.sort((a, b) => b.score - a.score || b.coords.length - a.coords.length);
-
-    const route = routes[0]?.coords || [];
-    return { route, stops };
+    return { routes, stops };
   }
 
   function toRad(deg) {
@@ -194,6 +205,16 @@
         Math.sin(dLng / 2) ** 2;
 
     return 2 * R * Math.asin(Math.sqrt(h));
+  }
+
+  function routeLengthMeters(route) {
+    let total = 0;
+
+    for (let i = 0; i < route.length - 1; i++) {
+      total += distanceMeters(route[i], route[i + 1]);
+    }
+
+    return total;
   }
 
   function bearingDegrees(a, b) {
@@ -271,6 +292,17 @@
     return `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${encodeURIComponent(viewpoint)}&heading=${heading}&pitch=0&fov=${fov}`;
   }
 
+  function openInStreetViewViewer(point) {
+  if (!point || !point.url) return;
+
+  const windowName = "campsite_lab_streetview_viewer";
+
+  state.viewerWindow = window.open(point.url, windowName);
+
+  if (state.viewerWindow) {
+    state.viewerWindow.focus();
+  }
+}
   function buildPoints(route, stops, intervalMeters) {
     const sampled = densifyRoute(route, intervalMeters);
 
@@ -293,6 +325,43 @@
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#039;");
+  }
+
+  function populateRouteSelect(routes) {
+    const select = $("labStreetViewRouteSelect");
+    if (!select) return;
+
+    select.innerHTML = "";
+
+    if (!routes.length) {
+      const option = document.createElement("option");
+      option.value = "";
+      option.textContent = "ルートが見つかりません";
+      select.appendChild(option);
+      enableRouteSelect(false);
+      return;
+    }
+
+    routes.forEach((route, index) => {
+      const option = document.createElement("option");
+      const distance = Math.round(route.distance || routeLengthMeters(route.coords));
+      const folder = route.folder ? `${route.folder} / ` : "";
+
+      option.value = String(index);
+      option.textContent = `${index + 1}. ${folder}${route.name}（約${distance}m / ${route.coords.length}点）`;
+      select.appendChild(option);
+    });
+
+    select.value = String(state.selectedRouteIndex || 0);
+    enableRouteSelect(routes.length > 1);
+  }
+
+  function selectedRoute() {
+    const select = $("labStreetViewRouteSelect");
+    const index = Number(select?.value ?? state.selectedRouteIndex ?? 0);
+
+    state.selectedRouteIndex = Number.isFinite(index) ? index : 0;
+    return state.routes[state.selectedRouteIndex] || state.routes[0];
   }
 
   function updateCard() {
@@ -345,13 +414,12 @@
         : "";
 
       return `
-        <button type="button" class="lab-streetview-url-row" data-index="${idx}">
-          <span>${idx + 1}</span>
-          <strong>${p.lat.toFixed(5)}, ${p.lng.toFixed(5)}</strong>
-          <small>方角 ${Math.round(p.heading || 0)}°</small>
-          ${stopBadge}
-        </button>
-      `;
+  <button type="button" class="lab-streetview-url-row" data-index="${idx}">
+    <span class="lab-streetview-url-index">${idx + 1}</span>
+    <strong>${p.lat.toFixed(5)}, ${p.lng.toFixed(5)}</strong>
+    ${stopBadge}
+  </button>
+`;
     }).join("");
 
     panel.innerHTML = `<div class="lab-streetview-url-list">${rows}</div>`;
@@ -359,7 +427,7 @@
     panel.querySelectorAll(".lab-streetview-url-row").forEach((button) => {
       button.addEventListener("click", () => {
         state.currentIndex = Number(button.dataset.index || 0);
-        syncCurrentPoint(true);
+        syncCurrentPoint(false);
       });
     });
   }
@@ -410,6 +478,10 @@
         .bindTooltip(stop.name)
         .addTo(state.markerLayer);
     });
+
+    setTimeout(() => {
+      state.map.invalidateSize();
+    }, 80);
   }
 
   function syncCurrentPoint(openUrl) {
@@ -438,8 +510,40 @@
     });
 
     if (openUrl) {
-      window.open(p.url, "_blank", "noopener");
+  openInStreetViewViewer(p);
+}
+  }
+
+  function generateSelectedRouteTour() {
+    const routeInfo = selectedRoute();
+
+    if (!routeInfo || !routeInfo.coords || routeInfo.coords.length < 2) {
+      throw new Error("使用できるルートが見つかりません。");
     }
+
+    const interval = Number($("labStreetViewIntervalMeters")?.value || 50);
+
+    state.route = routeInfo.coords;
+    state.points = buildPoints(state.route, state.stops, interval);
+    state.currentIndex = 0;
+
+    setupMap();
+    renderLinkList();
+    syncCurrentPoint(false);
+    enableButtons(true);
+
+    const distance = Math.round(routeInfo.distance || routeLengthMeters(routeInfo.coords));
+
+    setStatus("APIなし下見リンクを生成しました。Street Viewは外部ビューアで開きます。", "success");
+    setSummary(`
+      選択ルート：${escapeHtml(routeInfo.name)}<br>
+      ルート距離：約${distance}m<br>
+      ルート点数：${state.route.length}<br>
+      生成リンク：${state.points.length}<br>
+      説明ポイント：${state.stops.length}<br>
+      検出ルート数：${state.routes.length}<br>
+      ※Street Viewがない地点は、Googleマップ側で通常地図に切り替わる場合があります。
+    `);
   }
 
   window.prepareLabStreetViewTour = async function prepareLabStreetViewTour() {
@@ -453,63 +557,93 @@
 
     setStatus("KMZ / KMLを解析中…", "loading");
     enableButtons(false);
+    enableRouteSelect(false);
 
     try {
       const kml = await readKmlText(file);
       const parsed = parseKml(kml);
 
-      if (parsed.route.length < 2) {
-        throw new Error("歩行ルートが見つかりません。マイマップに walk_route の線を作ってください。");
+      if (!parsed.routes.length) {
+        throw new Error("ルート線が見つかりません。マイマップに線を作ってください。");
       }
 
-      const interval = Number($("labStreetViewIntervalMeters")?.value || 50);
-
-      state.route = parsed.route;
+      state.routes = parsed.routes;
       state.stops = parsed.stops;
-      state.points = buildPoints(state.route, state.stops, interval);
-      state.currentIndex = 0;
+      state.selectedRouteIndex = 0;
 
-      setupMap();
-      renderLinkList();
-      syncCurrentPoint(false);
-      enableButtons(true);
+      populateRouteSelect(state.routes);
+      generateSelectedRouteTour();
 
-      setStatus("APIなし下見リンクを生成しました。Street ViewはGoogleマップを別タブで開きます。", "success");
-      setSummary(`
-        ルート点数：${state.route.length}<br>
-        生成リンク：${state.points.length}<br>
-        説明ポイント：${state.stops.length}<br>
-        ※Street Viewがない地点は、Googleマップ側で通常地図に切り替わる場合があります。
-      `);
+      if (state.routes.length > 1) {
+        setStatus(`ルートを${state.routes.length}本検出しました。使用するルートを選択できます。`, "success");
+      }
     } catch (error) {
       console.error(error);
       setStatus(error.message || "下見リンクの生成に失敗しました。", "error");
       setSummary("");
       enableButtons(false);
+      enableRouteSelect(false);
     }
   };
 
   window.openCurrentLabStreetViewPoint = function openCurrentLabStreetViewPoint() {
-    syncCurrentPoint(true);
-  };
+  syncCurrentPoint(true);
+};
 
-  window.stepLabStreetViewAutoTour = function stepLabStreetViewAutoTour() {
-    if (!state.points.length) return;
+window.stepLabStreetViewAutoTour = function stepLabStreetViewAutoTour() {
+  if (!state.points.length) return;
 
-    state.currentIndex = Math.min(
-      state.currentIndex + 1,
-      state.points.length - 1
-    );
+  state.currentIndex = Math.min(
+    state.currentIndex + 1,
+    state.points.length - 1
+  );
 
-    syncCurrentPoint(true);
-  };
+  syncCurrentPoint(false);
+};
 
-  window.resetLabStreetViewTour = function resetLabStreetViewTour() {
-    if (!state.points.length) return;
+window.prevLabStreetViewPoint = function prevLabStreetViewPoint() {
+  if (!state.points.length) return;
 
-    state.currentIndex = 0;
-    syncCurrentPoint(false);
-  };
+  state.currentIndex = Math.max(
+    state.currentIndex - 1,
+    0
+  );
+
+  syncCurrentPoint(false);
+};
+
+ window.resetLabStreetViewTour = function resetLabStreetViewTour() {
+  if (!state.points.length) return;
+
+  state.currentIndex = 0;
+  syncCurrentPoint(false);
+};
+
+  document.addEventListener("change", (event) => {
+    if (event.target && event.target.id === "labStreetViewRouteSelect") {
+      try {
+        generateSelectedRouteTour();
+      } catch (error) {
+        console.error(error);
+        setStatus(error.message || "ルートの切り替えに失敗しました。", "error");
+      }
+    }
+
+    if (
+      event.target &&
+      (event.target.id === "labStreetViewIntervalMeters" ||
+        event.target.id === "labStreetViewFov")
+    ) {
+      if (state.routes.length) {
+        try {
+          generateSelectedRouteTour();
+        } catch (error) {
+          console.error(error);
+          setStatus(error.message || "下見リンクの再生成に失敗しました。", "error");
+        }
+      }
+    }
+  });
 
   // 旧ボタン名が残っても壊れないようにする
   window.startLabStreetViewAutoTour = window.openCurrentLabStreetViewPoint;

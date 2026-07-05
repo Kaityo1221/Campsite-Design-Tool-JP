@@ -1260,6 +1260,7 @@ html, body {
 }
 
 .lab-streetview-label input,
+.lab-streetview-label select,
 .lab-streetview-options select {
   width: 100%;
   box-sizing: border-box;
@@ -1435,7 +1436,7 @@ html, body {
   background: rgba(14, 116, 144, 0.35);
 }
 
-.lab-streetview-url-row span {
+.lab-streetview-url-index {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1454,13 +1455,17 @@ html, body {
 .lab-streetview-stop-badge {
   grid-column: 2 / -1;
   display: inline-flex;
+  align-items: center;
   width: fit-content;
+  max-width: 100%;
   border-radius: 999px;
-  background: rgba(251, 191, 36, 0.16) !important;
+  background: rgba(251, 191, 36, 0.16);
   color: #fde68a;
   padding: 4px 10px;
   font-size: 12px;
   font-weight: 800;
+  white-space: normal;
+  line-height: 1.4;
 }
 
 @media (max-width: 900px) {
