@@ -1514,7 +1514,7 @@ if (title) {
       学習判定：${stats.learningHit}件
     </p>
 
-    <div style="
+        <div style="
       display:grid;
       gap:14px;
       font-weight:800;
@@ -1522,36 +1522,43 @@ if (title) {
       line-height:1.45;
     ">
       <div style="
-        display:grid;
-        grid-template-columns:1em minmax(0,1fr) auto;
-        gap:8px;
-        align-items:start;
+        display:flex;
+        justify-content:space-between;
+        gap:16px;
+        align-items:flex-start;
       ">
-        <span>・</span>
-        <span style="min-width:0; overflow-wrap:anywhere;">辞書ヒット</span>
-        <span>${stats.dictionaryHit}件</span>
+        <span style="min-width:0; overflow-wrap:anywhere;">・最終判定マスターヒット</span>
+        <span style="white-space:nowrap;">${stats.engineDecisionHit || 0}件</span>
       </div>
 
       <div style="
-        display:grid;
-        grid-template-columns:1em minmax(0,1fr) auto;
-        gap:8px;
-        align-items:start;
+        display:flex;
+        justify-content:space-between;
+        gap:16px;
+        align-items:flex-start;
       ">
-        <span>・</span>
-        <span style="min-width:0; overflow-wrap:anywhere;">推論ルールヒット</span>
-        <span>${stats.inferenceRuleHit}件</span>
+        <span style="min-width:0; overflow-wrap:anywhere;">・辞書ヒット</span>
+        <span style="white-space:nowrap;">${stats.dictionaryHit}件</span>
       </div>
 
       <div style="
-        display:grid;
-        grid-template-columns:1em minmax(0,1fr) auto;
-        gap:8px;
-        align-items:start;
+        display:flex;
+        justify-content:space-between;
+        gap:16px;
+        align-items:flex-start;
       ">
-        <span>・</span>
-        <span style="min-width:0; overflow-wrap:anywhere;">未一致</span>
-        <span>${stats.unmatched}件</span>
+        <span style="min-width:0; overflow-wrap:anywhere;">・推論ルールヒット</span>
+        <span style="white-space:nowrap;">${stats.inferenceRuleHit}件</span>
+      </div>
+
+      <div style="
+        display:flex;
+        justify-content:space-between;
+        gap:16px;
+        align-items:flex-start;
+      ">
+        <span style="min-width:0; overflow-wrap:anywhere;">・未一致</span>
+        <span style="white-space:nowrap;">${stats.unmatched}件</span>
       </div>
     </div>
 

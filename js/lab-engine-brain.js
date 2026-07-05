@@ -237,18 +237,54 @@ window.enrichLabPointsWithLabEngineBrain = async function(points) {
 
   const dictionary = brain.dictionary || [];
   const rules = brain.rules || [];
+const engineDecisions =
+  typeof window.loadCampsiteEngineDecisions === "function"
+    ? await window.loadCampsiteEngineDecisions("kasai-rinkai-20260625-v1")
+    : [];
 
-  if (!dictionary.length && !rules.length) {
-    console.log("LabEngine Brainは空です。既存のLabEngine分類だけで続行します。");
-    return points;
+const engineDecisionMap = new Map();
+
+engineDecisions.forEach(row => {
+  const name = normalizeLabEngineName(row.poi_name);
+  if (name) {
+    engineDecisionMap.set(name, row);
   }
+});
 
-  let dictionaryMatchedCount = 0;
-  let ruleMatchedCount = 0;
+  if (!engineDecisions.length && !dictionary.length && !rules.length) {
+  console.log("LabEngine Brainは空です。既存のLabEngine分類だけで続行します。");
+  return points;
+}
+
+let engineDecisionMatchedCount = 0;
+let dictionaryMatchedCount = 0;
+let ruleMatchedCount = 0;
 
   const enrichedPoints = (points || []).map(point => {
     const name = getLabEnginePointName(point);
+    
+const engineDecision =
+  engineDecisionMap.get(normalizeLabEngineName(name));
 
+if (engineDecision) {
+  engineDecisionMatchedCount += 1;
+
+  const category = convertLabEngineCategoryKey(engineDecision.final_category);
+
+  return {
+    ...point,
+    _labCategoryKey: category.key,
+    _labCategoryLabel: category.label,
+    _labEngineBrainMatched: true,
+    _labEngineBrainSource: "campsite_poi_engine_decisions_v1",
+    _labEngineName: engineDecision.poi_name || "",
+    _labEngineAction: engineDecision.final_status || "",
+    _labEngineReasonCode: engineDecision.decision_basis || "",
+    _labEngineConfidenceScore: 1,
+    _labEngineFinalReason: engineDecision.final_reason || "",
+    _labEngineRuleTitle: engineDecision.rule_title || ""
+  };
+}
     const dictionaryMatch = findLabEngineDictionaryMatch(name, dictionary);
 
     if (dictionaryMatch) {
@@ -275,8 +311,8 @@ window.enrichLabPointsWithLabEngineBrain = async function(points) {
   });
 
   console.log(
-    `LabEngine Brain分類: 辞書${dictionaryMatchedCount}件 / 推論${ruleMatchedCount}件 / 全${points.length}件`
-  );
+  `LabEngine Brain分類: 最終判定${engineDecisionMatchedCount}件 / 辞書${dictionaryMatchedCount}件 / 推論${ruleMatchedCount}件 / 全${points.length}件`
+);
 
   return enrichedPoints;
 };
@@ -287,11 +323,12 @@ window.enrichLabPointsWithLabEngineBrain = async function(points) {
 
 window.LabEngineLearningStats = (() => {
   const state = {
-    dictionaryCount: 0,
-    ruleCount: 0,
-    dictionaryHit: 0,
-    inferenceRuleHit: 0,
-    unmatched: 0,
+  dictionaryCount: 0,
+  ruleCount: 0,
+  engineDecisionHit: 0,
+  dictionaryHit: 0,
+  inferenceRuleHit: 0,
+  unmatched: 0,
     totalJudged: 0,
     dictionaryLoadOk: false,
     ruleLoadOk: false,
@@ -299,9 +336,10 @@ window.LabEngineLearningStats = (() => {
   };
 
   function reset() {
-    state.dictionaryHit = 0;
-    state.inferenceRuleHit = 0;
-    state.unmatched = 0;
+  state.engineDecisionHit = 0;
+  state.dictionaryHit = 0;
+  state.inferenceRuleHit = 0;
+  state.unmatched = 0;
     state.totalJudged = 0;
     state.lastError = "";
   }
@@ -349,6 +387,15 @@ window.LabEngineLearningStats = (() => {
   const isBrainMatched =
     result?.matched === true ||
     result?._labEngineBrainMatched === true;
+const isEngineDecisionMatch =
+  source.includes("campsite_poi_engine_decisions_v1") ||
+  !!result?._labEngineFinalReason ||
+  !!result?._labEngineRuleTitle;
+
+  if (isEngineDecisionMatch) {
+  state.engineDecisionHit += 1;
+  return;
+}
 
   if (
     hasDictionaryId ||
@@ -381,7 +428,10 @@ window.LabEngineLearningStats = (() => {
   state.unmatched += 1;
 }
   function getBreakdown() {
-    const learningHit = state.dictionaryHit + state.inferenceRuleHit;
+   const learningHit =
+  state.engineDecisionHit +
+  state.dictionaryHit +
+  state.inferenceRuleHit;
 
     let diagnosis = "";
 
@@ -394,10 +444,11 @@ window.LabEngineLearningStats = (() => {
     }
 
     return {
-      dictionaryCount: state.dictionaryCount,
-      ruleCount: state.ruleCount,
-      dictionaryHit: state.dictionaryHit,
-      inferenceRuleHit: state.inferenceRuleHit,
+  dictionaryCount: state.dictionaryCount,
+  ruleCount: state.ruleCount,
+  engineDecisionHit: state.engineDecisionHit,
+  dictionaryHit: state.dictionaryHit,
+  inferenceRuleHit: state.inferenceRuleHit,
       unmatched: state.unmatched,
       totalJudged: state.totalJudged,
       learningHit,
