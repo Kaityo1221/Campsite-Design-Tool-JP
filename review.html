@@ -41,21 +41,44 @@
     </section>
 
     <section class="guide-card" id="guideCard" hidden>
-      <button class="guide-toggle" type="button" id="guideToggle" aria-expanded="true">
-        判定ガイド：保留と除外の違い
-        <span>開閉</span>
-      </button>
-      <div class="guide-body" id="guideBody">
-        <div class="judge-rule strong">
-          <b>保留 = あとで写真・地図・現地確認を見れば使えるかもしれない</b>
-          <small>情報が足りないだけ。可能性を残す。</small>
-        </div>
-        <div class="judge-rule danger">
-          <b>除外 = 情報が増えても使わない</b>
-          <small>学習に入れるとノイズになる。キャンプサイト設計に使わない。</small>
-        </div>
-      </div>
-    </section>
+  <button class="guide-toggle" type="button" id="guideToggle" aria-expanded="true">
+    判定ガイド：保留・注意・除外の考え方
+    <span>開閉</span>
+  </button>
+
+  <div class="guide-body" id="guideBody">
+    <div class="judge-rule strong">
+      <b>保留 = あとで写真・地図・現地確認を見れば使えるかもしれない</b>
+      <small>情報が足りないだけ。可能性を残す。</small>
+    </div>
+
+    <div class="judge-rule caution">
+      <b>注意 = POIとしては使えるが、人を集めるにはリスクがある</b>
+      <small>駐車場・車道・橋・狭い道・サイクリングロード・他利用者の迷惑になりそうな場所。</small>
+    </div>
+
+    <div class="judge-rule danger">
+      <b>除外 = 情報が増えてもキャンプサイト設計には使わない</b>
+      <small>現物がない、立入禁止、撤去済み、一時展示、学習ノイズになるもの。</small>
+    </div>
+
+    <div class="judge-rule memo">
+      <b>判断の軸</b>
+      <small>
+        POIとして良いかではなく、トレーナーを安全に誘導してよい場所かで判断します。
+        車・自転車・歩行者の動線を妨げる場所、他利用者の目的を邪魔する場所は注意または除外にします。
+      </small>
+    </div>
+
+    <div class="judge-rule memo">
+      <b>カフェとホテルは分けて考える</b>
+      <small>
+        カフェ・レストラン・売店は、一般利用できるなら休憩候補にできます。
+        ホテル・宿泊施設・フロント・ロビーは、涼しくても目的外利用を案内しないため、休憩向きにはしません。
+      </small>
+    </div>
+  </div>
+</section>
 
     <section class="review-card" id="reviewCard" hidden>
       <div class="card-topline">
