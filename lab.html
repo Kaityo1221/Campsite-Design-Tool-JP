@@ -111,7 +111,100 @@
   ・最大25件は保証ではない旨を追記しました。<br>
   ・iPhoneでKMZが.zip保存された場合の案内を追加しました。
 </details>
+<div class="step lab-streetview-step">
+  <div class="step-no">Lab / Virtual Preview</div>
+  <h3>Street Viewリンク下見（APIなし実験）</h3>
 
+  <p class="note">
+    マイマップから出力したKMZ / KMLを読み込み、<code>walk_route</code> の線に沿ってGoogleマップのStreet Viewリンクを自動生成します。<br>
+    Google Maps JavaScript APIは使わないため、APIキー不要・課金設定不要です。
+  </p>
+
+  <div class="lab-streetview-grid">
+    <div class="lab-streetview-control">
+      <label class="lab-streetview-label">
+        下見用KMZ / KML
+        <input
+          type="file"
+          id="labStreetViewKmzFile"
+          accept=".kmz,.kml,.zip"
+        >
+      </label>
+
+      <div class="lab-streetview-options">
+        <label>
+          リンク生成間隔
+          <select id="labStreetViewIntervalMeters">
+            <option value="25">25m</option>
+            <option value="50" selected>50m</option>
+            <option value="75">75m</option>
+            <option value="100">100m</option>
+          </select>
+        </label>
+
+        <label>
+          Street View画角
+          <select id="labStreetViewFov">
+            <option value="70">狭め</option>
+            <option value="80" selected>標準</option>
+            <option value="95">広め</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="lab-streetview-buttons">
+        <button type="button" class="generate" onclick="prepareLabStreetViewTour()">
+          下見リンクを生成
+        </button>
+
+        <button type="button" id="labStreetViewStartButton" class="generate" onclick="openCurrentLabStreetViewPoint()" disabled>
+          現在地点を開く
+        </button>
+
+        <button type="button" id="labStreetViewStepButton" class="generate" onclick="stepLabStreetViewAutoTour()" disabled>
+          次の地点へ
+        </button>
+
+        <button type="button" id="labStreetViewStopButton" class="generate secondary" onclick="resetLabStreetViewTour()" disabled>
+          最初に戻る
+        </button>
+      </div>
+
+      <div id="labStreetViewStatus" class="lab-streetview-status">
+        KMZを選択して、下見リンクを生成してください。
+      </div>
+
+      <div id="labStreetViewSummary" class="lab-streetview-summary"></div>
+
+      <div class="lab-streetview-progress-box">
+        現在位置：<span id="labStreetViewProgress">- / -</span>
+      </div>
+
+      <div id="labStreetViewStopCard" class="lab-streetview-stop-card">
+        <strong>現在の確認</strong><br>
+        まだ下見リンクは生成されていません。
+      </div>
+    </div>
+
+    <div class="lab-streetview-viewer">
+      <div id="labStreetViewPanorama" class="lab-streetview-panorama lab-streetview-url-panel">
+        <div class="lab-streetview-placeholder">
+          ここにStreet Viewリンク一覧が表示されます。<br>
+          クリックするとGoogleマップを別タブで開きます。
+        </div>
+      </div>
+
+      <div id="labStreetViewMiniMap" class="lab-streetview-minimap"></div>
+    </div>
+  </div>
+
+  <div class="lab-legend-box">
+    <strong>マイマップ側の作り方</strong><br>
+    ・歩かせたい道は <code>walk_route</code> レイヤーに線で作成します。<br>
+    ・止まって説明したい場所は <code>stops</code> レイヤーにピンで作成します。<br>
+    ・このAPIなし版は、アプリ内にStreet Viewを埋め込まず、Googleマップへのリンクを生成します。
+  </div>
+</div>
     <div class="step lab-engine-step">
   <div class="step-no">LabEngine</div>
 
@@ -437,5 +530,6 @@
 <script src="js/capacity.js?v=4"></script>
 <script src="js/lab-engine-brain.js?v=4"></script>
 <script src="js/lab.js?v=7"></script>
+<script src="js/lab-streetview.js?v=1"></script>
 </body>
 </html>
