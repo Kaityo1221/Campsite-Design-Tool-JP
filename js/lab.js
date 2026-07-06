@@ -818,7 +818,13 @@ function getLabPoiStyleId(input = "") {
   if (categoryKey === "loop") {
     return "labLoopPoi";
   }
+  if (categoryKey === "hold") {
+    return "labHoldPoi";
+  }
 
+  if (categoryKey === "exclude") {
+    return "labExcludePoi";
+  }
   return "labUnknownPoi";
 }
 function getLabPoiCategoryKey(input = "") {
@@ -856,6 +862,8 @@ function getLabPoiFolderName(categoryKey) {
     stay: "🟡 滞在",
     loop: "🔵 回遊",
     caution: "🔴 注意",
+    hold: "🟣 保留",
+    exclude: "⚫ 除外",
     unknown: "⚪ 未分類"
   };
 
@@ -882,6 +890,8 @@ function createLabExistingPoiKml(points, sourceName) {
     stay: [],
     loop: [],
     caution: [],
+    hold: [],
+    exclude: [],
     unknown: []
   };
 
@@ -928,6 +938,11 @@ const loop =
 
 const caution =
   categoryKey === "caution" ? "○" : "×";
+const hold =
+  categoryKey === "hold" ? "○" : "×";
+
+const exclude =
+  categoryKey === "exclude" ? "○" : "×";
 
     const placemark = `
 <Placemark>
@@ -948,7 +963,9 @@ lng：${lng}<br><br>
 休憩：${rest}<br>
 滞在：${stay}<br>
 回遊：${loop}<br>
-注意：${caution}
+注意：${caution}<br>
+保留：${hold}<br>
+除外：${exclude}
   ]]></description>
   <Point>
     <coordinates>${lng},${lat},0</coordinates>
@@ -959,7 +976,7 @@ lng：${lng}<br><br>
   });
 
   const folders =
-    ["rest", "stay", "loop", "caution", "unknown"]
+    ["rest", "stay", "loop", "caution", "hold", "exclude", "unknown"]
       .map(key => {
         if (!groups[key].length) {
           return "";
@@ -983,6 +1000,8 @@ lng：${lng}<br><br>
 🟡 滞在：広場・芝生・噴水など<br>
 🔵 回遊：遊歩道・橋・案内板など<br>
 🔴 注意：駐車場・階段・水辺など<br>
+🟣 保留：情報不足・人間確認が必要<br>
+⚫ 除外：設計対象から外す候補<br>
 ⚪ 未分類：辞書追加候補
   ]]></description>
 
@@ -1021,7 +1040,23 @@ lng：${lng}<br><br>
       </Icon>
     </IconStyle>
   </Style>
+  <Style id="labHoldPoi">
+    <IconStyle>
+      <scale>1.0</scale>
+      <Icon>
+        <href>http://maps.google.com/mapfiles/kml/paddle/purple-circle.png</href>
+      </Icon>
+    </IconStyle>
+  </Style>
 
+  <Style id="labExcludePoi">
+    <IconStyle>
+      <scale>1.0</scale>
+      <Icon>
+        <href>http://maps.google.com/mapfiles/kml/paddle/wht-blank.png</href>
+      </Icon>
+    </IconStyle>
+  </Style>
   <Style id="labUnknownPoi">
     <IconStyle>
       <scale>1.0</scale>
@@ -1281,6 +1316,8 @@ function getLabResearchCategoryColor(categoryKey) {
     stay: "#facc15",
     loop: "#3b82f6",
     caution: "#ef4444",
+    hold: "#a855f7",
+    exclude: "#64748b",
     unknown: "#f8fafc"
   };
 
@@ -1289,12 +1326,14 @@ function getLabResearchCategoryColor(categoryKey) {
 
 function renderLabResearchSummary(points) {
   const counts = {
-    rest: 0,
-    stay: 0,
-    loop: 0,
-    caution: 0,
-    unknown: 0
-  };
+  rest: 0,
+  stay: 0,
+  loop: 0,
+  caution: 0,
+  hold: 0,
+  exclude: 0,
+  unknown: 0
+};
 
   points.forEach(point => {
     const key =
@@ -1304,13 +1343,15 @@ function renderLabResearchSummary(points) {
   });
 
   return `
-    <strong>研究結果</strong><br>
-    🟢 休憩：${counts.rest}件　
-    🟡 滞在：${counts.stay}件　
-    🔵 回遊：${counts.loop}件　
-    🔴 注意：${counts.caution}件　
-    ⚪ 未分類：${counts.unknown}件
-  `;
+  <strong>研究結果</strong><br>
+  🟢 休憩：${counts.rest}件　
+  🟡 滞在：${counts.stay}件　
+  🔵 回遊：${counts.loop}件　
+  🔴 注意：${counts.caution}件　
+  🟣 保留：${counts.hold}件　
+  ⚫ 除外：${counts.exclude}件　
+  ⚪ 未分類：${counts.unknown}件
+`;
 }
 
 // ===============================
@@ -1514,7 +1555,7 @@ if (title) {
       学習判定：${stats.learningHit}件
     </p>
 
-    <div style="
+        <div style="
       display:grid;
       gap:14px;
       font-weight:800;
@@ -1522,36 +1563,43 @@ if (title) {
       line-height:1.45;
     ">
       <div style="
-        display:grid;
-        grid-template-columns:1em minmax(0,1fr) auto;
-        gap:8px;
-        align-items:start;
+        display:flex;
+        justify-content:space-between;
+        gap:16px;
+        align-items:flex-start;
       ">
-        <span>・</span>
-        <span style="min-width:0; overflow-wrap:anywhere;">辞書ヒット</span>
-        <span>${stats.dictionaryHit}件</span>
+        <span style="min-width:0; overflow-wrap:anywhere;">・最終判定マスターヒット</span>
+        <span style="white-space:nowrap;">${stats.engineDecisionHit || 0}件</span>
       </div>
 
       <div style="
-        display:grid;
-        grid-template-columns:1em minmax(0,1fr) auto;
-        gap:8px;
-        align-items:start;
+        display:flex;
+        justify-content:space-between;
+        gap:16px;
+        align-items:flex-start;
       ">
-        <span>・</span>
-        <span style="min-width:0; overflow-wrap:anywhere;">推論ルールヒット</span>
-        <span>${stats.inferenceRuleHit}件</span>
+        <span style="min-width:0; overflow-wrap:anywhere;">・辞書ヒット</span>
+        <span style="white-space:nowrap;">${stats.dictionaryHit}件</span>
       </div>
 
       <div style="
-        display:grid;
-        grid-template-columns:1em minmax(0,1fr) auto;
-        gap:8px;
-        align-items:start;
+        display:flex;
+        justify-content:space-between;
+        gap:16px;
+        align-items:flex-start;
       ">
-        <span>・</span>
-        <span style="min-width:0; overflow-wrap:anywhere;">未一致</span>
-        <span>${stats.unmatched}件</span>
+        <span style="min-width:0; overflow-wrap:anywhere;">・推論ルールヒット</span>
+        <span style="white-space:nowrap;">${stats.inferenceRuleHit}件</span>
+      </div>
+
+      <div style="
+        display:flex;
+        justify-content:space-between;
+        gap:16px;
+        align-items:flex-start;
+      ">
+        <span style="min-width:0; overflow-wrap:anywhere;">・未一致</span>
+        <span style="white-space:nowrap;">${stats.unmatched}件</span>
       </div>
     </div>
 

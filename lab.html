@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="css/admin.css?v=28">
 <link rel="stylesheet" href="css/distance.css?v=40">
 <link rel="stylesheet" href="css/capacity.css?v=6">
-<link rel="stylesheet" href="css/lab.css?v=2">
+<link rel="stylesheet" href="css/lab.css?v=20260706-v19">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/icon.png">
 <link rel="manifest" href="./manifest.json">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
@@ -111,7 +111,110 @@
   ・最大25件は保証ではない旨を追記しました。<br>
   ・iPhoneでKMZが.zip保存された場合の案内を追加しました。
 </details>
+<div class="step lab-streetview-step">
+  <div class="step-no">Lab / Virtual Preview</div>
+  <h3>Street Viewリンク下見（APIなし実験）</h3>
 
+  <p class="note">
+    マイマップから出力したKMZ / KMLを読み込み、<code>walk_route</code> の線に沿ってGoogleマップのStreet Viewリンクを自動生成します。<br>
+    Google Maps JavaScript APIは使わないため、APIキー不要・課金設定不要です。
+  </p>
+
+  <div class="lab-streetview-grid">
+    <div class="lab-streetview-control">
+      <label class="lab-streetview-label">
+        下見用KMZ / KML
+        <input
+          type="file"
+          id="labStreetViewKmzFile"
+          accept=".kmz,.kml,.zip"
+        >
+      </label>
+<label class="lab-streetview-label">
+  使用するルート
+  <select id="labStreetViewRouteSelect" disabled>
+    <option value="">KMZ / KMLを読み込むとルート一覧が表示されます</option>
+  </select>
+</label>
+      <div class="lab-streetview-options">
+        <label>
+          リンク生成間隔
+          <select id="labStreetViewIntervalMeters">
+            <option value="25">25m</option>
+            <option value="50" selected>50m</option>
+            <option value="75">75m</option>
+            <option value="100">100m</option>
+          </select>
+        </label>
+
+        <label>
+          Street View画角
+          <select id="labStreetViewFov">
+            <option value="70">狭め</option>
+            <option value="80" selected>標準</option>
+            <option value="95">広め</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="lab-streetview-buttons">
+        <button type="button" class="generate" onclick="prepareLabStreetViewTour()">
+          下見リンクを生成
+        </button>
+
+        <button type="button" id="labStreetViewStartButton" class="generate" onclick="openCurrentLabStreetViewPoint()" disabled>
+  選択地点をGoogleマップで開く
+</button>
+
+<button type="button" id="labStreetViewStepButton" class="generate" onclick="stepLabStreetViewAutoTour()" disabled>
+  次の地点へ
+</button>
+
+<button type="button" id="labStreetViewPrevButton" class="generate" onclick="prevLabStreetViewPoint()" disabled>
+  前の地点へ
+</button>
+
+<button type="button" id="labStreetViewStopButton" class="generate secondary" onclick="resetLabStreetViewTour()" disabled>
+  最初に戻る
+</button>
+      </div>
+
+      <div id="labStreetViewStatus" class="lab-streetview-status">
+        KMZを選択して、下見リンクを生成してください。
+      </div>
+
+      <div id="labStreetViewSummary" class="lab-streetview-summary"></div>
+
+      <div class="lab-streetview-progress-box">
+        現在位置：<span id="labStreetViewProgress">- / -</span>
+      </div>
+
+      <div id="labStreetViewStopCard" class="lab-streetview-stop-card">
+        <strong>現在の確認</strong><br>
+        まだ下見リンクは生成されていません。
+      </div>
+    </div>
+
+    <div class="lab-streetview-viewer">
+      <div id="labStreetViewPanorama" class="lab-streetview-panorama lab-streetview-url-panel">
+        <div class="lab-streetview-placeholder">
+  ここにStreet Viewリンク一覧が表示されます。<br>
+  リストをクリックすると地点を選択します。<br>
+  「外部ビューアを開く」でGoogleマップを表示します。
+</div>
+      </div>
+
+      <div id="labStreetViewMiniMap" class="lab-streetview-minimap"></div>
+    </div>
+  </div>
+
+  <div class="lab-legend-box">
+    <strong>マイマップ側の作り方</strong><br>
+    ・歩かせたい道は <code>walk_route</code> レイヤーに線で作成します。<br>
+    ・止まって説明したい場所は <code>stops</code> レイヤーにピンで作成します。<br>
+    ・このAPIなし版は、アプリ内にStreet Viewを埋め込まず、Googleマップへのリンクを生成します。
+  </div>
+</div>
     <div class="step lab-engine-step">
   <div class="step-no">LabEngine</div>
 
@@ -259,10 +362,12 @@
 
     <div class="lab-legend-grid">
       <div><span class="legend-dot rest"></span>休憩：ベンチ・東屋・トイレなど</div>
-      <div><span class="legend-dot stay"></span>滞在：広場・芝生・噴水など</div>
-      <div><span class="legend-dot loop"></span>回遊：遊歩道・橋・案内板など</div>
-      <div><span class="legend-dot caution"></span>注意：駐車場・階段・水辺など</div>
-      <div><span class="legend-dot unknown"></span>未分類：今後辞書に追加する候補</div>
+<div><span class="legend-dot stay"></span>滞在：広場・芝生・噴水など</div>
+<div><span class="legend-dot loop"></span>回遊：遊歩道・橋・案内板など</div>
+<div><span class="legend-dot caution"></span>注意：駐車場・階段・水辺など</div>
+<div><span class="legend-dot hold"></span>保留：情報不足・人間確認が必要</div>
+<div><span class="legend-dot exclude"></span>除外：設計対象から外す候補</div>
+<div><span class="legend-dot unknown"></span>未分類：今後辞書に追加する候補</div>
     </div>
   </div>
 
@@ -432,10 +537,11 @@
 <script src="js/kmz.js?v=1"></script>
 <script src="js/deduplicate.js?v=1"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/lab-supabase.js?v=2"></script>
+<script src="js/lab-supabase.js?v=20260705-v17"></script>
 <script src="js/poi-dictionary-db.js?v=5"></script>
 <script src="js/capacity.js?v=4"></script>
-<script src="js/lab-engine-brain.js?v=4"></script>
-<script src="js/lab.js?v=7"></script>
+<script src="js/lab-engine-brain.js?v=20260706-v22"></script>
+<script src="js/lab.js?v=20260706-v19"></script>
+<script src="js/lab-streetview.js?v=6"></script>
 </body>
 </html>

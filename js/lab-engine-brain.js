@@ -24,9 +24,9 @@ function convertLabEngineCategoryKey(category) {
   if (key === "STAY") return { key: "stay", label: "滞在" };
   if (key === "LOOP") return { key: "loop", label: "回遊" };
   if (key === "CAUTION") return { key: "caution", label: "注意" };
+  if (key === "HOLD") return { key: "hold", label: "保留" };
+  if (key === "EXCLUDE") return { key: "exclude", label: "除外" };
 
-  // HOLD / EXCLUDE はPOIを消す意味ではない。
-  // LabEngine本体では未分類フォルダへ置き、人間確認対象として扱う。
   return { key: "unknown", label: "未分類" };
 }
 
@@ -59,6 +59,23 @@ function getLabEnginePointName(point) {
     point?.displayName ||
     ""
   );
+}
+function shouldUseKasaiFinalDecisionMaster(points = []) {
+  const text = (points || [])
+    .map(point => {
+      return [
+        getLabEnginePointName(point),
+        point?.description,
+        point?.park_name,
+        point?.parkName,
+        point?._sourceFile
+      ]
+        .filter(Boolean)
+        .join(" ");
+    })
+    .join(" ");
+
+  return /葛西|kasai/i.test(text);
 }
 
 async function loadLabEngineBrainFromSupabase() {
@@ -190,10 +207,29 @@ function findLabEngineDictionaryMatch(name, dictionary) {
   }) || null;
 }
 
+function getLabEngineRulePriority(rule) {
+  const category = String(rule?.final_category || "").toUpperCase();
+
+  // 安全・保留・除外系は最優先
+  if (category === "EXCLUDE") return 100;
+  if (category === "HOLD") return 90;
+  if (category === "CAUTION") return 80;
+
+  // 休憩・滞在・回遊は同列。
+  // この中では confidence_score が高いルールを勝たせる。
+  if (category === "REST") return 60;
+  if (category === "STAY") return 60;
+  if (category === "LOOP") return 60;
+
+  return 0;
+}
+
 function findLabEngineRuleMatch(name, rules) {
   const target = String(name || "");
 
   if (!target) return null;
+
+  const matchedRules = [];
 
   for (const rule of rules || []) {
     const ruleType = String(rule.rule_type || "ILIKE").toUpperCase();
@@ -204,12 +240,25 @@ function findLabEngineRuleMatch(name, rules) {
     if (ruleType === "ILIKE" || ruleType === "LIKE") {
       const regExp = sqlLikePatternToRegExp(pattern);
       if (regExp.test(target)) {
-        return rule;
+        matchedRules.push(rule);
       }
     }
   }
 
-  return null;
+  if (!matchedRules.length) return null;
+
+  matchedRules.sort((a, b) => {
+    const pa = getLabEngineRulePriority(a);
+    const pb = getLabEngineRulePriority(b);
+
+    if (pb !== pa) {
+      return pb - pa;
+    }
+
+    return Number(b.confidence_score || 0) - Number(a.confidence_score || 0);
+  });
+
+  return matchedRules[0];
 }
 
 function applyLabEngineBrainMatch(point, match, sourceType) {
@@ -237,18 +286,62 @@ window.enrichLabPointsWithLabEngineBrain = async function(points) {
 
   const dictionary = brain.dictionary || [];
   const rules = brain.rules || [];
+const useKasaiFinalDecisionMaster =
+  shouldUseKasaiFinalDecisionMaster(points);
 
-  if (!dictionary.length && !rules.length) {
-    console.log("LabEngine Brainは空です。既存のLabEngine分類だけで続行します。");
-    return points;
+const engineDecisions =
+  useKasaiFinalDecisionMaster &&
+  typeof window.loadCampsiteEngineDecisions === "function"
+    ? await window.loadCampsiteEngineDecisions("kasai-rinkai-20260625-v1")
+    : [];
+
+if (!useKasaiFinalDecisionMaster) {
+  console.log("葛西最終判定マスターは対象外のため使用しません。汎用推論ルールで判定します。");
+}
+
+const engineDecisionMap = new Map();
+
+engineDecisions.forEach(row => {
+  const name = normalizeLabEngineName(row.poi_name);
+  if (name) {
+    engineDecisionMap.set(name, row);
   }
+});
 
-  let dictionaryMatchedCount = 0;
-  let ruleMatchedCount = 0;
+  if (!engineDecisions.length && !dictionary.length && !rules.length) {
+  console.log("LabEngine Brainは空です。既存のLabEngine分類だけで続行します。");
+  return points;
+}
+
+let engineDecisionMatchedCount = 0;
+let dictionaryMatchedCount = 0;
+let ruleMatchedCount = 0;
 
   const enrichedPoints = (points || []).map(point => {
     const name = getLabEnginePointName(point);
+    
+const engineDecision =
+  engineDecisionMap.get(normalizeLabEngineName(name));
 
+if (engineDecision) {
+  engineDecisionMatchedCount += 1;
+
+  const category = convertLabEngineCategoryKey(engineDecision.final_category);
+
+  return {
+    ...point,
+    _labCategoryKey: category.key,
+    _labCategoryLabel: category.label,
+    _labEngineBrainMatched: true,
+    _labEngineBrainSource: "campsite_poi_engine_decisions_v1",
+    _labEngineName: engineDecision.poi_name || "",
+    _labEngineAction: engineDecision.final_status || "",
+    _labEngineReasonCode: engineDecision.decision_basis || "",
+    _labEngineConfidenceScore: 1,
+    _labEngineFinalReason: engineDecision.final_reason || "",
+    _labEngineRuleTitle: engineDecision.rule_title || ""
+  };
+}
     const dictionaryMatch = findLabEngineDictionaryMatch(name, dictionary);
 
     if (dictionaryMatch) {
@@ -275,8 +368,8 @@ window.enrichLabPointsWithLabEngineBrain = async function(points) {
   });
 
   console.log(
-    `LabEngine Brain分類: 辞書${dictionaryMatchedCount}件 / 推論${ruleMatchedCount}件 / 全${points.length}件`
-  );
+  `LabEngine Brain分類: 最終判定${engineDecisionMatchedCount}件 / 辞書${dictionaryMatchedCount}件 / 推論${ruleMatchedCount}件 / 全${points.length}件`
+);
 
   return enrichedPoints;
 };
@@ -287,11 +380,12 @@ window.enrichLabPointsWithLabEngineBrain = async function(points) {
 
 window.LabEngineLearningStats = (() => {
   const state = {
-    dictionaryCount: 0,
-    ruleCount: 0,
-    dictionaryHit: 0,
-    inferenceRuleHit: 0,
-    unmatched: 0,
+  dictionaryCount: 0,
+  ruleCount: 0,
+  engineDecisionHit: 0,
+  dictionaryHit: 0,
+  inferenceRuleHit: 0,
+  unmatched: 0,
     totalJudged: 0,
     dictionaryLoadOk: false,
     ruleLoadOk: false,
@@ -299,9 +393,10 @@ window.LabEngineLearningStats = (() => {
   };
 
   function reset() {
-    state.dictionaryHit = 0;
-    state.inferenceRuleHit = 0;
-    state.unmatched = 0;
+  state.engineDecisionHit = 0;
+  state.dictionaryHit = 0;
+  state.inferenceRuleHit = 0;
+  state.unmatched = 0;
     state.totalJudged = 0;
     state.lastError = "";
   }
@@ -349,6 +444,15 @@ window.LabEngineLearningStats = (() => {
   const isBrainMatched =
     result?.matched === true ||
     result?._labEngineBrainMatched === true;
+const isEngineDecisionMatch =
+  source.includes("campsite_poi_engine_decisions_v1") ||
+  !!result?._labEngineFinalReason ||
+  !!result?._labEngineRuleTitle;
+
+  if (isEngineDecisionMatch) {
+  state.engineDecisionHit += 1;
+  return;
+}
 
   if (
     hasDictionaryId ||
@@ -381,7 +485,10 @@ window.LabEngineLearningStats = (() => {
   state.unmatched += 1;
 }
   function getBreakdown() {
-    const learningHit = state.dictionaryHit + state.inferenceRuleHit;
+   const learningHit =
+  state.engineDecisionHit +
+  state.dictionaryHit +
+  state.inferenceRuleHit;
 
     let diagnosis = "";
 
@@ -394,10 +501,11 @@ window.LabEngineLearningStats = (() => {
     }
 
     return {
-      dictionaryCount: state.dictionaryCount,
-      ruleCount: state.ruleCount,
-      dictionaryHit: state.dictionaryHit,
-      inferenceRuleHit: state.inferenceRuleHit,
+  dictionaryCount: state.dictionaryCount,
+  ruleCount: state.ruleCount,
+  engineDecisionHit: state.engineDecisionHit,
+  dictionaryHit: state.dictionaryHit,
+  inferenceRuleHit: state.inferenceRuleHit,
       unmatched: state.unmatched,
       totalJudged: state.totalJudged,
       learningHit,

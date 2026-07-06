@@ -16,3 +16,25 @@ if (window.supabase && typeof window.supabase.createClient === "function") {
   window.campsiteSupabase = null;
   console.warn("Supabase SDKを読み込めませんでした。送信機能は無効です。");
 }
+async function loadCampsiteEngineDecisions(testBatchId = "kasai-rinkai-20260625-v1") {
+  if (!window.campsiteSupabase) {
+    console.warn("Supabase client is not ready.");
+    return [];
+  }
+
+  const { data, error } = await window.campsiteSupabase
+    .from("campsite_poi_engine_decisions_v1")
+    .select("*")
+    .eq("test_batch_id", testBatchId)
+    .eq("is_active", true)
+    .order("source_queue_id", { ascending: true });
+
+  if (error) {
+    console.error("engine decisions load error:", error);
+    return [];
+  }
+
+  return data || [];
+}
+
+window.loadCampsiteEngineDecisions = loadCampsiteEngineDecisions;
