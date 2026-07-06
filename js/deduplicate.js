@@ -245,6 +245,10 @@ async function createDeduplicatedKmzFromCsv(file) {
   const kmlText =
     serializer.serializeToString(outputXml);
 
+  if (!isJSZipAvailable("CSV重複整理KMZ生成")) {
+    throw new Error("JSZipが読み込まれていません");
+  }
+
   const zip =
     new JSZip();
 
@@ -370,6 +374,10 @@ async function createDeduplicatedKmzFromCsvFiles(files) {
   const kmlText =
     serializer.serializeToString(outputXml);
 
+  if (!isJSZipAvailable("CSV重複整理KMZ生成")) {
+    throw new Error("JSZipが読み込まれていません");
+  }
+
   const zip =
     new JSZip();
 
@@ -405,6 +413,10 @@ async function createDeduplicatedKmzFromKmlOrKmz(file) {
     fileName.endsWith(".kmz") ||
     fileName.endsWith(".zip")
   ) {
+    if (!isJSZipAvailable("KML / KMZ重複整理")) {
+      throw new Error("JSZipが読み込まれていません");
+    }
+
     zip =
       await JSZip.loadAsync(file);
 
@@ -492,6 +504,10 @@ async function createDeduplicatedKmzFromKmlOrKmz(file) {
     serializer.serializeToString(xml);
 
   if (!zip) {
+    if (!isJSZipAvailable("KML重複整理KMZ生成")) {
+      throw new Error("JSZipが読み込まれていません");
+    }
+
     zip =
       new JSZip();
 

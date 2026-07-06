@@ -16,7 +16,7 @@ let distancePolygonLayerGroup = null;
 let distanceWarningLineLayers = new Map();
 let latestDistanceWarnings = [];
 
-function escapeHtml(text) {
+function escapeDistanceHtml(text) {
   return String(text || "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -24,7 +24,7 @@ function escapeHtml(text) {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
 }
-function getDistanceMeters(a, b) {
+function getDistanceCheckMeters(a, b) {
 
   const R = 6371000;
 
@@ -74,7 +74,7 @@ function getPrecheckDuplicatePois() {
     for (let j = i + 1; j < points.length; j++) {
       const a = points[i];
       const b = points[j];
-      const distance = getDistanceMeters(a, b);
+      const distance = getDistanceCheckMeters(a, b);
 
       if (distance < 1) {
         duplicates.push({
@@ -131,8 +131,8 @@ function renderPrecheckDuplicatePoiHtml() {
           background:rgba(15,23,42,0.55);
         ">
           <strong>${item.distance.toFixed(1)}m</strong><br>
-          ${escapeHtml(item.a.layer)}：${escapeHtml(item.a.name)}<br>
-          × ${escapeHtml(item.b.layer)}：${escapeHtml(item.b.name)}
+          ${escapeDistanceHtml(item.a.layer)}：${escapeDistanceHtml(item.a.name)}<br>
+          × ${escapeDistanceHtml(item.b.layer)}：${escapeDistanceHtml(item.b.name)}
         </div>
       `).join("")}
     </div>
@@ -904,7 +904,7 @@ function renderDistanceLoadErrorHtml(title, message = "") {
       line-height:1.7;
     ">
       <strong style="color:#f87171;">
-        ⚠ ${escapeHtml(title)}
+        ⚠ ${escapeDistanceHtml(title)}
       </strong>
 
       ${message ? `
@@ -994,7 +994,7 @@ const isIphoneKmzZip =
     summary.innerHTML = `
       <div class="distance-warning">
         KMZ/KMLを読み込み中です...<br>
-        <small>${escapeHtml(file.name || "")}</small>
+        <small>${escapeDistanceHtml(file.name || "")}</small>
       </div>
     `;
   }
@@ -1231,6 +1231,16 @@ async function extractLayersFromKML(file) {
     if (fileName.endsWith(".kml")) {
       kmlText = await file.text();
     } else if (fileName.endsWith(".kmz") || isZipFile) {
+      if (!isJSZipAvailable("距離チェック用KMZ読み込み")) {
+        return {
+          layers: [],
+          pointsByLayer: {},
+          polygons: [],
+          errorCode: "jszip_unavailable",
+          errorDetail: ""
+        };
+      }
+
       const zip = await JSZip.loadAsync(file);
 
       for (const name in zip.files) {
@@ -1363,7 +1373,7 @@ async function extractLayersFromKML(file) {
     errorCode: ""
   };
 }
-function getExtendedDataValue(pm, keyName) {
+function getDistanceExtendedDataValue(pm, keyName) {
   const dataNodes = Array.from(pm.getElementsByTagName("Data"));
 
   for (const dataNode of dataNodes) {
@@ -1379,9 +1389,9 @@ function getExtendedDataValue(pm, keyName) {
 
 function getPlacemarkPoiName(pm) {
   const extendedName =
-    getExtendedDataValue(pm, "名前") ||
-    getExtendedDataValue(pm, "name") ||
-    getExtendedDataValue(pm, "title");
+    getDistanceExtendedDataValue(pm, "名前") ||
+    getDistanceExtendedDataValue(pm, "name") ||
+    getDistanceExtendedDataValue(pm, "title");
 
   if (extendedName.trim()) {
     return extendedName.trim();
@@ -1456,7 +1466,7 @@ function renderLayerSelector(layers, container) {
   container.innerHTML = `
     ${targetLayers.map(name => `
       <div class="layer-row">
-        <strong>${escapeHtml(cleanLayerName(name))}</strong>
+        <strong>${escapeDistanceHtml(cleanLayerName(name))}</strong>
         <span class="note">（${window._layerPoints[name]?.length || 0}件）</span>
       </div>
     `).join("")}
@@ -1529,7 +1539,7 @@ ${window._hasPolygon ? "" : `
 `}
 <br>
 <strong>判定対象レイヤー</strong><br>
-${info.targetLayerNames.map(name => escapeHtml(name)).join("<br>") || "なし"}
+${info.targetLayerNames.map(name => escapeDistanceHtml(name)).join("<br>") || "なし"}
     </div>
   `;
 }
@@ -1698,8 +1708,8 @@ function getRiskAccordionHtml(warnings) {
       <strong style="color:${cardColor};">
         ${label}（${w.distance.toFixed(1)}m）
       </strong><br>
-      ${escapeHtml(w.a.layer)}：${escapeHtml(w.a.name)}<br>
-× ${escapeHtml(w.b.layer)}：${escapeHtml(w.b.name)}<br>
+      ${escapeDistanceHtml(w.a.layer)}：${escapeDistanceHtml(w.a.name)}<br>
+× ${escapeDistanceHtml(w.b.layer)}：${escapeDistanceHtml(w.b.name)}<br>
       → ${message}
     </div>
   `;
@@ -1972,7 +1982,7 @@ if (
 ) {
   continue;
 }
-      const distance = getDistanceMeters(a, b);
+      const distance = getDistanceCheckMeters(a, b);
 if (distance < 1) {
   duplicatePois.push({
     a,
@@ -2013,8 +2023,8 @@ const duplicatePoiHtml =
         <strong style="color:#f87171;">
           ⚠ 重複POI候補（${item.distance.toFixed(1)}m）
         </strong><br>
-        ${escapeHtml(item.a.layer)}：${escapeHtml(item.a.name)}<br>
-        × ${escapeHtml(item.b.layer)}：${escapeHtml(item.b.name)}<br>
+        ${escapeDistanceHtml(item.a.layer)}：${escapeDistanceHtml(item.a.name)}<br>
+        × ${escapeDistanceHtml(item.b.layer)}：${escapeDistanceHtml(item.b.name)}<br>
         <span style="font-size:12px; opacity:0.85;">
           同じ場所に複数のPOIが配置されている可能性があります。
         </span>
@@ -2164,7 +2174,7 @@ const debugHtml = `
     判定対象POI数：${debugInfo.targetPointCount}件<br>
 活動範囲ポリゴン：${window._hasPolygon ? `あり（${window._activityPolygons?.length || 0}件）` : "なし"}<br><br>
     <strong>判定対象レイヤー</strong><br>
-    ${debugInfo.targetLayerNames.map(name => escapeHtml(name)).join("<br>") || "なし"}
+    ${debugInfo.targetLayerNames.map(name => escapeDistanceHtml(name)).join("<br>") || "なし"}
   </div>
 `;
   const resultHeaderHtml = `
@@ -2186,8 +2196,8 @@ const debugHtml = `
         nearestWarning ? `
           <strong>最短距離ペア</strong><br>
           ${nearestWarning.distance.toFixed(1)}m<br>
-          ${escapeHtml(nearestWarning.a.layer)}：${escapeHtml(nearestWarning.a.name)}<br>
-× ${escapeHtml(nearestWarning.b.layer)}：${escapeHtml(nearestWarning.b.name)}<br>
+          ${escapeDistanceHtml(nearestWarning.a.layer)}：${escapeDistanceHtml(nearestWarning.a.name)}<br>
+× ${escapeDistanceHtml(nearestWarning.b.layer)}：${escapeDistanceHtml(nearestWarning.b.name)}<br>
         ` : `
           <strong>最短距離ペア</strong><br>
           40m未満の組み合わせはありません。<br>
@@ -2267,8 +2277,8 @@ return;
         <strong style="color:${cardColor};">
           ${label}（${w.distance.toFixed(1)}m）
         </strong><br>
-        ${escapeHtml(w.a.layer)}：${escapeHtml(w.a.name)}<br>
-× ${escapeHtml(w.b.layer)}：${escapeHtml(w.b.name)}<br>
+        ${escapeDistanceHtml(w.a.layer)}：${escapeDistanceHtml(w.a.name)}<br>
+× ${escapeDistanceHtml(w.b.layer)}：${escapeDistanceHtml(w.b.name)}<br>
         → ${message}
         <br>
 <button
@@ -2664,9 +2674,9 @@ addDistanceMapLegend();
       weight: 2
     })
       .bindPopup(`
-        <strong>${escapeHtml(p.name || "名称なし")}</strong><br>
-        ${escapeHtml(label)}<br>
-        レイヤー：${escapeHtml(layerName || "-")}
+        <strong>${escapeDistanceHtml(p.name || "名称なし")}</strong><br>
+        ${escapeDistanceHtml(label)}<br>
+        レイヤー：${escapeDistanceHtml(layerName || "-")}
       `)
       .addTo(distanceLeafletLayerGroup);
 
@@ -2721,9 +2731,9 @@ const warningLine = L.polyline([aLatLng, bLatLng], {
   dashArray: isReference || w.distance >= 30 ? "6,6" : null
 })
   .bindPopup(`
-    <strong>${escapeHtml(label)}：${w.distance.toFixed(1)}m</strong><br>
-    ${escapeHtml(w.a.layer || "-")}：${escapeHtml(w.a.name || "名称なし")}<br>
-    × ${escapeHtml(w.b.layer || "-")}：${escapeHtml(w.b.name || "名称なし")}
+    <strong>${escapeDistanceHtml(label)}：${w.distance.toFixed(1)}m</strong><br>
+    ${escapeDistanceHtml(w.a.layer || "-")}：${escapeDistanceHtml(w.a.name || "名称なし")}<br>
+    × ${escapeDistanceHtml(w.b.layer || "-")}：${escapeDistanceHtml(w.b.name || "名称なし")}
   `)
   .addTo(distanceLeafletLayerGroup);
 
@@ -2752,7 +2762,7 @@ distanceWarningLineLayers.set(
 
 function createKmlKmzErrorMessage(errorType, detail = "") {
   const detailText = detail
-    ? `<br><small>${escapeHtml(String(detail))}</small>`
+    ? `<br><small>${escapeDistanceHtml(String(detail))}</small>`
     : "";
 
   const messages = {
@@ -2799,6 +2809,12 @@ function createKmlKmzErrorMessage(errorType, detail = "") {
       ⚠ KML/KMZの解析に失敗しました。<br>
       ファイルが壊れているか、対応していない形式の可能性があります。<br>
       Google My Maps から再エクスポートして、もう一度試してください。
+      ${detailText}
+    `,
+
+    jszip_unavailable: `
+      ⚠ KMZ処理ライブラリを読み込めませんでした。<br>
+      通信環境を確認して、ページを再読み込みしてください。
       ${detailText}
     `,
 

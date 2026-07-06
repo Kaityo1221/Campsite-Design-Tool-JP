@@ -1,3 +1,25 @@
+
+/* =========================
+   Common safe helpers
+========================= */
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function isJSZipAvailable(context = "KMZ処理") {
+  if (typeof JSZip !== "undefined") {
+    return true;
+  }
+
+  alert(`${context}に必要なライブラリを読み込めませんでした。通信環境を確認して、ページを再読み込みしてください。`);
+  return false;
+}
+
 function sleep(ms) {
 return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -311,6 +333,10 @@ async function getPointsFromKmlOrKmz(file) {
   const fileName = file.name.toLowerCase();
 
   if (fileName.endsWith(".kmz") || fileName.endsWith(".zip")) {
+    if (!isJSZipAvailable("KML / KMZ読み込み")) {
+      return [];
+    }
+
     const zip = await JSZip.loadAsync(file);
     const kmlFileName = Object.keys(zip.files).find(name =>
       name.toLowerCase().endsWith(".kml")

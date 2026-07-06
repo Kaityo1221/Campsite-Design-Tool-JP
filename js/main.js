@@ -52,6 +52,36 @@ splashScreen.classList.add("show");
 }
 
 
+
+/* =========================
+   Common modal: policy / research notice
+========================= */
+function togglePolicyModal() {
+  const modal = document.getElementById("policyModal");
+  if (!modal) return;
+
+  modal.classList.add("show");
+}
+
+function closePolicyModal() {
+  const modal = document.getElementById("policyModal");
+  if (!modal) return;
+
+  modal.classList.remove("show");
+}
+
+document.addEventListener("click", function (event) {
+  const modal = document.getElementById("policyModal");
+
+  if (!modal || !modal.classList.contains("show")) {
+    return;
+  }
+
+  if (event.target && event.target.id === "policyModal") {
+    closePolicyModal();
+  }
+});
+
 function openAdminLogin() {
   const modal = document.getElementById("adminLoginModal");
   const input = document.getElementById("adminCodeInput");
