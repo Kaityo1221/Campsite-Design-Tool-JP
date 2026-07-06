@@ -1500,3 +1500,10 @@ html, body {
     grid-column: 2;
   }
 }
+.legend-dot.hold {
+  background: #a855f7;
+}
+
+.legend-dot.exclude {
+  background: #64748b;
+}
