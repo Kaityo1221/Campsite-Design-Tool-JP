@@ -1931,17 +1931,41 @@ function calculateCampsiteScore(points, warnings) {
 
   let summary = "バランスの取れた拠点です";
 
-  if (under20 > 0) {
-    summary = "密集があり、配置調整が必要です";
-  } else if (under30 > 3) {
-    summary = "やや滞留が発生しやすい配置です";
-  } else if (!trafficOk) {
-    summary = "通行面に注意が必要な拠点です";
-  } else if (referenceUnder40 > 0) {
-    summary = "既存POI同士の近接も含め、拠点全体の密度に注意が必要です";
-  } else if (env >= 10) {
-    summary = "非常に遊びやすい理想的な拠点です";
+const densityCount = under20 + under30 + under40;
+const hasDensity = densityCount > 0;
+const hasStrongDensity = under20 > 0 || under30 >= 5;
+
+if (rank === "S") {
+  if (hasDensity) {
+    summary = "既存POIの密度はありますが、現地条件が良く、非常に運用しやすい拠点です";
+  } else {
+    summary = "距離・通行・回遊性のバランスが良い理想的な拠点です";
   }
+} else if (rank === "A") {
+  if (hasStrongDensity) {
+    summary = "既存POIの密度は高めですが、通行・広場・回遊性で補える拠点です。追加配置は慎重に確認してください";
+  } else if (!trafficOk) {
+    summary = "通行面に注意は必要ですが、全体としてはかなり良い拠点です";
+  } else {
+    summary = "多少の注意点はありますが、全体としてかなり良い拠点です";
+  }
+} else if (rank === "B") {
+  if (hasStrongDensity) {
+    summary = "既存POIの密度が高く、追加配置には注意が必要です";
+  } else if (!trafficOk) {
+    summary = "通行面に注意が必要です。現地確認を前提に調整してください";
+  } else {
+    summary = "一部に注意点があります。配置や導線を確認してください";
+  }
+} else {
+  if (hasStrongDensity) {
+    summary = "密集が強く、追加配置・動線設計の見直しが必要です";
+  } else if (!trafficOk) {
+    summary = "通行面の懸念が大きいため、現地確認と導線調整が必要です";
+  } else {
+    summary = "複数の注意点があります。配置計画を見直してください";
+  }
+}
 
   return {
     score,
