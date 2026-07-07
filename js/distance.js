@@ -294,7 +294,17 @@ function isExistingLayerName(layerName) {
     name.includes(normalizeLayerNameText(keyword))
   );
 }
+function getPoiOriginalLayerName(poi) {
+  return String(poi?.originalLayer || poi?.layer || "");
+}
 
+function isExistingPoi(poi) {
+  return isExistingLayerName(getPoiOriginalLayerName(poi));
+}
+
+function isExistingPoiPair(warning) {
+  return isExistingPoi(warning?.a) && isExistingPoi(warning?.b);
+}
 function extractParkNameFromText(text) {
   const value = String(text || "");
 
@@ -1644,9 +1654,7 @@ function getRiskAccordionHtml(warnings) {
   warnings.forEach(w => {
     const type = w.type || "軽微";
 
-    const isExistingA = (w.a.originalLayer || "").includes("既存");
-    const isExistingB = (w.b.originalLayer || "").includes("既存");
-    const isReference = isExistingA && isExistingB;
+    const isReference = isExistingPoiPair(w);
 
     if (!groups[type]) return;
 
@@ -1809,32 +1817,43 @@ function getRiskAccordionHtml(warnings) {
 function calculateCampsiteScore(points, warnings) {
   let score = 100;
 
+  // 拠点充実度は「追加・変更で調整できる近接」を評価します。
+  // 既存POI同士の近接は参考情報として表示し、スコア減点には含めません。
+  const scoringWarnings = (warnings || []).filter(w => !isExistingPoiPair(w));
+
   let under20 = 0;
   let under30 = 0;
   let under40 = 0;
+  let referenceUnder40 = 0;
   let distancePenalty = 0;
 
-  warnings.forEach(w => {
-  const d = w.distance;
+  (warnings || []).forEach(w => {
+    if (isExistingPoiPair(w) && w.distance < 40) {
+      referenceUnder40++;
+    }
+  });
 
-  if (d < 20) {
-  distancePenalty += 4;
-  under20++;
-} else if (d < 30) {
-  distancePenalty += 2;
-  under30++;
-} else if (d < 40) {
-  distancePenalty += 0.5;
-  under40++;
-}
-});
+  scoringWarnings.forEach(w => {
+    const d = w.distance;
 
-distancePenalty = Math.min(distancePenalty, 25);
+    if (d < 20) {
+      distancePenalty += 4;
+      under20++;
+    } else if (d < 30) {
+      distancePenalty += 2;
+      under30++;
+    } else if (d < 40) {
+      distancePenalty += 0.5;
+      under40++;
+    }
+  });
+
+  distancePenalty = Math.min(distancePenalty, 25);
   score -= distancePenalty;
 
   let stayPenalty = 0;
 
-  warnings.forEach(w => {
+  scoringWarnings.forEach(w => {
     const d = w.distance;
     const a = (w.a.layer || "").toLowerCase();
     const b = (w.b.layer || "").toLowerCase();
@@ -1879,18 +1898,18 @@ distancePenalty = Math.min(distancePenalty, 25);
   let label = "調整あり";
 
   if (score >= 85) {
-  rank = "S";
-  label = "理想";
-} else if (score >= 70) {
-  rank = "A";
-  label = "かなり良い";
-} else if (score >= 60) {
-  rank = "B";
-  label = "良好";
-} else {
-  rank = "C";
-  label = "調整推奨";
-}
+    rank = "S";
+    label = "理想";
+  } else if (score >= 70) {
+    rank = "A";
+    label = "かなり良い";
+  } else if (score >= 60) {
+    rank = "B";
+    label = "良好";
+  } else {
+    rank = "C";
+    label = "調整推奨";
+  }
 
   let type = "バランス型";
   if (under20 > 0 || under30 >= 5) {
@@ -1902,23 +1921,28 @@ distancePenalty = Math.min(distancePenalty, 25);
   }
 
   const comments = [];
-if (under20 > 0) comments.push("密集あり");
-if (under30 > 0) comments.push("滞留あり");
-if (!trafficOk) comments.push("通行注意");
-if (env >= 10) comments.push("環境良好");
+  if (under20 > 0) comments.push("密集あり");
+  if (under30 > 0) comments.push("滞留あり");
+  if (referenceUnder40 > 0 && under20 + under30 + under40 === 0) {
+    comments.push("既存POI同士の参考近接あり");
+  }
+  if (!trafficOk) comments.push("通行注意");
+  if (env >= 10) comments.push("環境良好");
 
-// 👇ここに追加
-let summary = "バランスの取れた拠点です";
+  let summary = "バランスの取れた拠点です";
 
-if (under20 > 0) {
-  summary = "密集があり、配置調整が必要です";
-} else if (under30 > 3) {
-  summary = "やや滞留が発生しやすい配置です";
-} else if (!trafficOk) {
-  summary = "通行面に注意が必要な拠点です";
-} else if (env >= 10) {
-  summary = "非常に遊びやすい理想的な拠点です";
-}
+  if (under20 > 0) {
+    summary = "密集があり、配置調整が必要です";
+  } else if (under30 > 3) {
+    summary = "やや滞留が発生しやすい配置です";
+  } else if (!trafficOk) {
+    summary = "通行面に注意が必要な拠点です";
+  } else if (referenceUnder40 > 0) {
+    summary = "追加POIの近接は少なく、既存POI同士の近接は参考扱いです";
+  } else if (env >= 10) {
+    summary = "非常に遊びやすい理想的な拠点です";
+  }
+
   return {
     score,
     rank,
@@ -1927,6 +1951,7 @@ if (under20 > 0) {
     under20,
     under30,
     under40,
+    referenceUnder40,
     trafficOk,
     comments,
     summary
@@ -2092,9 +2117,10 @@ ${poiLimitWarningHtml}
 ${campsite.summary}<br><br>
 
       密集：${campsite.under20}件<br>
-      滞留：${campsite.under30}件<br>
-      軽微：${campsite.under40}件<br>
-      通行：${campsite.trafficOk ? "良好" : "注意"}<br><br>
+滞留：${campsite.under30}件<br>
+軽微：${campsite.under40}件<br>
+参考：${campsite.referenceUnder40 || 0}件（既存POI同士・減点対象外）<br>
+通行：${campsite.trafficOk ? "良好" : "注意"}<br><br>
 
       <strong>CA所感</strong><br>
       ・通行：${document.getElementById("trafficOk")?.checked ? "スムーズに通れる" : "注意が必要"}<br>
@@ -2115,13 +2141,10 @@ ${campsite.summary}<br><br>
 };
 
 warnings.forEach(w => {
-  const isExistingA = (w.a.originalLayer || "").includes("既存");
-  const isExistingB = (w.b.originalLayer || "").includes("既存");
-
-  if (isExistingA && isExistingB) {
-    displayCounts.reference++;
-    return;
-  }
+  if (isExistingPoiPair(w)) {
+  displayCounts.reference++;
+  return;
+}
 
   if (w.distance < 20) {
     displayCounts.dense++;
@@ -2237,10 +2260,7 @@ sendDistanceCheckAnalytics(
 return;
 }
   const targetWarnings = warnings.filter(w => {
-  const isExistingA = (w.a.originalLayer || "").includes("既存");
-  const isExistingB = (w.b.originalLayer || "").includes("既存");
-
-  return !(isExistingA && isExistingB) && w.distance < 30;
+  return !isExistingPoiPair(w) && w.distance < 30;
 });
 
   const targetWarningListHtml = targetWarnings.length === 0 ? `
