@@ -1819,7 +1819,7 @@ function calculateCampsiteScore(points, warnings) {
 
   // 拠点充実度は「追加・変更で調整できる近接」を評価します。
   // 既存POI同士の近接は参考情報として表示し、スコア減点には含めません。
-  const scoringWarnings = (warnings || []).filter(w => !isExistingPoiPair(w));
+  const scoringWarnings = warnings || [];
 
   let under20 = 0;
   let under30 = 0;
@@ -1938,7 +1938,7 @@ function calculateCampsiteScore(points, warnings) {
   } else if (!trafficOk) {
     summary = "通行面に注意が必要な拠点です";
   } else if (referenceUnder40 > 0) {
-    summary = "追加POIの近接は少なく、既存POI同士の近接は参考扱いです";
+    summary = "既存POI同士の近接も含め、拠点全体の密度に注意が必要です";
   } else if (env >= 10) {
     summary = "非常に遊びやすい理想的な拠点です";
   }
@@ -2119,7 +2119,7 @@ ${campsite.summary}<br><br>
       密集：${campsite.under20}件<br>
 滞留：${campsite.under30}件<br>
 軽微：${campsite.under40}件<br>
-参考：${campsite.referenceUnder40 || 0}件（既存POI同士・減点対象外）<br>
+既存POI同士の近接：${campsite.referenceUnder40 || 0}件<br>
 通行：${campsite.trafficOk ? "良好" : "注意"}<br><br>
 
       <strong>CA所感</strong><br>
