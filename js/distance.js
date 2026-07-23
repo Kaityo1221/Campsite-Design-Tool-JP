@@ -16,7 +16,7 @@ let distancePolygonLayerGroup = null;
 let distanceWarningLineLayers = new Map();
 let latestDistanceWarnings = [];
 
-function escapeHtml(text) {
+function escapeDistanceHtml(text) {
   return String(text || "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -24,7 +24,7 @@ function escapeHtml(text) {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
 }
-function getDistanceMeters(a, b) {
+function getDistanceCheckMeters(a, b) {
 
   const R = 6371000;
 
@@ -74,7 +74,7 @@ function getPrecheckDuplicatePois() {
     for (let j = i + 1; j < points.length; j++) {
       const a = points[i];
       const b = points[j];
-      const distance = getDistanceMeters(a, b);
+      const distance = getDistanceCheckMeters(a, b);
 
       if (distance < 1) {
         duplicates.push({
@@ -131,8 +131,8 @@ function renderPrecheckDuplicatePoiHtml() {
           background:rgba(15,23,42,0.55);
         ">
           <strong>${item.distance.toFixed(1)}m</strong><br>
-          ${escapeHtml(item.a.layer)}：${escapeHtml(item.a.name)}<br>
-          × ${escapeHtml(item.b.layer)}：${escapeHtml(item.b.name)}
+          ${escapeDistanceHtml(item.a.layer)}：${escapeDistanceHtml(item.a.name)}<br>
+          × ${escapeDistanceHtml(item.b.layer)}：${escapeDistanceHtml(item.b.name)}
         </div>
       `).join("")}
     </div>
@@ -294,7 +294,17 @@ function isExistingLayerName(layerName) {
     name.includes(normalizeLayerNameText(keyword))
   );
 }
+function getPoiOriginalLayerName(poi) {
+  return String(poi?.originalLayer || poi?.layer || "");
+}
 
+function isExistingPoi(poi) {
+  return isExistingLayerName(getPoiOriginalLayerName(poi));
+}
+
+function isExistingPoiPair(warning) {
+  return isExistingPoi(warning?.a) && isExistingPoi(warning?.b);
+}
 function extractParkNameFromText(text) {
   const value = String(text || "");
 
@@ -904,7 +914,7 @@ function renderDistanceLoadErrorHtml(title, message = "") {
       line-height:1.7;
     ">
       <strong style="color:#f87171;">
-        ⚠ ${escapeHtml(title)}
+        ⚠ ${escapeDistanceHtml(title)}
       </strong>
 
       ${message ? `
@@ -994,7 +1004,7 @@ const isIphoneKmzZip =
     summary.innerHTML = `
       <div class="distance-warning">
         KMZ/KMLを読み込み中です...<br>
-        <small>${escapeHtml(file.name || "")}</small>
+        <small>${escapeDistanceHtml(file.name || "")}</small>
       </div>
     `;
   }
@@ -1231,6 +1241,16 @@ async function extractLayersFromKML(file) {
     if (fileName.endsWith(".kml")) {
       kmlText = await file.text();
     } else if (fileName.endsWith(".kmz") || isZipFile) {
+      if (!isJSZipAvailable("距離チェック用KMZ読み込み")) {
+        return {
+          layers: [],
+          pointsByLayer: {},
+          polygons: [],
+          errorCode: "jszip_unavailable",
+          errorDetail: ""
+        };
+      }
+
       const zip = await JSZip.loadAsync(file);
 
       for (const name in zip.files) {
@@ -1363,7 +1383,7 @@ async function extractLayersFromKML(file) {
     errorCode: ""
   };
 }
-function getExtendedDataValue(pm, keyName) {
+function getDistanceExtendedDataValue(pm, keyName) {
   const dataNodes = Array.from(pm.getElementsByTagName("Data"));
 
   for (const dataNode of dataNodes) {
@@ -1379,9 +1399,9 @@ function getExtendedDataValue(pm, keyName) {
 
 function getPlacemarkPoiName(pm) {
   const extendedName =
-    getExtendedDataValue(pm, "名前") ||
-    getExtendedDataValue(pm, "name") ||
-    getExtendedDataValue(pm, "title");
+    getDistanceExtendedDataValue(pm, "名前") ||
+    getDistanceExtendedDataValue(pm, "name") ||
+    getDistanceExtendedDataValue(pm, "title");
 
   if (extendedName.trim()) {
     return extendedName.trim();
@@ -1456,7 +1476,7 @@ function renderLayerSelector(layers, container) {
   container.innerHTML = `
     ${targetLayers.map(name => `
       <div class="layer-row">
-        <strong>${escapeHtml(cleanLayerName(name))}</strong>
+        <strong>${escapeDistanceHtml(cleanLayerName(name))}</strong>
         <span class="note">（${window._layerPoints[name]?.length || 0}件）</span>
       </div>
     `).join("")}
@@ -1529,7 +1549,7 @@ ${window._hasPolygon ? "" : `
 `}
 <br>
 <strong>判定対象レイヤー</strong><br>
-${info.targetLayerNames.map(name => escapeHtml(name)).join("<br>") || "なし"}
+${info.targetLayerNames.map(name => escapeDistanceHtml(name)).join("<br>") || "なし"}
     </div>
   `;
 }
@@ -1634,9 +1654,7 @@ function getRiskAccordionHtml(warnings) {
   warnings.forEach(w => {
     const type = w.type || "軽微";
 
-    const isExistingA = (w.a.originalLayer || "").includes("既存");
-    const isExistingB = (w.b.originalLayer || "").includes("既存");
-    const isReference = isExistingA && isExistingB;
+    const isReference = isExistingPoiPair(w);
 
     if (!groups[type]) return;
 
@@ -1698,8 +1716,8 @@ function getRiskAccordionHtml(warnings) {
       <strong style="color:${cardColor};">
         ${label}（${w.distance.toFixed(1)}m）
       </strong><br>
-      ${escapeHtml(w.a.layer)}：${escapeHtml(w.a.name)}<br>
-× ${escapeHtml(w.b.layer)}：${escapeHtml(w.b.name)}<br>
+      ${escapeDistanceHtml(w.a.layer)}：${escapeDistanceHtml(w.a.name)}<br>
+× ${escapeDistanceHtml(w.b.layer)}：${escapeDistanceHtml(w.b.name)}<br>
       → ${message}
     </div>
   `;
@@ -1799,32 +1817,43 @@ function getRiskAccordionHtml(warnings) {
 function calculateCampsiteScore(points, warnings) {
   let score = 100;
 
+  // 拠点充実度は「追加・変更で調整できる近接」を評価します。
+  // 既存POI同士の近接は参考情報として表示し、スコア減点には含めません。
+  const scoringWarnings = warnings || [];
+
   let under20 = 0;
   let under30 = 0;
   let under40 = 0;
+  let referenceUnder40 = 0;
   let distancePenalty = 0;
 
-  warnings.forEach(w => {
-  const d = w.distance;
+  (warnings || []).forEach(w => {
+    if (isExistingPoiPair(w) && w.distance < 40) {
+      referenceUnder40++;
+    }
+  });
 
-  if (d < 20) {
-  distancePenalty += 4;
-  under20++;
-} else if (d < 30) {
-  distancePenalty += 2;
-  under30++;
-} else if (d < 40) {
-  distancePenalty += 0.5;
-  under40++;
-}
-});
+  scoringWarnings.forEach(w => {
+    const d = w.distance;
 
-distancePenalty = Math.min(distancePenalty, 25);
+    if (d < 20) {
+      distancePenalty += 4;
+      under20++;
+    } else if (d < 30) {
+      distancePenalty += 2;
+      under30++;
+    } else if (d < 40) {
+      distancePenalty += 0.5;
+      under40++;
+    }
+  });
+
+  distancePenalty = Math.min(distancePenalty, 25);
   score -= distancePenalty;
 
   let stayPenalty = 0;
 
-  warnings.forEach(w => {
+  scoringWarnings.forEach(w => {
     const d = w.distance;
     const a = (w.a.layer || "").toLowerCase();
     const b = (w.b.layer || "").toLowerCase();
@@ -1869,18 +1898,18 @@ distancePenalty = Math.min(distancePenalty, 25);
   let label = "調整あり";
 
   if (score >= 85) {
-  rank = "S";
-  label = "理想";
-} else if (score >= 70) {
-  rank = "A";
-  label = "かなり良い";
-} else if (score >= 60) {
-  rank = "B";
-  label = "良好";
-} else {
-  rank = "C";
-  label = "調整推奨";
-}
+    rank = "S";
+    label = "理想";
+  } else if (score >= 70) {
+    rank = "A";
+    label = "かなり良い";
+  } else if (score >= 60) {
+    rank = "B";
+    label = "良好";
+  } else {
+    rank = "C";
+    label = "調整推奨";
+  }
 
   let type = "バランス型";
   if (under20 > 0 || under30 >= 5) {
@@ -1892,23 +1921,52 @@ distancePenalty = Math.min(distancePenalty, 25);
   }
 
   const comments = [];
-if (under20 > 0) comments.push("密集あり");
-if (under30 > 0) comments.push("滞留あり");
-if (!trafficOk) comments.push("通行注意");
-if (env >= 10) comments.push("環境良好");
+  if (under20 > 0) comments.push("密集あり");
+  if (under30 > 0) comments.push("滞留あり");
+  if (referenceUnder40 > 0 && under20 + under30 + under40 === 0) {
+    comments.push("既存POI同士の参考近接あり");
+  }
+  if (!trafficOk) comments.push("通行注意");
+  if (env >= 10) comments.push("環境良好");
 
-// 👇ここに追加
-let summary = "バランスの取れた拠点です";
+  let summary = "バランスの取れた拠点です";
 
-if (under20 > 0) {
-  summary = "密集があり、配置調整が必要です";
-} else if (under30 > 3) {
-  summary = "やや滞留が発生しやすい配置です";
-} else if (!trafficOk) {
-  summary = "通行面に注意が必要な拠点です";
-} else if (env >= 10) {
-  summary = "非常に遊びやすい理想的な拠点です";
+const densityCount = under20 + under30 + under40;
+const hasDensity = densityCount > 0;
+const hasStrongDensity = under20 > 0 || under30 >= 5;
+
+if (rank === "S") {
+  if (hasDensity) {
+    summary = "既存POIの密度はありますが、現地条件が良く、非常に運用しやすい拠点です";
+  } else {
+    summary = "距離・通行・回遊性のバランスが良い理想的な拠点です";
+  }
+} else if (rank === "A") {
+  if (hasStrongDensity) {
+    summary = "既存POIの密度は高めですが、通行・広場・回遊性で補える拠点です。追加配置は慎重に確認してください";
+  } else if (!trafficOk) {
+    summary = "通行面に注意は必要ですが、全体としてはかなり良い拠点です";
+  } else {
+    summary = "多少の注意点はありますが、全体としてかなり良い拠点です";
+  }
+} else if (rank === "B") {
+  if (hasStrongDensity) {
+    summary = "既存POIの密度が高く、追加配置には注意が必要です";
+  } else if (!trafficOk) {
+    summary = "通行面に注意が必要です。現地確認を前提に調整してください";
+  } else {
+    summary = "一部に注意点があります。配置や導線を確認してください";
+  }
+} else {
+  if (hasStrongDensity) {
+    summary = "密集が強く、追加配置・動線設計の見直しが必要です";
+  } else if (!trafficOk) {
+    summary = "通行面の懸念が大きいため、現地確認と導線調整が必要です";
+  } else {
+    summary = "複数の注意点があります。配置計画を見直してください";
+  }
 }
+
   return {
     score,
     rank,
@@ -1917,6 +1975,7 @@ if (under20 > 0) {
     under20,
     under30,
     under40,
+    referenceUnder40,
     trafficOk,
     comments,
     summary
@@ -1972,7 +2031,7 @@ if (
 ) {
   continue;
 }
-      const distance = getDistanceMeters(a, b);
+      const distance = getDistanceCheckMeters(a, b);
 if (distance < 1) {
   duplicatePois.push({
     a,
@@ -2013,8 +2072,8 @@ const duplicatePoiHtml =
         <strong style="color:#f87171;">
           ⚠ 重複POI候補（${item.distance.toFixed(1)}m）
         </strong><br>
-        ${escapeHtml(item.a.layer)}：${escapeHtml(item.a.name)}<br>
-        × ${escapeHtml(item.b.layer)}：${escapeHtml(item.b.name)}<br>
+        ${escapeDistanceHtml(item.a.layer)}：${escapeDistanceHtml(item.a.name)}<br>
+        × ${escapeDistanceHtml(item.b.layer)}：${escapeDistanceHtml(item.b.name)}<br>
         <span style="font-size:12px; opacity:0.85;">
           同じ場所に複数のPOIが配置されている可能性があります。
         </span>
@@ -2082,9 +2141,10 @@ ${poiLimitWarningHtml}
 ${campsite.summary}<br><br>
 
       密集：${campsite.under20}件<br>
-      滞留：${campsite.under30}件<br>
-      軽微：${campsite.under40}件<br>
-      通行：${campsite.trafficOk ? "良好" : "注意"}<br><br>
+滞留：${campsite.under30}件<br>
+軽微：${campsite.under40}件<br>
+既存POI同士の近接：${campsite.referenceUnder40 || 0}件<br>
+通行：${campsite.trafficOk ? "良好" : "注意"}<br><br>
 
       <strong>CA所感</strong><br>
       ・通行：${document.getElementById("trafficOk")?.checked ? "スムーズに通れる" : "注意が必要"}<br>
@@ -2105,13 +2165,10 @@ ${campsite.summary}<br><br>
 };
 
 warnings.forEach(w => {
-  const isExistingA = (w.a.originalLayer || "").includes("既存");
-  const isExistingB = (w.b.originalLayer || "").includes("既存");
-
-  if (isExistingA && isExistingB) {
-    displayCounts.reference++;
-    return;
-  }
+  if (isExistingPoiPair(w)) {
+  displayCounts.reference++;
+  return;
+}
 
   if (w.distance < 20) {
     displayCounts.dense++;
@@ -2164,7 +2221,7 @@ const debugHtml = `
     判定対象POI数：${debugInfo.targetPointCount}件<br>
 活動範囲ポリゴン：${window._hasPolygon ? `あり（${window._activityPolygons?.length || 0}件）` : "なし"}<br><br>
     <strong>判定対象レイヤー</strong><br>
-    ${debugInfo.targetLayerNames.map(name => escapeHtml(name)).join("<br>") || "なし"}
+    ${debugInfo.targetLayerNames.map(name => escapeDistanceHtml(name)).join("<br>") || "なし"}
   </div>
 `;
   const resultHeaderHtml = `
@@ -2186,8 +2243,8 @@ const debugHtml = `
         nearestWarning ? `
           <strong>最短距離ペア</strong><br>
           ${nearestWarning.distance.toFixed(1)}m<br>
-          ${escapeHtml(nearestWarning.a.layer)}：${escapeHtml(nearestWarning.a.name)}<br>
-× ${escapeHtml(nearestWarning.b.layer)}：${escapeHtml(nearestWarning.b.name)}<br>
+          ${escapeDistanceHtml(nearestWarning.a.layer)}：${escapeDistanceHtml(nearestWarning.a.name)}<br>
+× ${escapeDistanceHtml(nearestWarning.b.layer)}：${escapeDistanceHtml(nearestWarning.b.name)}<br>
         ` : `
           <strong>最短距離ペア</strong><br>
           40m未満の組み合わせはありません。<br>
@@ -2227,10 +2284,7 @@ sendDistanceCheckAnalytics(
 return;
 }
   const targetWarnings = warnings.filter(w => {
-  const isExistingA = (w.a.originalLayer || "").includes("既存");
-  const isExistingB = (w.b.originalLayer || "").includes("既存");
-
-  return !(isExistingA && isExistingB) && w.distance < 30;
+  return !isExistingPoiPair(w) && w.distance < 30;
 });
 
   const targetWarningListHtml = targetWarnings.length === 0 ? `
@@ -2267,8 +2321,8 @@ return;
         <strong style="color:${cardColor};">
           ${label}（${w.distance.toFixed(1)}m）
         </strong><br>
-        ${escapeHtml(w.a.layer)}：${escapeHtml(w.a.name)}<br>
-× ${escapeHtml(w.b.layer)}：${escapeHtml(w.b.name)}<br>
+        ${escapeDistanceHtml(w.a.layer)}：${escapeDistanceHtml(w.a.name)}<br>
+× ${escapeDistanceHtml(w.b.layer)}：${escapeDistanceHtml(w.b.name)}<br>
         → ${message}
         <br>
 <button
@@ -2664,9 +2718,9 @@ addDistanceMapLegend();
       weight: 2
     })
       .bindPopup(`
-        <strong>${escapeHtml(p.name || "名称なし")}</strong><br>
-        ${escapeHtml(label)}<br>
-        レイヤー：${escapeHtml(layerName || "-")}
+        <strong>${escapeDistanceHtml(p.name || "名称なし")}</strong><br>
+        ${escapeDistanceHtml(label)}<br>
+        レイヤー：${escapeDistanceHtml(layerName || "-")}
       `)
       .addTo(distanceLeafletLayerGroup);
 
@@ -2721,9 +2775,9 @@ const warningLine = L.polyline([aLatLng, bLatLng], {
   dashArray: isReference || w.distance >= 30 ? "6,6" : null
 })
   .bindPopup(`
-    <strong>${escapeHtml(label)}：${w.distance.toFixed(1)}m</strong><br>
-    ${escapeHtml(w.a.layer || "-")}：${escapeHtml(w.a.name || "名称なし")}<br>
-    × ${escapeHtml(w.b.layer || "-")}：${escapeHtml(w.b.name || "名称なし")}
+    <strong>${escapeDistanceHtml(label)}：${w.distance.toFixed(1)}m</strong><br>
+    ${escapeDistanceHtml(w.a.layer || "-")}：${escapeDistanceHtml(w.a.name || "名称なし")}<br>
+    × ${escapeDistanceHtml(w.b.layer || "-")}：${escapeDistanceHtml(w.b.name || "名称なし")}
   `)
   .addTo(distanceLeafletLayerGroup);
 
@@ -2752,7 +2806,7 @@ distanceWarningLineLayers.set(
 
 function createKmlKmzErrorMessage(errorType, detail = "") {
   const detailText = detail
-    ? `<br><small>${escapeHtml(String(detail))}</small>`
+    ? `<br><small>${escapeDistanceHtml(String(detail))}</small>`
     : "";
 
   const messages = {
@@ -2799,6 +2853,12 @@ function createKmlKmzErrorMessage(errorType, detail = "") {
       ⚠ KML/KMZの解析に失敗しました。<br>
       ファイルが壊れているか、対応していない形式の可能性があります。<br>
       Google My Maps から再エクスポートして、もう一度試してください。
+      ${detailText}
+    `,
+
+    jszip_unavailable: `
+      ⚠ KMZ処理ライブラリを読み込めませんでした。<br>
+      通信環境を確認して、ページを再読み込みしてください。
       ${detailText}
     `,
 

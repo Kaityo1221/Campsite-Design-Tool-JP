@@ -1,4 +1,4 @@
-function getUserId() {
+function getKmzUserId() {
   let userId = localStorage.getItem("campsiteUserId");
 
   if (!userId) {
@@ -9,7 +9,7 @@ function getUserId() {
   return userId;
 }
 
-async function sendAnalytics(data) {
+async function sendKmzAnalytics(data) {
   fetch(
     "https://script.google.com/macros/s/AKfycbxldgzcVeez7AEQk0MXbd569zRIQ_4Z8hHBKrO3lBA9bePX8C3Z5HTqjo9YnbBVTZpl/exec",
     {
@@ -135,6 +135,11 @@ async function generateCircleOnlyKMZ() {
     const serializer = new XMLSerializer();
     const newKml = serializer.serializeToString(outputXml);
 
+    if (!isJSZipAvailable("円だけKMZ生成")) {
+      status.textContent = "";
+      return;
+    }
+
     const zip = new JSZip();
     zip.file("doc.kml", newKml);
 
@@ -145,9 +150,9 @@ async function generateCircleOnlyKMZ() {
 
     const now = new Date();
     a.download = `campsite_circles_${now.getFullYear()}${now.getMonth() + 1}${now.getDate()}.kmz`;
-sendAnalytics({
+sendKmzAnalytics({
   timestamp: new Date().toISOString(),
-  userId: getUserId(),
+  userId: getKmzUserId(),
 
   toolVersion: window.APP_VERSION,
   action: "circle_only_kmz_generate",
@@ -272,6 +277,11 @@ async function generateExistingOnlyKMZ() {
     const serializer = new XMLSerializer();
     const newKml = serializer.serializeToString(outputXml);
 
+    if (!isJSZipAvailable("既存POI分類KMZ生成")) {
+      status.textContent = "";
+      return;
+    }
+
     const zip = new JSZip();
     zip.file("doc.kml", newKml);
 
@@ -282,9 +292,9 @@ async function generateExistingOnlyKMZ() {
 
     const now = new Date();
     a.download = `campsite_existing_poi_${now.getFullYear()}${now.getMonth() + 1}${now.getDate()}.kmz`;
-    sendAnalytics({
+    sendKmzAnalytics({
   timestamp: new Date().toISOString(),
-  userId: getUserId(),
+  userId: getKmzUserId(),
 
   toolVersion: window.APP_VERSION,
   action: "existing_poi_kmz_generate",
@@ -501,6 +511,11 @@ points.forEach(p => {
   const serializer = new XMLSerializer();
   const newKml = serializer.serializeToString(outputXml);
 
+  if (!isJSZipAvailable("KMZ生成")) {
+    hideLoading();
+    return;
+  }
+
   const zip = new JSZip();
   zip.file("doc.kml", newKml);
 
@@ -510,9 +525,9 @@ setWorkflowStep("kmz");
   a.href = URL.createObjectURL(blob);
   const now = new Date();
 a.download = `campsite_${now.getFullYear()}${now.getMonth()+1}${now.getDate()}.kmz`;
- sendAnalytics({
+ sendKmzAnalytics({
   timestamp: new Date().toISOString(),
-  userId: getUserId(),
+  userId: getKmzUserId(),
 
   toolVersion: window.APP_VERSION,
   action: "kmz_generate",

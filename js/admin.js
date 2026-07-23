@@ -2753,7 +2753,7 @@ async function generateDensityAreaKMZ() {
 
     const rank = getDensityRank(count);
 
-    const circleCoords = createCircleCoordinates(lat, lng, radius);
+    const circleCoords = createAdminCircleCoordinates(lat, lng, radius);
 
     kml += `
 <Placemark>
@@ -2782,6 +2782,10 @@ ${rank.message}
 </Document>
 </kml>`;
 
+  if (!isJSZipAvailable("密集エリアKMZ生成")) {
+    return;
+  }
+
   const zip = new JSZip();
   zip.file("doc.kml", kml);
 
@@ -2798,7 +2802,7 @@ ${rank.message}
   document.body.removeChild(a);
   URL.revokeObjectURL(a.href);
 }
-function createCircleCoordinates(lat, lng, radius) {
+function createAdminCircleCoordinates(lat, lng, radius) {
 
   const coords = [];
 

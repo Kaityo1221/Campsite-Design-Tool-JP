@@ -1,5 +1,5 @@
-window.APP_VERSION = "v6.2.0";
-window.APP_UPDATED = "2026-06-25";
+window.APP_VERSION = "v6.2.1";
+window.APP_UPDATED = "2026-07-07";
 window.ENABLE_QUIZ = true;
 window.QUIZ_VERSION = "beta2";
 const ADMIN_CODE = "she1ep";
@@ -51,6 +51,36 @@ splashScreen.classList.add("show");
   }
 }
 
+
+
+/* =========================
+   Common modal: policy / research notice
+========================= */
+function togglePolicyModal() {
+  const modal = document.getElementById("policyModal");
+  if (!modal) return;
+
+  modal.classList.add("show");
+}
+
+function closePolicyModal() {
+  const modal = document.getElementById("policyModal");
+  if (!modal) return;
+
+  modal.classList.remove("show");
+}
+
+document.addEventListener("click", function (event) {
+  const modal = document.getElementById("policyModal");
+
+  if (!modal || !modal.classList.contains("show")) {
+    return;
+  }
+
+  if (event.target && event.target.id === "policyModal") {
+    closePolicyModal();
+  }
+});
 
 function openAdminLogin() {
   const modal = document.getElementById("adminLoginModal");

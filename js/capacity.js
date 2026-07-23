@@ -341,6 +341,10 @@ async function generateCandidatePoiKMZ() {
 
   const kml = buildCandidatePoiKml(grouped);
 
+  if (!isJSZipAvailable("候補POI KMZ生成")) {
+    return;
+  }
+
   const zip = new JSZip();
   zip.file("doc.kml", kml);
 
@@ -434,42 +438,50 @@ function pickBalancedCandidatePoints(points, count) {
   return picked;
 }
 function buildCandidatePoiKml(grouped) {
-  const allPoints = [
-    ...grouped.pokestop.map((p, i) => ({
-      ...p,
+  const folderDefinitions = [
+    {
+      folderName: "追加希望ポケスト",
       label: "候補ポケストップ",
-      name: `候補ポケストップ${i + 1}`
-    })),
-
-    ...grouped.gym.map((p, i) => ({
-      ...p,
+      prefix: "候補ポケストップ",
+      points: grouped.pokestop || []
+    },
+    {
+      folderName: "追加希望ジム",
       label: "候補ジム",
-      name: `候補ジム${i + 1}`
-    })),
-
-    ...grouped.power.map((p, i) => ({
-      ...p,
+      prefix: "候補ジム",
+      points: grouped.gym || []
+    },
+    {
+      folderName: "追加希望パワスポ",
       label: "候補パワースポット",
-      name: `候補パワースポット${i + 1}`
-    }))
+      prefix: "候補パワースポット",
+      points: grouped.power || []
+    }
   ];
+
+  const buildFolder = definition => {
+    const placemarks = definition.points.map((point, index) => `
+      <Placemark>
+        <name>${definition.prefix}${index + 1}</name>
+        <description>${definition.label}</description>
+        <Point>
+          <coordinates>${point.lng},${point.lat},0</coordinates>
+        </Point>
+      </Placemark>
+    `).join("");
+
+    return `
+  <Folder>
+    <name>${definition.folderName}</name>
+    ${placemarks}
+  </Folder>`;
+  };
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2">
 <Document>
   <name>候補POI</name>
-  <Folder>
-    <name>候補POI</name>
-    ${allPoints.map(p => `
-      <Placemark>
-        <name>${p.name}</name>
-        <description>${p.label}</description>
-        <Point>
-          <coordinates>${p.lng},${p.lat},0</coordinates>
-        </Point>
-      </Placemark>
-    `).join("")}
-  </Folder>
+  ${folderDefinitions.map(buildFolder).join("")}
 </Document>
 </kml>`;
 }
@@ -482,6 +494,10 @@ async function getCapacityKmlText(file) {
   }
 
   if (name.endsWith(".kmz") || name.endsWith(".zip")) {
+    if (!isJSZipAvailable("候補POIファイル読み込み")) {
+      return null;
+    }
+
     const zip = await JSZip.loadAsync(file);
 
     for (const path in zip.files) {

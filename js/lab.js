@@ -9,13 +9,15 @@
    Lab page local escape helper
    - lab.html は distance.js を読み込まないため、Lab内で使うescapeHtmlをここで持つ
 ========================= */
-function escapeHtml(value) {
-  return String(value ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll("\"", "&quot;")
-    .replaceAll("'", "&#039;");
+if (typeof window.escapeHtml !== "function") {
+  window.escapeHtml = function (value) {
+    return String(value ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll("\"", "&quot;")
+      .replaceAll("'", "&#039;");
+  };
 }
 
 /* =========================
@@ -770,6 +772,10 @@ async function createLabExistingPoiKmz(points, sourceName) {
     sourceName
   );
 
+  if (!isJSZipAvailable("研究用KMZ生成")) {
+    throw new Error("JSZipが読み込まれていません");
+  }
+
   const zip = new JSZip();
 
   zip.file("doc.kml", kml);
@@ -1117,31 +1123,6 @@ function stopLabEngineSound() {
   audio.currentTime = 0;
 }
 
-function togglePolicyModal() {
-  const modal = document.getElementById("policyModal");
-  if (!modal) return;
-
-  modal.classList.add("show");
-}
-
-function closePolicyModal() {
-  const modal = document.getElementById("policyModal");
-  if (!modal) return;
-
-  modal.classList.remove("show");
-}
-
-document.addEventListener("click", function(event) {
-  const modal = document.getElementById("policyModal");
-
-  if (!modal || !modal.classList.contains("show")) {
-    return;
-  }
-
-  if (event.target.id === "policyModal") {
-    closePolicyModal();
-  }
-});
 let labResearchKmzPoints = [];
 let labResearchMapInstance = null;
 let labResearchLayerGroup = null;
