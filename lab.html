@@ -533,6 +533,65 @@
 </section> <!-- parts -->
 </div>
 
+<!-- =========================
+     スマートウォッチ歩行データ取込ボタン
+========================= -->
+<div class="walk-import-launcher">
+  <button
+    type="button"
+    id="walkImportOpenButton"
+    class="walk-import-fab"
+    aria-label="歩行データを取り込む"
+    aria-controls="walkImportPanel"
+    aria-expanded="false"
+    title="歩行データを取り込む"
+  >
+    ⌚
+  </button>
+
+  <div
+    id="walkImportPanel"
+    class="walk-import-panel"
+    hidden
+  >
+    <div class="walk-import-panel-header">
+      <strong>フィールドデータ取込</strong>
+
+      <button
+        type="button"
+        id="walkImportCloseButton"
+        class="walk-import-close"
+        aria-label="閉じる"
+      >
+        ×
+      </button>
+    </div>
+
+    <p class="walk-import-description">
+      スマートウォッチなどで記録した歩行データを読み込みます。
+    </p>
+
+    <button
+      type="button"
+      id="walkImportFileButton"
+      class="walk-import-file-button"
+    >
+      ファイルを選択
+    </button>
+
+    <input
+      type="file"
+      id="walkImportFileInput"
+      accept=".gpx,application/gpx+xml"
+      hidden
+    >
+
+    <p class="walk-import-note">
+      初期対応形式：GPX
+    </p>
+  </div>
+</div>
+
 <script src="js/util.js?v=3"></script>
 <script src="js/kmz.js?v=2"></script>
 <script src="js/deduplicate.js?v=2"></script>
