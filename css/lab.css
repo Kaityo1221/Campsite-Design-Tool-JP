@@ -1522,24 +1522,18 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-
   width: 48px;
   height: 48px;
   padding: 0;
-
   border: 1px solid rgba(125, 211, 252, 0.7);
   border-radius: 50%;
-
   background: rgba(15, 23, 42, 0.94);
   color: #e0f2fe;
-
   font-size: 22px;
   line-height: 1;
-
   box-shadow:
     0 8px 24px rgba(0, 0, 0, 0.35),
     0 0 16px rgba(56, 189, 248, 0.2);
-
   cursor: pointer;
   transition:
     transform 0.2s ease,
@@ -1564,16 +1558,12 @@ html, body {
   position: absolute;
   top: 54px;
   right: 0;
-
   width: min(300px, calc(100vw - 48px));
   padding: 16px;
-
   border: 1px solid rgba(125, 211, 252, 0.45);
   border-radius: 16px;
-
   background: rgba(15, 23, 42, 0.98);
   color: #e2e8f0;
-
   box-shadow: 0 16px 38px rgba(0, 0, 0, 0.45);
 }
 
@@ -1588,13 +1578,10 @@ html, body {
   width: 32px;
   height: 32px;
   padding: 0;
-
   border: 0;
   border-radius: 50%;
-
   background: rgba(148, 163, 184, 0.15);
   color: #e2e8f0;
-
   font-size: 20px;
   cursor: pointer;
 }
@@ -1609,13 +1596,10 @@ html, body {
 .walk-import-file-button {
   width: 100%;
   min-height: 44px;
-
   border: 1px solid rgba(56, 189, 248, 0.7);
   border-radius: 10px;
-
   background: rgba(14, 116, 144, 0.35);
   color: #e0f2fe;
-
   font-weight: 800;
   cursor: pointer;
 }
@@ -1625,6 +1609,7 @@ html, body {
   font-size: 12px;
   color: #94a3b8;
 }
+
 @media (max-width: 640px) {
   .walk-import-launcher {
     top: 12px;
