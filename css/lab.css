@@ -1622,3 +1622,7 @@ html, body {
     font-size: 19px;
   }
 }
+.lab-main-panel {
+  position: relative;
+  overflow: visible;
+}
