@@ -1,4 +1,4 @@
-すらら =========================
+/* =========================
    Campsite Lab Standalone CSS
    Labページ専用。メイン画面の入口（羊→Lab看板）は style.css 側で維持。
 ========================= */
@@ -1511,11 +1511,16 @@ html, body {
    スマートウォッチ歩行データ取込
 ========================= */
 
+.lab-main-panel {
+  position: relative;
+  overflow: visible;
+}
+
 .walk-import-launcher {
   position: absolute;
   top: 16px;
   right: 16px;
-  z-index: 20;
+  z-index: 50;
 }
 
 .walk-import-fab {
@@ -1527,7 +1532,7 @@ html, body {
   padding: 0;
   border: 1px solid rgba(125, 211, 252, 0.7);
   border-radius: 50%;
-  background: rgba(15, 23, 42, 0.94);
+  background: rgba(15, 23, 42, 0.96);
   color: #e0f2fe;
   font-size: 22px;
   line-height: 1;
@@ -1554,88 +1559,158 @@ html, body {
   outline-offset: 3px;
 }
 
+/* PC：画面右側へ固定する解析ドロワー */
 .walk-import-panel {
-  position: absolute;
-  top: 54px;
-  right: 0;
-  width: min(300px, calc(100vw - 48px));
-  padding: 16px;
-  border: 1px solid rgba(125, 211, 252, 0.45);
-  border-radius: 16px;
-  background: rgba(15, 23, 42, 0.98);
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  bottom: 16px;
+  z-index: 1000;
+
+  width: min(620px, calc(100vw - 32px));
+  box-sizing: border-box;
+  padding: 18px;
+
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+
+  border: 1px solid rgba(125, 211, 252, 0.5);
+  border-radius: 20px;
+  background:
+    radial-gradient(
+      circle at top right,
+      rgba(59, 130, 246, 0.14),
+      transparent 34%
+    ),
+    rgba(10, 18, 35, 0.985);
+
   color: #e2e8f0;
-  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.45);
+
+  box-shadow:
+    -18px 0 55px rgba(0, 0, 0, 0.52),
+    0 0 28px rgba(56, 189, 248, 0.14);
+}
+
+.walk-import-panel[hidden] {
+  display: none !important;
 }
 
 .walk-import-panel-header {
+  position: sticky;
+  top: -18px;
+  z-index: 20;
+
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 16px;
+
+  margin: -18px -18px 16px;
+  padding: 18px;
+
+  border-bottom: 1px solid rgba(148, 163, 184, 0.22);
+  background: rgba(10, 18, 35, 0.96);
+  backdrop-filter: blur(14px);
+}
+
+.walk-import-heading {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.walk-import-heading strong {
+  color: #f8fafc;
+  font-size: 18px;
+  line-height: 1.4;
+}
+
+.walk-import-subtitle {
+  color: #7dd3fc;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
 }
 
 .walk-import-close {
-  width: 32px;
-  height: 32px;
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
   padding: 0;
-  border: 0;
+
+  border: 1px solid rgba(148, 163, 184, 0.2);
   border-radius: 50%;
-  background: rgba(148, 163, 184, 0.15);
+
+  background: rgba(148, 163, 184, 0.14);
   color: #e2e8f0;
-  font-size: 20px;
+
+  font-size: 22px;
+  line-height: 1;
   cursor: pointer;
 }
 
+.walk-import-close:hover {
+  background: rgba(248, 113, 113, 0.2);
+  border-color: rgba(248, 113, 113, 0.42);
+}
+
 .walk-import-description {
-  margin: 12px 0;
-  font-size: 13px;
-  line-height: 1.7;
+  margin: 0 0 14px;
   color: #cbd5e1;
+  font-size: 13px;
+  line-height: 1.75;
+}
+
+.walk-import-file-area {
+  padding: 14px;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.7);
 }
 
 .walk-import-file-button {
   width: 100%;
-  min-height: 44px;
+  min-height: 48px;
+  padding: 10px 14px;
+
   border: 1px solid rgba(56, 189, 248, 0.7);
-  border-radius: 10px;
+  border-radius: 12px;
+
   background: rgba(14, 116, 144, 0.35);
   color: #e0f2fe;
+
   font-weight: 800;
   cursor: pointer;
 }
 
+.walk-import-file-button:hover {
+  background: rgba(14, 116, 144, 0.5);
+}
+
 .walk-import-note {
   margin: 10px 0 0;
-  font-size: 12px;
   color: #94a3b8;
+  font-size: 11px;
+  line-height: 1.6;
 }
 
-@media (max-width: 640px) {
-  .walk-import-launcher {
-    top: 12px;
-    right: 12px;
-  }
-
-  .walk-import-fab {
-    width: 42px;
-    height: 42px;
-    font-size: 19px;
-  }
-}
-.lab-main-panel {
-  position: relative;
-  overflow: visible;
-}
 .walk-import-status {
-  margin-top: 12px;
-  padding: 10px 12px;
-  border-radius: 10px;
+  margin-top: 14px;
+  padding: 12px 14px;
+
   border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 12px;
+
   background: rgba(2, 6, 23, 0.72);
   color: #cbd5e1;
+
   font-size: 12px;
-  line-height: 1.7;
+  line-height: 1.75;
+
   overflow-wrap: anywhere;
+  white-space: pre-line;
 }
 
 .walk-import-status.loading {
@@ -1651,4 +1726,300 @@ html, body {
 .walk-import-status.error {
   border-color: rgba(248, 113, 113, 0.55);
   color: #fecaca;
+}
+
+/* =========================
+   解析結果カード
+========================= */
+
+.walk-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.walk-summary-grid[hidden] {
+  display: none !important;
+}
+
+.walk-summary-card {
+  min-width: 0;
+  padding: 13px 12px;
+
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 14px;
+
+  background:
+    radial-gradient(
+      circle at top left,
+      rgba(56, 189, 248, 0.12),
+      transparent 65%
+    ),
+    rgba(15, 23, 42, 0.78);
+}
+
+.walk-summary-card span {
+  display: block;
+  margin-bottom: 6px;
+
+  color: #94a3b8;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.walk-summary-card strong {
+  display: block;
+
+  color: #f8fafc;
+  font-size: 18px;
+  line-height: 1.35;
+
+  overflow-wrap: anywhere;
+}
+
+/* =========================
+   歩行ルート地図
+========================= */
+
+.walk-map-section {
+  margin-top: 14px;
+  padding: 14px;
+
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 16px;
+
+  background: rgba(2, 6, 23, 0.78);
+}
+
+.walk-map-section[hidden] {
+  display: none !important;
+}
+
+.walk-map-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.walk-map-title {
+  color: #bae6fd;
+  font-size: 14px;
+}
+
+.walk-map-fit-button {
+  padding: 6px 10px;
+
+  border: 1px solid rgba(56, 189, 248, 0.46);
+  border-radius: 999px;
+
+  background: rgba(14, 116, 144, 0.25);
+  color: #bae6fd;
+
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.walk-map-fit-button:hover {
+  background: rgba(14, 116, 144, 0.42);
+}
+
+.walk-route-map {
+  width: 100%;
+  height: 360px;
+
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 12px;
+
+  background: #0f172a;
+  overflow: hidden;
+}
+
+.walk-map-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+
+  margin-top: 10px;
+
+  color: #cbd5e1;
+  font-size: 11px;
+}
+
+.walk-map-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.walk-map-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  border-radius: 50%;
+}
+
+.walk-map-dot.start {
+  background: #22c55e;
+}
+
+.walk-map-dot.goal {
+  background: #ef4444;
+}
+
+.walk-map-dot.stop {
+  background: #eab308;
+}
+
+.walk-map-popup {
+  min-width: 140px;
+  line-height: 1.55;
+}
+
+.walk-map-popup strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+/* =========================
+   解析操作ボタン
+========================= */
+
+.walk-import-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 14px;
+  padding-bottom: 4px;
+}
+
+.walk-import-actions[hidden] {
+  display: none !important;
+}
+
+.walk-action-button {
+  min-height: 44px;
+  padding: 9px 12px;
+
+  border: 1px solid rgba(56, 189, 248, 0.42);
+  border-radius: 12px;
+
+  background: rgba(14, 116, 144, 0.24);
+  color: #e0f2fe;
+
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.walk-action-button:hover {
+  background: rgba(14, 116, 144, 0.42);
+}
+
+.walk-action-button.danger {
+  border-color: rgba(248, 113, 113, 0.42);
+  background: rgba(127, 29, 29, 0.22);
+  color: #fecaca;
+}
+
+.walk-action-button.danger:hover {
+  background: rgba(127, 29, 29, 0.4);
+}
+
+/* =========================
+   タブレット
+========================= */
+
+@media (max-width: 900px) {
+  .walk-import-panel {
+    width: min(560px, calc(100vw - 24px));
+    top: 12px;
+    right: 12px;
+    bottom: 12px;
+  }
+
+  .walk-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* =========================
+   スマホ：全画面解析UI
+========================= */
+
+@media (max-width: 640px) {
+  .walk-import-launcher {
+    top: 12px;
+    right: 12px;
+  }
+
+  .walk-import-fab {
+    width: 42px;
+    height: 42px;
+    font-size: 19px;
+  }
+
+  .walk-import-panel {
+    inset: 0;
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+
+    padding:
+      max(14px, env(safe-area-inset-top))
+      14px
+      max(18px, env(safe-area-inset-bottom));
+
+    border: 0;
+    border-radius: 0;
+  }
+
+  .walk-import-panel-header {
+    top: calc(-1 * max(14px, env(safe-area-inset-top)));
+
+    margin:
+      calc(-1 * max(14px, env(safe-area-inset-top)))
+      -14px
+      14px;
+
+    padding:
+      max(14px, env(safe-area-inset-top))
+      14px
+      14px;
+  }
+
+  .walk-import-heading strong {
+    font-size: 16px;
+  }
+
+  .walk-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .walk-summary-card strong {
+    font-size: 16px;
+  }
+
+  .walk-route-map {
+    height: 360px;
+  }
+
+  .walk-import-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 380px) {
+  .walk-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .walk-route-map {
+    height: 320px;
+  }
 }
