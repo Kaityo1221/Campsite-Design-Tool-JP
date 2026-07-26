@@ -2023,3 +2023,14 @@ html, body {
     height: 320px;
   }
 }
+/* LabEngine右上の歩行解析ボタン */
+.lab-engine-step {
+  position: relative;
+}
+
+.lab-engine-step > .walk-import-launcher {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 50;
+}

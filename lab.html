@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="css/admin.css?v=28">
 <link rel="stylesheet" href="css/distance.css?v=40">
 <link rel="stylesheet" href="css/capacity.css?v=6">
-<link rel="stylesheet" href="css/lab.css?v=20260726-v26">
+<link rel="stylesheet" href="css/lab.css?v=20260726-v28">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/icon.png">
 <link rel="manifest" href="./manifest.json">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
@@ -39,7 +39,187 @@
 <section id="parts" class="tab-content active lab-standalone-content">
   <div class="panel lab-main-panel">
 
-    <!-- スマートウォッチ歩行データ取込ボタン -->
+    
+
+    <h2>🧪 Campsite Lab</h2>
+  <div class="lab-secret-tag">CLASSIFIED / RESEARCH UNIT</div>
+
+<div class="lab-legend-box lab-user-guide">
+  <strong class="lab-mission-title">
+    🔬 今月の研究員ミッション
+    <span class="lab-live-dot"></span>
+  </strong>
+
+  <p class="note">
+    研究員は、CAイベントに使えそうな公園を探し、Wayfarer MapのNearby Wayspots CSVをCampsite Labへ投入します。<br>
+    LAB ENGINEで公園のPOIを分類し、研究KMZと一言メモを送信してください。
+  </p>
+
+  <div class="lab-guide-steps">
+    <div><span>1</span> CAイベントに使えそうな公園を1か所選ぶ</div>
+    <div><span>2</span> Wayfarer MapでCSVを抽出する</div>
+    <div><span>3</span> LAB ENGINEにCSVを投入（選択）する</div>
+    <div><span>4</span> 「⚙️ LAB ENGINE START」を押す</div>
+    <div><span>5</span> 研究結果マップと未分類POIを確認する</div>
+    <div><span>6</span> 研究KMZを保存する</div>
+    <div><span>7</span> 一言メモを書いて「研究結果を送信」を押す</div>
+  </div>
+
+  <div class="lab-mission-box">
+  <strong>🔬 研究員メモ</strong><br>
+  ①LAB ENGINEの解析が終わったら、右側の「研究KMZを保存」から端末に保存してください。<br>
+  ②保存した研究KMZは、会長のDiscord DMへ送ってください。<br>
+  ③下に表示される入力欄に公園の一言メモを書き、<br>
+  「研究結果を送信」を押してください。<br><br>
+
+  ※送信ボタンでは、研究履歴と未分類POIレビュー候補が保存されます。<br>
+  CSVや未分類POI CSVをDMで送る必要はありません。<br><br>
+
+    例：駅から近い／広場がある／日陰が少ない／CAイベントに使えそう
+</div>
+
+</div>
+
+<div class="step lab-dev-only" style="display:none;">
+  <div class="step-no">Supabase接続テスト</div>
+  <h3>POI名称データバンク読込テスト</h3>
+
+  <p class="note">
+    Supabaseに登録したPOI名称データバンクを、Campsite Labから読み込めるか確認します。<br>
+    成功すると、category_master から数件読み込みます。
+  </p>
+
+  <button
+    type="button"
+    class="generate"
+    onclick="testLoadPoiDatabank()"
+  >
+    Supabase辞書読込テスト
+  </button>
+
+  <button
+  type="button"
+  class="generate"
+  onclick="testClassifyPoiNames()"
+  style="margin-top:10px;"
+>
+  POI分類テスト
+</button>
+</div>
+<details class="lab-legend-box">
+  <summary><strong>更新履歴 v6.1.1</strong></summary>
+  ・配置余地カードを追加しました。<br>
+  ・有効配置余地を、既存POI40m円除外後の面積として表示しました。<br>
+  ・配置余地の点数表示を非表示にしました。<br>
+  ・最大25件は保証ではない旨を追記しました。<br>
+  ・iPhoneでKMZが.zip保存された場合の案内を追加しました。
+</details>
+<div class="step lab-streetview-step">
+  <div class="step-no">Lab / Virtual Preview</div>
+  <h3>Street Viewリンク下見（APIなし実験）</h3>
+
+  <p class="note">
+    マイマップから出力したKMZ / KMLを読み込み、<code>walk_route</code> の線に沿ってGoogleマップのStreet Viewリンクを自動生成します。<br>
+    Google Maps JavaScript APIは使わないため、APIキー不要・課金設定不要です。
+  </p>
+
+  <div class="lab-streetview-grid">
+    <div class="lab-streetview-control">
+      <label class="lab-streetview-label">
+        下見用KMZ / KML
+        <input
+          type="file"
+          id="labStreetViewKmzFile"
+          accept=".kmz,.kml,.zip"
+        >
+      </label>
+<label class="lab-streetview-label">
+  使用するルート
+  <select id="labStreetViewRouteSelect" disabled>
+    <option value="">KMZ / KMLを読み込むとルート一覧が表示されます</option>
+  </select>
+</label>
+      <div class="lab-streetview-options">
+        <label>
+          リンク生成間隔
+          <select id="labStreetViewIntervalMeters">
+            <option value="25">25m</option>
+            <option value="50" selected>50m</option>
+            <option value="75">75m</option>
+            <option value="100">100m</option>
+          </select>
+        </label>
+
+        <label>
+          Street View画角
+          <select id="labStreetViewFov">
+            <option value="70">狭め</option>
+            <option value="80" selected>標準</option>
+            <option value="95">広め</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="lab-streetview-buttons">
+        <button type="button" class="generate" onclick="prepareLabStreetViewTour()">
+          下見リンクを生成
+        </button>
+
+        <button type="button" id="labStreetViewStartButton" class="generate" onclick="openCurrentLabStreetViewPoint()" disabled>
+  選択地点をGoogleマップで開く
+</button>
+
+<button type="button" id="labStreetViewStepButton" class="generate" onclick="stepLabStreetViewAutoTour()" disabled>
+  次の地点へ
+</button>
+
+<button type="button" id="labStreetViewPrevButton" class="generate" onclick="prevLabStreetViewPoint()" disabled>
+  前の地点へ
+</button>
+
+<button type="button" id="labStreetViewStopButton" class="generate secondary" onclick="resetLabStreetViewTour()" disabled>
+  最初に戻る
+</button>
+      </div>
+
+      <div id="labStreetViewStatus" class="lab-streetview-status">
+        KMZを選択して、下見リンクを生成してください。
+      </div>
+
+      <div id="labStreetViewSummary" class="lab-streetview-summary"></div>
+
+      <div class="lab-streetview-progress-box">
+        現在位置：<span id="labStreetViewProgress">- / -</span>
+      </div>
+
+      <div id="labStreetViewStopCard" class="lab-streetview-stop-card">
+        <strong>現在の確認</strong><br>
+        まだ下見リンクは生成されていません。
+      </div>
+    </div>
+
+    <div class="lab-streetview-viewer">
+      <div id="labStreetViewPanorama" class="lab-streetview-panorama lab-streetview-url-panel">
+        <div class="lab-streetview-placeholder">
+  ここにStreet Viewリンク一覧が表示されます。<br>
+  リストをクリックすると地点を選択します。<br>
+  「外部ビューアを開く」でGoogleマップを表示します。
+</div>
+      </div>
+
+      <div id="labStreetViewMiniMap" class="lab-streetview-minimap"></div>
+    </div>
+  </div>
+
+  <div class="lab-legend-box">
+    <strong>マイマップ側の作り方</strong><br>
+    ・歩かせたい道は <code>walk_route</code> レイヤーに線で作成します。<br>
+    ・止まって説明したい場所は <code>stops</code> レイヤーにピンで作成します。<br>
+    ・このAPIなし版は、アプリ内にStreet Viewを埋め込まず、Googleマップへのリンクを生成します。
+  </div>
+</div>
+    <div class="step lab-engine-step">
+      <!-- スマートウォッチ歩行データ取込ボタン -->
     <div class="walk-import-launcher">
       <button
         type="button"
@@ -224,185 +404,6 @@
 
 </div>
 <!-- walk-import-launcher終了 -->
-
-    <h2>🧪 Campsite Lab</h2>
-  <div class="lab-secret-tag">CLASSIFIED / RESEARCH UNIT</div>
-
-<div class="lab-legend-box lab-user-guide">
-  <strong class="lab-mission-title">
-    🔬 今月の研究員ミッション
-    <span class="lab-live-dot"></span>
-  </strong>
-
-  <p class="note">
-    研究員は、CAイベントに使えそうな公園を探し、Wayfarer MapのNearby Wayspots CSVをCampsite Labへ投入します。<br>
-    LAB ENGINEで公園のPOIを分類し、研究KMZと一言メモを送信してください。
-  </p>
-
-  <div class="lab-guide-steps">
-    <div><span>1</span> CAイベントに使えそうな公園を1か所選ぶ</div>
-    <div><span>2</span> Wayfarer MapでCSVを抽出する</div>
-    <div><span>3</span> LAB ENGINEにCSVを投入（選択）する</div>
-    <div><span>4</span> 「⚙️ LAB ENGINE START」を押す</div>
-    <div><span>5</span> 研究結果マップと未分類POIを確認する</div>
-    <div><span>6</span> 研究KMZを保存する</div>
-    <div><span>7</span> 一言メモを書いて「研究結果を送信」を押す</div>
-  </div>
-
-  <div class="lab-mission-box">
-  <strong>🔬 研究員メモ</strong><br>
-  ①LAB ENGINEの解析が終わったら、右側の「研究KMZを保存」から端末に保存してください。<br>
-  ②保存した研究KMZは、会長のDiscord DMへ送ってください。<br>
-  ③下に表示される入力欄に公園の一言メモを書き、<br>
-  「研究結果を送信」を押してください。<br><br>
-
-  ※送信ボタンでは、研究履歴と未分類POIレビュー候補が保存されます。<br>
-  CSVや未分類POI CSVをDMで送る必要はありません。<br><br>
-
-    例：駅から近い／広場がある／日陰が少ない／CAイベントに使えそう
-</div>
-
-</div>
-
-<div class="step lab-dev-only" style="display:none;">
-  <div class="step-no">Supabase接続テスト</div>
-  <h3>POI名称データバンク読込テスト</h3>
-
-  <p class="note">
-    Supabaseに登録したPOI名称データバンクを、Campsite Labから読み込めるか確認します。<br>
-    成功すると、category_master から数件読み込みます。
-  </p>
-
-  <button
-    type="button"
-    class="generate"
-    onclick="testLoadPoiDatabank()"
-  >
-    Supabase辞書読込テスト
-  </button>
-
-  <button
-  type="button"
-  class="generate"
-  onclick="testClassifyPoiNames()"
-  style="margin-top:10px;"
->
-  POI分類テスト
-</button>
-</div>
-<details class="lab-legend-box">
-  <summary><strong>更新履歴 v6.1.1</strong></summary>
-  ・配置余地カードを追加しました。<br>
-  ・有効配置余地を、既存POI40m円除外後の面積として表示しました。<br>
-  ・配置余地の点数表示を非表示にしました。<br>
-  ・最大25件は保証ではない旨を追記しました。<br>
-  ・iPhoneでKMZが.zip保存された場合の案内を追加しました。
-</details>
-<div class="step lab-streetview-step">
-  <div class="step-no">Lab / Virtual Preview</div>
-  <h3>Street Viewリンク下見（APIなし実験）</h3>
-
-  <p class="note">
-    マイマップから出力したKMZ / KMLを読み込み、<code>walk_route</code> の線に沿ってGoogleマップのStreet Viewリンクを自動生成します。<br>
-    Google Maps JavaScript APIは使わないため、APIキー不要・課金設定不要です。
-  </p>
-
-  <div class="lab-streetview-grid">
-    <div class="lab-streetview-control">
-      <label class="lab-streetview-label">
-        下見用KMZ / KML
-        <input
-          type="file"
-          id="labStreetViewKmzFile"
-          accept=".kmz,.kml,.zip"
-        >
-      </label>
-<label class="lab-streetview-label">
-  使用するルート
-  <select id="labStreetViewRouteSelect" disabled>
-    <option value="">KMZ / KMLを読み込むとルート一覧が表示されます</option>
-  </select>
-</label>
-      <div class="lab-streetview-options">
-        <label>
-          リンク生成間隔
-          <select id="labStreetViewIntervalMeters">
-            <option value="25">25m</option>
-            <option value="50" selected>50m</option>
-            <option value="75">75m</option>
-            <option value="100">100m</option>
-          </select>
-        </label>
-
-        <label>
-          Street View画角
-          <select id="labStreetViewFov">
-            <option value="70">狭め</option>
-            <option value="80" selected>標準</option>
-            <option value="95">広め</option>
-          </select>
-        </label>
-      </div>
-
-      <div class="lab-streetview-buttons">
-        <button type="button" class="generate" onclick="prepareLabStreetViewTour()">
-          下見リンクを生成
-        </button>
-
-        <button type="button" id="labStreetViewStartButton" class="generate" onclick="openCurrentLabStreetViewPoint()" disabled>
-  選択地点をGoogleマップで開く
-</button>
-
-<button type="button" id="labStreetViewStepButton" class="generate" onclick="stepLabStreetViewAutoTour()" disabled>
-  次の地点へ
-</button>
-
-<button type="button" id="labStreetViewPrevButton" class="generate" onclick="prevLabStreetViewPoint()" disabled>
-  前の地点へ
-</button>
-
-<button type="button" id="labStreetViewStopButton" class="generate secondary" onclick="resetLabStreetViewTour()" disabled>
-  最初に戻る
-</button>
-      </div>
-
-      <div id="labStreetViewStatus" class="lab-streetview-status">
-        KMZを選択して、下見リンクを生成してください。
-      </div>
-
-      <div id="labStreetViewSummary" class="lab-streetview-summary"></div>
-
-      <div class="lab-streetview-progress-box">
-        現在位置：<span id="labStreetViewProgress">- / -</span>
-      </div>
-
-      <div id="labStreetViewStopCard" class="lab-streetview-stop-card">
-        <strong>現在の確認</strong><br>
-        まだ下見リンクは生成されていません。
-      </div>
-    </div>
-
-    <div class="lab-streetview-viewer">
-      <div id="labStreetViewPanorama" class="lab-streetview-panorama lab-streetview-url-panel">
-        <div class="lab-streetview-placeholder">
-  ここにStreet Viewリンク一覧が表示されます。<br>
-  リストをクリックすると地点を選択します。<br>
-  「外部ビューアを開く」でGoogleマップを表示します。
-</div>
-      </div>
-
-      <div id="labStreetViewMiniMap" class="lab-streetview-minimap"></div>
-    </div>
-  </div>
-
-  <div class="lab-legend-box">
-    <strong>マイマップ側の作り方</strong><br>
-    ・歩かせたい道は <code>walk_route</code> レイヤーに線で作成します。<br>
-    ・止まって説明したい場所は <code>stops</code> レイヤーにピンで作成します。<br>
-    ・このAPIなし版は、アプリ内にStreet Viewを埋め込まず、Googleマップへのリンクを生成します。
-  </div>
-</div>
-    <div class="step lab-engine-step">
   <div class="step-no">LabEngine</div>
 
   <h3>LabEngineにCSVを投入する</h3>
@@ -730,6 +731,6 @@
 <script src="js/lab-engine-brain.js?v=20260706-v22"></script>
 <script src="js/lab.js?v=20260706-v21"></script>
 <script src="js/lab-streetview.js?v=6"></script>
-<script src="js/lab-walk-import.js?v=9"></script>
+<script src="js/lab-walk-import.js?v=11"></script>
 </body>
 </html>
