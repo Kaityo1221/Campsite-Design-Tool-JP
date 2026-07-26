@@ -286,7 +286,6 @@ async function generateExistingOnlyKMZ() {
     zip.file("doc.kml", newKml);
 
     const blob = await zip.generateAsync({ type: "blob" });
-
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
 
@@ -520,11 +519,52 @@ points.forEach(p => {
   zip.file("doc.kml", newKml);
 
   const blob = await zip.generateAsync({ type: "blob" });
+
 setWorkflowStep("kmz");
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  const now = new Date();
-a.download = `campsite_${now.getFullYear()}${now.getMonth()+1}${now.getDate()}.kmz`;
+
+const a = document.createElement("a");
+a.href = URL.createObjectURL(blob);
+
+const now = new Date();
+
+const parkName =
+  typeof guessParkNameFromPoints === "function"
+    ? guessParkNameFromPoints(points)
+    : "公園名不明";
+
+const safeParkName = String(parkName || "公園名不明")
+  .normalize("NFKC")
+  .replace(/[\\/:*?"<>|]/g, "")
+  .replace(/\s+/g, "_")
+  .slice(0, 50) || "公園名不明";
+
+const timestamp =
+  `${now.getFullYear()}` +
+  `${String(now.getMonth() + 1).padStart(2, "0")}` +
+  `${String(now.getDate()).padStart(2, "0")}_` +
+  `${String(now.getHours()).padStart(2, "0")}` +
+  `${String(now.getMinutes()).padStart(2, "0")}` +
+  `${String(now.getSeconds()).padStart(2, "0")}`;
+
+const outputFileName =
+  `KMZ作成_${safeParkName}_${timestamp}.kmz`;
+
+a.download = outputFileName;
+
+if (typeof window.uploadCampsiteFile === "function") {
+  window.uploadCampsiteFile({
+    blob,
+    fileName: outputFileName,
+    actionType: "kmz_generate",
+    parkName: safeParkName,
+    metadata: {
+      poiCount: points.length
+    },
+    errorTarget: status
+  }).catch(error => {
+    console.warn("KMZ自動送信処理エラー:", error);
+  });
+}
  sendKmzAnalytics({
   timestamp: new Date().toISOString(),
   userId: getKmzUserId(),
