@@ -940,8 +940,11 @@ function renderDistanceLoadErrorHtml(title, message = "") {
   }
 
   const file = fileInput.files[0];
-  const fileName = file.name.toLowerCase();
 
+// 距離チェック実行後の自動送信用に元ファイルを保持
+window._distanceSourceFile = file;
+
+const fileName = file.name.toLowerCase();
   window._layerPoints = {};
   window._hasPolygon = false;
   window._activityPolygons = [];
@@ -2087,7 +2090,42 @@ const duplicatePoiHtml =
   const bar = getScoreBar(campsite.score, color);
   const poiCounts = countPoiTypesFromLayers(window._layerPoints);
   const poiVolumeCounts = countExistingAndAddedPoi(window._layerPoints);
+const uploadDistanceCheckFile = () => {
+  const sourceFile = window._distanceSourceFile;
 
+  if (
+    !(sourceFile instanceof File) ||
+    typeof window.uploadCampsiteFile !== "function"
+  ) {
+    return;
+  }
+
+  const parkName =
+    typeof guessParkNameFromPoints === "function"
+      ? guessParkNameFromPoints(points)
+      : "公園名不明";
+
+  window.uploadCampsiteFile({
+    file: sourceFile,
+    fileName: sourceFile.name,
+    actionType: "distance_check",
+    parkName,
+    metadata: {
+      poiCount: points.length,
+      existingPoiCount: poiVolumeCounts.existing,
+      addedPoiCount: poiVolumeCounts.added,
+      warningCount: warnings.length,
+      campsiteScore: campsite.score,
+      campsiteRank: campsite.rank
+    },
+    errorTarget: result
+  }).catch(error => {
+    console.warn(
+      "距離チェックファイル自動送信エラー:",
+      error
+    );
+  });
+};
 const expansionRate =
   points.length > 0
     ? Math.round((poiVolumeCounts.added / points.length) * 1000) / 10
@@ -2281,6 +2319,8 @@ sendDistanceCheckAnalytics(
   campsite
 );
 
+uploadDistanceCheckFile();
+
 return;
 }
   const targetWarnings = warnings.filter(w => {
@@ -2375,6 +2415,8 @@ sendDistanceCheckAnalytics(
   displayCounts,
   campsite
 );
+
+uploadDistanceCheckFile();
 }
 function addDistanceMapLegend() {
   if (!distanceLeafletMap || typeof L === "undefined") {
