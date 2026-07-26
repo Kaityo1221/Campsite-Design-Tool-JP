@@ -4055,3 +4055,16 @@ button.generate:active {
     font-size: 13px;
   }
 }
+
+.data-upload-notice {
+  margin-top: 8px;
+  font-size: 11px;
+  color: #777;
+  line-height: 1.5;
+}
+
+.server-upload-note {
+  margin-top: 4px;
+  font-size: 10px;
+  color: #999;
+}
