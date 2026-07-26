@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="css/admin.css?v=28">
 <link rel="stylesheet" href="css/distance.css?v=40">
 <link rel="stylesheet" href="css/capacity.css?v=6">
-<link rel="stylesheet" href="css/lab.css?v=20260706-v19">
+<link rel="stylesheet" href="css/lab.css?v=20260723-v21">v20">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/icon.png">
 <link rel="manifest" href="./manifest.json">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
@@ -37,7 +37,72 @@
 
 <div class="container lab-standalone-container">
 <section id="parts" class="tab-content active lab-standalone-content">
-  <div class="panel">
+  <div class="panel lab-main-panel">
+
+    <!-- スマートウォッチ歩行データ取込ボタン -->
+    <div class="walk-import-launcher">
+      <button
+        type="button"
+        id="walkImportOpenButton"
+        class="walk-import-fab"
+        aria-label="歩行データを取り込む"
+        aria-controls="walkImportPanel"
+        aria-expanded="false"
+        title="歩行データを取り込む"
+      >
+        ⌚
+      </button>
+
+      <div
+        id="walkImportPanel"
+        class="walk-import-panel"
+        hidden
+      >
+        <div class="walk-import-panel-header">
+          <strong>フィールドデータ取込</strong>
+
+          <button
+            type="button"
+            id="walkImportCloseButton"
+            class="walk-import-close"
+            aria-label="閉じる"
+          >
+            ×
+          </button>
+        </div>
+
+        <p class="walk-import-description">
+          スマートウォッチなどで記録した歩行データを読み込みます。
+        </p>
+
+        <button
+          type="button"
+          id="walkImportFileButton"
+          class="walk-import-file-button"
+        >
+          ファイルを選択
+        </button>
+
+        <input
+          type="file"
+          id="walkImportFileInput"
+          accept=".gpx,application/gpx+xml"
+          hidden
+        >
+
+       <p class="walk-import-note">
+  初期対応形式：GPX
+</p>
+
+<div
+  id="walkImportStatus"
+  class="walk-import-status"
+  role="status"
+  aria-live="polite"
+>
+  GPXファイルを選択してください。
+</div>
+
     <h2>🧪 Campsite Lab</h2>
   <div class="lab-secret-tag">CLASSIFIED / RESEARCH UNIT</div>
 
@@ -543,5 +608,6 @@
 <script src="js/lab-engine-brain.js?v=20260706-v22"></script>
 <script src="js/lab.js?v=20260706-v20"></script>
 <script src="js/lab-streetview.js?v=6"></script>
+<script src="js/lab-walk-import.js?v=2"></script>
 </body>
 </html>

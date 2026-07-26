@@ -1,4 +1,4 @@
-/* =========================
+すらら =========================
    Campsite Lab Standalone CSS
    Labページ専用。メイン画面の入口（羊→Lab看板）は style.css 側で維持。
 ========================= */
@@ -1506,4 +1506,149 @@ html, body {
 
 .legend-dot.exclude {
   background: #64748b;
+}
+/* =========================
+   スマートウォッチ歩行データ取込
+========================= */
+
+.walk-import-launcher {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 20;
+}
+
+.walk-import-fab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 1px solid rgba(125, 211, 252, 0.7);
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.94);
+  color: #e0f2fe;
+  font-size: 22px;
+  line-height: 1;
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.35),
+    0 0 16px rgba(56, 189, 248, 0.2);
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.walk-import-fab:hover {
+  transform: translateY(-2px);
+  border-color: #7dd3fc;
+  box-shadow:
+    0 10px 28px rgba(0, 0, 0, 0.4),
+    0 0 20px rgba(56, 189, 248, 0.35);
+}
+
+.walk-import-fab:focus-visible {
+  outline: 3px solid rgba(56, 189, 248, 0.45);
+  outline-offset: 3px;
+}
+
+.walk-import-panel {
+  position: absolute;
+  top: 54px;
+  right: 0;
+  width: min(300px, calc(100vw - 48px));
+  padding: 16px;
+  border: 1px solid rgba(125, 211, 252, 0.45);
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.98);
+  color: #e2e8f0;
+  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.45);
+}
+
+.walk-import-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.walk-import-close {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(148, 163, 184, 0.15);
+  color: #e2e8f0;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.walk-import-description {
+  margin: 12px 0;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #cbd5e1;
+}
+
+.walk-import-file-button {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid rgba(56, 189, 248, 0.7);
+  border-radius: 10px;
+  background: rgba(14, 116, 144, 0.35);
+  color: #e0f2fe;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.walk-import-note {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+@media (max-width: 640px) {
+  .walk-import-launcher {
+    top: 12px;
+    right: 12px;
+  }
+
+  .walk-import-fab {
+    width: 42px;
+    height: 42px;
+    font-size: 19px;
+  }
+}
+.lab-main-panel {
+  position: relative;
+  overflow: visible;
+}
+.walk-import-status {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  background: rgba(2, 6, 23, 0.72);
+  color: #cbd5e1;
+  font-size: 12px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.walk-import-status.loading {
+  border-color: rgba(56, 189, 248, 0.48);
+  color: #bae6fd;
+}
+
+.walk-import-status.success {
+  border-color: rgba(34, 197, 94, 0.48);
+  color: #bbf7d0;
+}
+
+.walk-import-status.error {
+  border-color: rgba(248, 113, 113, 0.55);
+  color: #fecaca;
 }
