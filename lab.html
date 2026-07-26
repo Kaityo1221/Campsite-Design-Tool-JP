@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="css/admin.css?v=28">
 <link rel="stylesheet" href="css/distance.css?v=40">
 <link rel="stylesheet" href="css/capacity.css?v=6">
-<link rel="stylesheet" href="css/lab.css?v=20260726-v22">
+<link rel="stylesheet" href="css/lab.css?v=20260726-v28">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/icon.png">
 <link rel="manifest" href="./manifest.json">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
@@ -39,71 +39,7 @@
 <section id="parts" class="tab-content active lab-standalone-content">
   <div class="panel lab-main-panel">
 
-    <!-- スマートウォッチ歩行データ取込ボタン -->
-    <div class="walk-import-launcher">
-      <button
-        type="button"
-        id="walkImportOpenButton"
-        class="walk-import-fab"
-        aria-label="歩行データを取り込む"
-        aria-controls="walkImportPanel"
-        aria-expanded="false"
-        title="歩行データを取り込む"
-      >
-        ⌚
-      </button>
-
-      <div
-        id="walkImportPanel"
-        class="walk-import-panel"
-        hidden
-      >
-        <div class="walk-import-panel-header">
-          <strong>フィールドデータ取込</strong>
-
-          <button
-            type="button"
-            id="walkImportCloseButton"
-            class="walk-import-close"
-            aria-label="閉じる"
-          >
-            ×
-          </button>
-        </div>
-
-        <p class="walk-import-description">
-          スマートウォッチなどで記録した歩行データを読み込みます。
-        </p>
-
-        <button
-          type="button"
-          id="walkImportFileButton"
-          class="walk-import-file-button"
-        >
-          ファイルを選択
-        </button>
-
-        <input
-          type="file"
-          id="walkImportFileInput"
-          accept=".gpx,application/gpx+xml"
-          hidden
-        >
-
-       <p class="walk-import-note">
-  初期対応形式：GPX
-</p>
-
-<div
-  id="walkImportStatus"
-  class="walk-import-status"
-  role="status"
-  aria-live="polite"
->
-  GPXファイルを選択してください。
-</div>
-      </div>
-    </div>
+    
 
     <h2>🧪 Campsite Lab</h2>
   <div class="lab-secret-tag">CLASSIFIED / RESEARCH UNIT</div>
@@ -283,6 +219,191 @@
   </div>
 </div>
     <div class="step lab-engine-step">
+      <!-- スマートウォッチ歩行データ取込ボタン -->
+    <div class="walk-import-launcher">
+      <button
+        type="button"
+        id="walkImportOpenButton"
+        class="walk-import-fab"
+        aria-label="歩行データを取り込む"
+        aria-controls="walkImportPanel"
+        aria-expanded="false"
+        title="歩行データを取り込む"
+      >
+        ⌚
+      </button>
+
+      <div
+  id="walkImportPanel"
+  class="walk-import-panel"
+  hidden
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="walkImportPanelTitle"
+>
+  <div class="walk-import-panel-header">
+    <div class="walk-import-heading">
+      <strong id="walkImportPanelTitle">
+        ⌚ フィールド歩行解析
+      </strong>
+
+      <span class="walk-import-subtitle">
+        FIELD ANALYSIS UNIT
+      </span>
+    </div>
+
+    <button
+      type="button"
+      id="walkImportCloseButton"
+      class="walk-import-close"
+      aria-label="歩行解析画面を閉じる"
+    >
+      ×
+    </button>
+  </div>
+
+  <p class="walk-import-description">
+    スマートウォッチなどで記録したGPXを読み込み、
+    歩行距離・速度・停止地点・歩行ルートを解析します。
+  </p>
+
+  <div class="walk-import-file-area">
+    <button
+      type="button"
+      id="walkImportFileButton"
+      class="walk-import-file-button"
+    >
+      📂 GPXファイルを選択
+    </button>
+
+    <input
+      type="file"
+      id="walkImportFileInput"
+      accept=".gpx,application/gpx+xml"
+      hidden
+    >
+
+    <p class="walk-import-note">
+      対応形式：GPX ／ データは端末内で解析されます
+    </p>
+  </div>
+
+  <div
+    id="walkImportStatus"
+    class="walk-import-status"
+    role="status"
+    aria-live="polite"
+  >
+    GPXファイルを選択してください。
+  </div>
+
+  <div
+    id="walkSummaryGrid"
+    class="walk-summary-grid"
+    hidden
+  >
+    <div class="walk-summary-card">
+      <span>総移動距離</span>
+      <strong id="walkSummaryDistance">--</strong>
+    </div>
+
+    <div class="walk-summary-card">
+      <span>記録時間</span>
+      <strong id="walkSummaryRecordedTime">--</strong>
+    </div>
+
+    <div class="walk-summary-card">
+      <span>移動時間</span>
+      <strong id="walkSummaryMovingTime">--</strong>
+    </div>
+
+    <div class="walk-summary-card">
+      <span>停止時間</span>
+      <strong id="walkSummaryStoppedTime">--</strong>
+    </div>
+
+    <div class="walk-summary-card">
+      <span>平均速度</span>
+      <strong id="walkSummaryAverageSpeed">--</strong>
+    </div>
+
+    <div class="walk-summary-card">
+      <span>停止地点</span>
+      <strong id="walkSummaryStopCount">--</strong>
+    </div>
+  </div>
+
+  <div
+    id="walkMapSection"
+    class="walk-map-section"
+    hidden
+  >
+    <div class="walk-map-header">
+      <strong class="walk-map-title">
+        🗺️ 歩行ルート
+      </strong>
+
+      <button
+        type="button"
+        id="walkMapFitButton"
+        class="walk-map-fit-button"
+        hidden
+      >
+        ルート全体
+      </button>
+    </div>
+
+    <div
+      id="walkRouteMap"
+      class="walk-route-map"
+      role="img"
+      aria-label="GPX歩行ルート地図"
+    ></div>
+
+    <div class="walk-map-legend">
+      <span class="walk-map-legend-item">
+        <span class="walk-map-dot start"></span>
+        スタート
+      </span>
+
+      <span class="walk-map-legend-item">
+        <span class="walk-map-dot goal"></span>
+        ゴール
+      </span>
+
+      <span class="walk-map-legend-item">
+        <span class="walk-map-dot stop"></span>
+        停止地点
+      </span>
+    </div>
+  </div>
+
+  <div
+    id="walkImportActions"
+    class="walk-import-actions"
+    hidden
+  >
+    <button
+      type="button"
+      id="walkImportChangeButton"
+      class="walk-action-button"
+    >
+      📂 別のGPXを選択
+    </button>
+
+    <button
+      type="button"
+      id="walkImportClearButton"
+      class="walk-action-button danger"
+    >
+      🗑️ 解析結果をクリア
+    </button>
+  </div>
+</div>
+<!-- walkImportPanel終了 -->
+
+</div>
+<!-- walk-import-launcher終了 -->
   <div class="step-no">LabEngine</div>
 
   <h3>LabEngineにCSVを投入する</h3>
@@ -608,8 +729,8 @@
 <script src="js/poi-dictionary-db.js?v=5"></script>
 <script src="js/capacity.js?v=5"></script>
 <script src="js/lab-engine-brain.js?v=20260706-v22"></script>
-<script src="js/lab.js?v=20260706-v20"></script>
+<script src="js/lab.js?v=20260706-v21"></script>
 <script src="js/lab-streetview.js?v=6"></script>
-<script src="js/lab-walk-import.js?v=2"></script>
+<script src="js/lab-walk-import.js?v=11"></script>
 </body>
 </html>

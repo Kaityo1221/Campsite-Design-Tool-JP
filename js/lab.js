@@ -343,6 +343,27 @@ if (typeof window.enrichLabPointsWithLabEngineBrain === "function") {
 
 console.log("Lab Engine POI分類完了:", points);
 
+/**
+ * LabEngineの解析済みPOIを
+ * スマートウォッチ歩行解析へ渡す
+ */
+if (
+  window.CampsiteWalkAnalysis &&
+  typeof window.CampsiteWalkAnalysis.setPoiData === "function"
+) {
+  const poiTransferResult =
+    window.CampsiteWalkAnalysis.setPoiData(points);
+
+  console.log(
+    "歩行解析へのPOI転送完了:",
+    poiTransferResult
+  );
+} else {
+  console.warn(
+    "歩行解析機能が見つからないため、POIは転送されませんでした。"
+  );
+}
+
 renderLabResearchMap(points);
 setLabResearchKmzReady(points);
     await new Promise(resolve => {
@@ -1130,6 +1151,15 @@ let pendingLabResearchReport = null;
 
 function resetLabResearchKmzOutput() {
   labResearchKmzPoints = [];
+  /**
+   * 前回の歩行解析用POIもクリアする
+   */
+  if (
+    window.CampsiteWalkAnalysis &&
+    typeof window.CampsiteWalkAnalysis.clearPoiData === "function"
+  ) {
+    window.CampsiteWalkAnalysis.clearPoiData();
+  }
 
   // CAMP-109: LabEngine 学習判定カウンターをリセット
   window.LabEngineLearningStats?.reset();
