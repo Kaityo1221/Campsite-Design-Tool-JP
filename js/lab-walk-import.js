@@ -44,6 +44,25 @@ const summaryAverageSpeed =
 
 const summaryStopCount =
   document.getElementById("walkSummaryStopCount");
+  const summaryPassedPoi =
+  document.getElementById(
+    "walkSummaryPassedPoi"
+  );
+
+const summaryNearPoi =
+  document.getElementById(
+    "walkSummaryNearPoi"
+  );
+
+const summaryStopPoi =
+  document.getElementById(
+    "walkSummaryStopPoi"
+  );
+
+const summaryFarPoi =
+  document.getElementById(
+    "walkSummaryFarPoi"
+  );
 
 const mapFitButton =
   document.getElementById("walkMapFitButton");
@@ -72,7 +91,11 @@ const clearButton =
   !summaryStoppedTime ||
   !summaryAverageSpeed ||
   !summaryStopCount ||
-  !mapFitButton ||
+!summaryPassedPoi ||
+!summaryNearPoi ||
+!summaryStopPoi ||
+!summaryFarPoi ||
+!mapFitButton ||
   !actionArea ||
   !changeButton ||
   !clearButton
@@ -409,25 +432,142 @@ const normalizePoiData = (poiList) => {
 /**
  * POIから歩行ルートまでの最短距離を計算する
  */
+/**
+ * 地点から1本のルート線分までの
+ * 最短距離をメートルで計算する
+ */
+const calculatePointToSegmentDistanceMeters = (
+  point,
+  segmentStart,
+  segmentEnd
+) => {
+  const referenceLatitude =
+    (
+      point.latitude +
+      segmentStart.latitude +
+      segmentEnd.latitude
+    ) / 3;
+
+  const longitudeScale =
+    Math.cos(
+      toRadians(referenceLatitude)
+    );
+
+  /**
+   * POIを原点として、
+   * 緯度経度をローカルなメートル座標へ変換する
+   */
+  const toLocalMeters = (target) => {
+    const x =
+      EARTH_RADIUS_METERS *
+      toRadians(
+        target.longitude -
+        point.longitude
+      ) *
+      longitudeScale;
+
+    const y =
+      EARTH_RADIUS_METERS *
+      toRadians(
+        target.latitude -
+        point.latitude
+      );
+
+    return {
+      x,
+      y
+    };
+  };
+
+  const start =
+    toLocalMeters(segmentStart);
+
+  const end =
+    toLocalMeters(segmentEnd);
+
+  const segmentX =
+    end.x - start.x;
+
+  const segmentY =
+    end.y - start.y;
+
+  const segmentLengthSquared =
+    segmentX ** 2 +
+    segmentY ** 2;
+
+  /**
+   * 始点と終点が同じ座標の場合
+   */
+  if (segmentLengthSquared === 0) {
+    return Math.hypot(
+      start.x,
+      start.y
+    );
+  }
+
+  const projectionRatio =
+    Math.max(
+      0,
+      Math.min(
+        1,
+        -(
+          start.x * segmentX +
+          start.y * segmentY
+        ) /
+        segmentLengthSquared
+      )
+    );
+
+  const closestX =
+    start.x +
+    segmentX * projectionRatio;
+
+  const closestY =
+    start.y +
+    segmentY * projectionRatio;
+
+  return Math.hypot(
+    closestX,
+    closestY
+  );
+};
+
+/**
+ * POIから歩行ルート全体までの
+ * 最短距離を計算する
+ */
 const calculatePoiRouteDistance = (
   poi,
   routeParts
 ) => {
-  let minimumDistanceMeters = Infinity;
+  let minimumDistanceMeters =
+    Infinity;
 
   routeParts.forEach((part) => {
-    part.forEach((point) => {
+    for (
+      let pointIndex = 1;
+      pointIndex < part.length;
+      pointIndex += 1
+    ) {
+      const segmentStart =
+        part[pointIndex - 1];
+
+      const segmentEnd =
+        part[pointIndex];
+
       const distanceMeters =
-        calculateDistanceMeters(
+        calculatePointToSegmentDistanceMeters(
           poi,
-          point
+          segmentStart,
+          segmentEnd
         );
 
-      minimumDistanceMeters = Math.min(
-        minimumDistanceMeters,
-        distanceMeters
-      );
-    });
+      minimumDistanceMeters =
+        Math.min(
+          minimumDistanceMeters,
+          distanceMeters
+        );
+    }
   });
 
   return Number.isFinite(
@@ -1008,6 +1148,45 @@ const renderSummaryCards = (analysis) => {
   actionArea.hidden = false;
 };
 /**
+ * POI接近判定の件数を表示する
+ */
+const renderPoiSummaryCards = (
+  analyzedPoiData
+) => {
+  const counts = {
+    passed: 0,
+    near: 0,
+    stop: 0,
+    far: 0
+  };
+
+  analyzedPoiData.forEach((poi) => {
+    const proximityType =
+      poi.proximityType;
+
+    if (
+      Object.hasOwn(
+        counts,
+        proximityType
+      )
+    ) {
+      counts[proximityType] += 1;
+    }
+  });
+
+  summaryPassedPoi.textContent =
+    `${counts.passed.toLocaleString()}件`;
+
+  summaryNearPoi.textContent =
+    `${counts.near.toLocaleString()}件`;
+
+  summaryStopPoi.textContent =
+    `${counts.stop.toLocaleString()}件`;
+
+  summaryFarPoi.textContent =
+    `${counts.far.toLocaleString()}件`;
+};
+/**
  * Dateを時刻表示へ変換する
  */
 const formatClockTime = (date) => {
@@ -1168,6 +1347,9 @@ const renderWalkMap = (gpxData, analysis) => {
     routeParts,
     analysis.stops
   );
+  renderPoiSummaryCards(
+  analyzedPoiData
+);
   routeParts.forEach((part) => {
     const latLngs = part.map((point) => [
       point.latitude,
@@ -1278,9 +1460,10 @@ analyzedPoiData.forEach((poi) => {
     markerColor = "#22c55e";
     label = "通過";
   } else if (poi.proximityType === "near") {
-    markerColor = "#facc15";
-    label = "近接";
-  } else if (poi.proximityType === "stop") {
+  markerColor = "#f97316";
+  label = "近接";
+}
+ else if (poi.proximityType === "stop") {
     markerColor = "#a855f7";
     label = "停止地点付近";
   }
@@ -1314,8 +1497,6 @@ analyzedPoiData.forEach((poi) => {
       )
     )
     .addTo(walkMapLayerGroup);
-
-  bounds.extend(latLng);
 });
   if (bounds.isValid()) {
   currentRouteBounds = bounds;
@@ -1418,7 +1599,10 @@ const clearWalkAnalysis = () => {
   summaryStoppedTime.textContent = "--";
   summaryAverageSpeed.textContent = "--";
   summaryStopCount.textContent = "--";
-
+summaryPassedPoi.textContent = "--";
+summaryNearPoi.textContent = "--";
+summaryStopPoi.textContent = "--";
+summaryFarPoi.textContent = "--";
   fileInput.value = "";
 
   setStatus(

@@ -1876,6 +1876,22 @@ html, body {
   background: #eab308;
 }
 
+.walk-map-dot.poi-passed {
+  background: #22c55e;
+}
+
+.walk-map-dot.poi-near {
+  background: #f97316;
+}
+
+.walk-map-dot.poi-stop {
+  background: #a855f7;
+}
+
+.walk-map-dot.poi-far {
+  background: #64748b;
+}
+
 .walk-map-popup {
   min-width: 140px;
   line-height: 1.55;

@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="css/admin.css?v=28">
 <link rel="stylesheet" href="css/distance.css?v=40">
 <link rel="stylesheet" href="css/capacity.css?v=6">
-<link rel="stylesheet" href="css/lab.css?v=20260726-v28">
+<link rel="stylesheet" href="css/lab.css?v=20260727-v30">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/icon.png">
 <link rel="manifest" href="./manifest.json">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
@@ -331,6 +331,25 @@
       <span>停止地点</span>
       <strong id="walkSummaryStopCount">--</strong>
     </div>
+    <div class="walk-summary-card">
+  <span>通過POI</span>
+  <strong id="walkSummaryPassedPoi">--</strong>
+</div>
+
+<div class="walk-summary-card">
+  <span>近接POI</span>
+  <strong id="walkSummaryNearPoi">--</strong>
+</div>
+
+<div class="walk-summary-card">
+  <span>停止付近POI</span>
+  <strong id="walkSummaryStopPoi">--</strong>
+</div>
+
+<div class="walk-summary-card">
+  <span>未接近POI</span>
+  <strong id="walkSummaryFarPoi">--</strong>
+</div>
   </div>
 
   <div
@@ -375,6 +394,27 @@
         <span class="walk-map-dot stop"></span>
         停止地点
       </span>
+
+<span class="walk-map-legend-item">
+  <span class="walk-map-dot poi-passed"></span>
+  通過POI
+</span>
+
+<span class="walk-map-legend-item">
+  <span class="walk-map-dot poi-near"></span>
+  近接POI
+</span>
+
+<span class="walk-map-legend-item">
+  <span class="walk-map-dot poi-stop"></span>
+  停止付近POI
+</span>
+
+<span class="walk-map-legend-item">
+  <span class="walk-map-dot poi-far"></span>
+  未接近POI
+</span>
+      
     </div>
   </div>
 
@@ -729,8 +769,8 @@
 <script src="js/poi-dictionary-db.js?v=5"></script>
 <script src="js/capacity.js?v=5"></script>
 <script src="js/lab-engine-brain.js?v=20260706-v22"></script>
-<script src="js/lab.js?v=20260706-v21"></script>
+<script src="js/lab.js?v=20260727-v22"></script>
 <script src="js/lab-streetview.js?v=6"></script>
-<script src="js/lab-walk-import.js?v=11"></script>
+<script src="js/lab-walk-import.js?v=15"></script>
 </body>
 </html>
