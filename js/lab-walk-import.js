@@ -11,6 +11,11 @@ const MAX_TIME_GAP_SECONDS = 5 * 60;
 const EARTH_RADIUS_METERS = 6371008.8;
 
 /**
+ * 未接近POIを初期表示するルートからの最大距離
+ */
+const FAR_POI_VISIBLE_DISTANCE_METERS = 100;
+
+/**
  * 停止地点の判定条件
  */
 const STOP_RADIUS_METERS = 20;
@@ -67,6 +72,11 @@ const summaryFarPoi =
 const mapFitButton =
   document.getElementById("walkMapFitButton");
 
+const farPoiToggleButton =
+  document.getElementById(
+    "walkFarPoiToggleButton"
+  );
+
 const actionArea =
   document.getElementById("walkImportActions");
 
@@ -96,6 +106,7 @@ const clearButton =
 !summaryStopPoi ||
 !summaryFarPoi ||
 !mapFitButton ||
+!farPoiToggleButton ||
   !actionArea ||
   !changeButton ||
   !clearButton
@@ -117,6 +128,12 @@ let currentPoiData = [];
  */
 let currentGpxData = null;
 let currentWalkAnalysis = null;
+
+/**
+ * true：100mを超える未接近POIも表示
+ * false：ルートから100m以内だけ表示
+ */
+let showAllFarPoi = false;
   /**
    * ステータス表示を更新する
    */
@@ -127,6 +144,26 @@ let currentWalkAnalysis = null;
     if (type) {
       status.classList.add(type);
     }
+  };
+
+  /**
+   * 未接近POI表示ボタンの状態を更新する
+   */
+  const updateFarPoiToggleButton = () => {
+    farPoiToggleButton.textContent =
+      showAllFarPoi
+        ? "未接近：全表示"
+        : "未接近：100m以内";
+
+    farPoiToggleButton.setAttribute(
+      "aria-pressed",
+      String(showAllFarPoi)
+    );
+
+    farPoiToggleButton.title =
+      showAllFarPoi
+        ? "100mを超える未接近POIも表示しています"
+        : "ルートから100m以内の未接近POIだけ表示します";
   };
 
   /**
@@ -1453,6 +1490,25 @@ const renderWalkMap = (gpxData, analysis) => {
  * POIを歩行ルート地図へ重ねる
  */
 analyzedPoiData.forEach((poi) => {
+  /**
+   * 未接近POIは初期状態ではルートから100m以内だけ表示する。
+   * 集計件数には影響させず、地図描画だけを絞り込む。
+   */
+  const isFarPoiVisible =
+    poi.proximityType !== "far" ||
+    showAllFarPoi ||
+    (
+      Number.isFinite(
+        poi.routeDistanceMeters
+      ) &&
+      poi.routeDistanceMeters <=
+        FAR_POI_VISIBLE_DISTANCE_METERS
+    );
+
+  if (!isFarPoiVisible) {
+    return;
+  }
+
   let markerColor = "#64748b";
   let label = "未接近";
 
@@ -1587,6 +1643,8 @@ const createGpxSummary = (
 const clearWalkAnalysis = () => {
   currentGpxData = null;
   currentWalkAnalysis = null;
+  showAllFarPoi = false;
+  updateFarPoiToggleButton();
 
   clearWalkMap();
 
@@ -1609,6 +1667,8 @@ summaryFarPoi.textContent = "--";
     "GPXファイルを選択してください。"
   );
 };
+  updateFarPoiToggleButton();
+
   /**
    * 時計ボタン
    */
@@ -1669,6 +1729,34 @@ mapFitButton.addEventListener(
   "click",
   () => {
     fitWalkMapToRoute();
+  }
+);
+
+/**
+ * 未接近POIの100m以内／全表示を切り替える
+ */
+farPoiToggleButton.addEventListener(
+  "click",
+  () => {
+    showAllFarPoi = !showAllFarPoi;
+    updateFarPoiToggleButton();
+
+    if (
+      currentGpxData &&
+      currentWalkAnalysis
+    ) {
+      try {
+        renderWalkMap(
+          currentGpxData,
+          currentWalkAnalysis
+        );
+      } catch (error) {
+        console.error(
+          "未接近POI表示切替後の地図更新に失敗しました:",
+          error
+        );
+      }
+    }
   }
 );
   /**

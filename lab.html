@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="css/admin.css?v=28">
 <link rel="stylesheet" href="css/distance.css?v=40">
 <link rel="stylesheet" href="css/capacity.css?v=6">
-<link rel="stylesheet" href="css/lab.css?v=20260727-v30">
+<link rel="stylesheet" href="css/lab.css?v=20260727-v33">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/icon.png">
 <link rel="manifest" href="./manifest.json">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
@@ -361,14 +361,26 @@
         🗺️ 歩行ルート
       </strong>
 
-      <button
-        type="button"
-        id="walkMapFitButton"
-        class="walk-map-fit-button"
-        hidden
-      >
-        ルート全体
-      </button>
+      <div class="walk-map-header-actions">
+        <button
+          type="button"
+          id="walkFarPoiToggleButton"
+          class="walk-poi-filter-button"
+          aria-pressed="false"
+          title="ルートから100m以内の未接近POIだけ表示します"
+        >
+          未接近：100m以内
+        </button>
+
+        <button
+          type="button"
+          id="walkMapFitButton"
+          class="walk-map-fit-button"
+          hidden
+        >
+          ルート全体
+        </button>
+      </div>
     </div>
 
     <div
@@ -770,6 +782,6 @@
 <script src="js/lab-engine-brain.js?v=20260706-v22"></script>
 <script src="js/lab.js?v=20260727-v22"></script>
 <script src="js/lab-streetview.js?v=6"></script>
-<script src="js/lab-walk-import.js?v=15"></script>
+<script src="js/lab-walk-import.js?v=16"></script>
 </body>
 </html>

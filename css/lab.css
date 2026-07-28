@@ -1623,7 +1623,7 @@ html, body {
 
 .walk-import-heading strong {
   color: #f8fafc;
-  font-size: 18px;
+  font-size: 16px;
   line-height: 1.4;
 }
 
@@ -1734,7 +1734,7 @@ html, body {
 
 .walk-summary-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 10px;
   margin-top: 14px;
 }
@@ -1745,7 +1745,7 @@ html, body {
 
 .walk-summary-card {
   min-width: 0;
-  padding: 13px 12px;
+  padding: 10px 9px;
 
   border: 1px solid rgba(148, 163, 184, 0.24);
   border-radius: 14px;
@@ -1960,7 +1960,7 @@ html, body {
   }
 
   .walk-summary-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -2050,3 +2050,57 @@ html, body {
   right: 16px;
   z-index: 50;
 }
+
+/* =========================
+   歩行地図：未接近POI表示フィルター
+========================= */
+
+.walk-map-header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.walk-poi-filter-button {
+  padding: 6px 10px;
+  border: 1px solid rgba(148, 163, 184, 0.42);
+  border-radius: 999px;
+  background: rgba(71, 85, 105, 0.28);
+  color: #e2e8f0;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.walk-poi-filter-button:hover {
+  background: rgba(71, 85, 105, 0.48);
+  border-color: rgba(203, 213, 225, 0.62);
+}
+
+.walk-poi-filter-button[aria-pressed="true"] {
+  border-color: rgba(168, 85, 247, 0.62);
+  background: rgba(126, 34, 206, 0.28);
+  color: #f3e8ff;
+}
+
+@media (max-width: 480px) {
+  .walk-map-header {
+    align-items: flex-start;
+  }
+
+  .walk-map-header-actions {
+    max-width: 68%;
+  }
+
+  .walk-poi-filter-button,
+  .walk-map-fit-button {
+    white-space: nowrap;
+  }
+}
+
