@@ -1,0 +1,26 @@
+Campsite Design Tool - distance.js 分割版 変更一覧
+作成日: 2026-08-05
+
+変更ファイル:
+- index.html
+- js/distance.js（実行・結果組み立て部分のみへ縮小）
+- js/distance-core.js（新規）
+- js/distance-analytics.js（新規）
+- js/distance-poi.js（新規）
+- js/distance-file.js（新規）
+- js/distance-render.js（新規）
+- js/distance-score.js（新規）
+- js/distance-map.js（新規）
+- js/distance-errors.js（新規）
+- docs/distance-js-split.md（新規）
+
+仕様確認:
+- 既存POI同士の40m未満もスコア減点対象のまま維持
+- 既存POI同士は画面上では参考情報として表示
+- 計算ロジック、関数名、処理順は変更なし
+
+検証結果:
+- 全JavaScript構文チェック: OK
+- 分割ファイル再結合と分割前コードの一致: OK（合意済みコメント修正を除く）
+- script読み込み順・ファイル存在確認: OK
+- 既存POI同士10mの減点テスト: OK
