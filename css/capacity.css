@@ -255,34 +255,47 @@
 
 /* STEP 0を補助リンクへ縮小 */
 #tool #csvModeSummary + .step {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px 14px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: stretch;
+  gap: 8px;
   margin-bottom: 18px;
-  padding: 12px 14px;
+  padding: 14px;
   border: 1px solid rgba(56, 189, 248, 0.3);
   border-radius: 14px;
   background: rgba(14, 165, 233, 0.08);
 }
 
 #tool #csvModeSummary + .step::before {
+  content: none;
+}
+
+#tool #csvModeSummary + .step .step-no,
+#tool #csvModeSummary + .step p {
+  display: none;
+}
+
+#tool #csvModeSummary + .step h3 {
+  display: block;
+  margin: 0;
+  font-size: 0;
+  line-height: 1.4;
+}
+
+#tool #csvModeSummary + .step h3::after {
   content: "初めての方へ";
   color: #f8fafc;
   font-size: 13px;
   font-weight: 800;
 }
 
-#tool #csvModeSummary + .step .step-no,
-#tool #csvModeSummary + .step h3,
-#tool #csvModeSummary + .step p {
-  display: none;
-}
-
 #tool #csvModeSummary + .step .link-btn {
+  width: 100%;
+  box-sizing: border-box;
   margin: 0;
-  padding: 8px 12px;
+  padding: 10px 12px;
   font-size: 13px;
+  text-align: center;
 }
 
 /* 冒頭の理念・重複説明は通常画面から外す */
@@ -447,7 +460,6 @@
   }
 
   #tool #csvModeSummary + .step {
-    display: grid;
     gap: 8px;
   }
 
