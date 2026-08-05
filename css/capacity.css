@@ -324,6 +324,19 @@
   line-height: 1.7;
 }
 
+/* 複数CSVと重複削除の説明は、ファイル選択欄の直下へ */
+#tool #customCsvStep + .step::after {
+  content: "複数CSVを同時に取り込んで、重複したPOIを自動で削除します。";
+  display: block;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(56, 189, 248, 0.08);
+  color: #bae6fd;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
 /* 円設定は初期値のまま非表示。両方ONを維持 */
 #tool #customCsvStep + .step + .step {
   display: none;
