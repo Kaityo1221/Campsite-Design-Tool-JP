@@ -1,0 +1,40 @@
+name: Temporary capacity cache bump
+
+on:
+  push:
+    branches:
+      - agent/ui-overhaul-01-kmz-flow
+
+permissions:
+  contents: write
+
+jobs:
+  bump:
+    if: github.event.head_commit.message == 'Run capacity cache version bump'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/ui-overhaul-01-kmz-flow
+
+      - name: Bump capacity stylesheet version
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('index.html')
+          text = path.read_text(encoding='utf-8')
+          old = 'css/capacity.css?v=6'
+          new = 'css/capacity.css?v=7'
+          if old not in text:
+              raise SystemExit(f'Expected value not found: {old}')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
+          rm .github/workflows/temp-capacity-cache-bump.yml
+
+      - name: Commit cache version bump
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Bump capacity CSS cache version'
+          git push origin HEAD:agent/ui-overhaul-01-kmz-flow
