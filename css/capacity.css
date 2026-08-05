@@ -324,9 +324,9 @@
   line-height: 1.7;
 }
 
-/* 複数CSVと重複削除の説明は、ファイル選択欄の直下へ */
+/* 周辺POIは広めに抽出してよいことを、ファイル選択欄の直下で案内 */
 #tool #customCsvStep + .step::after {
-  content: "複数CSVを同時に取り込んで、重複したPOIを自動で削除します。";
+  content: "周辺POIは広めに抽出して大丈夫です。\A 複数のCSVをまとめて選択しても、重複したPOIは自動で削除されます。";
   display: block;
   margin-top: 12px;
   padding: 10px 12px;
@@ -335,6 +335,7 @@
   color: #bae6fd;
   font-size: 13px;
   line-height: 1.65;
+  white-space: pre-line;
 }
 
 /* 円設定は初期値のまま非表示。両方ONを維持 */
