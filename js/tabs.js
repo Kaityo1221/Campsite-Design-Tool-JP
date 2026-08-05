@@ -387,6 +387,43 @@ function ensureKmzPostGenerationStyles() {
       .return-modal-actions {
         padding-bottom: calc(20px + env(safe-area-inset-bottom));
       }
+
+      .kmz-complete-modal {
+        align-items: flex-start !important;
+        justify-content: center !important;
+        height: 100dvh;
+        overflow: hidden !important;
+        overscroll-behavior: none;
+        padding:
+          max(12px, env(safe-area-inset-top))
+          12px
+          max(16px, env(safe-area-inset-bottom)) !important;
+      }
+
+      .kmz-complete-modal-card {
+        width: min(100%, 620px) !important;
+        max-height: calc(
+          100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom)
+        ) !important;
+        overflow-y: auto !important;
+        overscroll-behavior-y: contain;
+        -webkit-overflow-scrolling: touch;
+        touch-action: pan-y;
+        scroll-padding-top: 20px;
+        scroll-padding-bottom: calc(96px + env(safe-area-inset-bottom));
+        padding-bottom: calc(28px + env(safe-area-inset-bottom)) !important;
+      }
+
+      .kmz-complete-actions {
+        padding-bottom: calc(28px + env(safe-area-inset-bottom));
+      }
+
+      .kmz-complete-action-button,
+      .kmz-complete-modal-close,
+      .kmz-iphone-details summary {
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+      }
     }
 
     @media (max-width: 520px) {
@@ -398,6 +435,86 @@ function ensureKmzPostGenerationStyles() {
   `;
 
   document.head.appendChild(style);
+}
+
+function stabilizeModalScroller(scroller) {
+  if (!scroller || scroller.dataset.scrollStabilized === "true") {
+    return;
+  }
+
+  scroller.dataset.scrollStabilized = "true";
+
+  const keepInsideScrollBounds = () => {
+    const maxScroll = scroller.scrollHeight - scroller.clientHeight;
+
+    if (maxScroll <= 2) {
+      return;
+    }
+
+    if (scroller.scrollTop <= 0) {
+      scroller.scrollTop = 1;
+      return;
+    }
+
+    if (scroller.scrollTop >= maxScroll) {
+      scroller.scrollTop = maxScroll - 1;
+    }
+  };
+
+  scroller.addEventListener("touchstart", event => {
+    keepInsideScrollBounds();
+    event.stopPropagation();
+  }, { passive: true });
+
+  scroller.addEventListener("touchmove", event => {
+    event.stopPropagation();
+  }, { passive: true });
+
+  scroller.addEventListener("click", event => {
+    event.stopPropagation();
+  });
+}
+
+function lockKmzModalPageScroll() {
+  const body = document.body;
+
+  if (!body || body.dataset.kmzModalScrollLocked === "true") {
+    return;
+  }
+
+  const scrollY = window.scrollY;
+
+  body.dataset.kmzModalScrollLocked = "true";
+  body.dataset.kmzModalScrollY = String(scrollY);
+  body.style.position = "fixed";
+  body.style.top = `-${scrollY}px`;
+  body.style.left = "0";
+  body.style.right = "0";
+  body.style.width = "100%";
+  body.style.overflow = "hidden";
+  document.documentElement.style.overflow = "hidden";
+}
+
+function unlockKmzModalPageScroll() {
+  const body = document.body;
+
+  if (!body || body.dataset.kmzModalScrollLocked !== "true") {
+    return;
+  }
+
+  const scrollY = Number(body.dataset.kmzModalScrollY || "0");
+
+  delete body.dataset.kmzModalScrollLocked;
+  delete body.dataset.kmzModalScrollY;
+  body.style.position = "";
+  body.style.top = "";
+  body.style.left = "";
+  body.style.right = "";
+  body.style.width = "";
+  body.style.overflow = "";
+  document.documentElement.style.overflow = "";
+
+  window.scrollTo(0, scrollY);
 }
 
 function revealKmzAfterGuide() {
@@ -515,6 +632,25 @@ function setupKmzPostGenerationGuide() {
         </button>
       </div>
     `;
+
+    stabilizeModalScroller(modalCard);
+  }
+
+  const originalCloseKmzCompleteModal =
+    window.closeKmzCompleteModal;
+
+  if (
+    typeof originalCloseKmzCompleteModal === "function" &&
+    !originalCloseKmzCompleteModal._postGuideWrapped
+  ) {
+    const wrappedCloseKmzCompleteModal = function (...args) {
+      const result = originalCloseKmzCompleteModal.apply(this, args);
+      unlockKmzModalPageScroll();
+      return result;
+    };
+
+    wrappedCloseKmzCompleteModal._postGuideWrapped = true;
+    window.closeKmzCompleteModal = wrappedCloseKmzCompleteModal;
   }
 
   const originalOpenKmzCompleteModal =
@@ -525,8 +661,24 @@ function setupKmzPostGenerationGuide() {
     !originalOpenKmzCompleteModal._postGuideWrapped
   ) {
     const wrappedOpenKmzCompleteModal = function (...args) {
+      const result = originalOpenKmzCompleteModal.apply(this, args);
+
       revealKmzAfterGuide();
-      return originalOpenKmzCompleteModal.apply(this, args);
+      lockKmzModalPageScroll();
+
+      window.requestAnimationFrame(() => {
+        if (!modalCard) {
+          return;
+        }
+
+        const maxScroll = modalCard.scrollHeight - modalCard.clientHeight;
+
+        if (maxScroll > 2 && modalCard.scrollTop <= 0) {
+          modalCard.scrollTop = 1;
+        }
+      });
+
+      return result;
     };
 
     wrappedOpenKmzCompleteModal._postGuideWrapped = true;
