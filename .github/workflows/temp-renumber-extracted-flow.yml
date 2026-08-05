@@ -1,0 +1,98 @@
+name: Temporary renumber extracted CSV flow
+
+on:
+  push:
+    branches:
+      - agent/ui-overhaul-01-kmz-flow
+
+permissions:
+  contents: write
+
+jobs:
+  renumber:
+    if: github.event.head_commit.message == 'Run extracted CSV step renumber'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/ui-overhaul-01-kmz-flow
+
+      - name: Renumber extracted CSV flow
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          tabs_path = Path('js/tabs.js')
+          tabs = tabs_path.read_text(encoding='utf-8')
+          old = '''  const summaryText =
+    document.getElementById("csvModeSummaryText");
+
+  if(!wayfarerStep || !customStep || !summary || !summaryText){
+    return;
+  }
+'''
+          new = '''  const summaryText =
+    document.getElementById("csvModeSummaryText");
+
+  const toolSection =
+    document.getElementById("tool");
+
+  if(!wayfarerStep || !customStep || !summary || !summaryText){
+    return;
+  }
+
+  if(toolSection){
+    toolSection.classList.toggle(
+      "csv-mode-extracted",
+      mode === "extracted"
+    );
+  }
+'''
+          if old not in tabs:
+              raise SystemExit('Expected tabs.js insertion point not found')
+          tabs_path.write_text(tabs.replace(old, new, 1), encoding='utf-8')
+
+          css_path = Path('css/capacity.css')
+          css = css_path.read_text(encoding='utf-8')
+          marker = '/* 円設定は初期値のまま非表示。両方ONを維持 */\n'
+          addition = '''/* 抽出済みCSV方式は、見えている2工程をSTEP 1・2として表示 */
+#tool.csv-mode-extracted #customCsvStep + .step > .step-no {
+  font-size: 0;
+}
+
+#tool.csv-mode-extracted #customCsvStep + .step > .step-no::after {
+  content: "STEP 1";
+  font-size: 13px;
+}
+
+#tool.csv-mode-extracted #customCsvStep + .step + .step + .step > .step-no::after {
+  content: "STEP 2";
+}
+
+'''
+          if marker not in css:
+              raise SystemExit('Expected capacity.css insertion point not found')
+          css_path.write_text(css.replace(marker, addition + marker, 1), encoding='utf-8')
+
+          index_path = Path('index.html')
+          index = index_path.read_text(encoding='utf-8')
+          replacements = {
+              'css/capacity.css?v=8': 'css/capacity.css?v=9',
+              'js/tabs.js?v=1': 'js/tabs.js?v=2',
+          }
+          for old_value, new_value in replacements.items():
+              if old_value not in index:
+                  raise SystemExit(f'Expected index value not found: {old_value}')
+              index = index.replace(old_value, new_value, 1)
+          index_path.write_text(index, encoding='utf-8')
+          PY
+
+          rm .github/workflows/temp-renumber-extracted-flow.yml
+
+      - name: Commit step renumbering
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Renumber extracted CSV flow steps'
+          git push origin HEAD:agent/ui-overhaul-01-kmz-flow
