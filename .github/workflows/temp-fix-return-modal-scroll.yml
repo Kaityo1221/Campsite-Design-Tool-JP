@@ -1,0 +1,73 @@
+name: Temporary return modal scroll fix
+
+on:
+  push:
+    branches:
+      - agent/ui-overhaul-02-kmz-complete
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.event.head_commit.message == 'Run return modal scroll fix'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/ui-overhaul-02-kmz-complete
+
+      - name: Fix iPhone return modal scrolling
+        run: |
+          cat >> css/style.css <<'CSS'
+
+/* =========================
+   iPhone Safari: return modal scroll fix
+========================= */
+@media (max-width: 720px) {
+  .return-modal {
+    align-items: flex-start;
+    justify-content: center;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    padding:
+      max(12px, env(safe-area-inset-top))
+      12px
+      calc(112px + env(safe-area-inset-bottom));
+  }
+
+  .return-modal-card {
+    width: min(100%, 620px);
+    max-height: none;
+    overflow: visible;
+    margin: 0 auto;
+  }
+
+  .return-modal-actions {
+    padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  }
+}
+CSS
+
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('index.html')
+          text = path.read_text(encoding='utf-8')
+          old = 'css/style.css?v=90'
+          new = 'css/style.css?v=91'
+          if old not in text:
+              raise SystemExit(f'Expected value not found: {old}')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
+
+          rm .github/workflows/temp-fix-return-modal-scroll.yml
+          rm .tmp-return-modal-scroll-trigger
+
+      - name: Commit scroll fix
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Fix return modal scrolling on iPhone Safari'
+          git push origin HEAD:agent/ui-overhaul-02-kmz-complete
