@@ -515,7 +515,7 @@ function openGoogleMyMaps() {
   setWorkflowStep("mymaps");
 
   window.open(
-    "https://www.google.com/maps/d/",
+    "https://mymaps.google.com/",
     "_blank"
   );
 }
