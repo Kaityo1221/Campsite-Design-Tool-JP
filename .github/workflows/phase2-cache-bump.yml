@@ -1,0 +1,45 @@
+name: Phase 2 cache bump
+
+on:
+  push:
+    branches:
+      - agent/ui-overhaul-02-kmz-complete
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    if: github.event.head_commit.message == 'Run phase 2 cache bump'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/ui-overhaul-02-kmz-complete
+
+      - name: Check JavaScript syntax
+        run: node --check js/tabs.js
+
+      - name: Bump tabs cache version
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('index.html')
+          text = path.read_text(encoding='utf-8')
+          old = 'js/tabs.js?v=1'
+          new = 'js/tabs.js?v=2'
+          if old not in text:
+              raise SystemExit(f'Expected value not found: {old}')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
+
+          rm .github/workflows/phase2-cache-bump.yml
+          rm .github/phase2-cache-trigger.txt
+
+      - name: Commit verified update
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Verify phase 2 guide and bump tabs cache'
+          git push origin HEAD:agent/ui-overhaul-02-kmz-complete
