@@ -90,17 +90,14 @@ function updateWorkflowStep(tabId) {
 }
 
 function showScriptFlow(device, selectedButton) {
-  // すべての端末別フローを非表示にする
   document.querySelectorAll(".script-flow").forEach(flow => {
     flow.classList.remove("active");
   });
 
-  // すべての端末カードから選択状態を外す
   document.querySelectorAll(".script-device-card").forEach(card => {
     card.classList.remove("selected");
   });
 
-  // 選択した端末に対応するフローを指定する
   const flowMap = {
     pc: "scriptFlowPc",
     iphone: "scriptFlowIphone",
@@ -110,12 +107,10 @@ function showScriptFlow(device, selectedButton) {
   const targetId = flowMap[device];
   const targetFlow = document.getElementById(targetId);
 
-  // 選択した端末のフローを表示する
   if (targetFlow) {
     targetFlow.classList.add("active");
   }
 
-  // 選択した端末カードだけを光らせる
   if (selectedButton && selectedButton.classList) {
     selectedButton.classList.add("selected");
   }
@@ -244,7 +239,6 @@ function applyCampsiteCsvMode(mode){
     );
   }
 
-  /* 自作CSVを使う */
   if(mode === "custom"){
     wayfarerStep.style.display = "none";
     customStep.style.display = "block";
@@ -257,7 +251,6 @@ function applyCampsiteCsvMode(mode){
     return;
   }
 
-  /* Wayfarer Mapから抽出済みのCSVを使う */
   if(mode === "extracted"){
     wayfarerStep.style.display = "none";
     customStep.style.display = "none";
@@ -270,7 +263,6 @@ function applyCampsiteCsvMode(mode){
     return;
   }
 
-  /* Wayfarer Mapから新しく抽出する */
   wayfarerStep.style.display = "block";
   customStep.style.display = "none";
 
@@ -279,6 +271,246 @@ function applyCampsiteCsvMode(mode){
 
   summary.style.display = "flex";
 }
+
+/* =========================
+   UI大改修 02：KMZ生成後の案内
+========================= */
+
+function ensureKmzPostGenerationStyles() {
+  if (document.getElementById("kmzPostGenerationStyles")) {
+    return;
+  }
+
+  const style = document.createElement("style");
+  style.id = "kmzPostGenerationStyles";
+  style.textContent = `
+    #tool .kmz-pre-guide-hidden {
+      display: none !important;
+    }
+
+    #tool .kmz-after-guide[hidden] {
+      display: none !important;
+    }
+
+    #tool .kmz-after-guide {
+      margin-top: 14px;
+      padding: 16px;
+      border: 1px solid rgba(34, 197, 94, 0.34);
+      border-radius: 14px;
+      background: rgba(34, 197, 94, 0.08);
+    }
+
+    #tool .kmz-after-guide h3 {
+      margin: 0 0 8px;
+      color: #dcfce7;
+      font-size: 18px;
+      line-height: 1.5;
+    }
+
+    #tool .kmz-after-guide p {
+      margin: 0 0 14px;
+      color: #cbd5e1;
+      font-size: 13px;
+      line-height: 1.75;
+    }
+
+    #tool .kmz-after-guide .return-home-button {
+      width: 100%;
+      margin: 0;
+    }
+
+    .kmz-complete-next-steps {
+      margin: 16px 0;
+      padding: 14px 14px 14px 34px;
+      border: 1px solid rgba(56, 189, 248, 0.28);
+      border-radius: 14px;
+      background: rgba(14, 165, 233, 0.08);
+      color: #e2e8f0;
+      text-align: left;
+      line-height: 1.75;
+    }
+
+    .kmz-complete-next-steps li + li {
+      margin-top: 6px;
+    }
+
+    .kmz-iphone-details {
+      margin: 14px 0 18px;
+      overflow: hidden;
+      border: 1px dashed rgba(245, 158, 11, 0.38);
+      border-radius: 12px;
+      background: rgba(245, 158, 11, 0.08);
+      text-align: left;
+    }
+
+    .kmz-iphone-details summary {
+      padding: 12px 14px;
+      color: #fde68a;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .kmz-iphone-details div {
+      padding: 0 14px 14px;
+      color: #fef3c7;
+      font-size: 12px;
+      line-height: 1.75;
+    }
+
+    .kmz-iphone-details ol {
+      margin: 8px 0 0;
+      padding-left: 22px;
+    }
+
+    @media (max-width: 520px) {
+      .kmz-complete-next-steps {
+        padding-left: 30px;
+        font-size: 13px;
+      }
+    }
+  `;
+
+  document.head.appendChild(style);
+}
+
+function revealKmzAfterGuide() {
+  const guide = document.getElementById("kmzAfterGuide");
+
+  if (!guide) {
+    return;
+  }
+
+  guide.hidden = false;
+}
+
+function setupKmzPostGenerationGuide() {
+  ensureKmzPostGenerationStyles();
+
+  const renameGuide = document.getElementById("renameGuide");
+  const oldMyMapsStep = renameGuide
+    ? renameGuide.closest(".step")
+    : null;
+
+  if (oldMyMapsStep) {
+    oldMyMapsStep.classList.add("kmz-pre-guide-hidden");
+  }
+
+  const afterGuide = document.querySelector(
+    "#tool .return-step-card"
+  );
+
+  if (afterGuide) {
+    afterGuide.id = "kmzAfterGuide";
+    afterGuide.className = "step kmz-after-guide";
+    afterGuide.hidden = true;
+    afterGuide.innerHTML = `
+      <h3>Google My Mapsでの設計が終わりましたか？</h3>
+      <p>
+        追加POIと活動範囲を作成し、完成KMZを書き出したら、
+        距離チェックへ進んでください。
+      </p>
+      <button
+        type="button"
+        class="return-home-button"
+        onclick="openReturnModal()"
+      >
+        📏 完成KMZの距離チェックへ進む
+      </button>
+    `;
+  }
+
+  const modalCard = document.querySelector(
+    "#kmzCompleteModal .kmz-complete-modal-card"
+  );
+
+  if (modalCard) {
+    modalCard.innerHTML = `
+      <button
+        type="button"
+        class="kmz-complete-modal-close"
+        onclick="closeKmzCompleteModal()"
+        aria-label="閉じる"
+      >
+        ×
+      </button>
+
+      <div class="kmz-complete-sheep">🐏</div>
+
+      <p class="kmz-complete-label">
+        KMZ COMPLETE
+      </p>
+
+      <h2>KMZを保存しました！</h2>
+
+      <p class="kmz-complete-message">
+        次はGoogle My Mapsで設計を仕上げます。
+      </p>
+
+      <ol class="kmz-complete-next-steps">
+        <li>Google My MapsへKMZを読み込む</li>
+        <li>追加POIと活動範囲を作成する</li>
+        <li>完成KMZを書き出して距離チェックへ進む</li>
+      </ol>
+
+      <details class="kmz-iphone-details">
+        <summary>iPhoneでZIPとして保存された場合</summary>
+        <div>
+          ファイルアプリで保存されたZIPを長押しし、
+          「名称変更」から末尾の <strong>.zip</strong> を削除してください。
+          <ol>
+            <li>対象ファイルを長押し</li>
+            <li>「名称変更」を選択</li>
+            <li><strong>.kmz.zip</strong> を <strong>.kmz</strong> に変更</li>
+            <li>Googleドライブへ移動</li>
+          </ol>
+        </div>
+      </details>
+
+      <div class="kmz-complete-actions">
+        <button
+          type="button"
+          class="kmz-complete-action-button maps"
+          onclick="openGoogleMyMaps(); closeKmzCompleteModal();"
+        >
+          <span>🗺️</span>
+          <strong>Google My Mapsを開く</strong>
+          <small>生成したKMZをインポートします</small>
+        </button>
+
+        <button
+          type="button"
+          class="kmz-complete-action-button later"
+          onclick="closeKmzCompleteModal()"
+        >
+          <span>🐏</span>
+          <strong>あとで作業する</strong>
+          <small>案内を閉じて元の画面へ戻ります</small>
+        </button>
+      </div>
+    `;
+  }
+
+  const originalOpenKmzCompleteModal =
+    window.openKmzCompleteModal;
+
+  if (
+    typeof originalOpenKmzCompleteModal === "function" &&
+    !originalOpenKmzCompleteModal._postGuideWrapped
+  ) {
+    const wrappedOpenKmzCompleteModal = function (...args) {
+      revealKmzAfterGuide();
+      return originalOpenKmzCompleteModal.apply(this, args);
+    };
+
+    wrappedOpenKmzCompleteModal._postGuideWrapped = true;
+    window.openKmzCompleteModal = wrappedOpenKmzCompleteModal;
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  setupKmzPostGenerationGuide();
+});
 
 document.addEventListener("keydown", event => {
   if(event.key !== "Escape"){
