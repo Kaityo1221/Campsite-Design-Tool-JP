@@ -363,6 +363,32 @@ function ensureKmzPostGenerationStyles() {
       padding-left: 22px;
     }
 
+    @media (max-width: 720px) {
+      .return-modal {
+        align-items: flex-start !important;
+        justify-content: center !important;
+        height: 100dvh;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+        padding:
+          max(12px, env(safe-area-inset-top))
+          12px
+          calc(120px + env(safe-area-inset-bottom)) !important;
+      }
+
+      .return-modal-card {
+        width: min(100%, 620px) !important;
+        max-height: none !important;
+        overflow: visible !important;
+        margin: 0 auto !important;
+      }
+
+      .return-modal-actions {
+        padding-bottom: calc(20px + env(safe-area-inset-bottom));
+      }
+    }
+
     @media (max-width: 520px) {
       .kmz-complete-next-steps {
         padding-left: 30px;
