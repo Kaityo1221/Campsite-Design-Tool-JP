@@ -245,12 +245,7 @@
    対象: #tool（KMZ生成画面）
 ================================ */
 #tool .panel > h2 {
-  font-size: 0;
-}
-
-#tool .panel > h2::after {
-  content: "キャンプサイト用KMZを作成";
-  font-size: 24px;
+  margin-top: 0;
 }
 
 /* STEP 0を補助リンクへ縮小 */
@@ -455,7 +450,7 @@
 }
 
 @media (max-width: 520px) {
-  #tool .panel > h2::after {
+  #tool .panel > h2 {
     font-size: 21px;
   }
 
