@@ -44,13 +44,14 @@ function openTab(tabId, button) {
     button.classList.add("active");
   }
 
-updateWorkflowStep(tabId);
-  
-window.scrollTo({
+  updateWorkflowStep(tabId);
+
+  window.scrollTo({
     top: 0,
     behavior: "smooth"
   });
 }
+
 function setWorkflowStep(step) {
   document
     .querySelectorAll(".workflow-step")
@@ -67,6 +68,7 @@ function setWorkflowStep(step) {
     target.classList.add("active");
   }
 }
+
 function updateWorkflowStep(tabId) {
   const stepMap = {
     howto: "prepare",
@@ -118,12 +120,38 @@ function showScriptFlow(device, selectedButton) {
     selectedButton.classList.add("selected");
   }
 }
+
 /*
   Campsite CSV Mode Selector
   Wayfarer Map抽出CSV / 自作CSV の入口を分岐する
 */
 
 window._campsiteCsvMode = null;
+
+function ensureCampsiteStepNumberStyles() {
+  if (document.getElementById("campsiteStepNumberStyles")) {
+    return;
+  }
+
+  const style = document.createElement("style");
+  style.id = "campsiteStepNumberStyles";
+  style.textContent = `
+    #tool.csv-mode-extracted #customCsvStep + .step > .step-no {
+      font-size: 0;
+    }
+
+    #tool.csv-mode-extracted #customCsvStep + .step > .step-no::after {
+      content: "STEP 1";
+      font-size: 13px;
+    }
+
+    #tool.csv-mode-extracted #customCsvStep + .step + .step + .step > .step-no::after {
+      content: "STEP 2";
+    }
+  `;
+
+  document.head.appendChild(style);
+}
 
 function openCampsiteStartModal(){
   const modal = document.getElementById("campsiteCsvModal");
@@ -181,7 +209,7 @@ function selectCampsiteCsvMode(mode){
 
     applyCampsiteCsvMode(mode);
 
-setWorkflowStep("csv");
+    setWorkflowStep("csv");
   }, 0);
 }
 
@@ -200,8 +228,20 @@ function applyCampsiteCsvMode(mode){
   const summaryText =
     document.getElementById("csvModeSummaryText");
 
+  const toolSection =
+    document.getElementById("tool");
+
   if(!wayfarerStep || !customStep || !summary || !summaryText){
     return;
+  }
+
+  ensureCampsiteStepNumberStyles();
+
+  if(toolSection){
+    toolSection.classList.toggle(
+      "csv-mode-extracted",
+      mode === "extracted"
+    );
   }
 
   /* 自作CSVを使う */

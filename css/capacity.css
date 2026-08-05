@@ -240,3 +240,227 @@
     grid-template-columns: 1fr;
   }
 }
+/* ===============================
+   UI大改修 01：KMZ生成フロー簡素化
+   対象: #tool（KMZ生成画面）
+================================ */
+#tool .panel > h2 {
+  margin-top: 0;
+}
+
+/* STEP 0を補助リンクへ縮小 */
+#tool #csvModeSummary + .step {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: stretch;
+  gap: 8px;
+  margin-bottom: 18px;
+  padding: 14px;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 14px;
+  background: rgba(14, 165, 233, 0.08);
+}
+
+#tool #csvModeSummary + .step::before {
+  content: none;
+}
+
+#tool #csvModeSummary + .step .step-no,
+#tool #csvModeSummary + .step p {
+  display: none;
+}
+
+#tool #csvModeSummary + .step h3 {
+  display: block;
+  margin: 0;
+  font-size: 0;
+  line-height: 1.4;
+}
+
+#tool #csvModeSummary + .step h3::after {
+  content: "初めての方へ";
+  color: #f8fafc;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+#tool #csvModeSummary + .step .link-btn {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 10px 12px;
+  font-size: 13px;
+  text-align: center;
+}
+
+/* 冒頭の理念・重複説明は通常画面から外す */
+#tool #csvModeSummary + .step + p.note,
+#tool #csvModeSummary + .step + p.note + p.note {
+  display: none;
+}
+
+/* STEP 1：POI準備 */
+#tool #wayfarerCsvStep h3,
+#tool #customCsvStep h3 {
+  font-size: 0;
+}
+
+#tool #wayfarerCsvStep h3::after,
+#tool #customCsvStep h3::after {
+  content: "POIデータを準備";
+  font-size: 18px;
+}
+
+#tool #wayfarerCsvStep > p.note:last-child,
+#tool #customCsvStep .custom-csv-rule-box,
+#tool #customCsvStep > p.note:last-child {
+  display: none;
+}
+
+/* STEP 2：CSV選択 */
+#tool #customCsvStep + .step > p:first-of-type::before {
+  content: "CSVを選択";
+  display: block;
+  margin-bottom: 8px;
+  color: #f8fafc;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+#tool #customCsvStep + .step > p:first-of-type {
+  color: #cbd5e1;
+  line-height: 1.7;
+}
+
+/* 周辺POIは広めに抽出してよいことを、ファイル選択欄の直下で案内 */
+#tool #customCsvStep + .step::after {
+  content: "周辺POIは広めに抽出して大丈夫です。\A 複数のCSVをまとめて選択しても、重複したPOIは自動で削除されます。";
+  position: static;
+  inset: auto;
+  width: auto;
+  height: auto;
+  transform: none;
+  opacity: 1;
+  z-index: auto;
+  display: block;
+  box-sizing: border-box;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(56, 189, 248, 0.08);
+  color: #bae6fd;
+  font-size: 13px;
+  line-height: 1.65;
+  white-space: pre-line;
+}
+
+/* 円設定は初期値のまま非表示。両方ONを維持 */
+#tool #customCsvStep + .step + .step {
+  display: none;
+}
+
+/* STEP 3：KMZ生成 */
+#tool #customCsvStep + .step + .step + .step > .step-no {
+  font-size: 0;
+}
+
+#tool #customCsvStep + .step + .step + .step > .step-no::after {
+  content: "STEP 3";
+  font-size: 13px;
+}
+
+#tool #customCsvStep + .step + .step + .step > p:first-of-type {
+  font-size: 0;
+}
+
+#tool #customCsvStep + .step + .step + .step > p:first-of-type::before {
+  content: "KMZを生成";
+  display: block;
+  margin-bottom: 8px;
+  color: #f8fafc;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+#tool #customCsvStep + .step + .step + .step > p:first-of-type::after {
+  content: "既存POI・追加希望POI・30m／40m円を含むKMZを生成します。";
+  display: block;
+  color: #cbd5e1;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.7;
+}
+
+#tool #customCsvStep + .step + .step + .step > ul {
+  display: none;
+}
+
+/* iPhone向け補足は小さな補助カードへ */
+#tool #customCsvStep + .step + .step + .step + .step {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-style: dashed;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+#tool #customCsvStep + .step + .step + .step + .step .step-no,
+#tool #customCsvStep + .step + .step + .step + .step h3,
+#tool #customCsvStep + .step + .step + .step + .step > p.note {
+  display: none;
+}
+
+#tool #customCsvStep + .step + .step + .step + .step .guide-btn {
+  margin: 0;
+}
+
+/* STEP 6は番号を外し、生成後の流れとして圧縮 */
+#tool .return-step-card {
+  margin-top: 12px;
+  padding: 14px;
+  border-color: rgba(34, 197, 94, 0.3);
+  background: rgba(34, 197, 94, 0.07);
+}
+
+#tool .return-step-card .step-no,
+#tool .return-step-card > p.note {
+  display: none;
+}
+
+#tool .return-step-card h3 {
+  font-size: 0;
+}
+
+#tool .return-step-card h3::after {
+  content: "生成後の流れ";
+  color: #dcfce7;
+  font-size: 17px;
+}
+
+#tool .return-step-card .step-note {
+  font-size: 0;
+  line-height: 1.8;
+}
+
+#tool .return-step-card .step-note::after {
+  content: "1. Google My MapsへKMZを読み込む\A 2. 追加POIと活動範囲を作成する\A 3. 完成KMZを書き出し、距離チェックへ進む";
+  display: block;
+  color: #cbd5e1;
+  font-size: 13px;
+  white-space: pre-line;
+}
+
+@media (max-width: 520px) {
+  #tool .panel > h2 {
+    font-size: 21px;
+  }
+
+  #tool #csvModeSummary + .step {
+    gap: 8px;
+  }
+
+  #tool #csvModeSummary + .step .link-btn,
+  #tool #customCsvStep + .step + .step + .step + .step .guide-btn,
+  #tool .return-step-card .return-home-button {
+    width: 100%;
+  }
+}
