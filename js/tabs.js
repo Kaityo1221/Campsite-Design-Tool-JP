@@ -686,8 +686,104 @@ function setupKmzPostGenerationGuide() {
   }
 }
 
+function isIosMyMapsDevice() {
+  return (
+    /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+    (
+      navigator.platform === "MacIntel" &&
+      navigator.maxTouchPoints > 1
+    )
+  );
+}
+
+function copyTextForMyMaps(text) {
+  const showCopiedMessage = () => {
+    alert(
+      "My MapsのURLをコピーしました。\n\n" +
+      "Safariのアドレスバーへ貼り付けて開いてください。\n" +
+      "リンクを直接押すと、Google Mapsアプリが開く場合があります。"
+    );
+  };
+
+  const showManualCopy = () => {
+    prompt(
+      "下のURLをコピーし、Safariのアドレスバーへ貼り付けてください。",
+      text
+    );
+  };
+
+  if (
+    navigator.clipboard &&
+    window.isSecureContext
+  ) {
+    navigator.clipboard
+      .writeText(text)
+      .then(showCopiedMessage)
+      .catch(showManualCopy);
+
+    return;
+  }
+
+  try {
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    document.body.appendChild(textarea);
+    textarea.select();
+
+    const copied = document.execCommand("copy");
+    textarea.remove();
+
+    if (copied) {
+      showCopiedMessage();
+      return;
+    }
+  } catch (error) {
+    // 下の手動コピー案内へ進む
+  }
+
+  showManualCopy();
+}
+
+function setupIosMyMapsLinkBehavior() {
+  if (!isIosMyMapsDevice()) {
+    return;
+  }
+
+  const myMapsUrl =
+    "https://www.google.com/maps/d/u/0/";
+
+  window.openGoogleMyMaps = function () {
+    setWorkflowStep("mymaps");
+    copyTextForMyMaps(myMapsUrl);
+  };
+
+  const mapsButton = document.querySelector(
+    "#kmzCompleteModal .kmz-complete-action-button.maps"
+  );
+
+  if (!mapsButton) {
+    return;
+  }
+
+  const title = mapsButton.querySelector("strong");
+  const description = mapsButton.querySelector("small");
+
+  if (title) {
+    title.textContent = "My MapsのURLをコピー";
+  }
+
+  if (description) {
+    description.textContent =
+      "Safariのアドレスバーへ貼り付けて開きます";
+  }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   setupKmzPostGenerationGuide();
+  setupIosMyMapsLinkBehavior();
 });
 
 document.addEventListener("keydown", event => {
