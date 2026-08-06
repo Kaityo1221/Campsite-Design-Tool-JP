@@ -4,13 +4,14 @@ on:
   push:
     branches:
       - agent/ui-overhaul-03-distance-input
+    paths:
+      - .tmp-distance-manual-reference-trigger
 
 permissions:
   contents: write
 
 jobs:
   patch:
-    if: github.event.head_commit.message == 'Run distance manual reference patch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -45,7 +46,35 @@ jobs:
           if old not in js:
               raise SystemExit('Expected manual link block not found')
 
-          js_path.write_text(js.replace(old, new, 1), encoding='utf-8')
+          js = js.replace(old, new, 1)
+
+          css_anchor = '''    #distance .distance-file-meta a {
+      color: #7dd3fc;
+      font-weight: 700;
+    }
+'''
+
+          css_addition = '''    #distance .distance-file-meta a {
+      color: #7dd3fc;
+      font-weight: 700;
+    }
+
+    #distance .distance-file-meta a small {
+      display: block;
+      margin-top: 2px;
+      color: #bae6fd;
+      font-size: 11px;
+      font-weight: 600;
+    }
+'''
+
+          if css_anchor not in js:
+              raise SystemExit('Expected manual link style not found')
+
+          js_path.write_text(
+              js.replace(css_anchor, css_addition, 1),
+              encoding='utf-8'
+          )
 
           index_path = Path('index.html')
           index = index_path.read_text(encoding='utf-8')
