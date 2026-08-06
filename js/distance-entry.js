@@ -67,6 +67,14 @@ function ensureDistanceEntryStyles() {
       font-weight: 700;
     }
 
+    #distance .distance-file-meta a small {
+      display: block;
+      margin-top: 2px;
+      color: #bae6fd;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
     #distance .distance-layer-warning {
       margin-top: 14px;
       padding: 12px 14px;
@@ -248,11 +256,12 @@ function setupDistanceEntryUi() {
     <div class="distance-file-meta">
       <span>KMZ / KML / ZIPに対応</span>
       <a
-        href="docs/campsite-guide.pdf"
+        href="docs/campsite-guide.pdf#page=12"
         target="_blank"
         rel="noopener"
       >
-        書き出し方法を確認
+        書き出し方法を確認<br>
+        <small>マニュアル12P「5-5」を参照</small>
       </a>
     </div>
 
