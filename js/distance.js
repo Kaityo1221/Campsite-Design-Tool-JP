@@ -198,7 +198,7 @@ ${campsite.summary}<br><br>
 既存POI同士の近接：${campsite.referenceUnder40 || 0}件<br>
 通行：${campsite.trafficOk ? "良好" : "注意"}<br><br>
 
-      <strong>CA所感</strong><br>
+      <strong>現地環境チェック</strong><br>
       ・通行：${document.getElementById("trafficOk")?.checked ? "スムーズに通れる" : "注意が必要"}<br>
       ・広場：${document.getElementById("hasOpenSpace")?.checked ? "あり" : "なし"}<br>
       ・回遊：${document.getElementById("hasLoopRoute")?.checked ? "できる" : "弱い"}<br>
