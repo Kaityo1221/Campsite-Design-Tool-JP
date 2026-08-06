@@ -1,0 +1,56 @@
+name: Temporary repair phase 3 index
+
+on:
+  push:
+    branches:
+      - agent/ui-overhaul-03-distance-input
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.event.head_commit.message == 'Run phase 3 index repair'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/ui-overhaul-03-distance-input
+          fetch-depth: 0
+
+      - name: Restore main index and add distance entry script
+        run: |
+          git fetch origin main
+          git checkout origin/main -- index.html
+
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('index.html')
+          text = path.read_text(encoding='utf-8')
+          tabs_line = '<script src="js/tabs.js?v=3"></script>\n'
+          entry_line = '<script src="js/distance-entry.js?v=1"></script>\n'
+
+          if tabs_line not in text:
+              raise SystemExit('tabs.js script line was not found')
+
+          if entry_line not in text:
+              text = text.replace(
+                  tabs_line,
+                  tabs_line + entry_line,
+                  1
+              )
+
+          path.write_text(text, encoding='utf-8')
+          PY
+
+          rm .github/workflows/temp-repair-phase3-index.yml
+          rm .tmp-phase3-index-repair
+
+      - name: Commit repaired index
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Repair phase 3 index and load distance entry UI'
+          git push origin HEAD:agent/ui-overhaul-03-distance-input
