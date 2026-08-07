@@ -152,8 +152,8 @@ function getRiskAccordionHtml(warnings) {
 
   return `
     <div style="
-      margin:10px 0;
-      padding:10px;
+      margin:8px 0;
+      padding:9px 10px;
       border-radius:10px;
       background:rgba(15,23,42,0.65);
       border:1px solid rgba(148,163,184,0.25);
@@ -170,8 +170,6 @@ function getRiskAccordionHtml(warnings) {
 
   return `
     <div class="distance-warning">
-      <strong>分類別チェック</strong><br><br>
-
       ${Object.keys(groups).map(type => {
         const s = settings[type];
         const targetList = groups[type].target;
@@ -180,40 +178,40 @@ function getRiskAccordionHtml(warnings) {
 
         return `
           <details ${s.open ? "open" : ""} style="
-            margin-bottom:16px;
-            padding:14px 14px 12px 16px;
-            border-radius:14px;
+            margin-bottom:10px;
+            padding:10px 12px 9px 14px;
+            border-radius:12px;
             background:rgba(15,23,42,0.45);
             border:1px solid rgba(148,163,184,0.22);
-            border-left:6px solid ${s.color};
+            border-left:5px solid ${s.color};
           ">
             <summary style="
               cursor:pointer;
               font-weight:bold;
               color:${s.color};
-              font-size:16px;
-              line-height:1.7;
+              font-size:15px;
+              line-height:1.45;
             ">
               ${s.icon} ${s.label}（${totalCount}件）
             </summary>
 
             <div style="
-              margin-top:10px;
-              padding:8px 0 0 2px;
+              margin-top:8px;
+              padding:7px 0 0 2px;
               border-top:1px solid rgba(148,163,184,0.18);
             ">
               <div style="
-                margin-bottom:10px;
-                font-size:13px;
+                margin-bottom:8px;
+                font-size:12px;
                 color:#cbd5e1;
               ">
                 ${type === "軽微" ? "調整可能距離" : "調整対象"}：${targetList.length}件 / 参考：${referenceList.length}件
               </div>
 
               <details style="
-                margin-bottom:10px;
-                padding:10px 12px;
-                border-radius:12px;
+                margin-bottom:8px;
+                padding:8px 10px;
+                border-radius:10px;
                 background:rgba(239,68,68,0.08);
                 border:1px solid rgba(239,68,68,0.22);
               ">
@@ -224,7 +222,7 @@ function getRiskAccordionHtml(warnings) {
 ">
   ${type === "軽微" ? "△ 調整可能距離" : "⚠ 調整対象"}（${targetList.length}件）
 </summary>
-                <div style="margin-top:8px;">
+                <div style="margin-top:7px;">
                   ${targetList.length === 0 ? `
                     <div style="opacity:0.7;">該当なし</div>
                   ` : targetList.map(w => renderWarningCard(w, false)).join("")}
@@ -232,9 +230,9 @@ function getRiskAccordionHtml(warnings) {
               </details>
 
               <details style="
-                margin-bottom:4px;
-                padding:10px 12px;
-                border-radius:12px;
+                margin-bottom:2px;
+                padding:8px 10px;
+                border-radius:10px;
                 background:rgba(148,163,184,0.08);
                 border:1px solid rgba(148,163,184,0.18);
               ">
@@ -246,7 +244,7 @@ function getRiskAccordionHtml(warnings) {
                   ℹ 参考：既存POI同士（${referenceList.length}件）
                 </summary>
 
-                <div style="margin-top:8px;">
+                <div style="margin-top:7px;">
                   ${referenceList.length === 0 ? `
                     <div style="opacity:0.7;">該当なし</div>
                   ` : referenceList.map(w => renderWarningCard(w, true)).join("")}
@@ -256,6 +254,6 @@ function getRiskAccordionHtml(warnings) {
           </details>
         `;
       }).join("")}
-    </div><br>
+    </div>
   `;
 }
