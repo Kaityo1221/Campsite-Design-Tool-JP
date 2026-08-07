@@ -10,64 +10,45 @@ function ensureDistanceEntryStyles() {
   const style = document.createElement("style");
   style.id = "distanceEntryStyles";
   style.textContent = `
-    #distance .distance-entry-lead {
-      margin:0 0 16px;color:#cbd5e1;font-size:14px;line-height:1.75;
-    }
-    #distance .distance-file-step,
-    #distance .distance-run-step {
-      padding:18px;background:rgba(15,23,42,.72);scroll-margin-top:16px;
-    }
-    #distance .distance-file-step {
-      border-color:rgba(56,189,248,.42);
-      background:radial-gradient(circle at top right,rgba(56,189,248,.10),transparent 38%),rgba(15,23,42,.72);
-    }
-    #distance .distance-run-step {
-      margin-top:14px;border-color:rgba(168,85,247,.42);
-      background:radial-gradient(circle at top right,rgba(168,85,247,.11),transparent 38%),rgba(15,23,42,.72);
-    }
-    #distance .distance-file-step h3,
-    #distance .distance-run-step h3 {margin:4px 0 8px;color:#f8fafc;font-size:19px;line-height:1.45;}
-    #distance .distance-file-guide {margin:0 0 14px;color:#cbd5e1;font-size:13px;line-height:1.7;}
-    #distance .distance-file-slot input[type="file"] {width:100%;box-sizing:border-box;}
-    #distance .distance-file-meta {display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px 12px;margin-top:10px;color:#94a3b8;font-size:12px;line-height:1.6;}
-    #distance .distance-file-meta a {color:#7dd3fc;font-weight:700;}
-    #distance .distance-file-meta a small {display:block;margin-top:2px;color:#bae6fd;font-size:11px;font-weight:600;}
-    #distance .distance-layer-warning {margin-top:14px;padding:12px 14px;border:1px solid rgba(245,158,11,.4);border-radius:12px;background:rgba(245,158,11,.1);color:#fde68a;font-size:13px;line-height:1.7;}
-    #distance .distance-layer-warning strong {display:block;margin-bottom:3px;color:#fef3c7;}
-    #distance .distance-entry-details,
-    #distance .distance-rank-details,
-    #distance .distance-result-details {margin-top:12px;overflow:hidden;border:1px solid rgba(148,163,184,.26);border-radius:12px;background:rgba(15,23,42,.52);}
-    #distance .distance-entry-details summary,
-    #distance .distance-rank-details summary,
-    #distance .distance-result-details summary {padding:12px 14px;color:#bae6fd;font-size:13px;font-weight:800;cursor:pointer;list-style-position:inside;}
-    #distance .distance-entry-details-body,
-    #distance .distance-result-details-body {padding:0 14px 14px;color:#cbd5e1;font-size:12px;line-height:1.75;}
-    #distance .distance-summary-slot,
-    #distance .distance-layer-results {margin-top:14px;}
-    #distance .distance-layer-results:empty {display:none;}
-    #distance .distance-site-observation-step {margin-top:14px;}
-    #distance .distance-run-step > .generate {width:100%;box-sizing:border-box;margin-top:8px;}
-    #distance .distance-rank-details .rank-guide-box {margin:0;border:0;border-top:1px solid rgba(148,163,184,.18);border-radius:0;}
+    #distance .distance-entry-lead{margin:0 0 16px;color:#cbd5e1;font-size:14px;line-height:1.75}
+    #distance .distance-file-step,#distance .distance-run-step{padding:18px;background:rgba(15,23,42,.72);scroll-margin-top:16px}
+    #distance .distance-file-step{border-color:rgba(56,189,248,.42);background:radial-gradient(circle at top right,rgba(56,189,248,.10),transparent 38%),rgba(15,23,42,.72)}
+    #distance .distance-run-step{margin-top:14px;border-color:rgba(168,85,247,.42);background:radial-gradient(circle at top right,rgba(168,85,247,.11),transparent 38%),rgba(15,23,42,.72)}
+    #distance .distance-file-step h3,#distance .distance-run-step h3{margin:4px 0 8px;color:#f8fafc;font-size:19px;line-height:1.45}
+    #distance .distance-file-guide{margin:0 0 14px;color:#cbd5e1;font-size:13px;line-height:1.7}
+    #distance .distance-file-slot input[type="file"]{width:100%;box-sizing:border-box}
+    #distance .distance-file-meta{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px 12px;margin-top:10px;color:#94a3b8;font-size:12px;line-height:1.6}
+    #distance .distance-file-meta a{color:#7dd3fc;font-weight:700}
+    #distance .distance-file-meta a small{display:block;margin-top:2px;color:#bae6fd;font-size:11px;font-weight:600}
+    #distance .distance-layer-warning{margin-top:14px;padding:12px 14px;border:1px solid rgba(245,158,11,.4);border-radius:12px;background:rgba(245,158,11,.1);color:#fde68a;font-size:13px;line-height:1.7}
+    #distance .distance-layer-warning strong{display:block;margin-bottom:3px;color:#fef3c7}
+    #distance .distance-entry-details,#distance .distance-rank-details,#distance .distance-result-details{margin-top:12px;overflow:hidden;border:1px solid rgba(148,163,184,.26);border-radius:12px;background:rgba(15,23,42,.52)}
+    #distance .distance-entry-details summary,#distance .distance-rank-details summary,#distance .distance-result-details summary{padding:12px 14px;color:#bae6fd;font-size:13px;font-weight:800;cursor:pointer;list-style-position:inside}
+    #distance .distance-entry-details-body,#distance .distance-result-details-body{padding:0 14px 14px;color:#cbd5e1;font-size:12px;line-height:1.75}
+    #distance .distance-summary-slot,#distance .distance-layer-results{margin-top:14px}
+    #distance .distance-layer-results:empty{display:none}
+    #distance .distance-site-observation-step{margin-top:14px}
+    #distance .distance-run-step>.generate{width:100%;box-sizing:border-box;margin-top:8px}
+    #distance .distance-rank-details .rank-guide-box{margin:0;border:0;border-top:1px solid rgba(148,163,184,.18);border-radius:0}
 
-    #distanceResult.distance-result-ready {margin-top:18px;}
-    #distanceResult .distance-result-intro {margin:0 0 14px;padding:14px 16px;border:1px solid rgba(56,189,248,.35);border-radius:14px;background:rgba(14,165,233,.08);color:#dbeafe;font-size:13px;line-height:1.7;}
-    #distanceResult .distance-result-section {margin:0 0 14px;}
-    #distanceResult .distance-result-heading {margin:0 0 8px;padding:9px 12px;border-left:5px solid #38bdf8;border-radius:10px;background:rgba(15,23,42,.58);color:#e5e7eb;font-size:15px;font-weight:800;letter-spacing:.02em;}
-    #distanceResult .distance-result-section[data-result-title="判定結果"] {order:1;}
-    #distanceResult .distance-result-section[data-result-title="拠点充実度"] {order:2;}
-    #distanceResult .distance-result-section[data-result-title="距離チェックマップ"] {order:4;}
-    #distanceResult .distance-result-details {margin:0 0 12px;}
-    #distanceResult .distance-result-details summary {color:#cbd5e1;}
-    #distanceResult .distance-result-details[data-attention="true"] {border-color:rgba(245,158,11,.42);background:rgba(245,158,11,.07);}
-    #distanceResult .distance-result-details[data-attention="true"] summary {color:#fde68a;}
-    #distanceResult .distance-result-primary {display:flex;flex-direction:column;}
-    #distanceResult .distance-result-secondary {margin:6px 0 14px;}
+    #distanceResult.distance-result-ready{margin-top:18px}
+    #distanceResult .distance-result-intro{margin:0 0 14px;padding:14px 16px;border:1px solid rgba(56,189,248,.35);border-radius:14px;background:rgba(14,165,233,.08);color:#dbeafe;font-size:13px;line-height:1.7}
+    #distanceResult .distance-result-section{margin:0 0 14px}
+    #distanceResult .distance-result-heading{margin:0 0 8px;padding:9px 12px;border-left:5px solid #38bdf8;border-radius:10px;background:rgba(15,23,42,.58);color:#e5e7eb;font-size:15px;font-weight:800;letter-spacing:.02em}
+    #distanceResult .distance-result-details{margin:0 0 12px}
+    #distanceResult .distance-result-details summary{color:#cbd5e1}
+    #distanceResult .distance-result-details[data-attention="true"]{border-color:rgba(245,158,11,.42);background:rgba(245,158,11,.07)}
+    #distanceResult .distance-result-details[data-attention="true"] summary{color:#fde68a}
+    #distanceResult .distance-result-primary{display:flex;flex-direction:column}
+    #distanceResult .distance-result-secondary{margin:6px 0 14px}
+    #distanceResult .distance-result-map{margin-top:4px}
+    #distanceResult .distance-result-details-body>.distance-result-duplicate-title{display:none!important}
 
-    @media (max-width:520px) {
-      #distance .panel > h2 {font-size:22px;}
-      #distance .distance-file-step,#distance .distance-run-step {padding:15px;}
-      #distance .distance-file-meta {align-items:flex-start;flex-direction:column;}
-      #distanceResult .distance-result-intro {padding:12px 13px;}
+    @media(max-width:520px){
+      #distance .panel>h2{font-size:22px}
+      #distance .distance-file-step,#distance .distance-run-step{padding:15px}
+      #distance .distance-file-meta{align-items:flex-start;flex-direction:column}
+      #distanceResult .distance-result-intro{padding:12px 13px}
     }
   `;
   document.head.appendChild(style);
@@ -153,12 +134,21 @@ function setupDistanceEntryUi() {
 
 function isDistanceSectionHeader(node) {
   if (!(node instanceof HTMLElement) || node.tagName !== "DIV") return false;
-  const style = node.getAttribute("style") || "";
-  return style.includes("border-left:5px solid #38bdf8");
+  return (node.getAttribute("style") || "").includes("border-left:5px solid #38bdf8");
 }
 
 function getDistanceSectionTitle(node) {
   return (node.textContent || "").trim().split("\n")[0].trim();
+}
+
+function markDuplicateResultTitle(body, title) {
+  const candidates = Array.from(body.querySelectorAll("strong,h3,h4,div"));
+  const duplicate = candidates.find(element => {
+    const text = (element.textContent || "").trim();
+    if (text !== title) return false;
+    return !element.querySelector("div,section,details");
+  });
+  if (duplicate) duplicate.classList.add("distance-result-duplicate-title");
 }
 
 function enhanceDistanceResultUi() {
@@ -187,12 +177,12 @@ function enhanceDistanceResultUi() {
   const intro = document.createElement("div");
   intro.className = "distance-result-intro";
   intro.innerHTML = "<strong>まず判定結果を確認してください。</strong><br>調整が必要な場合は詳細を開き、対象POIと地図を確認します。";
-  result.appendChild(intro);
 
   const primary = document.createElement("div");
   primary.className = "distance-result-primary";
   const secondary = document.createElement("div");
   secondary.className = "distance-result-secondary";
+  let mapSection = null;
 
   const primaryTitles = ["判定結果", "拠点充実度", "距離チェックマップ"];
   const attentionTitles = ["重複POIチェック", "追加・変更対象", "分類別チェック"];
@@ -207,7 +197,13 @@ function enhanceDistanceResultUi() {
       heading.textContent = group.title;
       section.appendChild(heading);
       group.nodes.forEach(node => section.appendChild(node));
-      primary.appendChild(section);
+
+      if (group.title === "距離チェックマップ") {
+        section.classList.add("distance-result-map");
+        mapSection = section;
+      } else {
+        primary.appendChild(section);
+      }
       return;
     }
 
@@ -219,17 +215,18 @@ function enhanceDistanceResultUi() {
     const body = document.createElement("div");
     body.className = "distance-result-details-body";
     group.nodes.forEach(node => body.appendChild(node));
+    markDuplicateResultTitle(body, group.title);
     details.append(summary, body);
     secondary.appendChild(details);
   });
 
-  const orderedTitles = ["判定結果", "拠点充実度", "距離チェックマップ"];
-  orderedTitles.forEach(title => {
+  ["判定結果", "拠点充実度"].forEach(title => {
     const section = primary.querySelector(`[data-result-title="${title}"]`);
     if (section) primary.appendChild(section);
   });
 
-  result.append(primary, secondary);
+  result.append(intro, primary, secondary);
+  if (mapSection) result.appendChild(mapSection);
 }
 
 function wrapDistanceCheckForResultUi() {
