@@ -1,0 +1,2 @@
+Redeploy phase 5 after iPhone UI review.
+Fixes: duplicate accordion inner title and map placement after detail accordions.

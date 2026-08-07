@@ -1,0 +1,5 @@
+Redeploy trigger for UI overhaul phase 5.
+
+Target branch: agent/ui-overhaul-05-distance-results
+Purpose: deploy the distance result UI test version to GitHub Pages without changing application logic.
+Requested at: 2026-08-07 09:48 JST
