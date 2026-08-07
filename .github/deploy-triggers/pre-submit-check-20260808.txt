@@ -1,0 +1,5 @@
+Redeploy trigger for UI overhaul phase 7 pre-submit checklist.
+
+Target branch: agent/ui-overhaul-07-pre-submit-check
+Latest UI commit: 27461caf2618ba213fc6e5f5d1e5c4bfb312a117
+Purpose: publish the new 10-item pre-submit checklist for iPhone verification.
