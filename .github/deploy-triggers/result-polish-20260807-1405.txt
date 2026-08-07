@@ -1,0 +1,6 @@
+Redeploy trigger for UI overhaul phase 6.
+
+Target branch: agent/ui-overhaul-06-result-polish
+Purpose: iPhone test deployment for compact distance result cards.
+Application logic unchanged.
+Requested at: 2026-08-07 14:05 JST
