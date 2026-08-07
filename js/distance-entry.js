@@ -42,7 +42,7 @@ function ensureDistanceEntryStyles() {
     #distanceResult .distance-result-primary{display:flex;flex-direction:column}
     #distanceResult .distance-result-secondary{margin:6px 0 14px}
     #distanceResult .distance-result-map{margin-top:4px}
-    #distanceResult .distance-result-details-body>.distance-result-duplicate-title{display:none!important}
+    #distanceResult .distance-result-details-body .distance-result-duplicate-title{display:none!important}
 
     @media(max-width:520px){
       #distance .panel>h2{font-size:22px}
