@@ -1,0 +1,6 @@
+Redeploy trigger for UI overhaul phase 6 result polish.
+
+Target branch: agent/ui-overhaul-06-result-polish
+Latest UI commit: 03cfba745a667487987010e3344f11565c75428a
+Purpose: publish the compact classification summary and spacing adjustments to GitHub Pages for iPhone verification.
+Requested at: 2026-08-07 14:59 JST
