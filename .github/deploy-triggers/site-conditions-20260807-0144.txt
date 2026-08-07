@@ -1,5 +1,0 @@
-Redeploy trigger for UI overhaul phase 4.
-
-Target branch: agent/ui-overhaul-04-site-conditions
-Purpose: trigger a fresh GitHub Pages build without changing application behavior.
-Requested at: 2026-08-07 01:44 JST
