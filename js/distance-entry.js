@@ -151,6 +151,46 @@ function markDuplicateResultTitle(body, title) {
   if (duplicate) duplicate.classList.add("distance-result-duplicate-title");
 }
 
+function normalizeJudgementSection(section) {
+  if (!section) return;
+  const card = section.querySelector(".distance-warning");
+  if (!card) return;
+
+  const text = card.textContent || "";
+  const dense = Number(text.match(/20m未満（密集）\s*：\s*(\d+)件/)?.[1] || 0);
+  const stay = Number(text.match(/20〜30m（滞留）\s*：\s*(\d+)件/)?.[1] || 0);
+  const light = Number(text.match(/30〜40m（軽微）\s*：\s*(\d+)件/)?.[1] || 0);
+  const actionableTotal = dense + stay + light;
+
+  let status = "問題なし";
+  let icon = "✅";
+  let color = "#22c55e";
+
+  if (dense + stay > 0) {
+    status = "調整あり";
+    icon = "⚠";
+    color = "#ef4444";
+  } else if (light > 0) {
+    status = "調整可能距離あり";
+    icon = "△";
+    color = "#94a3b8";
+  }
+
+  card.style.borderColor = color;
+  card.innerHTML = `
+    <strong style="color:${color};font-size:20px;">
+      ${icon} 判定結果：${status}
+    </strong><br><br>
+    20m未満（密集）：${dense}件<br>
+    20〜30m（滞留）：${stay}件<br>
+    30〜40m（軽微）：${light}件<br>
+    40m未満合計：${actionableTotal}件<br><br>
+    ${actionableTotal === 0
+      ? "追加・変更対象の40m未満の組み合わせはありません。"
+      : "追加・変更対象に関係する40m未満の組み合わせがあります。詳細チェックで対象POIを確認してください。"}
+  `;
+}
+
 function enhanceDistanceResultUi() {
   const result = document.getElementById("distanceResult");
   if (!result || result.dataset.resultUiReady === "true" || !result.children.length) return;
@@ -197,6 +237,8 @@ function enhanceDistanceResultUi() {
       heading.textContent = group.title;
       section.appendChild(heading);
       group.nodes.forEach(node => section.appendChild(node));
+
+      if (group.title === "判定結果") normalizeJudgementSection(section);
 
       if (group.title === "距離チェックマップ") {
         section.classList.add("distance-result-map");
