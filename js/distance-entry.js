@@ -1,5 +1,5 @@
 /* =========================
-   UI大改修 03 / 05
+   UI大改修 03 / 05 / 06
    距離チェック入口と結果表示を整理する。
    距離判定・スコア・地図・送信ロジックには触れない。
 ========================= */
@@ -43,12 +43,16 @@ function ensureDistanceEntryStyles() {
     #distanceResult .distance-result-secondary{margin:6px 0 14px}
     #distanceResult .distance-result-map{margin-top:4px}
     #distanceResult .distance-result-details-body .distance-result-duplicate-title{display:none!important}
+    #distanceResult .distance-classification-body>.distance-warning{margin-top:0;padding:10px 12px}
+    #distanceResult .distance-classification-note{margin:8px 0 0;padding:7px 10px;border-radius:9px;background:rgba(148,163,184,.08);border:1px solid rgba(148,163,184,.16);color:#cbd5e1;font-size:12px;line-height:1.45}
 
     @media(max-width:520px){
       #distance .panel>h2{font-size:22px}
       #distance .distance-file-step,#distance .distance-run-step{padding:15px}
       #distance .distance-file-meta{align-items:flex-start;flex-direction:column}
       #distanceResult .distance-result-intro{padding:12px 13px}
+      #distanceResult .distance-result-details-body{padding:0 12px 12px}
+      #distanceResult .distance-classification-body>.distance-warning{padding:8px 10px}
     }
   `;
   document.head.appendChild(style);
@@ -149,6 +153,29 @@ function markDuplicateResultTitle(body, title) {
     return !element.querySelector("div,section,details");
   });
   if (duplicate) duplicate.classList.add("distance-result-duplicate-title");
+}
+
+function compactClassificationSection(body) {
+  if (!body) return;
+  body.classList.add("distance-classification-body");
+
+  const accordion = body.querySelector(":scope > .distance-warning");
+  if (!accordion) return;
+
+  const fullText = body.textContent || "";
+  const referenceCount = Number(fullText.match(/参考\s*[:：]\s*(\d+)件/)?.[1] || 0);
+
+  let node = accordion.nextSibling;
+  while (node) {
+    const next = node.nextSibling;
+    node.remove();
+    node = next;
+  }
+
+  const note = document.createElement("div");
+  note.className = "distance-classification-note";
+  note.textContent = `ℹ 参考：既存POI同士 ${referenceCount}件`;
+  body.appendChild(note);
 }
 
 function normalizeJudgementSection(section) {
@@ -258,6 +285,7 @@ function enhanceDistanceResultUi() {
     body.className = "distance-result-details-body";
     group.nodes.forEach(node => body.appendChild(node));
     markDuplicateResultTitle(body, group.title);
+    if (group.title === "分類別チェック") compactClassificationSection(body);
     details.append(summary, body);
     secondary.appendChild(details);
   });
