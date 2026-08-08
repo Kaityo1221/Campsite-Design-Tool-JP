@@ -40,6 +40,7 @@ function ensureDistanceEntryStyles() {
     #distanceResult .distance-result-details[data-attention="true"]{border-color:rgba(245,158,11,.42);background:rgba(245,158,11,.07)}
     #distanceResult .distance-result-details[data-attention="true"] summary{color:#fde68a}
     #distanceResult .distance-result-primary{display:flex;flex-direction:column}
+    #distanceResult .distance-result-advice{margin:0 0 14px!important}
     #distanceResult .distance-result-secondary{margin:6px 0 14px}
     #distanceResult .distance-result-map{margin-top:4px}
     #distanceResult .distance-result-details-body .distance-result-duplicate-title{display:none!important}
@@ -158,6 +159,11 @@ function markDuplicateResultTitle(body, title) {
   if (duplicate) duplicate.classList.add("distance-result-duplicate-title");
 }
 
+function isDistanceAdviceNode(node) {
+  return node instanceof HTMLElement &&
+    (node.textContent || "").includes("🧭 次に確認する場所");
+}
+
 function compactClassificationSection(body) {
   if (!body) return;
   body.classList.add("distance-classification-body");
@@ -253,6 +259,7 @@ function enhanceDistanceResultUi() {
   const secondary = document.createElement("div");
   secondary.className = "distance-result-secondary";
   let mapSection = null;
+  let adviceNode = null;
 
   const primaryTitles = ["判定結果", "拠点充実度", "距離チェックマップ"];
   const attentionTitles = ["重複POIチェック", "追加・変更対象", "分類別チェック"];
@@ -279,6 +286,13 @@ function enhanceDistanceResultUi() {
       return;
     }
 
+    if (group.title === "分類別チェック") {
+      const adviceIndex = group.nodes.findIndex(isDistanceAdviceNode);
+      if (adviceIndex >= 0) {
+        adviceNode = group.nodes.splice(adviceIndex, 1)[0];
+      }
+    }
+
     const details = document.createElement("details");
     details.className = "distance-result-details";
     details.dataset.attention = attentionTitles.some(title => group.title.startsWith(title)) ? "true" : "false";
@@ -297,6 +311,12 @@ function enhanceDistanceResultUi() {
     const section = primary.querySelector(`[data-result-title="${title}"]`);
     if (section) primary.appendChild(section);
   });
+
+  const judgementSection = primary.querySelector('[data-result-title="判定結果"]');
+  if (adviceNode instanceof HTMLElement && judgementSection) {
+    adviceNode.classList.add("distance-result-advice");
+    judgementSection.insertAdjacentElement("afterend", adviceNode);
+  }
 
   result.append(intro, primary, secondary);
   if (mapSection) result.appendChild(mapSection);
