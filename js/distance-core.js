@@ -25,12 +25,9 @@ function escapeDistanceHtml(text) {
     .replace(/'/g, "&#039;");
 }
 function getDistanceCheckMeters(a, b) {
-
   const R = 6371000;
-
   const lat1 = a.lat * Math.PI / 180;
   const lat2 = b.lat * Math.PI / 180;
-
   const dLat = (b.lat - a.lat) * Math.PI / 180;
   const dLng = (b.lng - a.lng) * Math.PI / 180;
 
@@ -141,9 +138,10 @@ function renderPrecheckDuplicatePoiHtml() {
 
 /* =========================
    UI大改修 07：提出前チェック
+   元の6項目を基準にアップデートする。
 ========================= */
 
-const PRE_SUBMIT_MANUAL_KEY = "campsitePreSubmitManualV1";
+const PRE_SUBMIT_MANUAL_KEY = "campsitePreSubmitManualV2";
 
 function ensurePreSubmitStyles() {
   if (document.getElementById("preSubmitStyles")) return;
@@ -197,50 +195,18 @@ function getPreSubmitLayerNames() {
 }
 
 function getPreSubmitAddedPoiCount() {
-  const names = getPreSubmitLayerNames();
-
-  return names.reduce((sum, name) => {
+  return getPreSubmitLayerNames().reduce((sum, name) => {
     if (!/(追加|希望)/.test(name)) return sum;
-
     const points = window._layerPoints?.[name];
     return sum + (Array.isArray(points) ? points.length : 0);
   }, 0);
-}
-
-function getPreSubmitDistanceState() {
-  const result = document.getElementById("distanceResult");
-
-  if (!result || !(result.textContent || "").trim()) {
-    return {
-      state: "warn",
-      detail: "距離チェックを実行すると自動確認します。"
-    };
-  }
-
-  const text = result.textContent || "";
-  const dense = Number(text.match(/20m未満（密集）\s*[:：]\s*(\d+)件/)?.[1] || 0);
-  const stay = Number(text.match(/20〜30m（滞留）\s*[:：]\s*(\d+)件/)?.[1] || 0);
-  const count = dense + stay;
-
-  return count === 0
-    ? {
-        state: "ok",
-        detail: "30m未満の追加・変更対象はありません。"
-      }
-    : {
-        state: "ng",
-        detail: `30m未満の追加・変更対象が${count}件あります。`
-      };
 }
 
 function getPreSubmitLayerState() {
   const names = getPreSubmitLayerNames();
 
   if (!names.length) {
-    return {
-      state: "warn",
-      detail: "完成KMZを読み込むと自動確認します。"
-    };
+    return { state: "warn", detail: "完成KMZを読み込むと自動確認します。" };
   }
 
   const hasExisting = names.some(name => /既存/.test(name));
@@ -251,14 +217,29 @@ function getPreSubmitLayerState() {
   });
 
   return hasExisting && hasAdded && !hasAmbiguousPoiLayer
-    ? {
-        state: "ok",
-        detail: "既存POIと追加POIを別レイヤーとして認識しています。"
-      }
-    : {
-        state: "ng",
-        detail: "POIレイヤー名に「既存」または「追加」が入っているか確認してください。"
-      };
+    ? { state: "ok", detail: "既存POIと追加POIを別レイヤーとして認識しています。" }
+    : { state: "ng", detail: "POIレイヤー名に「既存」または「追加」が入っているか確認してください。" };
+}
+
+function getPreSubmitDistanceRunState() {
+  const result = document.getElementById("distanceResult");
+  const hasResult = Boolean(result && (result.textContent || "").trim());
+
+  return hasResult
+    ? { state: "ok", detail: "完成KMZで距離チェックを実施済みです。" }
+    : { state: "warn", detail: "完成KMZで距離チェックを実施してください。" };
+}
+
+function getPreSubmitDuplicateState() {
+  const result = document.getElementById("distanceResult");
+  if (!result || !(result.textContent || "").trim()) {
+    return { state: "warn", detail: "距離チェック実施後に確認できます。" };
+  }
+
+  const duplicates = getPrecheckDuplicatePois();
+  return duplicates.length === 0
+    ? { state: "ok", detail: "重複POI候補はありません。" }
+    : { state: "ng", detail: `重複POI候補が${duplicates.length}件あります。` };
 }
 
 function getPreSubmitAutoItems() {
@@ -268,20 +249,13 @@ function getPreSubmitAutoItems() {
   return [
     {
       id: "addedLimit",
-      label: "追加POIが25個以内になっている",
+      label: "追加POIは25個以内に収まっている",
       state: !hasData ? "warn" : (addedCount <= 25 ? "ok" : "ng"),
-      detail: !hasData
-        ? "完成KMZを読み込むと自動確認します。"
-        : `追加POI：${addedCount}件 / 最大25件`
-    },
-    {
-      id: "distance",
-      label: "追加・変更対象の距離条件を確認している",
-      ...getPreSubmitDistanceState()
+      detail: !hasData ? "完成KMZを読み込むと自動確認します。" : `追加POI：${addedCount}件 / 最大25件`
     },
     {
       id: "layers",
-      label: "既存POIと追加POIを正しいレイヤーに分けている",
+      label: "既存POIと追加POIのレイヤーを分けている",
       ...getPreSubmitLayerState()
     },
     {
@@ -290,33 +264,19 @@ function getPreSubmitAutoItems() {
       state: !hasData ? "warn" : (window._hasPolygon ? "ok" : "ng"),
       detail: !hasData
         ? "完成KMZを読み込むと自動確認します。"
-        : (window._hasPolygon
-          ? "活動範囲を検出しました。"
-          : "活動範囲ポリゴンが見つかりません。")
+        : (window._hasPolygon ? "活動範囲を検出しました。" : "活動範囲ポリゴンが見つかりません。")
+    },
+    {
+      id: "distanceRun",
+      label: "完成KMZで距離チェックを実施している",
+      ...getPreSubmitDistanceRunState()
+    },
+    {
+      id: "duplicate",
+      label: "重複POI候補を確認している",
+      ...getPreSubmitDuplicateState()
     }
   ];
-}
-
-function getPreSubmitLinkedItems() {
-  const definitions = [
-    ["trafficOk", "安全に歩いて移動できる", "現地環境チェック：通行"],
-    ["hasOpenSpace", "人が集まれる広場がある", "現地環境チェック：広場"],
-    ["hasLoopRoute", "回遊できる動線がある", "現地環境チェック：回遊"],
-    ["hasWaitingSpace", "待機できる場所がある", "現地環境チェック：待機場所"]
-  ];
-
-  return definitions.map(([id, label, detail]) => {
-    const input = document.getElementById(id);
-
-    return {
-      id,
-      label,
-      state: input?.checked ? "ok" : "warn",
-      detail: input
-        ? `${detail}から連携`
-        : "現地環境チェックを先に確認してください。"
-    };
-  });
 }
 
 function getPreSubmitStateIcon(state) {
@@ -337,6 +297,25 @@ function renderPreSubmitItem(item) {
   `;
 }
 
+function renderPreSubmitManualItem(item, manualState) {
+  const checked = manualState[item.id] === true;
+
+  return `
+    <label class="pre-submit-item" data-state="${checked ? "ok" : "warn"}">
+      <input
+        class="pre-submit-manual"
+        type="checkbox"
+        data-pre-submit-manual="${item.id}"
+        ${checked ? "checked" : ""}
+      >
+      <span class="pre-submit-copy">
+        <strong>${item.label}</strong>
+        <small>${item.detail}</small>
+      </span>
+    </label>
+  `;
+}
+
 function renderPreSubmitCheck() {
   const section = document.getElementById("check");
   const panel = section?.querySelector(".panel");
@@ -347,12 +326,26 @@ function renderPreSubmitCheck() {
 
   const manualState = readPreSubmitManualState();
   const autoItems = getPreSubmitAutoItems();
-  const linkedItems = getPreSubmitLinkedItems();
   const manualItems = [
     {
+      id: "spacing40",
+      label: "POI間隔は40m以上を基本としている",
+      detail: "まず40m以上の間隔を目標に配置します。"
+    },
+    {
+      id: "spacing30to40",
+      label: "40m確保が難しい箇所のみ、30m以上40m未満で調整している",
+      detail: "30m台は必要な箇所だけに限定し、30m未満は避けます。"
+    },
+    {
       id: "playability",
-      label: "遊びやすさを優先している",
+      label: "「置ける」より「遊びやすい」を優先している",
       detail: "POI数だけでなく、歩きやすさ・回遊しやすさ・滞在しやすさまで確認します。"
+    },
+    {
+      id: "siteEnvironment",
+      label: "現地の安全性・広場・回遊動線・待機場所を確認している",
+      detail: "すべての条件が揃う必要はありません。現地環境チェックの内容を参考に確認します。"
     },
     {
       id: "privateMap",
@@ -361,58 +354,39 @@ function renderPreSubmitCheck() {
     }
   ];
 
-  const machineOk = [...autoItems, ...linkedItems].every(item => item.state === "ok");
+  const autoOk = autoItems.every(item => item.state === "ok");
   const manualOk = manualItems.every(item => manualState[item.id] === true);
-  const ready = machineOk && manualOk;
+  const ready = autoOk && manualOk;
 
   panel.innerHTML = `
     <h2>提出前チェック</h2>
     <p class="pre-submit-lead">
-      完成KMZの解析結果と現地環境チェックをまとめ、最後にCA本人の確認だけ行います。
+      元の申請前チェックリストを基準に、完成KMZで確認できる項目は自動判定し、設計意図や現地確認はCA本人が確認します。
     </p>
 
     <div class="pre-submit-note">
-      <strong>候補地の前提：</strong>
-      屋外・一般公開・安全に利用できる場所であること。KMZだけでは確実に判定できないため、候補地選定時に確認してください。
+      <strong>距離の基本：</strong>
+      POI間隔は40m以上を基本とし、40m確保が難しい箇所のみ30m以上40m未満で調整します。
     </div>
 
     <div class="pre-submit-group">
       <h3>🤖 自動確認</h3>
-      <p>完成KMZと距離チェック結果から判定します。</p>
+      <p>完成KMZと距離チェック結果から確認します。</p>
       ${autoItems.map(renderPreSubmitItem).join("")}
     </div>
 
     <div class="pre-submit-group">
-      <h3>🔗 現地環境チェック連携</h3>
-      <p>距離チェック画面で入力した内容をそのまま使います。</p>
-      ${linkedItems.map(renderPreSubmitItem).join("")}
-    </div>
-
-    <div class="pre-submit-group">
       <h3>👤 CA本人確認</h3>
-      <p>ツールでは判断できない設計意図と管理状態だけ確認してください。</p>
-      ${manualItems.map(item => `
-        <label class="pre-submit-item" data-state="${manualState[item.id] ? "ok" : "warn"}">
-          <input
-            class="pre-submit-manual"
-            type="checkbox"
-            data-pre-submit-manual="${item.id}"
-            ${manualState[item.id] ? "checked" : ""}
-          >
-          <span class="pre-submit-copy">
-            <strong>${item.label}</strong>
-            <small>${item.detail}</small>
-          </span>
-        </label>
-      `).join("")}
+      <p>設計意図と現地の確認内容をチェックしてください。</p>
+      ${manualItems.map(item => renderPreSubmitManualItem(item, manualState)).join("")}
     </div>
 
     <div class="pre-submit-result ${ready ? "ready" : ""}">
       <strong>${ready ? "🎉 提出準備OK" : "📝 まだ確認があります"}</strong>
       <span>
         ${ready
-          ? "自動確認・現地環境・本人確認がすべて揃いました。"
-          : "黄色・赤色の項目を確認してから提出してください。"}
+          ? "提出前の確認項目がすべて揃いました。"
+          : "未確認または要確認の項目を確認してください。"}
       </span>
       <div class="pre-submit-actions">
         <button type="button" data-pre-submit-distance>距離チェックへ戻る</button>
@@ -431,7 +405,6 @@ function renderPreSubmitCheck() {
 
   panel.querySelector("[data-pre-submit-distance]")?.addEventListener("click", () => {
     const button = document.querySelector('.tab-button[onclick*="distance"]');
-
     if (typeof window.openTab === "function") {
       window.openTab("distance", button || null);
     }
@@ -439,21 +412,14 @@ function renderPreSubmitCheck() {
 }
 
 function setupPreSubmitCheck() {
-  const distanceFile = document.getElementById("distanceFile");
-
-  distanceFile?.addEventListener("change", () => {
+  document.getElementById("distanceFile")?.addEventListener("change", () => {
     try {
       sessionStorage.removeItem(PRE_SUBMIT_MANUAL_KEY);
     } catch (_) {}
   });
 
-  ["trafficOk", "hasOpenSpace", "hasLoopRoute", "hasWaitingSpace"].forEach(id => {
-    document.getElementById(id)?.addEventListener("change", renderPreSubmitCheck);
-  });
-
   document.addEventListener("click", event => {
     const target = event.target.closest?.(".tab-button, .opening-sign-area");
-
     if (!target) return;
 
     setTimeout(() => {
