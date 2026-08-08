@@ -322,6 +322,9 @@ function ensureDistanceChecklistGuide() {
     if (typeof window.openTab === "function") {
       window.openTab("check", button || null);
     }
+    if (typeof window.renderPreSubmitCheck === "function") {
+      window.renderPreSubmitCheck();
+    }
   });
 
   distanceMap.insertAdjacentElement("afterend", guide);
