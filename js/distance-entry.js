@@ -45,6 +45,9 @@ function ensureDistanceEntryStyles() {
     #distanceResult .distance-result-details-body .distance-result-duplicate-title{display:none!important}
     #distanceResult .distance-classification-body>.distance-warning{margin-top:0;padding:10px 12px}
     #distanceResult .distance-classification-note{margin:8px 0 0;padding:7px 10px;border-radius:9px;background:rgba(148,163,184,.08);border:1px solid rgba(148,163,184,.16);color:#cbd5e1;font-size:12px;line-height:1.45}
+    #distance .distance-checklist-guide{margin-top:16px;padding:16px;border:1px solid rgba(34,197,94,.35);border-radius:14px;background:rgba(34,197,94,.08);text-align:center;color:#d1fae5}
+    #distance .distance-checklist-guide p{margin:0 0 12px;font-size:13px;line-height:1.7}
+    #distance .distance-checklist-guide button{width:100%;padding:11px 14px;border:1px solid rgba(34,197,94,.45);border-radius:10px;background:rgba(34,197,94,.16);color:#dcfce7;font-weight:800;cursor:pointer}
 
     @media(max-width:520px){
       #distance .panel>h2{font-size:22px}
@@ -299,6 +302,34 @@ function enhanceDistanceResultUi() {
   if (mapSection) result.appendChild(mapSection);
 }
 
+function ensureDistanceChecklistGuide() {
+  const result = document.getElementById("distanceResult");
+  const distanceMap = document.getElementById("distanceMap");
+  const executionStep = document.getElementById("distanceCheckStep");
+  if (!result || !distanceMap || !executionStep || !result.children.length) return;
+
+  executionStep.querySelector(".distance-checklist-guide")?.remove();
+
+  const guide = document.createElement("div");
+  guide.className = "distance-checklist-guide";
+  guide.innerHTML = `
+    <p><strong>距離チェックが終わったら、提出前チェックで最終確認しましょう。</strong></p>
+    <button type="button" data-go-pre-submit>提出前チェックリストへ進む</button>
+  `;
+
+  guide.querySelector("[data-go-pre-submit]")?.addEventListener("click", () => {
+    const button = document.querySelector('.tab-button[onclick*="check"]');
+    if (typeof window.openTab === "function") {
+      window.openTab("check", button || null);
+    }
+    if (typeof window.renderPreSubmitCheck === "function") {
+      window.renderPreSubmitCheck();
+    }
+  });
+
+  distanceMap.insertAdjacentElement("afterend", guide);
+}
+
 function wrapDistanceCheckForResultUi() {
   if (window.__distanceResultUiWrapped || typeof window.runDistanceCheck !== "function") return;
   const originalRunDistanceCheck = window.runDistanceCheck;
@@ -310,6 +341,7 @@ function wrapDistanceCheckForResultUi() {
     }
     const value = await originalRunDistanceCheck.apply(this, args);
     enhanceDistanceResultUi();
+    ensureDistanceChecklistGuide();
     return value;
   };
   window.__distanceResultUiWrapped = true;
