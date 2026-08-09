@@ -10,6 +10,15 @@
   <link rel="stylesheet" href="css/field-mode.css?v=1">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/icon.png">
+  <style>
+    .field-location-badge{position:absolute;left:12px;bottom:12px;z-index:520;background:rgba(255,255,255,.92);border:1px solid #b8c7d8;border-radius:999px;padding:7px 10px;font-size:11px;font-weight:800;color:#244d73;box-shadow:0 2px 10px rgba(0,0,0,.12)}
+    .field-crosshair{position:absolute;left:50%;top:50%;width:42px;height:42px;transform:translate(-50%,-50%);z-index:560;pointer-events:none;display:none}
+    .field-crosshair::before,.field-crosshair::after{content:"";position:absolute;background:#7b4d00;box-shadow:0 0 0 2px rgba(255,255,255,.85)}
+    .field-crosshair::before{width:2px;height:42px;left:20px;top:0}.field-crosshair::after{height:2px;width:42px;left:0;top:20px}
+    .field-crosshair-dot{position:absolute;width:10px;height:10px;border:3px solid #7b4d00;border-radius:50%;left:16px;top:16px;background:#fff}
+    .field-scan-pulse{animation:fieldPulse .9s ease-out}@keyframes fieldPulse{0%{stroke-width:8;fill-opacity:.18}100%{stroke-width:1;fill-opacity:0}}
+    .field-mode-adjust-actions button:not(:disabled){background:#d8b766;color:#3b2d15;border-color:#9b742b}
+  </style>
 </head>
 <body class="field-mode-body">
   <header class="field-mode-header">
@@ -33,8 +42,10 @@
       <div id="fieldModePlaceholder" class="field-mode-placeholder" style="z-index:2;pointer-events:none;">
         <span class="field-mode-placeholder-icon">⌖</span>
         <strong>KMZを読み込むと、ここに現地確認用マップを表示します。</strong>
-        <span>既存POI・追加予定POIを重ねて確認します。</span>
+        <span>既存POI・追加予定POI・現在地を重ねて確認します。</span>
       </div>
+      <div id="fieldModeCrosshair" class="field-crosshair"><span class="field-crosshair-dot"></span></div>
+      <div id="fieldModeLocationBadge" class="field-location-badge">GPS待機中</div>
       <button type="button" class="field-mode-new-poi" style="z-index:500;" disabled>＋ 新規</button>
     </section>
 
@@ -49,9 +60,9 @@
   </main>
 
   <nav class="field-mode-toolbar" aria-label="現地モード操作">
-    <button type="button" class="field-mode-history-button" disabled>← 戻る</button>
-    <button type="button" class="field-mode-scan-button" disabled aria-label="SCAN"><span class="field-mode-scan-ring"></span><span>SCAN</span></button>
-    <button type="button" class="field-mode-history-button" disabled>進む →</button>
+    <button id="fieldModeUndoButton" type="button" class="field-mode-history-button" disabled>← 戻る</button>
+    <button id="fieldModeScanButton" type="button" class="field-mode-scan-button" disabled aria-label="SCAN"><span class="field-mode-scan-ring"></span><span>SCAN</span></button>
+    <button id="fieldModeRedoButton" type="button" class="field-mode-history-button" disabled>進む →</button>
   </nav>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -65,23 +76,34 @@
     const selectionDetail = document.getElementById('fieldModeSelectionDetail');
     const relocateButton = document.getElementById('fieldModeRelocateButton');
     const fineTuneButton = document.getElementById('fieldModeFineTuneButton');
+    const undoButton = document.getElementById('fieldModeUndoButton');
+    const redoButton = document.getElementById('fieldModeRedoButton');
+    const scanButton = document.getElementById('fieldModeScanButton');
+    const crosshair = document.getElementById('fieldModeCrosshair');
+    const locationBadge = document.getElementById('fieldModeLocationBadge');
+
     const map = L.map('fieldModeMap', { zoomControl: true }).setView([35.6812, 139.7671], 15);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 20, attribution: '&copy; OpenStreetMap contributors' }).addTo(map);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 20,
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
-
-    // 活動範囲・距離円・線は背景、POIは手前に固定する。
     map.createPane('fieldBackgroundPane');
     map.getPane('fieldBackgroundPane').style.zIndex = 350;
     map.getPane('fieldBackgroundPane').style.pointerEvents = 'none';
-
     map.createPane('fieldPoiPane');
     map.getPane('fieldPoiPane').style.zIndex = 450;
+    map.createPane('fieldLocationPane');
+    map.getPane('fieldLocationPane').style.zIndex = 500;
 
     let dataLayer = L.layerGroup().addTo(map);
+    let locationLayer = L.layerGroup().addTo(map);
     let selectedPoi = null;
+    let currentPosition = null;
+    let currentAccuracy = null;
+    let locationMarker = null;
+    let accuracyCircle = null;
+    let fineTuneMode = false;
+    let poiRecords = [];
+    const undoStack = [];
+    const redoStack = [];
 
     function textOf(node, tag) {
       const el = Array.from(node.children || []).find(child => child.localName === tag);
@@ -108,60 +130,159 @@
       return /追加|追加予定|add|planned|candidate/i.test(`${folder} ${name}`);
     }
 
+    function meters(a,b){ return map.distance(L.latLng(a[0],a[1]), L.latLng(b[0],b[1])); }
+
+    function updateHistoryButtons(){
+      undoButton.disabled = undoStack.length === 0;
+      redoButton.disabled = redoStack.length === 0;
+    }
+
+    function pushMove(record, from, to){
+      undoStack.push({record, from:[from[0],from[1]], to:[to[0],to[1]]});
+      redoStack.length = 0;
+      updateHistoryButtons();
+    }
+
+    function applyMove(record, latlng){
+      record.latlng = [latlng[0],latlng[1]];
+      record.marker.setLatLng(record.latlng);
+      if (selectedPoi === record) refreshSelectionPanel();
+    }
+
+    function refreshSelectionPanel(){
+      if (!selectedPoi) return;
+      selectionTitle.textContent = `選択中：${selectedPoi.name}`;
+      let detail = selectedPoi.folder || '追加予定POI';
+      if (currentPosition) detail += ` ／ 現在地から ${meters(selectedPoi.latlng,currentPosition).toFixed(1)}m`;
+      selectionDetail.textContent = detail;
+      relocateButton.disabled = !currentPosition || fineTuneMode;
+      fineTuneButton.disabled = false;
+    }
+
     function resetPoiSelection() {
-      if (selectedPoi?.marker) {
-        selectedPoi.marker.setStyle({
-          radius: 9,
-          weight: 3,
-          color: '#d58b00',
-          fillColor: '#ffd35c',
-          fillOpacity: .9
-        });
-      }
+      if (selectedPoi?.marker) selectedPoi.marker.setStyle({radius:9,weight:3,color:'#d58b00',fillColor:'#ffd35c',fillOpacity:.9});
       selectedPoi = null;
+      fineTuneMode = false;
+      crosshair.style.display = 'none';
+      relocateButton.textContent = '現在地へ再配置';
+      fineTuneButton.textContent = '位置を微調整';
       selectionTitle.textContent = '追加予定POIを選択してください';
       selectionDetail.textContent = '地図上の黄色い追加予定POIをタップしてください。';
       relocateButton.disabled = true;
       fineTuneButton.disabled = true;
     }
 
-    function selectAddedPoi(marker, name, folder, latlng) {
-      if (selectedPoi?.marker && selectedPoi.marker !== marker) {
-        selectedPoi.marker.setStyle({
-          radius: 9,
-          weight: 3,
-          color: '#d58b00',
-          fillColor: '#ffd35c',
-          fillOpacity: .9
-        });
-      }
-
-      selectedPoi = { marker, name, folder, latlng };
-      marker.setStyle({
-        radius: 13,
-        weight: 5,
-        color: '#5d3f00',
-        fillColor: '#fff19a',
-        fillOpacity: 1
-      });
-      marker.bringToFront();
-
-      selectionTitle.textContent = `選択中：${name}`;
-      selectionDetail.textContent = folder
-        ? `${folder} ／ 現在地への再配置・微調整は次の実装で有効にします。`
-        : '現在地への再配置・微調整は次の実装で有効にします。';
-
-      relocateButton.disabled = true;
-      fineTuneButton.disabled = true;
+    function selectAddedPoi(record) {
+      if (selectedPoi?.marker && selectedPoi.marker !== record.marker) selectedPoi.marker.setStyle({radius:9,weight:3,color:'#d58b00',fillColor:'#ffd35c',fillOpacity:.9});
+      selectedPoi = record;
+      record.marker.setStyle({radius:13,weight:5,color:'#5d3f00',fillColor:'#fff19a',fillOpacity:1});
+      record.marker.bringToFront();
+      refreshSelectionPanel();
     }
+
+    function setCurrentPosition(lat, lng, accuracy, recenter=false){
+      currentPosition = [lat,lng];
+      currentAccuracy = accuracy;
+      if (!locationMarker) {
+        locationMarker = L.circleMarker(currentPosition,{pane:'fieldLocationPane',radius:8,weight:3,color:'#fff',fillColor:'#1687e8',fillOpacity:1,interactive:false}).addTo(locationLayer);
+        accuracyCircle = L.circle(currentPosition,{pane:'fieldBackgroundPane',radius:accuracy||0,color:'#1687e8',weight:1,fillColor:'#1687e8',fillOpacity:.08,interactive:false}).addTo(locationLayer);
+      } else {
+        locationMarker.setLatLng(currentPosition);
+        accuracyCircle.setLatLng(currentPosition).setRadius(accuracy||0);
+      }
+      const accuracyText = Number.isFinite(accuracy) ? `±${Math.round(accuracy)}m` : '精度不明';
+      locationBadge.textContent = `● 現在地 ${accuracyText}`;
+      modeStatus.textContent = Number.isFinite(accuracy) && accuracy > 25 ? 'GPS精度低め' : 'GPS取得済';
+      scanButton.disabled = false;
+      if (selectedPoi) refreshSelectionPanel();
+      if (recenter) map.panTo(currentPosition);
+    }
+
+    function onGeoSuccess(pos, recenter=false){ setCurrentPosition(pos.coords.latitude,pos.coords.longitude,pos.coords.accuracy,recenter); }
+    function onGeoError(){ locationBadge.textContent='⚠ 位置情報を取得できません'; modeStatus.textContent='GPS未取得'; }
+
+    function startGps(){
+      if (!navigator.geolocation) { onGeoError(); return; }
+      navigator.geolocation.watchPosition(p=>onGeoSuccess(p,false),onGeoError,{enableHighAccuracy:true,maximumAge:5000,timeout:15000});
+    }
+
+    function scanNow(){
+      if (!navigator.geolocation) return;
+      modeStatus.textContent='SCAN中';
+      navigator.geolocation.getCurrentPosition(pos=>{
+        onGeoSuccess(pos,true);
+        const pulse=L.circle(currentPosition,{pane:'fieldLocationPane',radius:40,color:'#1687e8',weight:4,fillColor:'#1687e8',fillOpacity:.12,interactive:false,className:'field-scan-pulse'}).addTo(locationLayer);
+        setTimeout(()=>locationLayer.removeLayer(pulse),950);
+        modeStatus.textContent='SCAN完了';
+      },onGeoError,{enableHighAccuracy:true,maximumAge:0,timeout:15000});
+    }
+
+    relocateButton.addEventListener('click',()=>{
+      if (!selectedPoi || !currentPosition) return;
+      const from=[...selectedPoi.latlng];
+      const to=[...currentPosition];
+      pushMove(selectedPoi,from,to);
+      applyMove(selectedPoi,to);
+      selectionDetail.textContent += ' ／ 現在地へ再配置しました';
+    });
+
+    fineTuneButton.addEventListener('click',()=>{
+      if (!selectedPoi) return;
+      if (!fineTuneMode) {
+        fineTuneMode=true;
+        crosshair.style.display='block';
+        map.panTo(selectedPoi.latlng);
+        relocateButton.textContent='この位置に変更';
+        relocateButton.disabled=false;
+        fineTuneButton.textContent='微調整を取消';
+        selectionDetail.textContent='地図を動かし、中央の照準へ位置を合わせてください。';
+      } else {
+        fineTuneMode=false;
+        crosshair.style.display='none';
+        relocateButton.textContent='現在地へ再配置';
+        fineTuneButton.textContent='位置を微調整';
+        refreshSelectionPanel();
+      }
+    });
+
+    relocateButton.addEventListener('click',()=>{
+      if (!fineTuneMode || !selectedPoi) return;
+    });
+
+    // capture phaseで微調整確定を通常再配置より先に処理
+    relocateButton.addEventListener('click',(e)=>{
+      if (!fineTuneMode || !selectedPoi) return;
+      e.stopImmediatePropagation();
+      const center=map.getCenter();
+      const from=[...selectedPoi.latlng];
+      const to=[center.lat,center.lng];
+      pushMove(selectedPoi,from,to);
+      applyMove(selectedPoi,to);
+      fineTuneMode=false;
+      crosshair.style.display='none';
+      relocateButton.textContent='現在地へ再配置';
+      fineTuneButton.textContent='位置を微調整';
+      refreshSelectionPanel();
+      selectionDetail.textContent += ' ／ 微調整しました';
+    },true);
+
+    undoButton.addEventListener('click',()=>{
+      const action=undoStack.pop(); if(!action) return;
+      applyMove(action.record,action.from); redoStack.push(action); updateHistoryButtons();
+    });
+    redoButton.addEventListener('click',()=>{
+      const action=redoStack.pop(); if(!action) return;
+      applyMove(action.record,action.to); undoStack.push(action); updateHistoryButtons();
+    });
+    scanButton.addEventListener('click',scanNow);
 
     function renderKml(kmlText) {
       const xml = new DOMParser().parseFromString(kmlText, 'application/xml');
       if (xml.querySelector('parsererror')) throw new Error('KMLを解析できませんでした。');
-
       dataLayer.clearLayers();
+      poiRecords=[];
+      undoStack.length=0; redoStack.length=0; updateHistoryButtons();
       resetPoiSelection();
-
       const bounds = [];
       const placemarks = Array.from(xml.getElementsByTagNameNS('*', 'Placemark'));
 
@@ -173,111 +294,54 @@
         const polygon = pm.getElementsByTagNameNS('*', 'Polygon')[0];
 
         if (point) {
-          const c = point.getElementsByTagNameNS('*', 'coordinates')[0];
-          if (!c) return;
-          const pts = parseCoordList(c.textContent);
-          if (!pts.length) return;
-
+          const c = point.getElementsByTagNameNS('*', 'coordinates')[0]; if (!c) return;
+          const pts = parseCoordList(c.textContent); if (!pts.length) return;
           const latlng = pts[0];
           const added = isAddedPoi(folder, name);
-          const marker = L.circleMarker(latlng, {
-            pane: 'fieldPoiPane',
-            radius: added ? 9 : 7,
-            weight: 3,
-            color: added ? '#d58b00' : '#375f87',
-            fillColor: added ? '#ffd35c' : '#78b9ed',
-            fillOpacity: .9
-          });
-
-          marker.bindPopup(`<strong>${name}</strong>${folder ? `<br><small>${folder}</small>` : ''}${added ? '<br><b>追加予定POI</b>' : ''}`);
-          if (added) marker.on('click', () => selectAddedPoi(marker, name, folder, latlng));
-          marker.addTo(dataLayer);
-          bounds.push(latlng);
-          return;
+          const marker = L.circleMarker(latlng,{pane:'fieldPoiPane',radius:added?9:7,weight:3,color:added?'#d58b00':'#375f87',fillColor:added?'#ffd35c':'#78b9ed',fillOpacity:.9});
+          const record={marker,name,folder,latlng:[...latlng],added};
+          poiRecords.push(record);
+          marker.bindPopup(`<strong>${name}</strong>${folder?`<br><small>${folder}</small>`:''}${added?'<br><b>追加予定POI</b>':''}`);
+          if (added) marker.on('click',()=>selectAddedPoi(record));
+          marker.addTo(dataLayer); bounds.push(latlng); return;
         }
 
-        const geometry = line || polygon;
-        if (!geometry) return;
-
-        const coordNodes = Array.from(geometry.getElementsByTagNameNS('*', 'coordinates'));
-        coordNodes.forEach(c => {
-          const pts = parseCoordList(c.textContent);
-          if (pts.length < 2) return;
-
-          const commonOptions = {
-            pane: 'fieldBackgroundPane',
-            interactive: false,
-            bubblingMouseEvents: false
-          };
-
-          const shape = polygon
-            ? L.polygon(pts, {
-                ...commonOptions,
-                color: '#8b6a2f',
-                weight: 2,
-                fillOpacity: .05
-              })
-            : L.polyline(pts, {
-                ...commonOptions,
-                color: '#8b6a2f',
-                weight: 2,
-                opacity: .55
-              });
-
-          shape.addTo(dataLayer);
-          bounds.push(...pts);
+        const geometry=line||polygon; if(!geometry) return;
+        Array.from(geometry.getElementsByTagNameNS('*','coordinates')).forEach(c=>{
+          const pts=parseCoordList(c.textContent); if(pts.length<2) return;
+          const common={pane:'fieldBackgroundPane',interactive:false,bubblingMouseEvents:false};
+          const shape=polygon?L.polygon(pts,{...common,color:'#8b6a2f',weight:2,fillOpacity:.05}):L.polyline(pts,{...common,color:'#8b6a2f',weight:2,opacity:.55});
+          shape.addTo(dataLayer); bounds.push(...pts);
         });
       });
 
       if (!bounds.length) throw new Error('表示できる地点・線・範囲が見つかりませんでした。');
-      map.fitBounds(bounds, { padding:[24,24], maxZoom:18 });
-      placeholder.style.display = 'none';
-      modeStatus.textContent = 'KMZ読込済';
+      map.fitBounds(bounds,{padding:[24,24],maxZoom:18});
+      placeholder.style.display='none';
+      modeStatus.textContent=currentPosition?'GPS取得済':'KMZ読込済';
       fileStatus.textContent += ` ／ ${placemarks.length}件を読み込み`;
-      setTimeout(() => map.invalidateSize(), 50);
+      setTimeout(()=>map.invalidateSize(),50);
     }
 
     async function readKmlText(file) {
-      const lower = file.name.toLowerCase();
-      const isKml = lower.endsWith('.kml');
-      const isKmz = lower.endsWith('.kmz');
-      const isZip = lower.endsWith('.zip');
-
-      if (!isKml && !isKmz && !isZip) {
-        throw new Error('KMZ / KML / ZIP ファイルを選択してください。');
-      }
-
-      if (isKml) return await file.text();
-      if (!window.JSZip) throw new Error('KMZ展開ライブラリを読み込めませんでした。');
-
-      const zip = await JSZip.loadAsync(await file.arrayBuffer());
-      const names = Object.keys(zip.files).filter(n => n.toLowerCase().endsWith('.kml') && !zip.files[n].dir);
-      if (!names.length) throw new Error('KMZ内にKMLがありません。');
-
-      const preferred = names.find(n => /(^|\/)doc\.kml$/i.test(n)) || names[0];
+      const lower=file.name.toLowerCase();
+      if(!/\.(kml|kmz|zip)$/.test(lower)) throw new Error('KMZ / KML / ZIP ファイルを選択してください。');
+      if(lower.endsWith('.kml')) return await file.text();
+      if(!window.JSZip) throw new Error('KMZ展開ライブラリを読み込めませんでした。');
+      const zip=await JSZip.loadAsync(await file.arrayBuffer());
+      const names=Object.keys(zip.files).filter(n=>n.toLowerCase().endsWith('.kml')&&!zip.files[n].dir);
+      if(!names.length) throw new Error('KMZ内にKMLがありません。');
+      const preferred=names.find(n=>/(^|\/)doc\.kml$/i.test(n))||names[0];
       return await zip.files[preferred].async('string');
     }
 
-    fileInput.addEventListener('change', async () => {
-      const file = fileInput.files && fileInput.files[0];
-      if (!file) return;
-
-      fileStatus.textContent = `読込中：${file.name}`;
-      modeStatus.textContent = '読込中';
-
-      try {
-        const kmlText = await readKmlText(file);
-        fileStatus.textContent = `選択中：${file.name}`;
-        renderKml(kmlText);
-      } catch (error) {
-        console.error(error);
-        dataLayer.clearLayers();
-        resetPoiSelection();
-        placeholder.style.display = '';
-        modeStatus.textContent = '読込失敗';
-        fileStatus.textContent = `⚠ ${error.message || 'ファイルを読み込めませんでした。'}`;
-      }
+    fileInput.addEventListener('change',async()=>{
+      const file=fileInput.files&&fileInput.files[0]; if(!file) return;
+      fileStatus.textContent=`読込中：${file.name}`; modeStatus.textContent='読込中';
+      try{const kmlText=await readKmlText(file);fileStatus.textContent=`選択中：${file.name}`;renderKml(kmlText);}catch(error){console.error(error);dataLayer.clearLayers();resetPoiSelection();placeholder.style.display='';modeStatus.textContent='読込失敗';fileStatus.textContent=`⚠ ${error.message||'ファイルを読み込めませんでした。'}`;}
     });
+
+    startGps();
   </script>
 </body>
 </html>
