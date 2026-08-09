@@ -69,27 +69,20 @@
     return points.join(' ');
   }
 
-  function ensureCircleStyles(doc, documentNode) {
-    [['fieldMode30mStyle', 'ff3b3bd6', '2.2'], ['fieldMode40mStyle', 'ff00a5ff', '2.2']].forEach(([id, color, width]) => {
-      Array.from(doc.getElementsByTagNameNS('*', 'Style')).filter(el => el.getAttribute('id') === id).forEach(el => el.remove());
-      const style = createElement(doc, 'Style');
-      style.setAttribute('id', id);
-      const lineStyle = createElement(doc, 'LineStyle');
-      lineStyle.appendChild(createElement(doc, 'color', color));
-      lineStyle.appendChild(createElement(doc, 'width', width));
-      const polyStyle = createElement(doc, 'PolyStyle');
-      polyStyle.appendChild(createElement(doc, 'color', '00000000'));
-      polyStyle.appendChild(createElement(doc, 'fill', '0'));
-      style.appendChild(lineStyle);
-      style.appendChild(polyStyle);
-      documentNode.appendChild(style);
-    });
+  function folderStyleUrl(folder) {
+    if (!folder) return '';
+    const placemarks = Array.from(folder.children || []).filter(el => el.localName === 'Placemark');
+    for (const pm of placemarks) {
+      const styleUrl = Array.from(pm.children || []).find(el => el.localName === 'styleUrl');
+      if (styleUrl?.textContent?.trim()) return styleUrl.textContent.trim();
+    }
+    return '';
   }
 
-  function createCirclePlacemark(doc, record, radiusMeters, styleId) {
+  function createCirclePlacemark(doc, record, radiusMeters, styleUrl) {
     const placemark = createElement(doc, 'Placemark');
     placemark.appendChild(createElement(doc, 'name', `${record.name}_${radiusMeters}m円`));
-    placemark.appendChild(createElement(doc, 'styleUrl', `#${styleId}`));
+    if (styleUrl) placemark.appendChild(createElement(doc, 'styleUrl', styleUrl));
     const polygon = createElement(doc, 'Polygon');
     polygon.appendChild(createElement(doc, 'tessellate', '1'));
     polygon.appendChild(createElement(doc, 'altitudeMode', 'clampToGround'));
@@ -115,9 +108,14 @@
     const folder30 = ensureTargetFolder(doc, documentNode, '30m円（調整用）');
     const folder40 = ensureTargetFolder(doc, documentNode, '40m円（基本距離）');
 
+    // 既存レイヤーの最初の円が使っているstyleUrlをそのまま流用する。
+    // 添付KMZでは30m=#poly-C2185B-3000-71-nodesc、40m=#poly-000000-2000-77-nodesc。
+    const style30 = folderStyleUrl(folder30) || '#poly-C2185B-3000-71-nodesc';
+    const style40 = folderStyleUrl(folder40) || '#poly-000000-2000-77-nodesc';
+
     records.forEach(record => {
-      folder30.appendChild(createCirclePlacemark(doc, record, 30, 'fieldMode30mStyle'));
-      folder40.appendChild(createCirclePlacemark(doc, record, 40, 'fieldMode40mStyle'));
+      folder30.appendChild(createCirclePlacemark(doc, record, 30, style30));
+      folder40.appendChild(createCirclePlacemark(doc, record, 40, style40));
     });
   }
 
@@ -142,10 +140,7 @@
 
     replaceMovedCoordinates(doc, changed);
     const documentNode = doc.getElementsByTagNameNS('*', 'Document')[0] || doc.documentElement;
-
-    // 旧テスト版で作った現地モード専用レイヤーは消し、既存レイヤーへ統合する。
     removeOldFieldCircleFolders(doc);
-    ensureCircleStyles(doc, documentNode);
 
     const addedRecords = poiRecords.filter(record => record.added);
     appendGeneratedCirclesToExistingLayers(doc, documentNode, addedRecords);
@@ -172,7 +167,7 @@
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 4000);
 
-    saveNote.textContent = `${changed.length}件の座標を更新し、30m円は「30m円（調整用）」、40m円は「40m円（基本距離）」へ追加しました。`;
+    saveNote.textContent = `${changed.length}件の座標を更新し、追加円の色も既存30m・40m円に合わせて保存しました。`;
     modeStatus.textContent = 'KMZ保存完了';
   }
 
@@ -181,7 +176,7 @@
     saveButton.disabled = !n;
     saveButton.textContent = n ? `変更したPOIをKMZ保存（${n}件）` : '変更したPOIをKMZ保存';
     saveNote.textContent = n
-      ? `${n}件の座標を更新し、既存の30m円・40m円レイヤーへ自動追加します。`
+      ? `${n}件の座標を更新し、既存レイヤーの色・スタイルを引き継いで30m円・40m円を追加します。`
       : '変更するとKMZ保存できるようになります。';
   };
   updateSaveButton();
@@ -190,7 +185,7 @@
     event.preventDefault();
     event.stopImmediatePropagation();
     saveButton.disabled = true;
-    saveNote.textContent = '既存レイヤーへ30m円・40m円を追加したKMZを作成中…';
+    saveNote.textContent = '既存スタイルを引き継いだKMZを作成中…';
     try {
       await exportPreservedKmz();
     } catch (error) {
