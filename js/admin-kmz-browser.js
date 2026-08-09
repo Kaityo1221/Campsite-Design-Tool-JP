@@ -1,4 +1,4 @@
-/* 管理者KMZブラウザ ローダー */
+/* 管理者機能 セキュアローダー */
 (function () {
   "use strict";
 
@@ -25,9 +25,13 @@
         await loadScript("js/admin-auth.js?v=1", "campsiteAdminAuthScript");
       }
 
+      if (!window.CampsiteAdminSecureApi) {
+        await loadScript("js/admin-secure-api.js?v=1", "campsiteAdminSecureApiScript");
+      }
+
       await loadScript("js/admin-kmz-browser-v2.js?v=2", "campsiteAdminKmzBrowserV2Script");
     } catch (error) {
-      console.error("管理者KMZブラウザ初期化エラー", error);
+      console.error("管理者機能初期化エラー", error);
     }
   }
 
