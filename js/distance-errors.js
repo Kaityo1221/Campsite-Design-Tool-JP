@@ -103,7 +103,8 @@ function showKmlKmzError(targetElementId, errorType, detail = "") {
 }
 
 // ======================================================
-// Phase 9: 距離チェック共有レポート
+// Phase 9: 距離チェック保存用レポート
+// 外部共有を促進せず、端末内TXT保存のみ提供する。
 // ======================================================
 
 function getDistanceReportTargetPoints() {
@@ -145,7 +146,7 @@ function getDistanceReportCheckLine(id, checkedText, uncheckedText) {
   return document.getElementById(id)?.checked ? checkedText : uncheckedText;
 }
 
-function buildDistanceShareReport() {
+function buildDistanceSavedReport() {
   const result = document.getElementById("distanceResult");
   if (!result || !result.textContent.trim()) return "";
 
@@ -181,7 +182,7 @@ function buildDistanceShareReport() {
     .trim();
 
   return [
-    "Campsite Design Tool 共有レポート",
+    "Campsite Design Tool 保存用レポート",
     "================================",
     `拠点名：${siteName}`,
     `作成日時：${generatedAt}`,
@@ -201,6 +202,9 @@ function buildDistanceShareReport() {
     "",
     "【距離チェック結果】",
     resultText,
+    "",
+    "【取扱い注意】",
+    "このレポートにはキャンプサイト設計情報が含まれます。外部SNS・チャットへの共有は想定していません。端末内での確認・保管用として扱ってください。",
     "",
     "【確認メモ】",
     "このレポートは距離チェック時点の確認結果です。最終提出前に提出前チェックリストも確認してください。"
@@ -223,8 +227,8 @@ function getDistanceReportFileName() {
   return `${siteName}_距離チェック_${date}.txt`;
 }
 
-function downloadDistanceShareReport() {
-  const report = buildDistanceShareReport();
+function downloadDistanceSavedReport() {
+  const report = buildDistanceSavedReport();
   if (!report) return;
 
   const blob = new Blob(["\ufeff", report], { type: "text/plain;charset=utf-8" });
@@ -236,35 +240,6 @@ function downloadDistanceShareReport() {
   link.click();
   link.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
-
-async function shareDistanceReport() {
-  const report = buildDistanceShareReport();
-  if (!report) return;
-
-  const title = "Campsite Design Tool 共有レポート";
-
-  if (navigator.share) {
-    try {
-      await navigator.share({ title, text: report });
-      return;
-    } catch (error) {
-      if (error?.name === "AbortError") return;
-      console.warn("共有レポートの共有に失敗しました:", error);
-    }
-  }
-
-  if (navigator.clipboard?.writeText) {
-    try {
-      await navigator.clipboard.writeText(report);
-      alert("共有レポートをクリップボードにコピーしました。");
-      return;
-    } catch (error) {
-      console.warn("共有レポートのコピーに失敗しました:", error);
-    }
-  }
-
-  downloadDistanceShareReport();
 }
 
 function ensureDistanceReportActions() {
@@ -282,18 +257,15 @@ function ensureDistanceReportActions() {
   ].join(";");
 
   actions.innerHTML = `
-    <div style="font-weight:900;color:#7dd3fc;margin-bottom:5px;">📄 共有レポート</div>
+    <div style="font-weight:900;color:#7dd3fc;margin-bottom:5px;">📄 保存用レポート</div>
     <div style="font-size:12px;line-height:1.7;color:#cbd5e1;margin-bottom:12px;">
-      距離チェック結果を、他のCAや管理者へ渡せるテキストレポートにまとめます。
+      距離チェック結果を端末内へTXTファイルとして保存します。<br>
+      <strong style="color:#fde68a;">設計情報を含むため、外部SNS・チャットへの共有は想定していません。</strong>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-      <button type="button" data-distance-report-share style="padding:11px 10px;border:1px solid rgba(56,189,248,.45);border-radius:10px;background:rgba(56,189,248,.16);color:#e0f2fe;font-weight:800;cursor:pointer;">共有する</button>
-      <button type="button" data-distance-report-save style="padding:11px 10px;border:1px solid rgba(148,163,184,.35);border-radius:10px;background:rgba(148,163,184,.10);color:#e2e8f0;font-weight:800;cursor:pointer;">TXT保存</button>
-    </div>
+    <button type="button" data-distance-report-save style="width:100%;padding:11px 10px;border:1px solid rgba(56,189,248,.45);border-radius:10px;background:rgba(56,189,248,.16);color:#e0f2fe;font-weight:800;cursor:pointer;">TXTとして端末に保存</button>
   `;
 
-  actions.querySelector("[data-distance-report-share]")?.addEventListener("click", shareDistanceReport);
-  actions.querySelector("[data-distance-report-save]")?.addEventListener("click", downloadDistanceShareReport);
+  actions.querySelector("[data-distance-report-save]")?.addEventListener("click", downloadDistanceSavedReport);
   result.appendChild(actions);
 }
 
