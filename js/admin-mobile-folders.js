@@ -1,7 +1,7 @@
 /* ======================================================
    管理者画面: スマホ向け折りたたみUI
 
-   - 未分類POIレビューの判断基準を折りたたむ
+   - 未分類POIレビューの説明・判断基準を折りたたむ
    - Recent Reviews / Dictionary Candidatesを初期状態で閉じる
    - 辞書候補は要点だけ先に表示し、詳細操作を折りたたむ
    - 提出KMZカードは主要情報だけ先に表示し、補足情報を折りたたむ
@@ -72,6 +72,11 @@
 
       .admin-fold-dictionary {
         border-color: rgba(167, 139, 250, 0.24);
+      }
+
+      .admin-fold-intro {
+        margin: 0;
+        padding: 2px 14px 10px;
       }
 
       .admin-fold-shell > .alias-review-guide,
@@ -187,6 +192,11 @@
           font-size: 11px;
         }
 
+        .admin-fold-intro {
+          padding-left: 11px;
+          padding-right: 11px;
+        }
+
         .admin-kmz-quick {
           gap: 5px;
         }
@@ -225,12 +235,23 @@
 
   function enhanceAliasSections() {
     const guide = document.querySelector(".alias-review-guide");
-    wrapExistingBox(guide, {
+    const guideDetails = wrapExistingBox(guide, {
       kind: "guide",
       className: "admin-fold-guide",
-      summary: "📘 判断基準を見る",
+      summary: "📘 説明・判断基準を見る",
       open: false
     });
+
+    if (guideDetails && guide) {
+      const intro = guideDetails.previousElementSibling;
+      if (
+        intro?.matches?.("p.note") &&
+        /Research Review Room|研究者専用/.test(intro.textContent || "")
+      ) {
+        intro.classList.add("admin-fold-intro");
+        guideDetails.insertBefore(intro, guide);
+      }
+    }
 
     const history = document.querySelector(".alias-review-history-box");
     wrapExistingBox(history, {
