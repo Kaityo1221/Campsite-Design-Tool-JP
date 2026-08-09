@@ -37,6 +37,10 @@
     return Array.from(node.children || []).find(el => el.localName === 'name')?.textContent?.trim() || '';
   }
 
+  function findFolderByName(doc, name) {
+    return Array.from(doc.getElementsByTagNameNS('*', 'Folder')).find(folder => directName(folder) === name) || null;
+  }
+
   function removeOldFieldCircleFolders(doc) {
     Array.from(doc.getElementsByTagNameNS('*', 'Folder')).forEach(folder => {
       const name = directName(folder);
@@ -84,7 +88,7 @@
 
   function createCirclePlacemark(doc, record, radiusMeters, styleId) {
     const placemark = createElement(doc, 'Placemark');
-    placemark.appendChild(createElement(doc, 'name', `${record.name} ${radiusMeters}m`));
+    placemark.appendChild(createElement(doc, 'name', `${record.name}_${radiusMeters}m円`));
     placemark.appendChild(createElement(doc, 'styleUrl', `#${styleId}`));
     const polygon = createElement(doc, 'Polygon');
     polygon.appendChild(createElement(doc, 'tessellate', '1'));
@@ -98,11 +102,23 @@
     return placemark;
   }
 
-  function addCircleFolder(doc, documentNode, records, radiusMeters, folderName, styleId) {
-    const folder = createElement(doc, 'Folder');
-    folder.appendChild(createElement(doc, 'name', folderName));
-    records.forEach(record => folder.appendChild(createCirclePlacemark(doc, record, radiusMeters, styleId)));
+  function ensureTargetFolder(doc, documentNode, name) {
+    let folder = findFolderByName(doc, name);
+    if (folder) return folder;
+    folder = createElement(doc, 'Folder');
+    folder.appendChild(createElement(doc, 'name', name));
     documentNode.appendChild(folder);
+    return folder;
+  }
+
+  function appendGeneratedCirclesToExistingLayers(doc, documentNode, records) {
+    const folder30 = ensureTargetFolder(doc, documentNode, '30m円（調整用）');
+    const folder40 = ensureTargetFolder(doc, documentNode, '40m円（基本距離）');
+
+    records.forEach(record => {
+      folder30.appendChild(createCirclePlacemark(doc, record, 30, 'fieldMode30mStyle'));
+      folder40.appendChild(createCirclePlacemark(doc, record, 40, 'fieldMode40mStyle'));
+    });
   }
 
   function replaceMovedCoordinates(doc, changed) {
@@ -120,19 +136,31 @@
     if (!changed.length) return;
     const source = await sourcePromise;
     if (!source) throw new Error('元ファイルを再取得できませんでした。もう一度KMZを選択してください。');
+
     const doc = new DOMParser().parseFromString(source.kmlText, 'application/xml');
     if (doc.querySelector('parsererror')) throw new Error('元KMLを解析できませんでした。');
+
     replaceMovedCoordinates(doc, changed);
     const documentNode = doc.getElementsByTagNameNS('*', 'Document')[0] || doc.documentElement;
+
+    // 旧テスト版で作った現地モード専用レイヤーは消し、既存レイヤーへ統合する。
     removeOldFieldCircleFolders(doc);
     ensureCircleStyles(doc, documentNode);
+
     const addedRecords = poiRecords.filter(record => record.added);
-    addCircleFolder(doc, documentNode, addedRecords, 30, '現地モード_30m円', 'fieldMode30mStyle');
-    addCircleFolder(doc, documentNode, addedRecords, 40, '現地モード_40m円', 'fieldMode40mStyle');
+    appendGeneratedCirclesToExistingLayers(doc, documentNode, addedRecords);
+
     const serialized = new XMLSerializer().serializeToString(doc);
     const outZip = source.zip || new JSZip();
     outZip.file(source.kmlPath || 'doc.kml', serialized);
-    const blob = await outZip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 }, mimeType: 'application/vnd.google-earth.kmz' });
+
+    const blob = await outZip.generateAsync({
+      type: 'blob',
+      compression: 'DEFLATE',
+      compressionOptions: { level: 6 },
+      mimeType: 'application/vnd.google-earth.kmz'
+    });
+
     const stamp = new Date().toISOString().replace(/[:.]/g, '-');
     const base = sourceFileName.replace(/\.(kmz|kml|zip)$/i, '');
     const url = URL.createObjectURL(blob);
@@ -143,7 +171,8 @@
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 4000);
-    saveNote.textContent = `${changed.length}件の座標を更新し、30m円・40m円を別レイヤーで保存しました。`;
+
+    saveNote.textContent = `${changed.length}件の座標を更新し、30m円は「30m円（調整用）」、40m円は「40m円（基本距離）」へ追加しました。`;
     modeStatus.textContent = 'KMZ保存完了';
   }
 
@@ -151,7 +180,9 @@
     const n = changedRecords().length;
     saveButton.disabled = !n;
     saveButton.textContent = n ? `変更したPOIをKMZ保存（${n}件）` : '変更したPOIをKMZ保存';
-    saveNote.textContent = n ? `${n}件の座標を更新し、名前・説明を維持したまま30m円・40m円を別レイヤーで追加します。` : '変更するとKMZ保存できるようになります。';
+    saveNote.textContent = n
+      ? `${n}件の座標を更新し、既存の30m円・40m円レイヤーへ自動追加します。`
+      : '変更するとKMZ保存できるようになります。';
   };
   updateSaveButton();
 
@@ -159,12 +190,15 @@
     event.preventDefault();
     event.stopImmediatePropagation();
     saveButton.disabled = true;
-    saveNote.textContent = '30m円・40m円付きKMZを作成中…';
-    try { await exportPreservedKmz(); }
-    catch (error) {
+    saveNote.textContent = '既存レイヤーへ30m円・40m円を追加したKMZを作成中…';
+    try {
+      await exportPreservedKmz();
+    } catch (error) {
       console.error(error);
       saveNote.textContent = `⚠ ${error.message || 'KMZを保存できませんでした。'}`;
       modeStatus.textContent = '保存失敗';
-    } finally { updateSaveButton(); }
+    } finally {
+      updateSaveButton();
+    }
   }, true);
 })();
