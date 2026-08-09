@@ -283,3 +283,23 @@ function setupDistanceReportObserver() {
 }
 
 document.addEventListener("DOMContentLoaded", setupDistanceReportObserver);
+
+// ======================================================
+// Phase 10: 作成前の拠点診断を遅延読み込み
+// ======================================================
+
+function loadSiteDiagnosisFeature() {
+  if (document.querySelector('script[data-site-diagnosis-loader="true"]')) return;
+
+  const script = document.createElement("script");
+  script.src = "js/site-diagnosis.js?v=1";
+  script.async = false;
+  script.dataset.siteDiagnosisLoader = "true";
+  document.body.appendChild(script);
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", loadSiteDiagnosisFeature);
+} else {
+  loadSiteDiagnosisFeature();
+}
