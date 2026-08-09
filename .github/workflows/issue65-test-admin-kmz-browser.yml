@@ -1,0 +1,130 @@
+name: Issue 65 test admin KMZ browser
+
+on:
+  push:
+    branches:
+      - agent/post-overhaul-65-admin-review-knowledge
+    paths:
+      - .github/workflows/issue65-test-admin-kmz-browser.yml
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check browser JavaScript syntax
+        run: node --check js/admin-kmz-browser.js
+
+      - name: Test admin Edge Function list and download
+        run: |
+          python - <<'PY'
+          import json
+          import re
+          import urllib.request
+          import urllib.error
+          from pathlib import Path
+
+          main = Path('js/main.js').read_text(encoding='utf-8')
+          supa = Path('js/lab-supabase.js').read_text(encoding='utf-8')
+
+          admin_match = re.search(r'const ADMIN_CODE\s*=\s*"([^"]+)"', main)
+          key_match = re.search(r'CAMPSITE_SUPABASE_PUBLISHABLE_KEY\s*=\s*"([^"]+)"', supa)
+          url_match = re.search(r'CAMPSITE_SUPABASE_URL\s*=\s*"([^"]+)"', supa)
+
+          if not admin_match or not key_match or not url_match:
+              raise SystemExit('required local config not found')
+
+          admin_code = admin_match.group(1)
+          publishable_key = key_match.group(1)
+          function_url = url_match.group(1).rstrip('/') + '/functions/v1/admin-kmz-browser'
+
+          headers = {
+              'Content-Type': 'application/json',
+              'apikey': publishable_key,
+              'Authorization': 'Bearer ' + publishable_key,
+          }
+
+          def post(payload, expect_status=200):
+              req = urllib.request.Request(
+                  function_url,
+                  data=json.dumps(payload).encode('utf-8'),
+                  headers=headers,
+                  method='POST',
+              )
+              try:
+                  with urllib.request.urlopen(req, timeout=30) as response:
+                      status = response.status
+                      data = json.loads(response.read().decode('utf-8'))
+              except urllib.error.HTTPError as exc:
+                  status = exc.code
+                  data = json.loads(exc.read().decode('utf-8'))
+
+              if status != expect_status:
+                  raise SystemExit(f'unexpected status: {status}')
+              return data
+
+          denied = post({'action': 'list', 'adminCode': '__invalid__'}, expect_status=401)
+          if denied.get('authRequired') is not True:
+              raise SystemExit('invalid admin auth was not rejected')
+
+          listed = post({
+              'action': 'list',
+              'adminCode': admin_code,
+              'currentDeviceId': '__github_actions_test_device__',
+          })
+
+          if listed.get('success') is not True:
+              raise SystemExit('list failed')
+
+          history = listed.get('historyRecords') or []
+          unique = listed.get('uniqueRecords') or []
+          if not history or not unique:
+              raise SystemExit('no records returned')
+
+          record_id = unique[0].get('id')
+          if not record_id:
+              raise SystemExit('first unique record has no id')
+
+          download = post({
+              'action': 'download',
+              'adminCode': admin_code,
+              'recordId': record_id,
+          })
+
+          signed_url = download.get('signedUrl')
+          if not signed_url:
+              raise SystemExit('signed url not returned')
+
+          with urllib.request.urlopen(signed_url, timeout=30) as response:
+              body = response.read()
+              if response.status != 200 or not body:
+                  raise SystemExit('signed KMZ download failed')
+
+          summary = listed.get('summary') or {}
+          result = {
+              'status': 'ok',
+              'history': len(history),
+              'unique': len(unique),
+              'duplicateHistory': summary.get('duplicateHistory'),
+              'distinctDevices': summary.get('distinctDevices'),
+              'downloadBytes': len(body),
+          }
+          Path('.issue65-admin-kmz-browser-test.json').write_text(
+              json.dumps(result, ensure_ascii=False, indent=2) + '\n',
+              encoding='utf-8',
+          )
+          PY
+
+      - name: Commit test marker
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .issue65-admin-kmz-browser-test.json
+          git commit -m "Record admin KMZ browser test success"
+          git push
