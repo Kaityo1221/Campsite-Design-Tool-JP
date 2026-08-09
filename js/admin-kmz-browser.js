@@ -19,6 +19,7 @@
   let viewMode = "unique";
   let actionFilter = "all";
   let searchText = "";
+  let excludeCurrentDevice = true;
   let visibleCount = PAGE_SIZE;
   let isLoading = false;
 
@@ -205,6 +206,42 @@
         color: #94a3b8;
         font-size: 11px;
         line-height: 1.65;
+      }
+
+      .admin-kmz-current-device-toggle {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 2px 9px;
+        align-items: center;
+        margin: 0 22px 14px;
+        padding: 11px 13px;
+        border: 1px solid rgba(167,139,250,.24);
+        border-radius: 13px;
+        background: rgba(124,58,237,.07);
+        color: #ddd6fe;
+        cursor: pointer;
+      }
+
+      .admin-kmz-current-device-toggle input {
+        grid-row: 1 / span 2;
+        width: 17px;
+        height: 17px;
+        accent-color: #38bdf8;
+      }
+
+      .admin-kmz-current-device-toggle span {
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      .admin-kmz-current-device-toggle small {
+        color: #8b9bb2;
+        font-size: 9px;
+      }
+
+      .admin-kmz-activity-pill.current-device {
+        border-color: rgba(167,139,250,.26);
+        color: #ddd6fe;
       }
 
       .admin-kmz-controls {
@@ -451,7 +488,8 @@
         }
 
         .admin-kmz-browser-note,
-        .admin-kmz-mode-tabs {
+        .admin-kmz-mode-tabs,
+        .admin-kmz-current-device-toggle {
           margin-left: 14px;
           margin-right: 14px;
         }
@@ -578,6 +616,14 @@
     const query = normalizeSearch(searchText);
 
     return source.filter(record => {
+      if (excludeCurrentDevice) {
+        if (viewMode === "unique") {
+          if (record.hasOtherDeviceActivity !== true) return false;
+        } else if (record.isCurrentDevice === true) {
+          return false;
+        }
+      }
+
       if (actionFilter !== "all") {
         const types = Array.isArray(record.actionTypes)
           ? record.actionTypes
@@ -620,6 +666,13 @@
     const historyCount = Number(record.historyCount) || 1;
     const duplicateCount = Number(record.duplicateCount) || 0;
     const isDuplicate = record.isDuplicate === true;
+    const deviceText = viewMode === "unique"
+      ? (record.hasCurrentDeviceActivity && record.hasOtherDeviceActivity
+          ? "この端末＋他端末"
+          : record.hasCurrentDeviceActivity
+            ? "この端末"
+            : record.deviceLabel || "端末不明")
+      : record.deviceLabel || "端末不明";
 
     const badges = [
       `<span class="admin-kmz-badge">${getActionIcon(record.actionType)} ${getActionLabel(record.actionType)}</span>`
@@ -645,7 +698,7 @@
 
         <div class="admin-kmz-meta">
           <div class="admin-kmz-meta-item"><strong>最終利用</strong><br>${escapeHtml(formatDate(date))}</div>
-          <div class="admin-kmz-meta-item"><strong>匿名端末</strong><br>${escapeHtml(record.deviceLabel || "端末不明")}</div>
+          <div class="admin-kmz-meta-item"><strong>匿名端末</strong><br>${escapeHtml(deviceText)}</div>
           <div class="admin-kmz-meta-item"><strong>POI</strong><br>${record.poiCount ?? "-"}件（追加 ${record.addedPoiCount ?? "-"}）</div>
           <div class="admin-kmz-meta-item"><strong>警告 / 評価</strong><br>${record.warningCount ?? "-"}件 / ${escapeHtml(getScoreText(record))}</div>
           <div class="admin-kmz-meta-item"><strong>サイズ</strong><br>${escapeHtml(formatBytes(record.fileSizeBytes))}</div>
@@ -669,28 +722,44 @@
     if (!body || !payload) return;
 
     const summary = payload.summary || {};
+    const showingOther = excludeCurrentDevice && (Number(summary.currentDeviceHistoryCount) || 0) > 0;
+    const summaryUnique = showingOther ? summary.otherUniqueFiles : summary.uniqueFiles;
+    const summaryHistory = showingOther ? summary.otherDeviceHistoryCount : summary.totalHistory;
+    const summaryDuplicate = showingOther ? summary.otherDuplicateHistory : summary.duplicateHistory;
+    const summaryDevices = showingOther ? summary.otherDistinctDevices : summary.distinctDevices;
+    const summaryToday = showingOther ? summary.otherTodayCount : summary.todayCount;
+    const summaryLast7 = showingOther ? summary.otherLast7DaysCount : summary.last7DaysCount;
+    const summaryKmz = showingOther ? summary.otherKmzGenerateCount : summary.kmzGenerateCount;
+    const summaryDistance = showingOther ? summary.otherDistanceCheckCount : summary.distanceCheckCount;
     const filtered = getFilteredRecords();
     const visible = filtered.slice(0, visibleCount);
 
     body.innerHTML = `
       <div class="admin-kmz-summary">
-        <div class="admin-kmz-stat primary"><strong>${Number(summary.uniqueFiles) || 0}</strong><span>実ファイル</span></div>
-        <div class="admin-kmz-stat"><strong>${Number(summary.totalHistory) || 0}</strong><span>アップロード履歴</span></div>
-        <div class="admin-kmz-stat duplicate"><strong>${Number(summary.duplicateHistory) || 0}</strong><span>重複履歴</span></div>
-        <div class="admin-kmz-stat device"><strong>${Number(summary.distinctDevices) || 0}</strong><span>匿名端末ID</span></div>
+        <div class="admin-kmz-stat primary"><strong>${Number(summaryUnique) || 0}</strong><span>${showingOther ? "他端末の実ファイル" : "実ファイル"}</span></div>
+        <div class="admin-kmz-stat"><strong>${Number(summaryHistory) || 0}</strong><span>${showingOther ? "他端末の履歴" : "アップロード履歴"}</span></div>
+        <div class="admin-kmz-stat duplicate"><strong>${Number(summaryDuplicate) || 0}</strong><span>重複履歴</span></div>
+        <div class="admin-kmz-stat device"><strong>${Number(summaryDevices) || 0}</strong><span>${showingOther ? "その他の匿名端末ID" : "匿名端末ID"}</span></div>
       </div>
 
       <div class="admin-kmz-activity-strip">
-        <span class="admin-kmz-activity-pill">今日 ${Number(summary.todayCount) || 0}件</span>
-        <span class="admin-kmz-activity-pill">直近7日 ${Number(summary.last7DaysCount) || 0}件</span>
-        <span class="admin-kmz-activity-pill">KMZ生成 ${Number(summary.kmzGenerateCount) || 0}件</span>
-        <span class="admin-kmz-activity-pill">距離チェック ${Number(summary.distanceCheckCount) || 0}件</span>
+        <span class="admin-kmz-activity-pill">今日 ${Number(summaryToday) || 0}件</span>
+        <span class="admin-kmz-activity-pill">直近7日 ${Number(summaryLast7) || 0}件</span>
+        <span class="admin-kmz-activity-pill">KMZ生成 ${Number(summaryKmz) || 0}件</span>
+        <span class="admin-kmz-activity-pill">距離チェック ${Number(summaryDistance) || 0}件</span>
+        ${Number(summary.currentDeviceHistoryCount) > 0 ? `<span class="admin-kmz-activity-pill current-device">この端末 ${Number(summary.currentDeviceHistoryCount)}件</span>` : ""}
       </div>
 
       <div class="admin-kmz-browser-note">
         「匿名端末ID」は利用人数ではありません。同じ人の複数端末やブラウザ保存状態の変化で増減します。<br>
         「実ファイル」は同一内容の重複アップロードを1件にまとめた数です。
       </div>
+
+      <label class="admin-kmz-current-device-toggle">
+        <input type="checkbox" data-admin-kmz-exclude-current ${excludeCurrentDevice ? "checked" : ""}>
+        <span>🧪 この端末の履歴を除く</span>
+        <small>今使っているブラウザのテスト履歴だけを除外します</small>
+      </label>
 
       <div class="admin-kmz-controls">
         <input
@@ -709,10 +778,10 @@
 
       <div class="admin-kmz-mode-tabs">
         <button type="button" class="admin-kmz-mode-button ${viewMode === "unique" ? "active" : ""}" data-admin-kmz-mode="unique">
-          実ファイル ${Number(summary.uniqueFiles) || 0}
+          実ファイル ${Number(summaryUnique) || 0}
         </button>
         <button type="button" class="admin-kmz-mode-button ${viewMode === "history" ? "active" : ""}" data-admin-kmz-mode="history">
-          全履歴 ${Number(summary.totalHistory) || 0}
+          全履歴 ${Number(summaryHistory) || 0}
         </button>
       </div>
 
@@ -734,6 +803,12 @@
   function bindBrowserEvents() {
     const body = document.getElementById("adminKmzBrowserBody");
     if (!body) return;
+
+    body.querySelector("[data-admin-kmz-exclude-current]")?.addEventListener("change", event => {
+      excludeCurrentDevice = event.target.checked === true;
+      visibleCount = PAGE_SIZE;
+      renderBrowser();
+    });
 
     const search = body.querySelector("[data-admin-kmz-search]");
     search?.addEventListener("input", event => {
@@ -821,7 +896,10 @@
     renderLoading();
 
     try {
-      payload = await invokeFunction({ action: "list" });
+      payload = await invokeFunction({
+        action: "list",
+        currentDeviceId: localStorage.getItem("campsiteUserId") || ""
+      });
       visibleCount = PAGE_SIZE;
       renderBrowser();
     } catch (error) {
