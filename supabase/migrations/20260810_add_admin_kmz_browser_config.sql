@@ -10,5 +10,6 @@ create table if not exists public.admin_kmz_browser_config (
 
 alter table public.admin_kmz_browser_config enable row level security;
 
--- Public/anon向けSELECTポリシーは作成しない。
+-- Public/anon/authenticatedへは読み取り権限を付けない。
 -- Edge Functionがservice role経由でのみ参照する。
+grant select on table public.admin_kmz_browser_config to service_role;
