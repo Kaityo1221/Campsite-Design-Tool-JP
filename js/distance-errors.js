@@ -101,3 +101,213 @@ function showKmlKmzError(targetElementId, errorType, detail = "") {
     );
   }
 }
+
+// ======================================================
+// Phase 9: 距離チェック共有レポート
+// ======================================================
+
+function getDistanceReportTargetPoints() {
+  const points = [];
+
+  Object.entries(window._layerPoints || {}).forEach(([layerName, layerPoints]) => {
+    const isCsvLayer = layerName === "CSV_POI";
+    if (!isCsvLayer && typeof isDistanceTargetLayer === "function" && !isDistanceTargetLayer(layerName)) {
+      return;
+    }
+
+    (layerPoints || []).forEach(point => {
+      points.push({
+        ...point,
+        layer: typeof cleanLayerName === "function" ? cleanLayerName(layerName) : layerName,
+        originalLayer: layerName
+      });
+    });
+  });
+
+  return points;
+}
+
+function getDistanceReportSiteName(points) {
+  if (typeof guessParkNameFromPoints === "function") {
+    const guessed = guessParkNameFromPoints(points);
+    if (guessed && guessed !== "公園名不明") return guessed;
+  }
+
+  const sourceName = window._distanceSourceFile?.name || "";
+  if (sourceName) {
+    return sourceName.replace(/\.(kmz|kml|zip)$/i, "");
+  }
+
+  return "名称未取得";
+}
+
+function getDistanceReportCheckLine(id, checkedText, uncheckedText) {
+  return document.getElementById(id)?.checked ? checkedText : uncheckedText;
+}
+
+function buildDistanceShareReport() {
+  const result = document.getElementById("distanceResult");
+  if (!result || !result.textContent.trim()) return "";
+
+  const points = getDistanceReportTargetPoints();
+  const siteName = getDistanceReportSiteName(points);
+  const sourceName = window._distanceSourceFile?.name || "未取得";
+  const generatedAt = new Intl.DateTimeFormat("ja-JP", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit"
+  }).format(new Date());
+
+  let existingCount = 0;
+  let addedCount = 0;
+  if (typeof countExistingAndAddedPoi === "function") {
+    const counts = countExistingAndAddedPoi(window._layerPoints || {});
+    existingCount = counts.existing || 0;
+    addedCount = counts.added || 0;
+  }
+
+  let typeLine = "POI種別：取得できませんでした";
+  if (typeof countPoiTypesFromLayers === "function") {
+    const types = countPoiTypesFromLayers(window._layerPoints || {});
+    typeLine = `POI種別：ポケストップ ${types.pokestop || 0} / ジム ${types.gym || 0} / パワースポット ${types.power || 0}`;
+  }
+
+  const resultClone = result.cloneNode(true);
+  resultClone.querySelector("#distanceReportActions")?.remove();
+  const resultText = (resultClone.innerText || resultClone.textContent || "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
+  return [
+    "Campsite Design Tool 共有レポート",
+    "================================",
+    `拠点名：${siteName}`,
+    `作成日時：${generatedAt}`,
+    `元ファイル：${sourceName}`,
+    "",
+    "【POI内訳】",
+    `判定対象POI：${points.length}件`,
+    `既存POI：${existingCount}件`,
+    `追加POI：${addedCount}件`,
+    typeLine,
+    "",
+    "【現地環境チェック】",
+    `通行：${getDistanceReportCheckLine("trafficOk", "スムーズに通れる", "注意が必要")}`,
+    `広場：${getDistanceReportCheckLine("hasOpenSpace", "あり", "なし")}`,
+    `回遊：${getDistanceReportCheckLine("hasLoopRoute", "できる", "弱い")}`,
+    `待機場所：${getDistanceReportCheckLine("hasWaitingSpace", "あり", "なし")}`,
+    "",
+    "【距離チェック結果】",
+    resultText,
+    "",
+    "【確認メモ】",
+    "このレポートは距離チェック時点の確認結果です。最終提出前に提出前チェックリストも確認してください。"
+  ].join("\n");
+}
+
+function getDistanceReportFileName() {
+  const points = getDistanceReportTargetPoints();
+  const siteName = getDistanceReportSiteName(points)
+    .replace(/[\\/:*?\"<>|]/g, "_")
+    .trim() || "campsite";
+
+  const now = new Date();
+  const date = [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, "0"),
+    String(now.getDate()).padStart(2, "0")
+  ].join("");
+
+  return `${siteName}_距離チェック_${date}.txt`;
+}
+
+function downloadDistanceShareReport() {
+  const report = buildDistanceShareReport();
+  if (!report) return;
+
+  const blob = new Blob(["\ufeff", report], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = getDistanceReportFileName();
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+async function shareDistanceReport() {
+  const report = buildDistanceShareReport();
+  if (!report) return;
+
+  const title = "Campsite Design Tool 共有レポート";
+
+  if (navigator.share) {
+    try {
+      await navigator.share({ title, text: report });
+      return;
+    } catch (error) {
+      if (error?.name === "AbortError") return;
+      console.warn("共有レポートの共有に失敗しました:", error);
+    }
+  }
+
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(report);
+      alert("共有レポートをクリップボードにコピーしました。");
+      return;
+    } catch (error) {
+      console.warn("共有レポートのコピーに失敗しました:", error);
+    }
+  }
+
+  downloadDistanceShareReport();
+}
+
+function ensureDistanceReportActions() {
+  const result = document.getElementById("distanceResult");
+  if (!result || !result.textContent.trim() || result.querySelector("#distanceReportActions")) return;
+
+  const actions = document.createElement("div");
+  actions.id = "distanceReportActions";
+  actions.style.cssText = [
+    "margin:18px 0 4px",
+    "padding:16px",
+    "border:1px solid rgba(56,189,248,.35)",
+    "border-radius:14px",
+    "background:rgba(14,165,233,.08)"
+  ].join(";");
+
+  actions.innerHTML = `
+    <div style="font-weight:900;color:#7dd3fc;margin-bottom:5px;">📄 共有レポート</div>
+    <div style="font-size:12px;line-height:1.7;color:#cbd5e1;margin-bottom:12px;">
+      距離チェック結果を、他のCAや管理者へ渡せるテキストレポートにまとめます。
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <button type="button" data-distance-report-share style="padding:11px 10px;border:1px solid rgba(56,189,248,.45);border-radius:10px;background:rgba(56,189,248,.16);color:#e0f2fe;font-weight:800;cursor:pointer;">共有する</button>
+      <button type="button" data-distance-report-save style="padding:11px 10px;border:1px solid rgba(148,163,184,.35);border-radius:10px;background:rgba(148,163,184,.10);color:#e2e8f0;font-weight:800;cursor:pointer;">TXT保存</button>
+    </div>
+  `;
+
+  actions.querySelector("[data-distance-report-share]")?.addEventListener("click", shareDistanceReport);
+  actions.querySelector("[data-distance-report-save]")?.addEventListener("click", downloadDistanceShareReport);
+  result.appendChild(actions);
+}
+
+function setupDistanceReportObserver() {
+  const result = document.getElementById("distanceResult");
+  if (!result || result.dataset.reportObserverReady === "true") return;
+
+  result.dataset.reportObserverReady = "true";
+  const observer = new MutationObserver(() => {
+    requestAnimationFrame(ensureDistanceReportActions);
+  });
+
+  observer.observe(result, { childList: true, subtree: true });
+  ensureDistanceReportActions();
+}
+
+document.addEventListener("DOMContentLoaded", setupDistanceReportObserver);
