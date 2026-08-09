@@ -2,23 +2,27 @@
    UI大改修 11: Campsite知見基盤
 
    目的:
-   - 必須確認 / 推奨 / 経験則を同じ重さで扱わない
-   - 全国CAから集める知見を、説明可能な固定データとして管理する
-   - AIの自由生成ではなく、登録済みデータだけを表示する
+   - 利用者向けアドバイスを「必須確認 / 推奨」に分ける
+   - 管理者が実際のKMZを確認して得た観察は、未公開データとして蓄積できる形にする
+   - 同じ傾向が繰り返し確認できたものだけ、管理者判断で「推奨」へ昇格する
+   - AIの自由生成ではなく、登録済みの説明可能なデータだけを表示する
 ====================================================== */
 
-const CAMPSITE_KNOWLEDGE_SCHEMA_VERSION = "1.0";
+const CAMPSITE_KNOWLEDGE_SCHEMA_VERSION = "1.1";
 
 const CAMPSITE_ADVICE_LEVELS = Object.freeze({
   REQUIRED: "required",
-  RECOMMENDED: "recommended",
-  EXPERIENCE: "experience"
+  RECOMMENDED: "recommended"
 });
 
 const CAMPSITE_ADVICE_LEVEL_LABELS = Object.freeze({
   [CAMPSITE_ADVICE_LEVELS.REQUIRED]: "必須確認",
-  [CAMPSITE_ADVICE_LEVELS.RECOMMENDED]: "推奨",
-  [CAMPSITE_ADVICE_LEVELS.EXPERIENCE]: "経験則"
+  [CAMPSITE_ADVICE_LEVELS.RECOMMENDED]: "推奨"
+});
+
+const CAMPSITE_KNOWLEDGE_SOURCE_TYPES = Object.freeze({
+  FIXED_RULE: "fixed_rule",
+  KMZ_REVIEW: "kmz_review"
 });
 
 const CAMPSITE_KNOWLEDGE_REQUIRED_FIELDS = Object.freeze([
@@ -29,15 +33,34 @@ const CAMPSITE_KNOWLEDGE_REQUIRED_FIELDS = Object.freeze([
   "advice",
   "importance",
   "evidence",
-  "contributor",
+  "sourceType",
+  "sourceRef",
   "confirmedAt",
   "regionalVariation",
   "publicationAllowed"
 ]);
 
+const CAMPSITE_REVIEW_OBSERVATION_REQUIRED_FIELDS = Object.freeze([
+  "id",
+  "category",
+  "observation",
+  "evidence",
+  "sourceType",
+  "sourceRef",
+  "confirmedAt",
+  "regionalVariation",
+  "promotionStatus"
+]);
+
+const CAMPSITE_REVIEW_PROMOTION_STATUS = Object.freeze({
+  CANDIDATE: "candidate",
+  PROMOTED: "promoted",
+  REJECTED: "rejected"
+});
+
 /*
-  固定ルール・推奨事項の基礎データ。
-  ここに登録する内容は、現在のCampsite Design Toolで既に案内している方針に限定する。
+  利用者へ表示してよい固定ルール・推奨事項。
+  現在のCampsite Design Toolで既に案内している方針に限定する。
 */
 const CAMPSITE_FIXED_KNOWLEDGE = Object.freeze([
   {
@@ -48,7 +71,8 @@ const CAMPSITE_FIXED_KNOWLEDGE = Object.freeze([
     advice: "POI間隔は40mを基本とし、40mの確保が難しい場所だけ30m以上40m未満を調整候補として確認します。",
     importance: 3,
     evidence: "Campsite Design Toolの距離チェック・設計ガイドで使用している基本距離方針。",
-    contributor: "Campsite Design Tool",
+    sourceType: CAMPSITE_KNOWLEDGE_SOURCE_TYPES.FIXED_RULE,
+    sourceRef: "campsite-design-tool",
     confirmedAt: "2026-08-10",
     regionalVariation: false,
     publicationAllowed: true
@@ -61,7 +85,8 @@ const CAMPSITE_FIXED_KNOWLEDGE = Object.freeze([
     advice: "追加POIは25個以内に収まっているか確認します。",
     importance: 3,
     evidence: "Campsite Design Toolの設計ガイド・提出前チェックで使用している上限確認。",
-    contributor: "Campsite Design Tool",
+    sourceType: CAMPSITE_KNOWLEDGE_SOURCE_TYPES.FIXED_RULE,
+    sourceRef: "campsite-design-tool",
     confirmedAt: "2026-08-10",
     regionalVariation: false,
     publicationAllowed: true
@@ -74,7 +99,8 @@ const CAMPSITE_FIXED_KNOWLEDGE = Object.freeze([
     advice: "既存POI・追加POI・活動範囲は、確認しやすいようにレイヤーを分けます。",
     importance: 3,
     evidence: "距離チェックと提出前チェックで必要になるレイヤー構成。",
-    contributor: "Campsite Design Tool",
+    sourceType: CAMPSITE_KNOWLEDGE_SOURCE_TYPES.FIXED_RULE,
+    sourceRef: "campsite-design-tool",
     confirmedAt: "2026-08-10",
     regionalVariation: false,
     publicationAllowed: true
@@ -87,7 +113,8 @@ const CAMPSITE_FIXED_KNOWLEDGE = Object.freeze([
     advice: "人の流れを妨げにくい位置へ、立ち止まるポイントを分散して配置することを推奨します。",
     importance: 2,
     evidence: "現地環境チェックで確認している通行・滞留への配慮。",
-    contributor: "Campsite Design Tool",
+    sourceType: CAMPSITE_KNOWLEDGE_SOURCE_TYPES.FIXED_RULE,
+    sourceRef: "campsite-design-tool",
     confirmedAt: "2026-08-10",
     regionalVariation: true,
     publicationAllowed: true
@@ -100,7 +127,8 @@ const CAMPSITE_FIXED_KNOWLEDGE = Object.freeze([
     advice: "一か所への集中を避けられるよう、回遊できる動線を意識することを推奨します。",
     importance: 2,
     evidence: "作成前の拠点診断・現地環境チェックで確認している回遊性。",
-    contributor: "Campsite Design Tool",
+    sourceType: CAMPSITE_KNOWLEDGE_SOURCE_TYPES.FIXED_RULE,
+    sourceRef: "campsite-design-tool",
     confirmedAt: "2026-08-10",
     regionalVariation: true,
     publicationAllowed: true
@@ -113,7 +141,8 @@ const CAMPSITE_FIXED_KNOWLEDGE = Object.freeze([
     advice: "集合・待機場所は、通行の余白を残せる場所として設計へ組み込むことを推奨します。",
     importance: 2,
     evidence: "作成前の拠点診断・現地環境チェックで確認している待機環境。",
-    contributor: "Campsite Design Tool",
+    sourceType: CAMPSITE_KNOWLEDGE_SOURCE_TYPES.FIXED_RULE,
+    sourceRef: "campsite-design-tool",
     confirmedAt: "2026-08-10",
     regionalVariation: true,
     publicationAllowed: true
@@ -121,10 +150,12 @@ const CAMPSITE_FIXED_KNOWLEDGE = Object.freeze([
 ]);
 
 /*
-  全国CAから集める経験則は、レビュー済みのものだけをここへ登録する。
-  初期状態では空。AIによる自動生成や、未確認の自由記述を直接表示しない。
+  管理者がデータベースから実際のKMZを確認して見つけた傾向を置く内部用の箱。
+  ここに入った時点では利用者へ表示しない。
+  同じ傾向が複数のKMZで繰り返し確認できた場合だけ、管理者判断で
+  CAMPSITE_FIXED_KNOWLEDGE の recommended 項目へ昇格させる。
 */
-const CAMPSITE_EXPERIENCE_KNOWLEDGE = [];
+const CAMPSITE_KMZ_REVIEW_OBSERVATIONS = [];
 
 function validateCampsiteKnowledgeEntry(entry) {
   const errors = [];
@@ -145,12 +176,42 @@ function validateCampsiteKnowledgeEntry(entry) {
     errors.push("importanceは1〜3で指定してください。");
   }
 
+  if (!Object.values(CAMPSITE_KNOWLEDGE_SOURCE_TYPES).includes(entry.sourceType)) {
+    errors.push(`sourceTypeが不正です: ${entry.sourceType}`);
+  }
+
   if (typeof entry.regionalVariation !== "boolean") {
     errors.push("regionalVariationはbooleanで指定してください。");
   }
 
   if (typeof entry.publicationAllowed !== "boolean") {
     errors.push("publicationAllowedはbooleanで指定してください。");
+  }
+
+  return errors;
+}
+
+function validateCampsiteReviewObservation(entry) {
+  const errors = [];
+
+  if (!entry || typeof entry !== "object") {
+    return ["KMZレビュー観察データがオブジェクトではありません。"];
+  }
+
+  CAMPSITE_REVIEW_OBSERVATION_REQUIRED_FIELDS.forEach(field => {
+    if (!(field in entry)) errors.push(`必須項目がありません: ${field}`);
+  });
+
+  if (entry.sourceType !== CAMPSITE_KNOWLEDGE_SOURCE_TYPES.KMZ_REVIEW) {
+    errors.push("KMZレビュー観察のsourceTypeはkmz_reviewで指定してください。");
+  }
+
+  if (!Object.values(CAMPSITE_REVIEW_PROMOTION_STATUS).includes(entry.promotionStatus)) {
+    errors.push(`promotionStatusが不正です: ${entry.promotionStatus}`);
+  }
+
+  if (typeof entry.regionalVariation !== "boolean") {
+    errors.push("regionalVariationはbooleanで指定してください。");
   }
 
   return errors;
@@ -163,12 +224,7 @@ function getCampsiteKnowledgeEntries(options = {}) {
     publicationAllowedOnly = true
   } = options;
 
-  const entries = [
-    ...CAMPSITE_FIXED_KNOWLEDGE,
-    ...CAMPSITE_EXPERIENCE_KNOWLEDGE
-  ];
-
-  return entries.filter(entry => {
+  return CAMPSITE_FIXED_KNOWLEDGE.filter(entry => {
     if (validateCampsiteKnowledgeEntry(entry).length) return false;
     if (level && entry.level !== level) return false;
     if (category && entry.category !== category) return false;
@@ -226,24 +282,6 @@ function ensureCampsiteKnowledgeStyles() {
       background: rgba(56,189,248,.12);
       color: #bae6fd;
     }
-
-    .knowledge-level-badge.experience {
-      border: 1px solid rgba(168,85,247,.42);
-      background: rgba(168,85,247,.12);
-      color: #e9d5ff;
-    }
-
-    #site-diagnosis .site-diagnosis-experience-card {
-      border-color: rgba(168,85,247,.34);
-      background: rgba(126,34,206,.07);
-    }
-
-    #site-diagnosis .site-diagnosis-experience-empty {
-      margin: 0;
-      color: #c4b5fd;
-      font-size: 12px;
-      line-height: 1.7;
-    }
   `;
 
   document.head.appendChild(style);
@@ -257,10 +295,9 @@ function addKnowledgeLevelGuideToSiteDiagnosis() {
   const guide = document.createElement("div");
   guide.className = "knowledge-level-guide";
   guide.innerHTML = `
-    <strong>アドバイスは3種類に分けて扱います。</strong><br>
+    <strong>アドバイスは2種類に分けて扱います。</strong><br>
     <span class="knowledge-level-badge required">必須確認</span>距離・追加POI上限・レイヤー分けなど、提出前に必ず確認する項目。<br>
-    <span class="knowledge-level-badge recommended">推奨</span>回遊・待機・通行など、現地条件に合わせて考える項目。<br>
-    <span class="knowledge-level-badge experience">経験則</span>全国CAから集め、レビュー済みになった事例だけを補足表示します。
+    <span class="knowledge-level-badge recommended">推奨</span>回遊・待機・通行など、現地条件に合わせて考える項目。
   `;
 
   policy.insertAdjacentElement("afterend", guide);
@@ -293,48 +330,9 @@ function decorateSiteDiagnosisAdvice() {
   });
 }
 
-function ensureSiteDiagnosisExperienceCard() {
-  const result = document.getElementById("siteDiagnosisResult");
-  if (!result || !result.textContent.trim()) return;
-  if (result.querySelector(".site-diagnosis-experience-card")) return;
-
-  const next = result.querySelector(".site-diagnosis-next");
-  if (!next) return;
-
-  const experienceEntries = getCampsiteKnowledgeEntries({
-    level: CAMPSITE_ADVICE_LEVELS.EXPERIENCE,
-    publicationAllowedOnly: true
-  });
-
-  const card = document.createElement("div");
-  card.className = "site-diagnosis-result-card site-diagnosis-experience-card";
-
-  if (!experienceEntries.length) {
-    card.innerHTML = `
-      <h3>📚 経験則</h3>
-      <p class="site-diagnosis-experience-empty">
-        現在、公開可能としてレビュー済みの経験則は登録されていません。<br>
-        未確認の自由記述やAI生成の助言は表示しません。
-      </p>
-    `;
-  } else {
-    card.innerHTML = `
-      <h3>📚 経験則</h3>
-      <ul>
-        ${experienceEntries.map(entry => `
-          <li><span class="knowledge-level-badge experience">経験則</span>${entry.advice}</li>
-        `).join("")}
-      </ul>
-    `;
-  }
-
-  next.insertAdjacentElement("beforebegin", card);
-}
-
 function refreshCampsiteKnowledgeUi() {
   addKnowledgeLevelGuideToSiteDiagnosis();
   decorateSiteDiagnosisAdvice();
-  ensureSiteDiagnosisExperienceCard();
 }
 
 function setupCampsiteKnowledgeUi() {
@@ -355,10 +353,14 @@ function setupCampsiteKnowledgeUi() {
 window.CampsiteKnowledge = Object.freeze({
   schemaVersion: CAMPSITE_KNOWLEDGE_SCHEMA_VERSION,
   levels: CAMPSITE_ADVICE_LEVELS,
+  sourceTypes: CAMPSITE_KNOWLEDGE_SOURCE_TYPES,
+  reviewPromotionStatus: CAMPSITE_REVIEW_PROMOTION_STATUS,
   requiredFields: CAMPSITE_KNOWLEDGE_REQUIRED_FIELDS,
+  reviewObservationRequiredFields: CAMPSITE_REVIEW_OBSERVATION_REQUIRED_FIELDS,
   fixedEntries: CAMPSITE_FIXED_KNOWLEDGE,
-  experienceEntries: CAMPSITE_EXPERIENCE_KNOWLEDGE,
+  reviewObservations: CAMPSITE_KMZ_REVIEW_OBSERVATIONS,
   validateEntry: validateCampsiteKnowledgeEntry,
+  validateReviewObservation: validateCampsiteReviewObservation,
   getEntries: getCampsiteKnowledgeEntries,
   getLevelLabel: getCampsiteKnowledgeLevelLabel
 });
