@@ -14,22 +14,11 @@
     if (!file) return null;
     const lower = file.name.toLowerCase();
     if (lower.endsWith('.kml')) {
-      return {
-        file,
-        zip: null,
-        kmlPath: 'doc.kml',
-        kmlText: await file.text()
-      };
+      return { file, zip: null, kmlPath: 'doc.kml', kmlText: await file.text() };
     }
-
     const zip = await JSZip.loadAsync(await file.arrayBuffer());
     const kmlPath = findKmlPath(zip);
-    return {
-      file,
-      zip,
-      kmlPath,
-      kmlText: await zip.files[kmlPath].async('string')
-    };
+    return { file, zip, kmlPath, kmlText: await zip.files[kmlPath].async('string') };
   }
 
   fileInput.addEventListener('change', () => {
@@ -51,10 +40,9 @@
   }
 
   function removeOldFieldCircleFolders(doc) {
-    const folders = Array.from(doc.getElementsByTagNameNS('*', 'Folder'));
-    folders.forEach(folder => {
+    Array.from(doc.getElementsByTagNameNS('*', 'Folder')).forEach(folder => {
       const name = directName(folder);
-      if (name === '現地モード_30m円' || name === '現地モード_40m円') folder.remove();
+      if (name === '現地モード_30m円' || name === '現地モード_40m円' || name === '現地モード_距離円') folder.remove();
     });
   }
 
@@ -76,8 +64,7 @@
   function circleCoordinateText(lat, lng, radiusMeters, steps = 72) {
     const points = [];
     for (let i = 0; i <= steps; i += 1) {
-      const bearing = 360 * i / steps;
-      const [pLat, pLng] = destinationPoint(lat, lng, radiusMeters, bearing);
+      const [pLat, pLng] = destinationPoint(lat, lng, radiusMeters, 360 * i / steps);
       points.push(`${pLng.toFixed(8)},${pLat.toFixed(8)},0`);
     }
     return points.join(' ');
@@ -85,12 +72,14 @@
 
   function ensureCircleStyles(doc, documentNode) {
     const styles = [
-      ['fieldMode30mStyle', 'ff3b3bd6', '1.8'],
-      ['fieldMode40mStyle', 'ff00a5ff', '1.8']
+      ['fieldMode30mStyle', 'ff3b3bd6', '2.2'],
+      ['fieldMode40mStyle', 'ff00a5ff', '2.2']
     ];
     styles.forEach(([id, color, width]) => {
-      const existing = Array.from(doc.getElementsByTagNameNS('*', 'Style')).find(el => el.getAttribute('id') === id);
-      if (existing) existing.remove();
+      Array.from(doc.getElementsByTagNameNS('*', 'Style'))
+        .filter(el => el.getAttribute('id') === id)
+        .forEach(el => el.remove());
+
       const style = createElement(doc, 'Style');
       style.setAttribute('id', id);
       const lineStyle = createElement(doc, 'LineStyle');
@@ -105,24 +94,32 @@
     });
   }
 
-  function addCircleFolder(doc, documentNode, records, radiusMeters, folderName, styleId) {
+  function createCirclePlacemark(doc, record, radiusMeters, styleId) {
+    const placemark = createElement(doc, 'Placemark');
+    placemark.appendChild(createElement(doc, 'name', `${record.name} ${radiusMeters}m`));
+    placemark.appendChild(createElement(doc, 'description', `${radiusMeters}m距離確認円`));
+    placemark.appendChild(createElement(doc, 'styleUrl', `#${styleId}`));
+
+    const polygon = createElement(doc, 'Polygon');
+    polygon.appendChild(createElement(doc, 'tessellate', '1'));
+    polygon.appendChild(createElement(doc, 'altitudeMode', 'clampToGround'));
+    const outer = createElement(doc, 'outerBoundaryIs');
+    const ring = createElement(doc, 'LinearRing');
+    ring.appendChild(createElement(doc, 'coordinates', circleCoordinateText(record.latlng[0], record.latlng[1], radiusMeters)));
+    outer.appendChild(ring);
+    polygon.appendChild(outer);
+    placemark.appendChild(polygon);
+    return placemark;
+  }
+
+  function addDistanceCircleFolder(doc, documentNode, records) {
     const folder = createElement(doc, 'Folder');
-    folder.appendChild(createElement(doc, 'name', folderName));
+    folder.appendChild(createElement(doc, 'name', '現地モード_距離円'));
 
     records.forEach(record => {
-      const placemark = createElement(doc, 'Placemark');
-      placemark.appendChild(createElement(doc, 'name', `${record.name} ${radiusMeters}m`));
-      placemark.appendChild(createElement(doc, 'styleUrl', `#${styleId}`));
-
-      const polygon = createElement(doc, 'Polygon');
-      polygon.appendChild(createElement(doc, 'tessellate', '1'));
-      const outer = createElement(doc, 'outerBoundaryIs');
-      const ring = createElement(doc, 'LinearRing');
-      ring.appendChild(createElement(doc, 'coordinates', circleCoordinateText(record.latlng[0], record.latlng[1], radiusMeters)));
-      outer.appendChild(ring);
-      polygon.appendChild(outer);
-      placemark.appendChild(polygon);
-      folder.appendChild(placemark);
+      // 40mを先に入れ、その内側へ30mを重ねる。
+      folder.appendChild(createCirclePlacemark(doc, record, 40, 'fieldMode40mStyle'));
+      folder.appendChild(createCirclePlacemark(doc, record, 30, 'fieldMode30mStyle'));
     });
 
     documentNode.appendChild(folder);
@@ -159,8 +156,7 @@
     ensureCircleStyles(doc, documentNode);
 
     const addedRecords = poiRecords.filter(record => record.added);
-    addCircleFolder(doc, documentNode, addedRecords, 30, '現地モード_30m円', 'fieldMode30mStyle');
-    addCircleFolder(doc, documentNode, addedRecords, 40, '現地モード_40m円', 'fieldMode40mStyle');
+    addDistanceCircleFolder(doc, documentNode, addedRecords);
 
     const serialized = new XMLSerializer().serializeToString(doc);
     const outZip = source.zip || new JSZip();
@@ -184,27 +180,25 @@
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 4000);
 
-    saveNote.textContent = `${changed.length}件の座標を更新し、30m・40m円付きKMZを保存しました。ID・説明・ExtendedData・内部ファイルは元KMZを引き継ぎます。`;
+    saveNote.textContent = `${changed.length}件の座標を更新し、30m・40m円を同一レイヤーに入れたKMZを保存しました。`;
     modeStatus.textContent = 'KMZ保存完了';
   }
 
-  // 既存のKML書き出し表示をKMZ仕様へ置き換える。
   updateSaveButton = function updateFieldKmzSaveButton() {
     const n = changedRecords().length;
     saveButton.disabled = !n;
     saveButton.textContent = n ? `変更したPOIをKMZ保存（${n}件）` : '変更したPOIをKMZ保存';
     saveNote.textContent = n
-      ? `${n}件の座標だけ更新し、元KMZのデータを保持したまま30m・40m円を追加します。`
+      ? `${n}件の座標を更新し、名前・説明を維持したまま30m・40m円を追加します。`
       : '変更するとKMZ保存できるようになります。';
   };
   updateSaveButton();
 
-  // 既存のKML出力リスナーより先に処理して停止する。
   saveButton.addEventListener('click', async event => {
     event.preventDefault();
     event.stopImmediatePropagation();
     saveButton.disabled = true;
-    saveNote.textContent = '元KMZを保持したまま保存データを作成中…';
+    saveNote.textContent = '30m・40m円付きKMZを作成中…';
     try {
       await exportPreservedKmz();
     } catch (error) {
