@@ -39,9 +39,12 @@
     </section>
 
     <section class="field-mode-selection" aria-live="polite">
-      <div class="field-mode-selection-title">追加予定POIを選択してください</div>
-      <div class="field-mode-selection-detail">選択後、「現在地へ再配置」または「位置を微調整」を使います。</div>
-      <div class="field-mode-adjust-actions"><button type="button" disabled>現在地へ再配置</button><button type="button" disabled>位置を微調整</button></div>
+      <div id="fieldModeSelectionTitle" class="field-mode-selection-title">追加予定POIを選択してください</div>
+      <div id="fieldModeSelectionDetail" class="field-mode-selection-detail">地図上の黄色い追加予定POIをタップしてください。</div>
+      <div class="field-mode-adjust-actions">
+        <button id="fieldModeRelocateButton" type="button" disabled>現在地へ再配置</button>
+        <button id="fieldModeFineTuneButton" type="button" disabled>位置を微調整</button>
+      </div>
     </section>
   </main>
 
@@ -58,9 +61,14 @@
     const fileStatus = document.getElementById('fieldModeFileStatus');
     const modeStatus = document.getElementById('fieldModeStatus');
     const placeholder = document.getElementById('fieldModePlaceholder');
+    const selectionTitle = document.getElementById('fieldModeSelectionTitle');
+    const selectionDetail = document.getElementById('fieldModeSelectionDetail');
+    const relocateButton = document.getElementById('fieldModeRelocateButton');
+    const fineTuneButton = document.getElementById('fieldModeFineTuneButton');
     const map = L.map('fieldModeMap', { zoomControl: true }).setView([35.6812, 139.7671], 15);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 20, attribution: '&copy; OpenStreetMap contributors' }).addTo(map);
     let dataLayer = L.layerGroup().addTo(map);
+    let selectedPoi = null;
 
     function directChildrenByTag(node, tag) {
       return Array.from(node.children || []).filter(el => el.localName === tag);
@@ -91,10 +99,59 @@
       return /追加|追加予定|add|planned|candidate/i.test(`${folder} ${name}`);
     }
 
+    function resetPoiSelection() {
+      if (selectedPoi?.marker) {
+        selectedPoi.marker.setStyle({
+          radius: 9,
+          weight: 3,
+          color: '#d58b00',
+          fillColor: '#ffd35c',
+          fillOpacity: .9
+        });
+      }
+      selectedPoi = null;
+      selectionTitle.textContent = '追加予定POIを選択してください';
+      selectionDetail.textContent = '地図上の黄色い追加予定POIをタップしてください。';
+      relocateButton.disabled = true;
+      fineTuneButton.disabled = true;
+    }
+
+    function selectAddedPoi(marker, name, folder, latlng) {
+      if (selectedPoi?.marker && selectedPoi.marker !== marker) {
+        selectedPoi.marker.setStyle({
+          radius: 9,
+          weight: 3,
+          color: '#d58b00',
+          fillColor: '#ffd35c',
+          fillOpacity: .9
+        });
+      }
+
+      selectedPoi = { marker, name, folder, latlng };
+      marker.setStyle({
+        radius: 13,
+        weight: 5,
+        color: '#5d3f00',
+        fillColor: '#fff19a',
+        fillOpacity: 1
+      });
+      marker.bringToFront();
+
+      selectionTitle.textContent = `選択中：${name}`;
+      selectionDetail.textContent = folder
+        ? `${folder} ／ 現在地への再配置・微調整は次の実装で有効にします。`
+        : '現在地への再配置・微調整は次の実装で有効にします。';
+
+      // 選択確認だけ先に実装。実処理が未実装のボタンはまだ押せない。
+      relocateButton.disabled = true;
+      fineTuneButton.disabled = true;
+    }
+
     function renderKml(kmlText) {
       const xml = new DOMParser().parseFromString(kmlText, 'application/xml');
       if (xml.querySelector('parsererror')) throw new Error('KMLを解析できませんでした。');
       dataLayer.clearLayers();
+      resetPoiSelection();
       const bounds = [];
       const placemarks = Array.from(xml.getElementsByTagNameNS('*', 'Placemark'));
 
@@ -114,6 +171,9 @@
           const added = isAddedPoi(folder, name);
           const marker = L.circleMarker(latlng, { radius: added ? 9 : 7, weight: 3, color: added ? '#d58b00' : '#375f87', fillColor: added ? '#ffd35c' : '#78b9ed', fillOpacity: .9 });
           marker.bindPopup(`<strong>${name}</strong>${folder ? `<br><small>${folder}</small>` : ''}${added ? '<br><b>追加予定POI</b>' : ''}`);
+          if (added) {
+            marker.on('click', () => selectAddedPoi(marker, name, folder, latlng));
+          }
           marker.addTo(dataLayer);
           bounds.push(latlng);
           return;
@@ -170,6 +230,7 @@
       } catch (error) {
         console.error(error);
         dataLayer.clearLayers();
+        resetPoiSelection();
         placeholder.style.display = '';
         modeStatus.textContent = '読込失敗';
         fileStatus.textContent = `⚠ ${error.message || 'ファイルを読み込めませんでした。'}`;
