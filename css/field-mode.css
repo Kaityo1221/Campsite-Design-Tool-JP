@@ -1,0 +1,209 @@
+:root {
+  --field-bg: #f5f1e7;
+  --field-panel: #fffdf7;
+  --field-ink: #332b21;
+  --field-muted: #746957;
+  --field-accent: #b78324;
+  --field-accent-dark: #74521c;
+  --field-border: #d8c9a8;
+}
+
+* { box-sizing: border-box; }
+
+.field-mode-body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--field-bg);
+  color: var(--field-ink);
+  padding-bottom: calc(92px + env(safe-area-inset-bottom));
+}
+
+.field-mode-header {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: calc(12px + env(safe-area-inset-top)) 14px 12px;
+  background: #3b3125;
+  color: #fff9e9;
+}
+
+.field-mode-header h1 {
+  margin: 1px 0 0;
+  font-size: 20px;
+}
+
+.field-mode-eyebrow {
+  font-size: 9px;
+  letter-spacing: .14em;
+  opacity: .72;
+}
+
+.field-mode-back {
+  color: #f2d894;
+  text-decoration: none;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.field-mode-status {
+  padding: 5px 8px;
+  border: 1px solid rgba(255,255,255,.25);
+  border-radius: 999px;
+  font-size: 11px;
+}
+
+.field-mode-main {
+  width: min(100%, 760px);
+  margin: 0 auto;
+  padding: 12px;
+}
+
+.field-mode-intro,
+.field-mode-selection {
+  background: var(--field-panel);
+  border: 1px solid var(--field-border);
+  border-radius: 14px;
+  padding: 12px 14px;
+}
+
+.field-mode-intro strong { font-size: 14px; }
+.field-mode-intro p {
+  margin: 5px 0 0;
+  color: var(--field-muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.field-mode-stage {
+  position: relative;
+  min-height: 52vh;
+  margin: 10px 0;
+  border: 1px solid var(--field-border);
+  border-radius: 16px;
+  overflow: hidden;
+  background:
+    linear-gradient(rgba(255,255,255,.42), rgba(255,255,255,.42)),
+    repeating-linear-gradient(0deg, transparent 0 39px, rgba(116,82,28,.08) 40px),
+    repeating-linear-gradient(90deg, transparent 0 39px, rgba(116,82,28,.08) 40px),
+    #e7dfcb;
+}
+
+.field-mode-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 30px;
+  text-align: center;
+  color: var(--field-muted);
+  font-size: 12px;
+}
+
+.field-mode-placeholder strong {
+  color: var(--field-ink);
+  font-size: 14px;
+}
+
+.field-mode-placeholder-icon {
+  font-size: 44px;
+  color: var(--field-accent-dark);
+}
+
+.field-mode-new-poi {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  border: 1px solid var(--field-border);
+  border-radius: 999px;
+  padding: 9px 13px;
+  background: rgba(255,253,247,.9);
+  color: var(--field-muted);
+  font-weight: 700;
+}
+
+.field-mode-selection-title {
+  font-weight: 800;
+  font-size: 14px;
+}
+
+.field-mode-selection-detail {
+  margin-top: 4px;
+  color: var(--field-muted);
+  font-size: 12px;
+}
+
+.field-mode-adjust-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.field-mode-adjust-actions button {
+  min-height: 42px;
+  border: 1px solid var(--field-border);
+  border-radius: 10px;
+  background: #eee8da;
+  color: #938876;
+  font-weight: 700;
+}
+
+.field-mode-toolbar {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  z-index: 1000;
+  width: min(100%, 760px);
+  display: grid;
+  grid-template-columns: 1fr 82px 1fr;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px calc(9px + env(safe-area-inset-bottom));
+  background: rgba(59,49,37,.96);
+  box-shadow: 0 -8px 24px rgba(40,31,20,.16);
+}
+
+.field-mode-toolbar button {
+  border: 0;
+  font-weight: 800;
+}
+
+.field-mode-history-button {
+  height: 44px;
+  border-radius: 10px;
+  background: #efe4ca;
+  color: #6b5837;
+}
+
+.field-mode-scan-button {
+  position: relative;
+  width: 68px;
+  height: 68px;
+  justify-self: center;
+  border-radius: 50%;
+  background: #d5a33b;
+  color: #fff8e8;
+  box-shadow: inset 0 0 0 4px #7d5b21, 0 3px 10px rgba(0,0,0,.22);
+  font-size: 10px;
+  letter-spacing: .08em;
+}
+
+.field-mode-scan-ring {
+  position: absolute;
+  inset: 12px;
+  border: 1px solid rgba(255,255,255,.65);
+  border-radius: 50%;
+}
+
+.field-mode-toolbar button:disabled { opacity: .52; }
+
+@media (max-width: 520px) {
+  .field-mode-header { grid-template-columns: 1fr auto; }
+  .field-mode-header > div:nth-child(2) { grid-row: 2; grid-column: 1 / -1; }
+  .field-mode-stage { min-height: 50vh; }
+}
