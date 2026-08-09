@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="googlebot" content="noindex, nofollow">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>現地モード | Campsite Design Tool JP</title>
+  <link rel="stylesheet" href="css/style.css?v=90">
+  <link rel="stylesheet" href="css/field-mode.css?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/icon.png">
+</head>
+<body class="field-mode-body">
+  <header class="field-mode-header">
+    <a href="lab.html" class="field-mode-back">← Campsite Lab</a>
+    <div>
+      <div class="field-mode-eyebrow">FIELD POSITION ADJUSTMENT</div>
+      <h1>現地モード</h1>
+    </div>
+    <div class="field-mode-status" aria-live="polite">準備中</div>
+  </header>
+
+  <main class="field-mode-main">
+    <section class="field-mode-intro">
+      <strong>事前に配置した追加予定POIを、現地で実際の位置へ合わせます。</strong>
+      <p>基本は「作る」ではなく「合わせる」。新規POI追加は補助機能として扱います。</p>
+    </section>
+
+    <section class="field-mode-stage" aria-label="現地モード地図領域">
+      <div class="field-mode-placeholder">
+        <span class="field-mode-placeholder-icon">⌖</span>
+        <strong>KMZを読み込むと、ここに現地確認用マップを表示します。</strong>
+        <span>既存POI・追加予定POI・現在地を重ねて確認します。</span>
+      </div>
+
+      <button type="button" class="field-mode-new-poi" disabled title="Phase 1では補助機能として後から実装します">
+        ＋ 新規
+      </button>
+    </section>
+
+    <section class="field-mode-selection" aria-live="polite">
+      <div class="field-mode-selection-title">追加予定POIを選択してください</div>
+      <div class="field-mode-selection-detail">選択後、「現在地へ再配置」または「位置を微調整」を使います。</div>
+      <div class="field-mode-adjust-actions">
+        <button type="button" disabled>現在地へ再配置</button>
+        <button type="button" disabled>位置を微調整</button>
+      </div>
+    </section>
+  </main>
+
+  <nav class="field-mode-toolbar" aria-label="現地モード操作">
+    <button type="button" class="field-mode-history-button" disabled>← 戻る</button>
+    <button type="button" class="field-mode-scan-button" disabled aria-label="SCAN">
+      <span class="field-mode-scan-ring"></span>
+      <span>SCAN</span>
+    </button>
+    <button type="button" class="field-mode-history-button" disabled>進む →</button>
+  </nav>
+</body>
+</html>
