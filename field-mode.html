@@ -12,7 +12,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="assets/icon.png">
   <style>
     .field-location-badge{position:absolute;left:12px;bottom:12px;z-index:520;background:rgba(255,255,255,.92);border:1px solid #b8c7d8;border-radius:999px;padding:7px 10px;font-size:11px;font-weight:800;color:#244d73;box-shadow:0 2px 10px rgba(0,0,0,.12)}
-    .field-distance-badge{position:absolute;right:12px;top:12px;z-index:540;background:rgba(246,255,244,.96);border:2px solid #68a55c;border-radius:14px;padding:8px 11px;font-size:12px;font-weight:900;color:#35652e;box-shadow:0 2px 10px rgba(0,0,0,.14);pointer-events:none}
+    .field-distance-badge{position:absolute;right:12px;top:12px;z-index:540;background:rgba(246,255,244,.96);border:2px solid #68a55c;border-radius:14px;padding:8px 11px;font-size:12px;font-weight:900;color:#35652e;box-shadow:0 2px 10px rgba(0,0,0,.14);pointer-events:none;line-height:1.45}
     .field-distance-badge.near{background:rgba(255,248,220,.97);border-color:#d99b22;color:#805500}
     .field-distance-badge.danger{background:rgba(255,235,231,.98);border-color:#d9534f;color:#9b2926}
     .field-crosshair{position:absolute;left:50%;top:50%;width:42px;height:42px;transform:translate(-50%,-50%);z-index:560;pointer-events:none;display:none}
@@ -85,13 +85,13 @@
     function textOf(node,tag){const el=Array.from(node.children||[]).find(child=>child.localName===tag);return el?(el.textContent||'').trim():'';}
     function folderNameFor(pm){let node=pm.parentElement;while(node){if(node.localName==='Folder')return textOf(node,'name');node=node.parentElement;}return '';}
     function parseCoordList(text){return text.trim().split(/\s+/).map(item=>{const p=item.split(',').map(Number);return[p[1],p[0]];}).filter(p=>Number.isFinite(p[0])&&Number.isFinite(p[1]));}
-    function isAddedPoi(folder,name){return /追加|追加予定|add|planned|candidate/i.test(`${folder} ${name}`);}
+    function isAddedPoi(folder,name){return /追加|追加予定|追加希望|追加候補|候補|新設|add|planned|candidate|proposed/i.test(`${folder} ${name}`);}
     function meters(a,b){return map.distance(L.latLng(a[0],a[1]),L.latLng(b[0],b[1]));}
 
-    function nearestConflictPoi(position,excludedRecord=null){
+    function nearestPoiByType(position,added,excludedRecord=null){
       let nearest=null;
       for(const record of poiRecords){
-        if(record===excludedRecord)continue;
+        if(record===excludedRecord||record.added!==added)continue;
         const d=meters(position,record.latlng);
         if(!nearest||d<nearest.distance)nearest={record,distance:d};
       }
@@ -101,13 +101,23 @@
     function updateDistanceStatus(position=currentPosition,excludedRecord=null){
       distanceBadge.className='field-distance-badge';
       if(!position||!poiRecords.length){distanceBadge.textContent='● 判定待ち';return;}
-      const nearest=nearestConflictPoi(position,excludedRecord);
-      if(!nearest){distanceBadge.textContent='● 配置可能。';return;}
-      const d=nearest.distance;
-      const label=nearest.record.added?'追加予定POI':'既存POI';
-      if(d<30){distanceBadge.classList.add('danger');distanceBadge.textContent=`⚠ ${label}まで ${d.toFixed(1)}m`;return;}
-      if(d<40){distanceBadge.classList.add('near');distanceBadge.textContent=`⚠ ${label}まで ${d.toFixed(1)}m`;return;}
-      distanceBadge.textContent='● 配置可能。';
+
+      const existing=nearestPoiByType(position,false,excludedRecord);
+      const planned=nearestPoiByType(position,true,excludedRecord);
+      const warnings=[];
+
+      if(existing&&existing.distance<40)warnings.push({label:'既存POI',distance:existing.distance});
+      if(planned&&planned.distance<40)warnings.push({label:'追加予定POI',distance:planned.distance});
+
+      if(!warnings.length){distanceBadge.textContent='● 配置可能。';return;}
+
+      if(warnings.some(item=>item.distance<30))distanceBadge.classList.add('danger');
+      else distanceBadge.classList.add('near');
+
+      distanceBadge.innerHTML=warnings
+        .sort((a,b)=>a.distance-b.distance)
+        .map(item=>`⚠ ${item.label}まで ${item.distance.toFixed(1)}m`)
+        .join('<br>');
     }
 
     function updateHistoryButtons(){undoButton.disabled=!undoStack.length;redoButton.disabled=!redoStack.length;}
