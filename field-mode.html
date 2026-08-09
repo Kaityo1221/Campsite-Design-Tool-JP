@@ -23,9 +23,9 @@
       <strong>事前に配置した追加予定POIを、現地で実際の位置へ合わせます。</strong>
       <p>基本は「作る」ではなく「合わせる」。新規POI追加は補助機能として扱います。</p>
       <label style="display:block;margin-top:10px;font-size:12px;font-weight:800;">現地確認するKMZ / KML
-        <input id="fieldModeFile" type="file" accept=".kmz,.kml,.zip" style="display:block;width:100%;margin-top:6px;">
+        <input id="fieldModeFile" type="file" style="display:block;width:100%;margin-top:6px;">
       </label>
-      <div id="fieldModeFileStatus" style="margin-top:6px;font-size:11px;color:#746957;">ファイルを選択してください。</div>
+      <div id="fieldModeFileStatus" style="margin-top:6px;font-size:11px;color:#746957;">KMZ / KML / ZIP を選択してください。</div>
     </section>
 
     <section class="field-mode-stage" aria-label="現地モード地図領域">
@@ -141,7 +141,15 @@
 
     async function readKmlText(file) {
       const lower = file.name.toLowerCase();
-      if (lower.endsWith('.kml')) return await file.text();
+      const isKml = lower.endsWith('.kml');
+      const isKmz = lower.endsWith('.kmz');
+      const isZip = lower.endsWith('.zip');
+
+      if (!isKml && !isKmz && !isZip) {
+        throw new Error('KMZ / KML / ZIP ファイルを選択してください。');
+      }
+
+      if (isKml) return await file.text();
       if (!window.JSZip) throw new Error('KMZ展開ライブラリを読み込めませんでした。');
       const zip = await JSZip.loadAsync(await file.arrayBuffer());
       const names = Object.keys(zip.files).filter(n => n.toLowerCase().endsWith('.kml') && !zip.files[n].dir);
