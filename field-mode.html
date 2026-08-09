@@ -101,28 +101,20 @@
     function updateDistanceStatus(position=currentPosition,excludedRecord=null){
       distanceBadge.className='field-distance-badge';
       if(!position||!poiRecords.length){distanceBadge.textContent='● 判定待ち';return;}
-
       const existing=nearestPoiByType(position,false,excludedRecord);
       const planned=nearestPoiByType(position,true,excludedRecord);
       const warnings=[];
-
       if(existing&&existing.distance<40)warnings.push({label:'既存POI',distance:existing.distance});
       if(planned&&planned.distance<40)warnings.push({label:'追加予定POI',distance:planned.distance});
-
       if(!warnings.length){distanceBadge.textContent='● 配置可能。';return;}
-
       if(warnings.some(item=>item.distance<30))distanceBadge.classList.add('danger');
       else distanceBadge.classList.add('near');
-
-      distanceBadge.innerHTML=warnings
-        .sort((a,b)=>a.distance-b.distance)
-        .map(item=>`⚠ ${item.label}まで ${item.distance.toFixed(1)}m`)
-        .join('<br>');
+      distanceBadge.innerHTML=warnings.sort((a,b)=>a.distance-b.distance).map(item=>`⚠ ${item.label}まで ${item.distance.toFixed(1)}m`).join('<br>');
     }
 
     function updateHistoryButtons(){undoButton.disabled=!undoStack.length;redoButton.disabled=!redoStack.length;}
     function pushMove(record,from,to){undoStack.push({record,from:[...from],to:[...to]});redoStack.length=0;updateHistoryButtons();}
-    function applyMove(record,latlng){record.latlng=[...latlng];record.marker.setLatLng(record.latlng);if(selectedPoi===record)refreshSelectionPanel();else updateDistanceStatus(record.latlng,record);}
+    function applyMove(record,latlng){record.latlng=[...latlng];record.marker.setLatLng(record.latlng);if(record.rangeCircle)record.rangeCircle.setLatLng(record.latlng);if(selectedPoi===record)refreshSelectionPanel();else updateDistanceStatus(record.latlng,record);}
 
     function refreshSelectionPanel(){
       if(!selectedPoi)return;
@@ -180,10 +172,23 @@
       const xml=new DOMParser().parseFromString(kmlText,'application/xml');if(xml.querySelector('parsererror'))throw new Error('KMLを解析できませんでした。');
       dataLayer.clearLayers();poiRecords=[];undoStack.length=0;redoStack.length=0;updateHistoryButtons();resetPoiSelection();const bounds=[],placemarks=Array.from(xml.getElementsByTagNameNS('*','Placemark'));
       placemarks.forEach(pm=>{const name=textOf(pm,'name')||'名称なし',folder=folderNameFor(pm),point=pm.getElementsByTagNameNS('*','Point')[0],line=pm.getElementsByTagNameNS('*','LineString')[0],polygon=pm.getElementsByTagNameNS('*','Polygon')[0];
-        if(point){const c=point.getElementsByTagNameNS('*','coordinates')[0];if(!c)return;const pts=parseCoordList(c.textContent);if(!pts.length)return;const latlng=pts[0],added=isAddedPoi(folder,name),marker=L.circleMarker(latlng,{pane:'fieldPoiPane',radius:added?9:7,weight:3,color:added?'#d58b00':'#375f87',fillColor:added?'#ffd35c':'#78b9ed',fillOpacity:.9}),record={marker,name,folder,latlng:[...latlng],added};poiRecords.push(record);marker.bindPopup(`<strong>${name}</strong>${folder?`<br><small>${folder}</small>`:''}${added?'<br><b>追加予定POI</b>':''}`);if(added)marker.on('click',()=>selectAddedPoi(record));marker.addTo(dataLayer);bounds.push(latlng);return;}
-        const geometry=line||polygon;if(!geometry)return;Array.from(geometry.getElementsByTagNameNS('*','coordinates')).forEach(c=>{const pts=parseCoordList(c.textContent);if(pts.length<2)return;const common={pane:'fieldBackgroundPane',interactive:false,bubblingMouseEvents:false},shape=polygon?L.polygon(pts,{...common,color:'#8b6a2f',weight:2,fillOpacity:.05}):L.polyline(pts,{...common,color:'#8b6a2f',weight:2,opacity:.55});shape.addTo(dataLayer);bounds.push(...pts);});
+        if(point){
+          const c=point.getElementsByTagNameNS('*','coordinates')[0];if(!c)return;
+          const pts=parseCoordList(c.textContent);if(!pts.length)return;
+          const latlng=pts[0],added=isAddedPoi(folder,name);
+          const rangeCircle=L.circle(latlng,{pane:'fieldBackgroundPane',radius:40,color:added?'#d58b00':'#375f87',weight:2,opacity:.7,fillColor:added?'#ffd35c':'#78b9ed',fillOpacity:.035,interactive:false,dashArray:added?'6 5':null}).addTo(dataLayer);
+          const marker=L.circleMarker(latlng,{pane:'fieldPoiPane',radius:added?9:7,weight:3,color:added?'#d58b00':'#375f87',fillColor:added?'#ffd35c':'#78b9ed',fillOpacity:.9});
+          const record={marker,rangeCircle,name,folder,latlng:[...latlng],added};
+          poiRecords.push(record);
+          marker.bindPopup(`<strong>${name}</strong>${folder?`<br><small>${folder}</small>`:''}${added?'<br><b>追加予定POI</b>':''}<br><small>現地モード：40m円を自動表示</small>`);
+          if(added)marker.on('click',()=>selectAddedPoi(record));
+          marker.addTo(dataLayer);bounds.push(latlng);return;
+        }
+        const geometry=line||polygon;if(!geometry)return;
+        Array.from(geometry.getElementsByTagNameNS('*','coordinates')).forEach(c=>{const pts=parseCoordList(c.textContent);if(pts.length<2)return;const common={pane:'fieldBackgroundPane',interactive:false,bubblingMouseEvents:false},shape=polygon?L.polygon(pts,{...common,color:'#8b6a2f',weight:2,fillOpacity:.05}):L.polyline(pts,{...common,color:'#8b6a2f',weight:2,opacity:.55});shape.addTo(dataLayer);bounds.push(...pts);});
       });
-      if(!bounds.length)throw new Error('表示できる地点・線・範囲が見つかりませんでした。');map.fitBounds(bounds,{padding:[24,24],maxZoom:18});placeholder.style.display='none';modeStatus.textContent=currentPosition?'GPS取得済':'KMZ読込済';fileStatus.textContent+=` ／ ${placemarks.length}件を読み込み`;updateDistanceStatus(currentPosition);setTimeout(()=>map.invalidateSize(),50);
+      if(!bounds.length)throw new Error('表示できる地点・線・範囲が見つかりませんでした。');
+      map.fitBounds(bounds,{padding:[24,24],maxZoom:18});placeholder.style.display='none';modeStatus.textContent=currentPosition?'GPS取得済':'KMZ読込済';fileStatus.textContent+=` ／ ${placemarks.length}件を読み込み ／ 40m円を自動表示`;updateDistanceStatus(currentPosition);setTimeout(()=>map.invalidateSize(),50);
     }
 
     async function readKmlText(file){const lower=file.name.toLowerCase();if(!/\.(kml|kmz|zip)$/.test(lower))throw new Error('KMZ / KML / ZIP ファイルを選択してください。');if(lower.endsWith('.kml'))return await file.text();if(!window.JSZip)throw new Error('KMZ展開ライブラリを読み込めませんでした。');const zip=await JSZip.loadAsync(await file.arrayBuffer()),names=Object.keys(zip.files).filter(n=>n.toLowerCase().endsWith('.kml')&&!zip.files[n].dir);if(!names.length)throw new Error('KMZ内にKMLがありません。');const preferred=names.find(n=>/(^|\/)doc\.kml$/i.test(n))||names[0];return await zip.files[preferred].async('string');}
