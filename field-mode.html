@@ -24,6 +24,11 @@
     <section class="field-mode-intro">
       <strong>事前に配置した追加予定POIを、現地で実際の位置へ合わせます。</strong>
       <p>基本は「作る」ではなく「合わせる」。新規POI追加は補助機能として扱います。</p>
+      <label style="display:block;margin-top:10px;font-size:12px;font-weight:800;">
+        現地確認するKMZ / KML
+        <input id="fieldModeFile" type="file" accept=".kmz,.kml,.zip" style="display:block;width:100%;margin-top:6px;">
+      </label>
+      <div id="fieldModeFileStatus" style="margin-top:6px;font-size:11px;color:#746957;">ファイルを選択してください。</div>
     </section>
 
     <section class="field-mode-stage" aria-label="現地モード地図領域">
@@ -33,9 +38,7 @@
         <span>既存POI・追加予定POI・現在地を重ねて確認します。</span>
       </div>
 
-      <button type="button" class="field-mode-new-poi" disabled title="Phase 1では補助機能として後から実装します">
-        ＋ 新規
-      </button>
+      <button type="button" class="field-mode-new-poi" disabled title="Phase 1では補助機能として後から実装します">＋ 新規</button>
     </section>
 
     <section class="field-mode-selection" aria-live="polite">
@@ -56,5 +59,14 @@
     </button>
     <button type="button" class="field-mode-history-button" disabled>進む →</button>
   </nav>
+
+  <script>
+    const fieldModeFile = document.getElementById('fieldModeFile');
+    const fieldModeFileStatus = document.getElementById('fieldModeFileStatus');
+    fieldModeFile.addEventListener('change', () => {
+      const file = fieldModeFile.files && fieldModeFile.files[0];
+      fieldModeFileStatus.textContent = file ? `選択中：${file.name}` : 'ファイルを選択してください。';
+    });
+  </script>
 </body>
 </html>
