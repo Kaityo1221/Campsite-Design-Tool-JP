@@ -4,6 +4,12 @@
   const selectionSection = document.querySelector('.field-mode-selection');
   if (!selectionSection) return;
 
+  const TARGET_BYTES = 280 * 1024;
+  const INITIAL_MAX_EDGE = 1600;
+  const MIN_MAX_EDGE = 960;
+  const INITIAL_QUALITY = 0.82;
+  const MIN_QUALITY = 0.46;
+
   const style = document.createElement('style');
   style.textContent = `
     .field-poi-meta{margin-top:12px;padding-top:12px;border-top:1px dashed #cbbd9f;display:none}
@@ -35,7 +41,7 @@
       <button id="fieldPoiPhotoRemove" class="field-poi-photo-remove" type="button">削除</button>
     </div>
     <img id="fieldPoiPhotoPreview" class="field-poi-photo-preview" alt="選択した現地写真のプレビュー">
-    <div class="field-poi-meta-note">写真とメモはサーバーへ送信せず、KMZ保存時に端末へ持ち帰ります。</div>
+    <div class="field-poi-meta-note">写真は約280KBを目安に自動圧縮してKMZへ保存します。元写真は端末側に残ります。</div>
   `;
 
   const saveRow = selectionSection.querySelector('.field-save-row');
@@ -49,11 +55,84 @@
   const photoPreview = document.getElementById('fieldPoiPhotoPreview');
   let previewUrl = '';
 
+  function formatBytes(bytes) {
+    if (!Number.isFinite(bytes)) return '';
+    if (bytes < 1024) return `${bytes}B`;
+    return `${(bytes / 1024).toFixed(bytes >= 1024 * 1024 ? 0 : 0)}KB`;
+  }
+
   function clearPreview() {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     previewUrl = '';
     photoPreview.removeAttribute('src');
     photoPreview.classList.remove('active');
+  }
+
+  function loadImage(file) {
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        resolve(img);
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        reject(new Error('写真を読み込めませんでした。'));
+      };
+      img.src = url;
+    });
+  }
+
+  function canvasToBlob(canvas, quality) {
+    return new Promise((resolve, reject) => {
+      canvas.toBlob(blob => {
+        if (blob) resolve(blob);
+        else reject(new Error('写真を圧縮できませんでした。'));
+      }, 'image/jpeg', quality);
+    });
+  }
+
+  async function compressPhoto(file) {
+    const img = await loadImage(file);
+    const originalWidth = img.naturalWidth || img.width;
+    const originalHeight = img.naturalHeight || img.height;
+    if (!originalWidth || !originalHeight) throw new Error('写真サイズを取得できませんでした。');
+
+    let maxEdge = Math.min(INITIAL_MAX_EDGE, Math.max(originalWidth, originalHeight));
+    let bestBlob = null;
+    let bestWidth = originalWidth;
+    let bestHeight = originalHeight;
+
+    for (let resizeTry = 0; resizeTry < 5; resizeTry += 1) {
+      const scale = Math.min(1, maxEdge / Math.max(originalWidth, originalHeight));
+      const width = Math.max(1, Math.round(originalWidth * scale));
+      const height = Math.max(1, Math.round(originalHeight * scale));
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d', { alpha: false });
+      if (!ctx) throw new Error('写真圧縮を開始できませんでした。');
+      ctx.drawImage(img, 0, 0, width, height);
+
+      for (let quality = INITIAL_QUALITY; quality >= MIN_QUALITY - 0.001; quality -= 0.06) {
+        const blob = await canvasToBlob(canvas, Math.max(MIN_QUALITY, quality));
+        if (!bestBlob || blob.size < bestBlob.size) {
+          bestBlob = blob;
+          bestWidth = width;
+          bestHeight = height;
+        }
+        if (blob.size <= TARGET_BYTES) {
+          return { blob, width, height, originalBytes: file.size, targetBytes: TARGET_BYTES };
+        }
+      }
+
+      if (maxEdge <= MIN_MAX_EDGE) break;
+      maxEdge = Math.max(MIN_MAX_EDGE, Math.round(maxEdge * 0.84));
+    }
+
+    if (!bestBlob) throw new Error('写真を圧縮できませんでした。');
+    return { blob: bestBlob, width: bestWidth, height: bestHeight, originalBytes: file.size, targetBytes: TARGET_BYTES };
   }
 
   function renderMeta() {
@@ -71,7 +150,8 @@
     clearPreview();
 
     if (selectedPoi.fieldPhoto?.blob) {
-      photoName.textContent = selectedPoi.fieldPhoto.name || '現地写真';
+      const size = selectedPoi.fieldPhoto.blob.size;
+      photoName.textContent = `${selectedPoi.fieldPhoto.name || '現地写真'} / ${formatBytes(size)}`;
       photoRemove.classList.add('active');
       previewUrl = URL.createObjectURL(selectedPoi.fieldPhoto.blob);
       photoPreview.src = previewUrl;
@@ -94,7 +174,6 @@
     renderMeta();
   };
 
-  const baseChangedRecords = changedRecords;
   changedRecords = function changedRecordsWithFieldData() {
     return poiRecords.filter(record => {
       if (!record.added) return false;
@@ -110,19 +189,35 @@
     updateSaveButton();
   });
 
-  photoInput.addEventListener('change', () => {
+  photoInput.addEventListener('change', async () => {
     if (!selectedPoi?.added) return;
     const file = photoInput.files && photoInput.files[0];
     if (!file) return;
-    selectedPoi.fieldPhoto = {
-      name: file.name || `photo_${Date.now()}.jpg`,
-      type: file.type || 'image/jpeg',
-      blob: file
-    };
-    selectedPoi.fieldPhotoDirty = true;
-    photoInput.value = '';
-    renderMeta();
-    updateSaveButton();
+
+    const targetRecord = selectedPoi;
+    photoInput.disabled = true;
+    photoName.textContent = '圧縮中…';
+
+    try {
+      const compressed = await compressPhoto(file);
+      targetRecord.fieldPhoto = {
+        name: `${(file.name || `photo_${Date.now()}`).replace(/\.[^.]+$/, '')}.jpg`,
+        type: 'image/jpeg',
+        blob: compressed.blob,
+        originalBytes: compressed.originalBytes,
+        width: compressed.width,
+        height: compressed.height
+      };
+      targetRecord.fieldPhotoDirty = true;
+      updateSaveButton();
+      if (selectedPoi === targetRecord) renderMeta();
+    } catch (error) {
+      console.error(error);
+      if (selectedPoi === targetRecord) photoName.textContent = `⚠ ${error.message || '写真を圧縮できませんでした。'}`;
+    } finally {
+      photoInput.value = '';
+      photoInput.disabled = false;
+    }
   });
 
   photoRemove.addEventListener('click', () => {
@@ -133,7 +228,6 @@
     updateSaveButton();
   });
 
-  // 既存POI読込時にフィールド用属性を初期化する。
   const originalRenderKml = renderKml;
   renderKml = function patchedRenderKml(kmlText) {
     originalRenderKml(kmlText);
