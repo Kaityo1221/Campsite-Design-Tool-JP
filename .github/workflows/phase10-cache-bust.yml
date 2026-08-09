@@ -1,0 +1,45 @@
+name: Phase 10 cache bust
+
+on:
+  push:
+    branches:
+      - agent/ui-overhaul-10-site-diagnosis
+    paths:
+      - .github/workflows/phase10-cache-bust.yml
+
+permissions:
+  contents: write
+
+jobs:
+  bump-cache:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Bump distance feature cache
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('index.html')
+          text = path.read_text(encoding='utf-8')
+          old = 'js/distance-errors.js?v=1'
+          new = 'js/distance-errors.js?v=2'
+          if old not in text:
+              raise SystemExit(f'{old} not found')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
+
+      - name: Commit cache bump
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          if git diff --cached --quiet; then
+            echo "No cache change needed"
+          else
+            git commit -m "Bump distance feature cache"
+            git push
+          fi
