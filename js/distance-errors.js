@@ -292,9 +292,25 @@ function loadSiteDiagnosisFeature() {
   if (document.querySelector('script[data-site-diagnosis-loader="true"]')) return;
 
   const script = document.createElement("script");
-  script.src = "js/site-diagnosis.js?v=1";
+  script.src = "js/site-diagnosis.js?v=2";
   script.async = false;
   script.dataset.siteDiagnosisLoader = "true";
+  script.addEventListener("load", loadCampsiteKnowledgeFeature, { once: true });
+  document.body.appendChild(script);
+}
+
+// ======================================================
+// Phase 11: 必須確認 / 推奨 / 経験則の知見基盤
+// Phase 10の診断UIが読み込まれた後に追加する。
+// ======================================================
+
+function loadCampsiteKnowledgeFeature() {
+  if (document.querySelector('script[data-campsite-knowledge-loader="true"]')) return;
+
+  const script = document.createElement("script");
+  script.src = "js/campsite-knowledge.js?v=1";
+  script.async = false;
+  script.dataset.campsiteKnowledgeLoader = "true";
   document.body.appendChild(script);
 }
 
