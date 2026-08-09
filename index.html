@@ -1,1 +1,2108 @@
-PLACEHOLDER
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta name="robots" content="noindex, nofollow">
+<meta name="googlebot" content="noindex, nofollow">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Campsite Design Tool JP</title>
+<style>
+  html,
+  body {
+    margin: 0;
+    min-height: 100%;
+    background: #020617;
+  }
+</style>
+<link rel="preload" as="image" href="assets/story-left.PNG">
+<link rel="preload" as="image" href="assets/story-right.PNG">
+<link rel="preload" as="image" href="assets/icon.png">
+<link rel="stylesheet" href="css/style.css?v=90">
+<link rel="stylesheet" href="css/splash.css?v=98">
+<link rel="stylesheet" href="css/tabs.css?v=29">
+<link rel="stylesheet" href="css/admin.css?v=28">
+<link rel="stylesheet" href="css/distance.css?v=40">
+<link rel="stylesheet" href="css/capacity.css?v=8">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/icon.png">
+<link rel="manifest" href="./manifest.json">
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"
+  defer
+></script>
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+  crossorigin=""
+>
+
+<script
+  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+  crossorigin=""
+  defer
+></script>
+
+</head>
+
+  
+<body>
+
+<audio id="loginSound" src="assets/login.mp3"></audio>
+<audio id="successSound" src="assets/success.mp3"></audio>
+  <div id="loadingOverlay" class="loading-overlay">
+  <div class="loading-box">
+    <div class="spinner big"></div>
+    <div id="loadingText">処理中…</div>
+  </div>
+</div>
+<div id="loginScreen" class="login-screen">
+  <div class="login-card">
+    <h2>Campsite Design Tool</h2>
+    <p class="login-sub">アクセスコードが必要です</p>
+
+<input
+  id="accessCodeInput"
+  type="text"
+  inputmode="latin"
+  lang="en"
+  name="accessCode"
+  autocomplete="off"
+  autocorrect="off"
+  autocapitalize="off"
+  spellcheck="false"
+  enterkeyhint="done"
+  placeholder="アクセスコードを入力"
+  oninput="sanitizePasscodeInput(this)"
+  style="-webkit-text-security: disc;"
+>
+<button type="button" id="loginButton" onclick="checkAccessCode()">ログイン</button>
+<p id="loginError" class="error"></p>
+  </div>
+</div>
+<div id="splashScreen" class="splash-screen">
+<img src="assets/icon.png" alt="Campsite Tool Icon">
+</div>
+<div id="openingScreen" class="opening-screen">
+
+  <div class="opening-scene-wrap">
+
+  <img
+  id="openingSceneLeft"
+  class="opening-scene active"
+  src="assets/story-left.PNG"
+  alt="Campsite Design Tool opening"
+  loading="eager"
+  decoding="async"
+  fetchpriority="high"
+>
+
+<img
+  id="openingSceneRight"
+  class="opening-scene"
+  src="assets/story-right.PNG"
+  alt="Campsite Design Tool campfire"
+  loading="eager"
+  decoding="async"
+>
+<!-- CAMP隠しボタン -->
+<button
+  type="button"
+  id="campSecretButton"
+  class="camp-secret-button"
+  aria-label="CAMP"
+  onclick="showSoulIcon()"
+></button>
+
+<!-- SOULアイコン -->
+<img
+  src="assets/soul-icon.PNG"
+  id="soulIcon"
+  class="soul-icon"
+  alt=""
+  loading="lazy"
+  decoding="async"
+>
+    <!-- 羊タップ範囲 -->
+    <button
+      type="button"
+      id="sheepTapArea"
+      class="sheep-tap-area"
+      aria-label="羊をタップして次のシーンへ"
+      onclick="changeOpeningScene()"
+    ></button>
+<!-- 看板ショートカット -->
+<button
+  type="button"
+  class="opening-sign-area sign-howto"
+  aria-label="使い方へ"
+  onclick="goOpeningTab('howto')"
+></button>
+
+<button
+  type="button"
+  class="opening-sign-area sign-script"
+  aria-label="スクリプト導入方法へ"
+  onclick="goOpeningTab('script')"
+></button>
+
+<button
+  type="button"
+  class="opening-sign-area sign-campsite"
+  aria-label="キャンプサイト作成へ"
+  onclick="openCampsiteStartModal()"
+></button>
+
+<button
+  type="button"
+  class="opening-sign-area sign-distance"
+  aria-label="距離チェックへ"
+  onclick="goOpeningTab('distance')"
+></button>
+
+<button
+  type="button"
+  class="opening-sign-area sign-check"
+  aria-label="チェックリストへ"
+  onclick="goOpeningTab('check')"
+></button>
+<button
+  type="button"
+  class="opening-sign-area sign-tools"
+  aria-label="Campsite Labへ"
+  onclick="openCampsiteLab()"
+></button>
+    <!-- 設計を始める -->
+    <button
+  type="button"
+  class="opening-start-area"
+  aria-label="設計を始める"
+  onclick="openCampsiteStartModal()"
+></button>
+
+    <!-- ガイドPDFを見る -->
+    <a
+      class="opening-guide-area"
+      aria-label="ガイドPDFを見る"
+      href="docs/campsite-guide.pdf"
+      target="_blank"
+    ></a>
+
+    <!-- 幻想的な光 -->
+<div id="sceneMagicGlow" class="scene-magic-glow"></div>
+
+<button
+  type="button"
+  class="opening-policy-btn"
+  onclick="togglePolicyModal()"
+>
+  利用規約・研究について
+</button>
+
+</div> <!-- opening-scene-wrap -->
+
+</div> <!-- openingScreen -->
+
+<div id="policyModal" class="policy-modal">
+
+  <div class="policy-modal-card">
+
+    <button
+      class="policy-close"
+      onclick="closePolicyModal()"
+    >
+      ×
+    </button>
+
+    <h3>利用規約・研究について</h3>
+
+    <p>
+      みなさんの設計データは、
+      より良いキャンプサイト作成支援のための
+      研究・改善に役立てることがあります。
+    </p>
+
+  </div>
+
+</div>
+
+<div class="container">
+
+  <div class="hero">
+    <div class="badge">Community Ambassador Support Tool</div>
+
+    <h1>Campsite Design Tool</h1>
+
+    <p class="lead">
+      Wayfarer CSV / My Maps KML / KMZ から<br>
+      POIを読み込み、30m・40m円と既存POIレイヤーを自動生成します。
+    </p>
+  </div>
+
+  <!-- =========================
+       作業進捗ナビ
+  ========================= -->
+  <div class="workflow-nav" aria-label="キャンプサイト作成の進捗">
+    <div class="workflow-step active" data-workflow-step="prepare">
+      <span>1</span>
+      <strong>準備</strong>
+    </div>
+
+    <div class="workflow-step" data-workflow-step="csv">
+      <span>2</span>
+      <strong>CSV読込</strong>
+    </div>
+
+    <div class="workflow-step" data-workflow-step="kmz">
+      <span>3</span>
+      <strong>KMZ生成</strong>
+    </div>
+
+    <div class="workflow-step" data-workflow-step="mymaps">
+      <span>4</span>
+      <strong>My Maps設計</strong>
+    </div>
+
+    <div class="workflow-step" data-workflow-step="finished-kmz">
+      <span>5</span>
+      <strong>完成KMZ読込</strong>
+    </div>
+
+    <div class="workflow-step" data-workflow-step="distance">
+      <span>6</span>
+      <strong>距離確認</strong>
+    </div>
+
+    <div class="workflow-step" data-workflow-step="check">
+      <span>7</span>
+      <strong>提出前確認</strong>
+    </div>
+  </div>
+
+  <!-- =========================
+     ネオン看板メニュー
+========================= -->
+<div class="tabs grouped-tabs dashboard-menu">
+
+  <!-- ネオンアイコン定義 -->
+  <svg
+    class="dashboard-icon-sprite"
+    aria-hidden="true"
+    focusable="false"
+  >
+    <symbol id="icon-book" viewBox="0 0 48 48">
+      <path d="M7 10c7-3 12-2 17 2v27c-5-4-10-5-17-2z"/>
+      <path d="M41 10c-7-3-12-2-17 2v27c5-4 10-5 17-2z"/>
+    </symbol>
+
+    <symbol id="icon-code" viewBox="0 0 48 48">
+      <path d="M17 14 7 24l10 10"/>
+      <path d="m31 14 10 10-10 10"/>
+      <path d="m27 9-7 30"/>
+    </symbol>
+
+    <symbol id="icon-guide" viewBox="0 0 48 48">
+      <path d="M13 5h16l7 7v31H13z"/>
+      <path d="M29 5v9h7"/>
+      <path d="M18 22h13"/>
+      <path d="M18 29h13"/>
+      <path d="M18 36h9"/>
+    </symbol>
+
+    <symbol id="icon-campsite" viewBox="0 0 48 48">
+      <path d="M5 37 20 10l15 27z"/>
+      <path d="M20 10v27"/>
+      <path d="m20 37 7-13 8 13"/>
+      <path d="M40 38c-4-3-4-7-1-10 0 3 2 3 3 1 3 4 2 7-2 9z"/>
+    </symbol>
+
+    <symbol id="icon-radar" viewBox="0 0 48 48">
+      <circle cx="24" cy="24" r="18"/>
+      <circle cx="24" cy="24" r="10"/>
+      <circle cx="24" cy="24" r="3"/>
+      <path d="M24 6v36"/>
+      <path d="M6 24h36"/>
+      <path d="m24 24 12-9"/>
+    </symbol>
+
+    <symbol id="icon-checklist" viewBox="0 0 48 48">
+      <path d="M15 8h22v35H15z"/>
+      <path d="M20 5h12v6H20z"/>
+      <path d="m20 19 3 3 5-6"/>
+      <path d="M30 20h4"/>
+      <path d="m20 29 3 3 5-6"/>
+      <path d="M30 30h4"/>
+      <path d="M20 38h14"/>
+    </symbol>
+
+    <symbol id="icon-circle" viewBox="0 0 48 48">
+      <circle cx="24" cy="24" r="17"/>
+      <path d="M24 7v7"/>
+      <path d="M24 34v7"/>
+      <path d="M7 24h7"/>
+      <path d="M34 24h7"/>
+      <path d="M24 24 34 15"/>
+      <circle cx="24" cy="24" r="3"/>
+    </symbol>
+
+    <symbol id="icon-layers" viewBox="0 0 48 48">
+      <path d="m24 6 17 9-17 9-17-9z"/>
+      <path d="m7 23 17 9 17-9"/>
+      <path d="m7 31 17 9 17-9"/>
+    </symbol>
+
+    <symbol id="icon-megaphone" viewBox="0 0 48 48">
+      <path d="M8 21h10l18-9v24l-18-9H8z"/>
+      <path d="M18 27l3 12h-7l-3-12"/>
+      <path d="M40 19c3 3 3 7 0 10"/>
+    </symbol>
+
+    <symbol id="icon-admin" viewBox="0 0 48 48">
+      <path d="M24 5 39 10v12c0 10-6 17-15 21C15 39 9 32 9 22V10z"/>
+      <circle cx="24" cy="20" r="5"/>
+      <path d="M16 34c2-5 14-5 16 0"/>
+    </symbol>
+  </svg>
+
+  <!-- =========================
+       事前準備
+  ========================= -->
+  <section class="dashboard-section dashboard-prep">
+    <h2 class="dashboard-section-title">事前準備</h2>
+
+    <div class="dashboard-list">
+      <button
+        class="tab-button dashboard-button neon-blue"
+        onclick="openTab('howto', this)"
+      >
+        <svg class="dashboard-icon">
+          <use href="#icon-book"></use>
+        </svg>
+
+        <span class="dashboard-copy">
+          <strong>使い方</strong>
+          <small>基本的な使い方を確認</small>
+        </span>
+      </button>
+
+      <button
+        class="tab-button dashboard-button neon-purple"
+        onclick="openTab('script', this)"
+      >
+        <svg class="dashboard-icon">
+          <use href="#icon-code"></use>
+        </svg>
+
+        <span class="dashboard-copy">
+          <strong>スクリプト導入</strong>
+          <small>スクリプトを導入</small>
+        </span>
+      </button>
+
+      <button
+        class="tab-button dashboard-button neon-blue"
+        onclick="openTab('guide', this)"
+      >
+        <svg class="dashboard-icon">
+          <use href="#icon-guide"></use>
+        </svg>
+
+        <span class="dashboard-copy">
+          <strong>設計ガイド</strong>
+          <small>設計のポイントを確認</small>
+        </span>
+      </button>
+    </div>
+  </section>
+
+  <!-- =========================
+       メインフロー
+  ========================= -->
+  <section class="dashboard-section dashboard-route">
+    <div class="dashboard-route-head">
+      <h2 class="dashboard-section-title">メインフロー</h2>
+      <span>Adventure Route</span>
+    </div>
+
+    <div class="route-grid">
+
+      <button
+        class="tab-button route-card neon-purple active"
+        data-tab-target="tool"
+        onclick="openCampsiteStartModal(this)"
+      >
+        <span class="route-number">1</span>
+
+        <svg class="route-icon">
+          <use href="#icon-campsite"></use>
+        </svg>
+
+        <strong>キャンプサイト作成</strong>
+        <small>POIを配置してサイトを作成</small>
+      </button>
+
+      <span class="route-arrow">→</span>
+
+      <button
+        class="tab-button route-card neon-blue"
+        onclick="openTab('distance', this)"
+      >
+        <span class="route-number">2</span>
+
+        <svg class="route-icon">
+          <use href="#icon-radar"></use>
+        </svg>
+
+        <strong>距離チェック</strong>
+        <small>30m・40mの距離を確認</small>
+      </button>
+
+      <span class="route-arrow">→</span>
+
+      <button
+        class="tab-button route-card neon-purple"
+        onclick="openTab('check', this)"
+      >
+        <span class="route-number">3</span>
+
+        <svg class="route-icon">
+          <use href="#icon-checklist"></use>
+        </svg>
+
+        <strong>チェックリスト</strong>
+        <small>提出前に最終確認</small>
+      </button>
+
+    </div>
+  </section>
+
+  <!-- =========================
+       補助ツール
+  ========================= -->
+  <section class="dashboard-section dashboard-utility">
+    <h2 class="dashboard-section-title">補助ツール</h2>
+
+    <div class="dashboard-list">
+      <button
+        class="tab-button dashboard-button neon-cyan"
+        onclick="openTab('circle-tools', this)"
+      >
+        <svg class="dashboard-icon">
+          <use href="#icon-circle"></use>
+        </svg>
+
+        <span class="dashboard-copy">
+          <strong>円だけ生成</strong>
+          <small>30m・40m円をまとめて生成</small>
+        </span>
+      </button>
+
+      <button
+        class="tab-button dashboard-button neon-green"
+        onclick="openTab('deduplicate-poi', this)"
+      >
+        <svg class="dashboard-icon">
+          <use href="#icon-layers"></use>
+        </svg>
+
+        <span class="dashboard-copy">
+          <strong>重複POI整理</strong>
+          <small>重複しているPOIを検出・整理</small>
+        </span>
+      </button>
+    </div>
+  </section>
+
+  <!-- =========================
+       その他
+  ========================= -->
+  <section class="dashboard-section dashboard-other">
+    <h2 class="dashboard-section-title">その他</h2>
+
+    <div class="dashboard-list">
+      <button
+        type="button"
+        class="tab-button dashboard-button neon-purple"
+        onclick="backToOpening()"
+      >
+        <svg class="dashboard-icon">
+          <use href="#icon-megaphone"></use>
+        </svg>
+
+        <span class="dashboard-copy">
+          <strong>オープニング</strong>
+          <small>はじめに戻る</small>
+        </span>
+      </button>
+
+      <button
+        type="button"
+        class="tab-button dashboard-button neon-blue admin-tab-button"
+        onclick="openAdminLogin()"
+      >
+        <svg class="dashboard-icon">
+          <use href="#icon-admin"></use>
+        </svg>
+
+        <span class="dashboard-copy">
+          <strong>管理者</strong>
+          <small>管理者向け機能</small>
+        </span>
+      </button>
+    </div>
+  </section>
+
+</div>
+  <section id="tool" class="tab-content active">
+    <div class="panel">
+      <h2>キャンプサイト用KMZを作成</h2>
+      <div
+  id="csvModeSummary"
+  class="csv-mode-summary"
+  style="display:none;"
+>
+  <div>
+    <span class="csv-mode-summary-label">選択中の作成方法</span>
+    <strong id="csvModeSummaryText"></strong>
+  </div>
+
+  <button
+    type="button"
+    class="csv-mode-change-button"
+    onclick="openCampsiteStartModal()"
+  >
+    変更する
+  </button>
+</div>
+          <div class="step">
+      <div class="step-no">STEP 0</div>
+      <h3>はじめにマニュアルPDFを見る</h3>
+      <p class="note">
+        キャンプサイト設計の考え方と作成手順をまとめたPDFです。<br>
+        初めて使う方は、先にこちらをご確認ください。
+      </p>
+      <a
+        href="docs/campsite-guide.pdf"
+        target="_blank"
+        class="link-btn"
+      >
+        📘 マニュアルPDFを開く
+      </a>
+    </div>
+      <p class="note">
+  このツールは「POIを増やすため」ではなく、安心して集まり、遊びやすいキャンプサイトの設計図を作るためのものです。
+</p>
+      <p class="note">
+        複数CSVを同時に取り込んで、重複したPOIを自動で削除します。
+      </p>
+
+      <div id="wayfarerCsvStep" class="step">
+  <div class="step-no">STEP 1</div>
+  <h3>Wayfarer MapからPOIを抽出する</h3>
+
+  <p>
+    Wayfarer Mapから「Nearby Wayspots」を押して
+    Export CSVを実行します。<br>
+    ※広い公園の場合は複数回に分けて抽出してください。
+  </p>
+
+  <a
+    href="docs/poi-export-guide.pdf"
+    target="_blank"
+    class="link-btn"
+  >
+    📍 POI一括抽出マニュアルを開く
+  </a>
+
+  <p class="note">
+    初回利用でスクリプトをまだ導入していない方は、
+    <a href="#" onclick="openTab('script', this); return false;">
+      スクリプト導入方法
+    </a>
+    をご確認ください。
+  </p>
+</div>
+<div
+  id="customCsvStep"
+  class="step"
+  style="display:none;"
+>
+  <div class="step-no">STEP 1</div>
+  <h3>POI一覧を自分で作成する</h3>
+
+  <p class="note">
+    Wayfarer Mapを使わず、自分で整理したPOI一覧を読み込む方法です。<br>
+    自作CSVを初めて作る場合は、入力用Excelテンプレートをご利用ください。
+  </p>
+
+  <a
+    href="docs/campsite-poi-template.xlsx"
+    class="link-btn"
+    download
+  >
+    📊 自作CSV用Excelテンプレートをダウンロード
+  </a>
+
+  <div class="custom-csv-rule-box">
+    <strong>入力する列</strong>
+
+    <ul>
+      <li>POI名</li>
+      <li>緯度</li>
+      <li>経度</li>
+      <li>POI種別</li>
+    </ul>
+
+    <p class="note">
+  POI種別には、次のいずれかを入力してください。
+</p>
+
+<ul>
+  <li><strong>ポケストップ</strong></li>
+  <li><strong>ジム</strong></li>
+  <li><strong>パワースポット</strong></li>
+</ul>
+
+<p class="note">
+  または、
+  <strong>pokestop</strong>、
+  <strong>gym</strong>、
+  <strong>powerspot</strong>
+  と入力しても判定できます。
+</p>
+  </div>
+
+  <p class="note">
+    Excelへの入力が完了したら、
+    「CSV UTF-8（コンマ区切り）」形式で保存してください。<br>
+    保存したCSVは、次のSTEP 2で読み込みます。
+  </p>
+</div>
+      <div class="step">
+        <div class="step-no">STEP 2</div>
+        <p>CSV ファイルを選択します。<br>※正しくポケストップ・ジム・パワースポットを分類するため、
+CSVの使用を推奨します。KML / KMZでは分類できない場合があります。</p>
+        <input type="file" id="fileInput" multiple>
+      </div>
+
+      <div class="step">
+        <div class="step-no">STEP 3</div>
+        <p>生成する円を選択します。</p>
+
+        <div class="checks">
+          <label>
+            <input type="checkbox" name="radius" value="40" checked>
+            40m円（基本距離）
+          </label><br>
+
+          <label>
+            <input type="checkbox" name="radius" value="30" checked>
+            30m円（調整用）
+          </label>
+
+          <p class="note">
+            POI作成時は40mで統一する（管理者側の調整余地を確保するため）。<br>
+            配置が厳しい場合のみ、30mまで調整可能とする。
+          </p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-no">STEP 4</div>
+        <p>KMZを生成します。出力されるレイヤーは以下の構成です。</p>
+<ul>
+  <li>既存のポケストップ</li>
+  <li>既存のジム</li>
+  <li>既存のパワースポット</li>
+  <li>追加希望ポケスト</li>
+  <li>追加希望ジム</li>
+  <li>追加希望パワスポ</li>
+  <li>40m円（基本距離）</li>
+  <li>30m円（調整用）</li>
+</ul>
+
+<button class="generate" onclick="generateKMZ()">KMZを生成</button>
+<div id="status"></div>
+
+<p class="data-upload-notice">
+  本ツールの精度向上と今後の機能改善のため、
+  生成したKMZファイルと解析結果を匿名で収集しています。
+</p>
+      </div>
+
+      <div class="step">
+        <div class="step-no">STEP 5</div>
+        <h3>Google My Mapsにインポート</h3>
+        <p class="note">
+          生成されたKMZファイルをGoogle My Mapsにインポートしてください。<br>
+          出力構成に応じたレイヤーで表示されます
+        </p>
+        <button class="guide-btn" onclick="toggleRenameGuide()">
+  iPhoneでZIPになった場合
+</button>
+
+<div id="renameGuide" class="rename-guide">
+  <p>
+    iPhoneではKMZがZIPとして保存されてしまいます。<br>
+    その場合は以下の手順で拡張子を変更してください。<br>
+  </p>
+  <ol>
+    <li>ファイルアプリを開く</li>
+    <li>保存されたZIPファイルを長押し</li>
+    <li>「名称変更」を選択</li>
+    <li>末尾の <strong>.zip</strong> を <strong>.kmz</strong> に変更</li>
+    <li>「完了」を押す</li>
+    <li>保存されたKMZファイルをgoogleドライブに移動する</li>
+  </ol>
+          </div> <!-- renameGuide -->
+      </div> <!-- STEP5 -->
+<div class="step return-step-card">
+  <div class="step-no">STEP 6</div>
+
+  <h3>追加POIが決まったら、完成KMZを書き出して戻ってきてね</h3>
+
+  <p class="note">
+    Google My Mapsで追加POIの配置が終わったら、
+    完成した地図をKMZ形式で書き出してください。<br>
+    そのKMZをこのツールの「距離チェック」で読み込み、提出前確認を行います。
+  </p>
+
+  <div class="step-note">
+    <strong>STEP 6でやること</strong><br>
+    ① Google My Mapsで追加POIを配置する<br>
+    ② 活動範囲ポリゴンを作成する<br>
+    ③ 完成した地図をKMZ形式で書き出す<br>
+    ④ このツールへ戻る<br>
+    ⑤ 距離チェックで完成KMZを読み込む
+  </div>
+
+  <p class="note">
+    ※iPhoneでKMZがZIPとして保存された場合は、
+    上の「ZIPをKMZへ変更する手順」を確認してください。
+  </p>
+
+  <button
+    type="button"
+    class="return-home-button"
+    onclick="openReturnModal()"
+  >
+    🐏 設計できたよ！ 戻ってきました
+  </button>
+</div>
+
+</div> <!-- panel -->
+</section> <!-- tool -->
+<section id="circle-tools" class="tab-content">
+  <div class="panel">
+    <h2>円だけ生成</h2>
+
+    <p class="note">
+      既存のGoogle My Mapsを調整するための補助機能です。<br>
+      CSV / KML / KMZから、30m円・40m円だけを生成できます。
+    </p>
+
+    <div class="step">
+      <div class="step-no">補助機能</div>
+      <h3>円だけ生成</h3>
+
+      <p class="note">
+        CSV / KML / KMZから、30m円・40m円だけを生成します。<br>
+        既存のMy Mapsに円レイヤーだけ追加したい場合に使います。
+      </p>
+
+      <p class="note" style="
+        padding:12px;
+        border-radius:12px;
+        background:rgba(249,115,22,0.12);
+        border:1px solid rgba(249,115,22,0.35);
+        color:#fed7aa;
+      ">
+        ⚠ 既に作成済みのMy Mapsから書き出したKMZを読み込む場合、既存の30m円・40m円レイヤーは自動で読み込み対象から除外します。<br>
+        ただし、My Maps上の古い円レイヤーは自動削除できないため、新しい円KMZをインポートする前に、My Maps側で古い円レイヤーを削除してください。
+      </p>
+
+      <p>円を作成したいファイルを選択します。</p>
+     <input
+  type="file"
+  id="circleOnlyFileInput"
+  multiple
+  accept=".csv,.kmz,.kml,.zip,text/csv,application/vnd.google-earth.kmz,application/vnd.google-earth.kml+xml,application/zip"
+>
+
+      <div class="checks">
+        <label>
+          <input type="checkbox" name="circleOnlyRadius" value="40" checked>
+          40m円（基本距離）
+        </label><br>
+
+        <label>
+          <input type="checkbox" name="circleOnlyRadius" value="30" checked>
+          30m円（調整用）
+        </label>
+      </div>
+
+      <button class="generate" onclick="generateCircleOnlyKMZ()">
+        円だけKMZを生成
+      </button>
+
+      <div id="circleOnlyStatus"></div>
+    </div>
+  </div>
+</section>
+<section id="deduplicate-poi" class="tab-content">
+  <div class="panel">
+    <h2>🧹 重複POI整理</h2>
+
+    <p class="note">
+  CSVを複数読み込み、同じ座標に重複している既存POIを1件にまとめます。<br>
+  一地域を複数箇所から抽出したCSVを整理し、重複削除済みKMZを生成できます。<br>
+  KML / KMZは従来どおり、1ファイル内の重複整理に対応します。
+</p>
+
+    <div class="step">
+      <div class="step-no">補助機能</div>
+      <h3>既存POIの重複を削除する</h3>
+
+      <p class="note">
+  複数CSVをまとめて読み込み、同じ座標に重複している既存POIを1件にまとめます。<br>
+  追加希望POI、30m円、40m円、ダミーポイントは削除対象になりません。
+</p>
+
+      <p class="note" style="
+        padding:12px;
+        border-radius:12px;
+        background:rgba(56,189,248,0.10);
+        border:1px solid rgba(56,189,248,0.30);
+        color:#bae6fd;
+      ">
+        💡 KML / KMZを読み込んだ場合は、元のレイヤー構成を維持したまま既存POIの重複だけを削除します。<br>
+        CSVを読み込んだ場合は、整理済みの既存POI分類KMZを新しく生成します。
+      </p>
+
+      <p>整理したいCSV / KML / KMZファイルを選択します。</p>
+
+     <input
+  type="file"
+  id="deduplicatePoiFile"
+  multiple
+  accept=".csv,.kmz,.kml,.zip"
+>
+    <button
+  class="generate"
+  onclick="generateDeduplicatedPoiKMZ()"
+>
+  重複を削除したKMZを生成
+</button>
+      <div id="deduplicatePoiStatus"></div>
+    </div>
+  </div>
+</section>
+ <!-- Campsite Labは lab.html に分離。入口は羊→Lab看板のまま。 -->
+
+
+<section id="admin" class="tab-content">
+  <div class="panel">
+    <h2>管理者ツール</h2>
+
+    <p class="note">
+      管理者専用の確認・レビュー補助機能です。<br>
+      他CAから受け取ったMy Maps / KMZの内容確認や、レビュー前の整理に使います。
+    </p>
+  <div
+  id="aliasReviewAdminBox"
+  class="lab-admin-review-box"
+  style="display:none;"
+>
+    <button
+      id="aliasReviewToggleButton"
+      type="button"
+      class="lab-admin-mini-button"
+    >
+      🧩 未分類レビュー
+    </button>
+
+    <div
+      id="aliasReviewPanel"
+      class="alias-review-panel"
+      style="display:none;"
+    >
+      <div class="alias-review-header">
+  <div style="display:flex; align-items:center; gap:8px;">
+    <span id="aliasReviewRemainingCount">未読込</span>
+
+    <button
+      type="button"
+      id="aliasReviewCloseButton"
+      class="alias-review-close-button"
+      aria-label="未分類POIレビューを閉じる"
+    >
+      ×
+    </button>
+  </div>
+</div>
+
+      <p class="note">
+🧩 <strong>Research Review Room</strong><br><br>
+
+この部屋は研究者専用です。<br><br>
+
+研究員が送信した未分類POIを確認し、<br>
+辞書の未来を少しずつ育てています。<br><br>
+
+Ryotaさん、<br>
+ここはまだ見なくて大丈夫。<br>
+完成したら、自慢しに行きます。
+</p>
+<div class="alias-review-guide">
+  <strong>判断基準</strong>
+
+  <p class="note">
+    地図・ストリートビューで現地の文脈を見て、いちばん強い役割で判定します。<br>
+    レビュー結果は一次判定です。辞書本体にはまだ反映されません。
+  </p>
+
+  <div class="alias-review-guide-list">
+    <div>⚠️ <strong>注意</strong>：危険・水辺・階段・道路・駐車場・立入禁止など</div>
+    <div>🟢 <strong>休憩</strong>：ベンチ・東屋・トイレ・水飲み場など</div>
+    <div>🔵 <strong>回遊</strong>：入口・案内板・案内図・橋・園路・通路など</div>
+    <div>🟡 <strong>滞在</strong>：広場・芝生・石碑・像・説明板・花壇など</div>
+    <div>⏸ <strong>保留</strong>：意味は分かるが混在・判断に迷うもの</div>
+    <div>🚫 <strong>辞書不要</strong>：意味不明・一時的・広告・誤検知・辞書化すると危ないもの</div>
+  </div>
+
+  <p class="note">
+    迷ったら無理に決めず、<strong>保留＋メモ</strong>で残します。<br>
+    混在する場合は、原則 <strong>注意 ＞ 休憩 ＞ 回遊 ＞ 滞在</strong> の順で安全側を優先します。
+  </p>
+</div>
+      <div
+        id="aliasReviewStatus"
+        class="alias-review-status"
+      ></div>
+
+      <div
+        id="aliasReviewCard"
+        class="alias-review-card"
+        style="display:none;"
+      >
+        <div class="alias-review-label">POI名</div>
+
+        <div
+          id="aliasReviewPoiName"
+          class="alias-review-poi-name"
+        ></div>
+
+        <div
+          id="aliasReviewMeta"
+          class="alias-review-meta"
+        ></div>
+
+        <a
+          id="aliasReviewMapLink"
+          class="alias-review-map-link"
+          href="#"
+          target="_blank"
+          rel="noopener noreferrer"
+          style="display:none;"
+        >
+          📍 地図で見る
+        </a>
+
+        <textarea
+          id="aliasReviewNote"
+          class="alias-review-note"
+          rows="2"
+          placeholder="任意メモ：例）石碑系なので滞在／入口案内なので回遊"
+        ></textarea>
+
+        <div class="alias-review-actions">
+          <button type="button" data-review-category="REST">休憩</button>
+          <button type="button" data-review-category="STAY">滞在</button>
+          <button type="button" data-review-category="LOOP">回遊</button>
+          <button type="button" data-review-category="CAUTION">注意</button>
+          <button type="button" data-review-category="EXCLUDE">辞書不要</button>
+          <button type="button" data-review-category="HOLD">保留</button>
+        </div>
+        <button
+  type="button"
+  id="aliasReviewSkipButton"
+  class="alias-review-skip-button"
+>
+  この候補をあとで見る
+</button>
+      </div>
+
+      <div class="alias-review-history-box">
+        <h3 class="alias-review-history-title">
+          📝 Recent Reviews
+        </h3>
+
+        <div
+          id="aliasReviewHistoryList"
+          class="alias-review-history-list"
+        >
+          <div class="alias-review-history-empty">
+            レビュー履歴を読み込み中...
+          </div>
+        </div>
+      </div>
+
+        <div class="alias-dictionary-candidate-box">
+        <h3 class="alias-dictionary-candidate-title">
+          📚 Dictionary Candidates
+        </h3>
+
+        <p class="note">
+          レビュー済みの未分類POIから、辞書反映候補を表示します。<br>
+          保留・辞書不要は候補から除外されます。
+        </p>
+
+        <div
+          id="aliasDictionaryCandidateList"
+          class="alias-dictionary-candidate-list"
+        >
+          <div class="alias-dictionary-candidate-empty">
+            辞書反映候補を読み込み中...
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+<div class="step" style="
+  border:1px solid rgba(168,85,247,0.55);
+  background:rgba(88,28,135,0.14);
+">
+  <div class="step-no">管理者レビュー</div>
+
+  <h3>提出KMZ 総合レビュー</h3>
+
+  <p class="note">
+    他CAから受け取った完成KMZを読み込み、<br>
+    提出前に優先して確認する項目をまとめて表示します。
+  </p>
+
+  <p>レビューする完成KMZを選択してください。</p>
+
+ <input
+  type="file"
+  id="adminReviewFile"
+  accept=".kmz,.kml,.zip,application/vnd.google-earth.kmz,application/vnd.google-earth.kml+xml,application/zip"
+>
+
+  <button
+    class="generate"
+    onclick="runAdminDashboardReview()"
+  >
+    管理者レビューを実行
+  </button>
+
+  <div id="adminReviewResult"></div>
+</div>
+
+    <div class="step">
+  <div class="step-no">管理者機能</div>
+  <h3>KMZ内容チェック</h3>
+
+  <p class="note">
+    他CAから受け取ったKML / KMZの中身を確認します。<br>
+    POI件数、レイヤー構成、円レイヤー有無、追加希望レイヤー有無、ダミーポイント混入をチェックできます。
+  </p>
+
+  <p>チェックしたいファイルを選択します。</p>
+  <input
+  type="file"
+  id="adminCheckFile"
+  accept=".kmz,.kml,.zip,application/vnd.google-earth.kmz,application/vnd.google-earth.kml+xml,application/zip"
+>
+
+  <button class="generate" onclick="runAdminFileCheck()">
+    内容をチェック
+  </button>
+
+  <div id="adminCheckResult"></div>
+</div>
+<div class="step">
+  <div class="step-no">管理者機能</div>
+  <h3>密集エリアチェック</h3>
+
+  <p class="note">
+    KML / KMZ内の有効POIをもとに、半径内にPOIが集中している場所を確認します。<br>
+    円レイヤー、ダミーポイントは判定対象から除外します。<br>
+既存POIと追加希望POIをまたいで、密集状況を確認します。
+  </p>
+
+  <p>チェックしたいKML / KMZファイルを選択します。</p>
+  <input
+  type="file"
+  id="adminDensityFile"
+  accept=".kmz,.kml,.zip,application/vnd.google-earth.kmz,application/vnd.google-earth.kml+xml,application/zip"
+>
+
+  <div class="checks">
+    <label>
+      判定半径：
+      <select id="adminDensityRadius" style="
+        padding:8px 10px;
+        border-radius:8px;
+        background:#1e293b;
+        color:white;
+        border:1px solid #475569;
+      ">
+        <option value="50">50m</option>
+        <option value="80">80m</option>
+        <option value="100" selected>100m</option>
+        <option value="150">150m</option>
+        <option value="200">200m</option>
+      </select>
+    </label>
+  </div>
+
+  <button class="generate" onclick="runAdminDensityCheck()">
+  密集エリアをチェック
+</button>
+
+<button
+  class="generate"
+  onclick="generateDensityAreaKMZ()"
+  style="margin-top:10px;"
+>
+  密集エリアKMZを生成
+</button>
+
+<div id="adminDensityResult"></div>
+</div>
+  </div>
+</section>
+  <section id="script" class="tab-content">
+  <div class="panel">
+    <h2>スクリプト導入方法</h2>
+
+    <p class="note">
+      利用する端末を選んでください。<br>
+      選択した端末に必要な手順だけを表示します。
+    </p>
+
+    <!-- 端末選択 -->
+    <div class="script-device-grid">
+      <button type="button" class="script-device-card" onclick="showScriptFlow('pc', this)">
+        <span class="script-device-icon">💻</span>
+        <strong>PC版</strong>
+        <small>Chromeを使用</small>
+      </button>
+
+      <button type="button" class="script-device-card" onclick="showScriptFlow('iphone', this)">
+        <span class="script-device-icon">🍎</span>
+        <strong>iPhone版</strong>
+        <small>Safariを使用</small>
+      </button>
+
+      <button type="button" class="script-device-card" onclick="showScriptFlow('android', this)">
+        <span class="script-device-icon">🤖</span>
+        <strong>Android版</strong>
+        <small>Firefoxを使用</small>
+      </button>
+    </div>
+
+    <!-- PC版 -->
+    <div id="scriptFlowPc" class="script-flow">
+      <div class="step">
+        <div class="step-no">PC STEP 1</div>
+        <h3>Tampermonkeyをインストール</h3>
+        <p class="note">Chromeブラウザに、ユーザースクリプト管理用の拡張機能を追加します。</p>
+        <a class="link-btn" href="https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo?hl=ja" target="_blank">Tampermonkeyをインストール</a>
+      </div>
+
+      <div class="flow-arrow">↓</div>
+
+      <div class="step">
+        <div class="step-no">PC STEP 2</div>
+        <h3>Chromeの拡張機能設定を確認する</h3>
+        <p class="note">Tampermonkeyを追加しただけでは、まだ設定が足りません。<br>Chromeの拡張機能画面で、以下の項目をONにしてください。</p>
+        <ol class="note">
+          <li>Chrome右上の「︙」を押す</li>
+          <li>「拡張機能」を押す</li>
+          <li>「拡張機能を管理」を押す</li>
+          <li>画面右上の「デベロッパーモード」をONにする</li>
+          <li>Tampermonkeyの枠内にある「詳細」を押す</li>
+          <li>「ユーザースクリプトを許可する」をONにする</li>
+        </ol>
+      </div>
+
+      <div class="flow-arrow">↓</div>
+
+      <div class="step">
+        <div class="step-no">PC STEP 3</div>
+        <h3>Baseをインストール</h3>
+        <p class="note">下のボタンを押すと、Tampermonkeyの画面が開きます。<br>画面内の「インストール」を押してください。</p>
+        <a class="link-btn" href="https://gitlab.com/Tntnnbltn/wayfarer-addons/-/raw/main/wayfarer-map-mods-base.user.js" target="_blank">Baseをインストール</a>
+      </div>
+
+      <div class="flow-arrow">↓</div>
+
+      <div class="step">
+        <div class="step-no">PC STEP 4</div>
+        <h3>S2 Cellsをインストール</h3>
+        <p class="note">Baseのインストールが終わったら、続けてS2 Cellsを追加します。<br>下のボタンを押し、Tampermonkeyの画面内にある「インストール」を押してください。</p>
+        <a class="link-btn" href="https://gitlab.com/Tntnnbltn/wayfarer-addons/-/raw/main/wayfarer-map-mods-s2-cells.user.js" target="_blank">S2 Cellsをインストール</a>
+      </div>
+
+      <div class="flow-arrow">↓</div>
+
+      <div class="step script-step-complete">
+        <div class="step-no">PC STEP 5</div>
+        <h3>Wayfarer Mapで動作を確認する</h3>
+        <p class="note">BaseとS2 Cellsのインストールが終わったら、ChromeでWayfarer Mapを開いてください。<br>左上にアイコンが2つ表示されたら導入完了です。</p>
+        <div class="script-check-image-wrap">
+          <p class="script-check-label">✓ このように画面左上へアイコンが2つ表示されれば成功です</p>
+          <img src="assets/wayfarer-icons-check.png" alt="Wayfarer Map左上にアイコンが2つ表示された正常な状態" class="script-check-image">
+        </div>
+        <a class="link-btn" href="https://wayfarer.nianticlabs.com/new/" target="_blank">ChromeでWayfarer Mapを開く</a>
+      </div>
+
+      <div class="flow-arrow">↓</div>
+
+      <div class="step script-step-next">
+        <div class="step-no">NEXT STEP</div>
+        <h3>POIを抽出する</h3>
+        <p class="note">スクリプトの導入が完了したら、Wayfarer MapからPOIを抽出してください。<br>詳しい手順は、POI一括抽出マニュアルをご確認ください。</p>
+        <a class="link-btn" href="docs/poi-export-guide.pdf" target="_blank">📍 POI一括抽出マニュアルを開く</a>
+        <a class="link-btn" href="#" onclick="openTab('tool', this); return false;">キャンプサイト作成へ戻る</a>
+      </div>
+    </div>
+
+    <!-- iPhone版 -->
+    <div id="scriptFlowIphone" class="script-flow">
+      <div class="step">
+        <div class="step-no">iPhone STEP 1</div>
+        <h3>Userscriptsをインストール</h3>
+        <p class="note">App StoreからUserscriptsアプリを追加します。</p>
+        <a class="link-btn" href="https://apps.apple.com/jp/app/userscripts/id1463298887" target="_blank">Userscriptsをインストール</a>
+      </div>
+
+      <div class="flow-arrow">↓</div>
+
+      <div class="step">
+        <div class="step-no">iPhone STEP 2</div>
+        <h3>Safariの機能拡張をONにする</h3>
+        <p class="note">Userscriptsをインストールしただけでは、まだ使えません。<br>Safari側でも機能拡張をONにしてください。</p>
+        <ol class="note">
+          <li>Safariを開く</li>
+          <li>Safari左上のメニューを押す</li>
+          <li>「機能拡張を管理」を押す</li>
+          <li>一覧にある「Userscripts」をONにする</li>
+        </ol>
+      </div>
+
+      <div class="flow-arrow">↓</div>
+
+      <div class="step">
+        <div class="step-no">iPhone STEP 3</div>
+        <h3>Baseをインストール</h3>
+        <p class="note">下のボタンを押すと、スクリプトの画面が開きます。<br>Safari左上のメニューから「Userscripts」を押し、続けて「Tap to Install」を押してください。</p>
+        <a class="link-btn" href="https://gitlab.com/Tntnnbltn/wayfarer-addons/-/raw/main/wayfarer-map-mods-base.user.js" target="_blank">Baseをインストール</a>
+      </div>
+
+      <div class="flow-arrow">↓</div>
+
+      <div class="step">
+        <div class="step-no">iPhone STEP 4</div>
+        <h3>S2 Cellsをインストール</h3>
+        <p class="note">Baseのインストールが終わったら、次にS2 Cellsを追加します。<br>同じように、Safari左上のメニューから「Userscripts」を押し、続けて「Tap to Install」を押してください。</p>
+        <a class="link-btn" href="https://gitlab.com/Tntnnbltn/wayfarer-addons/-/raw/main/wayfarer-map-mods-s2-cells.user.js" target="_blank">S2 Cellsをインストール</a>
+      </div>
+
+      <div class="flow-arrow">↓</div>
+
+      <div class="step script-step-complete">
+        <div class="step-no">iPhone STEP 5</div>
+        <h3>Wayfarer Mapで動作を確認する</h3>
+        <p class="note">BaseとS2 Cellsのインストールが終わったら、SafariでWayfarer Mapを開いてください。<br>左上にアイコンが2つ表示されたら導入完了です。</p>
+        <div class="script-check-image-wrap">
+          <p class="script-check-label">✓ このように画面左上へアイコンが2つ表示されれば成功です</p>
+          <img src="assets/wayfarer-icons-check.png" alt="Wayfarer Map左上にアイコンが2つ表示された正常な状態" class="script-check-image">
+        </div>
+        <a class="link-btn" href="https://wayfarer.nianticlabs.com/new/" target="_blank">SafariでWayfarer Mapを開く</a>
+      </div>
+
+      <div class="flow-arrow">↓</div>
+
+      <div class="step script-step-next">
+        <div class="step-no">NEXT STEP</div>
+        <h3>POIを抽出する</h3>
+        <p class="note">スクリプトの導入が完了したら、Wayfarer MapからPOIを抽出してください。<br>詳しい手順は、POI一括抽出マニュアルをご確認ください。</p>
+        <a class="link-btn" href="docs/poi-export-guide.pdf" target="_blank">📍 POI一括抽出マニュアルを開く</a>
+        <a class="link-btn" href="#" onclick="openTab('tool', this); return false;">キャンプサイト作成へ戻る</a>
+      </div>
+    </div>
+
+    <!-- Android版 -->
+    <div id="scriptFlowAndroid" class="script-flow">
+      <div class="step">
+        <div class="step-no">Android STEP 1</div>
+        <h3>Firefoxをインストール</h3>
+        <p class="note">Android版ではFirefoxブラウザを使用します。</p>
+        <a class="link-btn" href="https://play.google.com/store/apps/details?id=org.mozilla.firefox" target="_blank">Firefoxをインストール</a>
+      </div>
+
+      <div class="flow-arrow">↓</div>
+
+      <div class="step">
+        <div class="step-no">Android STEP 2</div>
+        <h3>TampermonkeyをFirefoxに追加する</h3>
+        <p class="note">Firefoxで下のボタンを開き、Tampermonkeyを追加してください。<br>Chromeではなく、必ずFirefoxで開いてください。</p>
+        <ol class="note">
+          <li>下のボタンを押す</li>
+          <li>Firefoxでページを開く</li>
+          <li>「Firefoxへ追加」を押す</li>
+          <li>確認画面で「追加」を押す</li>
+        </ol>
+        <a class="link-btn" href="https://addons.mozilla.org/ja/firefox/addon/tampermonkey/" target="_blank">TampermonkeyをFirefoxに追加</a>
+        <p class="note" style="margin-top:14px;padding:12px;border-radius:12px;background:rgba(59,130,246,0.12);border:1px solid rgba(96,165,250,0.35);color:#bfdbfe;">ℹ Tampermonkey追加後に案内ページが開きますが、<br>そのページでは何も押さなくて大丈夫です。<br>この手順ページへ戻り、次のSTEPへ進んでください。</p>
+      </div>
+
+      <div class="flow-arrow">↓</div>
+
+      <div class="step">
+        <div class="step-no">Android STEP 3</div>
+        <h3>Baseをインストール</h3>
+        <p class="note">Firefoxで下のボタンを開いてください。<br>Tampermonkeyの画面が表示されたら、「インストール」を押してください。</p>
+        <p class="note" style="margin-top:14px;padding:12px;border-radius:12px;background:rgba(245,158,11,0.12);border:1px solid rgba(251,191,36,0.38);color:#fde68a;">⚠ インストール画面に注意文が表示されます。<br>今回案内しているリンクから開いた場合は、画面下部の「インストール」を押して進んでください。</p>
+        <div class="script-warning-image-wrap">
+          <p class="script-warning-label">この画面が表示されても問題ありません</p>
+          <img src="assets/script-install-warning.PNG" alt="Android版Firefoxで表示されるユーザースクリプトのインストール確認画面" class="script-warning-image">
+        </div>
+        <a class="link-btn" href="https://gitlab.com/Tntnnbltn/wayfarer-addons/-/raw/main/wayfarer-map-mods-base.user.js" target="_blank">Baseをインストール</a>
+      </div>
+
+      <div class="flow-arrow">↓</div>
+
+      <div class="step">
+        <div class="step-no">Android STEP 4</div>
+        <h3>S2 Cellsをインストール</h3>
+        <p class="note">Baseのインストールが終わったら、続けてS2 Cellsを追加します。<br>Firefoxで下のボタンを開き、Tampermonkeyの画面で「インストール」を押してください。</p>
+        <p class="note" style="margin-top:14px;padding:12px;border-radius:12px;background:rgba(245,158,11,0.12);border:1px solid rgba(251,191,36,0.38);color:#fde68a;">⚠ STEP 3と同じ注意文が表示されます。<br>画面下部の「インストール」を押して進んでください。</p>
+        <a class="link-btn" href="https://gitlab.com/Tntnnbltn/wayfarer-addons/-/raw/main/wayfarer-map-mods-s2-cells.user.js" target="_blank">S2 Cellsをインストール</a>
+      </div>
+
+      <div class="flow-arrow">↓</div>
+
+      <div class="step script-step-complete">
+        <div class="step-no">Android STEP 5</div>
+        <h3>Wayfarer Mapで動作を確認する</h3>
+        <p class="note">BaseとS2 Cellsのインストールが終わったら、FirefoxでWayfarer Mapを開いてください。<br>左上にアイコンが2つ表示されたら導入完了です。</p>
+        <div class="script-check-image-wrap">
+          <p class="script-check-label">✓ このように画面左上へアイコンが2つ表示されれば成功です</p>
+          <img src="assets/wayfarer-icons-check.png" alt="Wayfarer Map左上にアイコンが2つ表示された正常な状態" class="script-check-image">
+        </div>
+        <a class="link-btn" href="https://wayfarer.nianticlabs.com/new/" target="_blank">FirefoxでWayfarer Mapを開く</a>
+      </div>
+
+      <div class="flow-arrow">↓</div>
+
+      <div class="step script-step-next">
+        <div class="step-no">NEXT STEP</div>
+        <h3>POIを抽出する</h3>
+        <p class="note">スクリプトの導入が完了したら、Wayfarer MapからPOIを抽出してください。<br>詳しい手順は、POI一括抽出マニュアルをご確認ください。</p>
+        <a class="link-btn" href="docs/poi-export-guide.pdf" target="_blank">📍 POI一括抽出マニュアルを開く</a>
+        <a class="link-btn" href="#" onclick="openTab('tool', this); return false;">キャンプサイト作成へ戻る</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section id="guide" class="tab-content">
+    <div class="panel">
+      <h2>設計ガイド</h2>
+
+      <div class="grid">
+        <div class="step">
+          <div class="step-no">考え方</div>
+         <h3>My Mapsは「地図」ではなく<br>「設計図」</h3>
+          <p class="note">
+            どこに人が集まり、どのように遊び、どこで交流が生まれるかを伝えるための設計図です。
+          </p>
+        </div>
+
+        <div class="step">
+          <div class="step-no">基本距離</div>
+          <h3>40mを基本にする</h3>
+          <p class="note">
+            POI作成時は40mで統一する（管理者側の調整余地を確保するため）。<br>
+            配置が厳しい場合のみ、30mまで調整可能とします。
+          </p>
+        </div>
+
+        <div class="step">
+          <div class="step-no">上限</div>
+          <h3>追加POIは最大25個</h3>
+          <p class="note">
+            25個は上限であり、すべて追加される保証はありません。<br>
+            体験設計の意図が伝わることが重要です。
+          </p>
+        </div>
+
+        <div class="step">
+          <div class="step-no">レイヤー</div>
+          <h3>レイヤーを分ける</h3>
+          <p class="note">
+            既存POI、追加POI、活動エリアは混在させず、<br>カテゴリごとに分けて管理します。
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="check" class="tab-content">
+    <div class="panel">
+      <h2>申請前チェックリスト</h2>
+      <ul>
+        <li>□ POI作成時は40mで統一している</li>
+        <li>□ 配置が厳しい箇所のみ30mで調整している</li>
+        <li>□ 追加POIは25個以内に収まっている</li>
+        <li>□ 既存POIと追加POIのレイヤーを分けている</li>
+        <li>□ 活動エリア（ゾーン）のレイヤーを設定している</li>
+        <li>□ 「置ける」より「遊びやすい」を優先している</li>
+      </ul>
+    </div>
+  </section>
+
+ <section id="howto" class="tab-content">
+  <div class="panel">
+    <h2>使い方</h2>
+
+    <div class="step">
+      <div class="step-no">1</div>
+      <h3>Wayfarer MapからCSVを抽出する</h3>
+      <p class="note">
+        Wayfarer Map（スクリプト導入済み）から「Nearby Wayspots」を押して Export CSV を実行します。<br>
+        広い公園の場合は2〜3回に分けて抽出してください。
+      </p>
+    </div>
+
+    <div class="step">
+      <div class="step-no">2</div>
+      <h3>このツールに読み込む</h3>
+      <p class="note">
+        CSVファイルを選択してください。複数CSVを入れた場合、自動で重複削除されます。
+      </p>
+    </div>
+
+    <div class="step">
+      <div class="step-no">3</div>
+      <h3>KMZをMy Mapsへインポート</h3>
+      <p class="note">
+        出力構成に応じたレイヤーで表示されます
+      </p>
+    </div>
+
+  </div>
+</section>
+     
+    <section id="distance" class="tab-content">
+  
+  <div class="panel">
+  <h2>距離チェック</h2>
+
+  <p class="note">
+    Google My Mapsで設計した完成KMZ(既存・追加あり)を読み込み、<br>
+    追加POI・活動範囲ポリゴン・距離条件を提出前に確認します。
+  </p>
+
+  <div class="step">
+    <div class="step-no">STEP 1</div>
+    <h3>完成KMZを読み込む</h3>
+    <p class="note">
+      Google My Mapsから書き出した、完成KMZファイルを選択してください。
+    </p>
+<p class="note" style="
+  margin-top:8px;
+  color:#facc15;
+  font-weight:bold;
+">
+  ※CSVや途中確認用KMZではなく、提出直前の完成KMZを選択してください。
+</p>
+<p class="note">
+  完成KMZの書き出し方法が分からない場合は、
+  <a href="docs/campsite-guide.pdf" target="_blank" rel="noopener">
+    マニュアルPDF
+  </a>
+  を確認してください。
+</p>
+
+<p class="note" style="
+  margin-top:8px;
+  padding:12px 14px;
+  border-radius:12px;
+  background:rgba(245,158,11,0.12);
+  border:1px solid rgba(245,158,11,0.35);
+  color:#fde68a;
+  font-weight:bold;
+  line-height:1.8;
+">
+  ※距離チェックを正しく行うため、Google My Mapsのレイヤー名には<br>
+  「既存」または「追加」を入れてください。<br>
+  例：既存ポケストップ／既存ジム／追加ポケストップ／追加ジム
+</p>
+
+<input
+  type="file"
+  id="distanceFile"
+>
+      <div style="
+  margin-top:12px;
+  padding:12px 14px;
+  border-radius:12px;
+  background:rgba(56,189,248,0.10);
+  border:1px solid rgba(56,189,248,0.35);
+  color:#bae6fd;
+  font-size:13px;
+  line-height:1.8;
+">
+  <strong style="color:#7dd3fc;">
+    📱 iPhoneをご利用の方へ
+  </strong><br>
+  KMZファイルが <strong>.kmz.zip</strong> として保存される場合があります。<br>
+その場合は、iPhoneの「ファイル」アプリで対象ファイルを長押しし、<br>
+「名称変更」から末尾の <strong>.zip</strong> だけを削除してください。<br><br>
+
+<span style="opacity:0.9;">
+  例：<strong>campsite_2026612.kmz.zip</strong><br>
+  ↓<br>
+  <strong>campsite_2026612.kmz</strong>
+</span>
+</div>
+    <div id="distancePoiSummary"></div>
+  </div>
+
+   <div class="step" id="distanceCheckStep">
+      <div class="step-no">STEP 2</div>
+      <p class="note">
+  読み込んだKMZから、<br>
+  既存POIと追加POIを自動抽出して距離判定を行います。<br><br>
+
+  対象となるPOIは以下です。<br>
+  ・ポケストップ<br>
+  ・ジム<br>
+  ・パワースポット<br><br>
+
+  <strong>重要：</strong><br>
+  距離チェックを正しく行うため、Google My Mapsのレイヤー名には<br>
+  <strong>「既存」</strong> または <strong>「追加」</strong> を入れてください。<br><br>
+
+  例：<br>
+  ・既存ポケストップ<br>
+  ・既存ジム<br>
+  ・既存パワースポット<br>
+  ・追加ポケストップ<br>
+  ・追加ジム<br>
+  ・追加パワースポット<br><br>
+
+  ※円レイヤーや30m・40mなどの補助レイヤーは自動的に除外されます。
+</p>
+      <div id="distanceLayerList"></div>
+    </div>
+<div class="step">
+  <div class="step-no">現地環境チェック</div>
+  <p class="note">現地の通行・広場・回遊・待機環境を確認してください。</p>
+
+  <label>
+    <input type="checkbox" id="trafficOk">
+    ここで立ち止まっても、後ろの人はスムーズに通れる
+  </label><br>
+
+  <label>
+    <input type="checkbox" id="hasOpenSpace">
+    広場・開けた空間がある
+  </label><br>
+
+  <label>
+    <input type="checkbox" id="hasLoopRoute">
+    回遊できる（複数ルートがある）
+  </label><br>
+
+  <label>
+    <input type="checkbox" id="hasWaitingSpace">
+    待機・集合しやすいスペースがある
+  </label>
+</div>
+    <div class="step">
+  <div class="step-no">STEP 3</div>
+
+  <button class="generate" onclick="runDistanceCheck()">距離チェック実行</button>
+
+  <p class="data-upload-notice">
+    本ツールの精度向上と今後の機能改善のため、
+    距離チェックに使用したファイルと解析結果を匿名で収集しています。
+  </p>
+
+  <div class="rank-guide-box">
+  <strong>距離判定の見方</strong><br><br>
+
+  🔴 密集：20m未満。近すぎるため、配置の見直し確定です。<br><br>
+
+  🟠 滞留：20m以上30m未満。人が止まりやすい場所では注意しましょう。<br><br>
+
+  🟡 軽微：30m以上40m未満。NIAの調整余地として確認します。<br><br>
+
+  ⚪ 40m以上：距離上は余裕があります。いいですね。
+</div>
+
+  <div id="distanceResult"></div>
+  <div id="distanceMap"></div>
+</div>
+
+  </div> <!-- panel -->
+</section>
+
+</div> <!-- container -->
+
+<!-- =========================
+     KMZ生成完了モーダル
+========================= -->
+<div
+  id="kmzCompleteModal"
+  class="kmz-complete-modal"
+  style="display:none;"
+  onclick="closeKmzCompleteModalByBackdrop(event)"
+>
+  <div class="kmz-complete-modal-card">
+
+    <button
+      type="button"
+      class="kmz-complete-modal-close"
+      onclick="closeKmzCompleteModal()"
+      aria-label="閉じる"
+    >
+      ×
+    </button>
+
+    <div class="kmz-complete-sheep">🐏</div>
+
+    <p class="kmz-complete-label">
+      KMZ COMPLETE
+    </p>
+
+    <h2>KMZ生成完了！</h2>
+
+    <p class="kmz-complete-message">
+      次はGoogle My Mapsで<br>
+      追加POIを配置しましょう。
+    </p>
+
+    <div class="kmz-complete-actions">
+
+      <button
+        type="button"
+        class="kmz-complete-action-button maps"
+        onclick="openGoogleMyMaps()"
+      >
+        <span>🗺️</span>
+        <strong>Google My Mapsを開く</strong>
+        <small>生成したKMZをインポートします</small>
+      </button>
+
+          <button
+        type="button"
+        class="kmz-complete-action-button later"
+        onclick="closeKmzCompleteModal()"
+      >
+        <span>🐏</span>
+        <strong>閉じる</strong>
+        <small>あとで続きを行います</small>
+      </button>
+
+    </div>
+
+  </div>
+</div>
+
+<!-- =========================
+     おかえりなさいモーダル
+========================= -->
+<div
+  id="returnModal"
+  class="return-modal"
+  style="display:none;"
+  onclick="closeReturnModalByBackdrop(event)"
+>
+  <div class="return-modal-card">
+
+    <button
+      type="button"
+      class="return-modal-close"
+      onclick="closeReturnModal()"
+      aria-label="閉じる"
+    >
+      ×
+    </button>
+
+    <img
+  data-src="assets/return-back-icon.PNG"
+  alt="おかえりなさいと迎える羊"
+  class="return-modal-sheep"
+  loading="lazy"
+  decoding="async"
+>
+
+    <p class="return-modal-label">
+      WELCOME BACK
+    </p>
+
+    <h2>おかえりなさい！</h2>
+
+    <p class="return-modal-message">
+  追加POIの配置と、活動範囲ポリゴンの作成は終わりましたか？<br>
+  Google My Mapsから完成KMZを書き出したら、次に進む作業を選んでください。
+</p>
+
+    <div class="return-modal-actions">
+
+      <button
+        type="button"
+        class="return-action-button distance"
+        onclick="goFromReturnModal('distance')"
+      >
+        <span>📏</span>
+        <strong>距離チェックへ進む</strong>
+        <small>POI同士の距離を確認します</small>
+      </button>
+
+      <button
+        type="button"
+        class="return-action-button checklist"
+        onclick="goFromReturnModal('check')"
+      >
+        <span>✅</span>
+        <strong>提出前チェックリストを見る</strong>
+        <small>提出前の最終確認を行います</small>
+      </button>
+
+      <button
+        type="button"
+        class="return-action-button continue"
+        onclick="closeReturnModal()"
+      >
+        <span>🗺️</span>
+        <strong>まだ設計を続ける</strong>
+        <small>Google My Mapsで調整を続けます</small>
+      </button>
+
+    </div>
+
+  </div>
+</div>
+<div
+  id="campsiteCsvModal"
+  class="campsite-csv-modal"
+  onclick="closeCampsiteStartModalByBackdrop(event)"
+>
+  <div
+    class="campsite-csv-modal-card"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="campsiteCsvModalTitle"
+  >
+    <div class="campsite-csv-modal-icon">🏕️</div>
+
+    <h3 id="campsiteCsvModalTitle">
+      キャンプサイト作成を始めます
+    </h3>
+
+    <p class="note">
+      使用するCSVを選んでください。
+    </p>
+
+    <button
+  type="button"
+  class="campsite-csv-choice-button"
+  onclick="selectCampsiteCsvMode('wayfarer')"
+>
+  <span class="campsite-csv-choice-icon">📍</span>
+
+  <span>
+    <strong>Wayfarer Mapから抽出してキャンプサイトを作成する</strong>
+    <small>
+      周辺POIをまとめて取得する通常の作成方法です
+    </small>
+  </span>
+</button>
+
+<button
+  type="button"
+  class="campsite-csv-choice-button"
+  onclick="selectCampsiteCsvMode('custom')"
+>
+  <span class="campsite-csv-choice-icon">📊</span>
+
+  <span>
+    <strong>自作CSVを使ってキャンプサイトを作成する</strong>
+    <small>
+      自分でPOI一覧を作成します
+    </small>
+  </span>
+</button>
+
+<button
+  type="button"
+  class="campsite-csv-choice-button"
+  onclick="selectCampsiteCsvMode('extracted')"
+>
+  <span class="campsite-csv-choice-icon">📁</span>
+
+  <span>
+    <strong>抽出済みCSVを使ってキャンプサイトを作成する</strong>
+    <small>
+      すでにWayfarer Mapから取得したCSVを読み込みます
+    </small>
+  </span>
+</button>
+
+    <button
+      type="button"
+      class="campsite-csv-close-button"
+      onclick="closeCampsiteStartModal()"
+    >
+      閉じる
+    </button>
+  </div>
+</div>
+<div id="adminLoginModal" style="
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.8);
+  z-index:99999;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+">
+  <div style="
+    background:#0f172a;
+    padding:24px;
+    border-radius:16px;
+    width:90%;
+    max-width:360px;
+    color:white;
+    border:1px solid #334155;
+  ">
+    <h3>管理者ログイン</h3>
+    <p class="note">
+      管理者専用機能を開くには、管理者コードを入力してください。
+    </p>
+
+    <input
+  id="adminCodeInput"
+  type="password"
+  inputmode="text"
+  name="adminCode"
+  autocomplete="one-time-code"
+  autocorrect="off"
+  autocapitalize="off"
+  spellcheck="false"
+  placeholder="管理者コード"
+  style="
+    width:100%;
+    padding:12px;
+    border-radius:10px;
+    border:none;
+    margin:12px 0;
+    background:#1e293b;
+    color:white;
+    font-size:16px;
+  "
+>
+
+<button
+  type="button"
+  class="admin-login-open-btn"
+  onclick="checkAdminCode()"
+>
+  <span class="admin-login-open-btn-icon">🛡️</span>
+  <span class="admin-login-open-btn-text">
+    管理者画面を開く
+  </span>
+  <span class="admin-login-open-btn-sub">
+    ADMIN ACCESS
+  </span>
+</button>
+
+<button
+  type="button"
+  class="admin-login-close-btn"
+  onclick="closeAdminLogin()"
+>
+  閉じる
+</button>
+
+    <p id="adminLoginError" class="error"></p>
+  </div>
+</div>
+<div id="quizModal" style="
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.8);
+  z-index:99999;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+">
+ <div style="
+  background:#0f172a;
+  padding:24px;
+  border-radius:16px;
+  width:90%;
+  max-width:400px;
+  max-height:80vh;
+  overflow-y:auto;
+  color:white;
+">
+    <h3>📘 利用前チェック（必須）</h3>
+    <p class="note">
+      最低限のルール確認です。詳細はガイドをご覧ください。
+    </p>
+
+    <!-- Q1 -->
+<p>Q1. POI配置では基本的に（ア）m間隔を目安とし、配置が難しい場合のみ（イ）mまでの配置を検討します。正しい組み合わせを選んでください。</p>
+
+<label><input type="radio" name="q1" value="a">（ア）40m　（イ）30m</label><br>
+<label><input type="radio" name="q1" value="b">（ア）40m　（イ）20m</label><br>
+<label><input type="radio" name="q1" value="c">（ア）30m　（イ）20m</label><br>
+
+<br><br>
+
+<!-- Q2 -->
+<p>Q2. POI間隔として40mが推奨される理由は？</p>
+
+<label><input type="radio" name="q2" value="many">
+トレーナーの歩数を減らして、できるだけ楽をしてもらうため
+</label><br>
+
+<label><input type="radio" name="q2" value="tap">
+マップ上でPOIやポケモンをタップしやすくするため
+</label><br>
+
+<label><input type="radio" name="q2" value="gym">
+参加者を惑わせて「どれ押せばいいんだよ！」選手権を開催するため
+</label><br>
+
+<br><br>
+
+<!-- Q3 -->
+<p>Q3. POIが既に密集している公園ではどうなりますか？</p>
+
+<label><input type="radio" name="q3" value="many">
+POIは上限まで必ず追加される
+</label><br>
+
+<label><input type="radio" name="q3" value="none">
+追加POIが設置されない場合がある
+</label><br>
+
+<label><input type="radio" name="q3" value="triple">
+GOロケット団の出現率が3倍になる
+</label><br>
+
+<br><br>
+
+<!-- Q4 -->
+<p>Q4. Community Celebrationsで追加できるPOI数の上限は？</p>
+
+<label><input type="radio" name="q4" value="15">15個</label><br>
+<label><input type="radio" name="q4" value="25">25個</label><br>
+<label><input type="radio" name="q4" value="999">設計者の情熱次第</label><br>
+
+<br><br>
+
+<!-- Q5 -->
+<p>Q5. キャンプサイト設計で最も大切な考え方は？</p>
+
+<label><input type="radio" name="q5" value="many">
+とにかくPOIを増やすこと
+</label><br>
+
+<label><input type="radio" name="q5" value="safe">
+安全で快適なプレイ環境を作ること
+</label><br>
+
+<label><input type="radio" name="q5" value="perfect">
+25個すべての追加POI枠を使い切ること
+
+</label><br>
+
+    <br><br>
+
+    <a href="docs/campsite-guide.pdf" target="_blank" class="link-btn">
+  📘 ガイドPDFを開く
+</a>
+
+    <br><br>
+
+    <button class="generate" onclick="checkQuiz()">回答する</button>
+
+  </div>
+</div>
+<script src="js/util.js?v=3"></script>
+<script src="js/tabs.js?v=3"></script>
+<script src="js/distance-entry.js?v=2"></script>
+<script src="js/distance-core.js?v=2"></script>
+<script src="js/distance-analytics.js?v=1"></script>
+<script src="js/distance-poi.js?v=1"></script>
+<script src="js/distance-file.js?v=1"></script>
+<script src="js/distance-render.js?v=1"></script>
+<script src="js/distance-score.js?v=1"></script>
+<script src="js/distance.js?v=19"></script>
+<script src="js/distance-map.js?v=1"></script>
+<script src="js/distance-errors.js?v=1"></script>
+<script src="js/admin.js?v=2"></script>
+<script src="js/main.js?v=7"></script>
+<script src="js/kmz.js?v=2"></script>
+<script src="js/deduplicate.js?v=2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/lab-supabase.js?v=1"></script>
+<script src="js/kmz-upload.js?v=1"></script>
+<script src="js/poi-dictionary-db.js?v=5"></script>
+<script src="js/capacity.js?v=5"></script>
+<div id="versionInfo" onclick="toggleVersionHistory()">
+</div>
+<div id="versionHistoryModal" class="version-modal">
+  <div class="version-card">
+  <h3>更新履歴</h3>
+
+<div style="
+  margin-bottom:16px;
+  padding:10px;
+  border-radius:10px;
+  background:rgba(56,189,248,.12);
+  border:1px solid rgba(56,189,248,.25);
+">
+ <div class="update-latest">
+  <strong>最新更新</strong><br>
+v6.2.1（2026-07-07）
+
+<h3>v6.2.1</h3>
+<ul>
+  <li>拠点充実度スコアで、既存POI同士の近接を減点対象外に変更</li>
+  <li>既存POI同士の近接は参考件数として表示</li>
+</ul>
+
+<h3>v6.0.0</h3>
+<ul>
+  <li>iPhone .kmz.zip案内追加</li>
+  <li>追加POI上限説明追加</li>
+  <li>Buffers除外対応</li>
+</ul>
+
+<h3>v1.7.9</h3>
+<ul>
+  <li>活動範囲ポリゴン表示</li>
+  <li>レイヤー判定改善</li>
+</ul>
+
+    <button onclick="toggleVersionHistory()">閉じる</button>
+  </div>
+</div>
+</body>
+</html>
