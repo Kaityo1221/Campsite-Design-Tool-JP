@@ -74,3 +74,49 @@ function sendDistanceCheckAnalytics(points, poiVolumeCounts, poiCounts, expansio
     summary: campsite.summary
   });
 }
+
+/* ブラウザ更新後も通常ログイン状態を維持する */
+const CAMPSITE_ACCESS_UNLOCKED_KEY = "campsiteAccessUnlocked";
+
+function rememberCampsiteAccessAfterLogin() {
+  window.setTimeout(() => {
+    if (!document.getElementById("loginScreen")) {
+      try {
+        localStorage.setItem(CAMPSITE_ACCESS_UNLOCKED_KEY, "true");
+      } catch (_) {}
+    }
+  }, 0);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  let accessRemembered = false;
+
+  try {
+    accessRemembered =
+      localStorage.getItem(CAMPSITE_ACCESS_UNLOCKED_KEY) === "true";
+  } catch (_) {}
+
+  if (accessRemembered) {
+    document.getElementById("loginScreen")?.remove();
+    document.getElementById("splashScreen")?.remove();
+    document.body.classList.add("opening-mode");
+
+    if (typeof showOpeningScreen === "function") {
+      showOpeningScreen();
+    }
+
+    return;
+  }
+
+  document
+    .getElementById("loginButton")
+    ?.addEventListener("click", rememberCampsiteAccessAfterLogin);
+
+  document
+    .getElementById("accessCodeInput")
+    ?.addEventListener("keydown", event => {
+      if (event.key === "Enter") {
+        rememberCampsiteAccessAfterLogin();
+      }
+    });
+});
