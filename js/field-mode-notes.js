@@ -162,15 +162,59 @@
     }
   }
 
+  function applyIntuitiveLabels() {
+    if (newPoiButton) newPoiButton.textContent = '＋ ここに追加';
+    if (scanButton) {
+      scanButton.setAttribute('aria-label', '現在地を再取得');
+      const scanText = scanButton.querySelector('span:last-child');
+      if (scanText) scanText.textContent = '現在地';
+    }
+    if (fileStatus && !fileLoaded) fileStatus.textContent = 'KMZ / KML を選ぶと、すぐ現地確認を始められます。';
+    if (!selectedPoi) {
+      selectionTitle.textContent = '近くの候補を選びます';
+      selectionDetail.textContent = 'KMZを開くと、現在地に近い追加予定POIを自動で選びます。';
+      relocateButton.textContent = '📍 ここに置く';
+      fineTuneButton.textContent = '地図で微調整';
+    }
+  }
+
+  function nearestAddedPoi() {
+    if (!currentPosition || !poiRecords?.length) return null;
+    let nearest = null;
+    for (const record of poiRecords) {
+      if (!record.added) continue;
+      const distance = meters(currentPosition, record.latlng);
+      if (!nearest || distance < nearest.distance) nearest = { record, distance };
+    }
+    return nearest;
+  }
+
+  function autoSelectNearestPoi() {
+    if (!fileLoaded || !currentPosition || selectedPoi) return;
+    const nearest = nearestAddedPoi();
+    if (!nearest) return;
+    selectAddedPoi(nearest.record);
+    selectionTitle.textContent = `近くの候補：${nearest.record.name}`;
+    selectionDetail.textContent = `現在地から ${nearest.distance.toFixed(1)}m。ここなら「ここに置く」をタップ。`;
+    relocateButton.textContent = '📍 ここに置く';
+    fineTuneButton.textContent = '地図で微調整';
+  }
+
   const originalSelectAddedPoi = selectAddedPoi;
   selectAddedPoi = function patchedSelectAddedPoi(record) {
     originalSelectAddedPoi(record);
+    relocateButton.textContent = '📍 ここに置く';
+    fineTuneButton.textContent = '地図で微調整';
     renderMeta();
   };
 
   const originalResetPoiSelection = resetPoiSelection;
   resetPoiSelection = function patchedResetPoiSelection() {
     originalResetPoiSelection();
+    relocateButton.textContent = '📍 ここに置く';
+    fineTuneButton.textContent = '地図で微調整';
+    selectionTitle.textContent = '近くの候補を選びます';
+    selectionDetail.textContent = '黄色いPOIをタップするか、現在地の近くなら自動で選びます。';
     renderMeta();
   };
 
@@ -238,7 +282,15 @@
       record.fieldPhotoDirty = false;
     });
     renderMeta();
+    setTimeout(autoSelectNearestPoi, 0);
   };
 
+  const originalSetCurrentPosition = setCurrentPosition;
+  setCurrentPosition = function patchedSetCurrentPosition(lat, lng, accuracy, recenter = false) {
+    originalSetCurrentPosition(lat, lng, accuracy, recenter);
+    setTimeout(autoSelectNearestPoi, 0);
+  };
+
+  applyIntuitiveLabels();
   renderMeta();
 })();
