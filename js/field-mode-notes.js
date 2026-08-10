@@ -25,6 +25,8 @@
     .field-poi-photo-preview{margin-top:8px;max-width:150px;max-height:110px;border-radius:10px;border:1px solid #d6c7a8;display:none;object-fit:cover}
     .field-poi-photo-preview.active{display:block}
     .field-poi-meta-note{margin-top:6px;font-size:10px;color:#807563}
+    .field-poi-delete{display:none;width:100%;min-height:40px;margin-top:8px;border:1px solid #d39a91;border-radius:12px;background:#fff2f0;color:#9a3f34;font-weight:900;font-size:12px}
+    .field-poi-delete.active{display:block}
   `;
   document.head.appendChild(style);
 
@@ -44,9 +46,19 @@
     <div class="field-poi-meta-note">写真は約280KBを目安に自動圧縮してKMZへ保存します。元写真は端末側に残ります。</div>
   `;
 
+  const deleteButton = document.createElement('button');
+  deleteButton.type = 'button';
+  deleteButton.className = 'field-poi-delete';
+  deleteButton.textContent = '🗑 このPOIを削除';
+
   const saveRow = selectionSection.querySelector('.field-save-row');
-  if (saveRow) selectionSection.insertBefore(box, saveRow);
-  else selectionSection.appendChild(box);
+  if (saveRow) {
+    selectionSection.insertBefore(box, saveRow);
+    selectionSection.insertBefore(deleteButton, saveRow);
+  } else {
+    selectionSection.appendChild(box);
+    selectionSection.appendChild(deleteButton);
+  }
 
   const memo = document.getElementById('fieldPoiMemo');
   const photoInput = document.getElementById('fieldPoiPhoto');
@@ -58,7 +70,7 @@
   function formatBytes(bytes) {
     if (!Number.isFinite(bytes)) return '';
     if (bytes < 1024) return `${bytes}B`;
-    return `${(bytes / 1024).toFixed(bytes >= 1024 * 1024 ? 0 : 0)}KB`;
+    return `${(bytes / 1024).toFixed(0)}KB`;
   }
 
   function clearPreview() {
@@ -72,24 +84,15 @@
     return new Promise((resolve, reject) => {
       const url = URL.createObjectURL(file);
       const img = new Image();
-      img.onload = () => {
-        URL.revokeObjectURL(url);
-        resolve(img);
-      };
-      img.onerror = () => {
-        URL.revokeObjectURL(url);
-        reject(new Error('写真を読み込めませんでした。'));
-      };
+      img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('写真を読み込めませんでした。')); };
       img.src = url;
     });
   }
 
   function canvasToBlob(canvas, quality) {
     return new Promise((resolve, reject) => {
-      canvas.toBlob(blob => {
-        if (blob) resolve(blob);
-        else reject(new Error('写真を圧縮できませんでした。'));
-      }, 'image/jpeg', quality);
+      canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('写真を圧縮できませんでした。')), 'image/jpeg', quality);
     });
   }
 
@@ -98,45 +101,33 @@
     const originalWidth = img.naturalWidth || img.width;
     const originalHeight = img.naturalHeight || img.height;
     if (!originalWidth || !originalHeight) throw new Error('写真サイズを取得できませんでした。');
-
     let maxEdge = Math.min(INITIAL_MAX_EDGE, Math.max(originalWidth, originalHeight));
-    let bestBlob = null;
-    let bestWidth = originalWidth;
-    let bestHeight = originalHeight;
-
+    let bestBlob = null, bestWidth = originalWidth, bestHeight = originalHeight;
     for (let resizeTry = 0; resizeTry < 5; resizeTry += 1) {
       const scale = Math.min(1, maxEdge / Math.max(originalWidth, originalHeight));
       const width = Math.max(1, Math.round(originalWidth * scale));
       const height = Math.max(1, Math.round(originalHeight * scale));
       const canvas = document.createElement('canvas');
-      canvas.width = width;
-      canvas.height = height;
+      canvas.width = width; canvas.height = height;
       const ctx = canvas.getContext('2d', { alpha: false });
       if (!ctx) throw new Error('写真圧縮を開始できませんでした。');
       ctx.drawImage(img, 0, 0, width, height);
-
       for (let quality = INITIAL_QUALITY; quality >= MIN_QUALITY - 0.001; quality -= 0.06) {
         const blob = await canvasToBlob(canvas, Math.max(MIN_QUALITY, quality));
-        if (!bestBlob || blob.size < bestBlob.size) {
-          bestBlob = blob;
-          bestWidth = width;
-          bestHeight = height;
-        }
-        if (blob.size <= TARGET_BYTES) {
-          return { blob, width, height, originalBytes: file.size, targetBytes: TARGET_BYTES };
-        }
+        if (!bestBlob || blob.size < bestBlob.size) { bestBlob = blob; bestWidth = width; bestHeight = height; }
+        if (blob.size <= TARGET_BYTES) return { blob, width, height, originalBytes: file.size, targetBytes: TARGET_BYTES };
       }
-
       if (maxEdge <= MIN_MAX_EDGE) break;
       maxEdge = Math.max(MIN_MAX_EDGE, Math.round(maxEdge * 0.84));
     }
-
     if (!bestBlob) throw new Error('写真を圧縮できませんでした。');
     return { blob: bestBlob, width: bestWidth, height: bestHeight, originalBytes: file.size, targetBytes: TARGET_BYTES };
   }
 
   function renderMeta() {
-    if (!selectedPoi || !selectedPoi.added) {
+    const active = !!selectedPoi?.added && !selectedPoi.fieldDeleted;
+    deleteButton.classList.toggle('active', active);
+    if (!active) {
       box.classList.remove('active');
       memo.value = '';
       photoName.textContent = '写真なし';
@@ -144,14 +135,11 @@
       clearPreview();
       return;
     }
-
     box.classList.add('active');
     memo.value = selectedPoi.fieldMemo || '';
     clearPreview();
-
     if (selectedPoi.fieldPhoto?.blob) {
-      const size = selectedPoi.fieldPhoto.blob.size;
-      photoName.textContent = `${selectedPoi.fieldPhoto.name || '現地写真'} / ${formatBytes(size)}`;
+      photoName.textContent = `${selectedPoi.fieldPhoto.name || '現地写真'} / ${formatBytes(selectedPoi.fieldPhoto.blob.size)}`;
       photoRemove.classList.add('active');
       previewUrl = URL.createObjectURL(selectedPoi.fieldPhoto.blob);
       photoPreview.src = previewUrl;
@@ -182,7 +170,7 @@
     if (!currentPosition || !poiRecords?.length) return null;
     let nearest = null;
     for (const record of poiRecords) {
-      if (!record.added) continue;
+      if (!record.added || record.fieldDeleted) continue;
       const distance = meters(currentPosition, record.latlng);
       if (!nearest || distance < nearest.distance) nearest = { record, distance };
     }
@@ -202,6 +190,7 @@
 
   const originalSelectAddedPoi = selectAddedPoi;
   selectAddedPoi = function patchedSelectAddedPoi(record) {
+    if (record.fieldDeleted) return;
     originalSelectAddedPoi(record);
     relocateButton.textContent = '📍 ここに置く';
     fineTuneButton.textContent = '地図で微調整';
@@ -221,10 +210,56 @@
   changedRecords = function changedRecordsWithFieldData() {
     return poiRecords.filter(record => {
       if (!record.added) return false;
+      if (record.fieldDeleted) return !record.isNew;
       const moved = record.isNew || meters(record.originalLatlng, record.latlng) > .05;
       return moved || !!record.fieldMemoDirty || !!record.fieldPhotoDirty;
     });
   };
+
+  deleteButton.addEventListener('click', () => {
+    if (!selectedPoi?.added || selectedPoi.fieldDeleted) return;
+    const record = selectedPoi;
+    if (!window.confirm(`「${record.name}」を削除しますか？\n「戻る」で復元できます。`)) return;
+    record.fieldDeleted = true;
+    if (record.marker && dataLayer.hasLayer(record.marker)) dataLayer.removeLayer(record.marker);
+    if (record.rangeCircle && dataLayer.hasLayer(record.rangeCircle)) dataLayer.removeLayer(record.rangeCircle);
+    undoStack.push({ kind: 'delete', record });
+    redoStack.length = 0;
+    resetPoiSelection();
+    updateHistoryButtons();
+    updateSaveButton();
+    modeStatus.textContent = 'POI削除';
+    setTimeout(autoSelectNearestPoi, 0);
+  });
+
+  undoButton.addEventListener('click', event => {
+    const action = undoStack[undoStack.length - 1];
+    if (!action || action.kind !== 'delete') return;
+    event.preventDefault(); event.stopImmediatePropagation();
+    undoStack.pop();
+    action.record.fieldDeleted = false;
+    action.record.marker.addTo(dataLayer);
+    if (action.record.rangeCircle) action.record.rangeCircle.addTo(dataLayer);
+    redoStack.push(action);
+    selectAddedPoi(action.record);
+    updateHistoryButtons(); updateSaveButton();
+    modeStatus.textContent = '削除を戻しました';
+  }, true);
+
+  redoButton.addEventListener('click', event => {
+    const action = redoStack[redoStack.length - 1];
+    if (!action || action.kind !== 'delete') return;
+    event.preventDefault(); event.stopImmediatePropagation();
+    redoStack.pop();
+    action.record.fieldDeleted = true;
+    if (dataLayer.hasLayer(action.record.marker)) dataLayer.removeLayer(action.record.marker);
+    if (action.record.rangeCircle && dataLayer.hasLayer(action.record.rangeCircle)) dataLayer.removeLayer(action.record.rangeCircle);
+    undoStack.push(action);
+    if (selectedPoi === action.record) resetPoiSelection();
+    updateHistoryButtons(); updateSaveButton();
+    modeStatus.textContent = '削除をやり直しました';
+    setTimeout(autoSelectNearestPoi, 0);
+  }, true);
 
   memo.addEventListener('input', () => {
     if (!selectedPoi?.added) return;
@@ -237,20 +272,15 @@
     if (!selectedPoi?.added) return;
     const file = photoInput.files && photoInput.files[0];
     if (!file) return;
-
     const targetRecord = selectedPoi;
     photoInput.disabled = true;
     photoName.textContent = '圧縮中…';
-
     try {
       const compressed = await compressPhoto(file);
       targetRecord.fieldPhoto = {
         name: `${(file.name || `photo_${Date.now()}`).replace(/\.[^.]+$/, '')}.jpg`,
-        type: 'image/jpeg',
-        blob: compressed.blob,
-        originalBytes: compressed.originalBytes,
-        width: compressed.width,
-        height: compressed.height
+        type: 'image/jpeg', blob: compressed.blob, originalBytes: compressed.originalBytes,
+        width: compressed.width, height: compressed.height
       };
       targetRecord.fieldPhotoDirty = true;
       updateSaveButton();
@@ -280,6 +310,7 @@
       record.fieldMemoDirty = false;
       record.fieldPhoto = null;
       record.fieldPhotoDirty = false;
+      record.fieldDeleted = false;
     });
     renderMeta();
     setTimeout(autoSelectNearestPoi, 0);
