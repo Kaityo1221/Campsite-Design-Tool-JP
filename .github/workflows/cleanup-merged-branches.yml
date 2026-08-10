@@ -1,0 +1,33 @@
+name: Cleanup merged branches
+
+on:
+  push:
+    branches:
+      - agent/post-overhaul-65-admin-review-knowledge
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete confirmed merged branches
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git init cleanup
+          cd cleanup
+          git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          for branch in \
+            agent/fix-distance-layer-guidance \
+            agent/move-distance-advice \
+            agent/phase9-local-report-only \
+            agent/ui-overhaul-09-share-report \
+            agent/ui-overhaul-10-site-diagnosis \
+            agent/ui-overhaul-11-knowledge-foundation
+          do
+            echo "Deleting $branch"
+            git push origin --delete "$branch" || true
+          done
