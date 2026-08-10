@@ -1,110 +1,67 @@
 /* CAMP: AI要確認レビューキュー
- * 既存の未分類レビューを壊さず、suggested_category = AI_REVIEW の pending POIだけを
- * 「AI要確認」として絞り込む管理者向け補助。
+ * AIが断定しなかった pending POI を、管理者セッション付き
+ * Edge Function admin-alias-access 経由で安全に絞り込む。
  */
 (function () {
   "use strict";
 
-  const AI_REVIEW_TAG = "AI_REVIEW";
   let reviewMode = "ai";
 
-  function getSupabase() {
-    return window.campsiteSupabase || null;
-  }
-
-  function applyReviewMode(query) {
-    if (reviewMode === "ai") {
-      return query.eq("suggested_category", AI_REVIEW_TAG);
+  async function invokeSecure(action, payload = {}) {
+    if (!window.CampsiteAdminSecureApi?.invoke) {
+      throw new Error("管理者レビューAPIを読み込めませんでした。");
     }
 
-    return query;
+    return window.CampsiteAdminSecureApi.invoke(action, payload);
   }
 
   window.fetchAliasReviewRemainingCount = async function () {
-    const supabase = getSupabase();
-    if (!supabase) return 0;
-
-    let query = supabase
-      .from("alias_review_queue")
-      .select("id", {
-        count: "exact",
-        head: true
-      })
-      .eq("review_status", "pending");
-
-    query = applyReviewMode(query);
-
-    const { count, error } = await query;
-
-    if (error) {
+    try {
+      const data = await invokeSecure("remaining-count", {
+        reviewMode
+      });
+      return Number(data.count) || 0;
+    } catch (error) {
       console.error("AI要確認レビュー残数取得エラー:", error);
+      if (typeof setAliasReviewStatus === "function") {
+        setAliasReviewStatus(error?.message || "AI要確認件数の取得に失敗しました。", "error");
+      }
       return 0;
     }
-
-    return count || 0;
   };
 
   window.fetchNextAliasReviewItem = async function () {
-    const supabase = getSupabase();
+    try {
+      const data = await invokeSecure("next-items", {
+        reviewMode
+      });
+      const items = Array.isArray(data.items) ? data.items : [];
 
-    if (!supabase) {
-      if (typeof setAliasReviewStatus === "function") {
-        setAliasReviewStatus("Supabaseに接続されていません。", "error");
+      if (!items.length) return null;
+
+      const skipped =
+        typeof aliasReviewSkippedIds !== "undefined" && Array.isArray(aliasReviewSkippedIds)
+          ? aliasReviewSkippedIds
+          : [];
+
+      const nextItem = items.find(item => {
+        return !skipped.includes(String(item.id));
+      });
+
+      if (nextItem) return nextItem;
+
+      if (typeof aliasReviewSkippedIds !== "undefined") {
+        aliasReviewSkippedIds = [];
       }
-      return null;
-    }
 
-    let query = supabase
-      .from("alias_review_queue")
-      .select(`
-        id,
-        poi_name,
-        normalized_name,
-        count,
-        sample_lat,
-        sample_lng,
-        source,
-        review_status,
-        suggested_category,
-        review_note,
-        created_at
-      `)
-      .eq("review_status", "pending");
-
-    query = applyReviewMode(query);
-
-    const { data, error } = await query
-      .order("count", { ascending: false })
-      .order("created_at", { ascending: true })
-      .limit(100);
-
-    if (error) {
+      return items[0] || null;
+    } catch (error) {
       console.error("AI要確認レビュー取得エラー:", error);
       if (typeof setAliasReviewStatus === "function") {
-        setAliasReviewStatus("未分類POIの取得に失敗しました。", "error");
+        setAliasReviewStatus(error?.message || "AI要確認POIの取得に失敗しました。", "error");
       }
       return null;
     }
-
-    const items = Array.isArray(data) ? data : [];
-    if (!items.length) return null;
-
-    const skipped =
-      typeof aliasReviewSkippedIds !== "undefined" && Array.isArray(aliasReviewSkippedIds)
-        ? aliasReviewSkippedIds
-        : [];
-
-    const nextItem = items.find(item => {
-      return !skipped.includes(String(item.id));
-    });
-
-    if (nextItem) return nextItem;
-
-    if (typeof aliasReviewSkippedIds !== "undefined") {
-      aliasReviewSkippedIds = [];
-    }
-
-    return items[0];
   };
 
   const originalRenderAliasReviewItem = window.renderAliasReviewItem;
@@ -129,33 +86,20 @@
   }
 
   async function getPendingCounts() {
-    const supabase = getSupabase();
-    if (!supabase) return { all: 0, ai: 0 };
+    try {
+      const [allData, aiData] = await Promise.all([
+        invokeSecure("remaining-count", { reviewMode: "all" }),
+        invokeSecure("remaining-count", { reviewMode: "ai" })
+      ]);
 
-    const [allResult, aiResult] = await Promise.all([
-      supabase
-        .from("alias_review_queue")
-        .select("id", { count: "exact", head: true })
-        .eq("review_status", "pending"),
-      supabase
-        .from("alias_review_queue")
-        .select("id", { count: "exact", head: true })
-        .eq("review_status", "pending")
-        .eq("suggested_category", AI_REVIEW_TAG)
-    ]);
-
-    if (allResult.error) {
-      console.error("未分類総数取得エラー:", allResult.error);
+      return {
+        all: Number(allData.count) || 0,
+        ai: Number(aiData.count) || 0
+      };
+    } catch (error) {
+      console.error("AIレビュー件数取得エラー:", error);
+      return { all: 0, ai: 0 };
     }
-
-    if (aiResult.error) {
-      console.error("AI要確認総数取得エラー:", aiResult.error);
-    }
-
-    return {
-      all: allResult.count || 0,
-      ai: aiResult.count || 0
-    };
   }
 
   async function refreshModeButtons() {
