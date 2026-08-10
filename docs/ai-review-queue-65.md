@@ -17,3 +17,7 @@
 - 既存の `review_status = pending` を維持したまま `suggested_category` に一時タグを設定
 - 辞書への自動反映なし
 - AI判定を正式判定として保存しない
+
+## 検証
+
+- Supabase上で `review_status = pending AND suggested_category = AI_REVIEW` が 65件であることを確認済み
