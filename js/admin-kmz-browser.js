@@ -30,7 +30,7 @@
       }
 
       await loadScript("js/admin-kmz-browser-v2.js?v=2", "campsiteAdminKmzBrowserV2Script");
-      await loadScript("js/admin-mobile-folders.js?v=1", "campsiteAdminMobileFoldersScript");
+      await loadScript("js/admin-mobile-folders.js?v=2", "campsiteAdminMobileFoldersScript");
     } catch (error) {
       console.error("管理者機能初期化エラー", error);
     }
