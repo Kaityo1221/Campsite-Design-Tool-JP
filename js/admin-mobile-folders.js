@@ -181,6 +181,55 @@
         border-top: 1px solid rgba(148, 163, 184, 0.12);
       }
 
+      .admin-kmz-list-fold {
+        margin: 0 22px 22px;
+        border: 1px solid rgba(56, 189, 248, 0.22);
+        border-radius: 14px;
+        background: rgba(2, 6, 23, 0.30);
+        overflow: hidden;
+      }
+
+      .admin-kmz-list-fold > summary {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        min-height: 46px;
+        padding: 11px 13px;
+        box-sizing: border-box;
+        color: #e0f2fe;
+        font-size: 11px;
+        font-weight: 900;
+        cursor: pointer;
+        list-style: none;
+      }
+
+      .admin-kmz-list-fold > summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .admin-kmz-list-fold > summary::after {
+        content: "＋";
+        flex: 0 0 auto;
+        color: #38bdf8;
+        font-size: 18px;
+      }
+
+      .admin-kmz-list-fold[open] > summary::after {
+        content: "−";
+      }
+
+      .admin-kmz-list-fold > summary small {
+        margin-left: auto;
+        color: #64748b;
+        font-size: 9px;
+        font-weight: 800;
+      }
+
+      .admin-kmz-list-fold > .ak-wrap {
+        padding: 10px 12px 14px;
+      }
+
       @media (max-width: 680px) {
         .admin-fold-shell {
           margin: 10px 0;
@@ -195,6 +244,22 @@
         .admin-fold-intro {
           padding-left: 11px;
           padding-right: 11px;
+        }
+
+        .admin-kmz-list-fold {
+          margin-left: 14px;
+          margin-right: 14px;
+          margin-bottom: 16px;
+        }
+
+        .admin-kmz-list-fold > summary {
+          min-height: 44px;
+          padding: 10px 11px;
+          font-size: 10px;
+        }
+
+        .admin-kmz-list-fold > .ak-wrap {
+          padding: 9px 8px 12px;
         }
 
         .admin-kmz-quick {
@@ -353,6 +418,33 @@
     details.append(summary, meta);
   }
 
+  function enhanceKmzList() {
+    const wrap = document.querySelector("#adminKmzBrowserV2 .ak-wrap");
+    if (!wrap || wrap.closest(`details[${ENHANCED_ATTR}="kmz-list"]`)) return;
+
+    const countText =
+      wrap.querySelector(":scope > .ak-head span")?.textContent?.trim() || "";
+
+    const details = document.createElement("details");
+    details.className = "admin-kmz-list-fold";
+    details.setAttribute(ENHANCED_ATTR, "kmz-list");
+    details.open = false;
+
+    const summary = document.createElement("summary");
+    const label = document.createElement("span");
+    label.textContent = "📍 提出KMZ一覧を見る";
+    summary.appendChild(label);
+
+    if (countText) {
+      const count = document.createElement("small");
+      count.textContent = countText;
+      summary.appendChild(count);
+    }
+
+    wrap.before(details);
+    details.append(summary, wrap);
+  }
+
   function enhanceKmzCards() {
     document
       .querySelectorAll("#adminKmzBrowserV2 .ak-card")
@@ -362,6 +454,7 @@
   function enhanceAll() {
     enhanceAliasSections();
     enhanceDictionaryCandidates();
+    enhanceKmzList();
     enhanceKmzCards();
   }
 
