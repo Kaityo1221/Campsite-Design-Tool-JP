@@ -46,10 +46,19 @@ function openTab(tabId, button) {
 
   updateWorkflowStep(tabId);
 
-  window.scrollTo({
-    top: 0,
-    behavior: "smooth"
-  });
+  if (targetTab) {
+    requestAnimationFrame(() => {
+      const targetTop =
+        targetTab.getBoundingClientRect().top +
+        window.scrollY -
+        16;
+
+      window.scrollTo({
+        top: Math.max(0, targetTop),
+        behavior: "smooth"
+      });
+    });
+  }
 }
 
 function setWorkflowStep(step) {
