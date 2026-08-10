@@ -1,0 +1,76 @@
+name: Admin fold list fix
+
+on:
+  push:
+    branches:
+      - agent/post-overhaul-65-admin-review-knowledge
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fold submitted KMZ list and remove internal note
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          index = Path('index.html')
+          text = index.read_text()
+          text = re.sub(
+              r'\nRyotaさん、<br>\nここはまだ見なくて大丈夫。<br>\n完成したら、自慢しに行きます。\n?',
+              '\n',
+              text,
+              count=1
+          )
+          text = text.replace('js/admin-kmz-browser.js?v=2', 'js/admin-kmz-browser.js?v=3', 1)
+          index.write_text(text)
+
+          loader = Path('js/admin-kmz-browser.js')
+          text = loader.read_text()
+          text = text.replace('js/admin-mobile-folders.js?v=2', 'js/admin-mobile-folders.js?v=3', 1)
+          loader.write_text(text)
+
+          folders = Path('js/admin-mobile-folders.js')
+          text = folders.read_text()
+
+          css_marker = '      @media (max-width: 680px) {'
+          css_insert = '''      .admin-kmz-list-fold {\n        margin: 0 22px 22px;\n        border: 1px solid rgba(56, 189, 248, 0.22);\n        border-radius: 14px;\n        background: rgba(2, 6, 23, 0.30);\n        overflow: hidden;\n      }\n\n      .admin-kmz-list-fold > summary {\n        display: flex;\n        align-items: center;\n        justify-content: space-between;\n        gap: 10px;\n        min-height: 46px;\n        padding: 11px 13px;\n        box-sizing: border-box;\n        color: #e0f2fe;\n        font-size: 11px;\n        font-weight: 900;\n        cursor: pointer;\n        list-style: none;\n      }\n\n      .admin-kmz-list-fold > summary::-webkit-details-marker {\n        display: none;\n      }\n\n      .admin-kmz-list-fold > summary::after {\n        content: "＋";\n        flex: 0 0 auto;\n        color: #38bdf8;\n        font-size: 18px;\n      }\n\n      .admin-kmz-list-fold[open] > summary::after {\n        content: "−";\n      }\n\n      .admin-kmz-list-fold > summary small {\n        margin-left: auto;\n        color: #64748b;\n        font-size: 9px;\n        font-weight: 800;\n      }\n\n      .admin-kmz-list-fold > .ak-wrap {\n        padding: 10px 12px 14px;\n      }\n\n'''
+          if 'admin-kmz-list-fold' not in text:
+              if css_marker not in text:
+                  raise SystemExit('CSS marker not found')
+              text = text.replace(css_marker, css_insert + css_marker, 1)
+
+          mobile_marker = '''        .admin-fold-intro {\n          padding-left: 11px;\n          padding-right: 11px;\n        }\n'''
+          mobile_insert = mobile_marker + '''\n        .admin-kmz-list-fold {\n          margin-left: 14px;\n          margin-right: 14px;\n          margin-bottom: 16px;\n        }\n\n        .admin-kmz-list-fold > summary {\n          min-height: 44px;\n          padding: 10px 11px;\n          font-size: 10px;\n        }\n\n        .admin-kmz-list-fold > .ak-wrap {\n          padding: 9px 8px 12px;\n        }\n'''
+          if 'margin-bottom: 16px;' not in text:
+              if mobile_marker not in text:
+                  raise SystemExit('mobile marker not found')
+              text = text.replace(mobile_marker, mobile_insert, 1)
+
+          function_marker = '  function enhanceKmzCards() {'
+          function_insert = '''  function enhanceKmzList() {\n    const wrap = document.querySelector("#adminKmzBrowserV2 .ak-wrap");\n    if (!wrap || wrap.closest(`details[${ENHANCED_ATTR}="kmz-list"]`)) return;\n\n    const countText =\n      wrap.querySelector(":scope > .ak-head span")?.textContent?.trim() || "";\n\n    const details = document.createElement("details");\n    details.className = "admin-kmz-list-fold";\n    details.setAttribute(ENHANCED_ATTR, "kmz-list");\n    details.open = false;\n\n    const summary = document.createElement("summary");\n    const label = document.createElement("span");\n    label.textContent = "📍 提出KMZ一覧を見る";\n    summary.appendChild(label);\n\n    if (countText) {\n      const count = document.createElement("small");\n      count.textContent = countText;\n      summary.appendChild(count);\n    }\n\n    wrap.before(details);\n    details.append(summary, wrap);\n  }\n\n'''
+          if 'function enhanceKmzList()' not in text:
+              if function_marker not in text:
+                  raise SystemExit('function marker not found')
+              text = text.replace(function_marker, function_insert + function_marker, 1)
+
+          all_old = '''  function enhanceAll() {\n    enhanceAliasSections();\n    enhanceDictionaryCandidates();\n    enhanceKmzCards();\n  }'''
+          all_new = '''  function enhanceAll() {\n    enhanceAliasSections();\n    enhanceDictionaryCandidates();\n    enhanceKmzList();\n    enhanceKmzCards();\n  }'''
+          if all_old in text:
+              text = text.replace(all_old, all_new, 1)
+          elif 'enhanceKmzList();' not in text:
+              raise SystemExit('enhanceAll marker not found')
+
+          folders.write_text(text)
+          PY
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add index.html js/admin-kmz-browser.js js/admin-mobile-folders.js
+          git commit -m "Fold submitted KMZ list by default" || exit 0
+          git push
