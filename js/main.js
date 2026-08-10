@@ -2,7 +2,6 @@ window.APP_VERSION = "v6.2.1";
 window.APP_UPDATED = "2026-07-07";
 window.ENABLE_QUIZ = true;
 window.QUIZ_VERSION = "beta2";
-const ADMIN_CODE = "she1ep";
 
 let currentAliasReviewItem = null;
 let aliasReviewIsLoading = false;
@@ -83,23 +82,11 @@ document.addEventListener("click", function (event) {
 });
 
 function openAdminLogin() {
-  const modal = document.getElementById("adminLoginModal");
-  const input = document.getElementById("adminCodeInput");
-  const error = document.getElementById("adminLoginError");
-
-  if (!modal) {
-    alert("管理者ログイン画面が見つかりません");
-    return;
+  if (window.CampsiteAdminAuth?.openAdminEntry) {
+    return window.CampsiteAdminAuth.openAdminEntry();
   }
 
-  if (error) error.textContent = "";
-  if (input) input.value = "";
-
-  modal.style.display = "flex";
-
-  setTimeout(() => {
-    if (input) input.focus();
-  }, 100);
+  alert("管理者認証を準備中です。少し待ってから再度お試しください。");
 }
 
 function closeAdminLogin() {
@@ -110,30 +97,13 @@ function closeAdminLogin() {
 }
 
 function checkAdminCode() {
-  const input = document.getElementById("adminCodeInput");
+  if (window.CampsiteAdminAuth?.loginFromModal) {
+    return window.CampsiteAdminAuth.loginFromModal();
+  }
+
   const error = document.getElementById("adminLoginError");
-
-  if (!input) return;
-
-  if (input.value.trim() === ADMIN_CODE) {
-    if (error) error.textContent = "";
-    closeAdminLogin();
-
-    openTab("admin", null);
-      localStorage.removeItem("campsiteAdminUnlocked");
-sessionStorage.setItem("campsiteAdminUnlocked", "true");
-showAliasReviewAdminBox();
-
-    document.querySelectorAll(".tab-button").forEach(btn => {
-      btn.classList.remove("active");
-    });
-
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth"
-    });
-  } else {
-    if (error) error.textContent = "管理者パスコードが違います";
+  if (error) {
+    error.textContent = "管理者認証を準備中です";
   }
 }
 document.addEventListener("DOMContentLoaded", function () {
