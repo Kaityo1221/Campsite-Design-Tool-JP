@@ -8,6 +8,7 @@ const corsHeaders = {
 
 const ALLOWED_CATEGORIES = new Set(["REST", "STAY", "LOOP", "CAUTION", "EXCLUDE", "HOLD"]);
 const ALLOWED_DICTIONARY_STATUSES = new Set(["adopted", "later", "rejected"]);
+const AI_REVIEW_TAG = "AI_REVIEW";
 
 function jsonResponse(body: Record<string, unknown>, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -72,24 +73,38 @@ Deno.serve(async (request: Request): Promise<Response> => {
     }
 
     const action = sanitizeText(body?.action, 40);
+    const reviewMode = sanitizeText(body?.reviewMode, 20);
+    const aiOnly = reviewMode === "ai";
 
     if (action === "remaining-count") {
-      const { count, error } = await supabase
+      let query = supabase
         .from("alias_review_queue")
         .select("id", { count: "exact", head: true })
         .eq("review_status", "pending");
+
+      if (aiOnly) {
+        query = query.eq("suggested_category", AI_REVIEW_TAG);
+      }
+
+      const { count, error } = await query;
       if (error) throw error;
       return jsonResponse({ success: true, count: count || 0 });
     }
 
     if (action === "next-items") {
-      const { data, error } = await supabase
+      let query = supabase
         .from("alias_review_queue")
         .select("id, poi_name, normalized_name, count, sample_lat, sample_lng, source, review_status, suggested_category, review_note, created_at")
-        .eq("review_status", "pending")
+        .eq("review_status", "pending");
+
+      if (aiOnly) {
+        query = query.eq("suggested_category", AI_REVIEW_TAG);
+      }
+
+      const { data, error } = await query
         .order("count", { ascending: false })
         .order("created_at", { ascending: true })
-        .limit(30);
+        .limit(aiOnly ? 100 : 30);
       if (error) throw error;
       return jsonResponse({ success: true, items: data || [] });
     }
