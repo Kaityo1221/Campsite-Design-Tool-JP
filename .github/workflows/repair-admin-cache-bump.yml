@@ -1,0 +1,36 @@
+name: Repair admin cache bump
+
+on:
+  push:
+    branches:
+      - agent/post-overhaul-65-admin-review-knowledge
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Restore full index and bump only admin loader cache
+        run: |
+          git checkout 996a33a4df62fed9fb1602b610dcaea7ff137c50 -- index.html
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          text = p.read_text()
+          old = 'js/admin-kmz-browser.js?v=1'
+          new = 'js/admin-kmz-browser.js?v=2'
+          if old not in text:
+              raise SystemExit('target cache string not found')
+          p.write_text(text.replace(old, new, 1))
+          PY
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add index.html
+          git commit -m "Repair index and bump admin loader cache" || exit 0
+          git push
