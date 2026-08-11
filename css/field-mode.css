@@ -202,8 +202,192 @@
 
 .field-mode-toolbar button:disabled { opacity: .52; }
 
+.field-mode-creative-launcher {
+  position: absolute;
+  left: 12px;
+  top: 82px;
+  z-index: 620;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #8a6b31;
+  border-radius: 13px;
+  background: rgba(255,253,247,.96);
+  color: #49391e;
+  box-shadow: 0 4px 12px rgba(0,0,0,.16);
+  font-size: 21px;
+}
+
+.field-mode-creative-launcher:disabled {
+  opacity: .42;
+}
+
+.field-mode-creative-close,
+.field-mode-creative-hotbar,
+.field-mode-creative-hint {
+  display: none;
+}
+
+.field-mode-body.field-creative-active {
+  position: fixed;
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: 100dvh;
+  min-height: 100dvh;
+  overflow: hidden;
+  overscroll-behavior: none;
+  padding-bottom: 0;
+}
+
+.field-creative-active .field-mode-stage {
+  position: fixed;
+  top: calc(env(safe-area-inset-top) + 6px);
+  left: 6px;
+  right: 6px;
+  bottom: calc(86px + env(safe-area-inset-bottom));
+  z-index: 900;
+  width: auto;
+  min-height: 0;
+  margin: 0;
+  border-radius: 18px;
+  box-shadow: 0 10px 34px rgba(31,24,16,.24);
+}
+
+.field-creative-active .field-mode-header,
+.field-creative-active .field-mode-intro,
+.field-creative-active .field-mode-selection {
+  visibility: hidden;
+}
+
+.field-creative-active .field-mode-toolbar {
+  z-index: 1100;
+  width: 100%;
+}
+
+.field-creative-active .field-mode-creative-close {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  z-index: 680;
+  display: block;
+  transform: translateX(-50%);
+  border: 1px solid rgba(73,57,30,.34);
+  border-radius: 999px;
+  padding: 8px 12px;
+  background: rgba(255,253,247,.96);
+  color: #49391e;
+  box-shadow: 0 3px 10px rgba(0,0,0,.14);
+  font-size: 12px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.field-creative-active .field-mode-creative-launcher {
+  top: 84px;
+}
+
+.field-creative-active .field-mode-new-poi,
+.field-creative-active #fieldPoiTypeButton {
+  display: none !important;
+}
+
+.field-creative-active.field-creative-tool-poi .field-mode-new-poi,
+.field-creative-active.field-creative-tool-poi #fieldPoiTypeButton {
+  display: block !important;
+}
+
+.field-creative-active .field-mode-creative-hotbar.is-open {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  z-index: 680;
+  display: flex;
+  max-width: calc(100% - 24px);
+  gap: 6px;
+  transform: translateX(-50%);
+  padding: 7px;
+  border: 1px solid rgba(73,57,30,.28);
+  border-radius: 16px;
+  background: rgba(59,49,37,.92);
+  box-shadow: 0 5px 16px rgba(0,0,0,.22);
+  backdrop-filter: blur(8px);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.field-mode-creative-tool {
+  min-width: 58px;
+  min-height: 54px;
+  display: grid;
+  place-items: center;
+  gap: 1px;
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 11px;
+  background: rgba(255,253,247,.92);
+  color: #49391e;
+  font-weight: 900;
+}
+
+.field-mode-creative-tool span {
+  font-size: 19px;
+  line-height: 1;
+}
+
+.field-mode-creative-tool small {
+  font-size: 10px;
+  line-height: 1;
+}
+
+.field-mode-creative-tool.is-active {
+  outline: 3px solid rgba(213,163,59,.55);
+}
+
+.field-mode-creative-tool.is-coming {
+  opacity: .42;
+}
+
+.field-creative-active .field-mode-creative-hint.is-open {
+  position: absolute;
+  left: 50%;
+  bottom: 80px;
+  z-index: 675;
+  display: block;
+  max-width: calc(100% - 36px);
+  transform: translateX(-50%);
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: rgba(255,253,247,.94);
+  color: #5c4a30;
+  box-shadow: 0 2px 9px rgba(0,0,0,.12);
+  font-size: 11px;
+  font-weight: 800;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.field-creative-active.field-creative-menu-open .field-location-badge {
+  bottom: 82px;
+}
+
 @media (max-width: 520px) {
   .field-mode-header { grid-template-columns: 1fr auto; }
   .field-mode-header > div:nth-child(2) { grid-row: 2; grid-column: 1 / -1; }
   .field-mode-stage { min-height: 50vh; }
+  .field-creative-active .field-mode-stage {
+    top: calc(env(safe-area-inset-top) + 4px);
+    left: 4px;
+    right: 4px;
+    bottom: calc(84px + env(safe-area-inset-bottom));
+  }
+  .field-mode-creative-launcher {
+    left: 10px;
+    top: 80px;
+  }
+  .field-creative-active .field-mode-creative-hint.is-open {
+    max-width: calc(100% - 24px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
