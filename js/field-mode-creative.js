@@ -84,7 +84,7 @@
   }
 
   function setBodyToolClass(tool){
-    ['poi','adjust','line','area','distance'].forEach(name=>body.classList.remove(`field-creative-tool-${name}`));
+    ['poi','adjust','line','area','eraser','distance'].forEach(name=>body.classList.remove(`field-creative-tool-${name}`));
     if(tool)body.classList.add(`field-creative-tool-${tool}`);
   }
 
@@ -168,11 +168,20 @@
     }
   }
 
+  function cancelTransientAdjustment(){
+    let tuning=false;
+    try{tuning=!!fineTuneMode;}catch(_){}
+    if(tuning&&fineTuneButtonEl){
+      fineTuneButtonEl.click();
+    }
+  }
+
   function openPalette(){
     if(!active){
       enter();
       return;
     }
+    if(activeTool==='adjust')cancelTransientAdjustment();
     window.dispatchEvent(new CustomEvent('fieldcreativecancel'));
     activeTool=null;
     setBodyToolClass(null);
@@ -217,6 +226,8 @@
       try{if(typeof map!=='undefined'&&selectedPoi)map.panTo(selectedPoi.latlng);}catch(_){}
       if(collapse)setMenu(false);else showAdjustControls();
       if(modeStatusEl)modeStatusEl.textContent='位置調整';
+    }else{
+      if(collapse)setMenu(false);
     }
     invalidateMap();
     return true;
@@ -255,14 +266,6 @@
     if(modeStatusEl)modeStatusEl.textContent='クリエイティブ';
     invalidateMap();
     return true;
-  }
-
-  function cancelTransientAdjustment(){
-    let tuning=false;
-    try{tuning=!!fineTuneMode;}catch(_){}
-    if(tuning&&fineTuneButtonEl){
-      fineTuneButtonEl.click();
-    }
   }
 
   function exit({cancel=false}={}){
