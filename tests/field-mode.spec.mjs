@@ -80,3 +80,33 @@ test('新規POIを確定後、戻る・進むでUndo/Redoできる',async({page}
   await expect(page.locator('#fieldModeUndoButton')).toBeEnabled();
   expect(pageErrors).toEqual([]);
 });
+
+test('現地作業はリロード後に続きから再開でき、履歴も復元される',async({page})=>{
+  const pageErrors=await openFieldMode(page);
+
+  await page.locator('#fieldModeNewPoiButton').click();
+  await expect(page.locator('#fieldModeCrosshair')).toBeVisible();
+  await page.locator('#fieldModeNewPoiButton').click();
+  await expect(page.locator('#fieldModeSelectionTitle')).toContainText('ポケストップ 1');
+  await expect(page.locator('#fieldModeUndoButton')).toBeEnabled();
+
+  await page.evaluate(async()=>{
+    await window.FieldModeSession.saveNow();
+  });
+  await expect(page.locator('#fieldModeSessionStatus')).toContainText('自動保存済み');
+
+  await page.reload();
+  await expect(page.locator('#fieldModeResumePanel')).toHaveClass(/active/);
+  await expect(page.locator('#fieldModeResumeDetail')).toContainText('smoke.kml');
+  await page.locator('#fieldModeResumeButton').click();
+
+  await expect(page.locator('#fieldModeSessionStatus')).toContainText('復元しました');
+  await expect(page.locator('#fieldModeSelectionTitle')).toContainText('ポケストップ 1');
+  await expect(page.locator('#fieldModeUndoButton')).toBeEnabled();
+
+  await page.locator('#fieldModeUndoButton').click();
+  await expect(page.locator('#fieldModeRedoButton')).toBeEnabled();
+  await page.locator('#fieldModeRedoButton').click();
+  await expect(page.locator('#fieldModeUndoButton')).toBeEnabled();
+  expect(pageErrors).toEqual([]);
+});
