@@ -7,9 +7,21 @@
 
   function toolbox(){return window.FieldCreative;}
   function activeTool(){return toolbox()?.activeTool?.()||null;}
+
+  function cancelAdjustTransient(){
+    if(activeTool()!=='adjust')return;
+    let tuning=false;
+    try{tuning=!!fineTuneMode;}catch(_){tuning=false;}
+    if(tuning){
+      const button=document.getElementById('fieldModeFineTuneButton');
+      button?.click();
+    }
+  }
+
   function returnToToolbox(){
     const creative=toolbox();
     if(!creative)return false;
+    cancelAdjustTransient();
     creative.openMenu?.();
     return true;
   }
