@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f5efe4">
+<meta name="robots" content="noindex,nofollow">
+<title>全国CA POIレビュー</title>
+<style>
+:root{--bg:#f5efe4;--card:#fffdf9;--ink:#2f342f;--muted:#74786f;--green:#557b62;--green2:#e7f0e7;--line:#e1dbcf;--shadow:0 16px 38px rgba(54,46,34,.11)}
+*{box-sizing:border-box} body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif;background:radial-gradient(circle at 20% 0,#fff7e8 0,transparent 34%),linear-gradient(180deg,#f3eadb,#eef3e9);color:var(--ink);min-height:100vh}
+.shell{max-width:640px;margin:0 auto;padding:20px 16px 40px} .brand{font-size:12px;font-weight:800;letter-spacing:.12em;color:var(--green);text-transform:uppercase}
+h1{font-size:28px;margin:6px 0 8px} .lead{margin:0;color:var(--muted);line-height:1.65;font-size:14px}
+.card{background:rgba(255,253,249,.94);border:1px solid rgba(255,255,255,.8);border-radius:24px;box-shadow:var(--shadow);padding:20px;margin-top:18px;backdrop-filter:blur(14px)}
+.start-grid{display:grid;gap:12px;margin-top:18px} label{font-size:13px;font-weight:800} input{width:100%;margin-top:6px;border:1px solid var(--line);border-radius:14px;padding:14px 15px;font-size:16px;background:white}
+.primary{width:100%;border:0;border-radius:16px;padding:15px;font-size:16px;font-weight:900;background:var(--green);color:white;box-shadow:0 8px 18px rgba(85,123,98,.25)} .primary:disabled{opacity:.5}
+.progress-head{display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:800} .bar{height:8px;background:#e8e2d7;border-radius:999px;overflow:hidden;margin:10px 0 18px} .bar>span{display:block;height:100%;background:var(--green);transition:width .25s}
+.poi-img{width:100%;max-height:235px;object-fit:cover;border-radius:18px;background:#e9e7e0;margin-bottom:16px} .poi-title{font-size:25px;line-height:1.3;margin:4px 0 10px} .poi-desc{font-size:14px;line-height:1.7;color:#575c55;margin:0 0 12px} .links{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 18px} .chip{display:inline-flex;align-items:center;gap:5px;text-decoration:none;color:#496451;background:#edf4ed;border:1px solid #d7e5d8;padding:8px 11px;border-radius:999px;font-size:12px;font-weight:800}
+.question{font-weight:900;margin:2px 0 12px} .buttons{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.judge{border:1px solid var(--line);background:white;border-radius:17px;padding:15px 8px;font-size:15px;font-weight:900;color:var(--ink)} .judge:active{transform:scale(.98)} .judge small{display:block;font-size:10px;color:var(--muted);font-weight:700;margin-top:3px}
+.subactions{display:flex;justify-content:space-between;margin-top:14px;align-items:center} .ghost{border:0;background:transparent;color:#687067;font-weight:800;padding:10px} .save{font-size:12px;color:#718070}
+details{margin-top:14px;background:#f8f4ec;border-radius:14px;padding:11px 13px;color:#656b63;font-size:12px;line-height:1.6} summary{font-weight:900;cursor:pointer;color:#536357}
+.done{text-align:center;padding:28px 10px} .done .big{font-size:48px} .done h2{font-size:27px;margin:8px 0} .done p{color:var(--muted);line-height:1.7}
+.hidden{display:none!important} .err{color:#a03e36;font-size:12px;margin-top:8px} .mini{font-size:12px;color:var(--muted)} 
+@media(max-width:390px){.shell{padding-left:12px;padding-right:12px} .card{padding:17px} .poi-title{font-size:22px} .judge{padding:13px 6px}}
+</style>
+</head>
+<body>
+<main class="shell">
+  <div class="brand">Campsite Design Tool / CA Review</div>
+  <h1>全国CA POIレビュー</h1>
+  <p class="lead">AIで判定しきれなかった20件だけ。ほかのCAの回答は表示せず、自分の判断でサクッと分類してください。</p>
+
+  <section id="start" class="card">
+    <strong>全20問・1タップで次へ</strong>
+    <div class="start-grid">
+      <label>Discord名<input id="name" maxlength="40" autocomplete="nickname" placeholder="例：SyoGo"></label>
+      <label>活動地域<input id="area" maxlength="40" placeholder="例：東京"></label>
+      <button id="startBtn" class="primary">レビュー開始</button>
+      <div id="startErr" class="err hidden"></div>
+    </div>
+  </section>
+
+  <section id="review" class="card hidden">
+    <div class="progress-head"><span id="counter">1 / 20</span><span id="answered">0件回答済み</span></div>
+    <div class="bar"><span id="bar"></span></div>
+    <img id="img" class="poi-img hidden" alt="">
+    <h2 id="title" class="poi-title"></h2>
+    <p id="desc" class="poi-desc"></p>
+    <div class="links"><a id="map" class="chip" target="_blank" rel="noopener">📍 地図を見る</a></div>
+    <div class="question">このPOIをどう使いますか？</div>
+    <div class="buttons">
+      <button class="judge" data-v="REST">🟢 休憩<small>休む・座る</small></button>
+      <button class="judge" data-v="STAY">🟡 滞在<small>集まる・留まる</small></button>
+      <button class="judge" data-v="LOOP">🔵 回遊<small>歩いて巡る</small></button>
+      <button class="judge" data-v="CAUTION">🟠 注意<small>使えるがリスクあり</small></button>
+      <button class="judge" data-v="EXCLUDE">⚫ 除外<small>設計には使わない</small></button>
+      <button class="judge" data-v="HOLD">🟣 保留<small>情報不足・要確認</small></button>
+    </div>
+    <details><summary>判定の目安</summary>POIそのものの良し悪しではなく、イベントで人を安全に誘導できるかを基準にしてください。迷ったら「保留」でOKです。</details>
+    <div class="subactions"><button id="back" class="ghost">← 1つ戻る</button><span id="saveStatus" class="save">自動保存</span></div>
+  </section>
+
+  <section id="done" class="card done hidden">
+    <div class="big">✅</div><h2>20件、完了！</h2>
+    <p>協力ありがとうございました。回答は会長側の集計に反映されています。</p>
+  </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/lab-supabase.js?v=20260812"></script>
+<script>
+const TEST_BATCH="ato-tokusa-national-ca-20260812-v1";
+const PARK_KEY="ato-tokusa";
+const PARK_NAME="山口市阿東・徳佐周辺";
+const POIS=[{"id":"bdb40371-34f0-50c1-8b4b-e46762da2904","title":"LANDMARK,","description":"山口市阿東で５０年近く営業していたレストラン「蘭土(らんど)」が新しく複合施設LAND MARK,として生まれ変わりました。LAND MARK,には「レストラン」「コワーキングスペース」を開設。定住促進や交流の場としての活用を図り、まさに阿東地区のランドマーク的存在になっています。　バリアフリーや環境に配慮した資材を使うなど、「環境と人にやさしい」をコンセプトに掲げられています。","address":"3511-4 Atōtokusanaka, Yamaguchi, 759-1512, Japan, Yamaguchi, 759-1512, JP","lat":34.393482,"lng":131.718673,"imageUrl":"https://lh3.googleusercontent.com/shMbPZZWneOpIZSsaTWSfmi5tc8FWmAdrjxAIjGD4HUZqD2JlVl_W9SY3DY_cgvFKlBRzxXmeturdAQDns1v4jq0rjOyVtJ-iMmaHPrUUw"},{"id":"e8c86cd8-f76a-5c2c-ac7d-167900c81979","title":"丸太の形のバス停","description":"阿東総合支所前のバス停で林業が盛んだった頃を回顧してのバス停です","address":"3370 Atōtokusanaka, Yamaguchi, 759-1512, Japan, Yamaguchi, 759-1512, JP","lat":34.396344,"lng":131.721682,"imageUrl":"https://lh3.googleusercontent.com/BbiKY1xCikRhHqNc5zxr5tVk12GkZY-hhsjazAcHOoJDVJjKaDSjP2bdd8STZuubHfosZL8DGJ7dYeGfpus-zHLa9eSbG6MB3pu7H_o"},{"id":"3bfa03a4-c06e-58bf-8163-0497578a4469","title":"山の上のお堂","description":"羽波地区の山の上にあるお堂","address":"Hiramaru-2655 Atōtokusanaka, Yamaguchi, 759-1512, Japan, Yamaguchi, 759-1512, JP","lat":34.404487,"lng":131.719227,"imageUrl":"https://lh3.googleusercontent.com/wECdUaS90fgdz5r77jcgy09kgd9afQ0GAazgpwmZ2bCAeTCytt7ablONQrWTN3sd-rEXw5z4W-_mubv06TVqBjt2bmU"},{"id":"a63c985f-0dfa-5602-9872-bf633089fbe8","title":"JR徳佐駅","description":"山口線　徳佐駅(とくさえき)1918年11月3日開業島式1面2線のホームを持ち、交換設備を有する地上駅。駅舎は上り線東側益田寄りにあり、ホームへは跨線橋で連絡している。","address":"3503 Atōtokusanaka, Yamaguchi-shi, Yamaguchi-ken 759-1512, Japan, Yamaguchi-shi, 759-1512, JP","lat":34.400095,"lng":131.720746,"imageUrl":"https://lh3.googleusercontent.com/g5VWHd4VC2b2JewY6pw9kzlQGX9DnPo9XcWekVsuEKn17mKGncszc_Ueh_6vJpg9_UR9hVQ0UjUl_ktklyfkif553qzL"},{"id":"5b974e3f-6f69-5757-bb3f-69f74746635d","title":"山口市役所阿東総合支所阿東山村開発センター","description":"","address":"","lat":34.397041,"lng":131.720757,"imageUrl":""},{"id":"d939470b-7ac9-518c-be59-897265bdca8b","title":"地蔵堂","description":"地域の人々に大切に守られてきた地蔵堂。道行く人々の安全や暮らしを静かに見守り続けています。","address":"ウォンツ徳佐店, Yamaguchi, Japan, JP","lat":34.394337,"lng":131.719176,"imageUrl":"https://lh3.googleusercontent.com/9upaAbZalj3jjfKwVWvI6TiB5n66s3HVJX1v0UBWoBtfgzS-8UpucFPWNemjX1CqOCujVaHnrejTBtPTkGsK_V_mtp7uMcD25PS-_qA"},{"id":"89c3cbec-44ff-51d1-908f-cdd1e0398bc3","title":"釜めしくん","description":"お食事処 磯平のかわいい看板","address":"Japan, 〒759-1513 Yamaguchi, Atōtokusashimo, 西村２７, Yamaguchi, 759-1513, JP","lat":34.392559,"lng":131.716433,"imageUrl":"https://lh3.googleusercontent.com/h9M9rSUjTlJQqUbYjCdCYgwTcSu5I_ScK_HmMJob3jwGkrcBVG4QIokUwlAiIiBej_yKEPRY1RL-yIL24BGjsC8_p0Xx_rMVPBLaEkNr"},{"id":"81833f9c-d8b5-5fa8-a7d1-3401593856c0","title":"エホバの証人の王国会館","description":"20年ぐらい前にできた建物です。みんながいつまでも幸せに暮らせるようにしてくれるという良いニュースを知らせるのが活動です。週に2回の集会もしています。","address":"2107-11 Atōtokusashimo, Yamaguchi, 759-1513, Japan, Yamaguchi, 759-1513, JP","lat":34.39836,"lng":131.71401,"imageUrl":"https://lh3.googleusercontent.com/FY23SoXws5d6lIaKdWlqJ6nPDdr5JnuN0iRnksJJGxFtuyNdKINr5NnFIVHkmd_sULzhcXAtAsYEIBE8rjiJHySTwDdx9F4FFpVZm4tG"},{"id":"c7826817-ae53-5d56-a164-4b5945bc4f8c","title":"山口市阿東保険センター","description":"山口市阿東保険センター","address":"Nakaichi-3382-1 Atōtokusanaka, Yamaguchi, 759-1512, Japan, Yamaguchi, 759-1512, JP","lat":34.395869,"lng":131.721077,"imageUrl":"https://lh3.googleusercontent.com/LY0tUivWAFv3EH2XItf-U9h_AzZiCa2Li2jD8FMhZqkAscPFj-9JOuS7qTtf4QBij48aXn25ihYm6NXf_HWs-QmW2Y4_zE5Q3j01QU2R"},{"id":"fed5ab16-cdfc-55cd-bc5b-53096ed1b999","title":"ＮPOあとう","description":"あとう観光協会","address":"3628 Atōtokusanaka, Yamaguchi-shi, Yamaguchi-ken 759-1512, Japan, Yamaguchi-shi, 759-1512, JP","lat":34.399581,"lng":131.72571,"imageUrl":"https://lh3.googleusercontent.com/mcY-XvVah7lxpUei8OxwkRxg6UQSiVAewmy2UxLZEzlTZCXGZ6kGlj75s8L9ew_zDRQsuzUnlA-x5ogDafZTXunXUh4"},{"id":"e6952283-39f7-517a-9c3f-bb4d46415f1e","title":"あんず","description":"","address":"","lat":34.398794,"lng":131.725653,"imageUrl":""},{"id":"cb3f5ff2-5eb6-55e9-b36f-dc99e09bc2e0","title":"NPO あとう","description":"","address":"","lat":34.399864,"lng":131.725307,"imageUrl":""},{"id":"2968dc85-f607-5eca-887f-c5497883ba85","title":"農業技術センター","description":"農業に関する会議などを行う","address":"3497-2 Atōtokusanaka, Yamaguchi, 759-1512, Japan, Yamaguchi, 759-1512, JP","lat":34.400589,"lng":131.721744,"imageUrl":"https://lh3.googleusercontent.com/Vmz-9GOh-8tLEcMOBLTJXJfE2533yXZEHb30k0OShieOPRP0NNrNT0QIF6lMLJGMF3of6w-Ib_y4sIDYrJifWtx0eFMnj811Wuhh1vPbuQ"},{"id":"b2ee9430-9664-5f7c-9898-b87a41a6eaf4","title":"山口市指定文化財狐塚古墳","description":"山口市阿東徳佐","address":"","lat":34.399766,"lng":131.726324,"imageUrl":"https://lh3.googleusercontent.com/my1rPHZw2KujAO2Msjj6pn-WATmETKOF_hcMHAw-k_pD7IYRCeXkpIhlsVXSUfW93XZZTiASrBH8Jp9vj59qbU1WeQ"},{"id":"14183ca9-f001-56f7-b4dc-b3a2f2958c8e","title":"狐塚古墳","description":"kitsune_zuka_tumulus","address":"3703-1 Atōtokusanaka, Yamaguchi-shi, Yamaguchi-ken 759-1512, Japan, Yamaguchi-shi, 759-1512, JP","lat":34.399958,"lng":131.726039,"imageUrl":"https://lh3.googleusercontent.com/xCZscr4clVtWgTw03-JoChsjf8DoCxx1NBA2lq_iSF33dOMrVpGAbSGGQ3X_UEd4ehsUiq9vERaTeOHIZwgF4F6-YQ"},{"id":"86ef31e6-786d-5f66-9770-876a1a9cbe61","title":"パティオデハナコ","description":"","address":"","lat":34.401329,"lng":131.729158,"imageUrl":""},{"id":"190423ac-f55e-5c82-9248-21c904662a72","title":"花米徳佐本店","description":"","address":"","lat":34.391163,"lng":131.715253,"imageUrl":""},{"id":"3043e19c-ab4b-571f-b75d-664a8fba169f","title":"高岳山登山道入口","description":"I LOVE あとう-高原の町-","address":"ふれあい市, Yamaguchi, Japan, JP","lat":34.404367,"lng":131.734983,"imageUrl":"https://lh3.googleusercontent.com/d1---q4aeI8aAD_eWqeaZKg2BmST1VdD-X1pQZFIwxlzfXBxAU4pU_8yyT-ZyLt6xEz_WMhJ9vQRz_XP2NbeF08RxMJojG_JYujZem0"},{"id":"452002fb-73ad-5056-8644-6525446e8dc0","title":"ゆめ工房華茶屋","description":"","address":"","lat":34.405418,"lng":131.738844,"imageUrl":""},{"id":"17353bc7-c856-5ffd-85f4-c4e173938437","title":"小さな祠","description":"川の近くにある小さな祠","address":"Hiramaru-2623 Atōtokusanaka, Yamaguchi, 759-1512, Japan, Yamaguchi, 759-1512, JP","lat":34.406607,"lng":131.720091,"imageUrl":"https://lh3.googleusercontent.com/iZtnYhL0GQN7Yek6up8m9NY0q7wSO5-cH8M_8vnMgnMPuIyGp12q4SeDHgHF7XIczMlXQCxiio2fiO5CScNltH-QqLzS"}];
+const CATS={REST:"休憩",STAY:"滞在",LOOP:"回遊",CAUTION:"注意",EXCLUDE:"除外",HOLD:"保留"};
+let reviewer="", area="", order=[], index=0, answers={};
+const $=s=>document.querySelector(s);
+function key(){return "ca-review:"+TEST_BATCH+":"+reviewer}
+function hash(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
+function shuffled(seed){const a=[...POIS];let x=hash(seed)||1;for(let i=a.length-1;i>0;i--){x=(x*1664525+1013904223)>>>0;const j=x%(i+1);[a[i],a[j]]=[a[j],a[i]]}return a}
+function loadLocal(){try{return JSON.parse(localStorage.getItem(key())||"null")}catch{return null}}
+function saveLocal(){localStorage.setItem(key(),JSON.stringify({area,order:order.map(x=>x.id),index,answers}))}
+async function start(){
+ reviewer=$("#name").value.trim(); area=$("#area").value.trim();
+ if(!reviewer||!area){$("#startErr").textContent="Discord名と活動地域を入力してください。";$("#startErr").classList.remove("hidden");return}
+ const saved=loadLocal(); const base=shuffled(reviewer);
+ if(saved&&Array.isArray(saved.order)){const m=new Map(POIS.map(p=>[p.id,p]));order=saved.order.map(id=>m.get(id)).filter(Boolean);answers=saved.answers||{};index=Math.min(saved.index||0,19)} else order=base;
+ $("#start").classList.add("hidden");$("#review").classList.remove("hidden");render();
+}
+function render(){
+ if(Object.keys(answers).length>=POIS.length){finish();return}
+ if(index>=order.length) index=order.findIndex(p=>!answers[p.id]);
+ const p=order[index]; if(!p){finish();return}
+ $("#counter").textContent=`${index+1} / ${order.length}`; $("#answered").textContent=`${Object.keys(answers).length}件回答済み`; $("#bar").style.width=`${Object.keys(answers).length/order.length*100}%`;
+ $("#title").textContent=p.title; $("#desc").textContent=p.description||"説明情報なし";
+ $("#map").href=`https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lng}`;
+ if(p.imageUrl){$("#img").src=p.imageUrl;$("#img").alt=p.title;$("#img").classList.remove("hidden")}else $("#img").classList.add("hidden");
+ $("#back").disabled=index===0; $("#saveStatus").textContent="自動保存";
+}
+async function choose(cat){
+ const p=order[index]; answers[p.id]=cat; saveLocal(); $("#saveStatus").textContent="保存中…";
+ const row={test_batch_id:TEST_BATCH,park_key:PARK_KEY,park_name:PARK_NAME,source_queue_id:p.id,poi_name:p.title,normalized_name:p.title.normalize("NFKC").trim(),sample_lat:p.lat,sample_lng:p.lng,reviewer_name:reviewer,reviewer_type:"national_ca",selected_category:cat,confidence:null,review_note:area,reviewed_at:new Date().toISOString()};
+ try{
+   if(!window.campsiteSupabase) throw new Error("Supabaseに接続できません");
+   const {error}=await window.campsiteSupabase.from("poi_review_test_results").upsert(row,{onConflict:"test_batch_id,source_queue_id,reviewer_name,reviewer_type"});
+   if(error) throw error; $("#saveStatus").textContent=`保存済み：${CATS[cat]}`;
+ }catch(e){$("#saveStatus").textContent="端末には保存済み";console.error(e)}
+ index++; saveLocal(); setTimeout(render,120);
+}
+function finish(){$("#review").classList.add("hidden");$("#done").classList.remove("hidden");saveLocal()}
+document.querySelectorAll(".judge").forEach(b=>b.addEventListener("click",()=>choose(b.dataset.v)));
+$("#back").addEventListener("click",()=>{if(index>0){index--;saveLocal();render()}});
+$("#startBtn").addEventListener("click",start);
+$("#name").addEventListener("keydown",e=>{if(e.key==="Enter")$("#area").focus()});
+</script>
+</body>
+</html>
