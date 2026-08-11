@@ -8,6 +8,7 @@ const read=(path)=>fs.readFileSync(path,'utf8');
 const files=[
   'js/field-mode-notes.js',
   'js/field-mode-area.js',
+  'js/field-mode-eraser.js',
   'js/field-mode-export.js',
   'js/field-mode-creative.js',
   'js/field-mode-session.js'
@@ -34,8 +35,13 @@ try{
 }catch(error){
   fail(`field-mode-line.js 互換ローダー構文エラー: ${error.message}`);
 }
-if(!loaderJs.includes("script.src='js/field-mode-area.js?v=1'"))fail('範囲ツール互換ローダーが欠けています。');
-else pass('範囲ツール互換ローダーOK');
+for(const token of [
+  "loadOnce('js/field-mode-area.js?v=1'",
+  "loadOnce('js/field-mode-eraser.js?v=1'"
+]){
+  if(!loaderJs.includes(token))fail(`現地モード互換ローダーが欠けています: ${token}`);
+  else pass(`現地モード互換ローダーOK: ${token}`);
+}
 
 const html=read('field-mode.html');
 const inlineScripts=[...html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi)].map(m=>m[1]).filter(Boolean);
@@ -115,6 +121,23 @@ for(const token of [
 ]){
   if(!areaJs.includes(token))fail(`範囲ツールの安全導線が欠けています: ${token}`);
   else pass(`範囲ツール導線OK: ${token}`);
+}
+
+const eraserJs=read('js/field-mode-eraser.js');
+for(const token of [
+  "button.dataset.tool='eraser'",
+  "button.innerHTML='<span>🧽</span><small>消去</small>'",
+  'data-eraser-action="delete"',
+  'data-eraser-action="clear"',
+  "kind:'area-delete'",
+  "undoStack.push({kind:'delete',record})",
+  "event.stopImmediatePropagation()",
+  "record.fieldDeleted=true",
+  "record.deleted=true",
+  'window.FieldModeEraser='
+]){
+  if(!eraserJs.includes(token))fail(`共通消しゴムの安全導線が欠けています: ${token}`);
+  else pass(`共通消しゴム導線OK: ${token}`);
 }
 
 const sessionJs=read('js/field-mode-session.js');
