@@ -81,6 +81,46 @@ test('新規POIを確定後、戻る・進むでUndo/Redoできる',async({page}
   expect(pageErrors).toEqual([]);
 });
 
+test('線ツールは点を順に置き、1点戻してから確定しUndo/Redoできる',async({page})=>{
+  const pageErrors=await openFieldMode(page);
+
+  await page.locator('#fieldModeCreativeButton').click();
+  const lineTool=page.locator('#fieldModeCreativeHotbar [data-tool="line"]');
+  await expect(lineTool).toBeEnabled();
+  await lineTool.click();
+
+  await expect(page.locator('#fieldModeCrosshair')).toBeVisible();
+  await expect(page.locator('#fieldModeLineActions')).toBeVisible();
+  const add=page.locator('[data-line-action="add"]');
+  const back=page.locator('[data-line-action="back"]');
+  const confirm=page.locator('[data-line-action="confirm"]');
+  await expect(confirm).toBeDisabled();
+
+  await add.click();
+  await page.evaluate(()=>map.panBy([70,0],{animate:false}));
+  await add.click();
+  await page.evaluate(()=>map.panBy([0,70],{animate:false}));
+  await add.click();
+  await expect(page.locator('#fieldModeSelectionTitle')).toContainText('3点');
+
+  await back.click();
+  await expect(page.locator('#fieldModeSelectionTitle')).toContainText('2点');
+  await expect(confirm).toBeEnabled();
+  await confirm.click();
+
+  await expect(page.locator('#fieldModeSelectionDetail')).toContainText('LineString');
+  await expect(page.locator('#fieldModeUndoButton')).toBeEnabled();
+  expect(await page.evaluate(()=>window.FieldModeLine.getRecords().filter(record=>!record.deleted).length)).toBe(1);
+
+  await page.locator('#fieldModeUndoButton').click();
+  await expect(page.locator('#fieldModeRedoButton')).toBeEnabled();
+  expect(await page.evaluate(()=>window.FieldModeLine.getRecords().filter(record=>!record.deleted).length)).toBe(0);
+
+  await page.locator('#fieldModeRedoButton').click();
+  expect(await page.evaluate(()=>window.FieldModeLine.getRecords().filter(record=>!record.deleted).length)).toBe(1);
+  expect(pageErrors).toEqual([]);
+});
+
 test('現地作業はリロード後に続きから再開でき、履歴も復元される',async({page})=>{
   const pageErrors=await openFieldMode(page);
 
