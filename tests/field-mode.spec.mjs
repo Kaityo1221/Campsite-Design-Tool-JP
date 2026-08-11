@@ -43,6 +43,19 @@ async function openFieldMode(page){
   return pageErrors;
 }
 
+async function createTwoPointLine(page){
+  await page.locator('#fieldModeCreativeButton').click();
+  const lineTool=page.locator('#fieldModeCreativeHotbar [data-tool="line"]');
+  await expect(lineTool).toBeEnabled();
+  await lineTool.click();
+  const add=page.locator('[data-line-action="add"]');
+  await add.click();
+  await page.evaluate(()=>map.panBy([70,0],{animate:false}));
+  await add.click();
+  await page.locator('[data-line-action="confirm"]').click();
+  await expect(page.locator('#fieldModeSelectionDetail')).toContainText('LineString');
+}
+
 test('新規設置は道具箱で取消でき、パレットは再タップで閉じる',async({page})=>{
   const pageErrors=await openFieldMode(page);
 
@@ -118,6 +131,27 @@ test('線ツールは点を順に置き、1点戻してから確定しUndo/Redo�
 
   await page.locator('#fieldModeRedoButton').click();
   expect(await page.evaluate(()=>window.FieldModeLine.getRecords().filter(record=>!record.deleted).length)).toBe(1);
+  expect(pageErrors).toEqual([]);
+});
+
+test('確定した線はリロード後に続きから再開でき、Undoも復元される',async({page})=>{
+  const pageErrors=await openFieldMode(page);
+  await createTwoPointLine(page);
+  await expect.poll(()=>page.evaluate(()=>window.FieldModeLine.getRecords().filter(record=>!record.deleted).length)).toBe(1);
+
+  await page.evaluate(async()=>{await window.FieldModeSession.saveNow();});
+  await expect(page.locator('#fieldModeSessionStatus')).toContainText('自動保存済み');
+  await page.waitForTimeout(250);
+
+  await page.reload();
+  await expect(page.locator('#fieldModeResumePanel')).toHaveClass(/active/);
+  await page.locator('#fieldModeResumeButton').click();
+
+  await expect.poll(()=>page.evaluate(()=>window.FieldModeLine.getRecords().filter(record=>!record.deleted).length)).toBe(1);
+  await expect(page.locator('#fieldModeUndoButton')).toBeEnabled();
+  await page.locator('#fieldModeUndoButton').click();
+  await expect.poll(()=>page.evaluate(()=>window.FieldModeLine.getRecords().filter(record=>!record.deleted).length)).toBe(0);
+  await expect(page.locator('#fieldModeRedoButton')).toBeEnabled();
   expect(pageErrors).toEqual([]);
 });
 
