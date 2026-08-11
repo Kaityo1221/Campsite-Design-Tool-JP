@@ -11,7 +11,6 @@
   let lineSeq=0;
   let sourcePromise=Promise.resolve(null);
   let sourceKey='';
-  let sourceFile=null;
   let initialized=false;
   let saveWrapperInstalled=false;
 
@@ -27,7 +26,6 @@
 
   async function captureSource(file){
     if(!file)return null;
-    sourceFile=file;
     sourceKey=`${file.name}:${file.size}:${file.lastModified||0}`;
     restoreStoredLines();
     const lower=file.name.toLowerCase();
@@ -59,6 +57,15 @@
     return layer;
   }
 
+  function ensureLineLayersVisible(){
+    if(!fileLoaded)return;
+    activeLines().forEach(record=>{
+      if(!record.layer)makeLineLayer(record);
+      else if(!dataLayer.hasLayer(record.layer))record.layer.addTo(dataLayer);
+    });
+    refreshSaveButton();
+  }
+
   function restoreStoredLines(){
     const key=storageKey();
     if(!key)return;
@@ -66,7 +73,13 @@
     try{payload=JSON.parse(localStorage.getItem(key)||'null');}catch(_){return;}
     if(!payload||payload.version!==1||!Array.isArray(payload.records))return;
     lineRecords.forEach(record=>{try{if(record.layer&&dataLayer.hasLayer(record.layer))dataLayer.removeLayer(record.layer);}catch(_){}});
-    lineRecords=payload.records.filter(item=>Array.isArray(item.points)&&item.points.length>=2).map(item=>({id:item.id,name:item.name||'現地線',points:item.points.map(p=>[Number(p[0]),Number(p[1])]),deleted:!!item.deleted,layer:null}));
+    lineRecords=payload.records.filter(item=>Array.isArray(item.points)&&item.points.length>=2).map(item=>({
+      id:item.id,
+      name:item.name||'現地線',
+      points:item.points.map(p=>[Number(p[0]),Number(p[1])]),
+      deleted:!!item.deleted,
+      layer:null
+    }));
     lineSeq=Math.max(Number(payload.seq)||0,lineRecords.length);
     lineRecords.forEach(makeLineLayer);
     refreshSaveButton();
@@ -98,10 +111,8 @@
 
   function refreshControls(){
     if(!controls)return;
-    const back=controls.querySelector('[data-line-action="back"]');
-    const confirm=controls.querySelector('[data-line-action="confirm"]');
-    back.disabled=!draftPoints.length;
-    confirm.disabled=draftPoints.length<2;
+    controls.querySelector('[data-line-action="back"]').disabled=!draftPoints.length;
+    controls.querySelector('[data-line-action="confirm"]').disabled=draftPoints.length<2;
     selectionTitle.textContent=`✏️ 線を作成中（${draftPoints.length}点）`;
     selectionDetail.textContent=draftPoints.length<2?'地図中央の十字を合わせて「＋ 点を追加」。2点以上で線を確定できます。':'地図を動かして点を追加します。橙色の線が完成イメージです。';
   }
@@ -121,8 +132,8 @@
     if(!fileLoaded)return;
     draftPoints=[];
     resetPoiSelection();
-    FieldCreative?.selectTool('line',{collapse:false});
-    FieldCreative?.closeMenu();
+    window.FieldCreative?.selectTool('line',{collapse:false});
+    window.FieldCreative?.closeMenu();
     crosshair.style.display='block';
     ensureControls().style.display='grid';
     modeStatus.textContent='線を作成';
@@ -154,7 +165,7 @@
     clearPreview();
     crosshair.style.display='none';
     if(controls)controls.style.display='none';
-    if(exit)FieldCreative?.exit({cancel:false});
+    if(exit)window.FieldCreative?.exit({cancel:false});
     modeStatus.textContent='線作成を取消';
     selectionTitle.textContent='追加予定POIを選択してください';
     selectionDetail.textContent='地図上の黄色い追加予定POIをタップしてください。';
@@ -178,7 +189,7 @@
     modeStatus.textContent='線を追加';
     selectionTitle.textContent=`追加：${record.name}`;
     selectionDetail.textContent=`${record.points.length}点の線を追加しました。KMZ保存でLineStringとして出力します。`;
-    FieldCreative?.exit({cancel:false});
+    window.FieldCreative?.exit({cancel:false});
   }
 
   function undoLine(event){
@@ -216,6 +227,7 @@
   function directName(node){return Array.from(node.children||[]).find(el=>el.localName==='name')?.textContent?.trim()||'';}
   function findFolderByName(doc,name){return Array.from(doc.getElementsByTagNameNS('*','Folder')).find(folder=>directName(folder)===name)||null;}
   function ensureTargetFolder(doc,documentNode,name){let folder=findFolderByName(doc,name);if(folder)return folder;folder=createElement(doc,'Folder');folder.appendChild(createElement(doc,'name',name));documentNode.appendChild(folder);return folder;}
+  function removeOldFieldCircleFolders(doc){Array.from(doc.getElementsByTagNameNS('*','Folder')).forEach(folder=>{const name=directName(folder);if(name==='現地モード_30m円'||name==='現地モード_40m円'||name==='現地モード_距離円')folder.remove();});}
   function destinationPoint(latDeg,lngDeg,distanceMeters,bearingDeg){const radius=6378137,delta=distanceMeters/radius,theta=bearingDeg*Math.PI/180,phi1=latDeg*Math.PI/180,lambda1=lngDeg*Math.PI/180,sinPhi2=Math.sin(phi1)*Math.cos(delta)+Math.cos(phi1)*Math.sin(delta)*Math.cos(theta),phi2=Math.asin(sinPhi2),lambda2=lambda1+Math.atan2(Math.sin(theta)*Math.sin(delta)*Math.cos(phi1),Math.cos(delta)-Math.sin(phi1)*Math.sin(phi2));return[phi2*180/Math.PI,lambda2*180/Math.PI];}
   function circleCoordinateText(lat,lng,radiusMeters,steps=72){const points=[];for(let i=0;i<=steps;i++){const[pLat,pLng]=destinationPoint(lat,lng,radiusMeters,360*i/steps);points.push(`${pLng.toFixed(8)},${pLat.toFixed(8)},0`);}return points.join(' ');}
   function folderStyleUrl(folder){if(!folder)return'';for(const pm of Array.from(folder.children||[]).filter(el=>el.localName==='Placemark')){const styleUrl=Array.from(pm.children||[]).find(el=>el.localName==='styleUrl');if(styleUrl?.textContent?.trim())return styleUrl.textContent.trim();}return'';}
@@ -233,8 +245,7 @@
   function appendLines(doc,documentNode){const records=activeLines();if(!records.length)return;const folder=ensureTargetFolder(doc,documentNode,LINE_FOLDER);records.forEach(record=>{const pm=createElement(doc,'Placemark');pm.appendChild(createElement(doc,'name',record.name));const line=createElement(doc,'LineString');line.appendChild(createElement(doc,'tessellate','1'));line.appendChild(createElement(doc,'altitudeMode','clampToGround'));line.appendChild(createElement(doc,'coordinates',record.points.map(point=>`${point[1].toFixed(8)},${point[0].toFixed(8)},0`).join(' ')));pm.appendChild(line);folder.appendChild(pm);});}
 
   async function exportCombinedKmz(){
-    const changed=changedRecords();
-    const lines=activeLines();
+    const changed=changedRecords(),lines=activeLines();
     if(!changed.length&&!lines.length)return;
     const source=await sourcePromise;
     if(!source)throw new Error('元ファイルを再取得できませんでした。もう一度KMZを選択してください。');
@@ -246,6 +257,7 @@
     const photoPaths=await attachPhotos(outZip,changed);
     replaceExistingRecords(changed,photoPaths,recordMap);
     deleteExistingRecords(recordMap);
+    removeOldFieldCircleFolders(doc);
     const newRecords=poiRecords.filter(r=>r.added&&r.isNew&&!r.fieldDeleted);
     appendNewPois(doc,documentNode,newRecords,photoPaths);
     appendGeneratedCircles(doc,documentNode,newRecords);
@@ -272,7 +284,7 @@
     const poiCount=changedRecords().length,lineCount=lineChangedCount(),total=poiCount+lineCount;
     saveButton.disabled=!total;
     saveButton.textContent=total?`変更をKMZ保存（POI ${poiCount} / 線 ${lineCount}）`:'変更したPOIをKMZ保存';
-    saveNote.textContent=total?`POIの追加・移動等と線をまとめてKMZへ反映します。`:'変更するとKMZ保存できるようになります。';
+    saveNote.textContent=total?'POIの追加・移動等と線をまとめてKMZへ反映します。':'変更するとKMZ保存できるようになります。';
   }
 
   function installSaveWrapper(){
@@ -299,13 +311,16 @@
   }
 
   fileInput.addEventListener('change',()=>{const file=fileInput.files&&fileInput.files[0];if(file)setSourceFile(file);});
+  if(modeStatus){
+    new MutationObserver(()=>setTimeout(ensureLineLayersVisible,0)).observe(modeStatus,{childList:true,subtree:true,characterData:true});
+  }
 
   const timer=setInterval(()=>{
-    const readyA=installSaveWrapper();
-    const readyB=initCreativeLine();
-    if((saveWrapperInstalled||readyA)&&(initialized||readyB))clearInterval(timer);
+    installSaveWrapper();
+    initCreativeLine();
+    if(saveWrapperInstalled&&initialized)clearInterval(timer);
   },0);
   setTimeout(()=>clearInterval(timer),5000);
 
-  window.FieldModeLine={getRecords:()=>lineRecords,setSourceFile,begin:beginLine,cancel:()=>cancelDraft({exit:true})};
+  window.FieldModeLine={getRecords:()=>lineRecords,setSourceFile,begin:beginLine,cancel:()=>cancelDraft({exit:true}),refresh:ensureLineLayersVisible};
 })();
