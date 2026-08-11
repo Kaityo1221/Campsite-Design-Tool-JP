@@ -138,9 +138,9 @@
   },true);
 
   const observer=new MutationObserver(sync);
-  observer.observe(document.body,{childList:true,subtree:true});
+  observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
   const timer=setInterval(sync,200);
-  setTimeout(()=>clearInterval(timer),10000);
+  setTimeout(()=>clearInterval(timer),5000);
   sync();
 
   window.FieldModeToolReturn={toToolbox:returnToToolbox};
