@@ -2,7 +2,6 @@
   'use strict';
 
   const LINE_FOLDER='現地モード_線';
-  const LINE_STORAGE_PREFIX='field-mode-lines:';
   let draftPoints=[];
   let previewLayer=null;
   let draftPointLayer=null;
@@ -10,13 +9,13 @@
   let lineRecords=[];
   let lineSeq=0;
   let sourcePromise=Promise.resolve(null);
-  let sourceKey='';
   let initialized=false;
   let saveWrapperInstalled=false;
 
   function centerLatLng(){const c=map.getCenter();return[c.lat,c.lng];}
   function activeLines(){return lineRecords.filter(record=>!record.deleted);}
   function lineChangedCount(){return activeLines().length;}
+  function scheduleSessionSave(){window.FieldModeSession?.scheduleSave?.();}
 
   function findKmlPath(zip){
     const names=Object.keys(zip.files).filter(name=>name.toLowerCase().endsWith('.kml')&&!zip.files[name].dir);
@@ -26,27 +25,23 @@
 
   async function captureSource(file){
     if(!file)return null;
-    sourceKey=`${file.name}:${file.size}:${file.lastModified||0}`;
-    restoreStoredLines();
     const lower=file.name.toLowerCase();
     if(lower.endsWith('.kml'))return{file,zip:null,kmlPath:'doc.kml',kmlText:await file.text()};
     const zip=await JSZip.loadAsync(await file.arrayBuffer()),kmlPath=findKmlPath(zip);
     return{file,zip,kmlPath,kmlText:await zip.files[kmlPath].async('string')};
   }
 
-  function setSourceFile(file){
-    if(!file)return;
-    sourcePromise=captureSource(file).catch(error=>{console.error('field line source capture failed',error);return null;});
+  function clearLines(){
+    lineRecords.forEach(record=>{if(record.layer&&dataLayer.hasLayer(record.layer))dataLayer.removeLayer(record.layer);});
+    lineRecords=[];
+    lineSeq=0;
+    refreshSaveButton();
   }
 
-  function storageKey(){return sourceKey?`${LINE_STORAGE_PREFIX}${sourceKey}`:'';}
-  function persistLines(){
-    const key=storageKey();
-    if(!key)return;
-    try{
-      const payload={version:1,seq:lineSeq,records:lineRecords.map(record=>({id:record.id,name:record.name,points:record.points,deleted:!!record.deleted}))};
-      localStorage.setItem(key,JSON.stringify(payload));
-    }catch(error){console.warn('field line autosave failed',error);}
+  function setSourceFile(file){
+    if(!file)return;
+    clearLines();
+    sourcePromise=captureSource(file).catch(error=>{console.error('field line source capture failed',error);return null;});
   }
 
   function makeLineLayer(record){
@@ -57,32 +52,28 @@
     return layer;
   }
 
-  function ensureLineLayersVisible(){
-    if(!fileLoaded)return;
-    activeLines().forEach(record=>{
-      if(!record.layer)makeLineLayer(record);
-      else if(!dataLayer.hasLayer(record.layer))record.layer.addTo(dataLayer);
-    });
-    refreshSaveButton();
+  function snapshotLines(){
+    return lineRecords.map(record=>({
+      id:record.id,
+      name:record.name,
+      points:record.points.map(point=>[...point]),
+      deleted:!!record.deleted
+    }));
   }
 
-  function restoreStoredLines(){
-    const key=storageKey();
-    if(!key)return;
-    let payload=null;
-    try{payload=JSON.parse(localStorage.getItem(key)||'null');}catch(_){return;}
-    if(!payload||payload.version!==1||!Array.isArray(payload.records))return;
-    lineRecords.forEach(record=>{try{if(record.layer&&dataLayer.hasLayer(record.layer))dataLayer.removeLayer(record.layer);}catch(_){}});
-    lineRecords=payload.records.filter(item=>Array.isArray(item.points)&&item.points.length>=2).map(item=>({
-      id:item.id,
-      name:item.name||'現地線',
-      points:item.points.map(p=>[Number(p[0]),Number(p[1])]),
+  function restoreLines(snapshots=[]){
+    clearLines();
+    lineRecords=(snapshots||[]).filter(item=>Array.isArray(item.points)&&item.points.length>=2).map(item=>({
+      id:item.id||`line:${Date.now().toString(36)}:${++lineSeq}`,
+      name:item.name||`現地線 ${lineSeq+1}`,
+      points:item.points.map(point=>[Number(point[0]),Number(point[1])]),
       deleted:!!item.deleted,
       layer:null
     }));
-    lineSeq=Math.max(Number(payload.seq)||0,lineRecords.length);
+    lineSeq=Math.max(lineSeq,lineRecords.length);
     lineRecords.forEach(makeLineLayer);
     refreshSaveButton();
+    return new Map(lineRecords.map(record=>[record.id,record]));
   }
 
   function ensureControls(){
@@ -180,12 +171,12 @@
     undoStack.push({kind:'line-add',lineRecord:record});
     redoStack.length=0;
     updateHistoryButtons();
-    persistLines();
     draftPoints=[];
     clearPreview();
     crosshair.style.display='none';
     if(controls)controls.style.display='none';
     refreshSaveButton();
+    scheduleSessionSave();
     modeStatus.textContent='線を追加';
     selectionTitle.textContent=`追加：${record.name}`;
     selectionDetail.textContent=`${record.points.length}点の線を追加しました。KMZ保存でLineStringとして出力します。`;
@@ -201,7 +192,7 @@
     record.deleted=true;
     if(record.layer&&dataLayer.hasLayer(record.layer))dataLayer.removeLayer(record.layer);
     redoStack.push(action);
-    updateHistoryButtons();persistLines();refreshSaveButton();
+    updateHistoryButtons();refreshSaveButton();scheduleSessionSave();
     modeStatus.textContent='線追加を戻しました';
   }
 
@@ -214,7 +205,7 @@
     record.deleted=false;
     if(record.layer&&!dataLayer.hasLayer(record.layer))record.layer.addTo(dataLayer);
     undoStack.push(action);
-    updateHistoryButtons();persistLines();refreshSaveButton();
+    updateHistoryButtons();refreshSaveButton();scheduleSessionSave();
     modeStatus.textContent='線追加をやり直しました';
   }
 
@@ -311,9 +302,6 @@
   }
 
   fileInput.addEventListener('change',()=>{const file=fileInput.files&&fileInput.files[0];if(file)setSourceFile(file);});
-  if(modeStatus){
-    new MutationObserver(()=>setTimeout(ensureLineLayersVisible,0)).observe(modeStatus,{childList:true,subtree:true,characterData:true});
-  }
 
   const timer=setInterval(()=>{
     installSaveWrapper();
@@ -322,5 +310,12 @@
   },0);
   setTimeout(()=>clearInterval(timer),5000);
 
-  window.FieldModeLine={getRecords:()=>lineRecords,setSourceFile,begin:beginLine,cancel:()=>cancelDraft({exit:true}),refresh:ensureLineLayersVisible};
+  window.FieldModeLine={
+    getRecords:()=>lineRecords,
+    snapshot:snapshotLines,
+    restore:restoreLines,
+    setSourceFile,
+    begin:beginLine,
+    cancel:()=>cancelDraft({exit:true})
+  };
 })();
