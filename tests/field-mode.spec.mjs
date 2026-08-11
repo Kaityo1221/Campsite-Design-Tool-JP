@@ -39,21 +39,25 @@ async function openFieldMode(page){
   await expect(page.locator('#fieldModeFileStatus')).toContainText('件を読み込み');
   await expect(page.locator('#fieldModeNewPoiButton')).toBeEnabled();
   await expect(page.locator('#fieldModeCreativeButton')).toBeEnabled();
+  await expect.poll(()=>page.locator('#fieldModeCreativeHotbar [data-tool="area"]').isEnabled()).toBe(true);
   expect(pageErrors).toEqual([]);
   return pageErrors;
 }
 
-async function createTwoPointLine(page){
+async function createThreePointArea(page){
   await page.locator('#fieldModeCreativeButton').click();
-  const lineTool=page.locator('#fieldModeCreativeHotbar [data-tool="line"]');
-  await expect(lineTool).toBeEnabled();
-  await lineTool.click();
-  const add=page.locator('[data-line-action="add"]');
+  const areaTool=page.locator('#fieldModeCreativeHotbar [data-tool="area"]');
+  await expect(areaTool).toBeEnabled();
+  await expect(page.locator('#fieldModeCreativeHotbar [data-tool="line"]')).toBeDisabled();
+  await areaTool.click();
+  const add=page.locator('[data-area-action="add"]');
   await add.click();
   await page.evaluate(()=>map.panBy([70,0],{animate:false}));
   await add.click();
-  await page.locator('[data-line-action="confirm"]').click();
-  await expect(page.locator('#fieldModeSelectionDetail')).toContainText('LineString');
+  await page.evaluate(()=>map.panBy([0,70],{animate:false}));
+  await add.click();
+  await page.locator('[data-area-action="confirm"]').click();
+  await expect(page.locator('#fieldModeSelectionDetail')).toContainText('Polygon');
 }
 
 test('新規設置は道具箱で取消でき、パレットは再タップで閉じる',async({page})=>{
@@ -94,50 +98,56 @@ test('新規POIを確定後、戻る・進むでUndo/Redoできる',async({page}
   expect(pageErrors).toEqual([]);
 });
 
-test('線ツールは点を順に置き、1点戻してから確定しUndo/Redoできる',async({page})=>{
+test('範囲ツールは3点以上を置き、最後を最初へ閉じてUndo/Redoできる',async({page})=>{
   const pageErrors=await openFieldMode(page);
 
   await page.locator('#fieldModeCreativeButton').click();
-  const lineTool=page.locator('#fieldModeCreativeHotbar [data-tool="line"]');
-  await expect(lineTool).toBeEnabled();
-  await lineTool.click();
+  const areaTool=page.locator('#fieldModeCreativeHotbar [data-tool="area"]');
+  await expect(areaTool).toBeEnabled();
+  await expect(page.locator('#fieldModeCreativeHotbar [data-tool="line"]')).toBeDisabled();
+  await areaTool.click();
 
   await expect(page.locator('#fieldModeCrosshair')).toBeVisible();
-  await expect(page.locator('#fieldModeLineActions')).toBeVisible();
-  const add=page.locator('[data-line-action="add"]');
-  const back=page.locator('[data-line-action="back"]');
-  const confirm=page.locator('[data-line-action="confirm"]');
+  await expect(page.locator('#fieldModeAreaActions')).toBeVisible();
+  const add=page.locator('[data-area-action="add"]');
+  const back=page.locator('[data-area-action="back"]');
+  const confirm=page.locator('[data-area-action="confirm"]');
   await expect(confirm).toBeDisabled();
 
   await add.click();
   await page.evaluate(()=>map.panBy([70,0],{animate:false}));
   await add.click();
+  await expect(confirm).toBeDisabled();
   await page.evaluate(()=>map.panBy([0,70],{animate:false}));
   await add.click();
   await expect(page.locator('#fieldModeSelectionTitle')).toContainText('3点');
-
-  await back.click();
-  await expect(page.locator('#fieldModeSelectionTitle')).toContainText('2点');
   await expect(confirm).toBeEnabled();
+
+  await page.evaluate(()=>map.panBy([-35,0],{animate:false}));
+  await add.click();
+  await expect(page.locator('#fieldModeSelectionTitle')).toContainText('4点');
+  await back.click();
+  await expect(page.locator('#fieldModeSelectionTitle')).toContainText('3点');
   await confirm.click();
 
-  await expect(page.locator('#fieldModeSelectionDetail')).toContainText('LineString');
-  await expect(page.locator('#fieldModeUndoButton')).toBeEnabled();
-  expect(await page.evaluate(()=>window.FieldModeLine.getRecords().filter(record=>!record.deleted).length)).toBe(1);
+  await expect(page.locator('#fieldModeSelectionDetail')).toContainText('閉じた範囲');
+  await expect(page.locator('#fieldModeSelectionDetail')).toContainText('Polygon');
+  expect(await page.evaluate(()=>window.FieldModeArea.getRecords().filter(record=>!record.deleted).length)).toBe(1);
+  expect(await page.evaluate(()=>window.FieldModeArea.getRecords()[0].points.length)).toBe(3);
 
   await page.locator('#fieldModeUndoButton').click();
   await expect(page.locator('#fieldModeRedoButton')).toBeEnabled();
-  expect(await page.evaluate(()=>window.FieldModeLine.getRecords().filter(record=>!record.deleted).length)).toBe(0);
+  expect(await page.evaluate(()=>window.FieldModeArea.getRecords().filter(record=>!record.deleted).length)).toBe(0);
 
   await page.locator('#fieldModeRedoButton').click();
-  expect(await page.evaluate(()=>window.FieldModeLine.getRecords().filter(record=>!record.deleted).length)).toBe(1);
+  expect(await page.evaluate(()=>window.FieldModeArea.getRecords().filter(record=>!record.deleted).length)).toBe(1);
   expect(pageErrors).toEqual([]);
 });
 
-test('確定した線はリロード後に続きから再開でき、Undoも復元される',async({page})=>{
+test('確定した活動範囲はリロード後に続きから再開でき、Undoも復元される',async({page})=>{
   const pageErrors=await openFieldMode(page);
-  await createTwoPointLine(page);
-  await expect.poll(()=>page.evaluate(()=>window.FieldModeLine.getRecords().filter(record=>!record.deleted).length)).toBe(1);
+  await createThreePointArea(page);
+  await expect.poll(()=>page.evaluate(()=>window.FieldModeArea.getRecords().filter(record=>!record.deleted).length)).toBe(1);
 
   await page.evaluate(async()=>{await window.FieldModeSession.saveNow();});
   await expect(page.locator('#fieldModeSessionStatus')).toContainText('自動保存済み');
@@ -147,10 +157,10 @@ test('確定した線はリロード後に続きから再開でき、Undoも復�
   await expect(page.locator('#fieldModeResumePanel')).toHaveClass(/active/);
   await page.locator('#fieldModeResumeButton').click();
 
-  await expect.poll(()=>page.evaluate(()=>window.FieldModeLine.getRecords().filter(record=>!record.deleted).length)).toBe(1);
+  await expect.poll(()=>page.evaluate(()=>window.FieldModeArea?.getRecords().filter(record=>!record.deleted).length||0)).toBe(1);
   await expect(page.locator('#fieldModeUndoButton')).toBeEnabled();
   await page.locator('#fieldModeUndoButton').click();
-  await expect.poll(()=>page.evaluate(()=>window.FieldModeLine.getRecords().filter(record=>!record.deleted).length)).toBe(0);
+  await expect.poll(()=>page.evaluate(()=>window.FieldModeArea.getRecords().filter(record=>!record.deleted).length)).toBe(0);
   await expect(page.locator('#fieldModeRedoButton')).toBeEnabled();
   expect(pageErrors).toEqual([]);
 });
@@ -164,9 +174,7 @@ test('現地作業はリロード後に続きから再開でき、履歴も復�
   await expect(page.locator('#fieldModeSelectionTitle')).toContainText('ポケストップ 1');
   await expect(page.locator('#fieldModeUndoButton')).toBeEnabled();
 
-  await page.evaluate(async()=>{
-    await window.FieldModeSession.saveNow();
-  });
+  await page.evaluate(async()=>{await window.FieldModeSession.saveNow();});
   await expect(page.locator('#fieldModeSessionStatus')).toContainText('自動保存済み');
 
   await page.reload();
