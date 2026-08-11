@@ -56,6 +56,7 @@ async function readKmlText(file){const lower=file.name.toLowerCase();if(!/\.(kml
 fileInput.addEventListener('change',async()=>{const file=fileInput.files&&fileInput.files[0];if(!file)return;fileLoaded=false;updateNewPoiButton();sourceFileName=file.name;fileStatus.textContent=`読込中：${file.name}`;modeStatus.textContent='読込中';try{const kmlText=await readKmlText(file);fileStatus.textContent=`選択中：${file.name}`;renderKml(kmlText);}catch(error){console.error(error);dataLayer.clearLayers();resetPoiSelection();placeholder.style.display='';modeStatus.textContent='読込失敗';fileStatus.textContent=`⚠ ${error.message||'ファイルを読み込めませんでした。'}`;}});updateSaveButton();updateNewPoiButton();startGps();
 </script>
 <script src="js/field-mode-notes.js?v=1"></script>
+<script src="js/field-mode-line.js?v=1"></script>
 <script src="js/field-mode-export.js?v=5"></script>
 <script src="js/field-mode-creative.js?v=5"></script>
 <script src="js/field-mode-session.js?v=3"></script>

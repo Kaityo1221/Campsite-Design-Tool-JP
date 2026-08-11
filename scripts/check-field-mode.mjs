@@ -7,6 +7,7 @@ const read=(path)=>fs.readFileSync(path,'utf8');
 
 const files=[
   'js/field-mode-notes.js',
+  'js/field-mode-area.js',
   'js/field-mode-export.js',
   'js/field-mode-creative.js',
   'js/field-mode-session.js'
@@ -25,6 +26,16 @@ for(const path of files){
     fail(`${path} 構文エラー: ${error.message}`);
   }
 }
+
+const loaderJs=read('js/field-mode-line.js');
+try{
+  new vm.Script(loaderJs,{filename:'js/field-mode-line.js'});
+  pass('field-mode-line.js 互換ローダー構文OK');
+}catch(error){
+  fail(`field-mode-line.js 互換ローダー構文エラー: ${error.message}`);
+}
+if(!loaderJs.includes("script.src='js/field-mode-area.js?v=1'"))fail('範囲ツール互換ローダーが欠けています。');
+else pass('範囲ツール互換ローダーOK');
 
 const html=read('field-mode.html');
 const inlineScripts=[...html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi)].map(m=>m[1]).filter(Boolean);
@@ -47,6 +58,7 @@ const requiredHtml=[
   'id="fieldModeUndoButton"',
   'id="fieldModeRedoButton"',
   'id="fieldModeScanButton"',
+  'js/field-mode-line.js?v=',
   'js/field-mode-export.js?v=',
   'js/field-mode-creative.js?v=',
   'js/field-mode-session.js?v='
@@ -84,6 +96,25 @@ for(const token of [
 ]){
   if(!creativeJs.includes(token))fail(`クリエイティブパレットの安全導線が欠けています: ${token}`);
   else pass(`パレット導線OK: ${token}`);
+}
+
+const areaJs=read('js/field-mode-area.js');
+for(const token of [
+  'data-area-action="add"',
+  'data-area-action="back"',
+  'data-area-action="confirm"',
+  "draftPoints.length<3",
+  "kind:'area-add'",
+  "event.stopImmediatePropagation()",
+  "const AREA_FOLDER='活動範囲'",
+  "createElement(doc,'Polygon')",
+  "createElement(doc,'LinearRing')",
+  'const closed=[...record.points,record.points[0]]',
+  'areaButton.disabled=false',
+  'window.FieldModeArea='
+]){
+  if(!areaJs.includes(token))fail(`範囲ツールの安全導線が欠けています: ${token}`);
+  else pass(`範囲ツール導線OK: ${token}`);
 }
 
 const sessionJs=read('js/field-mode-session.js');
