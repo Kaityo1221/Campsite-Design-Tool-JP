@@ -8,7 +8,8 @@ const read=(path)=>fs.readFileSync(path,'utf8');
 const files=[
   'js/field-mode-notes.js',
   'js/field-mode-export.js',
-  'js/field-mode-creative.js'
+  'js/field-mode-creative.js',
+  'js/field-mode-session.js'
 ];
 
 for(const path of files){
@@ -47,7 +48,8 @@ const requiredHtml=[
   'id="fieldModeRedoButton"',
   'id="fieldModeScanButton"',
   'js/field-mode-export.js?v=',
-  'js/field-mode-creative.js?v='
+  'js/field-mode-creative.js?v=',
+  'js/field-mode-session.js?v='
 ];
 for(const token of requiredHtml){
   if(!html.includes(token))fail(`field-mode.html 必須要素がありません: ${token}`);
@@ -66,10 +68,11 @@ for(const token of [
   "window.addEventListener('fieldcreativecancel',cancelNewPoiPlacement)",
   'function cancelNewPoiPlacement()',
   "newPoiButton.textContent='＋ 新規設置'",
-  "newPoiButton.textContent='✓ この位置に設置'"
+  "newPoiButton.textContent='✓ この位置に設置'",
+  'window.FieldModeExport={setSourceFile}'
 ]){
-  if(!exportJs.includes(token))fail(`新規設置の安全導線が欠けています: ${token}`);
-  else pass(`新規設置導線OK: ${token}`);
+  if(!exportJs.includes(token))fail(`新規設置・KMZ復元の安全導線が欠けています: ${token}`);
+  else pass(`新規設置・KMZ復元導線OK: ${token}`);
 }
 
 const creativeJs=read('js/field-mode-creative.js');
@@ -81,6 +84,20 @@ for(const token of [
 ]){
   if(!creativeJs.includes(token))fail(`クリエイティブパレットの安全導線が欠けています: ${token}`);
   else pass(`パレット導線OK: ${token}`);
+}
+
+const sessionJs=read('js/field-mode-session.js');
+for(const token of [
+  "const DB_NAME='campsite-field-session'",
+  'indexedDB.open(DB_NAME,DB_VERSION)',
+  'function persistStateNow()',
+  'async function restoreSession(',
+  'window.FieldModeSession=',
+  '前回の現地作業があります',
+  'FieldModeExport?.setSourceFile?.(file)'
+]){
+  if(!sessionJs.includes(token))fail(`現地作業セッションの復元導線が欠けています: ${token}`);
+  else pass(`セッション復元導線OK: ${token}`);
 }
 
 if(process.exitCode){
