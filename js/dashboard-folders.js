@@ -134,26 +134,56 @@
       .dashboard-opening-mini {
         display: inline-flex;
         align-items: center;
-        gap: 5px;
-        margin-top: 7px;
-        padding: 3px 7px;
-        border: 0;
-        background: transparent;
-        color: rgba(148, 163, 184, 0.68);
-        font-size: 9px;
-        font-weight: 800;
-        letter-spacing: .03em;
+        justify-content: center;
+        gap: 7px;
+        min-height: 40px;
+        margin-top: 12px;
+        padding: 9px 16px;
+        border: 1px solid rgba(125, 211, 252, 0.62);
+        border-radius: 999px;
+        background: linear-gradient(135deg, rgba(37, 99, 235, 0.30), rgba(124, 58, 237, 0.28));
+        color: #f8fafc;
+        font-size: 13px;
+        font-weight: 900;
+        letter-spacing: .02em;
+        line-height: 1;
         cursor: pointer;
         text-decoration: none;
+        text-shadow: 0 0 10px rgba(255,255,255,.20);
+        box-shadow:
+          inset 0 1px 0 rgba(255,255,255,.13),
+          0 8px 22px rgba(37,99,235,.20),
+          0 0 18px rgba(125,211,252,.16);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        -webkit-tap-highlight-color: transparent;
+        transition:
+          transform .16s ease,
+          border-color .16s ease,
+          background .16s ease,
+          box-shadow .16s ease;
       }
 
       .dashboard-opening-mini:hover,
       .dashboard-opening-mini:focus-visible {
-        color: #cbd5e1;
+        color: #ffffff;
+        border-color: rgba(186, 230, 253, 0.92);
+        background: linear-gradient(135deg, rgba(37, 99, 235, 0.44), rgba(124, 58, 237, 0.40));
+        box-shadow:
+          inset 0 1px 0 rgba(255,255,255,.18),
+          0 10px 26px rgba(37,99,235,.26),
+          0 0 24px rgba(125,211,252,.28);
+      }
+
+      .dashboard-opening-mini:active {
+        transform: scale(.97);
       }
 
       .dashboard-opening-mini span {
-        font-size: 10px;
+        color: #bae6fd;
+        font-size: 12px;
+        line-height: 1;
+        filter: drop-shadow(0 0 5px rgba(125,211,252,.55));
       }
 
       @media (max-width: 680px) {
@@ -191,6 +221,13 @@
           width: 27px;
           height: 27px;
           font-size: 16px;
+        }
+
+        .dashboard-opening-mini {
+          min-height: 38px;
+          margin-top: 11px;
+          padding: 8px 14px;
+          font-size: 12px;
         }
       }
     `;
@@ -238,7 +275,8 @@
     const mini = document.createElement("button");
     mini.type = "button";
     mini.className = "dashboard-opening-mini";
-    mini.innerHTML = '<span>↩</span> Opening';
+    mini.innerHTML = '<span aria-hidden="true">▶</span> オープニングを見る';
+    mini.setAttribute("aria-label", "オープニングを見る");
     mini.addEventListener("click", () => {
       if (typeof window.backToOpening === "function") {
         window.backToOpening();
