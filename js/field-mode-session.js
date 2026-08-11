@@ -14,7 +14,8 @@
 
   let currentSourceFile=null;
   let currentSourceId='';
-  let sourceReady=Promise.resolve();
+  let sourceReady=Promise.resolve(true);
+  let dbPromise=null;
   let restoring=false;
   let stateTimer=0;
   let newIdSeq=0;
@@ -61,7 +62,8 @@
   }
 
   function openDb(){
-    return new Promise((resolve,reject)=>{
+    if(dbPromise)return dbPromise;
+    dbPromise=new Promise((resolve,reject)=>{
       const request=indexedDB.open(DB_NAME,DB_VERSION);
       request.onupgradeneeded=()=>{
         const db=request.result;
@@ -69,46 +71,94 @@
           if(!db.objectStoreNames.contains(storeName))db.createObjectStore(storeName);
         }
       };
-      request.onsuccess=()=>resolve(request.result);
-      request.onerror=()=>reject(request.error||new Error('IndexedDBを開けませんでした。'));
+      request.onsuccess=()=>{
+        const db=request.result;
+        db.onversionchange=()=>{
+          db.close();
+          dbPromise=null;
+        };
+        resolve(db);
+      };
+      request.onerror=()=>{
+        const error=request.error||new Error('IndexedDBを開けませんでした。');
+        dbPromise=null;
+        reject(error);
+      };
+      request.onblocked=()=>{
+        console.warn('field session IndexedDB open blocked');
+      };
     });
+    return dbPromise;
+  }
+
+  function idbError(prefix,request,tx){
+    const original=request?.error||tx?.error;
+    if(original)return original;
+    return new Error(prefix);
   }
 
   async function storePut(storeName,value){
     const db=await openDb();
-    try{
-      await new Promise((resolve,reject)=>{
-        const tx=db.transaction(storeName,'readwrite');
-        tx.objectStore(storeName).put(value,KEY);
-        tx.oncomplete=resolve;
-        tx.onerror=()=>reject(tx.error||new Error('端末保存に失敗しました。'));
-        tx.onabort=()=>reject(tx.error||new Error('端末保存が中断されました。'));
-      });
-    }finally{db.close();}
+    await new Promise((resolve,reject)=>{
+      let settled=false;
+      const finish=(fn,value)=>{
+        if(settled)return;
+        settled=true;
+        fn(value);
+      };
+      let tx;
+      let request;
+      try{
+        tx=db.transaction(storeName,'readwrite');
+        request=tx.objectStore(storeName).put(value,KEY);
+      }catch(error){
+        reject(error);
+        return;
+      }
+      request.onerror=event=>{
+        console.error(`field session ${storeName} put failed`,request.error);
+        event.preventDefault?.();
+        try{tx.abort();}catch(_){}
+        finish(reject,idbError('端末保存に失敗しました。',request,tx));
+      };
+      tx.oncomplete=()=>finish(resolve);
+      tx.onerror=()=>finish(reject,idbError('端末保存に失敗しました。',request,tx));
+      tx.onabort=()=>finish(reject,idbError('端末保存が中断されました。',request,tx));
+    });
   }
 
   async function storeGet(storeName){
     const db=await openDb();
-    try{
-      return await new Promise((resolve,reject)=>{
-        const tx=db.transaction(storeName,'readonly');
-        const request=tx.objectStore(storeName).get(KEY);
-        request.onsuccess=()=>resolve(request.result||null);
-        request.onerror=()=>reject(request.error||new Error('端末データを読めませんでした。'));
-      });
-    }finally{db.close();}
+    return await new Promise((resolve,reject)=>{
+      let tx;
+      let request;
+      try{
+        tx=db.transaction(storeName,'readonly');
+        request=tx.objectStore(storeName).get(KEY);
+      }catch(error){
+        reject(error);
+        return;
+      }
+      request.onsuccess=()=>resolve(request.result||null);
+      request.onerror=()=>reject(request.error||tx.error||new Error('端末データを読めませんでした。'));
+    });
   }
 
   async function storeDelete(storeName){
     const db=await openDb();
-    try{
-      await new Promise((resolve,reject)=>{
-        const tx=db.transaction(storeName,'readwrite');
+    await new Promise((resolve,reject)=>{
+      let tx;
+      try{
+        tx=db.transaction(storeName,'readwrite');
         tx.objectStore(storeName).delete(KEY);
-        tx.oncomplete=resolve;
-        tx.onerror=()=>reject(tx.error||new Error('端末データを削除できませんでした。'));
-      });
-    }finally{db.close();}
+      }catch(error){
+        reject(error);
+        return;
+      }
+      tx.oncomplete=resolve;
+      tx.onerror=()=>reject(tx.error||new Error('端末データを削除できませんでした。'));
+      tx.onabort=()=>reject(tx.error||new Error('端末データの削除が中断されました。'));
+    });
   }
 
   async function clearAll(){
@@ -121,15 +171,18 @@
   }
 
   async function saveSource(file,sourceId){
-    if(!file||!sourceId)return;
+    if(!file||!sourceId)return false;
+    const type=file.type||'application/octet-stream';
+    const blob=file.slice(0,file.size,type);
     await storePut(SOURCE_STORE,{
       version:1,
       sourceId,
       name:file.name||'field-data.kmz',
-      type:file.type||'application/octet-stream',
+      type,
       lastModified:Number(file.lastModified)||Date.now(),
-      blob:file
+      blob
     });
+    return true;
   }
 
   function ensureRecordIds(){
@@ -198,17 +251,23 @@
   }
 
   async function persistStateNow(){
-    if(restoring||!fileLoaded||!currentSourceFile||!currentSourceId)return;
+    if(restoring||!fileLoaded||!currentSourceFile||!currentSourceId)return false;
     clearTimeout(stateTimer);
     try{
-      await sourceReady;
+      const sourceSaved=await sourceReady;
+      if(!sourceSaved){
+        setStatus('⚠ 元ファイルを端末保存できないため、自動復元は利用できません。',true);
+        return false;
+      }
       const state=makeState();
       await storePut(STATE_STORE,state);
       const stamp=new Date(state.savedAt).toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
       setStatus(`💾 自動保存済み ${stamp}`);
+      return true;
     }catch(error){
       console.error('field session autosave failed',error);
       setStatus(`⚠ 自動保存できません：${error.message||'端末保存エラー'}`,true);
+      return false;
     }
   }
 
@@ -219,8 +278,10 @@
   }
 
   async function persistView(){
-    if(restoring||!fileLoaded||!currentSourceId)return;
+    if(restoring||!fileLoaded||!currentSourceId)return false;
     try{
+      const sourceSaved=await sourceReady;
+      if(!sourceSaved)return false;
       const center=map.getCenter();
       await storePut(VIEW_STORE,{
         version:1,
@@ -229,8 +290,10 @@
         zoom:map.getZoom(),
         savedAt:Date.now()
       });
+      return true;
     }catch(error){
       console.warn('field session view save failed',error);
+      return false;
     }
   }
 
@@ -308,7 +371,7 @@
         : new File([source.blob],source.name,{type:source.type||'application/octet-stream',lastModified:source.lastModified||Date.now()});
       currentSourceFile=file;
       currentSourceId=source.sourceId;
-      sourceReady=Promise.resolve();
+      sourceReady=Promise.resolve(true);
       sourceFileName=file.name;
       window.FieldModeExport?.setSourceFile?.(file);
       const kmlText=await readKmlText(file);
@@ -426,10 +489,10 @@
     currentSourceId=makeSourceId(file);
     panel.classList.remove('active');
     setStatus('💾 現地作業の自動保存を開始します');
-    sourceReady=saveSource(file,currentSourceId).catch(error=>{
+    sourceReady=saveSource(file,currentSourceId).then(()=>true).catch(error=>{
       console.error('field session source save failed',error);
       setStatus(`⚠ 元ファイルを端末保存できません：${error.message||'保存エラー'}`,true);
-      throw error;
+      return false;
     });
   });
 
