@@ -7,25 +7,56 @@
     {value:'power_spot',label:'パワースポット',short:'⚡ パワースポット'}
   ];
   let selectedPoiTypeIndex=0;
+  let newPoiPlacementMode=false;
+  let poiTypeButton=null;
 
   function currentPoiType(){return POI_TYPES[selectedPoiTypeIndex];}
   function setupPoiTypeCycler(){
     if(!newPoiButton||document.getElementById('fieldPoiTypeButton'))return;
+    newPoiButton.textContent='＋ 新規設置';
+    const newPoiRect=newPoiButton.getBoundingClientRect();
+    const matchedWidth=Math.max(112,Math.round(newPoiRect.width));
+    const matchedHeight=Math.max(36,Math.round(newPoiRect.height));
+    newPoiButton.style.width=`${matchedWidth}px`;
     const button=document.createElement('button');
+    poiTypeButton=button;
     button.id='fieldPoiTypeButton';
     button.type='button';
     button.textContent=currentPoiType().short;
     button.title='タップするたびにPOI種類を切り替えます';
-    Object.assign(button.style,{position:'absolute',right:'12px',bottom:'100px',zIndex:'510',border:'1px solid #8a6b31',borderRadius:'999px',padding:'9px 13px',background:'rgba(255,253,247,.96)',color:'#49391e',fontWeight:'900',fontSize:'12px',boxShadow:'0 4px 12px rgba(0,0,0,.16)'});
-    button.addEventListener('click',()=>{selectedPoiTypeIndex=(selectedPoiTypeIndex+1)%POI_TYPES.length;button.textContent=currentPoiType().short;modeStatus.textContent=`種類：${currentPoiType().label}`;});
+    Object.assign(button.style,{position:'absolute',right:'12px',bottom:`${12+matchedHeight+3}px`,width:`${matchedWidth}px`,zIndex:'510',border:'1px solid #8a6b31',borderRadius:'999px',padding:'9px 8px',background:'rgba(255,253,247,.96)',color:'#49391e',fontWeight:'900',fontSize:'12px',boxShadow:'0 4px 12px rgba(0,0,0,.16)',whiteSpace:'nowrap'});
+    button.addEventListener('click',()=>{
+      selectedPoiTypeIndex=(selectedPoiTypeIndex+1)%POI_TYPES.length;
+      button.textContent=currentPoiType().short;
+      modeStatus.textContent=`種類：${currentPoiType().label}`;
+      if(newPoiPlacementMode)updateNewPoiPlacementGuide();
+    });
     newPoiButton.parentElement.appendChild(button);
   }
-  function createPoiAtCurrentPosition(){
+  function placementLatLng(){const center=map.getCenter();return[center.lat,center.lng];}
+  function updateNewPoiPlacementGuide(){
+    if(!newPoiPlacementMode)return;
+    const type=currentPoiType(),latlng=placementLatLng();
+    updateDistanceStatus(latlng);
+    selectionTitle.textContent=`新規${type.label}の位置を決めます`;
+    selectionDetail.textContent='十字が設置位置です。地図を動かして「✓ この位置に設置」で確定します。';
+  }
+  function beginNewPoiPlacement(){
     if(!currentPosition||!fileLoaded)return;
+    if(selectedPoi||fineTuneMode)resetPoiSelection();
+    newPoiPlacementMode=true;
+    crosshair.style.display='block';
+    newPoiButton.textContent='✓ この位置に設置';
+    newPoiButton.setAttribute('aria-label','十字の位置にPOIを設置');
+    modeStatus.textContent=`${currentPoiType().label}の位置決め`;
+    map.panTo(currentPosition);
+    updateNewPoiPlacementGuide();
+  }
+  function createPoiAtLatLng(latlng){
+    if(!fileLoaded)return;
     const type=currentPoiType();
     const count=poiRecords.filter(r=>r.isNew&&r.poiType===type.value&&!r.fieldDeleted).length+1;
     const name=`${type.label} ${count}`;
-    const latlng=[...currentPosition];
     const rangeCircle=L.circle(latlng,{pane:'fieldBackgroundPane',radius:40,color:'#d58b00',weight:2,opacity:.7,fillColor:'#ffd35c',fillOpacity:.035,interactive:false,dashArray:'6 5'}).addTo(dataLayer);
     const marker=L.circleMarker(latlng,{pane:'fieldPoiPane',radius:9,weight:3,color:'#d58b00',fillColor:'#ffd35c',fillOpacity:.9}).addTo(dataLayer);
     const record={marker,rangeCircle,name,description:'',folder:'追加希望POI',latlng:[...latlng],originalLatlng:[...latlng],added:true,isNew:true,poiType:type.value,fieldMemo:'',fieldMemoDirty:false,fieldPhoto:null,fieldPhotoDirty:false,fieldDeleted:false};
@@ -34,7 +65,21 @@
     marker.on('click',()=>selectAddedPoi(record));
     undoStack.push({kind:'add',record});redoStack.length=0;updateHistoryButtons();updateSaveButton();selectAddedPoi(record);updateDistanceStatus(record.latlng,record);modeStatus.textContent=`${type.label}を追加`;
   }
-  newPoiButton?.addEventListener('click',event=>{if(!currentPosition||!fileLoaded)return;event.preventDefault();event.stopImmediatePropagation();createPoiAtCurrentPosition();},true);
+  function confirmNewPoiPlacement(){
+    if(!newPoiPlacementMode)return;
+    const latlng=placementLatLng();
+    newPoiPlacementMode=false;
+    crosshair.style.display='none';
+    newPoiButton.textContent='＋ 新規設置';
+    newPoiButton.setAttribute('aria-label','現在地付近に新規POIを設置');
+    createPoiAtLatLng(latlng);
+  }
+  newPoiButton?.addEventListener('click',event=>{
+    if(!currentPosition||!fileLoaded)return;
+    event.preventDefault();event.stopImmediatePropagation();
+    if(newPoiPlacementMode)confirmNewPoiPlacement();else beginNewPoiPlacement();
+  },true);
+  map.on('move',updateNewPoiPlacementGuide);
 
   function findKmlPath(zip){const names=Object.keys(zip.files).filter(name=>name.toLowerCase().endsWith('.kml')&&!zip.files[name].dir);if(!names.length)throw new Error('KMZ内にKMLがありません。');return names.find(name=>/(^|\/)doc\.kml$/i.test(name))||names[0];}
   async function captureSource(file){if(!file)return null;const lower=file.name.toLowerCase();if(lower.endsWith('.kml'))return{file,zip:null,kmlPath:'doc.kml',kmlText:await file.text()};const zip=await JSZip.loadAsync(await file.arrayBuffer()),kmlPath=findKmlPath(zip);return{file,zip,kmlPath,kmlText:await zip.files[kmlPath].async('string')};}
