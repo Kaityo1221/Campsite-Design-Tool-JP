@@ -84,30 +84,26 @@
         dbPromise=null;
         reject(error);
       };
-      request.onblocked=()=>{
-        console.warn('field session IndexedDB open blocked');
-      };
+      request.onblocked=()=>console.warn('field session IndexedDB open blocked');
     });
     return dbPromise;
   }
 
   function idbError(prefix,request,tx){
-    const original=request?.error||tx?.error;
-    if(original)return original;
-    return new Error(prefix);
+    return request?.error||tx?.error||new Error(prefix);
   }
 
   async function storePut(storeName,value){
     const db=await openDb();
     await new Promise((resolve,reject)=>{
       let settled=false;
+      let tx;
+      let request;
       const finish=(fn,value)=>{
         if(settled)return;
         settled=true;
         fn(value);
       };
-      let tx;
-      let request;
       try{
         tx=db.transaction(storeName,'readwrite');
         request=tx.objectStore(storeName).put(value,KEY);
@@ -172,15 +168,14 @@
 
   async function saveSource(file,sourceId){
     if(!file||!sourceId)return false;
-    const type=file.type||'application/octet-stream';
-    const blob=file.slice(0,file.size,type);
+    const bytes=await file.arrayBuffer();
     await storePut(SOURCE_STORE,{
-      version:1,
+      version:2,
       sourceId,
       name:file.name||'field-data.kmz',
-      type,
+      type:file.type||'application/octet-stream',
       lastModified:Number(file.lastModified)||Date.now(),
-      blob
+      bytes
     });
     return true;
   }
@@ -197,19 +192,35 @@
     });
   }
 
-  function clonePhoto(photo){
+  async function serializePhoto(photo){
     if(!photo?.blob)return null;
+    const bytes=await photo.blob.arrayBuffer();
     return {
       name:photo.name||'photo.jpg',
       type:photo.type||photo.blob.type||'image/jpeg',
-      blob:photo.blob,
+      bytes,
       originalBytes:Number(photo.originalBytes)||0,
       width:Number(photo.width)||0,
       height:Number(photo.height)||0
     };
   }
 
-  function serializeRecord(record){
+  function restorePhoto(photo){
+    if(!photo)return null;
+    if(photo.blob)return photo;
+    if(!photo.bytes)return null;
+    const type=photo.type||'image/jpeg';
+    return {
+      name:photo.name||'photo.jpg',
+      type,
+      blob:new Blob([photo.bytes],{type}),
+      originalBytes:Number(photo.originalBytes)||0,
+      width:Number(photo.width)||0,
+      height:Number(photo.height)||0
+    };
+  }
+
+  async function serializeRecord(record){
     return {
       id:record.fieldSessionId,
       name:record.name||'',
@@ -222,28 +233,36 @@
       poiType:record.poiType||'',
       fieldMemo:record.fieldMemo||'',
       fieldMemoDirty:!!record.fieldMemoDirty,
-      fieldPhoto:clonePhoto(record.fieldPhoto),
+      fieldPhoto:await serializePhoto(record.fieldPhoto),
       fieldPhotoDirty:!!record.fieldPhotoDirty,
       fieldDeleted:!!record.fieldDeleted
     };
   }
 
   function serializeAction(action){
-    if(!action?.record?.fieldSessionId)return null;
+    if(!action?.record)return null;
+    if(!action.record.fieldSessionId){
+      newIdSeq+=1;
+      action.record.fieldSessionId=`new:${Date.now().toString(36)}:${newIdSeq}`;
+    }
     const out={kind:action.kind,recordId:action.record.fieldSessionId};
     if(Array.isArray(action.from))out.from=[...action.from];
     if(Array.isArray(action.to))out.to=[...action.to];
     return out;
   }
 
-  function makeState(){
+  async function makeState(){
     ensureRecordIds();
+    const records=[];
+    for(const record of poiRecords.filter(item=>item.added||item.isNew)){
+      records.push(await serializeRecord(record));
+    }
     return {
-      version:1,
+      version:2,
       sourceId:currentSourceId,
       sourceName:currentSourceFile?.name||sourceFileName||'field-data',
       savedAt:Date.now(),
-      records:poiRecords.filter(record=>record.added||record.isNew).map(serializeRecord),
+      records,
       undo:undoStack.map(serializeAction).filter(Boolean),
       redo:redoStack.map(serializeAction).filter(Boolean),
       selectedId:selectedPoi?.fieldSessionId||''
@@ -259,7 +278,7 @@
         setStatus('⚠ 元ファイルを端末保存できないため、自動復元は利用できません。',true);
         return false;
       }
-      const state=makeState();
+      const state=await makeState();
       await storePut(STATE_STORE,state);
       const stamp=new Date(state.savedAt).toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
       setStatus(`💾 自動保存済み ${stamp}`);
@@ -319,7 +338,7 @@
       poiType:snapshot.poiType||'pokestop',
       fieldMemo:snapshot.fieldMemo||'',
       fieldMemoDirty:!!snapshot.fieldMemoDirty,
-      fieldPhoto:snapshot.fieldPhoto||null,
+      fieldPhoto:restorePhoto(snapshot.fieldPhoto),
       fieldPhotoDirty:!!snapshot.fieldPhotoDirty,
       fieldDeleted:!!snapshot.fieldDeleted,
       fieldSessionId:snapshot.id
@@ -342,7 +361,7 @@
     record.poiType=snapshot.poiType||record.poiType||'';
     record.fieldMemo=snapshot.fieldMemo||'';
     record.fieldMemoDirty=!!snapshot.fieldMemoDirty;
-    record.fieldPhoto=snapshot.fieldPhoto||null;
+    record.fieldPhoto=restorePhoto(snapshot.fieldPhoto);
     record.fieldPhotoDirty=!!snapshot.fieldPhotoDirty;
     record.fieldDeleted=!!snapshot.fieldDeleted;
     if(record.fieldDeleted){
@@ -360,15 +379,25 @@
     return action;
   }
 
+  async function sourceToFile(source){
+    if(source.bytes){
+      return new File([source.bytes],source.name,{type:source.type||'application/octet-stream',lastModified:source.lastModified||Date.now()});
+    }
+    if(source.blob){
+      return source.blob instanceof File
+        ? source.blob
+        : new File([source.blob],source.name,{type:source.type||'application/octet-stream',lastModified:source.lastModified||Date.now()});
+    }
+    throw new Error('前回の元ファイルが端末内にありません。');
+  }
+
   async function restoreSession(source,state,view){
     restoring=true;
     resumeButton.disabled=true;
     discardButton.disabled=true;
     setStatus('💾 前回の作業を復元中…');
     try{
-      const file=source.blob instanceof File
-        ? source.blob
-        : new File([source.blob],source.name,{type:source.type||'application/octet-stream',lastModified:source.lastModified||Date.now()});
+      const file=await sourceToFile(source);
       currentSourceFile=file;
       currentSourceId=source.sourceId;
       sourceReady=Promise.resolve(true);
