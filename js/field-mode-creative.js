@@ -88,15 +88,6 @@
     if(tool)body.classList.add(`field-creative-tool-${tool}`);
   }
 
-  function setMenu(open){
-    menuOpen=!!open;
-    body.classList.toggle('field-creative-menu-open',menuOpen);
-    hotbar.classList.toggle('is-open',menuOpen);
-    hint.classList.toggle('is-open',menuOpen);
-    launcher.setAttribute('aria-expanded',String(menuOpen));
-    if(menuOpen)refreshAvailability();
-  }
-
   function syncAdjustLabels(){
     if(!relocateButtonEl||!fineTuneButtonEl)return;
     let tuning=false;
@@ -153,6 +144,22 @@
     adjustActions.style.display='none';
   }
 
+  function setMenu(open){
+    menuOpen=!!open;
+    body.classList.toggle('field-creative-menu-open',menuOpen);
+    hotbar.classList.toggle('is-open',menuOpen);
+    hint.classList.toggle('is-open',menuOpen);
+    launcher.setAttribute('aria-expanded',String(menuOpen));
+    if(menuOpen){
+      hideAdjustControls();
+      hint.textContent='道具を1つ選んで現地マップを編集します。';
+      refreshAvailability();
+    }else if(activeTool==='adjust'){
+      showAdjustControls();
+      hint.textContent='現在地へ合わせるか、十字で位置を微調整します。';
+    }
+  }
+
   function normalizeSelectionCopy(){
     if(!selectionDetailEl||copySyncing)return;
     const text=selectionDetailEl.textContent||'';
@@ -185,8 +192,7 @@
     }else if(tool==='adjust'){
       hint.textContent='現在地へ合わせるか、十字で位置を微調整します。';
       try{if(typeof map!=='undefined'&&selectedPoi)map.panTo(selectedPoi.latlng);}catch(_){}
-      showAdjustControls();
-      if(collapse)setMenu(false);
+      if(collapse)setMenu(false);else showAdjustControls();
       if(modeStatusEl)modeStatusEl.textContent='位置調整';
     }
     invalidateMap();
