@@ -71,17 +71,17 @@
         display:'none',
         position:'fixed',
         left:'50%',
-        bottom:'calc(92px + env(safe-area-inset-bottom))',
+        bottom:'calc(154px + env(safe-area-inset-bottom))',
         transform:'translateX(-50%)',
-        width:'min(calc(100% - 24px), 520px)',
-        minHeight:'46px',
-        zIndex:'1195',
+        width:'min(calc(100% - 56px), 340px)',
+        minHeight:'42px',
+        zIndex:'1175',
         border:'1px solid #b89a57',
         borderRadius:'14px',
         background:'rgba(255,248,230,.97)',
         color:'#49391e',
         fontWeight:'900',
-        boxShadow:'0 5px 16px rgba(0,0,0,.18)'
+        boxShadow:'0 4px 12px rgba(0,0,0,.16)'
       });
       button.addEventListener('click',event=>{
         event.preventDefault();
@@ -117,7 +117,7 @@
 
   function normalizeAreaCancel(){
     const button=document.querySelector('[data-area-action="cancel"]');
-    if(button)button.textContent='× 範囲作成をやめる';
+    if(button&&button.textContent!=='× 範囲作成をやめる')button.textContent='× 範囲作成をやめる';
   }
 
   function sync(){
@@ -126,7 +126,11 @@
     ensurePoiCancel();
     ensureEraserCancel();
     normalizeAreaCancel();
-    if(poiCancelButton)poiCancelButton.style.display=activeTool()==='poi'?'block':'none';
+    if(poiCancelButton){
+      const shouldShow=activeTool()==='poi';
+      const next=shouldShow?'block':'none';
+      if(poiCancelButton.style.display!==next)poiCancelButton.style.display=next;
+    }
   }
 
   document.addEventListener('click',event=>{
@@ -138,9 +142,8 @@
   },true);
 
   const observer=new MutationObserver(sync);
-  observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
-  const timer=setInterval(sync,200);
-  setTimeout(()=>clearInterval(timer),5000);
+  observer.observe(document.body,{childList:true,subtree:true});
+  setInterval(sync,300);
   sync();
 
   window.FieldModeToolReturn={toToolbox:returnToToolbox};
