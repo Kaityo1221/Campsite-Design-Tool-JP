@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "check:field-mode": "node scripts/check-field-mode.mjs",
-    "test:field-mode": "playwright test tests/field-mode.spec.mjs",
+    "test:field-mode": "playwright test tests/field-mode*.spec.mjs",
     "test": "npm run check:field-mode && npm run test:field-mode"
   },
   "devDependencies": {
