@@ -2,6 +2,10 @@
   'use strict';
 
   const LINE_FOLDER='現地モード_線';
+  const DB_NAME='campsite-field-session';
+  const DB_VERSION=1;
+  const DB_STORE='state';
+  const DB_KEY='field-lines-v1';
   let draftPoints=[];
   let previewLayer=null;
   let draftPointLayer=null;
@@ -9,13 +13,44 @@
   let lineRecords=[];
   let lineSeq=0;
   let sourcePromise=Promise.resolve(null);
+  let sourceIdentity='';
   let initialized=false;
   let saveWrapperInstalled=false;
 
   function centerLatLng(){const c=map.getCenter();return[c.lat,c.lng];}
   function activeLines(){return lineRecords.filter(record=>!record.deleted);}
   function lineChangedCount(){return activeLines().length;}
-  function scheduleSessionSave(){window.FieldModeSession?.scheduleSave?.();}
+  function sourceId(file){return file?`${file.name}:${file.size}:${file.lastModified||0}`:'';}
+
+  function openDb(){
+    return new Promise((resolve,reject)=>{
+      const request=indexedDB.open(DB_NAME,DB_VERSION);
+      request.onsuccess=()=>resolve(request.result);
+      request.onerror=()=>reject(request.error||new Error('IndexedDBを開けませんでした。'));
+      request.onblocked=()=>reject(new Error('IndexedDBが使用中です。'));
+    });
+  }
+
+  async function lineStoreGet(){
+    const db=await openDb();
+    try{return await new Promise((resolve,reject)=>{const tx=db.transaction(DB_STORE,'readonly'),request=tx.objectStore(DB_STORE).get(DB_KEY);request.onsuccess=()=>resolve(request.result||null);request.onerror=()=>reject(request.error||tx.error);});}
+    finally{db.close();}
+  }
+
+  async function lineStorePut(value){
+    const db=await openDb();
+    try{await new Promise((resolve,reject)=>{const tx=db.transaction(DB_STORE,'readwrite'),request=tx.objectStore(DB_STORE).put(value,DB_KEY);request.onerror=()=>reject(request.error||tx.error);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);});}
+    finally{db.close();}
+  }
+
+  function lineActionIds(stack){return stack.filter(action=>action?.kind==='line-add'&&action.lineRecord?.id).map(action=>action.lineRecord.id);}
+  function snapshotLines(){return lineRecords.map(record=>({id:record.id,name:record.name,points:record.points.map(point=>[...point]),deleted:!!record.deleted}));}
+
+  function persistLines(){
+    if(!sourceIdentity)return;
+    const payload={version:1,sourceIdentity,seq:lineSeq,records:snapshotLines(),undoIds:lineActionIds(undoStack),redoIds:lineActionIds(redoStack),savedAt:Date.now()};
+    lineStorePut(payload).catch(error=>console.warn('field line IndexedDB save failed',error));
+  }
 
   function findKmlPath(zip){
     const names=Object.keys(zip.files).filter(name=>name.toLowerCase().endsWith('.kml')&&!zip.files[name].dir);
@@ -38,27 +73,12 @@
     refreshSaveButton();
   }
 
-  function setSourceFile(file){
-    if(!file)return;
-    clearLines();
-    sourcePromise=captureSource(file).catch(error=>{console.error('field line source capture failed',error);return null;});
-  }
-
   function makeLineLayer(record){
     const layer=L.polyline(record.points,{pane:'fieldPoiPane',color:'#e06b2d',weight:5,opacity:.92,lineCap:'round',lineJoin:'round'});
     layer.bindPopup(`<strong>${record.name}</strong><br><small>現地モードで追加した線</small>`);
     record.layer=layer;
     if(!record.deleted)layer.addTo(dataLayer);
     return layer;
-  }
-
-  function snapshotLines(){
-    return lineRecords.map(record=>({
-      id:record.id,
-      name:record.name,
-      points:record.points.map(point=>[...point]),
-      deleted:!!record.deleted
-    }));
   }
 
   function restoreLines(snapshots=[]){
@@ -74,6 +94,37 @@
     lineRecords.forEach(makeLineLayer);
     refreshSaveButton();
     return new Map(lineRecords.map(record=>[record.id,record]));
+  }
+
+  function waitForFileLoaded(callback,attempt=0){
+    if(fileLoaded){callback();return;}
+    if(attempt<80)setTimeout(()=>waitForFileLoaded(callback,attempt+1),50);
+  }
+
+  async function restoreStoredLines(identity){
+    try{
+      const payload=await lineStoreGet();
+      if(!payload||payload.version!==1||payload.sourceIdentity!==identity)return;
+      waitForFileLoaded(()=>{
+        if(sourceIdentity!==identity)return;
+        const lineMap=restoreLines(payload.records||[]);
+        lineSeq=Math.max(lineSeq,Number(payload.seq)||0);
+        const existingUndoLineIds=new Set(lineActionIds(undoStack));
+        const existingRedoLineIds=new Set(lineActionIds(redoStack));
+        for(const id of payload.undoIds||[]){const record=lineMap.get(id);if(record&&!existingUndoLineIds.has(id))undoStack.push({kind:'line-add',lineRecord:record});}
+        for(const id of payload.redoIds||[]){const record=lineMap.get(id);if(record&&!existingRedoLineIds.has(id))redoStack.push({kind:'line-add',lineRecord:record});}
+        updateHistoryButtons();
+        refreshSaveButton();
+      });
+    }catch(error){console.warn('field line IndexedDB restore failed',error);}
+  }
+
+  function setSourceFile(file){
+    if(!file)return;
+    clearLines();
+    sourceIdentity=sourceId(file);
+    sourcePromise=captureSource(file).catch(error=>{console.error('field line source capture failed',error);return null;});
+    restoreStoredLines(sourceIdentity);
   }
 
   function ensureControls(){
@@ -176,7 +227,7 @@
     crosshair.style.display='none';
     if(controls)controls.style.display='none';
     refreshSaveButton();
-    scheduleSessionSave();
+    persistLines();
     modeStatus.textContent='線を追加';
     selectionTitle.textContent=`追加：${record.name}`;
     selectionDetail.textContent=`${record.points.length}点の線を追加しました。KMZ保存でLineStringとして出力します。`;
@@ -192,7 +243,7 @@
     record.deleted=true;
     if(record.layer&&dataLayer.hasLayer(record.layer))dataLayer.removeLayer(record.layer);
     redoStack.push(action);
-    updateHistoryButtons();refreshSaveButton();scheduleSessionSave();
+    updateHistoryButtons();refreshSaveButton();persistLines();
     modeStatus.textContent='線追加を戻しました';
   }
 
@@ -205,7 +256,7 @@
     record.deleted=false;
     if(record.layer&&!dataLayer.hasLayer(record.layer))record.layer.addTo(dataLayer);
     undoStack.push(action);
-    updateHistoryButtons();refreshSaveButton();scheduleSessionSave();
+    updateHistoryButtons();refreshSaveButton();persistLines();
     modeStatus.textContent='線追加をやり直しました';
   }
 
@@ -310,12 +361,5 @@
   },0);
   setTimeout(()=>clearInterval(timer),5000);
 
-  window.FieldModeLine={
-    getRecords:()=>lineRecords,
-    snapshot:snapshotLines,
-    restore:restoreLines,
-    setSourceFile,
-    begin:beginLine,
-    cancel:()=>cancelDraft({exit:true})
-  };
+  window.FieldModeLine={getRecords:()=>lineRecords,snapshot:snapshotLines,restore:restoreLines,setSourceFile,begin:beginLine,cancel:()=>cancelDraft({exit:true})};
 })();
