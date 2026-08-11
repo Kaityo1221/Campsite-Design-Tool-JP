@@ -1,0 +1,15 @@
+{
+  "name": "campsite-design-tool-jp-checks",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check:field-mode": "node scripts/check-field-mode.mjs",
+    "test:field-mode": "playwright test tests/field-mode.spec.mjs",
+    "test": "npm run check:field-mode && npm run test:field-mode"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "jszip": "3.10.1",
+    "leaflet": "1.9.4"
+  }
+}

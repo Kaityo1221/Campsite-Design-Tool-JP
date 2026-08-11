@@ -41,9 +41,20 @@
     selectionTitle.textContent=`新規${type.label}の位置を決めます`;
     selectionDetail.textContent='十字が設置位置です。地図を動かして「✓ この位置に設置」で確定します。';
   }
+  function cancelNewPoiPlacement(){
+    if(!newPoiPlacementMode)return;
+    newPoiPlacementMode=false;
+    crosshair.style.display='none';
+    newPoiButton.textContent='＋ 新規設置';
+    newPoiButton.setAttribute('aria-label','現在地付近に新規POIを設置');
+    resetPoiSelection();
+    updateDistanceStatus(currentPosition);
+    modeStatus.textContent='新規設置を取消';
+  }
   function beginNewPoiPlacement(){
     if(!currentPosition||!fileLoaded)return;
     if(selectedPoi||fineTuneMode)resetPoiSelection();
+    window.FieldCreative?.enter('poi',{collapse:true});
     newPoiPlacementMode=true;
     crosshair.style.display='block';
     newPoiButton.textContent='✓ この位置に設置';
@@ -73,17 +84,23 @@
     newPoiButton.textContent='＋ 新規設置';
     newPoiButton.setAttribute('aria-label','現在地付近に新規POIを設置');
     createPoiAtLatLng(latlng);
+    window.FieldCreative?.exit({cancel:false});
   }
   newPoiButton?.addEventListener('click',event=>{
     if(!currentPosition||!fileLoaded)return;
     event.preventDefault();event.stopImmediatePropagation();
     if(newPoiPlacementMode)confirmNewPoiPlacement();else beginNewPoiPlacement();
   },true);
+  window.addEventListener('fieldcreativecancel',cancelNewPoiPlacement);
   map.on('move',updateNewPoiPlacementGuide);
 
   function findKmlPath(zip){const names=Object.keys(zip.files).filter(name=>name.toLowerCase().endsWith('.kml')&&!zip.files[name].dir);if(!names.length)throw new Error('KMZ内にKMLがありません。');return names.find(name=>/(^|\/)doc\.kml$/i.test(name))||names[0];}
   async function captureSource(file){if(!file)return null;const lower=file.name.toLowerCase();if(lower.endsWith('.kml'))return{file,zip:null,kmlPath:'doc.kml',kmlText:await file.text()};const zip=await JSZip.loadAsync(await file.arrayBuffer()),kmlPath=findKmlPath(zip);return{file,zip,kmlPath,kmlText:await zip.files[kmlPath].async('string')};}
-  fileInput.addEventListener('change',()=>{const file=fileInput.files&&fileInput.files[0];sourcePromise=captureSource(file).catch(error=>{console.error('field export source capture failed',error);return null;});});
+  function setSourceFile(file){
+    if(!file)return;
+    sourcePromise=captureSource(file).catch(error=>{console.error('field export source capture failed',error);return null;});
+  }
+  fileInput.addEventListener('change',()=>{const file=fileInput.files&&fileInput.files[0];setSourceFile(file);});
   function createElement(doc,name,text){const el=doc.createElementNS(doc.documentElement.namespaceURI||KML_NS,name);if(text!==undefined)el.textContent=text;return el;}
   function directName(node){return Array.from(node.children||[]).find(el=>el.localName==='name')?.textContent?.trim()||'';}
   function findFolderByName(doc,name){return Array.from(doc.getElementsByTagNameNS('*','Folder')).find(folder=>directName(folder)===name)||null;}
@@ -107,4 +124,5 @@
   updateSaveButton=function(){const n=changedRecords().length;saveButton.disabled=!n;saveButton.textContent=n?`変更したPOIをKMZ保存（${n}件）`:'変更したPOIをKMZ保存';saveNote.textContent=n?`${n}件の追加・移動・削除・メモ・写真をKMZへ反映します。`:'変更するとKMZ保存できるようになります。';};updateSaveButton();
   saveButton.addEventListener('click',async event=>{event.preventDefault();event.stopImmediatePropagation();saveButton.disabled=true;saveNote.textContent='写真・メモを含むKMZを作成中…';try{await exportPreservedKmz();}catch(error){console.error(error);saveNote.textContent=`⚠ ${error.message||'KMZを保存できませんでした。'}`;modeStatus.textContent='保存失敗';}finally{updateSaveButton();}},true);
   setupPoiTypeCycler();
+  window.FieldModeExport={setSourceFile};
 })();

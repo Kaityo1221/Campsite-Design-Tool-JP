@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>現地モード | Campsite Design Tool JP</title>
   <link rel="stylesheet" href="css/style.css?v=90">
-  <link rel="stylesheet" href="css/field-mode.css?v=1">
+  <link rel="stylesheet" href="css/field-mode.css?v=2">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/icon.png">
   <style>
@@ -56,5 +56,7 @@ async function readKmlText(file){const lower=file.name.toLowerCase();if(!/\.(kml
 fileInput.addEventListener('change',async()=>{const file=fileInput.files&&fileInput.files[0];if(!file)return;fileLoaded=false;updateNewPoiButton();sourceFileName=file.name;fileStatus.textContent=`読込中：${file.name}`;modeStatus.textContent='読込中';try{const kmlText=await readKmlText(file);fileStatus.textContent=`選択中：${file.name}`;renderKml(kmlText);}catch(error){console.error(error);dataLayer.clearLayers();resetPoiSelection();placeholder.style.display='';modeStatus.textContent='読込失敗';fileStatus.textContent=`⚠ ${error.message||'ファイルを読み込めませんでした。'}`;}});updateSaveButton();updateNewPoiButton();startGps();
 </script>
 <script src="js/field-mode-notes.js?v=1"></script>
-<script src="js/field-mode-export.js?v=3"></script>
+<script src="js/field-mode-export.js?v=5"></script>
+<script src="js/field-mode-creative.js?v=5"></script>
+<script src="js/field-mode-session.js?v=3"></script>
 </body></html>
