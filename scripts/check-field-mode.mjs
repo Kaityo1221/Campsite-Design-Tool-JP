@@ -7,6 +7,7 @@ const read=(path)=>fs.readFileSync(path,'utf8');
 
 const files=[
   'js/field-mode-notes.js',
+  'js/field-mode-line.js',
   'js/field-mode-export.js',
   'js/field-mode-creative.js',
   'js/field-mode-session.js'
@@ -47,6 +48,7 @@ const requiredHtml=[
   'id="fieldModeUndoButton"',
   'id="fieldModeRedoButton"',
   'id="fieldModeScanButton"',
+  'js/field-mode-line.js?v=',
   'js/field-mode-export.js?v=',
   'js/field-mode-creative.js?v=',
   'js/field-mode-session.js?v='
@@ -84,6 +86,22 @@ for(const token of [
 ]){
   if(!creativeJs.includes(token))fail(`クリエイティブパレットの安全導線が欠けています: ${token}`);
   else pass(`パレット導線OK: ${token}`);
+}
+
+const lineJs=read('js/field-mode-line.js');
+for(const token of [
+  'data-line-action="add"',
+  'data-line-action="back"',
+  'data-line-action="confirm"',
+  "kind:'line-add'",
+  "event.stopImmediatePropagation()",
+  "const LINE_FOLDER='現地モード_線'",
+  "createElement(doc,'LineString')",
+  'lineButton.disabled=false',
+  'window.FieldModeLine='
+]){
+  if(!lineJs.includes(token))fail(`線ツールの安全導線が欠けています: ${token}`);
+  else pass(`線ツール導線OK: ${token}`);
 }
 
 const sessionJs=read('js/field-mode-session.js');
