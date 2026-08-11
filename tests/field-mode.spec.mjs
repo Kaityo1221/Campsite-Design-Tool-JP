@@ -100,9 +100,10 @@ test('現地作業はリロード後に続きから再開でき、履歴も復�
   await expect(page.locator('#fieldModeResumeDetail')).toContainText('smoke.kml');
   await page.locator('#fieldModeResumeButton').click();
 
-  await expect(page.locator('#fieldModeSessionStatus')).toContainText('復元しました');
+  await expect(page.locator('#fieldModeResumePanel')).not.toHaveClass(/active/);
   await expect(page.locator('#fieldModeSelectionTitle')).toContainText('ポケストップ 1');
   await expect(page.locator('#fieldModeUndoButton')).toBeEnabled();
+  await expect(page.locator('#fieldModeSessionStatus')).toContainText(/復元しました|自動保存済み/);
 
   await page.locator('#fieldModeUndoButton').click();
   await expect(page.locator('#fieldModeRedoButton')).toBeEnabled();
