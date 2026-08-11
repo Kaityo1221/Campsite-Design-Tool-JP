@@ -105,7 +105,7 @@
   }
 
   function showAdjustControls(){
-    if(!adjustActions)return;
+    if(!adjustActions||menuOpen)return;
     Object.assign(adjustActions.style,{
       display:'grid',
       visibility:'visible',
@@ -152,12 +152,31 @@
     launcher.setAttribute('aria-expanded',String(menuOpen));
     if(menuOpen){
       hideAdjustControls();
+      hotbar.style.display='flex';
+      hotbar.style.zIndex='1300';
+      hint.style.zIndex='1290';
       hint.textContent='道具を1つ選んで現地マップを編集します。';
       refreshAvailability();
-    }else if(activeTool==='adjust'){
-      showAdjustControls();
-      hint.textContent='現在地へ合わせるか、十字で位置を微調整します。';
+    }else{
+      hotbar.style.display='';
+      hotbar.style.zIndex='';
+      hint.style.zIndex='';
+      if(activeTool==='adjust'){
+        showAdjustControls();
+        hint.textContent='現在地へ合わせるか、十字で位置を微調整します。';
+      }
     }
+  }
+
+  function openPalette(){
+    if(!active){
+      enter();
+      return;
+    }
+    hideAdjustControls();
+    setMenu(true);
+    if(modeStatusEl)modeStatusEl.textContent='道具を選択';
+    invalidateMap();
   }
 
   function normalizeSelectionCopy(){
@@ -251,16 +270,20 @@
     menuOpen=false;
     hotbar.classList.remove('is-open');
     hint.classList.remove('is-open');
+    hotbar.style.display='';
+    hotbar.style.zIndex='';
+    hint.style.zIndex='';
     hideAdjustControls();
     unlockPage();
     normalizeSelectionCopy();
     invalidateMap();
   }
 
-  launcher.addEventListener('click',()=>{
+  launcher.addEventListener('click',event=>{
+    event.preventDefault();
+    event.stopPropagation();
     refreshAvailability();
-    if(!active){enter();return;}
-    setMenu(!menuOpen);
+    openPalette();
   });
 
   closeButton.addEventListener('click',()=>exit({cancel:true}));
@@ -310,7 +333,7 @@
     enter,
     exit,
     selectTool,
-    openMenu:()=>{if(active)setMenu(true);else enter();},
+    openMenu:openPalette,
     closeMenu:()=>setMenu(false),
     isActive:()=>active,
     activeTool:()=>activeTool,
