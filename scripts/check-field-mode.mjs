@@ -9,6 +9,8 @@ const files=[
   'js/field-mode-notes.js',
   'js/field-mode-area.js',
   'js/field-mode-eraser.js',
+  'js/field-mode-tool-return.js',
+  'js/field-mode-distance-tool.js',
   'js/field-mode-export.js',
   'js/field-mode-creative.js',
   'js/field-mode-session.js'
@@ -37,7 +39,9 @@ try{
 }
 for(const token of [
   "loadOnce('js/field-mode-area.js?v=1'",
-  "loadOnce('js/field-mode-eraser.js?v=1'"
+  "loadOnce('js/field-mode-eraser.js?v=1'",
+  "loadOnce('js/field-mode-tool-return.js?v=1'",
+  "loadOnce('js/field-mode-distance-tool.js?v=1'"
 ]){
   if(!loaderJs.includes(token))fail(`現地モード互換ローダーが欠けています: ${token}`);
   else pass(`現地モード互換ローダーOK: ${token}`);
@@ -138,6 +142,35 @@ for(const token of [
 ]){
   if(!eraserJs.includes(token))fail(`共通消しゴムの安全導線が欠けています: ${token}`);
   else pass(`共通消しゴム導線OK: ${token}`);
+}
+
+const toolReturnJs=read('js/field-mode-tool-return.js');
+for(const token of [
+  "button.textContent='× POIをやめる'",
+  "button.textContent='× 位置調整をやめる'",
+  "button.textContent='× 消去をやめる'",
+  "button.textContent='× 範囲作成をやめる'",
+  'cancelAdjustTransient()',
+  'creative.openMenu?.()',
+  'window.FieldModeToolReturn='
+]){
+  if(!toolReturnJs.includes(token))fail(`共通ツール終了導線が欠けています: ${token}`);
+  else pass(`共通ツール終了導線OK: ${token}`);
+}
+
+const distanceJs=read('js/field-mode-distance-tool.js');
+for(const token of [
+  'data-distance-action="start"',
+  'data-distance-action="exit"',
+  "button.disabled=false",
+  "button.classList.remove('is-coming')",
+  "badge.textContent=`📏 ${distance.toFixed(1)} m`",
+  "window.FieldModeToolReturn?.toToolbox?.()",
+  "window.addEventListener('fieldcreativecancel',cancel)",
+  'window.FieldModeDistance='
+]){
+  if(!distanceJs.includes(token))fail(`距離ツールの安全導線が欠けています: ${token}`);
+  else pass(`距離ツール導線OK: ${token}`);
 }
 
 const sessionJs=read('js/field-mode-session.js');
