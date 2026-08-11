@@ -41,9 +41,20 @@
     selectionTitle.textContent=`新規${type.label}の位置を決めます`;
     selectionDetail.textContent='十字が設置位置です。地図を動かして「✓ この位置に設置」で確定します。';
   }
+  function cancelNewPoiPlacement(){
+    if(!newPoiPlacementMode)return;
+    newPoiPlacementMode=false;
+    crosshair.style.display='none';
+    newPoiButton.textContent='＋ 新規設置';
+    newPoiButton.setAttribute('aria-label','現在地付近に新規POIを設置');
+    resetPoiSelection();
+    updateDistanceStatus(currentPosition);
+    modeStatus.textContent='新規設置を取消';
+  }
   function beginNewPoiPlacement(){
     if(!currentPosition||!fileLoaded)return;
     if(selectedPoi||fineTuneMode)resetPoiSelection();
+    window.FieldCreative?.enter('poi',{collapse:true});
     newPoiPlacementMode=true;
     crosshair.style.display='block';
     newPoiButton.textContent='✓ この位置に設置';
@@ -73,12 +84,14 @@
     newPoiButton.textContent='＋ 新規設置';
     newPoiButton.setAttribute('aria-label','現在地付近に新規POIを設置');
     createPoiAtLatLng(latlng);
+    window.FieldCreative?.exit({cancel:false});
   }
   newPoiButton?.addEventListener('click',event=>{
     if(!currentPosition||!fileLoaded)return;
     event.preventDefault();event.stopImmediatePropagation();
     if(newPoiPlacementMode)confirmNewPoiPlacement();else beginNewPoiPlacement();
   },true);
+  window.addEventListener('fieldcreativecancel',cancelNewPoiPlacement);
   map.on('move',updateNewPoiPlacementGuide);
 
   function findKmlPath(zip){const names=Object.keys(zip.files).filter(name=>name.toLowerCase().endsWith('.kml')&&!zip.files[name].dir);if(!names.length)throw new Error('KMZ内にKMLがありません。');return names.find(name=>/(^|\/)doc\.kml$/i.test(name))||names[0];}
