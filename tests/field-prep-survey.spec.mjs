@@ -1,4 +1,16 @@
 import { test, expect } from '@playwright/test';
+import fs from 'node:fs';
+
+const leafletJs = fs.readFileSync('node_modules/leaflet/dist/leaflet.js', 'utf8');
+const leafletCss = fs.readFileSync('node_modules/leaflet/dist/leaflet.css', 'utf8');
+const jszipJs = fs.readFileSync('node_modules/jszip/dist/jszip.min.js', 'utf8');
+
+test.beforeEach(async ({ page }) => {
+  await page.route('https://unpkg.com/leaflet@1.9.4/dist/leaflet.js', route => route.fulfill({ status: 200, contentType: 'application/javascript', body: leafletJs }));
+  await page.route('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css', route => route.fulfill({ status: 200, contentType: 'text/css', body: leafletCss }));
+  await page.route('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js', route => route.fulfill({ status: 200, contentType: 'application/javascript', body: jszipJs }));
+  await page.route(/https:\/\/[^/]+\.tile\.openstreetmap\.org\/.*/, route => route.fulfill({ status: 204, body: '' }));
+});
 
 test('調査範囲の内外判定ができ、境界上も範囲内として扱う', async ({ page }) => {
   await page.goto('/field-prep.html');
@@ -73,4 +85,26 @@ test('準備専用IndexedDBへ保存して復元できる', async ({ page }) => 
   expect(saved.core.uniquePoints).toHaveLength(1);
   expect(saved.core.uniquePoints[0].name).toBe('保存POI');
   expect(saved.survey.polygon).toHaveLength(3);
+});
+
+test('準備画面が生成したKMLを既存現地モードがそのまま読み込める', async ({ page }) => {
+  await page.goto('/field-prep.html');
+
+  const kml = await page.evaluate(() => window.FieldPrepSurvey.buildFieldKml([
+    { name: '入口', lat: 35.6800, lng: 139.7600, type: 'Pokestop', gameStatus: '' },
+    { name: '広場', lat: 35.6810, lng: 139.7610, type: 'Gym', gameStatus: '' },
+    { name: '北側', lat: 35.6820, lng: 139.7620, type: 'Power Spot', gameStatus: '' }
+  ]));
+
+  await page.goto('/field-mode.html');
+  await expect(page.locator('#fieldModeMap')).toBeVisible();
+  await page.locator('#fieldModeFile').setInputFiles({
+    name: 'field-prep-generated.kml',
+    mimeType: 'application/vnd.google-earth.kml+xml',
+    buffer: Buffer.from(kml)
+  });
+
+  await expect(page.locator('#fieldModeFileStatus')).toContainText('件を読み込み');
+  await expect(page.locator('#fieldModeNewPoiButton')).toBeEnabled();
+  await expect(page.locator('#fieldModeCreativeButton')).toBeEnabled();
 });
