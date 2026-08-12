@@ -9,6 +9,8 @@ on:
       - 'js/field-prep.js'
       - 'js/field-prep-session.js'
       - 'js/field-prep-map.js'
+      - 'js/field-mode-handoff.js'
+      - 'js/field-mode-line.js'
       - 'js/util.js'
       - 'docs/field-prep-*.md'
       - 'scripts/check-field-prep*.mjs'
