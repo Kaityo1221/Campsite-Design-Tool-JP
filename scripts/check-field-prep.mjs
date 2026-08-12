@@ -42,8 +42,8 @@ for (const token of jsTokens) {
   if (!js.includes(token)) throw new Error(`field-prep.js missing token: ${token}`);
 }
 
-if (!guide.includes('調査範囲と活動範囲は同じ？')) {
-  throw new Error('CA guide must explain survey range vs activity area');
+if (!guide.includes('調査範囲') || !guide.includes('活動範囲') || !/別/.test(guide)) {
+  throw new Error('CA guide must explain that survey range and activity area are separate');
 }
 
 console.log('FIELD PREP CHECK: GREEN');
