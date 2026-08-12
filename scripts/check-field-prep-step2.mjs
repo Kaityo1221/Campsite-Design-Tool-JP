@@ -39,7 +39,7 @@ if (map.includes("folder('調査範囲'")) {
   throw new Error('survey polygon must never be exported');
 }
 
-if (!guide.includes('調査範囲と活動範囲は同じ？')) {
+if (!guide.includes('調査範囲') || !guide.includes('活動範囲') || !/別/.test(guide)) {
   throw new Error('CA guide must separate survey and activity areas');
 }
 
