@@ -13,6 +13,7 @@ const points = [
 test.beforeEach(async ({ page }) => {
   await page.route('https://unpkg.com/leaflet@1.9.4/dist/leaflet.js', route => route.fulfill({ status: 200, contentType: 'application/javascript', body: leafletJs }));
   await page.route('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css', route => route.fulfill({ status: 200, contentType: 'text/css', body: leafletCss }));
+  await page.route('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2', route => route.fulfill({ status: 200, contentType: 'application/javascript', body: '' }));
   await page.route(/https:\/\/[^/]+\.tile\.openstreetmap\.org\/.*/, route => route.fulfill({ status: 204, body: '' }));
 });
 
@@ -26,6 +27,16 @@ async function openPreparedMap(page) {
   await expect(page.locator('#fieldPrepSurveySection')).toBeVisible();
   await expect(page.locator('#fieldPrepStartAreaButton')).toBeEnabled();
 }
+
+test('Campsite Labから現地準備へ迷わず入れる', async ({ page }) => {
+  await page.goto('/lab.html');
+  const entry = page.locator('#labFieldPrepEntry');
+  await expect(entry).toBeVisible();
+  await expect(entry).toContainText('現地準備');
+  await entry.click();
+  await expect(page).toHaveURL(/\/field-prep\.html$/);
+  await expect(page.getByRole('heading', { name: '現地モード準備' })).toBeVisible();
+});
 
 test('通常時は地図を確認用にし、調査範囲設定時だけ集中モードへ入る', async ({ page }) => {
   await openPreparedMap(page);
