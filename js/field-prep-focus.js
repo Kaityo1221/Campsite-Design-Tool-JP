@@ -12,20 +12,6 @@
 
   if (!surveySection || !mapShell || !mapElement || !startButton || !confirmButton) return;
 
-  const style = document.createElement('style');
-  style.textContent = `
-    .field-prep-map-gate{position:absolute;inset:0;z-index:700;display:flex;align-items:flex-end;justify-content:center;padding:0 12px 12px;touch-action:pan-y;pointer-events:auto;background:transparent}
-    .field-prep-map-gate span{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border:1px solid rgba(91,78,58,.2);border-radius:999px;background:rgba(255,252,244,.9);color:#5c5141;font-size:11px;font-weight:800;box-shadow:0 3px 12px rgba(47,42,34,.12);pointer-events:none}
-    body.field-prep-map-focus .field-prep-map-gate{pointer-events:none;opacity:0}
-  `;
-  document.head.appendChild(style);
-
-  const gate = document.createElement('div');
-  gate.className = 'field-prep-map-gate';
-  gate.setAttribute('aria-hidden', 'true');
-  gate.innerHTML = '<span>🗺️ 地図操作は「調査範囲を設定」から</span>';
-  mapShell.appendChild(gate);
-
   const exitButton = document.createElement('button');
   exitButton.type = 'button';
   exitButton.className = 'field-prep-focus-exit';
@@ -35,6 +21,7 @@
 
   let focusActive = false;
   let pausedDraft = false;
+  let returnScrollY = 0;
 
   function nudgeMapLayout() {
     window.requestAnimationFrame(() => {
@@ -43,12 +30,24 @@
     });
   }
 
+  function rememberMapPosition() {
+    const rect = mapShell.getBoundingClientRect();
+    returnScrollY = Math.max(0, window.scrollY + rect.top - 12);
+  }
+
+  function restoreMapPosition() {
+    window.requestAnimationFrame(() => {
+      window.scrollTo(0, returnScrollY);
+      window.requestAnimationFrame(() => window.scrollTo(0, returnScrollY));
+    });
+  }
+
   function enterFocusMode() {
     if (focusActive) return;
+    rememberMapPosition();
     focusActive = true;
     document.documentElement.classList.add('field-prep-map-focus-root');
     document.body.classList.add('field-prep-map-focus');
-    gate.setAttribute('aria-hidden', 'true');
     nudgeMapLayout();
   }
 
@@ -58,9 +57,9 @@
     pausedDraft = pause;
     document.documentElement.classList.remove('field-prep-map-focus-root');
     document.body.classList.remove('field-prep-map-focus');
-    gate.setAttribute('aria-hidden', 'false');
     if (pause) startButton.textContent = '調査範囲の編集を続ける';
     nudgeMapLayout();
+    restoreMapPosition();
   }
 
   startButton.addEventListener('click', event => {
