@@ -46,38 +46,105 @@
     return `${(value / (1024 * 1024)).toFixed(1)} MB`;
   }
 
+  function makeRemoveButton(label, onClick) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'field-prep-file-remove';
+    button.textContent = '解除';
+    button.setAttribute('aria-label', `${label}を解除`);
+    button.addEventListener('click', onClick);
+    return button;
+  }
+
+  function makeFileItem(nameText, metaText, onRemove) {
+    const item = document.createElement('div');
+    item.className = 'field-prep-file-item';
+
+    const copy = document.createElement('div');
+    copy.className = 'field-prep-file-copy';
+
+    const name = document.createElement('strong');
+    name.textContent = nameText;
+
+    const meta = document.createElement('span');
+    meta.textContent = metaText;
+
+    copy.append(name, meta);
+    item.append(copy, makeRemoveButton(nameText, onRemove));
+    return item;
+  }
+
+  async function removeSelectedFile(index) {
+    const hadPreparedResult = !results.hidden;
+    state.selectedFiles.splice(index, 1);
+    resetResults();
+    renderSelectedFiles();
+
+    const hasFiles = state.selectedFiles.length > 0;
+    analyzeButton.disabled = !hasFiles;
+    if (clearButton) clearButton.disabled = !hasFiles;
+
+    if (!hasFiles) {
+      fileInput.value = '';
+      setStatus('調査ファイルを選んでください。');
+      emitChange({ cleared: true });
+      return;
+    }
+
+    if (hadPreparedResult) {
+      await analyzeFiles();
+      return;
+    }
+
+    setStatus(`${state.selectedFiles.length}個の調査ファイルを選びました。`);
+    emitChange({ selectionChanged: true });
+  }
+
+  function removeRestoredFile(sourceName) {
+    state.rawPoints = state.rawPoints.filter(point => point.sourceName !== sourceName);
+    state.fileResults = state.fileResults.filter(item => item.name !== sourceName);
+
+    if (state.rawPoints.length === 0) {
+      state.selectedFiles = [];
+      fileInput.value = '';
+      fileList.replaceChildren();
+      resetResults();
+      analyzeButton.disabled = true;
+      if (clearButton) clearButton.disabled = true;
+      setStatus('調査ファイルを選んでください。');
+      emitChange({ cleared: true });
+      return;
+    }
+
+    const deduplicated = window.removeDuplicate(state.rawPoints);
+    state.uniquePoints = deduplicated.uniquePoints;
+    state.duplicateCount = deduplicated.duplicateCount;
+    renderSelectedFiles();
+    renderResults();
+    setStatus(`準備データを更新：${state.uniquePoints.length}件のPOIが残っています。`);
+    emitChange({ restoredFileRemoved: sourceName });
+  }
+
   function renderSelectedFiles() {
     fileList.replaceChildren();
 
     if (state.selectedFiles.length > 0) {
-      state.selectedFiles.forEach(file => {
-        const item = document.createElement('div');
-        item.className = 'field-prep-file-item';
-
-        const name = document.createElement('strong');
-        name.textContent = file.name;
-
-        const size = document.createElement('span');
-        size.textContent = formatBytes(file.size);
-
-        item.append(name, size);
-        fileList.appendChild(item);
+      state.selectedFiles.forEach((file, index) => {
+        fileList.appendChild(makeFileItem(
+          file.name,
+          formatBytes(file.size),
+          () => removeSelectedFile(index)
+        ));
       });
       return;
     }
 
     state.fileResults.forEach(itemResult => {
-      const item = document.createElement('div');
-      item.className = 'field-prep-file-item';
-
-      const name = document.createElement('strong');
-      name.textContent = itemResult.name;
-
-      const size = document.createElement('span');
-      size.textContent = `${itemResult.count || 0}件 / 前回`;
-
-      item.append(name, size);
-      fileList.appendChild(item);
+      fileList.appendChild(makeFileItem(
+        itemResult.name,
+        `${itemResult.count || 0}件 / 前回`,
+        () => removeRestoredFile(itemResult.name)
+      ));
     });
   }
 
@@ -97,8 +164,8 @@
     fileList.replaceChildren();
     resetResults();
     analyzeButton.disabled = true;
-    clearButton.disabled = true;
-    setStatus('CSVを選択してください。');
+    if (clearButton) clearButton.disabled = true;
+    setStatus('調査ファイルを選んでください。');
     emitChange({ cleared: true });
   }
 
@@ -143,7 +210,7 @@
       warnings.textContent = issues
         .map(item => item.error
           ? `「${item.name}」は読み込めませんでした。${item.error}`
-          : `「${item.name}」から有効な緯度・経度を持つPOIを読み取れませんでした。`)
+          : `「${item.name}」から位置情報のあるPOIを読み取れませんでした。`)
         .join(' ');
     } else {
       warnings.hidden = true;
@@ -157,14 +224,14 @@
     if (state.selectedFiles.length === 0) return;
 
     if (typeof window.parseCSV !== 'function' || typeof window.removeDuplicate !== 'function') {
-      setStatus('CSV解析機能を読み込めませんでした。ページを再読み込みしてください。', true);
+      setStatus('調査ファイルの読み込み機能を準備できませんでした。ページを再読み込みしてください。', true);
       return;
     }
 
     analyzeButton.disabled = true;
-    clearButton.disabled = true;
+    if (clearButton) clearButton.disabled = true;
     resetResults();
-    setStatus(`${state.selectedFiles.length}個のCSVを読み込んでいます…`);
+    setStatus(`${state.selectedFiles.length}個の調査ファイルを地図に読み込んでいます…`);
 
     const combined = [];
     const fileResults = [];
@@ -193,15 +260,16 @@
     state.fileResults = fileResults;
 
     renderResults();
+    renderSelectedFiles();
 
     if (combined.length === 0) {
-      setStatus('有効なPOIを読み取れませんでした。CSVの列名と緯度・経度を確認してください。', true);
+      setStatus('地点を読み取れませんでした。Wayfarer Mapから保存した調査ファイルか確認してください。', true);
     } else {
-      setStatus(`準備完了：${state.uniquePoints.length}件のPOIを整理しました。`);
+      setStatus(`準備完了：${state.uniquePoints.length}件のPOIを地図に読み込みました。`);
     }
 
     analyzeButton.disabled = false;
-    clearButton.disabled = false;
+    if (clearButton) clearButton.disabled = false;
     emitChange({ source: 'csv' });
   }
 
@@ -234,7 +302,7 @@
     renderSelectedFiles();
     renderResults();
     analyzeButton.disabled = true;
-    clearButton.disabled = false;
+    if (clearButton) clearButton.disabled = false;
     setStatus(`前回の準備データ ${state.uniquePoints.length}件を復元しました。`);
     return true;
   }
@@ -248,17 +316,17 @@
 
     const hasFiles = state.selectedFiles.length > 0;
     analyzeButton.disabled = !hasFiles;
-    clearButton.disabled = !hasFiles;
+    if (clearButton) clearButton.disabled = !hasFiles;
 
     if (hasFiles) {
-      setStatus(`${state.selectedFiles.length}個のCSVを選択しました。`);
+      setStatus(`${state.selectedFiles.length}個の調査ファイルを選びました。`);
     } else {
-      setStatus('CSVを選択してください。');
+      setStatus('調査ファイルを選んでください。');
     }
   });
 
   analyzeButton.addEventListener('click', analyzeFiles);
-  clearButton.addEventListener('click', clearSelection);
+  clearButton?.addEventListener('click', clearSelection);
 
   window.FieldPrep = {
     getState,
