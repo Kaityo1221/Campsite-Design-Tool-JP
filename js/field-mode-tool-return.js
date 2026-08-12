@@ -66,7 +66,7 @@
       button=document.createElement('button');
       button.id='fieldModePoiToolCancel';
       button.type='button';
-      button.textContent='× POIをやめる';
+      button.textContent='× 設置中止';
       Object.assign(button.style,{
         display:'none',
         position:'fixed',
