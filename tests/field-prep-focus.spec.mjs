@@ -38,12 +38,22 @@ test('Campsite Labから現地準備へ迷わず入れる', async ({ page }) => 
   await expect(page.getByRole('heading', { name: '現地モード準備' })).toBeVisible();
 });
 
-test('通常時は地図を確認用にし、調査範囲設定時だけ集中モードへ入る', async ({ page }) => {
+test('通常時も地図を触れ、範囲設定時だけ集中モードへ入る', async ({ page }) => {
   await openPreparedMap(page);
 
-  await expect(page.locator('.field-prep-map-gate')).toBeVisible();
+  await expect(page.locator('.field-prep-map-gate')).toHaveCount(0);
   await expect(page.locator('body')).not.toHaveClass(/field-prep-map-focus/);
   await expect(page.locator('#fieldPrepAddVertexButton')).toBeHidden();
+
+  const mapPointerEvents = await page.locator('#fieldPrepMap').evaluate(el => getComputedStyle(el).pointerEvents);
+  expect(mapPointerEvents).not.toBe('none');
+
+  const crosshairStyle = await page.locator('.field-prep-crosshair').evaluate(el => ({
+    border: getComputedStyle(el).borderTopWidth,
+    background: getComputedStyle(el).backgroundColor
+  }));
+  expect(crosshairStyle.border).toBe('0px');
+  expect(crosshairStyle.background).toBe('rgba(0, 0, 0, 0)');
 
   await page.locator('#fieldPrepStartAreaButton').click();
 
@@ -55,8 +65,10 @@ test('通常時は地図を確認用にし、調査範囲設定時だけ集中�
   await expect(page.locator('#fieldPrepConfirmAreaButton')).toBeVisible();
 });
 
-test('集中モードを閉じても未確定の頂点を保ち、編集を再開できる', async ({ page }) => {
+test('集中モードを閉じても未確定の頂点を保ち、地図位置へ戻って編集を再開できる', async ({ page }) => {
   await openPreparedMap(page);
+  await page.locator('#fieldPrepStartAreaButton').scrollIntoViewIfNeeded();
+
   await page.locator('#fieldPrepStartAreaButton').click();
   await page.locator('#fieldPrepAddVertexButton').click();
   await expect(page.locator('#fieldPrepVertexCount')).toHaveText('1');
@@ -66,12 +78,18 @@ test('集中モードを閉じても未確定の頂点を保ち、編集を再�
   await expect(page.locator('#fieldPrepStartAreaButton')).toContainText('編集を続ける');
   await expect(page.locator('#fieldPrepVertexCount')).toHaveText('1');
 
+  const mapInViewport = await page.locator('.field-prep-map-shell').evaluate(el => {
+    const rect = el.getBoundingClientRect();
+    return rect.top < window.innerHeight && rect.bottom > 0;
+  });
+  expect(mapInViewport).toBe(true);
+
   await page.locator('#fieldPrepStartAreaButton').click();
   await expect(page.locator('body')).toHaveClass(/field-prep-map-focus/);
   await expect(page.locator('#fieldPrepVertexCount')).toHaveText('1');
 });
 
-test('範囲を確定すると集中モードを抜けて通常スクロール画面へ戻る', async ({ page }) => {
+test('範囲を確定すると集中モードを抜け、地図が見える位置へ戻る', async ({ page }) => {
   await openPreparedMap(page);
   await page.locator('#fieldPrepStartAreaButton').click();
 
@@ -86,6 +104,12 @@ test('範囲を確定すると集中モードを抜けて通常スクロール�
 
   await page.locator('#fieldPrepConfirmAreaButton').click();
   await expect(page.locator('body')).not.toHaveClass(/field-prep-map-focus/);
-  await expect(page.locator('.field-prep-map-gate')).toBeVisible();
+  await expect(page.locator('.field-prep-map-gate')).toHaveCount(0);
   await expect(page.locator('#fieldPrepStartAreaButton')).toContainText('調査範囲を編集');
+
+  const mapInViewport = await page.locator('.field-prep-map-shell').evaluate(el => {
+    const rect = el.getBoundingClientRect();
+    return rect.top < window.innerHeight && rect.bottom > 0;
+  });
+  expect(mapInViewport).toBe(true);
 });
