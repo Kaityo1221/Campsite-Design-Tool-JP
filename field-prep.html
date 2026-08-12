@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta name="robots" content="noindex, nofollow">
+<meta name="googlebot" content="noindex, nofollow">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>現地モード準備 | Campsite Lab</title>
+<link rel="stylesheet" href="css/style.css?v=90">
+<link rel="stylesheet" href="css/field-prep.css?v=1">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/icon.png">
+</head>
+<body>
+<header class="field-prep-header">
+  <div class="field-prep-header-inner">
+    <a class="field-prep-back" href="lab.html">← Campsite Lab</a>
+    <div>
+      <p class="field-prep-kicker">CAMPSITE LAB / FIELD PREPARATION</p>
+      <h1>現地モード準備</h1>
+      <p class="field-prep-lead">現地へ行く前に、調査用CSVをひとまとめにして整理します。</p>
+    </div>
+  </div>
+</header>
+
+<main class="field-prep-main">
+  <section class="field-prep-card field-prep-intro" aria-labelledby="fieldPrepIntroTitle">
+    <div class="field-prep-step-badge">STEP 1</div>
+    <h2 id="fieldPrepIntroTitle">調査データを読み込む</h2>
+    <p>
+      Wayfarer Mapなどから用意したCSVを複数まとめて選択できます。
+      同じPOIが複数のCSVに含まれている場合は、自動で重複整理します。
+    </p>
+    <p class="field-prep-local-note">🔒 この段階ではCSVをサーバーへ送信しません。ブラウザ内で読み込み・整理します。</p>
+  </section>
+
+  <section class="field-prep-card" aria-labelledby="fieldPrepUploadTitle">
+    <h2 id="fieldPrepUploadTitle">CSVを選択</h2>
+    <label class="field-prep-dropzone" for="fieldPrepFiles">
+      <span class="field-prep-dropzone-icon">📂</span>
+      <strong>CSVをまとめて選択</strong>
+      <span>複数選択できます</span>
+      <input id="fieldPrepFiles" data-testid="field-prep-files" type="file" accept=".csv,text/csv" multiple>
+    </label>
+
+    <div class="field-prep-actions">
+      <button id="fieldPrepAnalyzeButton" data-testid="field-prep-analyze" class="field-prep-primary" type="button" disabled>CSVを読み込む</button>
+      <button id="fieldPrepClearButton" class="field-prep-secondary" type="button" disabled>選択をクリア</button>
+    </div>
+
+    <div id="fieldPrepStatus" data-testid="field-prep-status" class="field-prep-status" role="status" aria-live="polite">
+      CSVを選択してください。
+    </div>
+
+    <div id="fieldPrepFileList" class="field-prep-file-list" aria-label="選択したCSV"></div>
+  </section>
+
+  <section id="fieldPrepResults" data-testid="field-prep-results" class="field-prep-card" aria-labelledby="fieldPrepResultTitle" hidden>
+    <div class="field-prep-result-heading">
+      <div>
+        <div class="field-prep-step-badge field-prep-step-badge-muted">READ RESULT</div>
+        <h2 id="fieldPrepResultTitle">読み込み結果</h2>
+      </div>
+      <span id="fieldPrepReadyBadge" class="field-prep-ready-badge">準備データ</span>
+    </div>
+
+    <div class="field-prep-stats" aria-label="CSV集計結果">
+      <article class="field-prep-stat">
+        <span>読込CSV</span>
+        <strong id="fieldPrepCsvCount">0</strong>
+        <small>ファイル</small>
+      </article>
+      <article class="field-prep-stat">
+        <span>読込POI</span>
+        <strong id="fieldPrepRawCount">0</strong>
+        <small>件</small>
+      </article>
+      <article class="field-prep-stat">
+        <span>重複</span>
+        <strong id="fieldPrepDuplicateCount">0</strong>
+        <small>件を整理</small>
+      </article>
+      <article class="field-prep-stat field-prep-stat-accent">
+        <span>準備対象</span>
+        <strong id="fieldPrepUniqueCount">0</strong>
+        <small>件</small>
+      </article>
+    </div>
+
+    <h3>POIの種類</h3>
+    <div class="field-prep-type-grid">
+      <div><span>🔵 ポケストップ</span><strong id="fieldPrepPokestopCount">0</strong></div>
+      <div><span>🔴 ジム</span><strong id="fieldPrepGymCount">0</strong></div>
+      <div><span>🟣 パワースポット</span><strong id="fieldPrepPowerCount">0</strong></div>
+    </div>
+
+    <div id="fieldPrepWarnings" class="field-prep-warnings" hidden></div>
+
+    <div class="field-prep-next">
+      <strong>次の段階</strong>
+      <p>次の改修で、地図上に「今回調査する範囲」を描き、この準備対象から範囲外POIを除外できるようにします。</p>
+      <button class="field-prep-primary" type="button" disabled>調査範囲を設定する（次段階）</button>
+    </div>
+  </section>
+
+  <section class="field-prep-card field-prep-help" aria-labelledby="fieldPrepHelpTitle">
+    <h2 id="fieldPrepHelpTitle">CA向けメモ</h2>
+    <details>
+      <summary>同じPOIが複数CSVに入っていたら？</summary>
+      <p>重複として自動整理します。準備対象には1件だけ残ります。</p>
+    </details>
+    <details>
+      <summary>CSVを間違えて選んだら？</summary>
+      <p>「選択をクリア」を押して、もう一度選び直してください。この段階では現地モード側のデータには影響しません。</p>
+    </details>
+    <details>
+      <summary>調査範囲や活動範囲はここで決める？</summary>
+      <p>まだ決めません。次の段階で「調査範囲」を設定します。「活動範囲」とは別のものとして扱います。</p>
+    </details>
+  </section>
+</main>
+
+<script src="js/util.js?v=3"></script>
+<script src="js/field-prep.js?v=1"></script>
+</body>
+</html>
