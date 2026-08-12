@@ -79,10 +79,14 @@
   }
 
   function normalizePoiType(point) {
-    const source = [point?.type, point?.gameStatus, point?.name]
-      .map(value => String(value || '').trim())
+    const source = [point?.type, point?.gameStatus]
+      .map(value => String(value || '').trim().toLowerCase())
       .filter(Boolean)
       .join(' ');
+
+    if (/power\s*spot|powerspot|power_spot|\bpower\b|パワースポット|パワスポ/.test(source)) return 'power';
+    if (/\bgym\b|ジム/.test(source)) return 'gym';
+    if (/pokestop|poke\s*stop|ポケストップ|ポケスト/.test(source)) return 'pokestop';
 
     if (typeof window.classifyType === 'function') {
       const classified = String(window.classifyType(source, point?.name || '', point?.layer || '') || '').toLowerCase();
@@ -91,9 +95,6 @@
       if (classified === 'pokestop') return 'pokestop';
     }
 
-    const lower = source.toLowerCase();
-    if (/power\s*spot|powerspot|power_spot|パワースポット|パワスポ/.test(lower)) return 'power';
-    if (/gym|ジム/.test(lower)) return 'gym';
     return 'pokestop';
   }
 
