@@ -335,6 +335,46 @@ body {
 .field-prep-help summary { cursor: pointer; font-weight: 800; }
 .field-prep-help details p { margin-bottom: 0; }
 
+/* The normal map is directly draggable. Range editing still uses focus mode. */
+.field-prep-map-shell {
+  touch-action: auto !important;
+}
+
+.field-prep-map {
+  touch-action: none;
+}
+
+/* Thin survey crosshair: no circle, no heavy plus glyph. */
+.field-prep-crosshair {
+  width: 22px !important;
+  height: 22px !important;
+  color: transparent !important;
+  font-size: 0 !important;
+  text-shadow: none !important;
+}
+
+.field-prep-crosshair::before,
+.field-prep-crosshair::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  display: block;
+  background: rgba(47, 42, 34, 0.88);
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 1px rgba(255, 252, 244, 0.95);
+}
+
+.field-prep-crosshair::before {
+  width: 18px;
+  height: 1px;
+}
+
+.field-prep-crosshair::after {
+  width: 1px;
+  height: 18px;
+}
+
 @media (max-width: 680px) {
   .field-prep-header { padding: 18px 14px 14px; }
   .field-prep-back { margin-bottom: 12px; }
