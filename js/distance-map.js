@@ -422,3 +422,16 @@ distanceWarningLineLayers.set(
     distanceLeafletMap?.invalidateSize();
   }, 160);
 }
+
+/*
+  軍議システムは距離チェックの地図・判定ロジックを変更せず、
+  完了後にニュース番組型レビューを重ねる。
+*/
+(() => {
+  if (document.querySelector('script[data-gungi-runtime]')) return;
+  const script = document.createElement('script');
+  script.src = 'js/gungi-runtime.js?v=1';
+  script.async = false;
+  script.dataset.gungiRuntime = 'true';
+  document.head.appendChild(script);
+})();
