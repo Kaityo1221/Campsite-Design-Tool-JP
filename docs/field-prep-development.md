@@ -26,10 +26,12 @@ CSV → 調査範囲で絞り込み → 現地モード → 現地設計 → 提
 - 読込件数 / 重複件数 / 重複整理後件数を表示
 - ポケストップ / ジム / パワースポット件数を表示
 - CA向け説明書 v0.1 を同時追加
+- 第1段階専用の静的チェックとiPhone/WebKit E2Eテストを追加
 
 ### この段階で変更しないもの
 
 - `index.html`
+- `lab.html`
 - `field-mode.html`
 - `js/field-mode-session.js`
 - `js/field-mode-export.js`
@@ -62,10 +64,32 @@ CSV → 調査範囲で絞り込み → 現地モード → 現地設計 → 提
 
 - `power`
 - `power_spot`
+- `Power Spot`
 
-どちらも画面上では「パワースポット」とする。
+どれも画面上では「パワースポット」とする。
+
+CSVの `type` / `gameStatus` に明示された Gym / Power Spot / Pokestop を準備画面側で先に判定し、必要な場合だけ既存分類処理へフォールバックする。
 
 既存util側のenumは第1段階では変更しない。
+
+### テスト
+
+第1段階では、既存現地モード用チェックとは別に `Field Prep Safety Check` を追加した。
+
+確認する代表ケース:
+
+- CSVを2個まとめて読み込める
+- 合計4件のうち同一GUID 1件を重複として整理できる
+- 整理後3件になる
+- ポケストップ / ジム / パワースポットが各1件と集計される
+- 選択クリアで準備結果が消える
+
+初回E2Eで Gym / Power Spot がポケストップへ寄る種類判定不具合を検出し、準備画面側の明示判定へ修正した。
+
+修正後:
+
+- `Field Prep Safety Check`: GREEN
+- 既存 `Field Mode Safety Check`: GREEN
 
 ## 次段階: field-prep-02-survey-area
 
