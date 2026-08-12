@@ -127,6 +127,37 @@
     }
   }
 
+  async function refreshAfterSessionRestore(){
+    try{
+      const source=await readStore(SOURCE_STORE,CURRENT_KEY);
+      await loadForSignature(sourceSignatureFromStored(source));
+      applySavedToRecords();
+      render();
+    }catch(error){
+      console.warn('field 30m session restore sync failed',error);
+    }
+  }
+
+  function installResumeWatcher(){
+    const resumeButton=document.getElementById('fieldModeResumeButton');
+    const resumePanel=document.getElementById('fieldModeResumePanel');
+    if(!resumeButton||resumeButton.dataset.circleRestoreBound==='1')return Boolean(resumeButton);
+    resumeButton.dataset.circleRestoreBound='1';
+    resumeButton.addEventListener('click',()=>{
+      const startedAt=Date.now();
+      const timer=window.setInterval(()=>{
+        const restored=window.FieldModeSession?.hasSource?.()&&!resumePanel?.classList.contains('active');
+        if(restored){
+          window.clearInterval(timer);
+          refreshAfterSessionRestore();
+          return;
+        }
+        if(Date.now()-startedAt>=10000)window.clearInterval(timer);
+      },80);
+    });
+    return true;
+  }
+
   async function saveCurrentSelections(){
     if(!currentSourceSignature)return;
     const selections={};
@@ -204,6 +235,11 @@
     .then(source=>loadForSignature(sourceSignatureFromStored(source)))
     .catch(error=>console.warn('field 30m source restore failed',error));
 
+  if(!installResumeWatcher()){
+    window.addEventListener('load',installResumeWatcher,{once:true});
+    window.setTimeout(installResumeWatcher,0);
+  }
+
   render();
-  window.FieldModeCircleOptions={render,saveNow:saveCurrentSelections,applySavedToRecords};
+  window.FieldModeCircleOptions={render,saveNow:saveCurrentSelections,applySavedToRecords,refreshAfterSessionRestore};
 })();
