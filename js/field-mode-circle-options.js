@@ -179,6 +179,16 @@
     return result;
   };
 
+  const originalRenderKml=renderKml;
+  renderKml=function circleAwareRenderKml(...args){
+    const result=originalRenderKml(...args);
+    setTimeout(()=>{
+      applySavedToRecords();
+      render();
+    },0);
+    return result;
+  };
+
   const originalUpdateSaveButton=updateSaveButton;
   updateSaveButton=function circleAwareUpdateSaveButton(...args){
     applySavedToRecords();
