@@ -24,7 +24,7 @@ const htmlTokens = [
   'id="fieldPrepAnalyzeButton"',
   'id="fieldPrepResults"',
   'js/util.js?v=3',
-  'js/field-prep.js?v=1'
+  'js/field-prep.js?v='
 ];
 
 for (const token of htmlTokens) {
