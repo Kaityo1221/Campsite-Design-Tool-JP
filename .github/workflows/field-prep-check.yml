@@ -1,0 +1,54 @@
+name: Field Prep Safety Check
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'field-prep.html'
+      - 'css/field-prep.css'
+      - 'js/field-prep.js'
+      - 'js/util.js'
+      - 'docs/field-prep-*.md'
+      - 'scripts/check-field-prep.mjs'
+      - 'tests/field-prep.spec.mjs'
+      - 'playwright.config.mjs'
+      - 'package.json'
+      - '.github/workflows/field-prep-check.yml'
+  workflow_dispatch:
+
+jobs:
+  field-prep-safety:
+    name: field-prep-safety
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Static field prep check
+        run: npm run check:field-prep
+
+      - name: Install WebKit
+        run: npx playwright install --with-deps webkit
+
+      - name: iPhone/WebKit field prep test
+        run: npm run test:field-prep
+
+      - name: Upload Playwright trace on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: field-prep-playwright-report
+          path: |
+            test-results
+            playwright-report
+          if-no-files-found: ignore
