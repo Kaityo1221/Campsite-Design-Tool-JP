@@ -125,8 +125,10 @@ test('30m調整円の選択は同じ端末の作業復元後も残る',async({pa
   await page.reload();
   await expect(page.locator('#fieldModeResumePanel')).toHaveClass(/active/,{timeout:5000});
   await page.locator('#fieldModeResumeButton').click();
-  await expect(page.locator('#fieldPoi30mToggle')).toBeVisible({timeout:8000});
-  await expect(page.locator('#fieldPoi30mToggle')).toContainText('追加する');
+  await expect.poll(()=>page.evaluate(()=>{
+    const restored=poiRecords.find(record=>record?.isNew&&!record.fieldDeleted);
+    return restored?.include30mCircle===true;
+  }),{timeout:8000}).toBe(true);
 });
 
 test('活動範囲込み保存でも正式POIレイヤーと30m選択を維持する',async({page})=>{
