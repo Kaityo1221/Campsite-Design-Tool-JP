@@ -45,15 +45,25 @@ test('通常時も地図を触れ、範囲設定時だけ集中モードへ入�
   await expect(page.locator('body')).not.toHaveClass(/field-prep-map-focus/);
   await expect(page.locator('#fieldPrepAddVertexButton')).toBeHidden();
 
-  const mapPointerEvents = await page.locator('#fieldPrepMap').evaluate(el => getComputedStyle(el).pointerEvents);
-  expect(mapPointerEvents).not.toBe('none');
+  const normalMapStyle = await page.locator('#fieldPrepMap').evaluate(el => ({
+    pointerEvents: getComputedStyle(el).pointerEvents,
+    touchAction: getComputedStyle(el).touchAction
+  }));
+  expect(normalMapStyle.pointerEvents).not.toBe('none');
+  expect(normalMapStyle.touchAction).toBe('none');
 
   const crosshairStyle = await page.locator('.field-prep-crosshair').evaluate(el => ({
+    width: getComputedStyle(el).width,
+    height: getComputedStyle(el).height,
     border: getComputedStyle(el).borderTopWidth,
-    background: getComputedStyle(el).backgroundColor
+    background: getComputedStyle(el).backgroundColor,
+    fontSize: getComputedStyle(el).fontSize
   }));
+  expect(crosshairStyle.width).toBe('22px');
+  expect(crosshairStyle.height).toBe('22px');
   expect(crosshairStyle.border).toBe('0px');
   expect(crosshairStyle.background).toBe('rgba(0, 0, 0, 0)');
+  expect(crosshairStyle.fontSize).toBe('0px');
 
   await page.locator('#fieldPrepStartAreaButton').click();
 
