@@ -40,7 +40,7 @@ try{
 for(const token of [
   "loadOnce('js/field-mode-area.js?v=1'",
   "loadOnce('js/field-mode-eraser.js?v=1'",
-  "loadOnce('js/field-mode-tool-return.js?v=1'",
+  "loadOnce('js/field-mode-tool-return.js?v=2'",
   "loadOnce('js/field-mode-distance-tool.js?v=1'"
 ]){
   if(!loaderJs.includes(token))fail(`現地モード互換ローダーが欠けています: ${token}`);
@@ -146,7 +146,7 @@ for(const token of [
 
 const toolReturnJs=read('js/field-mode-tool-return.js');
 for(const token of [
-  "button.textContent='× POIをやめる'",
+  "button.textContent='× 設置中止'",
   "button.textContent='× 位置調整をやめる'",
   "button.textContent='× 消去をやめる'",
   "button.textContent='× 範囲作成をやめる'",
