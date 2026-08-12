@@ -15,6 +15,14 @@
   const outsideCount = document.getElementById('fieldPrepOutsideCount');
   const saveKmlButton = document.getElementById('fieldPrepSaveKmlButton');
   const restoreNote = document.getElementById('fieldPrepRestoreNote');
+  const startFieldModeButton = document.createElement('button');
+  startFieldModeButton.id = 'fieldPrepStartFieldModeButton';
+  startFieldModeButton.type = 'button';
+  startFieldModeButton.className = 'field-prep-primary';
+  startFieldModeButton.textContent = '現地モードを開始';
+  startFieldModeButton.disabled = true;
+  startFieldModeButton.style.marginBottom = '8px';
+  saveKmlButton.insertAdjacentElement('beforebegin', startFieldModeButton);
 
   let map = null;
   let poiLayer = null;
@@ -154,7 +162,9 @@
     loadedCount.textContent = String(currentPoints.length);
     insideCount.textContent = surveyPolygon.length >= 3 ? String(inside.length) : '-';
     outsideCount.textContent = surveyPolygon.length >= 3 ? String(currentPoints.length - inside.length) : '-';
-    saveKmlButton.disabled = surveyPolygon.length < 3 || inside.length === 0;
+    const cannotContinue = surveyPolygon.length < 3 || inside.length === 0;
+    saveKmlButton.disabled = cannotContinue;
+    startFieldModeButton.disabled = cannotContinue;
     renderPoiMarkers();
   }
 
@@ -319,6 +329,31 @@
     setMapStatus(`現地モード用KMLを保存しました。調査範囲内の${inside.length}件を収録しています。`);
   }
 
+  async function startFieldMode() {
+    const inside = getInsidePoints();
+    if (surveyPolygon.length < 3 || inside.length === 0) return;
+    if (!window.FieldPrepSession?.createHandoff) {
+      setMapStatus('現地モードへの引き継ぎ機能を読み込めませんでした。', true);
+      return;
+    }
+
+    startFieldModeButton.disabled = true;
+    setMapStatus(`現地モードへ${inside.length}件を引き継いでいます…`);
+    try {
+      const stamp = new Date().toISOString().slice(0, 10).replaceAll('-', '');
+      const handoff = await window.FieldPrepSession.createHandoff({
+        kml: buildFieldKml(inside),
+        sourceName: `field-prep-${stamp}.kml`,
+        pointCount: inside.length
+      });
+      window.location.assign(`field-mode.html?handoff=${encodeURIComponent(handoff.id)}`);
+    } catch (error) {
+      console.error('Field prep handoff failed', error);
+      setMapStatus(`現地モードへ引き継げませんでした：${error.message || '端末保存エラー'}`, true);
+      updateCounts();
+    }
+  }
+
   function applyPoints(points, { fit = true, resetPolygon = true } = {}) {
     currentPoints = Array.isArray(points)
       ? points.filter(point => Number.isFinite(Number(point.lat)) && Number.isFinite(Number(point.lng)))
@@ -398,6 +433,7 @@
   confirmButton.addEventListener('click', confirmSurvey);
   resetButton.addEventListener('click', () => resetSurvey());
   saveKmlButton.addEventListener('click', saveFieldKml);
+  startFieldModeButton.addEventListener('click', startFieldMode);
 
   window.FieldPrepSurvey = {
     getState() {
