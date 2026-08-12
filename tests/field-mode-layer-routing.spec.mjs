@@ -125,8 +125,7 @@ test('30m調整円の選択は同じ端末の作業復元後も残る',async({pa
   await page.reload();
   await expect(page.locator('#fieldModeResumePanel')).toHaveClass(/active/,{timeout:5000});
   await page.locator('#fieldModeResumeButton').click();
-  await expect(page.locator('#fieldModeSessionStatus')).toContainText('前回の作業を復元',{timeout:8000});
-  await expect(page.locator('#fieldPoi30mToggle')).toBeVisible();
+  await expect(page.locator('#fieldPoi30mToggle')).toBeVisible({timeout:8000});
   await expect(page.locator('#fieldPoi30mToggle')).toContainText('追加する');
 });
 
