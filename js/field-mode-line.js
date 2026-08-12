@@ -11,6 +11,6 @@
 
   loadOnce('js/field-mode-area.js?v=1', 'data-field-area-loader');
   loadOnce('js/field-mode-eraser.js?v=1', 'data-field-eraser-loader');
-  loadOnce('js/field-mode-tool-return.js?v=1', 'data-field-tool-return-loader');
+  loadOnce('js/field-mode-tool-return.js?v=2', 'data-field-tool-return-loader');
   loadOnce('js/field-mode-distance-tool.js?v=1', 'data-field-distance-tool-loader');
 })();
