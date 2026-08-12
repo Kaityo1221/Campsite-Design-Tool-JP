@@ -27,6 +27,12 @@
     fileResults: []
   };
 
+  function emitChange(detail = {}) {
+    window.dispatchEvent(new CustomEvent('fieldprep:datachanged', {
+      detail: { ...detail, state: getState() }
+    }));
+  }
+
   function setStatus(message, isError = false) {
     status.textContent = message;
     status.classList.toggle('is-error', isError);
@@ -43,15 +49,32 @@
   function renderSelectedFiles() {
     fileList.replaceChildren();
 
-    state.selectedFiles.forEach(file => {
+    if (state.selectedFiles.length > 0) {
+      state.selectedFiles.forEach(file => {
+        const item = document.createElement('div');
+        item.className = 'field-prep-file-item';
+
+        const name = document.createElement('strong');
+        name.textContent = file.name;
+
+        const size = document.createElement('span');
+        size.textContent = formatBytes(file.size);
+
+        item.append(name, size);
+        fileList.appendChild(item);
+      });
+      return;
+    }
+
+    state.fileResults.forEach(itemResult => {
       const item = document.createElement('div');
       item.className = 'field-prep-file-item';
 
       const name = document.createElement('strong');
-      name.textContent = file.name;
+      name.textContent = itemResult.name;
 
       const size = document.createElement('span');
-      size.textContent = formatBytes(file.size);
+      size.textContent = `${itemResult.count || 0}件 / 前回`;
 
       item.append(name, size);
       fileList.appendChild(item);
@@ -68,7 +91,7 @@
     warnings.textContent = '';
   }
 
-  function clearSelection() {
+  async function clearSelection() {
     fileInput.value = '';
     state.selectedFiles = [];
     fileList.replaceChildren();
@@ -76,6 +99,7 @@
     analyzeButton.disabled = true;
     clearButton.disabled = true;
     setStatus('CSVを選択してください。');
+    emitChange({ cleared: true });
   }
 
   function normalizePoiType(point) {
@@ -178,6 +202,41 @@
 
     analyzeButton.disabled = false;
     clearButton.disabled = false;
+    emitChange({ source: 'csv' });
+  }
+
+  function getState() {
+    return {
+      selectedFileNames: state.selectedFiles.map(file => file.name),
+      rawPoints: state.rawPoints.map(point => ({ ...point })),
+      uniquePoints: state.uniquePoints.map(point => ({ ...point })),
+      duplicateCount: state.duplicateCount,
+      fileResults: state.fileResults.map(item => ({ ...item }))
+    };
+  }
+
+  function restorePreparedData(snapshot) {
+    if (!snapshot || !Array.isArray(snapshot.uniquePoints) || snapshot.uniquePoints.length === 0) {
+      return false;
+    }
+
+    state.selectedFiles = [];
+    state.rawPoints = Array.isArray(snapshot.rawPoints)
+      ? snapshot.rawPoints.map(point => ({ ...point }))
+      : snapshot.uniquePoints.map(point => ({ ...point }));
+    state.uniquePoints = snapshot.uniquePoints.map(point => ({ ...point }));
+    state.duplicateCount = Number(snapshot.duplicateCount) || 0;
+    state.fileResults = Array.isArray(snapshot.fileResults)
+      ? snapshot.fileResults.map(item => ({ ...item }))
+      : [];
+
+    fileInput.value = '';
+    renderSelectedFiles();
+    renderResults();
+    analyzeButton.disabled = true;
+    clearButton.disabled = false;
+    setStatus(`前回の準備データ ${state.uniquePoints.length}件を復元しました。`);
+    return true;
   }
 
   fileInput.addEventListener('change', () => {
@@ -202,15 +261,9 @@
   clearButton.addEventListener('click', clearSelection);
 
   window.FieldPrep = {
-    getState() {
-      return {
-        selectedFileNames: state.selectedFiles.map(file => file.name),
-        rawPoints: state.rawPoints.map(point => ({ ...point })),
-        uniquePoints: state.uniquePoints.map(point => ({ ...point })),
-        duplicateCount: state.duplicateCount,
-        fileResults: state.fileResults.map(item => ({ ...item }))
-      };
-    },
+    getState,
+    restorePreparedData,
+    normalizePoiType,
     clear: clearSelection
   };
 })();
