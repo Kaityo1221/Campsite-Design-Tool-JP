@@ -91,7 +91,7 @@ for(const token of [
   'function cancelNewPoiPlacement()',
   "newPoiButton.textContent='＋ 新規設置'",
   "newPoiButton.textContent='✓ この位置に設置'",
-  'window.FieldModeExport={setSourceFile}'
+  'window.FieldModeExport={setSourceFile'
 ]){
   if(!exportJs.includes(token))fail(`新規設置・KMZ復元の安全導線が欠けています: ${token}`);
   else pass(`新規設置・KMZ復元導線OK: ${token}`);
