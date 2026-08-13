@@ -166,6 +166,11 @@
     return `${Date.now().toString(36)}-${file.size}-${random}`;
   }
 
+  function normalizedLastModified(value){
+    const number=Number(value);
+    return Number.isFinite(number)&&number>=0?number:0;
+  }
+
   async function saveSource(file,sourceId){
     if(!file||!sourceId)return false;
     const bytes=await file.arrayBuffer();
@@ -174,7 +179,7 @@
       sourceId,
       name:file.name||'field-data.kmz',
       type:file.type||'application/octet-stream',
-      lastModified:Number(file.lastModified)||Date.now(),
+      lastModified:normalizedLastModified(file.lastModified),
       bytes
     });
     return true;
@@ -381,12 +386,12 @@
 
   async function sourceToFile(source){
     if(source.bytes){
-      return new File([source.bytes],source.name,{type:source.type||'application/octet-stream',lastModified:source.lastModified||Date.now()});
+      return new File([source.bytes],source.name,{type:source.type||'application/octet-stream',lastModified:normalizedLastModified(source.lastModified)});
     }
     if(source.blob){
       return source.blob instanceof File
         ? source.blob
-        : new File([source.blob],source.name,{type:source.type||'application/octet-stream',lastModified:source.lastModified||Date.now()});
+        : new File([source.blob],source.name,{type:source.type||'application/octet-stream',lastModified:normalizedLastModified(source.lastModified)});
     }
     throw new Error('前回の元ファイルが端末内にありません。');
   }
