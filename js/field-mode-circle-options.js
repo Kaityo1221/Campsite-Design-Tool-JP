@@ -12,6 +12,7 @@
   const CIRCLE_KEY='circle-options-v1';
   let currentSourceSignature='';
   let storedPayload=null;
+  let loadGeneration=0;
 
   const style=document.createElement('style');
   style.textContent=`
@@ -115,13 +116,17 @@
   }
 
   async function loadForSignature(signature){
-    currentSourceSignature=signature||'';
+    const requestedSignature=signature||'';
+    const generation=++loadGeneration;
+    currentSourceSignature=requestedSignature;
     try{
       const payload=await readStore(STATE_STORE,CIRCLE_KEY);
+      if(generation!==loadGeneration)return;
       storedPayload=payload?.version===1?payload:null;
       applySavedToRecords();
       render();
     }catch(error){
+      if(generation!==loadGeneration)return;
       console.warn('field 30m option restore failed',error);
       storedPayload=null;
     }
@@ -242,7 +247,10 @@
   });
 
   readStore(SOURCE_STORE,CURRENT_KEY)
-    .then(source=>loadForSignature(sourceSignatureFromStored(source)))
+    .then(source=>{
+      if(currentSourceSignature)return;
+      return loadForSignature(sourceSignatureFromStored(source));
+    })
     .catch(error=>console.warn('field 30m source restore failed',error));
 
   bindResumeWatcherWhenReady();
