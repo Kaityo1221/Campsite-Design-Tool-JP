@@ -158,6 +158,16 @@
     return true;
   }
 
+  function bindResumeWatcherWhenReady(){
+    if(installResumeWatcher())return;
+    const startedAt=Date.now();
+    const timer=window.setInterval(()=>{
+      if(installResumeWatcher()||Date.now()-startedAt>=10000){
+        window.clearInterval(timer);
+      }
+    },80);
+  }
+
   async function saveCurrentSelections(){
     if(!currentSourceSignature)return;
     const selections={};
@@ -235,10 +245,7 @@
     .then(source=>loadForSignature(sourceSignatureFromStored(source)))
     .catch(error=>console.warn('field 30m source restore failed',error));
 
-  if(!installResumeWatcher()){
-    window.addEventListener('load',installResumeWatcher,{once:true});
-    window.setTimeout(installResumeWatcher,0);
-  }
+  bindResumeWatcherWhenReady();
 
   render();
   window.FieldModeCircleOptions={render,saveNow:saveCurrentSelections,applySavedToRecords,refreshAfterSessionRestore};
