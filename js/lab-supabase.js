@@ -46,3 +46,18 @@ window.loadCampsiteEngineDecisions = loadCampsiteEngineDecisions;
   script.async = false;
   document.head.appendChild(script);
 })();
+
+/* Support bot extension */
+(() => {
+  const style = document.createElement('link');
+  style.rel = 'stylesheet';
+  style.href = 'css/support-bot.css?v=1';
+  document.head.appendChild(style);
+
+  ['js/support-faq-mymaps.js?v=1', 'js/support-bot.js?v=1', 'js/support-bot-menu.js?v=1'].forEach((src) => {
+    const script = document.createElement('script');
+    script.src = src;
+    script.async = false;
+    document.head.appendChild(script);
+  });
+})();
