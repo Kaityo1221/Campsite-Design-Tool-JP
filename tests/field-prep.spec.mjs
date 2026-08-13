@@ -79,3 +79,30 @@ test('最後のファイルを解除すると準備結果も消える', async ({
   await expect(page.locator('#fieldPrepAnalyzeButton')).toBeDisabled();
   await expect(page.locator('#fieldPrepStatus')).toHaveText('調査ファイルを選んでください。');
 });
+
+test('iPhone幅で長いファイル名は横スクロールして末尾を確認できる', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/field-prep.html');
+
+  const longName = 'nearby-wayspots-2026-08-09-葛西臨海公園-調査エリア-西側-追加取得データ-最終確認用-8.csv';
+  await page.locator('#fieldPrepFiles').setInputFiles({
+    name: longName,
+    mimeType: 'text/csv',
+    buffer: Buffer.from(csvA)
+  });
+
+  const fileName = page.locator('.field-prep-file-name').first();
+  await expect(fileName).toContainText(longName);
+
+  const sizes = await fileName.evaluate(element => ({
+    clientWidth: element.clientWidth,
+    scrollWidth: element.scrollWidth
+  }));
+  expect(sizes.scrollWidth).toBeGreaterThan(sizes.clientWidth);
+
+  const scrollLeft = await fileName.evaluate(element => {
+    element.scrollLeft = element.scrollWidth;
+    return element.scrollLeft;
+  });
+  expect(scrollLeft).toBeGreaterThan(0);
+});
