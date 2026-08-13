@@ -48,6 +48,16 @@ function folderPlacemarkNames(kmlText, folderName) {
   return [...folderBody(kmlText, folderName).matchAll(/<Placemark>[\s\S]*?<name>([^<]+)<\/name>/g)].map(item => item[1]);
 }
 
+function expectLayerOrder(kmlText, layerNames) {
+  let previousIndex = -1;
+  for (const layerName of layerNames) {
+    const index = kmlText.indexOf(`<name>${layerName}</name>`);
+    expect(index, `完成KMZに「${layerName}」レイヤーがありません`).toBeGreaterThan(-1);
+    expect(index, `「${layerName}」のレイヤー順が崩れています`).toBeGreaterThan(previousIndex);
+    previousIndex = index;
+  }
+}
+
 async function savePreparedSurveyAndReload(page) {
   await page.evaluate(async polygon => {
     const core = window.FieldPrep.getState();
@@ -62,6 +72,14 @@ async function savePreparedSurveyAndReload(page) {
   await expect(page.locator('#fieldPrepInsideCount')).toHaveText('3');
   await expect(page.locator('#fieldPrepOutsideCount')).toHaveText('0');
   await expect(page.locator('#fieldPrepStartFieldModeButton')).toBeEnabled();
+}
+
+async function addNewPoi(page, typeLabel) {
+  await expect(page.locator('#fieldPoiTypeButton')).toContainText(typeLabel);
+  await page.locator('#fieldModeNewPoiButton').click();
+  await expect(page.locator('#fieldModeNewPoiButton')).toContainText('この位置に設置');
+  await page.locator('#fieldModeNewPoiButton').click();
+  await expect(page.locator('#fieldModeSelectionTitle')).toContainText(`${typeLabel} 1`);
 }
 
 async function createThreePointArea(page) {
@@ -96,7 +114,6 @@ test('調査ファイルから調査範囲・現地作業・完成KMZまで一�
   const pageErrors = [];
   page.on('pageerror', error => pageErrors.push(error.message));
 
-  // STEP 1: 複数の調査ファイルを読み込み、重複を整理する。
   await page.goto('/field-prep.html');
   await page.locator('#fieldPrepFiles').setInputFiles([
     { name: 'nearby-wayspots-2026-08-09 7.csv', mimeType: 'text/csv', buffer: Buffer.from(csvA) },
@@ -110,10 +127,8 @@ test('調査ファイルから調査範囲・現地作業・完成KMZまで一�
   await expect(page.locator('#fieldPrepGymCount')).toHaveText('1');
   await expect(page.locator('#fieldPrepPowerCount')).toHaveText('1');
 
-  // STEP 2: 同じ端末に確定済み調査範囲を保存し、通常の復元経路で読み直す。
   await savePreparedSurveyAndReload(page);
 
-  // STEP 3: 「現地モードを開始」から自動handoffする。
   await page.locator('#fieldPrepStartFieldModeButton').click();
   await expect(page).toHaveURL(/\/field-mode\.html(?:\?|$)/, { timeout: 12000 });
   await expect(page).not.toHaveURL(/handoff=/, { timeout: 12000 });
@@ -122,37 +137,64 @@ test('調査ファイルから調査範囲・現地作業・完成KMZまで一�
   await expect(page.locator('#fieldModeNewPoiButton')).toBeEnabled();
   await expect(page.locator('#fieldModeCreativeButton')).toBeEnabled();
 
-  // STEP 4: 新規ポケストップを1件追加する。
-  await expect(page.locator('#fieldPoiTypeButton')).toContainText('ポケストップ');
-  await page.locator('#fieldModeNewPoiButton').click();
-  await expect(page.locator('#fieldModeNewPoiButton')).toContainText('この位置に設置');
-  await page.locator('#fieldModeNewPoiButton').click();
-  await expect(page.locator('#fieldModeSelectionTitle')).toContainText('ポケストップ 1');
+  await addNewPoi(page, 'ポケストップ');
 
-  // STEP 5: その新規POIだけ30m調整円をONにする。40mは基本設定のまま。
   await expect(page.locator('#fieldPoi30mToggle')).toBeVisible();
   await page.locator('#fieldPoi30mToggle').click();
   await expect(page.locator('#fieldPoi30mToggle')).toContainText('追加する');
 
-  // STEP 6: 活動範囲を3点で作る。
+  await page.locator('#fieldPoiTypeButton').click();
+  await addNewPoi(page, 'ジム');
+
+  await page.locator('#fieldPoiTypeButton').click();
+  await addNewPoi(page, 'パワースポット');
+
   await createThreePointArea(page);
 
-  // STEP 7: 完成KMZを保存し、中身を検査する。
   const kml = await downloadFinalKml(page);
 
   expect(folderPointNames(kml, '既存のポケストップ')).toContain('公園入口');
   expect(folderPointNames(kml, '既存のジム')).toContain('中央広場');
   expect(folderPointNames(kml, '既存のパワースポット')).toContain('北側広場');
+
   expect(folderPointNames(kml, '追加希望ポケスト')).toContain('ポケストップ 1');
-  expect(folderPlacemarkNames(kml, '40m円（基本距離）')).toEqual(expect.arrayContaining([
+  expect(folderPointNames(kml, '追加希望ジム')).toContain('ジム 1');
+  expect(folderPointNames(kml, '追加希望パワスポ')).toContain('パワースポット 1');
+
+  const circles40 = folderPlacemarkNames(kml, '40m円（基本距離）');
+  expect(circles40).toEqual(expect.arrayContaining([
     '公園入口_40m円',
     '中央広場_40m円',
     '北側広場_40m円',
-    'ポケストップ 1_40m円'
+    'ポケストップ 1_40m円',
+    'ジム 1_40m円',
+    'パワースポット 1_40m円'
   ]));
+  expect(circles40).toHaveLength(6);
+
   expect(folderPlacemarkNames(kml, '30m円（調整用）')).toEqual(['ポケストップ 1_30m円']);
   expect(kml).toContain('<name>活動範囲 1</name>');
-  expect(kml).not.toContain('<name>調査範囲</name>');
-  expect(kml).not.toContain('<name>追加希望POI</name>');
+
+  expectLayerOrder(kml, [
+    '既存のポケストップ',
+    '既存のジム',
+    '既存のパワースポット',
+    '追加希望ポケスト',
+    '追加希望ジム',
+    '追加希望パワスポ',
+    '40m円（基本距離）',
+    '30m円（調整用）'
+  ]);
+
+  for (const forbiddenLayer of [
+    '調査範囲',
+    '追加希望POI',
+    '現地モード_30m円',
+    '現地モード_40m円',
+    '現地モード_距離円'
+  ]) {
+    expect(kml).not.toContain(`<name>${forbiddenLayer}</name>`);
+  }
+
   expect(pageErrors).toEqual([]);
 });
