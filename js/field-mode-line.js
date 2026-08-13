@@ -16,6 +16,7 @@
   loadOnce('js/field-mode-circle-options.js?v=4', 'data-field-circle-options-loader');
   loadOnce('js/field-mode-session-30m.js?v=1', 'data-field-session-30m-loader');
   loadOnce('js/field-mode-map-first.js?v=1', 'data-field-map-first-loader');
+  loadOnce('js/field-mode-finish.js?v=1', 'data-field-finish-loader');
 
   if (new URLSearchParams(window.location.search).has('handoff')) {
     loadOnce('js/field-mode-handoff.js?v=1', 'data-field-handoff-loader');
