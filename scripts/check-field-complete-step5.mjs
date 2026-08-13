@@ -19,7 +19,7 @@ for(const token of [
   if(!circle.includes(token))throw new Error(`30m circle option missing token: ${token}`);
 }
 
-if(!loader.includes("loadOnce('js/field-mode-circle-options.js?v=1'")){
+if(!loader.includes("loadOnce('js/field-mode-circle-options.js?v=")){
   throw new Error('field-mode-line.js must load field-mode-circle-options.js');
 }
 

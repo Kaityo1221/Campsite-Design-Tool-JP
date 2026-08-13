@@ -4,14 +4,16 @@
 <meta name="robots" content="noindex, nofollow">
 <meta name="googlebot" content="noindex, nofollow">
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>現地モード準備 | Campsite Lab</title>
 <link rel="stylesheet" href="css/style.css?v=90">
-<link rel="stylesheet" href="css/field-prep.css?v=1">
+<link rel="stylesheet" href="css/field-prep.css?v=4">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/icon.png">
 <style>
-.field-prep-map-shell{position:relative;overflow:hidden;margin-top:14px;border:1px solid #d9cdb8;border-radius:18px;background:#e7e2d6}.field-prep-map{width:100%;height:min(54vh,470px);min-height:330px}.field-prep-crosshair{position:absolute;z-index:500;inset:50% auto auto 50%;transform:translate(-50%,-50%);width:38px;height:38px;display:grid;place-items:center;border:2px solid rgba(47,42,34,.72);border-radius:50%;background:rgba(255,252,244,.78);font-size:24px;font-weight:900;pointer-events:none;box-shadow:0 4px 16px rgba(47,42,34,.18)}.field-prep-map-actions{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:12px}.field-prep-map-meta{margin-top:10px;color:#736b5e;font-size:13px;text-align:right}.field-prep-survey-stats{grid-template-columns:repeat(3,1fr);margin-top:14px;margin-bottom:0}@media(max-width:680px){.field-prep-map{min-height:360px;height:52vh}.field-prep-map-actions{grid-template-columns:1fr 1fr}.field-prep-map-actions>:first-child,.field-prep-map-actions>:nth-child(4){grid-column:1/-1}.field-prep-survey-stats{grid-template-columns:repeat(3,1fr)}}
+.field-prep-map-shell{position:relative;overflow:hidden;margin-top:14px;border:1px solid #d9cdb8;border-radius:18px;background:#e7e2d6;touch-action:auto}.field-prep-map{width:100%;height:min(46vh,420px);min-height:320px}.field-prep-crosshair{position:absolute;z-index:500;inset:50% auto auto 50%;transform:translate(-50%,-50%);pointer-events:none}.field-prep-map-actions{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-top:12px}.field-prep-map-actions #fieldPrepAddVertexButton,.field-prep-map-actions #fieldPrepUndoVertexButton,.field-prep-map-actions #fieldPrepConfirmAreaButton{display:none}.field-prep-map-meta{margin-top:10px;color:#736b5e;font-size:13px;text-align:right}.field-prep-survey-stats{grid-template-columns:repeat(3,1fr);margin-top:14px;margin-bottom:0}.field-prep-focus-exit{display:none}.field-prep-map-shell .leaflet-control-zoom{display:none}
+html.field-prep-map-focus-root,body.field-prep-map-focus{overflow:hidden;overscroll-behavior:none}body.field-prep-map-focus #fieldPrepSurveySection{position:fixed;inset:0;z-index:4000;margin:0;padding:0;border:0;border-radius:0;background:#e9e2d4;overflow:hidden}body.field-prep-map-focus #fieldPrepSurveySection>.field-prep-result-heading,body.field-prep-map-focus #fieldPrepSurveySection>p,body.field-prep-map-focus #fieldPrepSurveySection>.field-prep-local-note,body.field-prep-map-focus #fieldPrepSurveySection>.field-prep-map-meta,body.field-prep-map-focus #fieldPrepSurveySection>.field-prep-survey-stats,body.field-prep-map-focus #fieldPrepSurveySection>.field-prep-next{display:none!important}body.field-prep-map-focus .field-prep-map-shell{position:absolute;inset:0;margin:0;border:0;border-radius:0;touch-action:none}body.field-prep-map-focus .field-prep-map{height:100dvh;min-height:100dvh}body.field-prep-map-focus .field-prep-map-shell .leaflet-control-zoom{display:block}body.field-prep-map-focus .field-prep-crosshair{z-index:4300}body.field-prep-map-focus .field-prep-map-actions{position:absolute;z-index:4400;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));display:grid;grid-template-columns:1.25fr .8fr 1fr;gap:8px;margin:0;padding:10px;border:1px solid rgba(110,95,69,.22);border-radius:18px;background:rgba(255,252,244,.9);box-shadow:0 8px 24px rgba(47,42,34,.18);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}body.field-prep-map-focus .field-prep-map-actions #fieldPrepStartAreaButton,body.field-prep-map-focus .field-prep-map-actions #fieldPrepResetAreaButton{display:none}body.field-prep-map-focus .field-prep-map-actions #fieldPrepAddVertexButton,body.field-prep-map-focus .field-prep-map-actions #fieldPrepUndoVertexButton,body.field-prep-map-focus .field-prep-map-actions #fieldPrepConfirmAreaButton{display:block;min-height:50px;margin:0;font-size:13px}body.field-prep-map-focus #fieldPrepMapStatus{position:absolute;z-index:4400;top:calc(12px + env(safe-area-inset-top));left:64px;right:12px;margin:0;padding:9px 11px;border:1px solid rgba(110,95,69,.2);border-radius:14px;background:rgba(255,252,244,.9);box-shadow:0 4px 16px rgba(47,42,34,.14);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);font-size:12px;pointer-events:none}body.field-prep-map-focus .field-prep-focus-exit{display:grid;place-items:center;position:absolute;z-index:4450;top:calc(12px + env(safe-area-inset-top));left:12px;width:42px;height:42px;padding:0;border:1px solid rgba(110,95,69,.3);border-radius:14px;background:rgba(255,252,244,.94);color:#49391e;font-size:20px;font-weight:900;box-shadow:0 4px 16px rgba(47,42,34,.14)}
+@media(max-width:680px){.field-prep-map{min-height:330px;height:44vh}.field-prep-map-actions{grid-template-columns:minmax(0,1fr) auto}.field-prep-survey-stats{grid-template-columns:repeat(3,1fr)}body.field-prep-map-focus .field-prep-map{height:100dvh;min-height:100dvh}body.field-prep-map-focus .field-prep-map-actions{grid-template-columns:1.2fr .78fr 1fr}}
 </style>
 </head>
 <body>
@@ -21,7 +23,7 @@
     <div>
       <p class="field-prep-kicker">CAMPSITE LAB / FIELD PREPARATION</p>
       <h1>現地モード準備</h1>
-      <p class="field-prep-lead">現地へ行く前に、調査用CSVをひとまとめにして整理します。</p>
+      <p class="field-prep-lead">調査データを入れて、今日見る範囲を地図で決めます。</p>
     </div>
   </div>
 </header>
@@ -29,35 +31,35 @@
 <main class="field-prep-main">
   <section class="field-prep-card field-prep-intro" aria-labelledby="fieldPrepIntroTitle">
     <div class="field-prep-step-badge">STEP 1</div>
-    <h2 id="fieldPrepIntroTitle">調査データを読み込む</h2>
-    <p>Wayfarer Mapなどから用意したCSVを複数まとめて選択できます。同じPOIが複数のCSVに含まれている場合は、自動で重複整理します。</p>
-    <p class="field-prep-local-note">🔒 CSVや調査範囲はサーバーへ送信しません。ブラウザ内で処理・保存します。</p>
+    <h2 id="fieldPrepIntroTitle">調査データを入れる</h2>
+    <p>Wayfarer Mapなどから保存した調査ファイルを選びます。複数あっても、同じPOIは自動で1件に整理します。</p>
+    <p class="field-prep-local-note">🔒 選んだファイルや調査範囲はサーバーへ送りません。この端末の中だけで処理します。</p>
   </section>
 
   <section class="field-prep-card" aria-labelledby="fieldPrepUploadTitle">
-    <h2 id="fieldPrepUploadTitle">CSVを選択</h2>
+    <h2 id="fieldPrepUploadTitle">調査ファイルを選ぶ</h2>
     <label class="field-prep-dropzone" for="fieldPrepFiles">
       <span class="field-prep-dropzone-icon">📂</span>
-      <strong>CSVをまとめて選択</strong>
-      <span>複数選択できます</span>
-      <input id="fieldPrepFiles" data-testid="field-prep-files" type="file" accept=".csv,text/csv" multiple>
+      <strong>調査ファイルを選ぶ</strong>
+      <span>複数まとめて選べます</span>
+      <input id="fieldPrepFiles" data-testid="field-prep-files" type="file" multiple>
     </label>
-    <div class="field-prep-actions">
-      <button id="fieldPrepAnalyzeButton" data-testid="field-prep-analyze" class="field-prep-primary" type="button" disabled>CSVを読み込む</button>
-      <button id="fieldPrepClearButton" class="field-prep-secondary" type="button" disabled>選択をクリア</button>
+    <div id="fieldPrepFileList" class="field-prep-file-list" aria-label="選んだ調査ファイル"></div>
+    <div class="field-prep-actions field-prep-actions-single">
+      <button id="fieldPrepAnalyzeButton" data-testid="field-prep-analyze" class="field-prep-primary" type="button" disabled>地図に読み込む</button>
+      <button id="fieldPrepClearButton" class="field-prep-secondary" type="button" hidden disabled>すべて解除</button>
     </div>
-    <div id="fieldPrepStatus" data-testid="field-prep-status" class="field-prep-status" role="status" aria-live="polite">CSVを選択してください。</div>
-    <div id="fieldPrepFileList" class="field-prep-file-list" aria-label="選択したCSV"></div>
+    <div id="fieldPrepStatus" data-testid="field-prep-status" class="field-prep-status" role="status" aria-live="polite">調査ファイルを選んでください。</div>
   </section>
 
   <section id="fieldPrepResults" data-testid="field-prep-results" class="field-prep-card" aria-labelledby="fieldPrepResultTitle" hidden>
     <div class="field-prep-result-heading">
-      <div><div class="field-prep-step-badge field-prep-step-badge-muted">READ RESULT</div><h2 id="fieldPrepResultTitle">読み込み結果</h2></div>
-      <span id="fieldPrepReadyBadge" class="field-prep-ready-badge">準備データ</span>
+      <div><div class="field-prep-step-badge field-prep-step-badge-muted">CHECK</div><h2 id="fieldPrepResultTitle">読み込み結果</h2></div>
+      <span id="fieldPrepReadyBadge" class="field-prep-ready-badge">準備OK</span>
     </div>
-    <div class="field-prep-stats" aria-label="CSV集計結果">
-      <article class="field-prep-stat"><span>読込CSV</span><strong id="fieldPrepCsvCount">0</strong><small>ファイル</small></article>
-      <article class="field-prep-stat"><span>読込POI</span><strong id="fieldPrepRawCount">0</strong><small>件</small></article>
+    <div class="field-prep-stats" aria-label="読み込み結果">
+      <article class="field-prep-stat"><span>ファイル</span><strong id="fieldPrepCsvCount">0</strong><small>個</small></article>
+      <article class="field-prep-stat"><span>見つかったPOI</span><strong id="fieldPrepRawCount">0</strong><small>件</small></article>
       <article class="field-prep-stat"><span>重複</span><strong id="fieldPrepDuplicateCount">0</strong><small>件を整理</small></article>
       <article class="field-prep-stat field-prep-stat-accent"><span>準備対象</span><strong id="fieldPrepUniqueCount">0</strong><small>件</small></article>
     </div>
@@ -72,48 +74,49 @@
 
   <section id="fieldPrepSurveySection" data-testid="field-prep-survey" class="field-prep-card" aria-labelledby="fieldPrepSurveyTitle" hidden>
     <div class="field-prep-result-heading">
-      <div><div class="field-prep-step-badge">STEP 2</div><h2 id="fieldPrepSurveyTitle">今回調査する範囲を囲む</h2></div>
+      <div><div class="field-prep-step-badge">STEP 2</div><h2 id="fieldPrepSurveyTitle">今日見る範囲を囲む</h2></div>
       <span class="field-prep-ready-badge">調査範囲</span>
     </div>
-    <p>地図を動かし、中央の十字を頂点に合わせて公園など今回調査する範囲を囲みます。この範囲は正式な「活動範囲」とは別物で、完成KMZには出力しません。</p>
+    <p>地図はこのまま動かせます。範囲を囲む時だけ「調査範囲を設定」を押してください。ここで囲んだ線は完成KMZには入りません。</p>
     <p id="fieldPrepRestoreNote" class="field-prep-local-note" hidden>💾 前回の準備データをこの端末から復元しました。</p>
     <div class="field-prep-map-shell">
       <div id="fieldPrepMap" class="field-prep-map" aria-label="調査範囲設定用地図"></div>
-      <div class="field-prep-crosshair" aria-hidden="true">＋</div>
+      <div class="field-prep-crosshair" aria-hidden="true"></div>
     </div>
     <div class="field-prep-map-actions">
-      <button id="fieldPrepStartAreaButton" class="field-prep-primary" type="button">調査範囲を描く</button>
-      <button id="fieldPrepAddVertexButton" class="field-prep-secondary" type="button" disabled>地図中央を追加</button>
-      <button id="fieldPrepUndoVertexButton" class="field-prep-secondary" type="button" disabled>1つ戻す</button>
-      <button id="fieldPrepConfirmAreaButton" class="field-prep-primary" type="button" disabled>この範囲で確定</button>
-      <button id="fieldPrepResetAreaButton" class="field-prep-secondary" type="button" disabled>やり直す</button>
+      <button id="fieldPrepStartAreaButton" class="field-prep-primary" type="button">調査範囲を設定</button>
+      <button id="fieldPrepAddVertexButton" class="field-prep-secondary" type="button" disabled>＋ 頂点追加</button>
+      <button id="fieldPrepUndoVertexButton" class="field-prep-secondary" type="button" disabled>↶ 戻す</button>
+      <button id="fieldPrepConfirmAreaButton" class="field-prep-primary" type="button" disabled>✓ 確定</button>
+      <button id="fieldPrepResetAreaButton" class="field-prep-secondary" type="button" disabled>範囲をやり直す</button>
     </div>
     <div class="field-prep-map-meta">頂点：<strong id="fieldPrepVertexCount">0</strong>点</div>
-    <div id="fieldPrepMapStatus" class="field-prep-status" role="status" aria-live="polite">「調査範囲を描く」を押して、公園など今回調査する範囲を囲んでください。</div>
+    <div id="fieldPrepMapStatus" class="field-prep-status" role="status" aria-live="polite">見るだけなら地図をそのまま動かせます。範囲を囲む時は「調査範囲を設定」。</div>
     <div class="field-prep-stats field-prep-survey-stats">
       <article class="field-prep-stat"><span>準備対象</span><strong id="fieldPrepLoadedCount">0</strong><small>件</small></article>
       <article class="field-prep-stat field-prep-stat-accent"><span>範囲内</span><strong id="fieldPrepInsideCount">-</strong><small>件</small></article>
       <article class="field-prep-stat"><span>範囲外</span><strong id="fieldPrepOutsideCount">-</strong><small>件</small></article>
     </div>
     <div class="field-prep-next">
-      <strong>現地モードへ渡す前の実験</strong>
-      <p>この段階では自動引き継ぎをまだ接続しません。範囲内POIだけをまとめたKMLを保存し、既存の現地モードで手動読込して確認できます。</p>
-      <button id="fieldPrepSaveKmlButton" data-testid="field-prep-save-kml" class="field-prep-primary" type="button" disabled>現地モード用KMLを保存（実験）</button>
+      <strong>範囲が決まったら、そのまま現地モードへ</strong>
+      <p>範囲内のPOIだけを引き継いで、そのまま地図作業を始められます。</p>
+      <button id="fieldPrepSaveKmlButton" data-testid="field-prep-save-kml" class="field-prep-secondary" type="button" disabled>KMLを保存（予備）</button>
     </div>
   </section>
 
   <section class="field-prep-card field-prep-help" aria-labelledby="fieldPrepHelpTitle">
-    <h2 id="fieldPrepHelpTitle">CA向けメモ</h2>
-    <details><summary>同じPOIが複数CSVに入っていたら？</summary><p>重複として自動整理します。準備対象には1件だけ残ります。</p></details>
-    <details><summary>CSVを間違えて選んだら？</summary><p>「選択をクリア」を押して、もう一度選び直してください。</p></details>
-    <details><summary>調査範囲と活動範囲は同じ？</summary><p>別物です。調査範囲は今回のPOIを絞るためだけに使い、完成KMZには出力しません。活動範囲は現地モードで別に作成します。</p></details>
+    <h2 id="fieldPrepHelpTitle">困ったとき</h2>
+    <details><summary>同じPOIが複数ファイルに入っていたら？</summary><p>自動で重複整理します。準備対象には1件だけ残ります。</p></details>
+    <details><summary>ファイルを間違えて選んだら？</summary><p>ファイル名の右にある「解除」を押してください。</p></details>
+    <details><summary>調査範囲と活動範囲は同じ？</summary><p>別物です。調査範囲は今日見るPOIを絞るためだけに使います。正式な活動範囲は現地モードで別に作ります。</p></details>
   </section>
 </main>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="js/util.js?v=3"></script>
 <script src="js/field-prep-session.js?v=1"></script>
-<script src="js/field-prep.js?v=2"></script>
-<script src="js/field-prep-map.js?v=1"></script>
+<script src="js/field-prep.js?v=5"></script>
+<script src="js/field-prep-map.js?v=2"></script>
+<script src="js/field-prep-focus.js?v=3"></script>
 </body>
 </html>

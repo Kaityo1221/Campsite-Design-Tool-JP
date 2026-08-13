@@ -11,7 +11,7 @@ for (const token of [
   'id="fieldPrepMap"',
   'id="fieldPrepSaveKmlButton"',
   'js/field-prep-session.js?v=1',
-  'js/field-prep-map.js?v=1'
+  'js/field-prep-map.js?v=2'
 ]) {
   if (!html.includes(token)) throw new Error(`field-prep.html missing token: ${token}`);
 }

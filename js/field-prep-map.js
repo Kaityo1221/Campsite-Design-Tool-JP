@@ -52,11 +52,50 @@
     return true;
   }
 
+  function median(values) {
+    const sorted = values
+      .map(Number)
+      .filter(Number.isFinite)
+      .sort((a, b) => a - b);
+    if (sorted.length === 0) return null;
+    const middle = Math.floor(sorted.length / 2);
+    return sorted.length % 2
+      ? sorted[middle]
+      : (sorted[middle - 1] + sorted[middle]) / 2;
+  }
+
   function fitPoints() {
     if (!map || currentPoints.length === 0) return;
-    const latLngs = currentPoints.map(point => [point.lat, point.lng]);
-    const bounds = L.latLngBounds(latLngs);
-    if (bounds.isValid()) map.fitBounds(bounds.pad(0.12), { maxZoom: 17 });
+
+    const pointLatLngs = currentPoints.map(point => [Number(point.lat), Number(point.lng)]);
+    const focusLatLngs = surveyPolygon.length >= 3 ? surveyPolygon : pointLatLngs;
+    const bounds = L.latLngBounds(focusLatLngs);
+    if (!bounds.isValid()) return;
+
+    map.invalidateSize({ animate: false, pan: false });
+    map.fitBounds(bounds.pad(0.12), { maxZoom: 17, animate: false });
+
+    // A hidden/restored map or a distant outlier can otherwise collapse to a world view.
+    // In that case, reopen around the dense middle of the imported POIs at a field-use zoom.
+    if (!Number.isFinite(map.getZoom()) || map.getZoom() < 13) {
+      const centerLat = median(currentPoints.map(point => point.lat));
+      const centerLng = median(currentPoints.map(point => point.lng));
+      if (Number.isFinite(centerLat) && Number.isFinite(centerLng)) {
+        map.setView([centerLat, centerLng], 14, { animate: false });
+      }
+    }
+  }
+
+  function scheduleFitPoints() {
+    if (!map) return;
+    window.requestAnimationFrame(() => {
+      map.invalidateSize({ animate: false, pan: false });
+      fitPoints();
+      window.setTimeout(() => {
+        map.invalidateSize({ animate: false, pan: false });
+        if (map.getZoom() < 13) fitPoints();
+      }, 90);
+    });
   }
 
   function pointOnSegment(point, a, b, epsilon = 1e-10) {
@@ -139,18 +178,32 @@
         weight: 3,
         fillOpacity: 0.12
       }).addTo(map);
-    } else if (draftVertices.length >= 2) {
-      draftLayer = L.polyline(draftVertices, {
-        weight: 3,
-        dashArray: '8 7'
-      }).addTo(map);
+    } else if (draftVertices.length > 0) {
+      draftLayer = L.layerGroup().addTo(map);
+
+      draftVertices.forEach((latLng, index) => {
+        L.circleMarker(latLng, {
+          radius: index === draftVertices.length - 1 ? 5 : 4,
+          weight: 2,
+          opacity: 1,
+          fillOpacity: 0.95,
+          interactive: false
+        }).addTo(draftLayer);
+      });
+
       if (draftVertices.length >= 3) {
-        clearLayer(draftLayer);
-        draftLayer = L.polygon(draftVertices, {
+        L.polygon(draftVertices, {
           weight: 3,
           dashArray: '8 7',
-          fillOpacity: 0.08
-        }).addTo(map);
+          fillOpacity: 0.08,
+          interactive: false
+        }).addTo(draftLayer);
+      } else if (draftVertices.length >= 2) {
+        L.polyline(draftVertices, {
+          weight: 3,
+          dashArray: '8 7',
+          interactive: false
+        }).addTo(draftLayer);
       }
     }
 
@@ -199,7 +252,7 @@
     renderSurveyGeometry();
     updateCounts();
     updateButtons();
-    setMapStatus('「調査範囲を描く」を押して、公園など今回調査する範囲を囲んでください。');
+    setMapStatus('「調査範囲を設定」を押して、公園など今回調査する範囲を囲んでください。');
     if (persistState) persist();
   }
 
@@ -213,7 +266,7 @@
     renderSurveyGeometry();
     updateCounts();
     updateButtons();
-    setMapStatus('地図を動かし、中央の十字を頂点に合わせて「地図中央を追加」を押してください。');
+    setMapStatus('地図を動かし、中央の十字を頂点に合わせて「＋ 頂点追加」を押してください。');
   }
 
   function addVertex() {
@@ -222,7 +275,7 @@
     draftVertices.push([center.lat, center.lng]);
     renderSurveyGeometry();
     updateButtons();
-    setMapStatus(`${draftVertices.length}点を追加しました。3点以上で範囲を確定できます。`);
+    setMapStatus(`${draftVertices.length}点を追加しました。${draftVertices.length === 1 ? '地図に最初の点を表示しました。' : draftVertices.length === 2 ? '2点を線でつなぎました。' : '3点以上で範囲を確定できます。'}`);
   }
 
   function undoVertex() {
@@ -372,12 +425,11 @@
       return;
     }
 
-    setTimeout(() => map.invalidateSize(), 0);
     if (resetPolygon) resetSurvey({ persistState: false });
     renderPoiMarkers();
     updateCounts();
     updateButtons();
-    if (fit) fitPoints();
+    if (fit) scheduleFitPoints();
   }
 
   async function restoreSession() {
@@ -439,7 +491,8 @@
     getState() {
       return {
         polygon: surveyPolygon.map(pair => [...pair]),
-        insidePoints: getInsidePoints().map(point => ({ ...point }))
+        insidePoints: getInsidePoints().map(point => ({ ...point })),
+        mapZoom: map?.getZoom?.() ?? null
       };
     },
     pointInPolygon,
