@@ -46,6 +46,19 @@
     return `${(value / (1024 * 1024)).toFixed(1)} MB`;
   }
 
+  function ensureFileNameStyles() {
+    if (document.getElementById('fieldPrepFileNameStyles')) return;
+    const style = document.createElement('style');
+    style.id = 'fieldPrepFileNameStyles';
+    style.textContent = `
+      .field-prep-file-copy{flex:1 1 auto;min-width:0}
+      .field-prep-file-name{display:flex;align-items:baseline;gap:6px;min-width:0;max-width:100%}
+      .field-prep-file-name .field-prep-file-prefix{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#736b5e;font-size:12px}
+      .field-prep-file-name .field-prep-file-tail{display:block;flex:0 0 auto;overflow:visible!important;text-overflow:clip!important;white-space:nowrap;color:#2f2a22;font-size:14px;font-weight:900}
+    `;
+    document.head.appendChild(style);
+  }
+
   function splitFileNameForDisplay(fileName) {
     const fullName = String(fileName || '');
     const extensionMatch = fullName.match(/(\.[^.\s]+)$/);
@@ -81,6 +94,8 @@
   }
 
   function makeFileItem(nameText, metaText, onRemove) {
+    ensureFileNameStyles();
+
     const item = document.createElement('div');
     item.className = 'field-prep-file-item';
     item.title = nameText;
