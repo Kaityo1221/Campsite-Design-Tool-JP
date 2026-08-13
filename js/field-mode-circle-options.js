@@ -100,13 +100,14 @@
   }
 
   function selectionsForCurrentSource(){
-    if(!storedPayload||storedPayload.sourceSignature!==currentSourceSignature)return{};
+    if(!storedPayload||storedPayload.sourceSignature!==currentSourceSignature)return null;
     return storedPayload.selections||{};
   }
 
   function applySavedToRecord(record){
     if(!record?.isNew)return;
     const selections=selectionsForCurrentSource();
+    if(!selections)return;
     record.include30mCircle=!!selections[recordKey(record)];
   }
 
@@ -191,6 +192,19 @@
     },80);
   }
 
+  function installRestoreStatusObserver(){
+    const target=document.getElementById('fieldModeStatus');
+    if(!target||target.dataset.circleRestoreStatusObserved==='1')return;
+    target.dataset.circleRestoreStatusObserved='1';
+    let lastText=target.textContent||'';
+    const observer=new MutationObserver(()=>{
+      const text=target.textContent||'';
+      if(text!==lastText&&text.includes('前回作業を復元'))refreshAfterSessionRestore();
+      lastText=text;
+    });
+    observer.observe(target,{childList:true,subtree:true,characterData:true});
+  }
+
   async function saveCurrentSelections(){
     if(!currentSourceSignature)return;
     const selections={};
@@ -218,7 +232,7 @@
   toggle.addEventListener('click',()=>{
     if(!selectedPoi?.added||!selectedPoi?.isNew||selectedPoi.fieldDeleted)return;
     selectedPoi.include30mCircle=!selectedPoi.include30mCircle;
-    const selections=selectionsForCurrentSource();
+    const selections=selectionsForCurrentSource()||{};
     if(selectedPoi.include30mCircle)selections[recordKey(selectedPoi)]=true;
     else delete selections[recordKey(selectedPoi)];
     storedPayload={version:1,sourceSignature:currentSourceSignature,selections,savedAt:Date.now()};
@@ -272,6 +286,7 @@
     .catch(error=>console.warn('field 30m source restore failed',error));
 
   bindResumeHooksWhenReady();
+  installRestoreStatusObserver();
 
   render();
   window.FieldModeCircleOptions={render,saveNow:saveCurrentSelections,applySavedToRecords,refreshAfterSessionRestore};
