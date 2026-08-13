@@ -47,7 +47,7 @@
 
   function syncToolbox(){
     const launcher=document.getElementById('fieldModeCreativeButton');
-    if(launcher){launcher.textContent='🧰 道具';launcher.setAttribute('aria-label','道具');launcher.title=launcher.disabled?'先にKMZ / KMLを読み込んでください':'道具';}
+    if(launcher){launcher.innerHTML='🧰<span class="field-mode-launcher-label">道具</span>';launcher.setAttribute('aria-label','道具');launcher.title=launcher.disabled?'先にKMZ / KMLを読み込んでください':'道具';}
     const lineTool=document.querySelector('#fieldModeCreativeHotbar [data-tool="line"]');
     if(lineTool)lineTool.style.display='none';
   }
