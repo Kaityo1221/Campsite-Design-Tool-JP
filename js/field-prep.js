@@ -9,6 +9,10 @@
   const results = document.getElementById('fieldPrepResults');
   const warnings = document.getElementById('fieldPrepWarnings');
 
+  // iPhone Files picker should not gray out unrelated files.
+  // Let users select first, then validate the file type inside the app.
+  fileInput?.removeAttribute('accept');
+
   const output = {
     csvCount: document.getElementById('fieldPrepCsvCount'),
     rawCount: document.getElementById('fieldPrepRawCount'),
@@ -52,35 +56,16 @@
     style.id = 'fieldPrepFileNameStyles';
     style.textContent = `
       .field-prep-file-copy{flex:1 1 auto;min-width:0}
-      .field-prep-file-name{display:flex;align-items:baseline;gap:6px;min-width:0;max-width:100%}
-      .field-prep-file-name .field-prep-file-prefix{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#736b5e;font-size:12px}
-      .field-prep-file-name .field-prep-file-tail{display:block;flex:0 0 auto;overflow:visible!important;text-overflow:clip!important;white-space:nowrap;color:#2f2a22;font-size:14px;font-weight:900}
+      .field-prep-file-name{display:flex;align-items:baseline;gap:6px;min-width:0;max-width:100%;overflow-x:auto;overflow-y:hidden;white-space:nowrap;-webkit-overflow-scrolling:touch;touch-action:pan-x;scrollbar-width:none}
+      .field-prep-file-name::-webkit-scrollbar{display:none}
+      .field-prep-file-name .field-prep-file-prefix,.field-prep-file-name .field-prep-file-tail{display:block;flex:0 0 auto;overflow:visible!important;text-overflow:clip!important;white-space:nowrap;color:#2f2a22;font-size:14px;font-weight:900}
     `;
     document.head.appendChild(style);
   }
 
   function splitFileNameForDisplay(fileName) {
     const fullName = String(fileName || '');
-    const extensionMatch = fullName.match(/(\.[^.\s]+)$/);
-    const extension = extensionMatch?.[1] || '';
-    const stem = extension ? fullName.slice(0, -extension.length) : fullName;
-
-    // Wayfarer Map exports commonly end in a distinguishing number such as
-    // "nearby-wayspots-2026-08-09 8.csv". Keep that number visible at all times.
-    const numberedTail = stem.match(/^(.*?)([\s_-]+\d+)$/);
-    if (numberedTail) {
-      return {
-        prefix: numberedTail[1].replace(/[\s_-]+$/, ''),
-        tail: `${numberedTail[2].trim()}${extension}`
-      };
-    }
-
-    // For other long names, reserve the final part instead of hiding it with ellipsis.
-    const keepLength = Math.min(16, stem.length);
-    return {
-      prefix: stem.slice(0, Math.max(0, stem.length - keepLength)),
-      tail: `${stem.slice(-keepLength)}${extension}`
-    };
+    return { prefix: fullName, tail: '' };
   }
 
   function makeRemoveButton(label, onClick) {
@@ -112,11 +97,13 @@
     prefixNode.className = 'field-prep-file-prefix';
     prefixNode.textContent = prefix || '';
 
-    const tailNode = document.createElement('strong');
-    tailNode.className = 'field-prep-file-tail';
-    tailNode.textContent = tail;
-
-    name.append(prefixNode, tailNode);
+    name.append(prefixNode);
+    if (tail) {
+      const tailNode = document.createElement('strong');
+      tailNode.className = 'field-prep-file-tail';
+      tailNode.textContent = tail;
+      name.append(tailNode);
+    }
 
     const meta = document.createElement('span');
     meta.textContent = metaText;
@@ -361,8 +348,10 @@
 
   fileInput.addEventListener('change', () => {
     resetResults();
-    state.selectedFiles = Array.from(fileInput.files || [])
-      .filter(file => file.name.toLowerCase().endsWith('.csv'));
+    const pickedFiles = Array.from(fileInput.files || []);
+    const supportedFiles = pickedFiles.filter(file => file.name.toLowerCase().endsWith('.csv'));
+    const unsupportedFiles = pickedFiles.filter(file => !file.name.toLowerCase().endsWith('.csv'));
+    state.selectedFiles = supportedFiles;
 
     renderSelectedFiles();
 
@@ -370,8 +359,15 @@
     analyzeButton.disabled = !hasFiles;
     if (clearButton) clearButton.disabled = !hasFiles;
 
-    if (hasFiles) {
+    if (hasFiles && unsupportedFiles.length > 0) {
+      setStatus(`${hasFiles ? `${state.selectedFiles.length}個の調査ファイルを選びました。` : ''} ${unsupportedFiles.length}個は調査ファイルではないため読み込み対象から外しました。`, true);
+    } else if (hasFiles) {
       setStatus(`${state.selectedFiles.length}個の調査ファイルを選びました。`);
+    } else if (unsupportedFiles.length > 0) {
+      const hasKmz = unsupportedFiles.some(file => /\.kmz$/i.test(file.name));
+      setStatus(hasKmz
+        ? 'KMZは現地モードで使うファイルです。ここではWayfarer Mapから保存した調査ファイルを選んでください。'
+        : 'このファイルは調査ファイルではありません。Wayfarer Mapから保存した調査ファイルを選んでください。', true);
     } else {
       setStatus('調査ファイルを選んでください。');
     }
