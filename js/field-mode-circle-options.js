@@ -163,11 +163,29 @@
     return true;
   }
 
-  function bindResumeWatcherWhenReady(){
-    if(installResumeWatcher())return;
+  function installResumePanelObserver(){
+    const resumePanel=document.getElementById('fieldModeResumePanel');
+    if(!resumePanel||resumePanel.dataset.circleRestoreObserved==='1')return Boolean(resumePanel);
+    resumePanel.dataset.circleRestoreObserved='1';
+    let wasActive=resumePanel.classList.contains('active');
+    const observer=new MutationObserver(()=>{
+      const active=resumePanel.classList.contains('active');
+      if(wasActive&&!active&&window.FieldModeSession?.hasSource?.()){
+        refreshAfterSessionRestore();
+      }
+      wasActive=active;
+    });
+    observer.observe(resumePanel,{attributes:true,attributeFilter:['class']});
+    return true;
+  }
+
+  function bindResumeHooksWhenReady(){
+    if(installResumeWatcher()&&installResumePanelObserver())return;
     const startedAt=Date.now();
     const timer=window.setInterval(()=>{
-      if(installResumeWatcher()||Date.now()-startedAt>=10000){
+      const watcherReady=installResumeWatcher();
+      const observerReady=installResumePanelObserver();
+      if((watcherReady&&observerReady)||Date.now()-startedAt>=10000){
         window.clearInterval(timer);
       }
     },80);
@@ -253,7 +271,7 @@
     })
     .catch(error=>console.warn('field 30m source restore failed',error));
 
-  bindResumeWatcherWhenReady();
+  bindResumeHooksWhenReady();
 
   render();
   window.FieldModeCircleOptions={render,saveNow:saveCurrentSelections,applySavedToRecords,refreshAfterSessionRestore};
