@@ -1,0 +1,56 @@
+name: Field End-to-End Check
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'field-prep.html'
+      - 'field-mode.html'
+      - 'css/field-prep.css'
+      - 'css/field-mode.css'
+      - 'js/field-prep*.js'
+      - 'js/field-mode*.js'
+      - 'js/util.js'
+      - 'js/kmz.js'
+      - 'tests/field-e2e.spec.mjs'
+      - 'playwright.config.mjs'
+      - 'package.json'
+      - '.github/workflows/field-e2e-check.yml'
+  workflow_dispatch:
+
+jobs:
+  field-e2e:
+    name: field-e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Static field checks
+        run: npm run check:field-mode && npm run check:field-prep
+
+      - name: Install WebKit
+        run: npx playwright install --with-deps webkit
+
+      - name: iPhone/WebKit full route test
+        run: npm run test:field-e2e
+
+      - name: Upload Playwright trace on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: field-e2e-playwright-report
+          path: |
+            test-results
+            playwright-report
+          if-no-files-found: ignore
