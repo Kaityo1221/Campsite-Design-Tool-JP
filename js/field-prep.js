@@ -46,6 +46,30 @@
     return `${(value / (1024 * 1024)).toFixed(1)} MB`;
   }
 
+  function splitFileNameForDisplay(fileName) {
+    const fullName = String(fileName || '');
+    const extensionMatch = fullName.match(/(\.[^.\s]+)$/);
+    const extension = extensionMatch?.[1] || '';
+    const stem = extension ? fullName.slice(0, -extension.length) : fullName;
+
+    // Wayfarer Map exports commonly end in a distinguishing number such as
+    // "nearby-wayspots-2026-08-09 8.csv". Keep that number visible at all times.
+    const numberedTail = stem.match(/^(.*?)([\s_-]+\d+)$/);
+    if (numberedTail) {
+      return {
+        prefix: numberedTail[1].replace(/[\s_-]+$/, ''),
+        tail: `${numberedTail[2].trim()}${extension}`
+      };
+    }
+
+    // For other long names, reserve the final part instead of hiding it with ellipsis.
+    const keepLength = Math.min(16, stem.length);
+    return {
+      prefix: stem.slice(0, Math.max(0, stem.length - keepLength)),
+      tail: `${stem.slice(-keepLength)}${extension}`
+    };
+  }
+
   function makeRemoveButton(label, onClick) {
     const button = document.createElement('button');
     button.type = 'button';
@@ -59,12 +83,25 @@
   function makeFileItem(nameText, metaText, onRemove) {
     const item = document.createElement('div');
     item.className = 'field-prep-file-item';
+    item.title = nameText;
 
     const copy = document.createElement('div');
     copy.className = 'field-prep-file-copy';
 
-    const name = document.createElement('strong');
-    name.textContent = nameText;
+    const name = document.createElement('div');
+    name.className = 'field-prep-file-name';
+    name.setAttribute('aria-label', nameText);
+
+    const { prefix, tail } = splitFileNameForDisplay(nameText);
+    const prefixNode = document.createElement('span');
+    prefixNode.className = 'field-prep-file-prefix';
+    prefixNode.textContent = prefix || '';
+
+    const tailNode = document.createElement('strong');
+    tailNode.className = 'field-prep-file-tail';
+    tailNode.textContent = tail;
+
+    name.append(prefixNode, tailNode);
 
     const meta = document.createElement('span');
     meta.textContent = metaText;
