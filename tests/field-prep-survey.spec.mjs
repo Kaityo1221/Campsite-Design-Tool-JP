@@ -35,7 +35,7 @@ test('調査範囲の内外判定ができ、境界上も範囲内として扱�
   expect(result.boundary).toBe(true);
 });
 
-test('現地モード用KMLは正式フォルダと40m円を含み、調査範囲は出力しない', async ({ page }) => {
+test('現地モード用KMLは正式フォルダと50m円を含み、調査範囲は出力しない', async ({ page }) => {
   await page.goto('/field-prep.html');
 
   const kml = await page.evaluate(() => window.FieldPrepSurvey.buildFieldKml([
@@ -52,15 +52,16 @@ test('現地モード用KMLは正式フォルダと40m円を含み、調査範�
     '追加希望ジム',
     '追加希望パワスポ',
     '活動範囲',
-    '40m円（基本距離）',
-    '30m円（調整用）'
+    '50m円（目安）',
+    '40m円（参考距離）',
+    '30m円（参考距離）'
   ]) {
     expect(kml).toContain(`<name>${folderName}</name>`);
   }
 
-  expect(kml).toContain('入口_40m円');
-  expect(kml).toContain('広場_40m円');
-  expect(kml).toContain('北側_40m円');
+  expect(kml).toContain('入口_50m円');
+  expect(kml).toContain('広場_50m円');
+  expect(kml).toContain('北側_50m円');
   expect(kml).not.toContain('<name>調査範囲</name>');
 });
 

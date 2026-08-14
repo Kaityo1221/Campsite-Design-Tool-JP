@@ -62,6 +62,24 @@ test('距離ツールは始点から十字までをリアルタイム計測し�
   expect(pageErrors).toEqual([]);
 });
 
+test('距離判定は30m・40mを参考境界、50mを確保境界として共通化する',async({page})=>{
+  const pageErrors=await openFieldMode(page);
+  const bands=await page.evaluate(()=>[29.9,30,39.9,40,49.9,50].map(distance=>({
+    distance,
+    policy:window.CampsitePoiSpacingPolicy.distanceBand(distance),
+    tool:window.FieldModeDistance.bandForDistance(distance)
+  })));
+  expect(bands).toEqual([
+    {distance:29.9,policy:'danger',tool:'danger'},
+    {distance:30,policy:'caution',tool:'caution'},
+    {distance:39.9,policy:'caution',tool:'caution'},
+    {distance:40,policy:'near',tool:'near'},
+    {distance:49.9,policy:'near',tool:'near'},
+    {distance:50,policy:'ok',tool:'ok'}
+  ]);
+  expect(pageErrors).toEqual([]);
+});
+
 test('範囲作成をやめると下書きを破棄して道具箱へ戻る',async({page})=>{
   const pageErrors=await openFieldMode(page);
   await openPalette(page);
