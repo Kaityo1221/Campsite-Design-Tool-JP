@@ -27,6 +27,7 @@ async function runDistanceCheck() {
 
   const warnings = [];
 const duplicatePois = [];
+const distanceTargetMeters = window.CampsitePoiSpacingPolicy?.targetMeters || 50;
 
   for (let i = 0; i < points.length; i++) {
     for (let j = i + 1; j < points.length; j++) {
@@ -56,7 +57,7 @@ if (distance < 1) {
     distance
   });
 }
-      if (distance < 40) {
+      if (distance < distanceTargetMeters) {
         warnings.push({
           a,
           b,
@@ -194,8 +195,8 @@ ${campsite.summary}<br><br>
 
       密集：${campsite.under20}件<br>
 滞留：${campsite.under30}件<br>
-軽微：${campsite.under40}件<br>
-既存POI同士の近接：${campsite.referenceUnder40 || 0}件<br>
+30〜50m参考：${campsite.under40}件<br>
+既存POI同士の50m未満近接：${campsite.referenceUnder40 || 0}件<br>
 通行：${campsite.trafficOk ? "良好" : "注意"}<br><br>
 
       <strong>現地環境チェック</strong><br>
@@ -212,7 +213,7 @@ ${campsite.summary}<br><br>
  const displayCounts = {
   dense: 0,      // 20m未満
   stay: 0,       // 20〜30m
-  light: 0,      // 30〜40m
+  light: 0,      // 30〜50m（参考距離）
   reference: 0   // 既存POI同士
 };
 
@@ -250,7 +251,7 @@ const adjustableCount = displayCounts.light;
   resultStatusColor = "#ef4444";
   resultStatusIcon = "⚠";
 } else if (adjustableCount > 0) {
-  resultStatus = "調整可能距離あり";
+  resultStatus = "参考距離あり";
   resultStatusColor = "#94a3b8";
   resultStatusIcon = "△";
 } else if (displayCounts.reference > 0) {
@@ -288,9 +289,9 @@ const debugHtml = `
 
       20m未満（密集）：${displayCounts.dense}件<br>
 20〜30m（滞留）：${displayCounts.stay}件<br>
-30〜40m（軽微）：${displayCounts.light}件<br>
+30〜50m（参考距離）：${displayCounts.light}件<br>
 参考：${displayCounts.reference}件<br>
-40m未満合計：${warnings.length}件<br><br>
+50m未満合計：${warnings.length}件<br><br>
       ${
         nearestWarning ? `
           <strong>最短距離ペア</strong><br>
@@ -299,7 +300,7 @@ const debugHtml = `
 × ${escapeDistanceHtml(nearestWarning.b.layer)}：${escapeDistanceHtml(nearestWarning.b.name)}<br>
         ` : `
           <strong>最短距離ペア</strong><br>
-          40m未満の組み合わせはありません。<br>
+          50m未満の組み合わせはありません。<br>
         `
       }
     </div>
@@ -314,7 +315,7 @@ const simpleMapGuideHtml = `
   result.innerHTML =
     sectionTitleHtml("拠点充実度", "距離・通行・広場・回遊性などをもとにした総合評価です。") +
     scoreHtml +
-    sectionTitleHtml("判定結果", "20m未満／20〜30m／30〜40mの近接件数を確認します。") +
+    sectionTitleHtml("判定結果", "50m未満の近接件数を確認します。30m・40mは参考距離です。") +
 resultHeaderHtml +
 sectionTitleHtml("重複POIチェック", "同じ場所に複数のPOIが入っていないか確認します。") +
 duplicatePoiHtml +
@@ -346,8 +347,8 @@ return;
       border:1px solid rgba(34,197,94,0.45);
       background:rgba(34,197,94,0.12);
     ">
-      ✅ 追加・変更対象の近接はありません。<br>
-      既存POI同士の参考近接は、上の分類別チェック内で確認できます。
+      ✅ 追加・変更対象の要注意近接はありません。<br>
+      30m以上50m未満は参考距離として、上の分類別チェックで確認できます。
     </div>
   ` : targetWarnings.map(w => {
     let label = "";
@@ -361,8 +362,8 @@ return;
       cardColor = "#ef4444";
       cardBg = "rgba(239, 68, 68, 0.14)";
     } else {
-      label = "△ 40m未満";
-      message = "40m未満です。調整される場合があります。";
+      label = "△ 50m未満";
+      message = "50m未満です。30m・40mは参考距離として確認してください。";
       cardColor = "#f97316";
       cardBg = "rgba(249, 115, 22, 0.14)";
     }
@@ -402,20 +403,20 @@ return;
 result.innerHTML =
   sectionTitleHtml("拠点充実度", "距離・通行・広場・回遊性などをもとにした総合評価です。") +
   scoreHtml +
-  sectionTitleHtml("判定結果", "20m未満／20〜30m／30〜40mの近接件数を確認します。") +
+  sectionTitleHtml("判定結果", "50m未満の近接件数を確認します。30m・40mは参考距離です。") +
   resultHeaderHtml +
   sectionTitleHtml("重複POIチェック", "同じ場所に複数のPOIが入っていないか確認します。") +
   duplicatePoiHtml +
-  sectionTitleHtml("分類別チェック", "近接内容を密集・滞留・軽微に分けて確認します。") +
+  sectionTitleHtml("分類別チェック", "近接内容を密集・滞留・参考距離に分けて確認します。") +
   riskAccordionHtml + `
-    40m未満の組み合わせがあります。<br><br>
+    50m未満の組み合わせがあります。<br><br>
     🔴 20m未満：${displayCounts.dense}件 / 
     🟠 20〜30m：${displayCounts.stay}件 / 
-    ⚪ 30〜40m：${displayCounts.light}件 / 
+    ⚪ 30〜50m参考：${displayCounts.light}件 / 
     ℹ 参考：${displayCounts.reference}件
     <br><br>
   ` +
-  sectionTitleHtml("追加・変更対象の近接", "既存POI同士ではなく、追加・変更対象に関係する近接を確認します。") +
+  sectionTitleHtml("追加・変更対象の近接", "30m未満は要注意、30m以上50m未満は参考距離として確認します。") +
   targetWarningListHtml +
   sectionTitleHtml("距離チェックマップ", "OSM / 航空写真でPOI・活動範囲・近接ラインを確認できます。") +
   simpleMapGuideHtml;
