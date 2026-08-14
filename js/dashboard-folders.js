@@ -325,3 +325,11 @@
     setup();
   }
 })();
+
+(function loadPostCompletionHub() {
+  if (document.querySelector('script[data-post-completion-hub]')) return;
+  const script = document.createElement('script');
+  script.src = 'js/post-completion-hub.js?v=1';
+  script.setAttribute('data-post-completion-hub', '1');
+  document.head.appendChild(script);
+})();
