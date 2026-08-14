@@ -2,7 +2,8 @@
    トップダッシュボード: カテゴリ折りたたみ
 
    - メインフローは常時表示
-   - 事前準備 / 補助ツール / その他は初期状態で閉じる
+   - 事前準備は初期状態で開く
+   - 補助ツール / その他は初期状態で閉じる
    - オープニングは大きいカードから外し、タイトル付近の小リンクへ移動
 ====================================================== */
 
@@ -242,7 +243,7 @@
     const details = document.createElement("details");
     details.className = "dashboard-fold";
     details.setAttribute(ENHANCED, options.key);
-    details.open = false;
+    details.open = options.open === true;
 
     const summary = document.createElement("summary");
     summary.innerHTML = `
@@ -301,7 +302,8 @@
       key: "prep",
       icon: "🧭",
       title: "事前準備",
-      subtitle: "診断・使い方・導入・ガイド"
+      subtitle: "診断・使い方・導入・ガイド",
+      open: true
     });
 
     foldSection(".dashboard-utility", {
