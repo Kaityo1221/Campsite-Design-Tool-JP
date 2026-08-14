@@ -74,8 +74,18 @@
     return true;
   }
 
+  function loadWorkflowResume() {
+    if (document.querySelector('script[data-workflow-resume]')) return;
+
+    const script = document.createElement('script');
+    script.src = 'js/workflow-resume.js?v=1';
+    script.setAttribute('data-workflow-resume', '1');
+    document.head.appendChild(script);
+  }
+
   function setup() {
     ensureStyles();
+    loadWorkflowResume();
     if (enhanceReturnModal()) return;
 
     const startedAt = Date.now();
