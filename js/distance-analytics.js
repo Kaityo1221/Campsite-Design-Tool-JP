@@ -76,10 +76,18 @@ function sendDistanceCheckAnalytics(points, poiVolumeCounts, poiCounts, expansio
 }
 
 /* =========================
-   通常ログイン保持 / 前回タブ復元 / 簡易ログアウト
+   通常ログイン保持 / 初期表示 / 簡易ログアウト
+
+   ログイン状態だけを保持し、前回開いていた機能は復元しない。
+   再起動時は毎回「事前準備 > 使い方」から始める。
 ========================= */
 const CAMPSITE_ACCESS_UNLOCKED_KEY = "campsiteAccessUnlocked";
+/* 旧バージョンが保存した最後のタブを削除するためだけ残す */
 const CAMPSITE_LAST_TAB_KEY = "campsiteLastTab";
+
+if ("scrollRestoration" in history) {
+  history.scrollRestoration = "manual";
+}
 
 function rememberCampsiteAccessAfterLogin() {
   window.setTimeout(() => {
@@ -91,35 +99,10 @@ function rememberCampsiteAccessAfterLogin() {
   }, 0);
 }
 
-function rememberCampsiteTab(tabId) {
-  if (!tabId || tabId === "admin") return;
-
-  const target = document.getElementById(tabId);
-  if (!target || !target.classList.contains("tab-content")) return;
-
+function resetCampsiteStartupView() {
   try {
-    localStorage.setItem(CAMPSITE_LAST_TAB_KEY, tabId);
+    localStorage.removeItem(CAMPSITE_LAST_TAB_KEY);
   } catch (_) {}
-}
-
-function getRememberedCampsiteTab() {
-  try {
-    const tabId = localStorage.getItem(CAMPSITE_LAST_TAB_KEY);
-
-    if (!tabId || tabId === "admin") return "";
-
-    const target = document.getElementById(tabId);
-    if (!target || !target.classList.contains("tab-content")) return "";
-
-    return tabId;
-  } catch (_) {
-    return "";
-  }
-}
-
-function restoreRememberedCampsiteTab() {
-  const tabId = getRememberedCampsiteTab();
-  if (!tabId || typeof openTab !== "function") return false;
 
   const opening = document.getElementById("openingScreen");
 
@@ -130,17 +113,54 @@ function restoreRememberedCampsiteTab() {
 
   document.body.classList.remove("opening-mode");
 
-  let targetButton = null;
-  document.querySelectorAll(".tab-button").forEach(button => {
-    const onclick = button.getAttribute("onclick") || "";
-    if (onclick.includes(`openTab('${tabId}'`)) {
-      targetButton = button;
-    }
+  document.querySelectorAll(".tab-content").forEach(tab => {
+    tab.classList.remove("active");
   });
 
-  openTab(tabId, targetButton);
-  window.scrollTo({ top: 0, behavior: "auto" });
-  return true;
+  document.querySelectorAll(".tab-button").forEach(button => {
+    button.classList.remove("active");
+  });
+
+  document.getElementById("howto")?.classList.add("active");
+
+  const manualButton = document.querySelector(
+    ".dashboard-prep .tab-button[onclick*=\"openTab('howto'\"]"
+  );
+  manualButton?.classList.add("active");
+
+  if (typeof updateWorkflowStep === "function") {
+    updateWorkflowStep("howto");
+  }
+
+  /*
+    dashboard-folders.js が事前準備を details 化した後に実行する。
+    Safari の前回スクロール位置の復元もここで上書きする。
+  */
+  window.setTimeout(() => {
+    window.requestAnimationFrame(() => {
+      const prepFold = document.querySelector(
+        'details[data-dashboard-fold-enhanced="prep"]'
+      );
+      const prepTarget = prepFold || document.querySelector(".dashboard-prep");
+
+      if (prepFold) {
+        prepFold.open = true;
+      }
+
+      if (!prepTarget) {
+        window.scrollTo({ top: 0, behavior: "auto" });
+        return;
+      }
+
+      const targetTop =
+        prepTarget.getBoundingClientRect().top + window.scrollY - 12;
+
+      window.scrollTo({
+        top: Math.max(0, targetTop),
+        behavior: "auto"
+      });
+    });
+  }, 0);
 }
 
 function logoutCampsiteOnThisDevice() {
@@ -179,17 +199,6 @@ function addCampsiteLogoutButton() {
   document.body.appendChild(button);
 }
 
-/* tabs.js の既存 openTab を壊さず、公開タブだけ記憶する */
-if (typeof openTab === "function") {
-  const originalOpenTab = openTab;
-
-  openTab = function(tabId, button) {
-    const result = originalOpenTab(tabId, button);
-    rememberCampsiteTab(tabId);
-    return result;
-  };
-}
-
 document.addEventListener("DOMContentLoaded", () => {
   let accessRemembered = false;
 
@@ -203,13 +212,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("splashScreen")?.remove();
     addCampsiteLogoutButton();
 
-    if (!restoreRememberedCampsiteTab()) {
-      document.body.classList.add("opening-mode");
-
-      if (typeof showOpeningScreen === "function") {
-        showOpeningScreen();
-      }
-    }
+    resetCampsiteStartupView();
 
     return;
   }
