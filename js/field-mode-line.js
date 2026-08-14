@@ -16,6 +16,7 @@
   loadOnce('js/field-mode-circle-options.js?v=4', 'data-field-circle-options-loader');
   loadOnce('js/field-mode-session-30m.js?v=1', 'data-field-session-30m-loader');
   loadOnce('js/field-mode-map-first.js?v=1', 'data-field-map-first-loader');
+  loadOnce('js/field-mode-basemap-switch.js?v=1', 'data-field-basemap-switch-loader');
 
   function syncFinishLabel() {
     const button = document.getElementById('fieldModeSaveButton');
