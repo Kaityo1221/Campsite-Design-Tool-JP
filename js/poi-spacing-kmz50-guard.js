@@ -246,6 +246,14 @@
     }
   }
 
+  function countCirclePolygons(folder) {
+    if (!folder) return 0;
+
+    return Array.from(folder.getElementsByTagName("Placemark")).filter(placemark =>
+      Boolean(placemark.getElementsByTagName("Polygon")[0])
+    ).length;
+  }
+
   function ensure50mLayer(kmlText, options) {
     const parser = new DOMParser();
     const xml = parser.parseFromString(kmlText, "application/xml");
@@ -262,8 +270,9 @@
     renameReferenceFolders(xml);
 
     let folder50 = findCircleFolder(xml, 50);
+    const needs50Circles = !folder50 || countCirclePolygons(folder50) === 0;
 
-    if (!folder50) {
+    if (needs50Circles) {
       let centers = collectPointCenters(xml);
       if (centers.length === 0) {
         centers = collectCircleCenters(xml);
@@ -273,16 +282,19 @@
         throw new Error("50m円の中心座標を取得できませんでした");
       }
 
-      folder50 = createFolder(xml, documentNode, "50m円（目安）");
+      if (!folder50) {
+        folder50 = createFolder(xml, documentNode, "50m円（目安）");
+      }
+
       centers.forEach(point => {
         folder50.appendChild(createCirclePlacemark(xml, point, 50));
       });
-    } else {
-      const nameNode = Array.from(folder50.children || []).find(node =>
-        String(node.localName || node.tagName || "").toLowerCase() === "name"
-      );
-      if (nameNode) nameNode.textContent = "50m円（目安）";
     }
+
+    const nameNode50 = folder50 && Array.from(folder50.children || []).find(node =>
+      String(node.localName || node.tagName || "").toLowerCase() === "name"
+    );
+    if (nameNode50) nameNode50.textContent = "50m円（目安）";
 
     removeUnselectedReferenceFolders(
       xml,
