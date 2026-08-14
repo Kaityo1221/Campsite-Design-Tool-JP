@@ -5,6 +5,7 @@
    - 事前準備は初期状態で開く
    - 補助ツール / その他は初期状態で閉じる
    - オープニングは大きいカードから外し、タイトル付近の小リンクへ移動
+   - 事前準備の「使い方」は大きいマニュアル入口として最優先表示
 ====================================================== */
 
 (function () {
@@ -42,9 +43,7 @@
         color: #e2e8f0;
       }
 
-      .dashboard-fold > summary::-webkit-details-marker {
-        display: none;
-      }
+      .dashboard-fold > summary::-webkit-details-marker { display: none; }
 
       .dashboard-fold > summary::before {
         content: "";
@@ -58,9 +57,7 @@
         transition: opacity .18s ease;
       }
 
-      .dashboard-fold[open] > summary::before {
-        opacity: 1;
-      }
+      .dashboard-fold[open] > summary::before { opacity: 1; }
 
       .dashboard-fold-title {
         display: flex;
@@ -82,22 +79,9 @@
         font-size: 16px;
       }
 
-      .dashboard-fold-copy {
-        display: grid;
-        gap: 2px;
-      }
-
-      .dashboard-fold-copy strong {
-        font-size: 15px;
-        line-height: 1.2;
-        color: #f8fafc;
-      }
-
-      .dashboard-fold-copy small {
-        color: #71839c;
-        font-size: 9px;
-        font-weight: 800;
-      }
+      .dashboard-fold-copy { display: grid; gap: 2px; }
+      .dashboard-fold-copy strong { font-size: 15px; line-height: 1.2; color: #f8fafc; }
+      .dashboard-fold-copy small { color: #71839c; font-size: 9px; font-weight: 800; }
 
       .dashboard-fold-chevron {
         display: grid;
@@ -128,8 +112,52 @@
         padding-top: 14px;
       }
 
-      .dashboard-fold > .dashboard-section > .dashboard-section-title {
-        display: none;
+      .dashboard-fold > .dashboard-section > .dashboard-section-title { display: none; }
+
+      .dashboard-manual-feature {
+        position: relative;
+        grid-column: 1 / -1;
+        width: 100%;
+        min-height: 86px;
+        order: -10;
+        padding: 16px 18px !important;
+        border: 1px solid rgba(125,211,252,.78) !important;
+        border-radius: 16px !important;
+        background: linear-gradient(135deg, rgba(14,165,233,.18), rgba(79,70,229,.20)) !important;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.10), 0 10px 24px rgba(14,165,233,.15) !important;
+        text-align: left;
+      }
+
+      .dashboard-manual-feature::after {
+        content: "まずここから";
+        position: absolute;
+        top: 10px;
+        right: 12px;
+        padding: 4px 8px;
+        border-radius: 999px;
+        background: rgba(125,211,252,.16);
+        color: #bae6fd;
+        font-size: 9px;
+        font-weight: 900;
+        letter-spacing: .04em;
+      }
+
+      .dashboard-manual-feature .dashboard-icon {
+        width: 42px;
+        height: 42px;
+        flex: 0 0 auto;
+      }
+
+      .dashboard-manual-feature .dashboard-copy strong {
+        font-size: 17px;
+        color: #f8fafc;
+      }
+
+      .dashboard-manual-feature .dashboard-copy small {
+        margin-top: 4px;
+        font-size: 10px;
+        line-height: 1.45;
+        color: #bae6fd;
       }
 
       .dashboard-opening-mini {
@@ -151,18 +179,11 @@
         cursor: pointer;
         text-decoration: none;
         text-shadow: 0 0 10px rgba(255,255,255,.20);
-        box-shadow:
-          inset 0 1px 0 rgba(255,255,255,.13),
-          0 8px 22px rgba(37,99,235,.20),
-          0 0 18px rgba(125,211,252,.16);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.13), 0 8px 22px rgba(37,99,235,.20), 0 0 18px rgba(125,211,252,.16);
         backdrop-filter: blur(10px);
         -webkit-backdrop-filter: blur(10px);
         -webkit-tap-highlight-color: transparent;
-        transition:
-          transform .16s ease,
-          border-color .16s ease,
-          background .16s ease,
-          box-shadow .16s ease;
+        transition: transform .16s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease;
       }
 
       .dashboard-opening-mini:hover,
@@ -170,70 +191,55 @@
         color: #ffffff;
         border-color: rgba(186, 230, 253, 0.92);
         background: linear-gradient(135deg, rgba(37, 99, 235, 0.44), rgba(124, 58, 237, 0.40));
-        box-shadow:
-          inset 0 1px 0 rgba(255,255,255,.18),
-          0 10px 26px rgba(37,99,235,.26),
-          0 0 24px rgba(125,211,252,.28);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.18), 0 10px 26px rgba(37,99,235,.26), 0 0 24px rgba(125,211,252,.28);
       }
 
-      .dashboard-opening-mini:active {
-        transform: scale(.97);
-      }
-
-      .dashboard-opening-mini span {
-        color: #bae6fd;
-        font-size: 12px;
-        line-height: 1;
-        filter: drop-shadow(0 0 5px rgba(125,211,252,.55));
-      }
+      .dashboard-opening-mini:active { transform: scale(.97); }
+      .dashboard-opening-mini span { color: #bae6fd; font-size: 12px; line-height: 1; filter: drop-shadow(0 0 5px rgba(125,211,252,.55)); }
 
       @media (max-width: 680px) {
-        .dashboard-fold {
-          margin: 10px 0;
-          border-radius: 16px;
+        .dashboard-fold { margin: 10px 0; border-radius: 16px; }
+        .dashboard-fold > summary { min-height: 56px; padding: 11px 14px; }
+        .dashboard-fold > summary::before { left: 14px; right: 14px; }
+        .dashboard-fold-icon { width: 31px; height: 31px; border-radius: 10px; font-size: 14px; }
+        .dashboard-fold-copy strong { font-size: 14px; }
+        .dashboard-fold-copy small { font-size: 8px; }
+        .dashboard-fold-chevron { width: 27px; height: 27px; font-size: 16px; }
+        .dashboard-opening-mini { min-height: 38px; margin-top: 11px; padding: 8px 14px; font-size: 12px; }
+
+        .dashboard-manual-feature {
+          min-height: 82px;
+          padding: 14px 12px !important;
         }
 
-        .dashboard-fold > summary {
-          min-height: 56px;
-          padding: 11px 14px;
-        }
-
-        .dashboard-fold > summary::before {
-          left: 14px;
-          right: 14px;
-        }
-
-        .dashboard-fold-icon {
-          width: 31px;
-          height: 31px;
-          border-radius: 10px;
-          font-size: 14px;
-        }
-
-        .dashboard-fold-copy strong {
-          font-size: 14px;
-        }
-
-        .dashboard-fold-copy small {
+        .dashboard-manual-feature::after {
+          top: 8px;
+          right: 9px;
           font-size: 8px;
         }
 
-        .dashboard-fold-chevron {
-          width: 27px;
-          height: 27px;
-          font-size: 16px;
-        }
-
-        .dashboard-opening-mini {
-          min-height: 38px;
-          margin-top: 11px;
-          padding: 8px 14px;
-          font-size: 12px;
-        }
+        .dashboard-manual-feature .dashboard-copy strong { font-size: 16px; }
+        .dashboard-manual-feature .dashboard-copy small { max-width: 72%; font-size: 9px; }
       }
     `;
 
     document.head.appendChild(style);
+  }
+
+  function promoteManualEntry() {
+    const manualButton = document.querySelector(
+      ".dashboard-prep .dashboard-button[onclick*=\"openTab('howto'\"]"
+    );
+    if (!manualButton) return;
+
+    manualButton.classList.add("dashboard-manual-feature");
+    manualButton.setAttribute("aria-label", "マニュアルを見る");
+
+    const title = manualButton.querySelector(".dashboard-copy strong");
+    const subtitle = manualButton.querySelector(".dashboard-copy small");
+
+    if (title) title.textContent = "マニュアルを見る";
+    if (subtitle) subtitle.textContent = "キャンプサイト作成の流れと基本操作を最初に確認";
   }
 
   function foldSection(selector, options) {
@@ -285,11 +291,8 @@
     });
 
     const lead = hero.querySelector(".lead");
-    if (lead) {
-      lead.insertAdjacentElement("afterend", mini);
-    } else {
-      hero.appendChild(mini);
-    }
+    if (lead) lead.insertAdjacentElement("afterend", mini);
+    else hero.appendChild(mini);
 
     openingButton.remove();
   }
@@ -297,12 +300,13 @@
   function setup() {
     ensureStyles();
     moveOpeningShortcut();
+    promoteManualEntry();
 
     foldSection(".dashboard-prep", {
       key: "prep",
       icon: "🧭",
       title: "事前準備",
-      subtitle: "診断・使い方・導入・ガイド",
+      subtitle: "まずマニュアルを確認・導入・設計ガイド",
       open: true
     });
 
