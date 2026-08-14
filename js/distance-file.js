@@ -518,6 +518,28 @@ function getPlacemarkPoiName(pm) {
 
   return "無題";
 }
+function isLayerRetentionDummyPlacemark(pm) {
+  const point =
+    pm.getElementsByTagName("Point")[0];
+
+  const coord =
+    point?.getElementsByTagName("coordinates")[0]?.textContent;
+
+  if (!coord) {
+    return false;
+  }
+
+  const [lng, lat] =
+    coord.trim().split(",").map(Number);
+
+  return (
+    Number.isFinite(lat) &&
+    Number.isFinite(lng) &&
+    lat === 35 &&
+    lng === 139
+  );
+}
+
 function extractPointsByLayer(xml) {
   const result = {};
 
@@ -530,6 +552,10 @@ function extractPointsByLayer(xml) {
     const placemarks = Array.from(folder.getElementsByTagName("Placemark"));
 
     result[layerName] = placemarks.map(pm => {
+      if (isLayerRetentionDummyPlacemark(pm)) {
+        return null;
+      }
+
       const point = pm.getElementsByTagName("Point")[0];
       if (!point) return null;
 
