@@ -144,6 +144,9 @@
               { type: KMZ_MIME }
             );
 
+            const shouldOpenCompletionModal =
+              /_円差分更新\.kmz$/i.test(shareFile.name);
+
             let canShare = true;
 
             if (typeof navigator.canShare === "function") {
@@ -185,6 +188,13 @@
 
                     setTimeout(() => {
                       modal.style.display = "none";
+
+                      if (
+                        shouldOpenCompletionModal &&
+                        typeof window.openKmzCompleteModal === "function"
+                      ) {
+                        window.openKmzCompleteModal();
+                      }
                     }, 500);
                   } catch (error) {
                     if (status) {
