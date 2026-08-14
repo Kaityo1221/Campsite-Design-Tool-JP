@@ -1,15 +1,16 @@
 /* ======================================================
    POI spacing KMZ preserve / layer order
    - Circle layer order: 50m -> 40m -> 30m
-   - If a completed KML/KMZ already contains 30m/40m circles,
-     preserve the original file and add only the 50m circle layer.
+   - Completed KML/KMZ keeps existing circle layers untouched
+   - 50m is always added only when missing
+   - Optional 40m / 30m are added only when selected and missing
 ====================================================== */
 
 (() => {
   "use strict";
 
   const KML_NS = "http://www.opengis.net/kml/2.2";
-  const WRAPPED = "__poiSpacingPreserveWrapped";
+  const WRAPPED = "__poiSpacingPreserveWrappedV2";
 
   function localName(node) {
     return String(node?.localName || node?.tagName || "").toLowerCase();
@@ -22,14 +23,6 @@
       localName(node) === target
     );
     return child?.textContent?.trim() || "";
-  }
-
-  function circleMetersFromFolder(folder) {
-    if (!folder || localName(folder) !== "folder") return null;
-    const name = directChildText(folder, "name");
-    if (!name.includes("円")) return null;
-    const match = name.match(/(?:^|[^0-9])(50|40|30)m/i);
-    return match ? Number(match[1]) : null;
   }
 
   function parseXml(kmlText) {
@@ -49,42 +42,26 @@
     return documentNode;
   }
 
-  function reorderCircleFolders(xml) {
-    const documentNode = getDocumentNode(xml);
-    const children = Array.from(documentNode.children || []);
-
-    const circleFolders = children
-      .map((node, index) => ({
-        node,
-        index,
-        meters: circleMetersFromFolder(node)
-      }))
-      .filter(item => item.meters !== null);
-
-    if (circleFolders.length <= 1) return;
-
-    const firstIndex = Math.min(...circleFolders.map(item => item.index));
-    const sorted = circleFolders
-      .slice()
-      .sort((a, b) => {
-        if (a.meters !== b.meters) return b.meters - a.meters;
-        return a.index - b.index;
-      });
-
-    circleFolders.forEach(item => item.node.remove());
-
-    const remainingChildren = Array.from(documentNode.children || []);
-    const insertionRef = remainingChildren[firstIndex] || null;
-
-    sorted.forEach(item => {
-      documentNode.insertBefore(item.node, insertionRef);
-    });
+  function circleMetersFromFolder(folder) {
+    if (!folder || localName(folder) !== "folder") return null;
+    const name = directChildText(folder, "name");
+    if (!name.includes("円")) return null;
+    const match = name.match(/(?:^|[^0-9])(50|40|30)m/i);
+    return match ? Number(match[1]) : null;
   }
 
-  function orderKmlText(kmlText) {
-    const xml = parseXml(kmlText);
-    reorderCircleFolders(xml);
-    return new XMLSerializer().serializeToString(xml);
+  function findCircleFolders(xml, meters) {
+    return Array.from(xml.getElementsByTagName("Folder")).filter(folder =>
+      circleMetersFromFolder(folder) === meters
+    );
+  }
+
+  function hasCircleFolder(xml, meters) {
+    return findCircleFolders(xml, meters).length > 0;
+  }
+
+  function hasAnyKnownCircleFolder(xml) {
+    return [50, 40, 30].some(meters => hasCircleFolder(xml, meters));
   }
 
   function getParentFolderName(element) {
@@ -104,6 +81,14 @@
     const lat = Number(parts[1]);
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
     return { lat, lng };
+  }
+
+  function addUniqueCenter(list, seen, center, name) {
+    if (!center) return;
+    const key = `${center.lat.toFixed(7)},${center.lng.toFixed(7)}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    list.push({ ...center, name: name || "POI" });
   }
 
   function collectPointCenters(xml) {
@@ -136,20 +121,76 @@
       const firstCoordinate = String(coordinatesNode?.textContent || "")
         .trim()
         .split(/\s+/)[0];
-      const center = parseCoordinate(firstCoordinate);
-      if (!center) return;
 
-      const key = `${center.lat.toFixed(7)},${center.lng.toFixed(7)}`;
-      if (seen.has(key)) return;
-      seen.add(key);
-
-      centers.push({
-        ...center,
-        name: name || "POI"
-      });
+      addUniqueCenter(centers, seen, parseCoordinate(firstCoordinate), name);
     });
 
     return centers;
+  }
+
+  function polygonCenter(placemark) {
+    const polygon = Array.from(placemark.children || []).find(node =>
+      localName(node) === "polygon"
+    ) || placemark.getElementsByTagName("Polygon")[0];
+
+    if (!polygon) return null;
+
+    const coordinatesNode = polygon.getElementsByTagName("coordinates")[0];
+    const coordinateText = String(coordinatesNode?.textContent || "").trim();
+    if (!coordinateText) return null;
+
+    const points = coordinateText
+      .split(/\s+/)
+      .map(parseCoordinate)
+      .filter(Boolean);
+
+    if (points.length < 3) return null;
+
+    let minLat = Infinity;
+    let maxLat = -Infinity;
+    let minLng = Infinity;
+    let maxLng = -Infinity;
+
+    points.forEach(point => {
+      minLat = Math.min(minLat, point.lat);
+      maxLat = Math.max(maxLat, point.lat);
+      minLng = Math.min(minLng, point.lng);
+      maxLng = Math.max(maxLng, point.lng);
+    });
+
+    if (![minLat, maxLat, minLng, maxLng].every(Number.isFinite)) {
+      return null;
+    }
+
+    return {
+      lat: (minLat + maxLat) / 2,
+      lng: (minLng + maxLng) / 2
+    };
+  }
+
+  function collectExistingCircleCenters(xml) {
+    const centers = [];
+    const seen = new Set();
+
+    for (const meters of [40, 30, 50]) {
+      for (const folder of findCircleFolders(xml, meters)) {
+        Array.from(folder.getElementsByTagName("Placemark")).forEach(placemark => {
+          const rawName = directChildText(placemark, "name") || "POI";
+          const cleanName = rawName.replace(/_(50|40|30)m円.*$/i, "");
+          addUniqueCenter(centers, seen, polygonCenter(placemark), cleanName);
+        });
+      }
+      if (centers.length > 0) break;
+    }
+
+    return centers;
+  }
+
+  function getCenters(xml) {
+    const pointCenters = collectPointCenters(xml);
+    return pointCenters.length > 0
+      ? pointCenters
+      : collectExistingCircleCenters(xml);
   }
 
   function createCircleCoordinates(lat, lng, radiusMeters, steps = 72) {
@@ -186,68 +227,115 @@
     return coordinates.join(" ");
   }
 
-  function create50mFolder(xml, documentNode, centers) {
+  function createCirclePlacemark(xml, point, radius) {
+    const placemark = xml.createElementNS(KML_NS, "Placemark");
+
+    const name = xml.createElementNS(KML_NS, "name");
+    name.textContent = point.name ? `${point.name}_${radius}m円` : "";
+    placemark.appendChild(name);
+
+    const polygon = xml.createElementNS(KML_NS, "Polygon");
+    const outer = xml.createElementNS(KML_NS, "outerBoundaryIs");
+    const ring = xml.createElementNS(KML_NS, "LinearRing");
+    const coordinates = xml.createElementNS(KML_NS, "coordinates");
+    coordinates.textContent = createCircleCoordinates(point.lat, point.lng, radius);
+
+    ring.appendChild(coordinates);
+    outer.appendChild(ring);
+    polygon.appendChild(outer);
+    placemark.appendChild(polygon);
+
+    return placemark;
+  }
+
+  function circleFolderLabel(meters) {
+    if (meters === 50) return "50m円（目安）";
+    return `${meters}m円（参考距離）`;
+  }
+
+  function createCircleFolder(xml, documentNode, meters, centers) {
     const folder = xml.createElementNS(KML_NS, "Folder");
     const folderName = xml.createElementNS(KML_NS, "name");
-    folderName.textContent = "50m円（目安）";
+    folderName.textContent = circleFolderLabel(meters);
     folder.appendChild(folderName);
 
     centers.forEach(point => {
-      const placemark = xml.createElementNS(KML_NS, "Placemark");
-      const name = xml.createElementNS(KML_NS, "name");
-      name.textContent = point.name ? `${point.name}_50m円` : "";
-      placemark.appendChild(name);
-
-      const polygon = xml.createElementNS(KML_NS, "Polygon");
-      const outer = xml.createElementNS(KML_NS, "outerBoundaryIs");
-      const ring = xml.createElementNS(KML_NS, "LinearRing");
-      const coordinates = xml.createElementNS(KML_NS, "coordinates");
-      coordinates.textContent = createCircleCoordinates(point.lat, point.lng, 50);
-
-      ring.appendChild(coordinates);
-      outer.appendChild(ring);
-      polygon.appendChild(outer);
-      placemark.appendChild(polygon);
-      folder.appendChild(placemark);
+      folder.appendChild(createCirclePlacemark(xml, point, meters));
     });
 
-    const firstReferenceFolder = Array.from(documentNode.children || []).find(node => {
-      const meters = circleMetersFromFolder(node);
-      return meters === 40 || meters === 30;
-    }) || null;
-
-    documentNode.insertBefore(folder, firstReferenceFolder);
+    documentNode.appendChild(folder);
     return folder;
   }
 
-  function hasCircleFolder(xml, meters) {
-    return Array.from(xml.getElementsByTagName("Folder")).some(folder =>
-      circleMetersFromFolder(folder) === meters
-    );
-  }
-
-  function hasExistingReferenceCircles(kmlText) {
-    const xml = parseXml(kmlText);
-    return hasCircleFolder(xml, 40) || hasCircleFolder(xml, 30);
-  }
-
-  function add50mOnlyToCompletedKml(kmlText) {
-    const xml = parseXml(kmlText);
-    const documentNode = getDocumentNode(xml);
-
-    if (!hasCircleFolder(xml, 50)) {
-      const centers = collectPointCenters(xml);
-      if (centers.length === 0) {
-        throw new Error("50m円を作成できるPOI座標が見つかりませんでした");
-      }
-      create50mFolder(xml, documentNode, centers);
+  function ensureRadius(xml, meters, centers) {
+    if (hasCircleFolder(xml, meters)) {
+      return "kept";
     }
 
-    // Existing 30m/40m layers and every non-circle layer stay untouched.
-    // Only the circle-layer display order is normalized.
+    createCircleFolder(xml, getDocumentNode(xml), meters, centers);
+    return "added";
+  }
+
+  function reorderCircleFolders(xml) {
+    const documentNode = getDocumentNode(xml);
+    const children = Array.from(documentNode.children || []);
+
+    const circleFolders = children
+      .map((node, index) => ({
+        node,
+        index,
+        meters: circleMetersFromFolder(node)
+      }))
+      .filter(item => item.meters !== null);
+
+    if (circleFolders.length <= 1) return;
+
+    const firstIndex = Math.min(...circleFolders.map(item => item.index));
+    const sorted = circleFolders
+      .slice()
+      .sort((a, b) => {
+        if (a.meters !== b.meters) return b.meters - a.meters;
+        return a.index - b.index;
+      });
+
+    circleFolders.forEach(item => item.node.remove());
+
+    const remaining = Array.from(documentNode.children || []);
+    const insertionRef = remaining[firstIndex] || null;
+
+    sorted.forEach(item => {
+      documentNode.insertBefore(item.node, insertionRef);
+    });
+  }
+
+  function patchCompletedKml(kmlText, options) {
+    const xml = parseXml(kmlText);
+    const centers = getCenters(xml);
+
+    if (centers.length === 0) {
+      throw new Error("円を作成できるPOI座標が見つかりませんでした");
+    }
+
+    const result = {
+      50: ensureRadius(xml, 50, centers),
+      40: hasCircleFolder(xml, 40) ? "kept" : "none",
+      30: hasCircleFolder(xml, 30) ? "kept" : "none"
+    };
+
+    if (options.add40 && result[40] === "none") {
+      result[40] = ensureRadius(xml, 40, centers);
+    }
+
+    if (options.add30 && result[30] === "none") {
+      result[30] = ensureRadius(xml, 30, centers);
+    }
+
     reorderCircleFolders(xml);
 
-    return new XMLSerializer().serializeToString(xml);
+    return {
+      kmlText: new XMLSerializer().serializeToString(xml),
+      result
+    };
   }
 
   async function readKmlSource(file) {
@@ -267,8 +355,12 @@
         throw new Error("KMZ内にKMLが見つかりませんでした");
       }
 
-      const kmlText = await zip.files[kmlName].async("text");
-      return { type: "zip", zip, kmlName, kmlText };
+      return {
+        type: "zip",
+        zip,
+        kmlName,
+        kmlText: await zip.files[kmlName].async("text")
+      };
     }
 
     if (lowerName.endsWith(".kml")) {
@@ -287,13 +379,14 @@
     const base = String(fileName || "completed")
       .replace(/\.kmz\.zip$/i, "")
       .replace(/\.(kmz|zip|kml)$/i, "");
-    return `${base}_50m追加.kmz`;
+    return `${base}_円更新.kmz`;
   }
 
-  async function downloadCompletedKmzWith50m(file, source, patchedKml) {
+  async function downloadPatchedKmz(file, source, patchedKml) {
     let zip;
 
     if (source.type === "zip") {
+      // Keep every original KMZ entry. Replace only the KML text.
       zip = source.zip;
       zip.file(source.kmlName, patchedKml);
     } else {
@@ -310,19 +403,23 @@
     document.body.appendChild(a);
     a.click();
     a.remove();
-
     window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
   }
 
-  function playSuccessSound() {
-    const success = document.getElementById("successSound");
-    if (!success) return;
-    success.currentTime = 0;
-    success.volume = 0.12;
-    success.play().catch(() => {});
+  function selectedOptionalRadii(groupName) {
+    return {
+      add40: Boolean(document.querySelector(`input[name="${groupName}"][value="40"]`)?.checked),
+      add30: Boolean(document.querySelector(`input[name="${groupName}"][value="30"]`)?.checked)
+    };
   }
 
-  async function tryCompletedKmzAdd50mOnly(inputId, statusId) {
+  function resultText(meters, state) {
+    if (state === "added") return `${meters}m円を追加`;
+    if (state === "kept") return `既存${meters}m円を保持`;
+    return `${meters}m円なし`;
+  }
+
+  async function tryCompletedKmz(inputId, statusId, groupName) {
     const input = document.getElementById(inputId);
     const files = Array.from(input?.files || []);
 
@@ -332,26 +429,36 @@
     const source = await readKmlSource(file);
     if (!source) return false;
 
-    if (!hasExistingReferenceCircles(source.kmlText)) {
+    const sourceXml = parseXml(source.kmlText);
+    if (!hasAnyKnownCircleFolder(sourceXml)) {
       return false;
     }
 
     if (typeof window.showLoading === "function") {
-      window.showLoading("完成KMZに50m円を追加中…");
+      window.showLoading("既存円を確認して差分更新中…");
     }
 
     try {
-      const patchedKml = add50mOnlyToCompletedKml(source.kmlText);
-      await downloadCompletedKmzWith50m(file, source, patchedKml);
+      const options = selectedOptionalRadii(groupName);
+      const patched = patchCompletedKml(source.kmlText, options);
+      await downloadPatchedKmz(file, source, patched.kmlText);
 
       const status = document.getElementById(statusId);
       if (status) {
         status.innerHTML =
-          "既存レイヤー・既存円を維持しました。<br>" +
-          "✔ 50m円だけを追加したKMZを生成しました";
+          "既存レイヤー・既存円はそのまま維持しました。<br>" +
+          `✔ ${resultText(50, patched.result[50])}<br>` +
+          `✔ ${resultText(40, patched.result[40])}<br>` +
+          `✔ ${resultText(30, patched.result[30])}`;
       }
 
-      playSuccessSound();
+      const success = document.getElementById("successSound");
+      if (success) {
+        success.currentTime = 0;
+        success.volume = 0.12;
+        success.play().catch(() => {});
+      }
+
       return true;
     } finally {
       if (typeof window.hideLoading === "function") {
@@ -360,9 +467,16 @@
     }
   }
 
+  function orderGeneratedKml(kmlText) {
+    const xml = parseXml(kmlText);
+    reorderCircleFolders(xml);
+    return new XMLSerializer().serializeToString(xml);
+  }
+
   function installCircleOrderGuard() {
     const Zip = window.JSZip;
     const prototype = Zip?.prototype;
+
     if (!prototype || typeof prototype.generateAsync !== "function") {
       return () => {};
     }
@@ -378,7 +492,7 @@
         const entry = this.file(kmlName);
         if (!entry) continue;
         const kmlText = await entry.async("string");
-        this.file(kmlName, orderKmlText(kmlText));
+        this.file(kmlName, orderGeneratedKml(kmlText));
       }
 
       return originalGenerateAsync.apply(this, args);
@@ -400,27 +514,27 @@
     }
   }
 
-  function showCompletedPatchError(error) {
-    console.error("完成KMZへの50m円追加に失敗しました。", error);
+  function showPatchError(error) {
+    console.error("完成KMZの円差分更新に失敗しました。", error);
     if (typeof window.hideLoading === "function") {
       window.hideLoading();
     }
     alert(
-      "完成KMZへの50m円追加中にエラーが発生しました。\n\n" +
+      "完成KMZの円更新中にエラーが発生しました。\n\n" +
       (error?.message || String(error))
     );
   }
 
-  function wrapMainGenerator() {
-    const original = window.generateKMZ;
+  function wrapGenerator(name, inputId, statusId, groupName) {
+    const original = window[name];
     if (typeof original !== "function" || original[WRAPPED]) return;
 
     const wrapped = async function (...args) {
       try {
-        const handled = await tryCompletedKmzAdd50mOnly("fileInput", "status");
+        const handled = await tryCompletedKmz(inputId, statusId, groupName);
         if (handled) return;
       } catch (error) {
-        showCompletedPatchError(error);
+        showPatchError(error);
         return;
       }
 
@@ -428,32 +542,14 @@
     };
 
     Object.defineProperty(wrapped, WRAPPED, { value: true });
-    window.generateKMZ = wrapped;
+    window[name] = wrapped;
   }
 
-  function wrapCircleOnlyGenerator() {
-    const original = window.generateCircleOnlyKMZ;
-    if (typeof original !== "function" || original[WRAPPED]) return;
-
-    const wrapped = async function (...args) {
-      try {
-        const handled = await tryCompletedKmzAdd50mOnly(
-          "circleOnlyFileInput",
-          "circleOnlyStatus"
-        );
-        if (handled) return;
-      } catch (error) {
-        showCompletedPatchError(error);
-        return;
-      }
-
-      return runRegularWithOrder(original, this, args);
-    };
-
-    Object.defineProperty(wrapped, WRAPPED, { value: true });
-    window.generateCircleOnlyKMZ = wrapped;
-  }
-
-  wrapMainGenerator();
-  wrapCircleOnlyGenerator();
+  wrapGenerator("generateKMZ", "fileInput", "status", "radius");
+  wrapGenerator(
+    "generateCircleOnlyKMZ",
+    "circleOnlyFileInput",
+    "circleOnlyStatus",
+    "circleOnlyRadius"
+  );
 })();
