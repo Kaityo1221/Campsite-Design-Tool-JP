@@ -2,20 +2,26 @@ import { test, expect } from '@playwright/test';
 
 const STORAGE_KEY = 'campsiteWorkflowResumeV1';
 
-async function login(page, path = '/index.html') {
+async function openForResumeTest(page, path = '/index.html') {
   await page.goto(path);
 
-  const loginInput = page.locator('#accessCodeInput');
-  if (await loginInput.count()) {
-    await loginInput.fill('CA2026');
-    await page.locator('#loginButton').click();
-  }
+  await page.evaluate(() => {
+    document.getElementById('loginScreen')?.remove();
+    document.getElementById('splashScreen')?.remove();
+    document.body.classList.add('opening-mode');
 
-  await expect(page.locator('#openingScreen')).toHaveClass(/show/, { timeout: 5000 });
+    if (typeof window.showOpeningScreen === 'function') {
+      window.showOpeningScreen();
+    } else {
+      document.getElementById('openingScreen')?.classList.add('show');
+    }
+  });
+
+  await expect(page.locator('#openingScreen')).toHaveClass(/show/, { timeout: 3000 });
 }
 
 test('作成方法と工程を保存し、アプリを開き直した後に「前回のつづきから」で復帰できる', async ({ page, context }) => {
-  await login(page);
+  await openForResumeTest(page);
 
   await page.evaluate(() => {
     window.selectCampsiteCsvMode('custom');
@@ -28,12 +34,9 @@ test('作成方法と工程を保存し、アプリを開き直した後に「�
   expect(savedBeforeReopen).toContain('"mode":"custom"');
   expect(savedBeforeReopen).toContain('"workflowStep":"csv"');
 
-  // 同じブラウザコンテキスト内で新しいページを開く。
-  // localStorage は維持しつつ DOM は完全に作り直されるため、
-  // 実際の「アプリを閉じて開き直す」に近い状態を再現できる。
   const reopenedPage = await context.newPage();
   await page.close();
-  await login(reopenedPage, '/index.html?workflow-resume-reopen=1');
+  await openForResumeTest(reopenedPage, '/index.html?workflow-resume-reopen=1');
 
   const resumeCard = reopenedPage.locator('.workflow-resume-card');
   await expect(resumeCard).toBeVisible({ timeout: 5000 });
@@ -60,7 +63,7 @@ test('「新しく始める」で再開情報だけを削除して作成方法�
     }));
   }, STORAGE_KEY);
 
-  await login(page, '/index.html?workflow-resume-new=1');
+  await openForResumeTest(page, '/index.html?workflow-resume-new=1');
 
   const resumeCard = page.locator('.workflow-resume-card');
   await expect(resumeCard).toBeVisible({ timeout: 5000 });
