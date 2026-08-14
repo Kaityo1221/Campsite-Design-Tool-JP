@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "check:field-mode": "node scripts/check-field-mode.mjs && node scripts/check-field-layer-step4.mjs && node scripts/check-field-complete-step5.mjs",
+    "check:spacing": "node scripts/check-poi-spacing-consistency.mjs",
+    "check:field-mode": "npm run check:spacing && node scripts/check-field-mode.mjs && node scripts/check-field-layer-step4.mjs && node scripts/check-field-complete-step5.mjs",
     "check:field-prep": "node scripts/check-field-prep.mjs && node scripts/check-field-prep-step2.mjs && node scripts/check-field-prep-step3.mjs",
     "test:field-mode": "playwright test tests/field-mode*.spec.mjs",
     "test:field-prep": "playwright test tests/field-prep*.spec.mjs",

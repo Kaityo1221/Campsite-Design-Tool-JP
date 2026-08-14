@@ -11,7 +11,7 @@ for (const token of [
   'id="fieldPrepMap"',
   'id="fieldPrepSaveKmlButton"',
   'js/field-prep-session.js?v=1',
-  'js/field-prep-map.js?v=2'
+  'js/field-prep-map.js?v=3'
 ]) {
   if (!html.includes(token)) throw new Error(`field-prep.html missing token: ${token}`);
 }
@@ -27,8 +27,9 @@ for (const token of ['campsite-field-prep', 'window.FieldPrepSession']) {
 for (const token of [
   'pointInPolygon',
   "folder('活動範囲')",
-  "folder('40m円（基本距離）'",
-  "folder('30m円（調整用）')",
+  'spacing.targetCircleFolder',
+  'spacing.referenceCircleFolders[40]',
+  'spacing.referenceCircleFolders[30]',
   'buildFieldKml',
   'surveyPolygon'
 ]) {

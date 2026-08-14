@@ -8,14 +8,15 @@ test('完成KMZの正式レイヤー契約を固定する', async () => {
     "pokestop:'追加希望ポケスト'",
     "gym:'追加希望ジム'",
     "power_spot:'追加希望パワスポ'",
-    "ensureTargetFolder(doc,documentNode,'30m円（調整用）')",
-    "ensureTargetFolder(doc,documentNode,'40m円（基本距離）')"
+    "SPACING_POLICY.targetCircleFolder",
+    "SPACING_POLICY.referenceCircleFolders[40]",
+    "SPACING_POLICY.referenceCircleFolders[30]"
   ]) {
     expect(exportSource, `正式レイヤー契約が欠けています: ${token}`).toContain(token);
   }
 
   const appendPois = exportSource.indexOf('appendNewPois(doc,documentNode,newRecords,photoPaths)');
-  const appendCircles = exportSource.indexOf('appendGeneratedCirclesToExistingLayers(doc,documentNode,newRecords)');
+  const appendCircles = exportSource.indexOf('appendGeneratedCirclesToExistingLayers(doc,documentNode,allRecords,newRecords)');
   expect(appendPois).toBeGreaterThan(-1);
   expect(appendCircles).toBeGreaterThan(appendPois);
 });

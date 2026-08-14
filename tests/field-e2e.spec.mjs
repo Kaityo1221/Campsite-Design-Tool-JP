@@ -140,6 +140,8 @@ test('調査ファイルから調査範囲・現地作業・完成KMZまで一�
   await addNewPoi(page, 'ポケストップ');
 
   await expect(page.locator('#fieldPoi30mToggle')).toBeVisible();
+  await page.locator('#fieldPoi40mToggle').click();
+  await expect(page.locator('#fieldPoi40mToggle')).toContainText('追加する');
   await page.locator('#fieldPoi30mToggle').click();
   await expect(page.locator('#fieldPoi30mToggle')).toContainText('追加する');
 
@@ -161,18 +163,19 @@ test('調査ファイルから調査範囲・現地作業・完成KMZまで一�
   expect(folderPointNames(kml, '追加希望ジム')).toContain('ジム 1');
   expect(folderPointNames(kml, '追加希望パワスポ')).toContain('パワースポット 1');
 
-  const circles40 = folderPlacemarkNames(kml, '40m円（基本距離）');
-  expect(circles40).toEqual(expect.arrayContaining([
-    '公園入口_40m円',
-    '中央広場_40m円',
-    '北側広場_40m円',
-    'ポケストップ 1_40m円',
-    'ジム 1_40m円',
-    'パワースポット 1_40m円'
+  const circles50 = folderPlacemarkNames(kml, '50m円（目安）');
+  expect(circles50).toEqual(expect.arrayContaining([
+    '公園入口_50m円',
+    '中央広場_50m円',
+    '北側広場_50m円',
+    'ポケストップ 1_50m円',
+    'ジム 1_50m円',
+    'パワースポット 1_50m円'
   ]));
-  expect(circles40).toHaveLength(6);
+  expect(circles50).toHaveLength(6);
 
-  expect(folderPlacemarkNames(kml, '30m円（調整用）')).toEqual(['ポケストップ 1_30m円']);
+  expect(folderPlacemarkNames(kml, '40m円（参考距離）')).toEqual(['ポケストップ 1_40m円']);
+  expect(folderPlacemarkNames(kml, '30m円（参考距離）')).toEqual(['ポケストップ 1_30m円']);
   expect(kml).toContain('<name>活動範囲 1</name>');
 
   expectLayerOrder(kml, [
@@ -182,8 +185,9 @@ test('調査ファイルから調査範囲・現地作業・完成KMZまで一�
     '追加希望ポケスト',
     '追加希望ジム',
     '追加希望パワスポ',
-    '40m円（基本距離）',
-    '30m円（調整用）'
+    '50m円（目安）',
+    '40m円（参考距離）',
+    '30m円（参考距離）'
   ]);
 
   for (const forbiddenLayer of [
@@ -191,6 +195,7 @@ test('調査ファイルから調査範囲・現地作業・完成KMZまで一�
     '追加希望POI',
     '現地モード_30m円',
     '現地モード_40m円',
+    '現地モード_50m円',
     '現地モード_距離円'
   ]) {
     expect(kml).not.toContain(`<name>${forbiddenLayer}</name>`);
