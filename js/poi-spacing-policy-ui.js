@@ -109,10 +109,11 @@
     document.head.appendChild(style);
   }
 
-  function makeLabel(input, text, fixed = false) {
-    const label = input.closest("label") || document.createElement("label");
+  function setLabel(input, text, fixed = false) {
+    let label = input.closest("label");
 
-    if (!input.closest("label")) {
+    if (!label) {
+      label = document.createElement("label");
       label.appendChild(input);
     }
 
@@ -120,6 +121,8 @@
 
     if (fixed) {
       label.dataset.poiSpacingFixed50 = "true";
+    } else {
+      delete label.dataset.poiSpacingFixed50;
     }
 
     return label;
@@ -133,17 +136,15 @@
       input.type = "checkbox";
       input.name = "radius";
       input.value = "50";
-      input.checked = true;
-      input.disabled = true;
-
-      const label = makeLabel(input, "50m円（必ず生成）", true);
+      const label = setLabel(input, "50m円（必ず生成）", true);
       checks.prepend(label);
     } else {
-      input.checked = true;
-      input.disabled = true;
-      const label = makeLabel(input, "50m円（必ず生成）", true);
+      const label = setLabel(input, "50m円（必ず生成）", true);
       if (!label.parentElement) checks.prepend(label);
     }
+
+    input.checked = true;
+    input.disabled = true;
   }
 
   function normalizeOptionalInput(checks, meters) {
@@ -153,7 +154,7 @@
     input.checked = false;
     input.disabled = false;
 
-    const label = makeLabel(input, `${meters}m円（参考距離・任意）`);
+    const label = setLabel(input, `${meters}m円（参考距離・任意）`);
     if (!label.parentElement) checks.appendChild(label);
   }
 
@@ -162,8 +163,9 @@
     const step = anyRadius?.closest(".step");
     const checks = step?.querySelector(".checks");
 
-    if (!step || !checks) return;
+    if (!step || !checks || step.dataset.poiSpacingUiReady === "true") return;
 
+    step.dataset.poiSpacingUiReady = "true";
     step.classList.add("poi-spacing-radius-step");
 
     const lead = step.querySelector(":scope > p:first-of-type");
@@ -193,13 +195,4 @@
   } else {
     setup();
   }
-
-  const observer = new MutationObserver(() => {
-    setupMainRadiusUi();
-  });
-
-  observer.observe(document.documentElement, {
-    childList: true,
-    subtree: true
-  });
 })();
