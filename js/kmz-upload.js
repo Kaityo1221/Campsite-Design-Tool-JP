@@ -225,6 +225,7 @@ Promise.all([
 ])
   .then(() => import("./poi-spacing-kmz50-guard.js?v=2"))
   .then(() => import("./poi-spacing-kmz-preserve.js?v=2"))
+  .then(() => import("./poi-spacing-kmz-diff.js?v=1"))
   .catch(error => {
     console.warn("POI距離ポリシーの読み込みに失敗しました。", error);
   });
