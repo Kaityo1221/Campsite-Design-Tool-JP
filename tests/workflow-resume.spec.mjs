@@ -2,74 +2,50 @@ import { test, expect } from '@playwright/test';
 
 const STORAGE_KEY = 'campsiteWorkflowResumeV1';
 
-async function openForResumeTest(page, path = '/index.html') {
-  await page.goto(path);
-
-  await page.evaluate(() => {
-    document.getElementById('loginScreen')?.remove();
-    document.getElementById('splashScreen')?.remove();
-    document.body.classList.add('opening-mode');
-
-    if (typeof window.showOpeningScreen === 'function') {
-      window.showOpeningScreen();
-    } else {
-      document.getElementById('openingScreen')?.classList.add('show');
-    }
-  });
-
-  await expect(page.locator('#openingScreen')).toHaveClass(/show/, { timeout: 3000 });
-}
-
-test('作成方法と工程を保存し、アプリを開き直した後に「前回のつづきから」で復帰できる', async ({ page, context }) => {
-  await openForResumeTest(page);
-
-  await page.evaluate(() => {
-    window.selectCampsiteCsvMode('custom');
-  });
-
-  await expect(page.locator('#csvModeSummaryText')).toContainText('自作CSV');
-  await expect(page.locator('[data-workflow-step="csv"]')).toHaveClass(/active/);
-
-  const savedBeforeReopen = await page.evaluate(key => localStorage.getItem(key), STORAGE_KEY);
-  expect(savedBeforeReopen).toContain('"mode":"custom"');
-  expect(savedBeforeReopen).toContain('"workflowStep":"csv"');
-
-  const reopenedPage = await context.newPage();
-  await page.close();
-  await openForResumeTest(reopenedPage, '/index.html?workflow-resume-reopen=1');
-
-  const resumeCard = reopenedPage.locator('.workflow-resume-card');
-  await expect(resumeCard).toBeVisible({ timeout: 5000 });
-  await expect(resumeCard).toContainText('前回のつづき、覚えています。');
-  await expect(resumeCard).toContainText('自作CSV');
-
-  await resumeCard.locator('.workflow-resume-continue').click();
-
-  await expect(reopenedPage.locator('#tool')).toHaveClass(/active/, { timeout: 3000 });
-  await expect(reopenedPage.locator('#csvModeSummaryText')).toContainText('自作CSV');
-  await expect(reopenedPage.locator('[data-workflow-step="csv"]')).toHaveClass(/active/);
-});
-
-test('「新しく始める」で再開情報だけを削除して作成方法選択を開く', async ({ page }) => {
-  await page.goto('/index.html');
-
-  await page.evaluate(key => {
+test('旧つづきデータが残っていてもカードを表示せず保存状態を削除する', async ({ page }) => {
+  await page.addInitScript(key => {
     localStorage.setItem(key, JSON.stringify({
       version: 1,
-      mode: 'extracted',
+      mode: 'custom',
       workflowStep: 'csv',
       lastTab: 'tool',
       updatedAt: Date.now()
     }));
   }, STORAGE_KEY);
 
-  await openForResumeTest(page, '/index.html?workflow-resume-new=1');
+  await page.goto('/index.html?workflow-resume-disabled=1');
 
-  const resumeCard = page.locator('.workflow-resume-card');
-  await expect(resumeCard).toBeVisible({ timeout: 5000 });
-  await resumeCard.locator('.workflow-resume-new').click();
+  await expect(page.locator('.workflow-resume-card')).toHaveCount(0);
 
-  await expect(page.locator('#campsiteCsvModal')).toBeVisible();
+  await expect.poll(async () => {
+    return page.evaluate(key => localStorage.getItem(key), STORAGE_KEY);
+  }).toBeNull();
+});
+
+test('旧workflow-resume.jsが読み込まれてもカードと保存状態を掃除する', async ({ page }) => {
+  await page.goto('/index.html?workflow-resume-legacy-cleanup=1');
+
+  await page.evaluate(key => {
+    localStorage.setItem(key, JSON.stringify({
+      version: 1,
+      mode: 'extracted',
+      workflowStep: 'distance',
+      lastTab: 'distance',
+      updatedAt: Date.now()
+    }));
+
+    const card = document.createElement('div');
+    card.className = 'workflow-resume-card';
+    card.textContent = '前回のつづき';
+    document.body.appendChild(card);
+
+    const script = document.createElement('script');
+    script.src = '/js/workflow-resume.js?legacy-cleanup-test=1';
+    document.head.appendChild(script);
+  }, STORAGE_KEY);
+
+  await expect(page.locator('.workflow-resume-card')).toHaveCount(0);
+
   const saved = await page.evaluate(key => localStorage.getItem(key), STORAGE_KEY);
   expect(saved).toBeNull();
 });
