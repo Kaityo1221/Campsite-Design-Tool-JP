@@ -2,14 +2,14 @@ import { test, expect } from '@playwright/test';
 
 const STORAGE_KEY = 'campsiteWorkflowResumeV1';
 
-async function login(page) {
-  await page.goto('/index.html');
+async function login(page, path = '/index.html') {
+  await page.goto(path);
   await page.locator('#accessCodeInput').fill('CA2026');
   await page.locator('#loginButton').click();
   await expect(page.locator('#openingScreen')).toHaveClass(/show/, { timeout: 5000 });
 }
 
-test('作成方法と工程を保存し、再読込後に「前回のつづきから」で復帰できる', async ({ page }) => {
+test('作成方法と工程を保存し、アプリを開き直した後に「前回のつづきから」で復帰できる', async ({ page }) => {
   await login(page);
 
   await page.evaluate(() => {
@@ -19,13 +19,13 @@ test('作成方法と工程を保存し、再読込後に「前回のつづき�
   await expect(page.locator('#csvModeSummaryText')).toContainText('自作CSV');
   await expect(page.locator('[data-workflow-step="csv"]')).toHaveClass(/active/);
 
-  const savedBeforeReload = await page.evaluate(key => localStorage.getItem(key), STORAGE_KEY);
-  expect(savedBeforeReload).toContain('"mode":"custom"');
-  expect(savedBeforeReload).toContain('"workflowStep":"csv"');
+  const savedBeforeReopen = await page.evaluate(key => localStorage.getItem(key), STORAGE_KEY);
+  expect(savedBeforeReopen).toContain('"mode":"custom"');
+  expect(savedBeforeReopen).toContain('"workflowStep":"csv"');
 
-  await page.reload();
-  await page.locator('#accessCodeInput').fill('CA2026');
-  await page.locator('#loginButton').click();
+  // WebKit の reload は削除済みDOMを保持する場合があるため、
+  // 実際の「アプリを閉じて開き直す」に近い新規ナビゲーションで確認する。
+  await login(page, '/index.html?workflow-resume-reopen=1');
 
   const resumeCard = page.locator('.workflow-resume-card');
   await expect(resumeCard).toBeVisible({ timeout: 5000 });
@@ -52,9 +52,7 @@ test('「新しく始める」で再開情報だけを削除して作成方法�
     }));
   }, STORAGE_KEY);
 
-  await page.reload();
-  await page.locator('#accessCodeInput').fill('CA2026');
-  await page.locator('#loginButton').click();
+  await login(page, '/index.html?workflow-resume-new=1');
 
   const resumeCard = page.locator('.workflow-resume-card');
   await expect(resumeCard).toBeVisible({ timeout: 5000 });
