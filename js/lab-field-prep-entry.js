@@ -10,6 +10,7 @@
     entry.style.cssText = [
       'display:inline-flex',
       'align-items:center',
+      'justify-content:center',
       'gap:5px',
       'margin-left:8px',
       'padding:7px 12px',
@@ -32,6 +33,7 @@
     if (!header) return;
 
     const fieldLink = header.querySelector('a[href="field-mode.html"]');
+    header.style.position = 'relative';
 
     if (!document.getElementById('labPoiReviewEntry')) {
       const reviewEntry = makeHeaderLink({
@@ -43,8 +45,14 @@
         background: 'linear-gradient(180deg,#eef6ff,#dcecff)',
         color: '#243b62'
       });
-      if (fieldLink) fieldLink.insertAdjacentElement('beforebegin', reviewEntry);
-      else header.prepend(reviewEntry);
+      reviewEntry.style.position = 'absolute';
+      reviewEntry.style.top = '0';
+      reviewEntry.style.right = '0';
+      reviewEntry.style.marginLeft = '0';
+      reviewEntry.style.zIndex = '4';
+      reviewEntry.style.maxWidth = '48vw';
+      reviewEntry.style.whiteSpace = 'nowrap';
+      header.appendChild(reviewEntry);
     }
 
     if (!document.getElementById('labFieldPrepEntry')) {
