@@ -39,6 +39,33 @@ function showAfterKmzGuide() {
 距離チェックへ進めます。`
   );
 }
+
+function csvHasTypeOrCategoryColumn(text) {
+  const rows = parseCSVRows(text);
+
+  if (rows.length === 0) {
+    return false;
+  }
+
+  const acceptedHeaders = new Set([
+    "gameentity",
+    "type",
+    "category",
+    "種類"
+  ]);
+
+  return rows[0].some(header => {
+    const normalized = String(header || "")
+      .replace(/^\uFEFF/, "")
+      .normalize("NFKC")
+      .trim()
+      .toLowerCase()
+      .replace(/[\s_]+/g, "");
+
+    return acceptedHeaders.has(normalized);
+  });
+}
+
 async function generateCircleOnlyKMZ() {
   const files = Array.from(document.getElementById("circleOnlyFileInput").files);
   const status = document.getElementById("circleOnlyStatus");
@@ -369,12 +396,57 @@ async function generateKMZ() {
   await waitForRender();
 
   let points = [];
+  const csvTextCache = new Map();
+  const csvFilesMissingType = [];
+
+  for (const file of files) {
+    const fileName = file.name.toLowerCase();
+
+    if (!fileName.endsWith(".csv")) {
+      continue;
+    }
+
+    const text = await file.text();
+    csvTextCache.set(file, text);
+
+    if (!csvHasTypeOrCategoryColumn(text)) {
+      csvFilesMissingType.push(file.name);
+    }
+  }
+
+  if (csvFilesMissingType.length > 0) {
+    hideLoading();
+
+    const missingFilesText = csvFilesMissingType
+      .map(name => `・${name}`)
+      .join("\n");
+
+    const shouldContinue = confirm(
+`⚠ タイプ（カテゴリ）列が見つかりません
+
+${missingFilesText}
+
+このまま進むと、Google My Maps反映時の振り分けや、最後の距離チェックで正しく分類できない可能性があります。
+
+推奨：用意されているCSVテンプレートを使用してください。
+
+このままKMZ作成を続けますか？`
+    );
+
+    if (!shouldContinue) {
+      status.textContent = "KMZ作成をキャンセルしました";
+      return;
+    }
+
+    showLoading("読み込み中…");
+    await waitForRender();
+  }
 
   for (const file of files) {
   const fileName = file.name.toLowerCase();
 
   if (fileName.endsWith(".csv")) {
-    const text = await file.text();
+    const text = csvTextCache.get(file) ?? await file.text();
     points.push(...parseCSV(text));
   } else if (
     fileName.endsWith(".kml") ||
@@ -660,8 +732,11 @@ console.log("KMZ wrapper loaded v3");
           : String(error);
 
       alert(
-        "KMZ生成中にエラーが発生しました。\n\n" +
-        "エラー内容：\n" +
+        "KMZ生成中にエラーが発生しました。\
+\
+" +
+        "エラー内容：\
+" +
         message
       );
 
