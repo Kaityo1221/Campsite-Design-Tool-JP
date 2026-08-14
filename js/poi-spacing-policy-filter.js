@@ -38,3 +38,7 @@
     };
   }
 })();
+
+import("./poi-spacing-policy-ui.js?v=1").catch(error => {
+  console.warn("POI距離選択UIの読み込みに失敗しました。", error);
+});
