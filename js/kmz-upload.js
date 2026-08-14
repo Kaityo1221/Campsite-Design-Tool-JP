@@ -219,8 +219,9 @@
 
 /* 50m POI spacing policy is loaded after the legacy KMZ/distance scripts. */
 Promise.all([
-  import("./poi-spacing-policy.js?v=1"),
-  import("./poi-spacing-policy-filter.js?v=1")
+  import("./poi-spacing-policy.js?v=2"),
+  import("./poi-spacing-policy-filter.js?v=2"),
+  import("./poi-spacing-policy-ui.js?v=2")
 ]).catch(error => {
   console.warn("POI距離ポリシーの読み込みに失敗しました。", error);
 });
