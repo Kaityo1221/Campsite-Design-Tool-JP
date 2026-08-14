@@ -240,7 +240,9 @@
       fieldMemoDirty:!!record.fieldMemoDirty,
       fieldPhoto:await serializePhoto(record.fieldPhoto),
       fieldPhotoDirty:!!record.fieldPhotoDirty,
-      fieldDeleted:!!record.fieldDeleted
+      fieldDeleted:!!record.fieldDeleted,
+      include30mCircle:!!record.include30mCircle,
+      include40mCircle:!!record.include40mCircle
     };
   }
 
@@ -329,7 +331,7 @@
 
   function createRestoredNewRecord(snapshot){
     const latlng=[...snapshot.latlng];
-    const rangeCircle=L.circle(latlng,{pane:'fieldBackgroundPane',radius:40,color:'#d58b00',weight:2,opacity:.7,fillColor:'#ffd35c',fillOpacity:.035,interactive:false,dashArray:'6 5'});
+    const rangeCircle=L.circle(latlng,{pane:'fieldBackgroundPane',radius:window.CampsitePoiSpacingPolicy.targetMeters,color:'#d58b00',weight:2,opacity:.7,fillColor:'#ffd35c',fillOpacity:.035,interactive:false,dashArray:'6 5'});
     const marker=L.circleMarker(latlng,{pane:'fieldPoiPane',radius:9,weight:3,color:'#d58b00',fillColor:'#ffd35c',fillOpacity:.9});
     const record={
       marker,rangeCircle,
@@ -346,6 +348,8 @@
       fieldPhoto:restorePhoto(snapshot.fieldPhoto),
       fieldPhotoDirty:!!snapshot.fieldPhotoDirty,
       fieldDeleted:!!snapshot.fieldDeleted,
+      include30mCircle:!!snapshot.include30mCircle,
+      include40mCircle:!!snapshot.include40mCircle,
       fieldSessionId:snapshot.id
     };
     marker.bindPopup(`<strong>${record.name}</strong><br><small>${typeLabel(record.poiType)}</small><br><b>新規追加POI</b>`);
@@ -369,6 +373,8 @@
     record.fieldPhoto=restorePhoto(snapshot.fieldPhoto);
     record.fieldPhotoDirty=!!snapshot.fieldPhotoDirty;
     record.fieldDeleted=!!snapshot.fieldDeleted;
+    record.include30mCircle=!!snapshot.include30mCircle;
+    record.include40mCircle=!!snapshot.include40mCircle;
     if(record.fieldDeleted){
       if(dataLayer.hasLayer(record.marker))dataLayer.removeLayer(record.marker);
       if(record.rangeCircle&&dataLayer.hasLayer(record.rangeCircle))dataLayer.removeLayer(record.rangeCircle);

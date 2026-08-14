@@ -8,6 +8,12 @@
   let controls=null;
   let badge=null;
   let initialized=false;
+  const spacing=window.CampsitePoiSpacingPolicy;
+  const targetDistance=spacing.targetMeters;
+
+  function bandForDistance(distance){
+    return spacing.distanceBand(distance);
+  }
 
   function centerLatLng(){
     const center=map.getCenter();
@@ -64,17 +70,24 @@
     if(!badge)return;
     if(!Number.isFinite(distance)){
       badge.textContent='始点を置いてください';
+      badge.dataset.distanceBand='waiting';
       badge.style.borderColor='#7a8b9b';
       badge.style.color='#31404e';
       badge.style.background='rgba(255,255,255,.96)';
       return;
     }
     badge.textContent=`📏 ${distance.toFixed(1)} m`;
-    if(distance<30){
+    const band=bandForDistance(distance);
+    badge.dataset.distanceBand=band;
+    if(band==='danger'){
       badge.style.borderColor='#c94b43';
       badge.style.color='#8e2924';
       badge.style.background='rgba(255,235,231,.98)';
-    }else if(distance<40){
+    }else if(band==='caution'){
+      badge.style.borderColor='#dc881f';
+      badge.style.color='#815000';
+      badge.style.background='rgba(255,243,216,.98)';
+    }else if(band==='near'){
       badge.style.borderColor='#d99b22';
       badge.style.color='#805500';
       badge.style.background='rgba(255,248,220,.98)';
@@ -90,7 +103,7 @@
     const end=centerLatLng();
     const distance=map.distance(L.latLng(startPoint[0],startPoint[1]),L.latLng(end[0],end[1]));
     if(measureLine&&dataLayer.hasLayer(measureLine))dataLayer.removeLayer(measureLine);
-    const color=distance<30?'#c94b43':distance<40?'#d99b22':'#4d8f45';
+    const color={danger:'#c94b43',caution:'#dc881f',near:'#d2aa36',ok:'#4d8f45'}[bandForDistance(distance)];
     measureLine=L.polyline([startPoint,end],{
       pane:'fieldPoiPane',color,weight:4,opacity:.9,dashArray:'8 6',interactive:false
     }).addTo(dataLayer);
@@ -162,5 +175,5 @@
   const timer=setInterval(()=>{if(init())clearInterval(timer);},0);
   setTimeout(()=>clearInterval(timer),5000);
 
-  window.FieldModeDistance={begin,cancel,isActive:()=>active};
+  window.FieldModeDistance={begin,cancel,isActive:()=>active,bandForDistance};
 })();

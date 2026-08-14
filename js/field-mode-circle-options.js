@@ -9,7 +9,8 @@
   const SOURCE_STORE='source';
   const STATE_STORE='state';
   const CURRENT_KEY='current';
-  const CIRCLE_KEY='circle-options-v1';
+  const CIRCLE_KEY='circle-options-v2';
+  const LEGACY_CIRCLE_KEY='circle-options-v1';
   let currentSourceSignature='';
   let storedPayload=null;
   let loadGeneration=0;
@@ -28,15 +29,17 @@
   const box=document.createElement('div');
   box.className='field-circle-options';
   box.innerHTML=`
-    <div class="field-circle-options-title"><span>⭕ 距離円</span><span>40m 基本</span></div>
-    <div class="field-circle-options-note">40m円は自動で保存します。30m調整円は必要な新規POIだけ追加してください。</div>
-    <button id="fieldPoi30mToggle" class="field-circle-toggle" type="button">30m調整円：追加しない</button>
+    <div class="field-circle-options-title"><span>⭕ 距離円</span><span>50m 必須</span></div>
+    <div class="field-circle-options-note">50m円は自動で保存します。30m・40mは参考距離として必要な新規POIだけ追加できます。</div>
+    <button id="fieldPoi40mToggle" class="field-circle-toggle" type="button">40m参考円：追加しない</button>
+    <button id="fieldPoi30mToggle" class="field-circle-toggle" type="button">30m参考円：追加しない</button>
   `;
 
   const saveRow=selectionSection.querySelector('.field-save-row');
   if(saveRow)selectionSection.insertBefore(box,saveRow);
   else selectionSection.appendChild(box);
-  const toggle=box.querySelector('#fieldPoi30mToggle');
+  const toggle40=box.querySelector('#fieldPoi40mToggle');
+  const toggle30=box.querySelector('#fieldPoi30mToggle');
 
   function openDb(){
     return new Promise((resolve,reject)=>{
@@ -47,7 +50,7 @@
         if(!db.objectStoreNames.contains(STATE_STORE))db.createObjectStore(STATE_STORE);
       };
       request.onsuccess=()=>resolve(request.result);
-      request.onerror=()=>reject(request.error||new Error('30m調整円の端末保存を開けませんでした。'));
+      request.onerror=()=>reject(request.error||new Error('参考距離円の端末保存を開けませんでした。'));
     });
   }
 
@@ -104,11 +107,20 @@
     return storedPayload.selections||{};
   }
 
+  function normalizedSelection(value){
+    if(value===true)return{include30mCircle:true,include40mCircle:false};
+    if(!value||typeof value!=='object')return null;
+    return{include30mCircle:!!value.include30mCircle,include40mCircle:!!value.include40mCircle};
+  }
+
   function applySavedToRecord(record){
     if(!record?.isNew)return;
     const selections=selectionsForCurrentSource();
     if(!selections)return;
-    record.include30mCircle=!!selections[recordKey(record)];
+    const saved=normalizedSelection(selections[recordKey(record)]);
+    if(!saved)return;
+    record.include30mCircle=saved.include30mCircle;
+    record.include40mCircle=saved.include40mCircle;
   }
 
   function applySavedToRecords(){
@@ -121,14 +133,14 @@
     const generation=++loadGeneration;
     currentSourceSignature=requestedSignature;
     try{
-      const payload=await readStore(STATE_STORE,CIRCLE_KEY);
+      const payload=await readStore(STATE_STORE,CIRCLE_KEY)||await readStore(STATE_STORE,LEGACY_CIRCLE_KEY);
       if(generation!==loadGeneration)return;
-      storedPayload=payload?.version===1?payload:null;
+      storedPayload=payload?.version===2?payload:payload?.version===1?{...payload,version:2}:null;
       applySavedToRecords();
       render();
     }catch(error){
       if(generation!==loadGeneration)return;
-      console.warn('field 30m option restore failed',error);
+      console.warn('field reference circle option restore failed',error);
       storedPayload=null;
     }
   }
@@ -140,7 +152,7 @@
       applySavedToRecords();
       render();
     }catch(error){
-      console.warn('field 30m session restore sync failed',error);
+      console.warn('field reference circle session restore sync failed',error);
     }
   }
 
@@ -209,10 +221,12 @@
     if(!currentSourceSignature)return;
     const selections={};
     poiRecords.filter(record=>record?.isNew&&!record.fieldDeleted).forEach(record=>{
-      if(record.include30mCircle)selections[recordKey(record)]=true;
+      if(record.include30mCircle||record.include40mCircle){
+        selections[recordKey(record)]={include30mCircle:!!record.include30mCircle,include40mCircle:!!record.include40mCircle};
+      }
     });
-    storedPayload={version:1,sourceSignature:currentSourceSignature,selections,savedAt:Date.now()};
-    try{await writePayload(storedPayload);}catch(error){console.warn('field 30m option save failed',error);}
+    storedPayload={version:2,sourceSignature:currentSourceSignature,selections,savedAt:Date.now()};
+    try{await writePayload(storedPayload);}catch(error){console.warn('field reference circle option save failed',error);}
   }
 
   function render(){
@@ -220,27 +234,36 @@
     const active=!!selectedPoi?.added&&!!selectedPoi?.isNew&&!selectedPoi?.fieldDeleted;
     box.classList.toggle('active',active);
     if(!active){
-      toggle.classList.remove('is-on');
-      toggle.textContent='30m調整円：追加しない';
+      toggle40.classList.remove('is-on');
+      toggle30.classList.remove('is-on');
+      toggle40.textContent='40m参考円：追加しない';
+      toggle30.textContent='30m参考円：追加しない';
       return;
     }
-    const on=!!selectedPoi.include30mCircle;
-    toggle.classList.toggle('is-on',on);
-    toggle.textContent=on?'30m調整円：追加する ✓':'30m調整円：追加しない';
+    const on40=!!selectedPoi.include40mCircle,on30=!!selectedPoi.include30mCircle;
+    toggle40.classList.toggle('is-on',on40);
+    toggle30.classList.toggle('is-on',on30);
+    toggle40.textContent=on40?'40m参考円：追加する ✓':'40m参考円：追加しない';
+    toggle30.textContent=on30?'30m参考円：追加する ✓':'30m参考円：追加しない';
   }
 
-  toggle.addEventListener('click',()=>{
+  function toggleReferenceCircle(meters){
     if(!selectedPoi?.added||!selectedPoi?.isNew||selectedPoi.fieldDeleted)return;
-    selectedPoi.include30mCircle=!selectedPoi.include30mCircle;
+    const property=meters===40?'include40mCircle':'include30mCircle';
+    selectedPoi[property]=!selectedPoi[property];
     const selections=selectionsForCurrentSource()||{};
-    if(selectedPoi.include30mCircle)selections[recordKey(selectedPoi)]=true;
-    else delete selections[recordKey(selectedPoi)];
-    storedPayload={version:1,sourceSignature:currentSourceSignature,selections,savedAt:Date.now()};
+    if(selectedPoi.include30mCircle||selectedPoi.include40mCircle){
+      selections[recordKey(selectedPoi)]={include30mCircle:!!selectedPoi.include30mCircle,include40mCircle:!!selectedPoi.include40mCircle};
+    }else delete selections[recordKey(selectedPoi)];
+    storedPayload={version:2,sourceSignature:currentSourceSignature,selections,savedAt:Date.now()};
     render();
     updateSaveButton();
-    modeStatus.textContent=selectedPoi.include30mCircle?'30m調整円を追加':'30m調整円を解除';
+    modeStatus.textContent=selectedPoi[property]?`${meters}m参考円を追加`:`${meters}m参考円を解除`;
     saveCurrentSelections();
-  });
+  }
+
+  toggle40.addEventListener('click',()=>toggleReferenceCircle(40));
+  toggle30.addEventListener('click',()=>toggleReferenceCircle(30));
 
   const originalSelectAddedPoi=selectAddedPoi;
   selectAddedPoi=function circleAwareSelectAddedPoi(record){
@@ -283,7 +306,7 @@
       if(currentSourceSignature)return;
       return loadForSignature(sourceSignatureFromStored(source));
     })
-    .catch(error=>console.warn('field 30m source restore failed',error));
+    .catch(error=>console.warn('field reference circle source restore failed',error));
 
   bindResumeHooksWhenReady();
   installRestoreStatusObserver();

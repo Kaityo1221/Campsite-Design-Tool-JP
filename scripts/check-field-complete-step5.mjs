@@ -9,14 +9,16 @@ const area=fs.readFileSync('js/field-mode-area.js','utf8');
 new vm.Script(circle,{filename:'js/field-mode-circle-options.js'});
 
 for(const token of [
-  "CIRCLE_KEY='circle-options-v1'",
+  "CIRCLE_KEY='circle-options-v2'",
   'include30mCircle',
-  '30m調整円：追加しない',
-  '30m調整円：追加する ✓',
+  'include40mCircle',
+  '50m 必須',
+  '30m参考円：追加しない',
+  '40m参考円：追加しない',
   'sourceSignatureFromFile',
   'window.FieldModeCircleOptions='
 ]){
-  if(!circle.includes(token))throw new Error(`30m circle option missing token: ${token}`);
+  if(!circle.includes(token))throw new Error(`reference circle option missing token: ${token}`);
 }
 
 if(!loader.includes("loadOnce('js/field-mode-circle-options.js?v=")){
@@ -25,15 +27,18 @@ if(!loader.includes("loadOnce('js/field-mode-circle-options.js?v=")){
 
 for(const [name,code] of [['normal exporter',exporter],['activity-area exporter',area]]){
   if(!code.includes('if(record.include30mCircle)')){
-    throw new Error(`${name} must conditionally export 30m circles`);
+    throw new Error(`${name} must conditionally export 30m reference circles`);
   }
-  if(!code.includes("folder40.appendChild(createCirclePlacemark(doc,record,40")){
-    throw new Error(`${name} must always export 40m circles for new POIs`);
+  if(!code.includes('if(record.include40mCircle)')){
+    throw new Error(`${name} must conditionally export 40m reference circles`);
+  }
+  if(!code.includes("allRecords.forEach(record=>folder50.appendChild(createCirclePlacemark(doc,record")){
+    throw new Error(`${name} must rebuild 50m circles for every active POI`);
   }
 }
 
-if(!exporter.includes('include30mCircle:false')){
-  throw new Error('new POIs must default to no 30m adjustment circle');
+if(!exporter.includes('include30mCircle:false,include40mCircle:false')){
+  throw new Error('new POIs must default to no 30m/40m reference circles');
 }
 
 console.log('FIELD COMPLETE STEP 5 CHECK: GREEN');

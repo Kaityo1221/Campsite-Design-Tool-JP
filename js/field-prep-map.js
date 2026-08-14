@@ -334,11 +334,11 @@
     return `<Placemark><name>${escapeXml(point.name || '')}</name><description>${escapeXml(point.type || '')}</description><Point><coordinates>${Number(point.lng)},${Number(point.lat)},0</coordinates></Point></Placemark>`;
   }
 
-  function buildCirclePlacemark(point) {
+  function buildCirclePlacemark(point, radiusMeters = window.CampsitePoiSpacingPolicy.targetMeters) {
     const coords = typeof window.createCircleCoordinates === 'function'
-      ? window.createCircleCoordinates(point.lat, point.lng, 40)
-      : fallbackCircleCoordinates(point.lat, point.lng, 40);
-    return `<Placemark><name>${escapeXml(point.name || '')}_40m円</name><Polygon><outerBoundaryIs><LinearRing><coordinates>${coords}</coordinates></LinearRing></outerBoundaryIs></Polygon></Placemark>`;
+      ? window.createCircleCoordinates(point.lat, point.lng, radiusMeters)
+      : fallbackCircleCoordinates(point.lat, point.lng, radiusMeters);
+    return `<Placemark><name>${escapeXml(point.name || '')}_${radiusMeters}m円</name><Polygon><outerBoundaryIs><LinearRing><coordinates>${coords}</coordinates></LinearRing></outerBoundaryIs></Polygon></Placemark>`;
   }
 
   function folder(name, content = '') {
@@ -346,6 +346,7 @@
   }
 
   function buildFieldKml(points) {
+    const spacing = window.CampsitePoiSpacingPolicy;
     const grouped = { pokestop: [], gym: [], power: [] };
     points.forEach(point => grouped[window.FieldPrep.normalizePoiType(point)].push(point));
 
@@ -357,8 +358,9 @@
       folder('追加希望ジム'),
       folder('追加希望パワスポ'),
       folder('活動範囲'),
-      folder('40m円（基本距離）', points.map(buildCirclePlacemark).join('')),
-      folder('30m円（調整用）')
+      folder(spacing.targetCircleFolder, points.map(point => buildCirclePlacemark(point, spacing.targetMeters)).join('')),
+      folder(spacing.referenceCircleFolders[40]),
+      folder(spacing.referenceCircleFolders[30])
     ].join('');
 
     return `<?xml version="1.0" encoding="UTF-8"?>\n<kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>Campsite Field Preparation</name>${folders}</Document></kml>`;

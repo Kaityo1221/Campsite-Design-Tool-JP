@@ -13,14 +13,10 @@
 (() => {
   "use strict";
 
-  const POLICY = Object.freeze({
-    targetMeters: 50,
-    referenceMeters: Object.freeze([30, 40]),
-    publicLead: "POI間隔は50mを目安に設計してください。",
-    referenceNote: "30m・40mは参考距離です。"
-  });
-
-  window.CampsitePoiSpacingPolicy = POLICY;
+  const POLICY = window.CampsitePoiSpacingPolicy;
+  if (!POLICY) {
+    throw new Error("POI spacing config is not loaded.");
+  }
 
   function replaceFunctionSource(name, transform) {
     const original = window[name];
@@ -246,8 +242,9 @@
     if (typeof window.classifyDistanceRisk === "function") {
       window.classifyDistanceRisk = function classifyDistanceRisk50m(distance) {
         if (distance < 20) return "密集";
-        if (distance < 30) return "滞留";
-        if (distance < 50) return "軽微";
+        const band = POLICY.distanceBand(distance);
+        if (band === "danger") return "滞留";
+        if (band === "caution" || band === "near") return "軽微";
         return null;
       };
     }
@@ -272,7 +269,8 @@
     );
 
     replaceFunctionSource("runDistanceCheck", source => source
-      .replace(/if \(distance < 40\) \{/g, "if (distance < 50) {")
+      .replace(/if \(distance < 40\) \{/g,
+        "if (distance < window.CampsitePoiSpacingPolicy.targetMeters) {")
       .replace(/30〜40m（軽微）/g, "30〜50m（参考距離）")
       .replace(/40m未満合計/g, "50m未満合計")
       .replace(/40m未満の組み合わせはありません。/g, "50m未満の組み合わせはありません。")
