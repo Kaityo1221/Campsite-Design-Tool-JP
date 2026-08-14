@@ -8,16 +8,17 @@
 <title>未分類POIレビュー PREVIEW | Campsite Lab</title>
 <style>
 :root{color-scheme:dark;--panel:#121b2d;--line:#2a3957;--text:#edf4ff;--muted:#98a9c5;--accent:#67e8f9;--warn:#fde68a}
-*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#09111f,#111827 45%,#09111f);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.wrap{max-width:1100px;margin:auto;padding:20px}.top{display:flex;gap:14px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}.eyebrow{font-size:12px;letter-spacing:.16em;color:var(--accent);margin:0 0 5px}.title{margin:0;font-size:clamp(26px,5vw,42px)}.note{color:var(--muted);line-height:1.7}.badge{display:inline-flex;padding:8px 12px;border:1px solid #6b7280;border-radius:999px;color:#d1d5db;background:#111827}.warning{padding:12px 14px;border:1px solid #7c5c16;background:#2d220b;border-radius:12px;color:#fde68a;margin-top:12px}.session{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:22px 0 14px}.session-actions{display:flex;gap:8px;flex-wrap:wrap}.action{border:1px solid var(--line);background:#111827;color:#dbeafe;border-radius:12px;padding:11px 14px;cursor:pointer;font-weight:800}.action.primary{border:0;background:#67e8f9;color:#082f49}.cards{display:grid;gap:12px}.card{background:rgba(18,27,45,.94);border:1px solid var(--line);border-radius:18px;padding:16px}.num{font-size:12px;color:var(--accent);font-weight:800}.poi-line{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:5px 0 7px}.poi{font-size:19px;font-weight:800;min-width:0}.streetview{flex:none;color:#bae6fd;text-decoration:none;border:1px solid #31577c;background:#0b1c31;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:800}.hint{font-size:13px;color:var(--muted);margin-bottom:12px}.choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.choice{border:1px solid #40506d;background:#0f172a;color:#dbeafe;border-radius:10px;padding:10px 8px;cursor:pointer;font-size:13px}.choice.selected{background:#164e63;border-color:#67e8f9;color:white}.choice.hold.selected{background:#5b4215;border-color:#fde68a}.choice.reset-answer{grid-column:3;border-color:#70404a;color:#fecaca;background:#1d1117}.choice.reset-answer:disabled{opacity:.35;cursor:default}.summary{display:none;margin-top:18px;background:#07101e;border:1px solid var(--line);border-radius:18px;padding:18px;overflow:auto}.summary.show{display:block}.summary table{width:100%;border-collapse:collapse;min-width:680px}.summary th,.summary td{padding:9px;border-bottom:1px solid #263650;text-align:left;font-size:13px}.footer{margin:28px 0;color:var(--muted);font-size:13px}.back{color:#bae6fd;text-decoration:none}@media(max-width:720px){.choices{grid-template-columns:repeat(2,minmax(0,1fr))}.choice.reset-answer{grid-column:2}.wrap{padding:14px}.card{padding:14px}.poi-line{align-items:flex-start}.streetview{padding:5px 8px;font-size:11px}}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#09111f,#111827 45%,#09111f);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.wrap{max-width:1100px;margin:auto;padding:20px}.top{display:flex;gap:14px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}.eyebrow{font-size:12px;letter-spacing:.16em;color:var(--accent);margin:0 0 5px}.title{margin:0;font-size:clamp(26px,5vw,42px)}.note{color:var(--muted);line-height:1.7}.badge{display:inline-flex;padding:8px 12px;border:1px solid #6b7280;border-radius:999px;color:#d1d5db;background:#111827}.warning{padding:12px 14px;border:1px solid #7c5c16;background:#2d220b;border-radius:12px;color:#fde68a;margin-top:12px}.ai-box{margin-top:12px;padding:12px 14px;border:1px solid #31577c;background:#0b1c31;border-radius:12px;color:#cfe8ff}.session{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:22px 0 14px}.session-actions{display:flex;gap:8px;flex-wrap:wrap}.action{border:1px solid var(--line);background:#111827;color:#dbeafe;border-radius:12px;padding:11px 14px;cursor:pointer;font-weight:800}.action.primary{border:0;background:#67e8f9;color:#082f49}.cards{display:grid;gap:12px}.card{background:rgba(18,27,45,.94);border:1px solid var(--line);border-radius:18px;padding:16px}.num{font-size:12px;color:var(--accent);font-weight:800}.poi-line{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:5px 0 7px}.poi{font-size:19px;font-weight:800;min-width:0}.streetview{flex:none;color:#bae6fd;text-decoration:none;border:1px solid #31577c;background:#0b1c31;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:800}.reason{font-size:13px;color:var(--muted);margin-bottom:12px}.choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.choice{border:1px solid #40506d;background:#0f172a;color:#dbeafe;border-radius:10px;padding:10px 8px;cursor:pointer;font-size:13px}.choice.selected{background:#164e63;border-color:#67e8f9;color:white}.choice.hold.selected{background:#5b4215;border-color:#fde68a}.choice.reset-answer{grid-column:3;border-color:#70404a;color:#fecaca;background:#1d1117}.choice.reset-answer:disabled{opacity:.35;cursor:default}.summary{display:none;margin-top:18px;background:#07101e;border:1px solid var(--line);border-radius:18px;padding:18px;overflow:auto}.summary.show{display:block}.summary table{width:100%;border-collapse:collapse;min-width:680px}.summary th,.summary td{padding:9px;border-bottom:1px solid #263650;text-align:left;font-size:13px}.footer{margin:28px 0;color:var(--muted);font-size:13px}.back{color:#bae6fd;text-decoration:none}@media(max-width:720px){.choices{grid-template-columns:repeat(2,minmax(0,1fr))}.choice.reset-answer{grid-column:2}.wrap{padding:14px}.card{padding:14px}.poi-line{align-items:flex-start}.streetview{padding:5px 8px;font-size:11px}}
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="top">
-    <div><p class="eyebrow">CAMPSITE DESIGN TOOL / PRIVATE LAB / POI REVIEW</p><h1 class="title">未分類POIレビュー</h1><p class="note">1回20件。回数制限はありません。何度でも別の20件をレビューできます。<br>自動推定は参考表示だけです。人の判断を優先します。</p></div>
+    <div><p class="eyebrow">CAMPSITE DESIGN TOOL / PRIVATE LAB / POI REVIEW</p><h1 class="title">未分類POIレビュー</h1><p class="note">先にAI側で振り分けし、名前だけでは決めきれないPOIだけを人レビューへ回します。<br>1回20件。回数制限はありません。</p></div>
     <div><span class="badge">PREVIEW / DB反映なし</span></div>
   </div>
-  <div class="warning">このページの回答はSupabase・辞書・ADV判定結果へ保存しません。再読み込みでも回答は消えます。</div>
+  <div class="warning">このページの回答はSupabase・辞書・ADV判定結果へ保存しません。再読み込みで回答は消えます。</div>
+  <div class="ai-box"><strong>AI先行仕分け済み</strong><br>今回の1,402件を一次判定し、542件はAI側で高確度分類。860件を「人に任せたい候補」と判定しました。このプレビューでは、その候補から抜粋して表示します。</div>
   <div class="session">
     <div><strong id="sessionLabel">レビュー 1回目</strong><div id="progress" class="note">0 / 20件回答</div></div>
     <div class="session-actions"><button id="newBatch" class="action">別の20件</button><button id="resetAll" class="action">この20件をリセット</button><button id="summaryBtn" class="action primary">レビュー内容を見る</button></div>
@@ -28,31 +29,139 @@
 </div>
 <script>
 const CATS=['遊具','公園・広場','休憩・支援','駅・入口・交通','アート・ランドマーク','歴史・文化','寺社・宗教','商業・施設','水場','道・橋・導線','車両・駐車','その他','保留'];
-const LABELS={PLAYGROUND:'遊具',OPEN_SPACE:'公園・広場',REST_SUPPORT:'休憩・支援',ENTRANCE_TRANSIT:'駅・入口・交通',ART_LANDMARK:'アート・ランドマーク',HISTORY_CULTURE:'歴史・文化',RELIGIOUS:'寺社・宗教',COMMERCIAL:'商業・施設',WATER:'水場',PATH:'道・橋・導線',VEHICLE:'車両・駐車',OTHER:'その他'};
 const POOL=[
-[1,'PLAYGROUND','遊具のコアラ',36.087528,140.100516],[2,'PLAYGROUND','駒場団地の遊具セット',41.784181,140.773307],[3,'PLAYGROUND','Abandoned Playground',33.55427,133.516401],[4,'PLAYGROUND','複合遊具',33.562703,133.499818],[5,'PLAYGROUND','赤いブランコ',36.088654,140.07199],[6,'PLAYGROUND','UFOの遊具',41.791985,140.737676],[7,'PLAYGROUND','Functional Training Center遊具',36.083127,140.099343],[8,'PLAYGROUND','小山アスレチック',41.790659,140.767884],[9,'PLAYGROUND','数字の遊具',33.563651,133.496801],[10,'PLAYGROUND','年季ブランコ',33.551605,133.490954],
-[11,'OPEN_SPACE','Palette Sky Garden',26.213803,127.679633],[12,'OPEN_SPACE','Octopus Park (Takochu Koen)',26.206522,127.686526],[13,'OPEN_SPACE','Ball Donut Park',26.215681,127.684659],[14,'OPEN_SPACE','Matuo Park',26.21286,127.686229],[15,'REST_SUPPORT','モリの足湯',35.806069,137.240432],[16,'REST_SUPPORT','Food Court',36.076055,140.071072],[17,'REST_SUPPORT','Tamagusuku Coffee Roasters',26.213246,127.687349],[18,'REST_SUPPORT','横山珈琲店',41.788441,140.738536],[19,'REST_SUPPORT','コナズ珈琲つくば',36.085584,140.07415],[20,'REST_SUPPORT','丸壹珈琲',41.796383,140.750576],[21,'REST_SUPPORT','ヴィーナスの足湯',35.809406,137.241488],[22,'REST_SUPPORT','函館YWCA',41.7864,140.758769],[23,'REST_SUPPORT','SHIROFUJI COFFEE',41.782019,140.757333],[24,'REST_SUPPORT','Yagies coffee',41.784,140.764747],
-[25,'ENTRANCE_TRANSIT','JR旭駅',33.558793,133.508782],[26,'ENTRANCE_TRANSIT','ゆいレール県庁前駅',26.214357,127.679363],[27,'ENTRANCE_TRANSIT','つくば駅案内表示　徒歩72.0kcal',36.089308,140.100484],[28,'ENTRANCE_TRANSIT','県庁南口',26.210939,127.68146],[29,'ENTRANCE_TRANSIT','研究学園駅',36.082038,140.082473],[30,'ENTRANCE_TRANSIT','函館市電 深堀町駅',41.78713,140.77],[31,'ENTRANCE_TRANSIT','介護タクシーあさひ',33.560671,133.503301],[32,'ENTRANCE_TRANSIT','介護タクシー龍馬',33.555237,133.492324],[33,'ENTRANCE_TRANSIT','つくば駅案内表示　徒歩90.0kcal',36.091146,140.097911],[34,'ENTRANCE_TRANSIT','イーアスつくば カツラギロード北口',36.087055,140.084986],
-[35,'ART_LANDMARK','合資会社スタイル洋装店',26.214422,127.68296],[36,'ART_LANDMARK','ライオンズマンション久茂地のシーサー',26.219335,127.682276],[37,'ART_LANDMARK','寿し処にふぇーでーびるのシーサー',26.212294,127.676197],[38,'ART_LANDMARK','県庁横のシーサー',26.211887,127.680267],[39,'ART_LANDMARK','こくさいとおりのシーサー',26.213817,127.680565],[40,'ART_LANDMARK','イルカの置物',33.552726,133.504202],[41,'ART_LANDMARK','Shisa of Sanrei 2',26.207836,127.679231],[42,'ART_LANDMARK','牧志イオンシーサー',26.21904,127.691198],[43,'ART_LANDMARK','Shisa Face',26.214254,127.681826],[44,'ART_LANDMARK','太陽のブロックアート',26.218194,127.676251],
-[45,'HISTORY_CULTURE','仲島小堀跡',26.212389,127.677728],[46,'HISTORY_CULTURE','那覇大阿母屋敷跡',26.216022,127.682406],[47,'HISTORY_CULTURE','松尾山跡',26.218778,127.678471],[48,'HISTORY_CULTURE','箱館戦争と特別史跡五稜郭跡',41.795466,140.754484],[49,'HISTORY_CULTURE','内兼久山跡',26.215575,127.676617],[50,'HISTORY_CULTURE','幸田浄化センター 土木遺産 由来看板',35.801448,137.243101],[51,'HISTORY_CULTURE','旭校前身 明善学舎跡',33.557038,133.507545],[52,'HISTORY_CULTURE','松尾みそ文化の老舗店',26.21438,127.687666],[53,'HISTORY_CULTURE','Site of The Yuna-nu Ka',26.218218,127.676577],[54,'HISTORY_CULTURE','鹿持雅澄邸跡 墓順路図',33.567096,133.509445],
-[55,'RELIGIOUS','宮城区公民館',26.208288,127.69616],[56,'RELIGIOUS','桂不動産株式会社',36.08448,140.095546],[57,'RELIGIOUS','宮本公民館横のお堂',35.807883,137.248906],[58,'RELIGIOUS','函館千歳教会',41.78921,140.760603],[59,'RELIGIOUS','宮城マンションシーサー',26.220419,127.692131],[60,'RELIGIOUS','お社',36.079585,140.068323],[61,'RELIGIOUS','下呂里宮',35.802616,137.249933],[62,'RELIGIOUS','函館キリスト教会',41.787006,140.768402],[63,'RELIGIOUS','上本宮薬師堂',33.556715,133.495339],[64,'RELIGIOUS','天満大神宮案内',33.562802,133.50906],
-[65,'COMMERCIAL','エホバの証人の王国会館',26.209695,127.694117],[66,'COMMERCIAL','白鳥町会館',41.793091,140.746029],[67,'COMMERCIAL','創価学会函館平和会館',41.781811,140.747309],[68,'COMMERCIAL','旧日本銀行那覇支店の金庫扉',26.216769,127.679338],[69,'COMMERCIAL','函館市民憲章',41.784121,140.748235],[70,'COMMERCIAL','謝花きっぱん店',26.20986,127.68653],[71,'COMMERCIAL','ヨーロッパデザインの輸入住宅：インターデコハウス函館',41.785666,140.76359],[72,'COMMERCIAL','中島れんばいふれあいセンター',41.781655,140.742394],[73,'COMMERCIAL','壺屋陶器会館',26.212355,127.692494],[74,'COMMERCIAL','葛西商店',41.783304,140.737378],
-[75,'WATER','下呂温泉　森山館　紗々羅',35.80629,137.244891],[76,'WATER','つくば温泉 喜楽里 別邸',36.074703,140.083684],[77,'WATER','「歓迎 日本の三名泉 下呂温泉」看板',35.802587,137.250969],[78,'WATER','下呂温泉',35.80874,137.241213],[79,'WATER','かえるの滝',35.809293,137.243296],[80,'WATER','十勝ホルモンkemuri 泉崎店',26.213374,127.676507],[81,'WATER','下呂温泉マンホール',35.806946,137.242922],[82,'WATER','下呂温泉しらさぎマンホール',35.798202,137.248705],[83,'WATER','歓迎 下呂温泉',35.808309,137.246368],[84,'WATER','日本三名泉 発祥之地',35.809494,137.241281],
-[85,'PATH','ひぐらし通り',36.08792,140.076063],[86,'PATH','地下道に描かれた海中壁画',35.799804,137.255319],[87,'PATH','北海道教育大学の体育館',41.79252,140.740981],[88,'PATH','チョコレートミルク通り',26.216018,127.681454],[89,'PATH','北海道教育大学函館校教職員組合',41.792877,140.740586],[90,'PATH','飛騨街道石標',35.802206,137.244407],[91,'PATH','うぐいす通り',36.087811,140.076744],[92,'PATH','本町の道祖神',35.80487,137.243483],[93,'PATH','魚屋通り名店街',41.781538,140.743665],[94,'PATH','石立地下道南側タイルアート',33.550343,133.515493],
-[95,'VEHICLE','茨城トヨペット株式会社GRGarageつくば店',36.087298,140.086655],[96,'VEHICLE','浜田自動車',33.558723,133.504396],[97,'VEHICLE','岡野自動車工場',36.074931,140.092652],[98,'VEHICLE','ガレージN’s',36.080666,140.098821],[99,'VEHICLE','水車小屋',35.807991,137.250409],[100,'VEHICLE','鴨部ハイヤー 配車センター',33.552104,133.497294],[101,'VEHICLE','西本自動車',33.552563,133.498122],[102,'VEHICLE','合掌村 水車',35.808413,137.250302],[103,'VEHICLE','小さな水車',33.555689,133.50171],[104,'VEHICLE','矢島自転車商会',35.802562,137.245762],
-[105,'OTHER','にふぇーら',26.213972,127.692529],[106,'OTHER','桐の湯',41.788295,140.760565],[107,'OTHER','Mr.KINJO One Style Makishi',26.215593,127.691239],[108,'OTHER','ルルル',33.556239,133.511602],[109,'OTHER','理容吉田',33.548983,133.496003],[110,'OTHER','シェー！',33.551578,133.508959],[111,'OTHER','バーディアナ',41.787773,140.749858],[112,'OTHER','下呂御前山登山口',35.808582,137.24736],[113,'OTHER','Chip in チップイン',36.083286,140.079872],[114,'OTHER','那覇市役所 周辺地図',26.211822,127.679057],[115,'OTHER','貝殻だらけの壁',26.216139,127.680258],[116,'OTHER','オール・デザイン・アーキテクト',26.210875,127.692065],[117,'OTHER','野中石油',35.803349,137.245703],[118,'OTHER','不動尊',36.075821,140.067739],[119,'OTHER','軽食喫茶 じゃんけん',41.795449,140.752188],[120,'OTHER','エーテー測地試錐',41.782083,140.750018]
+[1,'にふぇーら',26.213972,127.692529,'名称だけでは意味を特定できない'],
+[2,'桐の湯',41.788295,140.760565,'名称だけでは意味を特定できない'],
+[3,'Mr.KINJO One Style Makishi',26.215593,127.691239,'名称だけでは意味を特定できない'],
+[4,'ルルル',33.556239,133.511602,'名称だけでは意味を特定できない'],
+[5,'シェー！',33.551578,133.508959,'名称だけでは意味を特定できない'],
+[6,'バーディアナ',41.787773,140.749858,'名称だけでは意味を特定できない'],
+[7,'Chip in チップイン',36.083286,140.079872,'名称だけでは意味を特定できない'],
+[8,'下呂温泉　森山館　紗々羅',35.80629,137.244891,'名称だけでは意味を特定できない'],
+[9,'貝殻だらけの壁',26.216139,127.680258,'名称だけでは意味を特定できない'],
+[10,'つくば温泉 喜楽里 別邸',36.074703,140.083684,'名称だけでは意味を特定できない'],
+[11,'地下道に描かれた海中壁画',35.799804,137.255319,'複数カテゴリに見える'],
+[12,'オール・デザイン・アーキテクト',26.210875,127.692065,'名称だけでは意味を特定できない'],
+[13,'野中石油',35.803349,137.245703,'名称だけでは意味を特定できない'],
+[14,'エーテー測地試錐',41.782083,140.750018,'名称だけでは意味を特定できない'],
+[15,'ひのき屋',33.566474,133.508196,'名称だけでは意味を特定できない'],
+[16,'函館市民憲章',41.784121,140.748235,'名称だけでは意味を特定できない'],
+[17,'コリーヌプラス',33.551574,133.48848,'名称だけでは意味を特定できない'],
+[18,'宮本公民館横のお堂',35.807883,137.248906,'複数カテゴリに見える'],
+[19,'仲佐',35.804996,137.245253,'名称だけでは意味を特定できない'],
+[20,'Suihouen',35.809208,137.248929,'名称だけでは意味を特定できない'],
+[21,'食彩小春日和',33.549795,133.505742,'名称だけでは意味を特定できない'],
+[22,'水の神様',35.798985,137.258609,'名称だけでは意味を特定できない'],
+[23,'おく実庵',33.549177,133.505699,'名称だけでは意味を特定できない'],
+[24,'MALICE（マリス）',41.79189,140.743634,'名称だけでは意味を特定できない'],
+[25,'ライオンズマンション久茂地のシーサー',26.219335,127.682276,'複数カテゴリに見える'],
+[26,'「歓迎 日本の三名泉 下呂温泉」看板',35.802587,137.250969,'名称だけでは意味を特定できない'],
+[27,'鮪と米',36.083567,140.083845,'名称だけでは意味を特定できない'],
+[28,'和花',33.55075,133.487419,'名称だけでは意味を特定できない'],
+[29,'宮城マンションシーサー',26.220419,127.692131,'複数カテゴリに見える'],
+[30,'美蓉館',33.557494,133.501648,'名称だけでは意味を特定できない'],
+[31,'Beautiful Glass',26.217293,127.689553,'名称だけでは意味を特定できない'],
+[32,'人の喜びを我が喜びに',26.212781,127.690374,'名称だけでは意味を特定できない'],
+[33,'タイセイホームイエのコト',33.566976,133.499046,'名称だけでは意味を特定できない'],
+[34,'ネクスト',41.793108,140.752773,'名称だけでは意味を特定できない'],
+[35,'Tatoo AJITO',26.216789,127.683265,'名称だけでは意味を特定できない'],
+[36,'Gun from Russia',41.781865,140.767952,'名称だけでは意味を特定できない'],
+[37,'イルカの置物',33.552726,133.504202,'名称だけでは意味を特定できない'],
+[38,'あじさい',41.794633,140.753332,'名称だけでは意味を特定できない'],
+[39,'一等水準点',36.091984,140.100076,'名称だけでは意味を特定できない'],
+[40,'下呂温泉',35.80874,137.241213,'名称だけでは意味を特定できない'],
+[41,'Le vélo APEX',26.214374,127.695894,'名称だけでは意味を特定できない'],
+[42,'まめぽっと',36.089544,140.099343,'名称だけでは意味を特定できない'],
+[43,'きたじ',33.556314,133.516728,'名称だけでは意味を特定できない'],
+[44,'とり勝',41.787495,140.770951,'名称だけでは意味を特定できない'],
+[45,'幡龍',41.790914,140.738293,'名称だけでは意味を特定できない'],
+[46,'JOUR',33.548426,133.49546,'名称だけでは意味を特定できない'],
+[47,'OKINAWA-21 陽満ちて',26.215011,127.677946,'名称だけでは意味を特定できない'],
+[48,'パンプチ',35.808803,137.23815,'名称だけでは意味を特定できない'],
+[49,'浜田自動車',33.558723,133.504396,'名称だけでは意味を特定できない'],
+[50,'ライオンズマンション松山のシーサー',26.221138,127.680236,'複数カテゴリに見える'],
+[51,'みちくさ',35.801076,137.249464,'名称だけでは意味を特定できない'],
+[52,'BRAN',41.783594,140.765591,'名称だけでは意味を特定できない'],
+[53,'キッチンひまわり',41.798892,140.764475,'名称だけでは意味を特定できない'],
+[54,'福狸',41.785986,140.735842,'名称だけでは意味を特定できない'],
+[55,'リスの乗り物',33.554892,133.507282,'名称だけでは意味を特定できない'],
+[56,'五稜郭風致・保健保安林',41.797258,140.764533,'名称だけでは意味を特定できない'],
+[57,'旧大戸家住宅',35.807624,137.247987,'複数カテゴリに見える'],
+[58,'下呂温泉マンホール',35.806946,137.242922,'名称だけでは意味を特定できない'],
+[59,'わらいえん',26.210513,127.67789,'名称だけでは意味を特定できない'],
+[60,'つくば駅案内表示　徒歩72.0kcal',36.089308,140.100484,'名称だけでは意味を特定できない'],
+[61,'おきなわ屋',26.215443,127.685303,'名称だけでは意味を特定できない'],
+[62,'シュガー・シャック',26.214796,127.682735,'名称だけでは意味を特定できない'],
+[63,'山こじき',41.791972,140.756446,'名称だけでは意味を特定できない'],
+[64,'CYBERDYNE',36.081782,140.08183,'名称だけでは意味を特定できない'],
+[65,'歳時記の森',35.80799,137.249695,'名称だけでは意味を特定できない'],
+[66,'若き星たち',41.792801,140.752013,'名称だけでは意味を特定できない'],
+[67,'下呂市総合観光案内所',35.805532,137.239512,'名称だけでは意味を特定できない'],
+[68,'Caterpillar',26.218283,127.677338,'名称だけでは意味を特定できない'],
+[69,'アドバンス総合広告',41.793959,140.757721,'名称だけでは意味を特定できない'],
+[70,'KAWAMURA',33.567523,133.51432,'名称だけでは意味を特定できない'],
+[71,'パティスリーAKIRA',41.782465,140.757393,'名称だけでは意味を特定できない'],
+[72,'年老いたサトコちゃん',26.210812,127.680185,'名称だけでは意味を特定できない'],
+[73,'段ちがい渡り',33.552837,133.509149,'名称だけでは意味を特定できない'],
+[74,'下呂温泉しらさぎマンホール',35.798202,137.248705,'名称だけでは意味を特定できない'],
+[75,'イーアスつくば カツラギロード中央',36.086268,140.084689,'名称だけでは意味を特定できない'],
+[76,'風について',26.214,127.678166,'名称だけでは意味を特定できない'],
+[77,'那覇めがね。',26.216701,127.692695,'名称だけでは意味を特定できない'],
+[78,'歓迎 下呂温泉',35.808309,137.246368,'名称だけでは意味を特定できない'],
+[79,'来夢の杜',36.085526,140.080869,'名称だけでは意味を特定できない'],
+[80,'笑う牛',26.222203,127.679242,'名称だけでは意味を特定できない'],
+[81,'えーご君',35.809338,137.242034,'名称だけでは意味を特定できない'],
+[82,'カラフルな窓',41.789885,140.739191,'名称だけでは意味を特定できない'],
+[83,'足ツボコーナー',33.560474,133.516363,'名称だけでは意味を特定できない'],
+[84,'つくば市の願い',36.08252,140.082629,'名称だけでは意味を特定できない'],
+[85,'大きなヘルメット',26.216974,127.692841,'名称だけでは意味を特定できない'],
+[86,'クリスタル',33.565254,133.494655,'名称だけでは意味を特定できない'],
+[87,'肴処・味感',26.218694,127.682265,'名称だけでは意味を特定できない'],
+[88,'ウィザードの隠れ家',36.090056,140.0748,'名称だけでは意味を特定できない'],
+[89,'フィットネススタジオD-BOX つくば ダイエットジム',36.081532,140.083555,'名称だけでは意味を特定できない'],
+[90,'Shissa Compass',26.213925,127.689698,'名称だけでは意味を特定できない'],
+[91,'アイズ',41.789288,140.745598,'名称だけでは意味を特定できない'],
+[92,"happy time's",33.562662,133.508445,'名称だけでは意味を特定できない'],
+[93,'お天狗様',33.546799,133.496437,'名称だけでは意味を特定できない'],
+[94,'ガウディ',33.550052,133.511002,'名称だけでは意味を特定できない'],
+[95,'学園の森ショッピングエリアの看板',36.090299,140.075629,'名称だけでは意味を特定できない'],
+[96,'蕎麦処　法扇',35.805724,137.244846,'名称だけでは意味を特定できない'],
+[97,'BAR FATE',26.218147,127.692617,'名称だけでは意味を特定できない'],
+[98,'岩ヶ淵の森及びその裏山',33.56511,133.483899,'名称だけでは意味を特定できない'],
+[99,'中村活版印刷所',26.215944,127.683277,'名称だけでは意味を特定できない'],
+[100,'八大龍王神 函館分宮',41.785128,140.754524,'名称だけでは意味を特定できない'],
+[101,'あしゃぎ',26.216123,127.677296,'名称だけでは意味を特定できない'],
+[102,'筑波こどものこころクリニック',36.09187,140.099691,'名称だけでは意味を特定できない'],
+[103,'興洋不動産',36.074926,140.093371,'名称だけでは意味を特定できない'],
+[104,'Open-air theater',26.209744,127.676861,'名称だけでは意味を特定できない'],
+[105,'こばと作業所',33.552041,133.492063,'名称だけでは意味を特定できない'],
+[106,'手作り惣菜お弁当いろは',41.781567,140.758182,'名称だけでは意味を特定できない'],
+[107,'鉄板王におれはなるっ!!!',33.551273,133.489239,'名称だけでは意味を特定できない'],
+[108,'千代田コンサルタント',26.208446,127.685797,'名称だけでは意味を特定できない'],
+[109,'ミモザフラワーショップ',33.547826,133.504893,'名称だけでは意味を特定できない'],
+[110,'ちょちょっ',33.568514,133.50588,'名称だけでは意味を特定できない'],
+[111,'Asian Bar RAMAI 五稜郭',41.793815,140.751863,'名称だけでは意味を特定できない'],
+[112,'セイコーマート函館柏木',41.783722,140.764923,'名称だけでは意味を特定できない'],
+[113,'ロケットのマンホール',36.081538,140.091097,'名称だけでは意味を特定できない'],
+[114,'阿蘇お食事処',26.21756,127.679386,'名称だけでは意味を特定できない'],
+[115,'日本三名泉 発祥之地',35.809494,137.241281,'名称だけでは意味を特定できない'],
+[116,'合掌村 うまや（馬屋）',35.808409,137.249676,'名称だけでは意味を特定できない'],
+[117,'本町の道祖神',35.80487,137.243483,'名称だけでは意味を特定できない'],
+[118,'下呂温泉巨大灯篭',35.809835,137.240674,'名称だけでは意味を特定できない'],
+[119,'トラットリア ルッソ',36.083435,140.084592,'名称だけでは意味を特定できない'],
+[120,'岸本情報システム',26.209299,127.683365,'名称だけでは意味を特定できない']
 ];
-let sessionNo=1;let current=[];const answers={};
+let batchNo=1;let current=[];const answers={};const seen=new Set();
 const cards=document.getElementById('cards'),progress=document.getElementById('progress'),sessionLabel=document.getElementById('sessionLabel'),summary=document.getElementById('summary'),summaryBody=document.getElementById('summaryBody');
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
-function shuffle(a){const r=[...a];for(let i=r.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[r[i],r[j]]=[r[j],r[i]]}return r}
-function newBatch(){current=shuffle(POOL).slice(0,20);sessionLabel.textContent=`レビュー ${sessionNo}回目`;summary.classList.remove('show');renderCards()}
-function streetUrl(lat,lng){return `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${encodeURIComponent(lat+','+lng)}`}
-function renderCards(){cards.innerHTML='';current.forEach(([seq,bucket,name,lat,lng],index)=>{const card=document.createElement('article');card.className='card';card.innerHTML=`<div class="num">No.${index+1} / SAMPLE ${seq}</div><div class="poi-line"><div class="poi">${esc(name)}</div><a class="streetview" href="${streetUrl(lat,lng)}" target="_blank" rel="noopener noreferrer">Street View ↗</a></div><div class="hint">自動推定（参考）: <b>${esc(LABELS[bucket])}</b></div><div class="choices"></div>`;const box=card.querySelector('.choices');CATS.forEach(cat=>{const bt=document.createElement('button');bt.className='choice'+(cat==='保留'?' hold':'')+(answers[seq]===cat?' selected':'');bt.textContent=cat;bt.onclick=()=>{answers[seq]=cat;renderCards()};box.appendChild(bt)});const reset=document.createElement('button');reset.className='choice reset-answer';reset.textContent='この回答をリセット';reset.disabled=!answers[seq];reset.onclick=()=>{delete answers[seq];renderCards()};box.appendChild(reset);cards.appendChild(card)});const answered=current.filter(([seq])=>answers[seq]).length;progress.textContent=`${answered} / 20件回答`}
-document.getElementById('newBatch').onclick=()=>{sessionNo+=1;newBatch()};
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function pickBatch(){let available=POOL.filter(x=>!seen.has(x[0]));if(available.length<20){seen.clear();available=[...POOL]}current=shuffle([...available]).slice(0,20);current.forEach(x=>seen.add(x[0]));summary.classList.remove('show');renderCards()}
+function streetViewUrl(lat,lng){return `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${encodeURIComponent(lat+','+lng)}`}
+function renderCards(){cards.innerHTML='';current.forEach(([seq,name,lat,lng,reason])=>{const card=document.createElement('article');card.className='card';card.innerHTML=`<div class="num">候補 No.${seq}</div><div class="poi-line"><div class="poi">${esc(name)}</div><a class="streetview" href="${streetViewUrl(lat,lng)}" target="_blank" rel="noopener noreferrer">Street View ↗</a></div><div class="reason">人レビューへ回した理由：<b>${esc(reason)}</b></div><div class="choices"></div>`;const box=card.querySelector('.choices');CATS.forEach(cat=>{const bt=document.createElement('button');bt.className='choice'+(cat==='保留'?' hold':'')+(answers[seq]===cat?' selected':'');bt.textContent=cat;bt.onclick=()=>{answers[seq]=cat;renderCards()};box.appendChild(bt)});const reset=document.createElement('button');reset.className='choice reset-answer';reset.textContent='この回答をリセット';reset.disabled=!answers[seq];reset.onclick=()=>{delete answers[seq];renderCards()};box.appendChild(reset);cards.appendChild(card)});const answered=current.filter(([seq])=>answers[seq]).length;progress.textContent=`${answered} / 20件回答`;sessionLabel.textContent=`レビュー ${batchNo}回目`}
+document.getElementById('newBatch').onclick=()=>{batchNo++;pickBatch()};
 document.getElementById('resetAll').onclick=()=>{current.forEach(([seq])=>delete answers[seq]);summary.classList.remove('show');renderCards()};
-document.getElementById('summaryBtn').onclick=()=>{let rows=current.map(([seq,bucket,name])=>`<tr><td>${esc(name)}</td><td>${esc(LABELS[bucket])}</td><td><b>${esc(answers[seq]||'未回答')}</b></td></tr>`).join('');summaryBody.innerHTML=`<p class="note">確認用表示です。送信・保存はされません。</p><table><thead><tr><th>POI</th><th>自動推定</th><th>あなたの分類</th></tr></thead><tbody>${rows}</tbody></table>`;summary.classList.add('show');summary.scrollIntoView({behavior:'smooth',block:'start'})};
-newBatch();
+document.getElementById('summaryBtn').onclick=()=>{const rows=current.map(([seq,name,lat,lng,reason])=>`<tr><td>${seq}</td><td>${esc(name)}</td><td>${esc(reason)}</td><td><b>${esc(answers[seq]||'未回答')}</b></td></tr>`).join('');summaryBody.innerHTML=`<p class="note">確認用表示です。送信されません。</p><table><thead><tr><th>No.</th><th>POI</th><th>人へ回した理由</th><th>回答</th></tr></thead><tbody>${rows}</tbody></table>`;summary.classList.add('show');summary.scrollIntoView({behavior:'smooth',block:'start'})};
+pickBatch();
 </script>
 </body>
 </html>
