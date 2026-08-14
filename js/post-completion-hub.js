@@ -3,6 +3,13 @@
 
   const STYLE_ID = 'postCompletionHubStyles';
   const HUB_CLASS = 'post-completion-hub';
+  const WORKFLOW_RESUME_KEY = 'campsiteWorkflowResumeV1';
+
+  function clearWorkflowResumeState() {
+    try {
+      localStorage.removeItem(WORKFLOW_RESUME_KEY);
+    } catch (_) {}
+  }
 
   function ensureStyles() {
     if (document.getElementById(STYLE_ID)) return;
@@ -74,18 +81,9 @@
     return true;
   }
 
-  function loadWorkflowResume() {
-    if (document.querySelector('script[data-workflow-resume]')) return;
-
-    const script = document.createElement('script');
-    script.src = 'js/workflow-resume.js?v=1';
-    script.setAttribute('data-workflow-resume', '1');
-    document.head.appendChild(script);
-  }
-
   function setup() {
+    clearWorkflowResumeState();
     ensureStyles();
-    loadWorkflowResume();
     if (enhanceReturnModal()) return;
 
     const startedAt = Date.now();
