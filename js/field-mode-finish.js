@@ -13,7 +13,7 @@
       position:fixed;
       left:10px;
       right:10px;
-      bottom:calc(84px + env(safe-area-inset-bottom));
+      bottom:var(--field-action-bottom);
       z-index:1080;
       width:min(calc(100% - 20px),540px);
       margin:0 auto;

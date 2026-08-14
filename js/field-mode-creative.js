@@ -111,7 +111,7 @@
       visibility:'visible',
       position:'fixed',
       left:'50%',
-      bottom:'calc(92px + env(safe-area-inset-bottom))',
+      bottom:'var(--field-action-bottom)',
       transform:'translateX(-50%)',
       width:'min(calc(100% - 24px), 520px)',
       gridTemplateColumns:'1fr 1fr',

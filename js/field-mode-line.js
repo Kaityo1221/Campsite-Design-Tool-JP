@@ -9,10 +9,10 @@
     document.head.appendChild(script);
   }
 
-  loadOnce('js/field-mode-area.js?v=2', 'data-field-area-loader');
-  loadOnce('js/field-mode-eraser.js?v=1', 'data-field-eraser-loader');
-  loadOnce('js/field-mode-tool-return.js?v=2', 'data-field-tool-return-loader');
-  loadOnce('js/field-mode-distance-tool.js?v=2', 'data-field-distance-tool-loader');
+  loadOnce('js/field-mode-area.js?v=3', 'data-field-area-loader');
+  loadOnce('js/field-mode-eraser.js?v=2', 'data-field-eraser-loader');
+  loadOnce('js/field-mode-tool-return.js?v=3', 'data-field-tool-return-loader');
+  loadOnce('js/field-mode-distance-tool.js?v=3', 'data-field-distance-tool-loader');
   loadOnce('js/field-mode-circle-options.js?v=5', 'data-field-circle-options-loader');
   loadOnce('js/field-mode-session-30m.js?v=2', 'data-field-session-circles-loader');
   loadOnce('js/field-mode-map-first.js?v=1', 'data-field-map-first-loader');
