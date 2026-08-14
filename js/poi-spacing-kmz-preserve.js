@@ -243,8 +243,8 @@
       create50mFolder(xml, documentNode, centers);
     }
 
-    // Existing 30m/40m layers and all other layers are preserved as-is.
-    // Only their display order relative to the circle layers is normalized.
+    // Existing 30m/40m layers and every non-circle layer stay untouched.
+    // Only the circle-layer display order is normalized.
     reorderCircleFolders(xml);
 
     return new XMLSerializer().serializeToString(xml);
@@ -303,14 +303,15 @@
 
     const blob = await zip.generateAsync({ type: "blob" });
     const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
+    const objectUrl = URL.createObjectURL(blob);
+    a.href = objectUrl;
     a.download = completedOutputName(file.name);
 
     document.body.appendChild(a);
     a.click();
     a.remove();
 
-    window.setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
   }
 
   function playSuccessSound() {
@@ -321,8 +322,8 @@
     success.play().catch(() => {});
   }
 
-  async function tryCompletedKmzAdd50mOnly() {
-    const input = document.getElementById("circleOnlyFileInput");
+  async function tryCompletedKmzAdd50mOnly(inputId, statusId) {
+    const input = document.getElementById(inputId);
     const files = Array.from(input?.files || []);
 
     if (files.length !== 1) return false;
@@ -343,7 +344,7 @@
       const patchedKml = add50mOnlyToCompletedKml(source.kmlText);
       await downloadCompletedKmzWith50m(file, source, patchedKml);
 
-      const status = document.getElementById("circleOnlyStatus");
+      const status = document.getElementById(statusId);
       if (status) {
         status.innerHTML =
           "既存レイヤー・既存円を維持しました。<br>" +
@@ -390,21 +391,44 @@
     };
   }
 
-  function wrapRegularGenerator(name) {
-    const original = window[name];
+  async function runRegularWithOrder(original, thisArg, args) {
+    const restoreOrderGuard = installCircleOrderGuard();
+    try {
+      return await original.apply(thisArg, args);
+    } finally {
+      restoreOrderGuard();
+    }
+  }
+
+  function showCompletedPatchError(error) {
+    console.error("完成KMZへの50m円追加に失敗しました。", error);
+    if (typeof window.hideLoading === "function") {
+      window.hideLoading();
+    }
+    alert(
+      "完成KMZへの50m円追加中にエラーが発生しました。\n\n" +
+      (error?.message || String(error))
+    );
+  }
+
+  function wrapMainGenerator() {
+    const original = window.generateKMZ;
     if (typeof original !== "function" || original[WRAPPED]) return;
 
     const wrapped = async function (...args) {
-      const restoreOrderGuard = installCircleOrderGuard();
       try {
-        return await original.apply(this, args);
-      } finally {
-        restoreOrderGuard();
+        const handled = await tryCompletedKmzAdd50mOnly("fileInput", "status");
+        if (handled) return;
+      } catch (error) {
+        showCompletedPatchError(error);
+        return;
       }
+
+      return runRegularWithOrder(original, this, args);
     };
 
     Object.defineProperty(wrapped, WRAPPED, { value: true });
-    window[name] = wrapped;
+    window.generateKMZ = wrapped;
   }
 
   function wrapCircleOnlyGenerator() {
@@ -413,32 +437,23 @@
 
     const wrapped = async function (...args) {
       try {
-        const handled = await tryCompletedKmzAdd50mOnly();
+        const handled = await tryCompletedKmzAdd50mOnly(
+          "circleOnlyFileInput",
+          "circleOnlyStatus"
+        );
         if (handled) return;
       } catch (error) {
-        console.error("完成KMZへの50m円追加に失敗しました。", error);
-        if (typeof window.hideLoading === "function") {
-          window.hideLoading();
-        }
-        alert(
-          "完成KMZへの50m円追加中にエラーが発生しました。\n\n" +
-          (error?.message || String(error))
-        );
+        showCompletedPatchError(error);
         return;
       }
 
-      const restoreOrderGuard = installCircleOrderGuard();
-      try {
-        return await original.apply(this, args);
-      } finally {
-        restoreOrderGuard();
-      }
+      return runRegularWithOrder(original, this, args);
     };
 
     Object.defineProperty(wrapped, WRAPPED, { value: true });
     window.generateCircleOnlyKMZ = wrapped;
   }
 
-  wrapRegularGenerator("generateKMZ");
+  wrapMainGenerator();
   wrapCircleOnlyGenerator();
 })();
