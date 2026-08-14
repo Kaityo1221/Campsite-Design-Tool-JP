@@ -27,24 +27,22 @@
   function setupPoiTypeCycler(){
     if(!newPoiButton||document.getElementById('fieldPoiTypeButton'))return;
     newPoiButton.textContent='＋ 新規設置';
-    const newPoiRect=newPoiButton.getBoundingClientRect();
-    const matchedWidth=Math.max(112,Math.round(newPoiRect.width));
-    const matchedHeight=Math.max(36,Math.round(newPoiRect.height));
-    newPoiButton.style.width=`${matchedWidth}px`;
     const button=document.createElement('button');
     poiTypeButton=button;
     button.id='fieldPoiTypeButton';
+    button.className='field-mode-poi-type';
     button.type='button';
     button.textContent=currentPoiType().short;
     button.title='タップするたびにPOI種類を切り替えます';
-    Object.assign(button.style,{position:'absolute',right:'12px',bottom:`${12+matchedHeight+3}px`,width:`${matchedWidth}px`,zIndex:'510',border:'1px solid #8a6b31',borderRadius:'999px',padding:'9px 8px',background:'rgba(255,253,247,.96)',color:'#49391e',fontWeight:'900',fontSize:'12px',boxShadow:'0 4px 12px rgba(0,0,0,.16)',whiteSpace:'nowrap'});
+    button.setAttribute('aria-label',`POI種類：${currentPoiType().label}。タップで切り替え`);
     button.addEventListener('click',()=>{
       selectedPoiTypeIndex=(selectedPoiTypeIndex+1)%POI_TYPES.length;
       button.textContent=currentPoiType().short;
+      button.setAttribute('aria-label',`POI種類：${currentPoiType().label}。タップで切り替え`);
       modeStatus.textContent=`種類：${currentPoiType().label}`;
       if(newPoiPlacementMode)updateNewPoiPlacementGuide();
     });
-    newPoiButton.parentElement.appendChild(button);
+    newPoiButton.insertAdjacentElement('beforebegin',button);
   }
   function placementLatLng(){const center=map.getCenter();return[center.lat,center.lng];}
   function updateNewPoiPlacementGuide(){

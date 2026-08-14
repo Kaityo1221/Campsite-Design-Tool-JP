@@ -38,10 +38,10 @@ try{
   fail(`field-mode-line.js 互換ローダー構文エラー: ${error.message}`);
 }
 for(const token of [
-  "loadOnce('js/field-mode-area.js?v=2'",
-  "loadOnce('js/field-mode-eraser.js?v=1'",
-  "loadOnce('js/field-mode-tool-return.js?v=2'",
-  "loadOnce('js/field-mode-distance-tool.js?v=2'"
+  "loadOnce('js/field-mode-area.js?v=3'",
+  "loadOnce('js/field-mode-eraser.js?v=2'",
+  "loadOnce('js/field-mode-tool-return.js?v=3'",
+  "loadOnce('js/field-mode-distance-tool.js?v=3'"
 ]){
   if(!loaderJs.includes(token))fail(`現地モード互換ローダーが欠けています: ${token}`);
   else pass(`現地モード互換ローダーOK: ${token}`);

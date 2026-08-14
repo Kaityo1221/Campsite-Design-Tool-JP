@@ -25,7 +25,7 @@
       controls=document.createElement('div');
       controls.id='fieldModeDistanceActions';
       Object.assign(controls.style,{
-        display:'none',position:'fixed',left:'50%',bottom:'calc(92px + env(safe-area-inset-bottom))',
+        display:'none',position:'fixed',left:'50%',bottom:'var(--field-action-bottom)',
         transform:'translateX(-50%)',width:'min(calc(100% - 24px), 520px)',gridTemplateColumns:'1fr',gap:'8px',
         padding:'8px',border:'1px solid rgba(73,57,30,.24)',borderRadius:'16px',background:'rgba(59,49,37,.94)',
         boxShadow:'0 5px 16px rgba(0,0,0,.22)',backdropFilter:'blur(8px)',zIndex:'1200'

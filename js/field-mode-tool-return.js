@@ -70,10 +70,9 @@
       Object.assign(button.style,{
         display:'none',
         position:'fixed',
-        left:'50%',
-        bottom:'calc(154px + env(safe-area-inset-bottom))',
-        transform:'translateX(-50%)',
-        width:'min(calc(100% - 56px), 340px)',
+        left:'12px',
+        bottom:'var(--field-action-bottom)',
+        width:'min(124px, calc(50% - 22px))',
         minHeight:'42px',
         zIndex:'1175',
         border:'1px solid #b89a57',
@@ -127,7 +126,7 @@
     ensureEraserCancel();
     normalizeAreaCancel();
     if(poiCancelButton){
-      const shouldShow=activeTool()==='poi';
+      const shouldShow=activeTool()==='poi'&&!document.body.classList.contains('field-creative-menu-open');
       const next=shouldShow?'block':'none';
       if(poiCancelButton.style.display!==next)poiCancelButton.style.display=next;
     }
@@ -142,7 +141,7 @@
   },true);
 
   const observer=new MutationObserver(sync);
-  observer.observe(document.body,{childList:true,subtree:true});
+  observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
   setInterval(sync,300);
   sync();
 
