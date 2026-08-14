@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta name="robots" content="noindex,nofollow">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>未分類POIレビュー | Campsite Lab</title>
+<style>
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#09111f;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}iframe{width:100%;height:100%;border:0;display:block}.submit-wrap{position:fixed;right:max(14px,env(safe-area-inset-right));bottom:calc(18px + env(safe-area-inset-bottom));z-index:2000;display:flex;flex-direction:column;align-items:flex-end;gap:7px}#submitStatus{max-width:min(78vw,420px);padding:8px 11px;border-radius:10px;background:rgba(7,16,30,.9);color:#dbeafe;font-size:12px;line-height:1.45;display:none;box-shadow:0 8px 22px rgba(0,0,0,.3)}#submitReview{min-height:50px;padding:0 20px;border:1px solid #22d3ee;border-radius:999px;background:rgba(8,145,178,.94);color:#fff;font-size:15px;font-weight:900;box-shadow:0 10px 28px rgba(0,0,0,.38);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}#submitReview:disabled{opacity:.55}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<iframe id="reviewFrame" src="poi-review-preview.html" title="未分類POIレビュー"></iframe>
+<div class="submit-wrap"><div id="submitStatus"></div><button id="submitReview" type="button">レビューを送信</button></div>
+<script>
+const db=window.supabase.createClient('https://azkshxjgsbtjgwbapcfw.supabase.co','sb_publishable_rWbeIqdWJJHHBtphER8bdg__CaS_xGK');
+const frame=document.getElementById('reviewFrame'),button=document.getElementById('submitReview'),statusBox=document.getElementById('submitStatus');
+function status(text,error=false){statusBox.textContent=text;statusBox.style.display='block';statusBox.style.color=error?'#fecaca':'#dbeafe';}
+function getRows(){const doc=frame.contentDocument;if(!doc)return[];return[...doc.querySelectorAll('.card')].map(card=>{const num=(card.querySelector('.num')?.textContent||'').match(/No\.(\d+)/)?.[1]||'';const name=(card.querySelector('.poi')?.textContent||'').trim();const selected=card.querySelector('.choice.selected');return{num,name,category:selected?(selected.textContent||'').trim():''};});}
+button.addEventListener('click',async()=>{const rows=getRows();if(rows.length!==20){status('レビュー20件を読み込めませんでした。ページを再読み込みしてください。',true);return;}const unanswered=rows.filter(r=>!r.category);if(unanswered.length){alert(`未回答が ${unanswered.length}件 あります。\nすべて回答してから送信してください。`);status(`⚠️ 未回答 ${unanswered.length}件。送信していません。`,true);return;}let reviewer=localStorage.getItem('campsitePoiReviewerName')||'';if(!reviewer){reviewer=(prompt('レビューする方のお名前を入力してください。\n例：JUNPOKO、ると、中野')||'').trim();if(!reviewer)return;localStorage.setItem('campsitePoiReviewerName',reviewer);}if(!confirm(`${reviewer}さんのレビュー20件を送信します。よろしいですか？`))return;button.disabled=true;status('送信中…');const batch=`adv-unclassified-${new Date().toISOString().replace(/[-:.TZ]/g,'').slice(0,14)}`;const now=new Date().toISOString();const payload=rows.map(r=>({test_batch_id:batch,park_key:'adv-unclassified-poi',park_name:'ADV 未分類POI',source_queue_id:null,poi_name:r.name,normalized_name:r.name.normalize('NFKC').trim().toLowerCase(),sample_lat:null,sample_lng:null,reviewer_name:reviewer,reviewer_type:'ca',selected_category:r.category,confidence:null,review_note:`preview_no:${r.num}`,reviewed_at:now}));const{error}=await db.from('poi_review_test_results').insert(payload);if(error){console.error(error);status('送信に失敗しました。回答は残っています。もう一度お試しください。',true);button.disabled=false;return;}status('✅ 20件を送信しました。');button.textContent='送信済み';setTimeout(()=>{button.disabled=false;button.textContent='レビューを送信';frame.contentDocument?.getElementById('newBatch')?.click();statusBox.style.display='none';},1200);});
+</script>
+</body>
+</html>
