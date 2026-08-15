@@ -1,0 +1,33 @@
+name: distance-mobile-cache-bump
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/cache-bump-mobile-distance.yml'
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Bump cache versions
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('js/kmz-upload.js')
+          s = p.read_text()
+          s = s.replace('poi-spacing-policy-ui.js?v=5', 'poi-spacing-policy-ui.js?v=6')
+          p.write_text(s)
+          p = Path('index.html')
+          s = p.read_text()
+          s = s.replace('js/kmz-upload.js?v=3', 'js/kmz-upload.js?v=4')
+          p.write_text(s)
+          PY
+          rm -f .github/workflows/cache-bump-mobile-distance.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html js/kmz-upload.js .github/workflows/cache-bump-mobile-distance.yml
+          git commit -m 'Bump distance mobile fix cache' || exit 0
+          git push
