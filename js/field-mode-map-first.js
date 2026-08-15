@@ -55,10 +55,19 @@
   body.prepend(entry);
 
   const slot=entry.querySelector('#fieldModeEntryFileSlot');
+  const card=entry.querySelector('.field-mode-entry-card');
   const state=entry.querySelector('#fieldModeEntryFileState');
   const startButton=entry.querySelector('#fieldModeEntryStart');
   const hint=entry.querySelector('#fieldModeEntryHint');
   slot.appendChild(fileInput);
+
+  function adoptSessionUi(){
+    const panel=document.getElementById('fieldModeResumePanel');
+    const sessionStatus=document.getElementById('fieldModeSessionStatus');
+    if(panel&&panel.parentElement!==card)card.appendChild(panel);
+    if(sessionStatus&&sessionStatus.parentElement!==card)card.appendChild(sessionStatus);
+    return !!panel;
+  }
 
   function syncEntry(){
     const text=(fileStatus?.textContent||'').trim();
@@ -98,7 +107,7 @@
     body.classList.add('field-mode-entry-started');
     if(undoButton){undoButton.textContent='↶ 元に戻す';undoButton.setAttribute('aria-label','元に戻す');}
     if(redoButton){redoButton.textContent='やり直す ↷';redoButton.setAttribute('aria-label','やり直す');}
-    if(newPoiButton)newPoiButton.style.display='none';
+    if(newPoiButton)newPoiButton.style.display='';
     if(locationBadge&&!locationBadge.dataset.recenterBound){
       locationBadge.dataset.recenterBound='1';
       locationBadge.setAttribute('role','button');
@@ -134,9 +143,12 @@
 
   const toolboxTimer=setInterval(()=>{syncToolbox();if(document.getElementById('fieldModeCreativeButton'))clearInterval(toolboxTimer);},50);
   setTimeout(()=>clearInterval(toolboxTimer),5000);
+  const sessionUiTimer=setInterval(()=>{if(adoptSessionUi())clearInterval(sessionUiTimer);},50);
+  setTimeout(()=>clearInterval(sessionUiTimer),5000);
   window.addEventListener('resize',()=>{if(entry.hidden)invalidateMap();});
   window.addEventListener('orientationchange',()=>{if(entry.hidden)invalidateMap();});
 
+  adoptSessionUi();
   syncEntry();
   syncToolbox();
 })();
