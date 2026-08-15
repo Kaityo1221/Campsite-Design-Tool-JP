@@ -2,6 +2,7 @@
    50m KMZ generation guard
    - 50m circle layer is always included in generated KMZ
    - 30m / 40m remain optional reference layers
+   - Warns when generated KMZ approaches My Maps 5MB import limit
    - Works after the legacy generateKMZ safety wrapper
 ====================================================== */
 
@@ -10,6 +11,8 @@
 
   const KML_NS = "http://www.opengis.net/kml/2.2";
   const WRAPPED = "__poiSpacingKmz50GuardWrapped";
+  const MY_MAPS_LIMIT_BYTES = 5_000_000;
+  const MY_MAPS_WARNING_BYTES = 4_500_000;
 
   function directChildText(element, tagName) {
     if (!element) return "";
@@ -317,7 +320,59 @@
     };
   }
 
-  function installZipGuard(options) {
+  function formatMb(bytes) {
+    return (Number(bytes || 0) / 1_000_000).toFixed(2);
+  }
+
+  function getSizeState(bytes) {
+    if (bytes > MY_MAPS_LIMIT_BYTES) return "over";
+    if (bytes >= MY_MAPS_WARNING_BYTES) return "warning";
+    return "safe";
+  }
+
+  function showSizeAlert(bytes) {
+    const state = getSizeState(bytes);
+    const size = formatMb(bytes);
+
+    if (state === "over") {
+      alert(
+`⚠️ My Mapsの5MB上限を超えています\n\n生成KMZ：${size}MB\n\nGoogle My Mapsへインポートできない可能性があります。\n50m円は原則のため残し、30m・40m円のチェックを外して再生成してください。`
+      );
+    } else if (state === "warning") {
+      alert(
+`⚠️ KMZサイズが5MB上限に近づいています\n\n生成KMZ：${size}MB\n\nGoogle My Mapsの5MB上限まで余裕が少なくなっています。\n必要がなければ30m・40m円を減らすことをおすすめします。`
+      );
+    }
+  }
+
+  function appendSizeStatus(statusId, sizeInfo) {
+    if (!sizeInfo) return;
+
+    const status = document.getElementById(statusId);
+    if (!status) return;
+
+    const size = formatMb(sizeInfo.bytes);
+    const state = getSizeState(sizeInfo.bytes);
+    let message = `KMZサイズ：${size}MB`;
+
+    if (state === "safe") {
+      message += "（My Maps 5MB上限以内）";
+    } else if (state === "warning") {
+      message += "（⚠️ 5MB上限に近づいています）";
+    } else {
+      message += "（⚠️ My Maps 5MB上限超過）";
+    }
+
+    const line = document.createElement("div");
+    line.dataset.kmzSizeGuard = "true";
+    line.textContent = message;
+
+    status.querySelector('[data-kmz-size-guard="true"]')?.remove();
+    status.appendChild(document.createElement("br"));
+    status.appendChild(line);
+  }
+
+  function installZipGuard(options, sizeInfo) {
     const Zip = window.JSZip;
     const prototype = Zip?.prototype;
 
@@ -340,7 +395,14 @@
         throw error;
       }
 
-      return originalGenerateAsync.apply(this, args);
+      const result = await originalGenerateAsync.apply(this, args);
+
+      if (result && typeof result.size === "number") {
+        sizeInfo.bytes = result.size;
+        showSizeAlert(result.size);
+      }
+
+      return result;
     };
 
     return () => {
@@ -361,6 +423,7 @@
       const keep40 = Boolean(input40?.checked);
       const keep30 = Boolean(input30?.checked);
       const restore50 = force50Checkbox(groupName);
+      const sizeInfo = { bytes: null };
 
       let seeded40 = false;
       if (circleOnly && !keep40 && !keep30 && input40) {
@@ -368,10 +431,12 @@
         seeded40 = true;
       }
 
-      const restoreZip = installZipGuard({ keep40, keep30 });
+      const restoreZip = installZipGuard({ keep40, keep30 }, sizeInfo);
 
       try {
-        return await original.apply(this, args);
+        const result = await original.apply(this, args);
+        appendSizeStatus(circleOnly ? "circleOnlyStatus" : "status", sizeInfo);
+        return result;
       } finally {
         restoreZip();
         restore50();
