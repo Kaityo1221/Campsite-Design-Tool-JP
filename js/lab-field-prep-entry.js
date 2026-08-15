@@ -25,6 +25,20 @@
     entry.style.whiteSpace = 'nowrap';
   }
 
+  function placeFieldEntry(header) {
+    const fieldEntry = header.querySelector('a[href="field-mode.html"]');
+    if (!fieldEntry) return;
+
+    // FIELDは右側のPOIレビュー群から切り離し、左側の独立した段に置く。
+    fieldEntry.style.display = 'flex';
+    fieldEntry.style.width = 'fit-content';
+    fieldEntry.style.margin = '74px 0 0';
+    fieldEntry.style.position = 'relative';
+    fieldEntry.style.left = '0';
+    fieldEntry.style.top = '0';
+    fieldEntry.style.zIndex = '2';
+  }
+
   function addLabHeaderEntries() {
     const header = document.querySelector('.lab-standalone-header');
     if (!header) return;
@@ -43,6 +57,8 @@
       header.appendChild(reviewEntry);
     }
     placeRightStack(reviewEntry, 42, '48vw');
+
+    placeFieldEntry(header);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', addLabHeaderEntries, { once: true });

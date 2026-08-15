@@ -181,13 +181,121 @@
 
     const note = checks.querySelector("p.note");
     if (note) {
-      note.textContent = "POI間隔は50mを目安に設計してください。30m・40mは参考距離です。";
+      note.textContent = "POI間隔は原則50mです。30m・40mは参考距離です。";
     }
+  }
+
+  function installDistanceResult50mUi() {
+    window.normalizeJudgementSection = function normalizeJudgementSection50m(section) {
+      if (!section) return;
+      const card = section.querySelector(".distance-warning");
+      if (!card) return;
+
+      const text = card.textContent || "";
+      const dense = Number(text.match(/20m未満（密集）\s*：\s*(\d+)件/)?.[1] || 0);
+      const stay = Number(text.match(/20〜30m（滞留）\s*：\s*(\d+)件/)?.[1] || 0);
+      const near50 = Number(
+        text.match(/30〜50m(?:（参考距離）)?\s*：\s*(\d+)件/)?.[1] ||
+        text.match(/30m〜50m未満(?:（要確認）)?\s*：\s*(\d+)件/)?.[1] ||
+        text.match(/30〜40m（軽微）\s*：\s*(\d+)件/)?.[1] ||
+        0
+      );
+      const actionableTotal = dense + stay + near50;
+
+      let status = "問題なし";
+      let icon = "✅";
+      let color = "#22c55e";
+
+      if (dense + stay > 0) {
+        status = "要修正";
+        icon = "⚠";
+        color = "#ef4444";
+      } else if (near50 > 0) {
+        status = "50m未満あり";
+        icon = "△";
+        color = "#f59e0b";
+      }
+
+      card.style.borderColor = color;
+      card.innerHTML = `
+        <strong style="color:${color};font-size:20px;">
+          ${icon} 判定結果：${status}
+        </strong><br><br>
+        20m未満（密集）：${dense}件<br>
+        20〜30m（滞留）：${stay}件<br>
+        30〜50m未満（要確認）：${near50}件<br>
+        50m未満合計：${actionableTotal}件<br><br>
+        ${actionableTotal === 0
+          ? "追加・変更対象の50m未満の組み合わせはありません。"
+          : "追加・変更対象に関係する50m未満の組み合わせがあります。詳細を開き、対象POIと地図を確認してください。"}
+      `;
+    };
+
+    const rankGuide = document.querySelector("#distance .rank-guide-box");
+    if (rankGuide) {
+      rankGuide.innerHTML = `
+        <strong>距離判定の見方</strong><br><br>
+        🔴 20m未満：密集。配置の見直しが必要です。<br><br>
+        🟠 20m以上30m未満：滞留。配置の見直しが必要です。<br><br>
+        🟡 30m以上50m未満：要確認。POI間隔は原則50mです。<br><br>
+        ⚪ 50m以上：原則となる間隔を満たしています。<br><br>
+        <span style="opacity:.85;">※30m・40mは距離確認のための参考値です。</span>
+      `;
+    }
+  }
+
+  function normalizeRenderedDistanceResult() {
+    const result = document.getElementById("distanceResult");
+    if (!result || !result.children.length) return;
+
+    const sections = Array.from(result.querySelectorAll(".distance-result-section"));
+    const judgementSection = sections.find(section => {
+      const heading = section.querySelector(".distance-result-heading");
+      return (heading?.textContent || "").includes("判定結果");
+    });
+
+    if (judgementSection) {
+      window.normalizeJudgementSection?.(judgementSection);
+      return;
+    }
+
+    const cards = Array.from(result.querySelectorAll(".distance-warning"));
+    const legacyCard = cards.find(card => {
+      const text = card.textContent || "";
+      return text.includes("判定結果") && (
+        text.includes("40m未満合計") ||
+        text.includes("30〜40m（軽微）") ||
+        text.includes("30〜50m（参考距離）") ||
+        text.includes("30m〜50m未満")
+      );
+    });
+
+    if (legacyCard) {
+      const wrapper = document.createElement("div");
+      legacyCard.parentNode?.insertBefore(wrapper, legacyCard);
+      wrapper.appendChild(legacyCard);
+      window.normalizeJudgementSection?.(wrapper);
+      wrapper.replaceWith(legacyCard);
+    }
+  }
+
+  function watchDistanceResult() {
+    const result = document.getElementById("distanceResult");
+    if (!result || result.dataset.poiSpacing50Observer === "true") return;
+
+    result.dataset.poiSpacing50Observer = "true";
+    const observer = new MutationObserver(() => {
+      queueMicrotask(normalizeRenderedDistanceResult);
+    });
+    observer.observe(result, { childList: true, subtree: true });
+    normalizeRenderedDistanceResult();
   }
 
   function setup() {
     ensureStyles();
     setupMainRadiusUi();
+    installDistanceResult50mUi();
+    watchDistanceResult();
   }
 
   if (document.readyState === "loading") {
