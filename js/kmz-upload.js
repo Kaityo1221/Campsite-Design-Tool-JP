@@ -373,79 +373,33 @@
       normalizeParkName(parkName)
     );
 
-    appendOptionalValue(
-      formData,
-      "poi_count",
-      metadata.poiCount
-    );
-
-    appendOptionalValue(
-      formData,
-      "existing_poi_count",
-      metadata.existingPoiCount
-    );
-
-    appendOptionalValue(
-      formData,
-      "added_poi_count",
-      metadata.addedPoiCount
-    );
-
-    appendOptionalValue(
-      formData,
-      "warning_count",
-      metadata.warningCount
-    );
-
-    appendOptionalValue(
-      formData,
-      "campsite_score",
-      metadata.campsiteScore
-    );
-
-    appendOptionalValue(
-      formData,
-      "campsite_rank",
-      metadata.campsiteRank
-    );
+    appendOptionalValue(formData, "poi_count", metadata.poiCount);
+    appendOptionalValue(formData, "existing_poi_count", metadata.existingPoiCount);
+    appendOptionalValue(formData, "added_poi_count", metadata.addedPoiCount);
+    appendOptionalValue(formData, "warning_count", metadata.warningCount);
+    appendOptionalValue(formData, "campsite_score", metadata.campsiteScore);
+    appendOptionalValue(formData, "campsite_rank", metadata.campsiteRank);
 
     try {
-      const {
-        data,
-        error
-      } = await window.campsiteSupabase.functions.invoke(
+      const { data, error } = await window.campsiteSupabase.functions.invoke(
         FUNCTION_NAME,
-        {
-          body: formData
-        }
+        { body: formData }
       );
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       if (!data || data.success !== true) {
-        throw new Error(
-          data?.error ||
-          "サーバーへの送信に失敗しました。"
-        );
+        throw new Error(data?.error || "サーバーへの送信に失敗しました。");
       }
 
       return data;
     } catch (error) {
-      console.warn(
-        "KMZ自動送信に失敗しました。",
-        error
-      );
-
+      console.warn("KMZ自動送信に失敗しました。", error);
       showUploadFailure(errorTarget);
 
       return {
         success: false,
-        error:
-          error instanceof Error
-            ? error.message
-            : String(error)
+        error: error instanceof Error ? error.message : String(error)
       };
     }
   }
@@ -454,15 +408,15 @@
 })();
 
 /* 50m POI spacing policy is loaded after the legacy KMZ/distance scripts. */
-import("./poi-spacing-config.js?v=1")
+import("./poi-spacing-config.js?v=2")
   .then(() => Promise.all([
-    import("./poi-spacing-policy.js?v=5"),
-    import("./poi-spacing-policy-filter.js?v=4"),
-    import("./poi-spacing-policy-ui.js?v=4")
+    import("./poi-spacing-policy.js?v=6"),
+    import("./poi-spacing-policy-filter.js?v=5"),
+    import("./poi-spacing-policy-ui.js?v=5")
   ]))
-  .then(() => import("./poi-spacing-kmz50-guard.js?v=2"))
-  .then(() => import("./poi-spacing-kmz-preserve.js?v=2"))
-  .then(() => import("./poi-spacing-kmz-diff.js?v=1"))
+  .then(() => import("./poi-spacing-kmz50-guard.js?v=3"))
+  .then(() => import("./poi-spacing-kmz-preserve.js?v=3"))
+  .then(() => import("./poi-spacing-kmz-diff.js?v=2"))
   .catch(error => {
     console.warn("POI距離ポリシーの読み込みに失敗しました。", error);
   });
