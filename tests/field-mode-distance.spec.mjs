@@ -26,6 +26,9 @@ async function openFieldMode(page){
   await page.goto('/field-mode.html');
   await page.locator('#fieldModeFile').setInputFiles({name:'distance.kml',mimeType:'application/vnd.google-earth.kml+xml',buffer:Buffer.from(sampleKml)});
   await expect(page.locator('#fieldModeFileStatus')).toContainText('件を読み込み');
+  await expect(page.locator('#fieldModeEntryStart')).toBeEnabled();
+  await page.locator('#fieldModeEntryStart').click();
+  await expect(page.locator('#fieldModeEntry')).toBeHidden({timeout:3000});
   await expect.poll(()=>page.evaluate(()=>!!window.FieldModeDistance&&!!window.FieldModeToolReturn)).toBe(true);
   return pageErrors;
 }
