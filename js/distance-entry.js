@@ -195,21 +195,26 @@ function normalizeJudgementSection(section) {
   const text = card.textContent || "";
   const dense = Number(text.match(/20m未満（密集）\s*：\s*(\d+)件/)?.[1] || 0);
   const stay = Number(text.match(/20〜30m（滞留）\s*：\s*(\d+)件/)?.[1] || 0);
-  const light = Number(text.match(/30〜40m（軽微）\s*：\s*(\d+)件/)?.[1] || 0);
-  const actionableTotal = dense + stay + light;
+  const near50 = Number(
+    text.match(/30〜50m(?:（参考距離）)?\s*：\s*(\d+)件/)?.[1] ||
+    text.match(/30m〜50m未満(?:（要確認）)?\s*：\s*(\d+)件/)?.[1] ||
+    text.match(/30〜40m（軽微）\s*：\s*(\d+)件/)?.[1] ||
+    0
+  );
+  const actionableTotal = dense + stay + near50;
 
   let status = "問題なし";
   let icon = "✅";
   let color = "#22c55e";
 
   if (dense + stay > 0) {
-    status = "調整あり";
+    status = "要修正";
     icon = "⚠";
     color = "#ef4444";
-  } else if (light > 0) {
-    status = "調整可能距離あり";
+  } else if (near50 > 0) {
+    status = "50m未満あり";
     icon = "△";
-    color = "#94a3b8";
+    color = "#f59e0b";
   }
 
   card.style.borderColor = color;
@@ -219,11 +224,11 @@ function normalizeJudgementSection(section) {
     </strong><br><br>
     20m未満（密集）：${dense}件<br>
     20〜30m（滞留）：${stay}件<br>
-    30〜40m（軽微）：${light}件<br>
-    40m未満合計：${actionableTotal}件<br><br>
+    30〜50m未満（要確認）：${near50}件<br>
+    50m未満合計：${actionableTotal}件<br><br>
     ${actionableTotal === 0
-      ? "追加・変更対象の40m未満の組み合わせはありません。"
-      : "追加・変更対象に関係する40m未満の組み合わせがあります。詳細チェックで対象POIを確認してください。"}
+      ? "追加・変更対象の50m未満の組み合わせはありません。"
+      : "追加・変更対象に関係する50m未満の組み合わせがあります。詳細を開き、対象POIと地図を確認してください。"}
   `;
 }
 
