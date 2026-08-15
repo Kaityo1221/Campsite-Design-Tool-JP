@@ -76,9 +76,17 @@ async function savePreparedSurveyAndReload(page) {
 
 async function addNewPoi(page, typeLabel) {
   await expect(page.locator('#fieldPoiTypeButton')).toContainText(typeLabel);
-  await page.locator('#fieldModeNewPoiButton').click();
+
+  // The visible CREATIVE MODE UI starts POI work from the toolbox. The old
+  // new-POI button remains as the internal placement engine and is hidden.
+  await page.locator('#fieldModeCreativeButton').click();
+  const poiTool = page.locator('#fieldModeCreativeHotbar [data-tool="poi"]');
+  await expect(poiTool).toBeEnabled();
+  await poiTool.click();
+
+  await page.locator('#fieldModeNewPoiButton').evaluate(button => button.click());
   await expect(page.locator('#fieldModeNewPoiButton')).toContainText('この位置に設置');
-  await page.locator('#fieldModeNewPoiButton').click();
+  await page.locator('#fieldModeNewPoiButton').evaluate(button => button.click());
   await expect(page.locator('#fieldModeSelectionTitle')).toContainText(`${typeLabel} 1`);
 }
 
@@ -134,7 +142,16 @@ test('調査ファイルから調査範囲・現地作業・完成KMZまで一�
   await expect(page).not.toHaveURL(/handoff=/, { timeout: 12000 });
   await expect(page.locator('#fieldModeFileStatus')).toContainText('件を読み込み', { timeout: 12000 });
   await expect.poll(() => page.evaluate(() => window.FieldModeSession?.hasSource?.() || false)).toBe(true);
-  await expect(page.locator('#fieldModeNewPoiButton')).toBeEnabled();
+
+  // Field Prep handoff must still pass through the explicit CREATIVE MODE entry.
+  await expect(page.locator('#fieldModeEntry')).toBeVisible();
+  await expect(page.locator('#fieldModeEntryStart')).toBeEnabled();
+  await expect(page.locator('#fieldModeEntryStart')).toHaveClass(/is-ready/);
+  await page.locator('#fieldModeEntryStart').click();
+  await expect(page.locator('#fieldModeEntry')).toBeHidden({ timeout: 3000 });
+  await expect(page.locator('body')).toHaveClass(/field-mode-entry-started/);
+
+  await expect(page.locator('#fieldModeNewPoiButton')).toBeHidden();
   await expect(page.locator('#fieldModeCreativeButton')).toBeEnabled();
 
   await addNewPoi(page, 'ポケストップ');
