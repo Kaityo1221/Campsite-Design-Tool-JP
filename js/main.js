@@ -1,7 +1,7 @@
 window.APP_VERSION = "v6.2.1";
 window.APP_UPDATED = "2026-07-07";
 window.ENABLE_QUIZ = true;
-window.QUIZ_VERSION = "beta2";
+window.QUIZ_VERSION = "beta3";
 
 let currentAliasReviewItem = null;
 let aliasReviewIsLoading = false;
