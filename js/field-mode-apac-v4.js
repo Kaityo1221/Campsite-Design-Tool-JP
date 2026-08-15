@@ -2,11 +2,11 @@
   'use strict';
 
   const MAX_ADDITIONAL_SPOTS = 25;
+  const TARGET_METERS = Number(window.CampsitePoiSpacingPolicy?.targetMeters) || 50;
   const STORE_DB = 'campsite-field-session';
   const STORE_DB_VERSION = 1;
   const STORE_NAME = 'state';
   const STORE_KEY = 'apac-v4-exceptions-v1';
-  const TARGET_METERS = Number(window.CampsitePoiSpacingPolicy?.targetMeters) || 50;
   const INSTALL_TIMEOUT_MS = 10000;
 
   let installed = false;
@@ -16,13 +16,17 @@
   let pendingExport = null;
   let pendingTimer = 0;
   let forceFinalExport = false;
-  let syncLock = false;
+  let terminologyLock = false;
   let summaryBox = null;
   let countValue = null;
+  let under50Value = null;
   let reviewValue = null;
   let circleToggle = null;
-  let designPanel = null;
   let campsiteNameInput = null;
+  let spotPanel = null;
+  let spotNameInput = null;
+  let spotTypeValue = null;
+  let spotCoordValue = null;
   let exceptionPanel = null;
   let exceptionTitle = null;
   let exceptionCopy = null;
@@ -31,12 +35,8 @@
   let exceptionReview = null;
   let exceptionConfirm = null;
   let exportOverlay = null;
-  let saveButtonObserver = null;
-  let uiObserver = null;
-  let statusObserver = null;
   let originalChangedRecords = null;
   let originalUpdateSaveButton = null;
-  let originalUpdateDistanceStatus = null;
   let originalRenderKml = null;
   let originalSelectAddedPoi = null;
   let originalResetPoiSelection = null;
@@ -46,6 +46,7 @@
     try {
       return typeof poiRecords !== 'undefined'
         && typeof meters === 'function'
+        && typeof changedRecords === 'function'
         && typeof updateSaveButton === 'function'
         && typeof updateDistanceStatus === 'function'
         && typeof renderKml === 'function'
@@ -58,6 +59,10 @@
     } catch (_) {
       return false;
     }
+  }
+
+  function setText(element, value) {
+    if (element && element.textContent !== value) element.textContent = value;
   }
 
   function validLatLng(value) {
@@ -105,8 +110,8 @@
     const lng = Number(origin[1]);
     return [
       record?.added ? 'additional' : 'existing',
+      record?.isNew ? 'new' : 'source',
       normalizedType(record),
-      String(record?.name || ''),
       Number.isFinite(lat) ? lat.toFixed(7) : '',
       Number.isFinite(lng) ? lng.toFixed(7) : ''
     ].join('|');
@@ -140,8 +145,7 @@
   }
 
   function recomputeAll({ render = true } = {}) {
-    const records = activeRecords();
-    const additions = records.filter(record => record.added);
+    const additions = additionalRecords();
     for (const record of additions) {
       const issues = issuesForPosition(record.latlng, record);
       const signature = issueSignature(issues);
@@ -157,41 +161,19 @@
     sync50mCircleVisibility();
     if (render) {
       renderSummary();
+      renderSpotPanel();
       renderExceptionPanel();
       syncFinalButton();
     }
     return additions;
   }
 
-  function reviewNeededRecords() {
-    return additionalRecords().filter(record => (record.spacingIssues || []).length && record.spacingExceptionNeedsReview);
-  }
-
   function under50Records() {
     return additionalRecords().filter(record => (record.spacingIssues || []).length);
   }
 
-  function updateDistanceStatusV4(position = null, excludedRecord = null) {
-    const badge = document.getElementById('fieldModeDistanceBadge');
-    if (!badge) return;
-    const targetPosition = validLatLng(position) ? position : null;
-    badge.className = 'field-distance-badge';
-    if (!targetPosition) {
-      badge.textContent = '● 50m確認待ち';
-      badge.dataset.distanceBand = 'waiting';
-      return;
-    }
-    const issues = issuesForPosition(targetPosition, excludedRecord);
-    if (!issues.length) {
-      badge.textContent = `● ${TARGET_METERS}m以上を確保`;
-      badge.dataset.distanceBand = 'ok';
-      return;
-    }
-    badge.classList.add('caution');
-    badge.dataset.distanceBand = 'review';
-    const nearest = issues[0];
-    const extra = issues.length > 1 ? ` ／ ほか${issues.length - 1}件` : '';
-    badge.innerHTML = `⚠ ${TARGET_METERS}m未満・要確認<br>${escapeHtml(nearest.other?.name || 'ゲームスポット')}（${nearest.role}）まで ${nearest.distance.toFixed(1)}m${extra}`;
+  function reviewNeededRecords() {
+    return under50Records().filter(record => record.spacingExceptionNeedsReview);
   }
 
   function escapeHtml(value) {
@@ -203,14 +185,39 @@
       .replace(/'/g, '&#39;');
   }
 
+  function updateDistanceStatusV4(position = null, excludedRecord = null) {
+    const badge = document.getElementById('fieldModeDistanceBadge');
+    if (!badge) return;
+    const targetPosition = validLatLng(position) ? position : null;
+    badge.className = 'field-distance-badge';
+    if (!targetPosition) {
+      setText(badge, '● 50m確認待ち');
+      badge.dataset.distanceBand = 'waiting';
+      return;
+    }
+    const issues = issuesForPosition(targetPosition, excludedRecord);
+    if (!issues.length) {
+      setText(badge, `● ${TARGET_METERS}m以上を確保`);
+      badge.dataset.distanceBand = 'ok';
+      return;
+    }
+    badge.classList.add('caution');
+    badge.dataset.distanceBand = 'review';
+    const nearest = issues[0];
+    const extra = issues.length > 1 ? ` ／ ほか${issues.length - 1}件` : '';
+    const html = `⚠ ${TARGET_METERS}m未満・要確認<br>${escapeHtml(nearest.other?.name || 'ゲームスポット')}（${nearest.role}）まで ${nearest.distance.toFixed(1)}m${extra}`;
+    if (badge.innerHTML !== html) badge.innerHTML = html;
+  }
+
   function addStyle() {
+    if (document.querySelector('style[data-field-apac-v4-style]')) return;
     const style = document.createElement('style');
     style.dataset.fieldApacV4Style = '1';
     style.textContent = `
       .field-apac-summary{position:absolute;top:64px;right:10px;z-index:670;width:min(205px,54vw);padding:8px;border:1px solid rgba(73,57,30,.25);border-radius:14px;background:rgba(255,253,247,.95);box-shadow:0 4px 13px rgba(0,0,0,.15);color:#49391e;font-size:10px;line-height:1.35}
-      .field-apac-summary-row{display:flex;justify-content:space-between;gap:8px;align-items:center}.field-apac-summary-row+ .field-apac-summary-row{margin-top:4px}.field-apac-summary strong{font-size:11px}.field-apac-summary .is-review{color:#9a531b}.field-apac-summary .is-over{color:#a23f35}
+      .field-apac-summary-row{display:flex;justify-content:space-between;gap:8px;align-items:center}.field-apac-summary-row+.field-apac-summary-row{margin-top:4px}.field-apac-summary strong{font-size:11px}.field-apac-summary .is-review{color:#9a531b}.field-apac-summary .is-over{color:#a23f35}
       .field-apac-summary-actions{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:6px}.field-apac-summary button{min-height:30px;border:1px solid #b89a57;border-radius:9px;background:#fff8e6;color:#49391e;font-size:9px;font-weight:900}
-      .field-apac-design{margin-top:10px;padding:11px;border:1px solid #d2c39f;border-radius:13px;background:#fffaf0}.field-apac-design label{display:block;font-size:11px;font-weight:900;color:#49391e}.field-apac-campsite-name{width:100%;margin-top:6px;padding:9px;border:1px solid #c9b993;border-radius:10px;background:#fff;color:#332b20;font:inherit;font-size:12px}.field-apac-guidance{margin-top:9px;font-size:10px;color:#746957;line-height:1.55}.field-apac-guidance summary{cursor:pointer;font-weight:900;color:#5a482d}.field-apac-guidance ul{padding-left:18px;margin:7px 0}.field-apac-guidance p{margin:7px 0 0}
+      .field-apac-design,.field-apac-spot{margin-top:10px;padding:11px;border:1px solid #d2c39f;border-radius:13px;background:#fffaf0}.field-apac-design label,.field-apac-spot label{display:block;font-size:11px;font-weight:900;color:#49391e}.field-apac-campsite-name,.field-apac-spot-name{width:100%;margin-top:6px;padding:9px;border:1px solid #c9b993;border-radius:10px;background:#fff;color:#332b20;font:inherit;font-size:12px}.field-apac-spot{display:none}.field-apac-spot.active{display:block}.field-apac-spot-meta{margin-top:7px;font-size:10px;line-height:1.5;color:#746957}.field-apac-guidance{margin-top:9px;font-size:10px;color:#746957;line-height:1.55}.field-apac-guidance summary{cursor:pointer;font-weight:900;color:#5a482d}.field-apac-guidance ul{padding-left:18px;margin:7px 0}.field-apac-guidance p{margin:7px 0 0}
       .field-apac-exception{display:none;margin-top:10px;padding:12px;border:1px solid #d89a4e;border-radius:13px;background:#fff8e9}.field-apac-exception.active{display:block}.field-apac-exception.resolved{border-color:#91b294;background:#f3faf2}.field-apac-exception h3{margin:0;font-size:13px;color:#694315}.field-apac-exception.resolved h3{color:#3f6844}.field-apac-exception-copy{margin-top:5px;font-size:10px;line-height:1.5;color:#746957}.field-apac-exception-list{margin:8px 0;padding-left:18px;font-size:11px;line-height:1.5}.field-apac-exception textarea{width:100%;min-height:82px;margin-top:7px;padding:9px;border:1px solid #c9b993;border-radius:10px;background:#fff;color:#332b20;font:inherit;font-size:12px;resize:vertical}.field-apac-exception button{width:100%;min-height:38px;margin-top:7px;border:1px solid #96722e;border-radius:10px;background:#d8b766;color:#34260e;font-weight:900}.field-apac-review-state{margin-top:6px;font-size:10px;font-weight:800;color:#9a531b}.field-apac-review-state.ok{color:#47725c}
       .field-apac-export-overlay{position:fixed;inset:0;z-index:9000;display:none;place-items:center;padding:24px;background:rgba(30,25,19,.68);color:#fff8e8;text-align:center;font-weight:900}.field-apac-export-overlay.active{display:grid}.field-apac-export-card{width:min(100%,380px);padding:20px;border-radius:18px;background:#443725;box-shadow:0 12px 40px rgba(0,0,0,.3)}.field-apac-export-card small{display:block;margin-top:7px;font-weight:600;opacity:.8;line-height:1.5}
       @media(max-width:340px){.field-apac-summary{width:min(190px,59vw);font-size:9px}.field-apac-summary-actions{grid-template-columns:1fr}.field-apac-summary button{min-height:27px}}
@@ -234,6 +241,7 @@
       <div class="field-apac-summary-actions"><button id="fieldApacCircleToggle" type="button">50m圏：表示中</button><button id="fieldApacReviewOpen" type="button">設計チェック</button></div>`;
     stage.appendChild(summaryBox);
     countValue = summaryBox.querySelector('#fieldApacCount');
+    under50Value = summaryBox.querySelector('#fieldApacUnder50');
     reviewValue = summaryBox.querySelector('#fieldApacReview');
     circleToggle = summaryBox.querySelector('#fieldApacCircleToggle');
     circleToggle.addEventListener('click', () => {
@@ -247,7 +255,7 @@
       document.querySelector('.field-mode-selection')?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
     });
 
-    designPanel = document.createElement('div');
+    const designPanel = document.createElement('div');
     designPanel.className = 'field-apac-design';
     designPanel.innerHTML = `
       <label for="fieldApacCampsiteName">キャンプサイト名</label>
@@ -265,6 +273,29 @@
       </details>`;
     campsiteNameInput = designPanel.querySelector('#fieldApacCampsiteName');
     campsiteNameInput.addEventListener('input', () => persistNow());
+
+    spotPanel = document.createElement('div');
+    spotPanel.id = 'fieldModeAdditionalSpotPanel';
+    spotPanel.className = 'field-apac-spot';
+    spotPanel.innerHTML = `
+      <label for="fieldApacSpotName">追加ゲームスポット名</label>
+      <input id="fieldApacSpotName" class="field-apac-spot-name" type="text" maxlength="100">
+      <div class="field-apac-spot-meta">種別：<strong id="fieldApacSpotType"></strong><br>座標：<span id="fieldApacSpotCoord"></span></div>`;
+    spotNameInput = spotPanel.querySelector('#fieldApacSpotName');
+    spotTypeValue = spotPanel.querySelector('#fieldApacSpotType');
+    spotCoordValue = spotPanel.querySelector('#fieldApacSpotCoord');
+    spotNameInput.addEventListener('input', () => {
+      if (!selectedPoi?.added || !selectedPoi.isNew) return;
+      const next = spotNameInput.value.trim();
+      if (!next) return;
+      selectedPoi.name = next;
+      try {
+        selectedPoi.marker?.bindPopup?.(`<strong>${escapeHtml(next)}</strong><br><small>${typeLabel(selectedPoi)}</small><br><b>追加ゲームスポット</b>`);
+      } catch (_) {}
+      updateSaveButton();
+      recomputeAll();
+      persistNow();
+    });
 
     exceptionPanel = document.createElement('div');
     exceptionPanel.id = 'fieldModeExceptionPanel';
@@ -294,7 +325,7 @@
       if (!selectedPoi?.added || !(selectedPoi.spacingIssues || []).length) return;
       const reason = String(exceptionReason.value || '').trim();
       if (!reason) {
-        exceptionReview.textContent = '理由を入力すると確認できます。';
+        setText(exceptionReview, '理由を入力すると確認できます。');
         exceptionReview.classList.remove('ok');
         exceptionReason.focus();
         return;
@@ -306,14 +337,15 @@
       renderExceptionReviewState(selectedPoi);
       renderSummary();
       persistNow();
-      modeStatus.textContent = '50m未満の理由を確認済み';
+      setText(modeStatus, '50m未満の理由を確認済み');
     });
 
     if (saveRow) {
       selection.insertBefore(designPanel, saveRow);
+      selection.insertBefore(spotPanel, saveRow);
       selection.insertBefore(exceptionPanel, saveRow);
     } else {
-      selection.append(designPanel, exceptionPanel);
+      selection.append(designPanel, spotPanel, exceptionPanel);
     }
 
     exportOverlay = document.createElement('div');
@@ -339,35 +371,50 @@
     const count = additionalCount();
     const under = under50Records().length;
     const needs = reviewNeededRecords().length;
-    countValue.textContent = `${count} / ${MAX_ADDITIONAL_SPOTS}`;
-    countValue.classList.toggle('is-over', count > MAX_ADDITIONAL_SPOTS);
-    summaryBox.querySelector('#fieldApacUnder50').textContent = String(under);
-    reviewValue.textContent = String(needs);
-    reviewValue.classList.toggle('is-review', needs > 0);
-    circleToggle.textContent = show50mCircles ? '50m圏：表示中' : '50m圏：非表示';
-    circleToggle.setAttribute('aria-pressed', String(show50mCircles));
+    setText(countValue, `${count} / ${MAX_ADDITIONAL_SPOTS}`);
+    countValue?.classList.toggle('is-over', count > MAX_ADDITIONAL_SPOTS);
+    setText(under50Value, String(under));
+    setText(reviewValue, String(needs));
+    reviewValue?.classList.toggle('is-review', needs > 0);
+    setText(circleToggle, show50mCircles ? '50m圏：表示中' : '50m圏：非表示');
+    circleToggle?.setAttribute('aria-pressed', String(show50mCircles));
+  }
+
+  function renderSpotPanel() {
+    if (!spotPanel) return;
+    const record = selectedPoi;
+    if (!record?.added || record.fieldDeleted) {
+      spotPanel.classList.remove('active');
+      return;
+    }
+    spotPanel.classList.add('active');
+    spotNameInput.readOnly = !record.isNew;
+    spotNameInput.title = record.isNew ? '追加ゲームスポット名を編集できます' : '読み込み済みゲームスポット名は元KMZを維持します';
+    if (document.activeElement !== spotNameInput && spotNameInput.value !== (record.name || '')) spotNameInput.value = record.name || '';
+    setText(spotTypeValue, typeLabel(record));
+    setText(spotCoordValue, `${Number(record.latlng[0]).toFixed(7)}, ${Number(record.latlng[1]).toFixed(7)}`);
   }
 
   function renderExceptionReviewState(record) {
     if (!exceptionReview || !record) return;
     const issues = record.spacingIssues || [];
     if (!issues.length) {
-      exceptionReview.textContent = '現在は50m以上です。但し書きは最終出力対象外です。';
+      setText(exceptionReview, '現在は50m以上です。但し書きは最終出力対象外です。');
       exceptionReview.classList.add('ok');
       return;
     }
     const reason = String(record.spacingExceptionReason || '').trim();
     if (!reason) {
-      exceptionReview.textContent = '但し書き未記入です。最終出力前に未記入として分かるよう表示します。';
+      setText(exceptionReview, '但し書き未記入です。最終出力前に未記入として分かるよう表示します。');
       exceptionReview.classList.remove('ok');
       return;
     }
     if (record.spacingExceptionConfirmedSignature !== record.spacingIssueSignature) {
-      exceptionReview.textContent = '位置・相手・距離条件が変わったため、理由を再確認してください。';
+      setText(exceptionReview, '位置・相手・距離条件が変わったため、理由を再確認してください。');
       exceptionReview.classList.remove('ok');
       return;
     }
-    exceptionReview.textContent = '✓ 現在の距離条件に対する理由を確認済みです。';
+    setText(exceptionReview, '✓ 現在の距離条件に対する理由を確認済みです。');
     exceptionReview.classList.add('ok');
   }
 
@@ -387,26 +434,23 @@
     exceptionPanel.classList.add('active');
     if (!issues.length) {
       exceptionPanel.classList.add('resolved');
-      exceptionTitle.textContent = '✓ 現在は50m以上です';
-      exceptionCopy.textContent = '以前入力した理由は内部に保持していますが、現在の設計では但し書き対象ではないため最終TXTには出力しません。';
-      exceptionList.innerHTML = '';
+      setText(exceptionTitle, '✓ 現在は50m以上です');
+      setText(exceptionCopy, '以前入力した理由は内部に保持していますが、現在の設計では但し書き対象ではないため最終TXTには出力しません。');
+      if (exceptionList.innerHTML) exceptionList.innerHTML = '';
       exceptionReason.style.display = 'none';
       exceptionConfirm.style.display = 'none';
       renderExceptionReviewState(record);
       return;
     }
     exceptionPanel.classList.remove('resolved');
-    exceptionTitle.textContent = `⚠ 50m未満・要確認（${issues.length}件）`;
-    exceptionCopy.textContent = '基本ルールでは50m以上の間隔を確保します。50m未満だから自動的に設置不可・不合格とは判定しません。やむを得ない事情がある場合は、なぜこの位置が必要なのかを記録してください。最終判断は運営側が行います。';
-    exceptionList.innerHTML = issues.map(issue => `<li>${escapeHtml(issue.other?.name || '名称なし')} ／ ${issue.role}・${issue.type} ／ <strong>${issue.distance.toFixed(1)}m</strong></li>`).join('');
+    setText(exceptionTitle, `⚠ 50m未満・要確認（${issues.length}件）`);
+    setText(exceptionCopy, '基本ルールでは50m以上の間隔を確保します。50m未満だから自動的に設置不可・不合格とは判定しません。やむを得ない事情がある場合は、なぜこの位置が必要なのかを記録してください。最終判断は運営側が行います。');
+    const listHtml = issues.map(issue => `<li>${escapeHtml(issue.other?.name || '名称なし')} ／ ${issue.role}・${issue.type} ／ <strong>${issue.distance.toFixed(1)}m</strong></li>`).join('');
+    if (exceptionList.innerHTML !== listHtml) exceptionList.innerHTML = listHtml;
     exceptionReason.style.display = '';
     exceptionConfirm.style.display = '';
-    if (document.activeElement !== exceptionReason && exceptionReason.value !== (record.spacingExceptionReason || '')) {
-      exceptionReason.value = record.spacingExceptionReason || '';
-    }
-    exceptionConfirm.textContent = record.spacingExceptionConfirmedSignature && record.spacingExceptionConfirmedSignature !== record.spacingIssueSignature
-      ? '変更後の理由を再確認'
-      : 'この理由を確認';
+    if (document.activeElement !== exceptionReason && exceptionReason.value !== (record.spacingExceptionReason || '')) exceptionReason.value = record.spacingExceptionReason || '';
+    setText(exceptionConfirm, record.spacingExceptionConfirmedSignature && record.spacingExceptionConfirmedSignature !== record.spacingIssueSignature ? '変更後の理由を再確認' : 'この理由を確認');
     renderExceptionReviewState(record);
   }
 
@@ -425,7 +469,7 @@
 
   function normalizePopup() {
     document.querySelectorAll('.leaflet-popup-content').forEach(node => {
-      let html = node.innerHTML;
+      const html = node.innerHTML;
       const next = html
         .replace(/追加予定POI/g, '追加ゲームスポット')
         .replace(/新規追加POI/g, '追加ゲームスポット')
@@ -438,8 +482,8 @@
     });
   }
 
-  function normalizeKnownText(element) {
-    if (!element) return;
+  function normalizeKnownLeaf(element) {
+    if (!element || element.children.length) return;
     const text = element.textContent || '';
     const replacements = [
       ['追加予定POIを選択してください', '追加ゲームスポットを選択してください'],
@@ -450,64 +494,52 @@
       ['既存POI', '既存ゲームスポット'],
       ['新規POI', '追加ゲームスポット'],
       ['POI種類', 'ゲームスポット種類'],
-      ['POIを選択', 'ゲームスポットを選択'],
-      ['このPOIを削除', 'このゲームスポットを削除']
+      ['POIを選択', 'ゲームスポットを選択']
     ];
     let next = text;
     for (const [from, to] of replacements) next = next.split(from).join(to);
-    if (next !== text && element.children.length === 0) element.textContent = next;
+    if (next !== text) element.textContent = next;
   }
 
   function syncTerminology() {
-    if (syncLock) return;
-    syncLock = true;
+    if (terminologyLock) return;
+    terminologyLock = true;
     try {
       const intro = document.querySelector('.field-mode-intro');
-      const introStrong = intro?.querySelector('strong');
-      const introP = intro?.querySelector('p');
-      if (introStrong) introStrong.textContent = '既存ゲームスポットを読み込み、追加ゲームスポットと活動範囲をCREATIVE MODE内で設計します。';
-      if (introP) introP.textContent = '配置・50m確認・例外理由・完成KMZ／但し書き出力までを一つの設計データとして扱います。';
-      const placeholderStrong = document.querySelector('#fieldModePlaceholder strong');
-      const placeholderSpan = document.querySelector('#fieldModePlaceholder span:last-child');
-      if (placeholderStrong) placeholderStrong.textContent = 'KMZを読み込むと、ゲームスポット設計マップを表示します。';
-      if (placeholderSpan) placeholderSpan.textContent = '既存ゲームスポット・追加ゲームスポット・50m圏を重ねて確認します。';
+      setText(intro?.querySelector('strong'), '既存ゲームスポットを読み込み、追加ゲームスポットと活動範囲をCREATIVE MODE内で設計します。');
+      setText(intro?.querySelector('p'), '配置・50m確認・例外理由・完成KMZ／但し書き出力までを一つの設計データとして扱います。');
+      setText(document.querySelector('#fieldModePlaceholder strong'), 'KMZを読み込むと、ゲームスポット設計マップを表示します。');
+      setText(document.querySelector('#fieldModePlaceholder span:last-child'), '既存ゲームスポット・追加ゲームスポット・50m圏を重ねて確認します。');
       const entryLabel = document.querySelector('.field-mode-entry-file-label');
-      if (entryLabel?.firstChild?.nodeType === Node.TEXT_NODE) entryLabel.firstChild.textContent = 'ゲームスポット元データ（KMZ／KML）を選択';
+      if (entryLabel?.firstChild?.nodeType === Node.TEXT_NODE && entryLabel.firstChild.textContent !== 'ゲームスポット元データ（KMZ／KML）を選択') entryLabel.firstChild.textContent = 'ゲームスポット元データ（KMZ／KML）を選択';
       const tool = document.querySelector('#fieldModeCreativeHotbar [data-tool="poi"] small');
-      if (tool) tool.textContent = 'ゲームスポット';
+      setText(tool, 'ゲームスポット');
       const toolButton = tool?.closest('button');
-      if (toolButton) toolButton.setAttribute('aria-label', '追加ゲームスポットを配置');
-      const creativeHint = document.getElementById('fieldModeCreativeHint');
-      normalizeKnownText(creativeHint);
-      normalizeKnownText(document.getElementById('fieldModeSelectionTitle'));
-      normalizeKnownText(document.getElementById('fieldModeSelectionDetail'));
-      normalizeKnownText(document.getElementById('fieldModeStatus'));
+      if (toolButton?.getAttribute('aria-label') !== '追加ゲームスポットを配置') toolButton?.setAttribute('aria-label', '追加ゲームスポットを配置');
+      normalizeKnownLeaf(document.getElementById('fieldModeCreativeHint'));
+      normalizeKnownLeaf(document.getElementById('fieldModeSelectionTitle'));
+      normalizeKnownLeaf(document.getElementById('fieldModeSelectionDetail'));
+      normalizeKnownLeaf(document.getElementById('fieldModeStatus'));
       const deleteButton = document.querySelector('.field-poi-delete');
-      if (deleteButton) deleteButton.textContent = '🗑 このゲームスポットを削除';
+      setText(deleteButton, '🗑 このゲームスポットを削除');
       const typeButton = document.getElementById('fieldPoiTypeButton');
-      if (typeButton) typeButton.title = 'タップするたびにゲームスポット種類を切り替えます';
-      const circleTitle = document.querySelector('.field-circle-options-title span:last-child');
-      if (circleTitle) circleTitle.textContent = '50m 基本ルール';
-      const circleNote = document.querySelector('.field-circle-options-note');
-      if (circleNote) circleNote.textContent = '50mが基本ルールです。30m・40mは50m未満時の例外確認用で、通常承認基準ではありません。';
+      if (typeButton && typeButton.title !== 'タップするたびにゲームスポット種類を切り替えます') typeButton.title = 'タップするたびにゲームスポット種類を切り替えます';
+      setText(document.querySelector('.field-circle-options-title span:last-child'), '50m 基本ルール');
+      setText(document.querySelector('.field-circle-options-note'), '50mが基本ルールです。30m・40mは50m未満時の例外確認用で、通常承認基準ではありません。');
       const toggle40 = document.getElementById('fieldPoi40mToggle');
       const toggle30 = document.getElementById('fieldPoi30mToggle');
-      if (toggle40) toggle40.textContent = toggle40.classList.contains('is-on') ? '40m例外確認用：追加する ✓' : '40m例外確認用：追加しない';
-      if (toggle30) toggle30.textContent = toggle30.classList.contains('is-on') ? '30m例外確認用：追加する ✓' : '30m例外確認用：追加しない';
+      setText(toggle40, toggle40?.classList.contains('is-on') ? '40m例外確認用：追加する ✓' : '40m例外確認用：追加しない');
+      setText(toggle30, toggle30?.classList.contains('is-on') ? '30m例外確認用：追加する ✓' : '30m例外確認用：追加しない');
       normalizePopup();
     } finally {
-      syncLock = false;
+      terminologyLock = false;
     }
   }
 
   function sourceIdentity() {
     let name = 'field-data';
     try { name = String(sourceFileName || name); } catch (_) {}
-    const original = activeRecords()
-      .filter(record => !record.isNew)
-      .map(stableRecordKey)
-      .sort()
-      .join(';;');
+    const original = activeRecords().filter(record => !record.isNew).map(stableRecordKey).sort().join(';;');
     return `${name}::${original}`;
   }
 
@@ -576,11 +608,7 @@
       const reason = String(record.spacingExceptionReason || '');
       const confirmed = String(record.spacingExceptionConfirmedSignature || '');
       if (!reason && !confirmed) continue;
-      out[stableRecordKey(record)] = {
-        reason,
-        confirmedSignature: confirmed,
-        reviewedAt: Number(record.spacingExceptionReviewedAt) || 0
-      };
+      out[stableRecordKey(record)] = { reason, confirmedSignature: confirmed, reviewedAt: Number(record.spacingExceptionReviewedAt) || 0 };
     }
     return out;
   }
@@ -642,9 +670,9 @@
       if (ready) {
         clearInterval(timer);
         restoreForCurrentSource();
-        return;
+      } else if (Date.now() - started > 10000) {
+        clearInterval(timer);
       }
-      if (Date.now() - started > 10000) clearInterval(timer);
     }, 80);
   }
 
@@ -655,20 +683,16 @@
     let loaded = false;
     try { loaded = !!fileLoaded; } catch (_) {}
     const areaCount = window.FieldModeArea?.getRecords?.().filter(record => !record.deleted).length || 0;
-    const hasDesign = activeRecords().length > 0 || areaCount > 0;
-    const canFinalize = loaded && hasDesign;
+    const canFinalize = loaded && (activeRecords().length > 0 || areaCount > 0);
     if (button.disabled === canFinalize) button.disabled = !canFinalize;
-    const label = '設計完成：KMZ＋但し書きを出力';
-    if (button.textContent !== label) button.textContent = label;
-    button.setAttribute('aria-label', '完成KMZと必要な50m未満但し書きを端末へ出力');
-    if (note) {
-      const under = under50Records().length;
-      const needs = reviewNeededRecords().length;
-      if (!canFinalize) note.textContent = 'ゲームスポットを読み込むと設計データを出力できます。';
-      else if (under === 0) note.textContent = '50m未満はありません。完成KMZを出力します。';
-      else if (needs > 0) note.textContent = `50m未満 ${under}件 ／ 但し書き要確認 ${needs}件。出力前に未確認箇所を案内します。`;
-      else note.textContent = `50m未満 ${under}件。完成KMZ＋但し書きTXTを同じチェックIDで出力します。`;
-    }
+    setText(button, '設計完成：KMZ＋但し書きを出力');
+    if (button.getAttribute('aria-label') !== '完成KMZと必要な50m未満但し書きを端末へ出力') button.setAttribute('aria-label', '完成KMZと必要な50m未満但し書きを端末へ出力');
+    const under = under50Records().length;
+    const needs = reviewNeededRecords().length;
+    if (!canFinalize) setText(note, 'ゲームスポットを読み込むと設計データを出力できます。');
+    else if (under === 0) setText(note, '50m未満はありません。完成KMZを出力します。');
+    else if (needs > 0) setText(note, `50m未満 ${under}件 ／ 但し書き要確認 ${needs}件。出力前に未確認箇所を案内します。`);
+    else setText(note, `50m未満 ${under}件。完成KMZ＋但し書きTXTを同じチェックIDで出力します。`);
   }
 
   function hashText(value) {
@@ -723,15 +747,7 @@
         distance: Number(issue.distance)
       }))
     }));
-    return {
-      version: 1,
-      campsiteName,
-      checkedAt: checkedAtLabel(now),
-      checkId,
-      issues,
-      additionalCount: additionalCount(),
-      designHash: hashText(designFingerprint())
-    };
+    return { version: 1, campsiteName, checkedAt: checkedAtLabel(now), checkId, issues, additionalCount: additionalCount(), designHash: hashText(designFingerprint()) };
   }
 
   function buildExceptionText(snapshot = pendingExport) {
@@ -753,16 +769,15 @@
       lines.push(`種別: ${item.type}`);
       lines.push(`座標: ${item.lat.toFixed(7)}, ${item.lng.toFixed(7)}`);
       lines.push('50m未満となる相手ゲームスポット:');
-      item.opponents.forEach(opponent => {
-        lines.push(`- ${opponent.name} / ${opponent.role} / ${opponent.type} / ${opponent.distance.toFixed(1)}m`);
-      });
+      item.opponents.forEach(opponent => lines.push(`- ${opponent.name} / ${opponent.role} / ${opponent.type} / ${opponent.distance.toFixed(1)}m`));
       lines.push(`理由: ${item.reason || '【未記入】'}`);
       if (!item.confirmed) lines.push('確認状態: 【再確認が必要】位置・相手・距離条件に対する理由を再確認してください。');
       lines.push('');
     });
     lines.push('フォーム貼り付け用');
     snapshot.issues.forEach(item => {
-      const nearest = Math.min(...item.opponents.map(opponent => opponent.distance));
+      const distances = item.opponents.map(opponent => opponent.distance).filter(Number.isFinite);
+      const nearest = distances.length ? Math.min(...distances) : NaN;
       lines.push(`・${item.name}（${Number.isFinite(nearest) ? nearest.toFixed(1) : '-'}m）`);
       lines.push(item.reason || '【理由未記入】');
       if (!item.confirmed) lines.push('【要再確認】');
@@ -794,9 +809,8 @@
     exportOverlay?.classList.remove('active');
     recomputeAll();
     if (message) {
-      modeStatus.textContent = message;
-      const note = document.getElementById('fieldModeSaveNote');
-      if (note) note.textContent = message;
+      setText(modeStatus, message);
+      setText(document.getElementById('fieldModeSaveNote'), message);
     }
   }
 
@@ -807,10 +821,8 @@
       const kmzBlob = await response.blob();
       const bundle = new JSZip();
       const base = safeFileName(snapshot.campsiteName);
-      const kmzName = `${base}_完成_${snapshot.checkId}.kmz`;
-      const txtName = `${base}_50m未満ゲームスポット但し書き_${snapshot.checkId}.txt`;
-      bundle.file(kmzName, kmzBlob);
-      bundle.file(txtName, `\uFEFF${buildExceptionText(snapshot)}`);
+      bundle.file(`${base}_完成_${snapshot.checkId}.kmz`, kmzBlob);
+      bundle.file(`${base}_50m未満ゲームスポット但し書き_${snapshot.checkId}.txt`, `\uFEFF${buildExceptionText(snapshot)}`);
       const zipBlob = await bundle.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
       downloadBlob(zipBlob, `${base}_提出用設計データ_${snapshot.checkId}.zip`);
       clearPendingExport('設計データ出力完了：完成KMZ＋但し書きTXT');
@@ -832,8 +844,7 @@
         setTimeout(() => clearPendingExport('設計データ出力完了：完成KMZ'), 0);
         return result;
       }
-      const href = this.href;
-      bundleKmzAndTxt(href, snapshot);
+      bundleKmzAndTxt(this.href, snapshot);
       return undefined;
     };
     patched.__fieldApacV4Patched = true;
@@ -843,9 +854,7 @@
   function prepareFinalExport(event) {
     if (event.target !== document.getElementById('fieldModeSaveButton')) return;
     recomputeAll();
-    const over = additionalCount() > MAX_ADDITIONAL_SPOTS;
-    const needs = reviewNeededRecords();
-    if (over) {
+    if (additionalCount() > MAX_ADDITIONAL_SPOTS) {
       const proceed = window.confirm(`追加ゲームスポットが${additionalCount()}個あります。CREATIVE MODEの上限は${MAX_ADDITIONAL_SPOTS}個です。\n読み込み済み設計を自動削除はしません。このまま確認用データを出力しますか？`);
       if (!proceed) {
         event.preventDefault();
@@ -853,6 +862,7 @@
         return;
       }
     }
+    const needs = reviewNeededRecords();
     if (needs.length) {
       const names = needs.slice(0, 6).map(record => `・${record.name}`).join('\n');
       const more = needs.length > 6 ? `\nほか${needs.length - 6}件` : '';
@@ -874,13 +884,11 @@
   function installMax25Guard() {
     document.addEventListener('click', event => {
       const button = event.target?.closest?.('#fieldModeNewPoiButton');
-      if (!button) return;
-      if (additionalCount() < MAX_ADDITIONAL_SPOTS) return;
+      if (!button || additionalCount() < MAX_ADDITIONAL_SPOTS) return;
       event.preventDefault();
       event.stopImmediatePropagation();
-      modeStatus.textContent = `追加ゲームスポットは最大${MAX_ADDITIONAL_SPOTS}個までです`;
-      const detail = document.getElementById('fieldModeSelectionDetail');
-      if (detail) detail.textContent = `現在 ${additionalCount()}個です。追加ゲームスポットは最大${MAX_ADDITIONAL_SPOTS}個までです。`;
+      setText(modeStatus, `追加ゲームスポットは最大${MAX_ADDITIONAL_SPOTS}個までです`);
+      setText(document.getElementById('fieldModeSelectionDetail'), `現在 ${additionalCount()}個です。追加ゲームスポットは最大${MAX_ADDITIONAL_SPOTS}個までです。`);
       renderSummary();
     }, true);
   }
@@ -901,12 +909,12 @@
       const result = originalUpdateSaveButton(...args);
       recomputeAll({ render: false });
       renderSummary();
+      renderSpotPanel();
       renderExceptionPanel();
       syncFinalButton();
       return result;
     };
 
-    originalUpdateDistanceStatus = updateDistanceStatus;
     updateDistanceStatus = function apacV4DistanceStatus(position = currentPosition, excludedRecord = null) {
       return updateDistanceStatusV4(position, excludedRecord);
     };
@@ -926,6 +934,7 @@
     selectAddedPoi = function apacV4SelectAddedPoi(record) {
       const result = originalSelectAddedPoi(record);
       recomputeAll({ render: false });
+      renderSpotPanel();
       renderExceptionPanel();
       syncTerminology();
       return result;
@@ -934,6 +943,7 @@
     originalResetPoiSelection = resetPoiSelection;
     resetPoiSelection = function apacV4ResetPoiSelection(...args) {
       const result = originalResetPoiSelection(...args);
+      renderSpotPanel();
       renderExceptionPanel();
       syncTerminology();
       return result;
@@ -942,25 +952,17 @@
 
   function installObservers() {
     const saveButton = document.getElementById('fieldModeSaveButton');
-    if (saveButton) {
-      saveButtonObserver = new MutationObserver(() => syncFinalButton());
-      saveButtonObserver.observe(saveButton, { attributes: true, attributeFilter: ['disabled'], childList: true, subtree: true, characterData: true });
-    }
-    uiObserver = new MutationObserver(() => {
-      syncTerminology();
-      renderExceptionPanel();
-    });
-    uiObserver.observe(document.body, { childList: true, subtree: true, characterData: true });
+    if (saveButton) new MutationObserver(syncFinalButton).observe(saveButton, { attributes: true, attributeFilter: ['disabled'], childList: true, subtree: true, characterData: true });
+    new MutationObserver(syncTerminology).observe(document.body, { childList: true, subtree: true, characterData: true });
     const status = document.getElementById('fieldModeStatus');
     if (status) {
-      statusObserver = new MutationObserver(() => {
+      new MutationObserver(() => {
         const text = status.textContent || '';
         if (/復元|読込済|読み込み/.test(text)) {
           recomputeAll();
           syncTerminology();
         }
-      });
-      statusObserver.observe(status, { childList: true, subtree: true, characterData: true });
+      }).observe(status, { childList: true, subtree: true, characterData: true });
     }
     try { map.on('popupopen', normalizePopup); } catch (_) {}
     document.getElementById('fieldModeFile')?.addEventListener('change', () => {
@@ -972,9 +974,9 @@
 
   function install() {
     if (installed || !dependenciesReady()) return false;
-    installed = true;
     addStyle();
     if (!buildUi()) return false;
+    installed = true;
     wrapCoreFunctions();
     installDownloadInterceptor();
     installMax25Guard();
