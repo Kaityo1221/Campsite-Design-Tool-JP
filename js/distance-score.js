@@ -4,15 +4,18 @@ function calculateCampsiteScore(points, warnings) {
   // 拠点充実度は、既存POI同士を含む拠点全体の近接状況を評価します。
   // 既存POI同士はスコアへ反映しつつ、配置を変更できないため参考情報として表示します。
   const scoringWarnings = warnings || [];
+  const distanceTargetMeters = window.CampsitePoiSpacingPolicy?.targetMeters || 50;
 
   let under20 = 0;
   let under30 = 0;
+  // 互換性のためプロパティ名は under40 のまま維持するが、現在は30m以上50m未満を数える。
   let under40 = 0;
+  // 互換性のためプロパティ名は referenceUnder40 のまま維持するが、現在は50m未満を数える。
   let referenceUnder40 = 0;
   let distancePenalty = 0;
 
   (warnings || []).forEach(w => {
-    if (isExistingPoiPair(w) && w.distance < 40) {
+    if (isExistingPoiPair(w) && w.distance < distanceTargetMeters) {
       referenceUnder40++;
     }
   });
@@ -26,7 +29,7 @@ function calculateCampsiteScore(points, warnings) {
     } else if (d < 30) {
       distancePenalty += 2;
       under30++;
-    } else if (d < 40) {
+    } else if (d < distanceTargetMeters) {
       distancePenalty += 0.5;
       under40++;
     }
