@@ -1,0 +1,50 @@
+name: fix-distance-mobile-once
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-distance-mobile-once.yml'
+permissions:
+  contents: write
+jobs:
+  hotfix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply distance hotfix
+        shell: python
+        run: |
+          from pathlib import Path
+
+          policy = Path('js/poi-spacing-policy.js')
+          s = policy.read_text(encoding='utf-8')
+          start = '    replaceFunctionSource("runDistanceCheck", source => source\n'
+          if start in s and 'if (!String(window.runDistanceCheck || "").includes("originalRunDistanceCheck")) {' not in s:
+              s = s.replace(start, '    // distance-entry.js が既にラップ済みの場合、Function再生成すると\\n    // クロージャ originalRunDistanceCheck が失われるため、ラッパーは書き換えない。\\n    if (!String(window.runDistanceCheck || "").includes("originalRunDistanceCheck")) {\\n' + start, 1)
+              marker = '    );\n  }\n\n  function patchKmzFunctions()'
+              s = s.replace(marker, '    );\\n    }\\n  }\\n\\n  function patchKmzFunctions()', 1)
+          policy.write_text(s, encoding='utf-8')
+
+          css = Path('css/distance.css')
+          c = css.read_text(encoding='utf-8')
+          hotfix = '''\n/* Mobile distance hotfix: hide the map until a result has actually been rendered. */\n#distanceMap:empty {\n  display: none !important;\n  height: 0 !important;\n  margin-top: 0 !important;\n  border: 0 !important;\n  box-shadow: none !important;\n}\n'''
+          if '#distanceMap:empty' not in c:
+              c += hotfix
+          css.write_text(c, encoding='utf-8')
+
+          index = Path('index.html')
+          i = index.read_text(encoding='utf-8')
+          i = i.replace('css/distance.css?v=40', 'css/distance.css?v=41')
+          i = i.replace('js/kmz-upload.js?v=3', 'js/kmz-upload.js?v=4')
+          index.write_text(i, encoding='utf-8')
+
+          upload = Path('js/kmz-upload.js')
+          u = upload.read_text(encoding='utf-8')
+          u = u.replace('poi-spacing-policy.js?v=5', 'poi-spacing-policy.js?v=6')
+          upload.write_text(u, encoding='utf-8')
+      - name: Commit hotfix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add js/poi-spacing-policy.js css/distance.css index.html js/kmz-upload.js
+          git commit -m "Fix mobile distance check wrapper and blank map" || exit 0
+          git push
