@@ -98,12 +98,30 @@ function clearCampsiteRememberedAccess() {
   } catch (_) {}
 }
 
+function expireCampsiteAccessNow() {
+  clearCampsiteRememberedAccess();
+  window.location.reload();
+}
+
+function scheduleCampsiteAccessExpiry(loginAt) {
+  const remainingMs = loginAt + CAMPSITE_ACCESS_TTL_MS - Date.now();
+
+  if (remainingMs <= 0) {
+    expireCampsiteAccessNow();
+    return;
+  }
+
+  window.setTimeout(expireCampsiteAccessNow, remainingMs);
+}
+
 function rememberCampsiteAccessAfterLogin() {
   window.setTimeout(() => {
     if (!document.getElementById("loginScreen")) {
       try {
+        const loginAt = Date.now();
         localStorage.setItem(CAMPSITE_ACCESS_UNLOCKED_KEY, "true");
-        localStorage.setItem(CAMPSITE_ACCESS_LOGIN_AT_KEY, String(Date.now()));
+        localStorage.setItem(CAMPSITE_ACCESS_LOGIN_AT_KEY, String(loginAt));
+        scheduleCampsiteAccessExpiry(loginAt);
       } catch (_) {}
     }
   }, 0);
@@ -132,6 +150,7 @@ function hasValidRememberedCampsiteAccess() {
       return false;
     }
 
+    scheduleCampsiteAccessExpiry(loginAt);
     return true;
   } catch (_) {
     return false;
