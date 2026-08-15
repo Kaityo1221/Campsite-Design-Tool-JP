@@ -89,4 +89,24 @@ for (const token of [
   if (!mainPolicy.includes(token)) fail(`main distance judgment is missing ${token}`);
 }
 
+const mainDistance = read('js/distance.js');
+for (const token of [
+  'window.CampsitePoiSpacingPolicy?.targetMeters || 50',
+  'if (distance < distanceTargetMeters)',
+  '30〜50m（参考距離）',
+  '50m未満合計',
+  '50m未満の組み合わせがあります。'
+]) {
+  if (!mainDistance.includes(token)) fail(`main distance check is missing ${token}`);
+}
+
+const distanceScore = read('js/distance-score.js');
+for (const token of [
+  'window.CampsitePoiSpacingPolicy?.targetMeters || 50',
+  'w.distance < distanceTargetMeters',
+  'd < distanceTargetMeters'
+]) {
+  if (!distanceScore.includes(token)) fail(`distance score is missing ${token}`);
+}
+
 console.log('POI SPACING CONSISTENCY CHECK: GREEN');
