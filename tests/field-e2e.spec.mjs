@@ -74,19 +74,32 @@ async function savePreparedSurveyAndReload(page) {
   await expect(page.locator('#fieldPrepStartFieldModeButton')).toBeEnabled();
 }
 
-async function addNewPoi(page, typeLabel) {
-  await expect(page.locator('#fieldPoiTypeButton')).toContainText(typeLabel);
+async function selectPoiType(page, typeLabel) {
+  const typeButton = page.locator('#fieldPoiTypeButton');
+  await expect(typeButton).toBeVisible();
+  for (let i = 0; i < 3; i += 1) {
+    if ((await typeButton.textContent())?.includes(typeLabel)) break;
+    await typeButton.click();
+  }
+  await expect(typeButton).toContainText(typeLabel);
+}
 
-  // The visible CREATIVE MODE UI starts POI work from the toolbox. The old
-  // new-POI button remains as the internal placement engine and is hidden.
-  await page.locator('#fieldModeCreativeButton').click();
-  const poiTool = page.locator('#fieldModeCreativeHotbar [data-tool="poi"]');
+async function addNewPoi(page, typeLabel) {
+  // Use the same visible route as a real user: toolbox → POI → type → confirm.
+  const hotbar = page.locator('#fieldModeCreativeHotbar');
+  if (!(await hotbar.evaluate(element => element.classList.contains('is-open')))) {
+    await page.locator('#fieldModeCreativeButton').click();
+  }
+  await expect(hotbar).toHaveClass(/is-open/);
+  const poiTool = hotbar.locator('[data-tool="poi"]');
   await expect(poiTool).toBeEnabled();
   await poiTool.click();
 
-  await page.locator('#fieldModeNewPoiButton').evaluate(button => button.click());
-  await expect(page.locator('#fieldModeNewPoiButton')).toContainText('この位置に設置');
-  await page.locator('#fieldModeNewPoiButton').evaluate(button => button.click());
+  await selectPoiType(page, typeLabel);
+  const confirmButton = page.locator('#fieldModeNewPoiButton');
+  await expect(confirmButton).toBeVisible();
+  await expect(confirmButton).toContainText('この位置に設置');
+  await confirmButton.click();
   await expect(page.locator('#fieldModeSelectionTitle')).toContainText(`${typeLabel} 1`);
 }
 
@@ -162,10 +175,7 @@ test('調査ファイルから調査範囲・現地作業・完成KMZまで一�
   await page.locator('#fieldPoi30mToggle').click();
   await expect(page.locator('#fieldPoi30mToggle')).toContainText('追加する');
 
-  await page.locator('#fieldPoiTypeButton').click();
   await addNewPoi(page, 'ジム');
-
-  await page.locator('#fieldPoiTypeButton').click();
   await addNewPoi(page, 'パワースポット');
 
   await createThreePointArea(page);
