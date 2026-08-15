@@ -5,7 +5,7 @@
    - 事前準備は初期状態で開く
    - 補助ツール / その他は初期状態で閉じる
    - オープニングは大きいカードから外し、タイトル付近の小リンクへ移動
-   - 事前準備の「使い方」は大きいマニュアル入口として最優先表示
+   - 事前準備の「マニュアル」はPDF入口として最優先表示
 ====================================================== */
 
 (function () {
@@ -233,13 +233,18 @@
     if (!manualButton) return;
 
     manualButton.classList.add("dashboard-manual-feature");
-    manualButton.setAttribute("aria-label", "マニュアルを見る");
+    manualButton.setAttribute("aria-label", "マニュアルを読む");
+    manualButton.onclick = null;
+    manualButton.removeAttribute("onclick");
+    manualButton.addEventListener("click", () => {
+      window.open("docs/campsite-guide.pdf", "_blank", "noopener,noreferrer");
+    });
 
     const title = manualButton.querySelector(".dashboard-copy strong");
     const subtitle = manualButton.querySelector(".dashboard-copy small");
 
-    if (title) title.textContent = "マニュアルを見る";
-    if (subtitle) subtitle.textContent = "キャンプサイト作成の流れと基本操作を最初に確認";
+    if (title) title.textContent = "マニュアルを読む";
+    if (subtitle) subtitle.textContent = "キャンプサイトの作り方 Ver3.5 をPDFで確認";
   }
 
   function foldSection(selector, options) {
