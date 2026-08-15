@@ -1,0 +1,13 @@
+{
+  "name": "CREATIVE MODE Preview",
+  "image": "mcr.microsoft.com/devcontainers/python:3.12",
+  "forwardPorts": [4173],
+  "portsAttributes": {
+    "4173": {
+      "label": "CREATIVE MODE Preview",
+      "onAutoForward": "openBrowser",
+      "visibility": "private"
+    }
+  },
+  "postStartCommand": "nohup python3 .devcontainer/preview_server.py > /tmp/creative-mode-preview.log 2>&1 &"
+}
