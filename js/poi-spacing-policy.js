@@ -176,6 +176,8 @@
         `sectionTitleHtml("分類別チェック", "${SAFETY_NOTE}")`)
       .replace(/sectionTitleHtml\("追加・変更対象の近接", "30m未満は要注意、30m以上50m未満は参考距離として確認します。"\)/g,
         'sectionTitleHtml("50m未満の箇所", "POI間隔は原則50mです。30m未満は要修正、30m以上50m未満は要確認です。")')
+      .replace(/const targetWarnings = warnings\.filter\(w => \{\s*return !isExistingPoiPair\(w\) && w\.distance < 30;\s*\}\);/g,
+        'const targetWarnings = warnings.filter(w => {\n  return !isExistingPoiPair(w) && w.distance < 50;\n});')
       .replace(/label = "⚠ 要注意";/g, 'label = "⚠ 要修正";')
       .replace(/message = "30m未満です。再確認をお願いします。";/g,
         'message = "30m未満です。配置の見直しをお願いします。";')
