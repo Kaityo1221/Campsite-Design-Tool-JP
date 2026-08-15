@@ -88,6 +88,33 @@
         line-height: 1.65;
       }
 
+      /* 実行前の空マップが大きな黒い余白として見えないようにする。 */
+      #distance #distanceMap:empty {
+        display: none;
+        height: 0;
+        min-height: 0;
+        margin: 0;
+        border: 0;
+        box-shadow: none;
+      }
+
+      #distance .distance-run-status {
+        margin: 14px 0 0;
+        padding: 14px 16px;
+        border: 1px solid rgba(56,189,248,.38);
+        border-radius: 14px;
+        background: rgba(14,165,233,.08);
+        color: #dbeafe;
+        font-size: 14px;
+        line-height: 1.7;
+      }
+
+      #distance .distance-run-status.error {
+        border-color: rgba(239,68,68,.48);
+        background: rgba(239,68,68,.10);
+        color: #fecaca;
+      }
+
       /* STEP 3の説明文を現行方針へ更新 */
       #tool #customCsvStep + .step + .step + .step > p:first-of-type::after {
         content: "50m円を必ず生成します。30m・40mは参考距離として任意で追加できます。" !important;
@@ -292,11 +319,81 @@
     normalizeRenderedDistanceResult();
   }
 
+  function installDistanceRunUx() {
+    const original = window.runDistanceCheck;
+    if (typeof original !== "function" || original.__distanceRunUxWrapped) return;
+
+    const wrapped = async function (...args) {
+      const result = document.getElementById("distanceResult");
+      const map = document.getElementById("distanceMap");
+      const button = document.querySelector('#distance button.generate[onclick*="runDistanceCheck"]');
+      const originalButtonText = button?.textContent || "距離チェック実行";
+
+      if (map && !map.children.length) {
+        map.style.display = "none";
+      }
+
+      if (result) {
+        result.innerHTML = '<div class="distance-run-status">📏 距離を計算しています…</div>';
+      }
+
+      if (button) {
+        button.disabled = true;
+        button.textContent = "距離チェック中…";
+      }
+
+      /* iPhone Safariでも押下直後の表示を先に描画させる。 */
+      await new Promise(resolve => requestAnimationFrame(() => resolve()));
+
+      try {
+        const value = await original.apply(this, args);
+
+        requestAnimationFrame(() => {
+          if (result?.children.length) {
+            result.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        });
+
+        return value;
+      } catch (error) {
+        console.error("距離チェック実行エラー:", error);
+        if (result) {
+          result.innerHTML = `
+            <div class="distance-run-status error">
+              ⚠ 距離チェック中にエラーが発生しました。<br>
+              <small>${String(error?.message || error || "不明なエラー")}</small>
+            </div>
+          `;
+          result.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+        return undefined;
+      } finally {
+        if (button) {
+          button.disabled = false;
+          button.textContent = originalButtonText;
+        }
+      }
+    };
+
+    Object.defineProperty(wrapped, "__distanceRunUxWrapped", { value: true });
+    window.runDistanceCheck = wrapped;
+  }
+
   function setup() {
     ensureStyles();
     setupMainRadiusUi();
     installDistanceResult50mUi();
     watchDistanceResult();
+    installDistanceRunUx();
+
+    const map = document.getElementById("distanceMap");
+    if (map && !map.children.length) {
+      map.style.display = "none";
+    }
+
+    /* 他の距離ポリシーパッチが後からrunDistanceCheckを包んでも最後にUXガードを戻す。 */
+    setTimeout(installDistanceRunUx, 0);
+    setTimeout(installDistanceRunUx, 600);
   }
 
   if (document.readyState === "loading") {
@@ -304,4 +401,8 @@
   } else {
     setup();
   }
+
+  window.addEventListener("load", () => {
+    installDistanceRunUx();
+  }, { once: true });
 })();
