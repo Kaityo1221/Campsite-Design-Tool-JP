@@ -78,10 +78,12 @@ function sendDistanceCheckAnalytics(points, poiVolumeCounts, poiCounts, expansio
 /* =========================
    通常ログイン保持 / 初期表示 / 簡易ログアウト
 
-   ログイン状態だけを保持し、前回開いていた機能は復元しない。
+   ログイン状態だけを最大3日間保持し、前回開いていた機能は復元しない。
    再起動時は毎回「事前準備 > 使い方」から始める。
 ========================= */
 const CAMPSITE_ACCESS_UNLOCKED_KEY = "campsiteAccessUnlocked";
+const CAMPSITE_ACCESS_LOGIN_AT_KEY = "campsiteAccessLoginAt";
+const CAMPSITE_ACCESS_TTL_MS = 3 * 24 * 60 * 60 * 1000;
 /* 旧バージョンが保存した最後のタブを削除するためだけ残す */
 const CAMPSITE_LAST_TAB_KEY = "campsiteLastTab";
 
@@ -89,14 +91,51 @@ if ("scrollRestoration" in history) {
   history.scrollRestoration = "manual";
 }
 
+function clearCampsiteRememberedAccess() {
+  try {
+    localStorage.removeItem(CAMPSITE_ACCESS_UNLOCKED_KEY);
+    localStorage.removeItem(CAMPSITE_ACCESS_LOGIN_AT_KEY);
+  } catch (_) {}
+}
+
 function rememberCampsiteAccessAfterLogin() {
   window.setTimeout(() => {
     if (!document.getElementById("loginScreen")) {
       try {
         localStorage.setItem(CAMPSITE_ACCESS_UNLOCKED_KEY, "true");
+        localStorage.setItem(CAMPSITE_ACCESS_LOGIN_AT_KEY, String(Date.now()));
       } catch (_) {}
     }
   }, 0);
+}
+
+function hasValidRememberedCampsiteAccess() {
+  try {
+    if (localStorage.getItem(CAMPSITE_ACCESS_UNLOCKED_KEY) !== "true") {
+      return false;
+    }
+
+    const loginAt = Number(localStorage.getItem(CAMPSITE_ACCESS_LOGIN_AT_KEY));
+    const now = Date.now();
+
+    /*
+      旧バージョンの期限なしログインには時刻がないため、
+      更新後は一度だけ再ログインしてもらい、そこから3日間を数える。
+    */
+    if (!Number.isFinite(loginAt) || loginAt <= 0 || loginAt > now) {
+      clearCampsiteRememberedAccess();
+      return false;
+    }
+
+    if (now - loginAt >= CAMPSITE_ACCESS_TTL_MS) {
+      clearCampsiteRememberedAccess();
+      return false;
+    }
+
+    return true;
+  } catch (_) {
+    return false;
+  }
 }
 
 function resetCampsiteStartupView() {
@@ -164,8 +203,9 @@ function resetCampsiteStartupView() {
 }
 
 function logoutCampsiteOnThisDevice() {
+  clearCampsiteRememberedAccess();
+
   try {
-    localStorage.removeItem(CAMPSITE_ACCESS_UNLOCKED_KEY);
     localStorage.removeItem(CAMPSITE_LAST_TAB_KEY);
     sessionStorage.removeItem("campsiteAdminUnlocked");
   } catch (_) {}
@@ -200,12 +240,7 @@ function addCampsiteLogoutButton() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  let accessRemembered = false;
-
-  try {
-    accessRemembered =
-      localStorage.getItem(CAMPSITE_ACCESS_UNLOCKED_KEY) === "true";
-  } catch (_) {}
+  const accessRemembered = hasValidRememberedCampsiteAccess();
 
   if (accessRemembered) {
     document.getElementById("loginScreen")?.remove();
