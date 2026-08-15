@@ -2,6 +2,7 @@
    50m KMZ generation guard
    - 50m circle layer is always included in generated KMZ
    - 30m / 40m remain optional reference layers
+   - Circle geometry is reduced to 36 segments / 7 decimals
    - Warns when generated KMZ approaches My Maps 5MB import limit
    - Works after the legacy generateKMZ safety wrapper
 ====================================================== */
@@ -13,6 +14,7 @@
   const WRAPPED = "__poiSpacingKmz50GuardWrapped";
   const MY_MAPS_LIMIT_BYTES = 5_000_000;
   const MY_MAPS_WARNING_BYTES = 4_500_000;
+  const TARGET_CIRCLE_SEGMENTS = 36;
 
   function directChildText(element, tagName) {
     if (!element) return "";
@@ -155,7 +157,7 @@
     return points;
   }
 
-  function createCircleCoordinates(lat, lng, radiusMeters, steps = 72) {
+  function createCircleCoordinates(lat, lng, radiusMeters, steps = TARGET_CIRCLE_SEGMENTS) {
     const coordinates = [];
     const earthRadius = 6378137;
     const centerLat = Number(lat) * Math.PI / 180;
@@ -182,7 +184,7 @@
       );
 
       coordinates.push(
-        `${pointLng * 180 / Math.PI},${pointLat * 180 / Math.PI},0`
+        `${(pointLng * 180 / Math.PI).toFixed(7)},${(pointLat * 180 / Math.PI).toFixed(7)},0`
       );
     }
 
@@ -257,6 +259,61 @@
     ).length;
   }
 
+  function optimizeCirclePolygons(xml) {
+    [50, 40, 30].forEach(meters => {
+      const folder = findCircleFolder(xml, meters);
+      if (!folder) return;
+
+      Array.from(folder.getElementsByTagName("Polygon")).forEach(polygon => {
+        const coordinatesNode = polygon.getElementsByTagName("coordinates")[0];
+        if (!coordinatesNode) return;
+
+        const points = String(coordinatesNode.textContent || "")
+          .trim()
+          .split(/\s+/)
+          .map(text => {
+            const parts = text.split(",");
+            const lng = Number(parts[0]);
+            const lat = Number(parts[1]);
+            if (!Number.isFinite(lng) || !Number.isFinite(lat)) return null;
+            return { lng, lat };
+          })
+          .filter(Boolean);
+
+        if (points.length < 4) return;
+
+        const unique = points.slice();
+        const first = unique[0];
+        const last = unique[unique.length - 1];
+        if (
+          first && last &&
+          Math.abs(first.lng - last.lng) < 1e-12 &&
+          Math.abs(first.lat - last.lat) < 1e-12
+        ) {
+          unique.pop();
+        }
+
+        const sampled = [];
+        if (unique.length <= TARGET_CIRCLE_SEGMENTS) {
+          sampled.push(...unique);
+        } else {
+          for (let i = 0; i < TARGET_CIRCLE_SEGMENTS; i++) {
+            const index = Math.floor(i * unique.length / TARGET_CIRCLE_SEGMENTS);
+            sampled.push(unique[index]);
+          }
+        }
+
+        if (sampled.length > 0) {
+          sampled.push({ ...sampled[0] });
+        }
+
+        coordinatesNode.textContent = sampled
+          .map(point => `${point.lng.toFixed(7)},${point.lat.toFixed(7)},0`)
+          .join(" ");
+      });
+    });
+  }
+
   function ensure50mLayer(kmlText, options) {
     const parser = new DOMParser();
     const xml = parser.parseFromString(kmlText, "application/xml");
@@ -304,6 +361,8 @@
       options.keep40,
       options.keep30
     );
+
+    optimizeCirclePolygons(xml);
 
     return new XMLSerializer().serializeToString(xml);
   }
