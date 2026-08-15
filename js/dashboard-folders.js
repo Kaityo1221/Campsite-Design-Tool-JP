@@ -297,10 +297,21 @@
     openingButton.remove();
   }
 
+  function updateDistanceRouteCopy() {
+    const distanceCard = document.querySelector(
+      ".dashboard-route .route-card[onclick*=\"openTab('distance'\"]"
+    );
+    if (!distanceCard) return;
+
+    const subtitle = distanceCard.querySelector("small");
+    if (subtitle) subtitle.textContent = "POIの間隔を確認";
+  }
+
   function setup() {
     ensureStyles();
     moveOpeningShortcut();
     promoteManualEntry();
+    updateDistanceRouteCopy();
 
     foldSection(".dashboard-prep", {
       key: "prep",
