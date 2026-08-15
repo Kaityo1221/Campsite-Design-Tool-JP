@@ -134,7 +134,8 @@
       window.classifyDistanceRisk = function classifyDistanceRisk50m(distance) {
         if (distance < 20) return "密集";
         if (distance < 30) return "滞留";
-        if (distance < 50) return "軽微";
+        const band = POLICY.distanceBand(distance);
+        if (band === "caution" || band === "near") return "軽微";
         return null;
       };
     }
