@@ -15,6 +15,7 @@
 
   const POLICY = window.CampsitePoiSpacingPolicy;
   if (!POLICY) return;
+  const TARGET_METERS = window.CampsitePoiSpacingPolicy.targetMeters;
 
   const FINAL_NOTE =
     "この結果は距離確認のための参考情報です。最終的にはコミュニティに合った遊び場を作ることを大切にしてください。";
@@ -134,7 +135,8 @@
       window.classifyDistanceRisk = function classifyDistanceRisk50m(distance) {
         if (distance < 20) return "密集";
         if (distance < 30) return "滞留";
-        if (distance < 50) return "軽微";
+        const band = POLICY.distanceBand(distance);
+        if (band === "caution" || band === "near") return "軽微";
         return null;
       };
     }
@@ -144,7 +146,7 @@
         if (type === "密集" || type === "滞留") {
           return "30m未満です。配置の見直しをお願いします。";
         }
-        return "POI間隔は原則50mです。50m未満の箇所は、状況により調整が必要になる場合があります。";
+        return `POI間隔は原則${TARGET_METERS}mです。${TARGET_METERS}m未満の箇所は、状況により調整が必要になる場合があります。`;
       };
     }
 

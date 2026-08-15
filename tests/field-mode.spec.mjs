@@ -26,22 +26,48 @@ test.beforeEach(async({page})=>{
   await page.route(/https:\/\/[^/]+\.tile\.openstreetmap\.org\/.*/,route=>route.fulfill({status:204,body:''}));
 });
 
+async function startCreativeMode(page){
+  await expect(page.locator('#fieldModeEntryStart')).toBeEnabled();
+  await page.locator('#fieldModeEntryStart').click();
+  await expect(page.locator('#fieldModeEntry')).toBeHidden({timeout:3000});
+  await expect(page.locator('body')).toHaveClass(/field-mode-entry-started/);
+}
+
 async function openFieldMode(page){
   const pageErrors=[];
   page.on('pageerror',error=>pageErrors.push(error.message));
   await page.goto('/field-mode.html');
-  await expect(page.locator('#fieldModeMap')).toBeVisible();
+  await expect(page.locator('#fieldModeEntry')).toBeVisible();
+  await expect(page.locator('.field-mode-stage')).toBeHidden();
   await page.locator('#fieldModeFile').setInputFiles({
     name:'smoke.kml',
     mimeType:'application/vnd.google-earth.kml+xml',
     buffer:Buffer.from(sampleKml)
   });
   await expect(page.locator('#fieldModeFileStatus')).toContainText('件を読み込み');
+  await startCreativeMode(page);
+  await expect(page.locator('.field-mode-stage')).toBeVisible();
   await expect(page.locator('#fieldModeNewPoiButton')).toBeEnabled();
   await expect(page.locator('#fieldModeCreativeButton')).toBeEnabled();
   await expect.poll(()=>page.locator('#fieldModeCreativeHotbar [data-tool="area"]').isEnabled()).toBe(true);
   expect(pageErrors).toEqual([]);
   return pageErrors;
+}
+
+async function openPalette(page){
+  const hotbar=page.locator('#fieldModeCreativeHotbar');
+  if(!(await hotbar.evaluate(el=>el.classList.contains('is-open'))))await page.locator('#fieldModeCreativeButton').click();
+  await expect(hotbar).toHaveClass(/is-open/);
+}
+
+async function beginNewPoiPlacement(page){
+  await openPalette(page);
+  const poi=page.locator('#fieldModeCreativeHotbar [data-tool="poi"]');
+  await expect(poi).toBeEnabled();
+  await poi.click();
+  await expect(page.locator('#fieldModeNewPoiButton')).toBeVisible();
+  await expect(page.locator('#fieldModeNewPoiButton')).toContainText('この位置に設置');
+  await expect(page.locator('#fieldModeCrosshair')).toBeVisible();
 }
 
 async function createThreePointArea(page){
@@ -63,10 +89,8 @@ async function createThreePointArea(page){
 test('新規設置は道具箱で取消でき、パレットは再タップで閉じる',async({page})=>{
   const pageErrors=await openFieldMode(page);
 
-  await page.locator('#fieldModeNewPoiButton').click();
+  await beginNewPoiPlacement(page);
   await expect(page.locator('body')).toHaveClass(/field-creative-active/);
-  await expect(page.locator('#fieldModeCrosshair')).toBeVisible();
-  await expect(page.locator('#fieldModeNewPoiButton')).toContainText('この位置に設置');
 
   await page.locator('#fieldModeCreativeButton').click();
   await expect(page.locator('#fieldModeCrosshair')).toBeHidden();
@@ -86,8 +110,7 @@ test('新規設置は道具箱で取消でき、パレットは再タップで�
 test('新規POIを確定後、戻る・進むでUndo/Redoできる',async({page})=>{
   const pageErrors=await openFieldMode(page);
 
-  await page.locator('#fieldModeNewPoiButton').click();
-  await expect(page.locator('#fieldModeCrosshair')).toBeVisible();
+  await beginNewPoiPlacement(page);
   await page.locator('#fieldModeNewPoiButton').click();
 
   await expect(page.locator('#fieldModeUndoButton')).toBeEnabled();
@@ -156,6 +179,8 @@ test('確定した活動範囲はリロード後に続きから再開でき、Un
   await page.reload();
   await expect(page.locator('#fieldModeResumePanel')).toHaveClass(/active/);
   await page.locator('#fieldModeResumeButton').click();
+  await expect(page.locator('#fieldModeEntryStart')).toBeEnabled({timeout:5000});
+  await startCreativeMode(page);
 
   await expect.poll(()=>page.evaluate(()=>window.FieldModeArea?.getRecords().filter(record=>!record.deleted).length||0)).toBe(1);
   await expect(page.locator('#fieldModeUndoButton')).toBeEnabled();
@@ -168,8 +193,7 @@ test('確定した活動範囲はリロード後に続きから再開でき、Un
 test('現地作業はリロード後に続きから再開でき、履歴も復元される',async({page})=>{
   const pageErrors=await openFieldMode(page);
 
-  await page.locator('#fieldModeNewPoiButton').click();
-  await expect(page.locator('#fieldModeCrosshair')).toBeVisible();
+  await beginNewPoiPlacement(page);
   await page.locator('#fieldModeNewPoiButton').click();
   await expect(page.locator('#fieldModeSelectionTitle')).toContainText('ポケストップ 1');
   await expect(page.locator('#fieldModeUndoButton')).toBeEnabled();
@@ -181,6 +205,8 @@ test('現地作業はリロード後に続きから再開でき、履歴も復�
   await expect(page.locator('#fieldModeResumePanel')).toHaveClass(/active/);
   await expect(page.locator('#fieldModeResumeDetail')).toContainText('smoke.kml');
   await page.locator('#fieldModeResumeButton').click();
+  await expect(page.locator('#fieldModeEntryStart')).toBeEnabled({timeout:5000});
+  await startCreativeMode(page);
 
   await expect(page.locator('#fieldModeResumePanel')).not.toHaveClass(/active/);
   await expect(page.locator('#fieldModeSelectionTitle')).toContainText('ポケストップ 1');

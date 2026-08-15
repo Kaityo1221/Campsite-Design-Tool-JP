@@ -210,7 +210,7 @@
       button.classList.toggle('is-active',button.dataset.tool===tool);
     });
     if(tool==='poi'){
-      hint.textContent='POI種類を選び、「新規設置」で位置を決めます。';
+      hint.textContent='POI種類を選び、十字の位置で設置します。';
       if(collapse)setMenu(false);
     }else if(tool==='adjust'){
       hint.textContent='現在地へ合わせるか、十字で位置を微調整します。';
@@ -301,6 +301,10 @@
   hotbar.addEventListener('click',event=>{
     const button=event.target.closest('[data-tool]');
     if(!button||button.disabled)return;
+    if(button.dataset.tool==='poi'&&newPoiButtonEl&&!newPoiButtonEl.disabled){
+      newPoiButtonEl.click();
+      return;
+    }
     selectTool(button.dataset.tool,{collapse:true});
   });
 

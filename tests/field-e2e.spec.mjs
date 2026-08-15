@@ -74,11 +74,32 @@ async function savePreparedSurveyAndReload(page) {
   await expect(page.locator('#fieldPrepStartFieldModeButton')).toBeEnabled();
 }
 
+async function selectPoiType(page, typeLabel) {
+  const typeButton = page.locator('#fieldPoiTypeButton');
+  await expect(typeButton).toBeVisible();
+  for (let i = 0; i < 3; i += 1) {
+    if ((await typeButton.textContent())?.includes(typeLabel)) break;
+    await typeButton.click();
+  }
+  await expect(typeButton).toContainText(typeLabel);
+}
+
 async function addNewPoi(page, typeLabel) {
-  await expect(page.locator('#fieldPoiTypeButton')).toContainText(typeLabel);
-  await page.locator('#fieldModeNewPoiButton').click();
-  await expect(page.locator('#fieldModeNewPoiButton')).toContainText('この位置に設置');
-  await page.locator('#fieldModeNewPoiButton').click();
+  // Use the same visible route as a real user: toolbox → POI → type → confirm.
+  const hotbar = page.locator('#fieldModeCreativeHotbar');
+  if (!(await hotbar.evaluate(element => element.classList.contains('is-open')))) {
+    await page.locator('#fieldModeCreativeButton').click();
+  }
+  await expect(hotbar).toHaveClass(/is-open/);
+  const poiTool = hotbar.locator('[data-tool="poi"]');
+  await expect(poiTool).toBeEnabled();
+  await poiTool.click();
+
+  await selectPoiType(page, typeLabel);
+  const confirmButton = page.locator('#fieldModeNewPoiButton');
+  await expect(confirmButton).toBeVisible();
+  await expect(confirmButton).toContainText('この位置に設置');
+  await confirmButton.click();
   await expect(page.locator('#fieldModeSelectionTitle')).toContainText(`${typeLabel} 1`);
 }
 
@@ -134,7 +155,16 @@ test('調査ファイルから調査範囲・現地作業・完成KMZまで一�
   await expect(page).not.toHaveURL(/handoff=/, { timeout: 12000 });
   await expect(page.locator('#fieldModeFileStatus')).toContainText('件を読み込み', { timeout: 12000 });
   await expect.poll(() => page.evaluate(() => window.FieldModeSession?.hasSource?.() || false)).toBe(true);
-  await expect(page.locator('#fieldModeNewPoiButton')).toBeEnabled();
+
+  // Field Prep handoff must still pass through the explicit CREATIVE MODE entry.
+  await expect(page.locator('#fieldModeEntry')).toBeVisible();
+  await expect(page.locator('#fieldModeEntryStart')).toBeEnabled();
+  await expect(page.locator('#fieldModeEntryStart')).toHaveClass(/is-ready/);
+  await page.locator('#fieldModeEntryStart').click();
+  await expect(page.locator('#fieldModeEntry')).toBeHidden({ timeout: 3000 });
+  await expect(page.locator('body')).toHaveClass(/field-mode-entry-started/);
+
+  await expect(page.locator('#fieldModeNewPoiButton')).toBeHidden();
   await expect(page.locator('#fieldModeCreativeButton')).toBeEnabled();
 
   await addNewPoi(page, 'ポケストップ');
@@ -145,10 +175,7 @@ test('調査ファイルから調査範囲・現地作業・完成KMZまで一�
   await page.locator('#fieldPoi30mToggle').click();
   await expect(page.locator('#fieldPoi30mToggle')).toContainText('追加する');
 
-  await page.locator('#fieldPoiTypeButton').click();
   await addNewPoi(page, 'ジム');
-
-  await page.locator('#fieldPoiTypeButton').click();
   await addNewPoi(page, 'パワースポット');
 
   await createThreePointArea(page);
