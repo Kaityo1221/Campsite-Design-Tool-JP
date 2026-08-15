@@ -3,7 +3,6 @@
    - 50m円は必ず生成
    - 30m / 40mは参考距離として任意選択
    - capacity.cssで隠されている円設定を再表示
-   - 距離チェック結果UIも原則50mへ統一
 ====================================================== */
 
 (() => {
@@ -197,7 +196,7 @@
       const stay = Number(text.match(/20〜30m（滞留）\s*：\s*(\d+)件/)?.[1] || 0);
       const near50 = Number(
         text.match(/30〜50m(?:（参考距離）)?\s*：\s*(\d+)件/)?.[1] ||
-        text.match(/30m〜50m未満\s*：\s*(\d+)件/)?.[1] ||
+        text.match(/30m〜50m未満(?:（要確認）)?\s*：\s*(\d+)件/)?.[1] ||
         text.match(/30〜40m（軽微）\s*：\s*(\d+)件/)?.[1] ||
         0
       );
@@ -245,10 +244,58 @@
     }
   }
 
+  function normalizeRenderedDistanceResult() {
+    const result = document.getElementById("distanceResult");
+    if (!result || !result.children.length) return;
+
+    const sections = Array.from(result.querySelectorAll(".distance-result-section"));
+    const judgementSection = sections.find(section => {
+      const heading = section.querySelector(".distance-result-heading");
+      return (heading?.textContent || "").includes("判定結果");
+    });
+
+    if (judgementSection) {
+      window.normalizeJudgementSection?.(judgementSection);
+      return;
+    }
+
+    const cards = Array.from(result.querySelectorAll(".distance-warning"));
+    const legacyCard = cards.find(card => {
+      const text = card.textContent || "";
+      return text.includes("判定結果") && (
+        text.includes("40m未満合計") ||
+        text.includes("30〜40m（軽微）") ||
+        text.includes("30〜50m（参考距離）") ||
+        text.includes("30m〜50m未満")
+      );
+    });
+
+    if (legacyCard) {
+      const wrapper = document.createElement("div");
+      legacyCard.parentNode?.insertBefore(wrapper, legacyCard);
+      wrapper.appendChild(legacyCard);
+      window.normalizeJudgementSection?.(wrapper);
+      wrapper.replaceWith(legacyCard);
+    }
+  }
+
+  function watchDistanceResult() {
+    const result = document.getElementById("distanceResult");
+    if (!result || result.dataset.poiSpacing50Observer === "true") return;
+
+    result.dataset.poiSpacing50Observer = "true";
+    const observer = new MutationObserver(() => {
+      queueMicrotask(normalizeRenderedDistanceResult);
+    });
+    observer.observe(result, { childList: true, subtree: true });
+    normalizeRenderedDistanceResult();
+  }
+
   function setup() {
     ensureStyles();
     setupMainRadiusUi();
     installDistanceResult50mUi();
+    watchDistanceResult();
   }
 
   if (document.readyState === "loading") {
