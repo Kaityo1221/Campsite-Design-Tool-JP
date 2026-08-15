@@ -15,8 +15,8 @@ test('完成KMZの正式レイヤー契約を固定する', async () => {
     expect(exportSource, `正式レイヤー契約が欠けています: ${token}`).toContain(token);
   }
 
-  const appendPois = exportSource.indexOf('appendNewPois(doc,documentNode,newRecords,photoPaths)');
-  const appendCircles = exportSource.indexOf('appendGeneratedCirclesToExistingLayers(doc,documentNode,allRecords,newRecords)');
+  const appendPois = exportSource.lastIndexOf('appendNewPois(doc,documentNode,newRecords,photoPaths)');
+  const appendCircles = exportSource.lastIndexOf('appendGeneratedCirclesToExistingLayers(doc,documentNode,allRecords,newRecords)');
   expect(appendPois).toBeGreaterThan(-1);
   expect(appendCircles).toBeGreaterThan(appendPois);
 });
