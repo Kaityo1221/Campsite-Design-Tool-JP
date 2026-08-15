@@ -189,7 +189,7 @@
     window.normalizeJudgementSection = function normalizeJudgementSection50m(section) {
       if (!section) return;
       const card = section.querySelector(".distance-warning");
-      if (!card) return;
+      if (!card || card.dataset.poiSpacing50Normalized === "true") return;
 
       const text = card.textContent || "";
       const dense = Number(text.match(/20m未満（密集）\s*：\s*(\d+)件/)?.[1] || 0);
@@ -217,6 +217,7 @@
       }
 
       card.style.borderColor = color;
+      card.dataset.poiSpacing50Normalized = "true";
       card.innerHTML = `
         <strong style="color:${color};font-size:20px;">
           ${icon} 判定結果：${status}
