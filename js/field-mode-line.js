@@ -17,16 +17,18 @@
   loadOnce('js/field-mode-session-30m.js?v=2', 'data-field-session-circles-loader');
   loadOnce('js/field-mode-map-first.js?v=1', 'data-field-map-first-loader');
   loadOnce('js/field-mode-basemap-switch.js?v=1', 'data-field-basemap-switch-loader');
+  loadOnce('js/field-mode-apac-v4.js?v=1', 'data-field-apac-v4-loader');
 
   function syncFinishLabel() {
     const button = document.getElementById('fieldModeSaveButton');
     const note = document.getElementById('fieldModeSaveNote');
     if (!button) return false;
-    if (button.textContent !== '完成KMZを保存') button.textContent = '完成KMZを保存';
-    button.setAttribute('aria-label', '完成KMZを端末へ保存');
+    const label = '設計完成：KMZ＋但し書きを出力';
+    if (button.textContent !== label) button.textContent = label;
+    button.setAttribute('aria-label', '完成KMZと必要な50m未満但し書きを端末へ出力');
     if (note) note.textContent = button.disabled
-      ? '変更があると完成KMZを保存できます。'
-      : '現地での変更をまとめて端末に保存します。';
+      ? 'ゲームスポットを読み込むと設計データを出力できます。'
+      : '完成KMZを生成し、50m未満がある場合は但し書きTXTも同時生成します。';
     return true;
   }
 
