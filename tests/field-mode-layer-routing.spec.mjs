@@ -32,6 +32,12 @@ test.beforeEach(async({page})=>{
   await page.route(/https:\/\/[^/]+\.tile\.openstreetmap\.org\/.*/,route=>route.fulfill({status:204,body:''}));
 });
 
+async function startCreativeMode(page){
+  await expect(page.locator('#fieldModeEntryStart')).toBeEnabled();
+  await page.locator('#fieldModeEntryStart').click();
+  await expect(page.locator('#fieldModeEntry')).toBeHidden({timeout:3000});
+}
+
 async function openFieldMode(page,kml=sourceKml){
   await page.goto('/field-mode.html');
   await page.locator('#fieldModeFile').setInputFiles({
@@ -40,12 +46,23 @@ async function openFieldMode(page,kml=sourceKml){
     buffer:Buffer.from(kml)
   });
   await expect(page.locator('#fieldModeFileStatus')).toContainText('件を読み込み');
+  await startCreativeMode(page);
   await expect(page.locator('#fieldModeNewPoiButton')).toBeEnabled();
   await expect(page.locator('#fieldPoiTypeButton')).toBeVisible();
 }
 
+async function openPalette(page){
+  const hotbar=page.locator('#fieldModeCreativeHotbar');
+  if(!(await hotbar.evaluate(el=>el.classList.contains('is-open'))))await page.locator('#fieldModeCreativeButton').click();
+  await expect(hotbar).toHaveClass(/is-open/);
+}
+
 async function addCurrentTypePoi(page){
-  await page.locator('#fieldModeNewPoiButton').click();
+  await openPalette(page);
+  const poi=page.locator('#fieldModeCreativeHotbar [data-tool="poi"]');
+  await expect(poi).toBeEnabled();
+  await poi.click();
+  await expect(page.locator('#fieldModeNewPoiButton')).toBeVisible();
   await expect(page.locator('#fieldModeNewPoiButton')).toContainText('この位置に設置');
   await page.locator('#fieldModeNewPoiButton').click();
   await expect(page.locator('#fieldModeNewPoiButton')).toContainText('新規設置');
@@ -154,6 +171,8 @@ test('30m・40m参考円の選択は同じ端末の作業復元後も残る',asy
   await page.reload();
   await expect(page.locator('#fieldModeResumePanel')).toHaveClass(/active/,{timeout:5000});
   await page.locator('#fieldModeResumeButton').click();
+  await expect(page.locator('#fieldModeEntryStart')).toBeEnabled({timeout:5000});
+  await startCreativeMode(page);
   await expect.poll(()=>page.evaluate(()=>{
     const restored=poiRecords.find(record=>record?.isNew&&!record.fieldDeleted);
     return restored?.include30mCircle===true&&restored?.include40mCircle===true;
