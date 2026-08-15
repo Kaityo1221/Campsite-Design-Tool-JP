@@ -1,0 +1,27 @@
+name: cache-bump-once
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/cache-bump-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Bump distance cache versions
+        run: |
+          sed -i 's#js/distance-entry.js?v=2#js/distance-entry.js?v=3#' index.html
+          sed -i 's#js/kmz-upload.js?v=2#js/kmz-upload.js?v=3#' index.html
+          sed -i 's#poi-spacing-policy-ui.js?v=4#poi-spacing-policy-ui.js?v=5#' js/kmz-upload.js
+          rm .github/workflows/cache-bump-once.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html js/kmz-upload.js .github/workflows/cache-bump-once.yml
+          git commit -m 'Bump distance cache versions'
+          git push
