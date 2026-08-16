@@ -1,0 +1,20 @@
+/* CREATIVE MODE start transition: slower, deeper, and easier to read. */
+.field-mode-entry-transition{
+  background:
+    radial-gradient(circle at 50% 46%,rgba(255,244,190,.98) 0%,rgba(242,196,86,.90) 18%,rgba(166,112,30,.78) 38%,rgba(49,37,23,.98) 76%);
+  text-shadow:0 3px 12px rgba(0,0,0,.72),0 0 24px rgba(255,235,151,.68);
+}
+.field-mode-entry-shell.is-starting .field-mode-entry-transition{
+  animation:fieldEntryStartLong 1.55s cubic-bezier(.22,.7,.2,1) forwards;
+}
+@keyframes fieldEntryStartLong{
+  0%{opacity:0;transform:scale(.88);filter:blur(7px)}
+  16%{opacity:1;transform:scale(.97);filter:blur(0)}
+  28%{opacity:1;transform:scale(1)}
+  70%{opacity:1;transform:scale(1.025)}
+  86%{opacity:.92;transform:scale(1.04)}
+  100%{opacity:0;transform:scale(1.085);filter:blur(2px)}
+}
+@media(prefers-reduced-motion:reduce){
+  .field-mode-entry-shell.is-starting .field-mode-entry-transition{animation:none;opacity:1;transform:none;filter:none}
+}
