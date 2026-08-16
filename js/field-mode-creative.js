@@ -301,8 +301,8 @@
   hotbar.addEventListener('click',event=>{
     const button=event.target.closest('[data-tool]');
     if(!button||button.disabled)return;
-    if(button.dataset.tool==='poi'&&newPoiButtonEl&&!newPoiButtonEl.disabled){
-      newPoiButtonEl.click();
+    if(button.dataset.tool==='poi'){
+      selectTool('poi',{collapse:true});
       return;
     }
     selectTool(button.dataset.tool,{collapse:true});
