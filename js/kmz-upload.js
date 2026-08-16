@@ -456,9 +456,9 @@
 /* 50m POI spacing policy is loaded after the legacy KMZ/distance scripts. */
 import("./poi-spacing-config.js?v=1")
   .then(() => Promise.all([
-    import("./poi-spacing-policy.js?v=5"),
+    import("./poi-spacing-policy.js?v=7"),
     import("./poi-spacing-policy-filter.js?v=4"),
-    import("./poi-spacing-policy-ui.js?v=4")
+    import("./poi-spacing-policy-ui.js?v=6")
   ]))
   .then(() => import("./poi-spacing-kmz50-guard.js?v=4"))
   .then(() => import("./poi-spacing-kmz-preserve.js?v=2"))
