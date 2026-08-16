@@ -334,8 +334,8 @@ function renderPreSubmitCheck() {
     },
     {
       id: "spacing30to40",
-      label: "50m確保が難しい箇所のみ、30m以上50m未満で調整している",
-      detail: "30m以上50m未満は必要な箇所だけに限定し、30m未満は避けます。"
+      label: "50m未満の配置は例外として必要性を確認している",
+      detail: "40m・30m台は参考値であり、原則は50m以上です。50m未満にする場合は必要性を確認します。"
     },
     {
       id: "playability",
@@ -366,7 +366,7 @@ function renderPreSubmitCheck() {
 
     <div class="pre-submit-note">
       <strong>距離の基本：</strong>
-      POI間隔は50m以上を基本とし、50m確保が難しい箇所のみ30m以上50m未満で調整します。
+      POI間隔は50m以上を原則とします。40m・30m台は参考値で、50m未満の配置は例外として必要性を確認します。
     </div>
 
     <div class="pre-submit-group">
