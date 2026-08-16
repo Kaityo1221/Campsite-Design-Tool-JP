@@ -706,3 +706,12 @@
   font-weight: 800;
 }
 
+
+/* Mobile distance hotfix: hide the map until a result has actually been rendered. */
+#distanceMap:empty {
+  display: none !important;
+  height: 0 !important;
+  margin-top: 0 !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
