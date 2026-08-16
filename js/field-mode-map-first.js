@@ -26,7 +26,7 @@
     document.head.appendChild(link);
   }
   ensureStyle('css/field-mode-map-first.css?v=1','data-field-map-first-style');
-  ensureStyle('css/field-mode-entry.css?v=5','data-field-entry-style');
+  ensureStyle('css/field-mode-entry.css?v=6','data-field-entry-style');
 
   function loaded(){
     try{return typeof fileLoaded!=='undefined'&&!!fileLoaded;}catch(_){return /件を読み込み|読み込み完了|読込済|復元/.test(fileStatus?.textContent||'');}
