@@ -123,7 +123,7 @@ window.loadCampsiteEngineDecisions = loadCampsiteEngineDecisions;
       <div class="campsite-file-guide-card update">
         <strong>すでにあるキャンプサイトを更新する方</strong>
         Google My Mapsから地図全体をKMZで書き出し、そのKMZを選択してください。<br>
-        追加したPOIに必要な、足りない50m円だけを追加して新しいKMZを作成します。
+        追加したPOIに必要な、足りない円だけを追加して新しいKMZを作成します。
       </div>
     `;
 
@@ -133,7 +133,7 @@ window.loadCampsiteEngineDecisions = loadCampsiteEngineDecisions;
       warning.className = 'campsite-file-guide-warning';
       input.insertAdjacentElement('afterend', warning);
     }
-    warning.innerHTML = '⚠️ Google My Mapsから<strong>レイヤーごとに書き出したCSVは使用しないでください。</strong><br>更新するときは、地図全体のKMZを使用してください。';
+    warning.innerHTML = '⚠️ Google My Mapsから<strong>書き出したCSVは使用しないでください。</strong><br>更新するときは、地図全体のKMZを使用してください。';
   }
 
   function setupStartModal() {
