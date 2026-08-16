@@ -14,7 +14,11 @@
   if(!body||!intro||!fileInput)return;
 
   function ensureStyle(href,attr){
-    if(document.querySelector(`link[${attr}]`))return;
+    const old=document.querySelector(`link[${attr}]`);
+    if(old){
+      if(old.getAttribute('href')!==href)old.setAttribute('href',href);
+      return;
+    }
     const link=document.createElement('link');
     link.rel='stylesheet';
     link.href=href;
@@ -22,7 +26,7 @@
     document.head.appendChild(link);
   }
   ensureStyle('css/field-mode-map-first.css?v=1','data-field-map-first-style');
-  ensureStyle('css/field-mode-entry.css?v=3','data-field-entry-style');
+  ensureStyle('css/field-mode-entry.css?v=4','data-field-entry-style');
 
   function loaded(){
     try{return typeof fileLoaded!=='undefined'&&!!fileLoaded;}catch(_){return /件を読み込み|読み込み完了|読込済|復元/.test(fileStatus?.textContent||'');}
