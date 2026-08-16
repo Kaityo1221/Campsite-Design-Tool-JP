@@ -14,7 +14,11 @@
   if(!body||!intro||!fileInput)return;
 
   function ensureStyle(href,attr){
-    if(document.querySelector(`link[${attr}]`))return;
+    const old=document.querySelector(`link[${attr}]`);
+    if(old){
+      if(old.getAttribute('href')!==href)old.setAttribute('href',href);
+      return;
+    }
     const link=document.createElement('link');
     link.rel='stylesheet';
     link.href=href;
@@ -22,7 +26,9 @@
     document.head.appendChild(link);
   }
   ensureStyle('css/field-mode-map-first.css?v=1','data-field-map-first-style');
-  ensureStyle('css/field-mode-entry.css?v=1','data-field-entry-style');
+  ensureStyle('css/field-mode-entry.css?v=6','data-field-entry-style');
+  ensureStyle('css/field-mode-entry-position.css?v=4','data-field-entry-position-style');
+  ensureStyle('css/field-mode-entry-transition.css?v=1','data-field-entry-transition-style');
 
   function loaded(){
     try{return typeof fileLoaded!=='undefined'&&!!fileLoaded;}catch(_){return /件を読み込み|読み込み完了|読込済|復元/.test(fileStatus?.textContent||'');}
@@ -43,29 +49,34 @@
     <div class="field-mode-entry-inner">
       <div class="field-mode-entry-kicker">CREATIVE MODE</div>
       <p class="field-mode-entry-copy">新しい世界の幕開けへ。</p>
-      <div class="field-mode-entry-card">
-        <label class="field-mode-entry-file-label">設計KMZ／KMLを選択<div id="fieldModeEntryFileSlot"></div></label>
-        <div id="fieldModeEntryFileState" class="field-mode-entry-file-state">KMZ / KML / ZIP を選択してください。</div>
-        <button id="fieldModeEntryStart" class="field-mode-entry-start" type="button" disabled>創作をはじめる</button>
-        <div id="fieldModeEntryHint" class="field-mode-entry-hint">先に設計KMZを選択してください</div>
-      </div>
+      <button id="fieldModeEntryStart" class="field-mode-entry-start" type="button" disabled>創作をはじめる</button>
+      <label class="field-mode-entry-filebar" for="fieldModeFile">
+        <span class="field-mode-entry-fileicon">▱</span>
+        <span class="field-mode-entry-filelabel">ゲームスポット元データを選択</span>
+        <span id="fieldModeEntryFileName" class="field-mode-entry-filename">未選択 ›</span>
+        <span id="fieldModeEntryFileSlot" class="field-mode-entry-file-slot"></span>
+      </label>
+      <div id="fieldModeEntryFileState" class="field-mode-entry-file-state" aria-live="polite"></div>
+      <div id="fieldModeEntryHint" class="field-mode-entry-hint">先に設計KMZを選択してください</div>
+      <div id="fieldModeEntryResumeSlot" class="field-mode-entry-resume-slot"></div>
       <a class="field-mode-entry-main-link" href="index.html">メインツールへ</a>
     </div>
     <div class="field-mode-entry-transition" aria-hidden="true">CREATIVE MODE START</div>`;
   body.prepend(entry);
 
   const slot=entry.querySelector('#fieldModeEntryFileSlot');
-  const card=entry.querySelector('.field-mode-entry-card');
+  const resumeSlot=entry.querySelector('#fieldModeEntryResumeSlot');
   const state=entry.querySelector('#fieldModeEntryFileState');
   const startButton=entry.querySelector('#fieldModeEntryStart');
   const hint=entry.querySelector('#fieldModeEntryHint');
+  const fileName=entry.querySelector('#fieldModeEntryFileName');
   slot.appendChild(fileInput);
 
   function adoptSessionUi(){
     const panel=document.getElementById('fieldModeResumePanel');
     const sessionStatus=document.getElementById('fieldModeSessionStatus');
-    if(panel&&panel.parentElement!==card)card.appendChild(panel);
-    if(sessionStatus&&sessionStatus.parentElement!==card)card.appendChild(sessionStatus);
+    if(panel&&panel.parentElement!==resumeSlot)resumeSlot.appendChild(panel);
+    if(sessionStatus&&sessionStatus.parentElement!==resumeSlot)resumeSlot.appendChild(sessionStatus);
     return !!panel;
   }
 
@@ -73,24 +84,24 @@
     const text=(fileStatus?.textContent||'').trim();
     const ready=loaded();
     const failed=/^⚠|失敗|エラー/.test(text)||/失敗|エラー/.test(modeStatus?.textContent||'');
-    state.classList.toggle('is-ready',ready&&!failed);
     state.classList.toggle('is-error',failed);
     if(failed){
       state.textContent=text||'ファイルを読み込めませんでした。';
+      fileName.textContent='読み込み失敗 ›';
       startButton.disabled=true;
       startButton.classList.remove('is-ready');
       hint.textContent='ファイルを確認して、もう一度選択してください';
       return;
     }
+    state.textContent='';
     if(ready){
-      const name=currentName();
-      state.textContent=`✓ 読み込み完了：${name}`;
+      fileName.textContent=`${currentName()} ✓`;
       startButton.disabled=false;
       startButton.classList.add('is-ready');
-      hint.textContent='準備完了。創作を始められます';
+      hint.textContent='';
       return;
     }
-    state.textContent=text&&text!=='KMZ / KML / ZIP を選択してください。'?text:'KMZ / KML / ZIP を選択してください。';
+    fileName.textContent='未選択 ›';
     startButton.disabled=true;
     startButton.classList.remove('is-ready');
     hint.textContent='先に設計KMZを選択してください';
@@ -133,7 +144,7 @@
       }
       invalidateMap();
       window.setTimeout(invalidateMap,120);
-    },620);
+    },1550);
   }
 
   startButton.addEventListener('click',()=>{if(loaded())enterCreativeMap();});

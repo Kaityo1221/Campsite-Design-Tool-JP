@@ -13,7 +13,8 @@ const files=[
   'js/field-mode-distance-tool.js',
   'js/field-mode-export.js',
   'js/field-mode-creative.js',
-  'js/field-mode-session.js'
+  'js/field-mode-session.js',
+  'js/field-mode-apac-v4.js'
 ];
 
 for(const path of files){
@@ -41,7 +42,8 @@ for(const token of [
   "loadOnce('js/field-mode-area.js?v=3'",
   "loadOnce('js/field-mode-eraser.js?v=2'",
   "loadOnce('js/field-mode-tool-return.js?v=3'",
-  "loadOnce('js/field-mode-distance-tool.js?v=3'"
+  "loadOnce('js/field-mode-distance-tool.js?v=3'",
+  "loadOnce('js/field-mode-apac-v4.js?v=1'"
 ]){
   if(!loaderJs.includes(token))fail(`現地モード互換ローダーが欠けています: ${token}`);
   else pass(`現地モード互換ローダーOK: ${token}`);
@@ -186,6 +188,29 @@ for(const token of [
   if(!sessionJs.includes(token))fail(`現地作業セッションの復元導線が欠けています: ${token}`);
   else pass(`セッション復元導線OK: ${token}`);
 }
+
+const apacJs=read('js/field-mode-apac-v4.js');
+for(const token of [
+  'const MAX_ADDITIONAL_SPOTS = 25',
+  'function recomputeAll(',
+  '追加ゲームスポットは最大${MAX_ADDITIONAL_SPOTS}個までです',
+  '50m未満だから自動的に設置不可・不合格とは判定しません',
+  'function buildExceptionText(',
+  'フォーム貼り付け用',
+  'spacingExceptionConfirmedSignature',
+  'window.FieldModeApacV4 =',
+  'noindex'
+]){
+  if(token==='noindex'){
+    if(!html.includes('noindex, nofollow'))fail('CREATIVE MODEの非公開検索制御 noindex が欠けています。');
+    else pass('CREATIVE MODE noindex維持');
+    continue;
+  }
+  if(!apacJs.includes(token))fail(`APAC Ver4導線が欠けています: ${token}`);
+  else pass(`APAC Ver4導線OK: ${token}`);
+}
+if(/5\s*[〜~-]\s*15/.test(apacJs))fail('APAC Ver4実装に5〜15個の制限値が混入しています。');
+else pass('5〜15個を制限値として使用していません');
 
 if(process.exitCode){
   console.error('\n現地モード安全チェック: NG');

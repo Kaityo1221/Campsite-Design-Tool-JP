@@ -88,7 +88,7 @@ test('準備専用IndexedDBへ保存して復元できる', async ({ page }) => 
   expect(saved.survey.polygon).toHaveLength(3);
 });
 
-test('準備画面が生成したKMLを既存現地モードがそのまま読み込める', async ({ page }) => {
+test('準備画面が生成したKMLをCREATIVE MODEがそのまま読み込める', async ({ page }) => {
   await page.goto('/field-prep.html');
 
   const kml = await page.evaluate(() => window.FieldPrepSurvey.buildFieldKml([
@@ -98,7 +98,8 @@ test('準備画面が生成したKMLを既存現地モードがそのまま読�
   ]));
 
   await page.goto('/field-mode.html');
-  await expect(page.locator('#fieldModeMap')).toBeVisible();
+  await expect(page.locator('#fieldModeEntry')).toBeVisible();
+  await expect(page.locator('#fieldModeMap')).toBeHidden();
   await page.locator('#fieldModeFile').setInputFiles({
     name: 'field-prep-generated.kml',
     mimeType: 'application/vnd.google-earth.kml+xml',
@@ -106,6 +107,11 @@ test('準備画面が生成したKMLを既存現地モードがそのまま読�
   });
 
   await expect(page.locator('#fieldModeFileStatus')).toContainText('件を読み込み');
-  await expect(page.locator('#fieldModeNewPoiButton')).toBeEnabled();
+  await expect(page.locator('#fieldModeEntryStart')).toBeEnabled();
+  await page.locator('#fieldModeEntryStart').click();
+  await expect(page.locator('#fieldModeEntry')).toBeHidden({ timeout: 3000 });
+  await expect(page.locator('#fieldModeMap')).toBeVisible();
+  await expect(page.locator('#fieldModeNewPoiButton')).toBeHidden();
   await expect(page.locator('#fieldModeCreativeButton')).toBeEnabled();
+  await expect.poll(() => page.evaluate(() => window.FieldModeApacV4?.additionalCount?.() ?? -1)).toBe(0);
 });

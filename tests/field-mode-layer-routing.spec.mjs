@@ -90,12 +90,21 @@ async function addAllThreeTypes(page){
 }
 
 async function downloadedKml(page){
+  page.on('dialog',dialog=>dialog.accept());
   const downloadPromise=page.waitForEvent('download');
   await page.locator('#fieldModeSaveButton').click();
   const download=await downloadPromise;
   const downloadPath=await download.path();
-  const zip=await JSZip.loadAsync(fs.readFileSync(downloadPath));
-  const doc=zip.file('doc.kml');
+  const downloaded=await JSZip.loadAsync(fs.readFileSync(downloadPath));
+  let kmz=downloaded;
+  let doc=kmz.file('doc.kml');
+  if(!doc){
+    const nestedName=Object.keys(downloaded.files).find(name=>name.toLowerCase().endsWith('.kmz'));
+    expect(nestedName,'APAC提出用ZIP内に完成KMZがありません').toBeTruthy();
+    const nestedBytes=await downloaded.file(nestedName).async('nodebuffer');
+    kmz=await JSZip.loadAsync(nestedBytes);
+    doc=kmz.file('doc.kml');
+  }
   expect(doc).not.toBeNull();
   return doc.async('string');
 }

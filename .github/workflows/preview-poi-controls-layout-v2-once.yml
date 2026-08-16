@@ -1,0 +1,42 @@
+name: preview-poi-controls-layout-v2-once
+on: push
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/creative-mode-apac-v4-preview
+      - name: Append compact POI controls CSS
+        run: |
+          if grep -q 'creative-poi-compact-controls-v2' css/field-mode.css; then exit 0; fi
+          cat >> css/field-mode.css <<'EOF'
+
+/* creative-poi-compact-controls-v2 */
+.field-creative-active.field-creative-tool-poi .field-mode-new-poi {
+  display: none !important;
+}
+.field-creative-active.field-creative-tool-poi .field-mode-poi-controls {
+  right: 6px;
+  bottom: 14px;
+  width: min(142px, 44vw);
+  gap: 0;
+}
+.field-creative-active.field-creative-tool-poi #fieldPoiTypeButton {
+  order: 1;
+  margin: 0;
+}
+.field-creative-active.field-creative-tool-poi .field-location-badge {
+  bottom: 74px;
+}
+EOF
+      - name: Commit
+        run: |
+          git config user.name Kaityo1221
+          git config user.email rakugo100@gmail.com
+          git add css/field-mode.css
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Hide redundant new placement button in creative POI mode'
+          git push origin HEAD:agent/creative-mode-apac-v4-preview

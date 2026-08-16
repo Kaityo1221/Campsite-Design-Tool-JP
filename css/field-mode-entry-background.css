@@ -1,0 +1,69 @@
+/* CREATIVE MODE opening art as the page background */
+.field-mode-entry-shell{
+  background:
+    linear-gradient(180deg,rgba(25,18,11,.18) 0%,rgba(25,18,11,.08) 34%,rgba(25,18,11,.48) 58%,rgba(23,19,15,.94) 82%,#17130f 100%),
+    url('../assets/creative-mode-opening.png') top center / 100% auto no-repeat,
+    #17130f;
+}
+.field-mode-entry-inner{
+  position:relative;
+  justify-content:flex-start;
+  padding-top:calc(24px + env(safe-area-inset-top));
+}
+.field-mode-entry-kicker,
+.field-mode-entry-copy{
+  position:relative;
+  z-index:2;
+  text-shadow:0 3px 18px rgba(0,0,0,.78),0 1px 3px rgba(0,0,0,.8);
+}
+.field-mode-entry-art{
+  position:static!important;
+  width:0!important;
+  height:0!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  overflow:visible!important;
+  background:none!important;
+  box-shadow:none!important;
+}
+.field-mode-entry-art img{display:none!important}
+.field-mode-entry-start-overlay{
+  position:absolute!important;
+  top:clamp(176px,38vw,250px)!important;
+  left:22px!important;
+  right:22px!important;
+  width:auto!important;
+  margin:0!important;
+  z-index:4!important;
+}
+.field-mode-entry-card{
+  position:relative;
+  z-index:3;
+  margin-top:clamp(250px,68vw,470px)!important;
+}
+.field-mode-entry-main-link{
+  position:relative;
+  z-index:3;
+}
+@media(max-width:520px){
+  .field-mode-entry-start-overlay{
+    top:clamp(170px,46vw,220px)!important;
+    left:18px!important;
+    right:18px!important;
+  }
+  .field-mode-entry-card{
+    margin-top:clamp(220px,72vw,330px)!important;
+  }
+}
+@media(max-width:340px),(max-height:620px){
+  .field-mode-entry-start-overlay{
+    top:136px!important;
+    left:12px!important;
+    right:12px!important;
+  }
+  .field-mode-entry-card{
+    margin-top:190px!important;
+  }
+}

@@ -85,7 +85,6 @@ async function selectPoiType(page, typeLabel) {
 }
 
 async function addNewPoi(page, typeLabel) {
-  // Use the same visible route as a real user: toolbox → POI → type → confirm.
   const hotbar = page.locator('#fieldModeCreativeHotbar');
   if (!(await hotbar.evaluate(element => element.classList.contains('is-open')))) {
     await page.locator('#fieldModeCreativeButton').click();
@@ -121,12 +120,21 @@ async function createThreePointArea(page) {
 }
 
 async function downloadFinalKml(page) {
+  page.on('dialog', dialog => dialog.accept());
   const downloadPromise = page.waitForEvent('download');
   await page.locator('#fieldModeSaveButton').click();
   const download = await downloadPromise;
   const downloadPath = await download.path();
-  const zip = await JSZip.loadAsync(fs.readFileSync(downloadPath));
-  const doc = zip.file('doc.kml');
+  const downloaded = await JSZip.loadAsync(fs.readFileSync(downloadPath));
+  let kmz = downloaded;
+  let doc = kmz.file('doc.kml');
+  if (!doc) {
+    const nestedName = Object.keys(downloaded.files).find(name => name.toLowerCase().endsWith('.kmz'));
+    expect(nestedName, 'APAC提出用ZIP内に完成KMZがありません').toBeTruthy();
+    const nestedBytes = await downloaded.file(nestedName).async('nodebuffer');
+    kmz = await JSZip.loadAsync(nestedBytes);
+    doc = kmz.file('doc.kml');
+  }
   expect(doc).not.toBeNull();
   return doc.async('string');
 }
@@ -156,7 +164,6 @@ test('調査ファイルから調査範囲・現地作業・完成KMZまで一�
   await expect(page.locator('#fieldModeFileStatus')).toContainText('件を読み込み', { timeout: 12000 });
   await expect.poll(() => page.evaluate(() => window.FieldModeSession?.hasSource?.() || false)).toBe(true);
 
-  // Field Prep handoff must still pass through the explicit CREATIVE MODE entry.
   await expect(page.locator('#fieldModeEntry')).toBeVisible();
   await expect(page.locator('#fieldModeEntryStart')).toBeEnabled();
   await expect(page.locator('#fieldModeEntryStart')).toHaveClass(/is-ready/);
