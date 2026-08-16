@@ -1,0 +1,65 @@
+name: creative-safe-main-sync
+
+on:
+  push:
+    branches: [agent/creative-mode-apac-v4]
+    paths:
+      - '.github/workflows/creative-safe-main-sync.yml'
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply only verified safe main fixes
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          policy = Path('js/poi-spacing-policy.js')
+          s = policy.read_text(encoding='utf-8')
+          replacements = [
+              ('すると\\n    // クロージャ', 'すると\n    // クロージャ'),
+              ('書き換えない。\\n    if ', '書き換えない。\n    if '),
+              ('includes("originalRunDistanceCheck")) {\\n    replaceFunctionSource', 'includes("originalRunDistanceCheck")) {\n      replaceFunctionSource'),
+              ('    );\\n    }\\n  }\\n\\n  function patchKmzFunctions() {', '    );\n    }\n  }\n\n  function patchKmzFunctions() {'),
+          ]
+          for old, new in replacements:
+              if old in s:
+                  s = s.replace(old, new, 1)
+          policy.write_text(s, encoding='utf-8')
+
+          kmz = Path('js/kmz-upload.js')
+          k = kmz.read_text(encoding='utf-8')
+          k = k.replace('poi-spacing-policy.js?v=6', 'poi-spacing-policy.js?v=7', 1)
+          kmz.write_text(k, encoding='utf-8')
+
+          index = Path('index.html')
+          h = index.read_text(encoding='utf-8')
+          h = h.replace('js/kmz-upload.js?v=4', 'js/kmz-upload.js?v=5', 1)
+          index.write_text(h, encoding='utf-8')
+          PY
+
+          git fetch origin main
+          git show origin/main:docs/knowledge/2026-08-16-distance-check-execution-incident.md > docs/knowledge/2026-08-16-distance-check-execution-incident.md
+
+          node --check js/poi-spacing-policy.js
+          node --check js/kmz-upload.js
+
+          if grep -nF '\n    // クロージャ' js/poi-spacing-policy.js; then
+            echo 'Broken literal \\n remains in policy' >&2
+            exit 1
+          fi
+
+          rm -f .github/workflows/creative-safe-main-sync.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add js/poi-spacing-policy.js js/kmz-upload.js index.html docs/knowledge/2026-08-16-distance-check-execution-incident.md .github/workflows/creative-safe-main-sync.yml
+          git commit -m 'Sync verified distance safety fixes from main'
+          git push
