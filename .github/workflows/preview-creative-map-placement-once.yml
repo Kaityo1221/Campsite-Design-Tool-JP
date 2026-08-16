@@ -1,0 +1,61 @@
+name: preview-creative-map-placement-once
+
+on:
+  push:
+    branches: [agent/creative-mode-apac-v4-preview]
+    paths:
+      - '.github/workflows/preview-creative-map-placement-once.yml'
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/creative-mode-apac-v4-preview
+          fetch-depth: 0
+
+      - name: Patch creative placement and map switch
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          p = Path('field-mode.html')
+          s = p.read_text(encoding='utf-8')
+
+          old = "function updateNewPoiButton(){newPoiButton.disabled=!(fileLoaded&&currentPosition);}"
+          new = "function updateNewPoiButton(){newPoiButton.disabled=!fileLoaded;}"
+          if old not in s:
+              raise SystemExit('updateNewPoiButton target not found')
+          s = s.replace(old, new, 1)
+
+          old = "function makeNewPoi(){if(!currentPosition||!fileLoaded)return;const count=poiRecords.filter(r=>r.isNew).length+1;"
+          new = "function makeNewPoi(){if(!fileLoaded)return;const count=poiRecords.filter(r=>r.isNew).length+1;"
+          if old not in s:
+              raise SystemExit('makeNewPoi guard target not found')
+          s = s.replace(old, new, 1)
+
+          old = "const latlng=[...currentPosition];const rangeCircle=L.circle(latlng,{pane:'fieldBackgroundPane'"
+          new = "const center=map.getCenter();const latlng=[center.lat,center.lng];const rangeCircle=L.circle(latlng,{pane:'fieldBackgroundPane'"
+          if old not in s:
+              raise SystemExit('new poi position target not found')
+          s = s.replace(old, new, 1)
+
+          old = "const map=L.map('fieldModeMap',{zoomControl:true}).setView([35.6812,139.7671],15);map.attributionControl.setPosition('bottomleft');L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:20,attribution:'&copy; OpenStreetMap contributors'}).addTo(map);"
+          new = "const map=L.map('fieldModeMap',{zoomControl:true}).setView([35.6812,139.7671],15);map.attributionControl.setPosition('bottomleft');const fieldBaseMap=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:20,attribution:'&copy; OpenStreetMap contributors'}).addTo(map);const fieldAerialMap=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:20,attribution:'Tiles &copy; Esri'});L.control.layers({'地図':fieldBaseMap,'航空写真':fieldAerialMap},null,{position:'topright',collapsed:false}).addTo(map);"
+          if old not in s:
+              raise SystemExit('base map target not found')
+          s = s.replace(old, new, 1)
+
+          p.write_text(s, encoding='utf-8')
+          PY
+
+          rm .github/workflows/preview-creative-map-placement-once.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add field-mode.html .github/workflows/preview-creative-map-placement-once.yml
+          git commit -m 'Fix creative placement and add map switcher'
+          git push
