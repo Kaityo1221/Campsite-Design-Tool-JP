@@ -1,0 +1,73 @@
+name: preview-distance-safe-sync
+
+on:
+  push:
+    branches: [agent/creative-mode-apac-v4-preview]
+    paths:
+      - '.github/workflows/preview-distance-safe-sync.yml'
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/creative-mode-apac-v4-preview
+          fetch-depth: 0
+
+      - name: Sync verified distance-check files only
+        shell: bash
+        run: |
+          git fetch origin agent/creative-mode-apac-v4 main
+
+          for f in \
+            css/distance.css \
+            js/distance-entry.js \
+            js/poi-spacing-policy-ui.js \
+            js/poi-spacing-policy.js \
+            js/kmz-upload.js; do
+            git show origin/agent/creative-mode-apac-v4:$f > "$f"
+          done
+
+          python - <<'PY'
+          import re, subprocess
+          from pathlib import Path
+
+          preview = Path('index.html')
+          p = preview.read_text(encoding='utf-8')
+          main = subprocess.check_output(['git','show','origin/main:index.html'], text=True)
+
+          patterns = [
+              r'css/distance\.css\?v=\d+',
+              r'js/distance-entry\.js\?v=\d+',
+              r'js/kmz-upload\.js\?v=\d+',
+          ]
+          for pat in patterns:
+              m = re.search(pat, main)
+              if not m:
+                  raise SystemExit(f'Main reference not found: {pat}')
+              p, n = re.subn(pat, m.group(0), p, count=1)
+              if n != 1:
+                  raise SystemExit(f'Preview reference not replaced: {pat}')
+
+          preview.write_text(p, encoding='utf-8')
+          PY
+
+          node --check js/distance-entry.js
+          node --check js/poi-spacing-policy-ui.js
+          node --check js/poi-spacing-policy.js
+          node --check js/kmz-upload.js
+
+          if grep -nF '\n    // クロージャ' js/poi-spacing-policy.js; then
+            echo 'Broken literal \\n remains in preview policy' >&2
+            exit 1
+          fi
+
+          rm -f .github/workflows/preview-distance-safe-sync.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add css/distance.css js/distance-entry.js js/poi-spacing-policy-ui.js js/poi-spacing-policy.js js/kmz-upload.js index.html .github/workflows/preview-distance-safe-sync.yml
+          git commit -m 'Sync verified distance-check fixes into preview'
+          git push origin HEAD:agent/creative-mode-apac-v4-preview
