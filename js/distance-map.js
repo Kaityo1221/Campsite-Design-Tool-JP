@@ -1,3 +1,74 @@
+let distanceLeafletLoadPromise = null;
+
+function ensureDistanceLeafletLoaded() {
+  if (typeof L !== "undefined") {
+    return Promise.resolve();
+  }
+
+  if (distanceLeafletLoadPromise) {
+    return distanceLeafletLoadPromise;
+  }
+
+  distanceLeafletLoadPromise = new Promise((resolve, reject) => {
+    const loadStylesheet = href => {
+      if (document.querySelector(`link[href="${href}"]`)) {
+        return;
+      }
+
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = href;
+      document.head.appendChild(link);
+    };
+
+    loadStylesheet(
+      "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"
+    );
+
+    const sources = [
+      "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js",
+      "https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"
+    ];
+
+    const tryLoad = index => {
+      if (typeof L !== "undefined") {
+        resolve();
+        return;
+      }
+
+      if (index >= sources.length) {
+        distanceLeafletLoadPromise = null;
+        reject(new Error("Leaflet could not be loaded"));
+        return;
+      }
+
+      const script = document.createElement("script");
+      script.src = sources[index];
+      script.async = true;
+
+      script.onload = () => {
+        if (typeof L !== "undefined") {
+          resolve();
+        } else {
+          script.remove();
+          tryLoad(index + 1);
+        }
+      };
+
+      script.onerror = () => {
+        script.remove();
+        tryLoad(index + 1);
+      };
+
+      document.head.appendChild(script);
+    };
+
+    tryLoad(0);
+  });
+
+  return distanceLeafletLoadPromise;
+}
+
 function addDistanceMapLegend() {
   if (!distanceLeafletMap || typeof L === "undefined") {
     return;
@@ -159,7 +230,7 @@ function focusDistanceWarning(warningIndex) {
 
 function renderSimpleDistanceMap(points = [], warnings = []) {
   latestDistanceWarnings = warnings || [];
-distanceWarningLineLayers = new Map();
+  distanceWarningLineLayers = new Map();
   const mapElement = document.getElementById("distanceMap");
 
   if (!mapElement) {
@@ -168,13 +239,30 @@ distanceWarningLineLayers = new Map();
 
   mapElement.innerHTML = "";
   mapElement.style.display = "block";
+  mapElement.style.height = "";
+  mapElement.style.minHeight = "";
 
   if (typeof L === "undefined") {
     mapElement.innerHTML = `
       <div class="distance-map-empty">
-        地図ライブラリを読み込めませんでした。
+        地図を読み込んでいます…
       </div>
     `;
+
+    ensureDistanceLeafletLoaded()
+      .then(() => {
+        renderSimpleDistanceMap(points, warnings);
+      })
+      .catch(() => {
+        mapElement.innerHTML = `
+          <div class="distance-map-empty">
+            地図を読み込めませんでした。通信環境を確認して、もう一度距離チェックを実行してください。
+          </div>
+        `;
+        mapElement.style.height = "auto";
+        mapElement.style.minHeight = "0";
+      });
+
     return;
   }
 
@@ -240,11 +328,11 @@ distanceWarningLineLayers = new Map();
   }
 
   if (distanceLeafletMap) {
-  distanceLeafletMap.remove();
-  distanceLeafletMap = null;
-  distanceLeafletLayerGroup = null;
-  distancePolygonLayerGroup = null;
-}
+    distanceLeafletMap.remove();
+    distanceLeafletMap = null;
+    distanceLeafletLayerGroup = null;
+    distancePolygonLayerGroup = null;
+  }
 
   distanceLeafletMap = L.map("distanceMap", {
     zoomControl: true
@@ -268,26 +356,26 @@ distanceWarningLineLayers = new Map();
 
   osmLayer.addTo(distanceLeafletMap);
 
-distanceLeafletLayerGroup =
-  L.layerGroup().addTo(distanceLeafletMap);
+  distanceLeafletLayerGroup =
+    L.layerGroup().addTo(distanceLeafletMap);
 
-distancePolygonLayerGroup =
-  L.layerGroup().addTo(distanceLeafletMap);
+  distancePolygonLayerGroup =
+    L.layerGroup().addTo(distanceLeafletMap);
 
-L.control.layers(
-  {
-    "OSM": osmLayer,
-    "航空写真": aerialLayer
-  },
-  {
-    "活動範囲": distancePolygonLayerGroup
-  },
-  {
-    collapsed: false
-  }
-).addTo(distanceLeafletMap);
+  L.control.layers(
+    {
+      "OSM": osmLayer,
+      "航空写真": aerialLayer
+    },
+    {
+      "活動範囲": distancePolygonLayerGroup
+    },
+    {
+      collapsed: false
+    }
+  ).addTo(distanceLeafletMap);
 
-addDistanceMapLegend();
+  addDistanceMapLegend();
 
   const bounds = [];
 
@@ -300,14 +388,14 @@ addDistanceMapLegend();
     }
 
     L.polygon(polygon, {
-  color: "#a855f7",
-  fillColor: "#a855f7",
-  fillOpacity: 0.18,
-  weight: 2,
-  interactive: false
-})
-  .bindPopup(`活動範囲ポリゴン ${index + 1}`)
-  .addTo(distancePolygonLayerGroup);
+      color: "#a855f7",
+      fillColor: "#a855f7",
+      fillOpacity: 0.18,
+      weight: 2,
+      interactive: false
+    })
+      .bindPopup(`活動範囲ポリゴン ${index + 1}`)
+      .addTo(distancePolygonLayerGroup);
 
     polygon.forEach(latLng => bounds.push(latLng));
   });
@@ -352,7 +440,7 @@ addDistanceMapLegend();
   /*
     近接ライン
   */
-(warnings || []).forEach((w, index) => {
+  (warnings || []).forEach((w, index) => {
     const aLatLng = getPointLatLng(w.a);
     const bLatLng = getPointLatLng(w.b);
 
@@ -385,28 +473,28 @@ addDistanceMapLegend();
       label = "参考";
     }
 
-   const warningIndex =
-  Number.isFinite(Number(w.warningIndex))
-    ? Number(w.warningIndex)
-    : index;
+    const warningIndex =
+      Number.isFinite(Number(w.warningIndex))
+        ? Number(w.warningIndex)
+        : index;
 
-const warningLine = L.polyline([aLatLng, bLatLng], {
-  color,
-  weight: isReference ? 2 : 3,
-  opacity: isReference ? 0.55 : 0.85,
-  dashArray: isReference || w.distance >= 30 ? "6,6" : null
-})
-  .bindPopup(`
-    <strong>${escapeDistanceHtml(label)}：${w.distance.toFixed(1)}m</strong><br>
-    ${escapeDistanceHtml(w.a.layer || "-")}：${escapeDistanceHtml(w.a.name || "名称なし")}<br>
-    × ${escapeDistanceHtml(w.b.layer || "-")}：${escapeDistanceHtml(w.b.name || "名称なし")}
-  `)
-  .addTo(distanceLeafletLayerGroup);
+    const warningLine = L.polyline([aLatLng, bLatLng], {
+      color,
+      weight: isReference ? 2 : 3,
+      opacity: isReference ? 0.55 : 0.85,
+      dashArray: isReference || w.distance >= 30 ? "6,6" : null
+    })
+      .bindPopup(`
+        <strong>${escapeDistanceHtml(label)}：${w.distance.toFixed(1)}m</strong><br>
+        ${escapeDistanceHtml(w.a.layer || "-")}：${escapeDistanceHtml(w.a.name || "名称なし")}<br>
+        × ${escapeDistanceHtml(w.b.layer || "-")}：${escapeDistanceHtml(w.b.name || "名称なし")}
+      `)
+      .addTo(distanceLeafletLayerGroup);
 
-distanceWarningLineLayers.set(
-  String(warningIndex),
-  warningLine
-);
+    distanceWarningLineLayers.set(
+      String(warningIndex),
+      warningLine
+    );
 
     bounds.push(aLatLng);
     bounds.push(bLatLng);
