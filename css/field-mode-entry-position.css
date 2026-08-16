@@ -13,7 +13,7 @@
   display:block;
   width:fit-content;
   max-width:100%;
-  margin:-126px auto 84px;
+  margin:-150px auto 108px;
   padding:10px 18px;
   border:1px solid rgba(255,232,128,.9);
   border-radius:999px;
@@ -33,8 +33,8 @@
 }
 @media(max-width:520px){
   .field-mode-entry-resume-slot .field-session-panel.active::before{
-    margin-top:-118px;
-    margin-bottom:80px;
+    margin-top:-142px;
+    margin-bottom:104px;
     padding:9px 14px;
     font-size:14px;
   }
