@@ -161,7 +161,10 @@
       .replace(/⚠ 調整対象/g, "⚠ 要修正")
     );
 
-    // distance-entry.js が既にラップ済みの場合、Function再生成すると\n    // クロージャ originalRunDistanceCheck が失われるため、ラッパーは書き換えない。\n    if (!String(window.runDistanceCheck || "").includes("originalRunDistanceCheck")) {\n    replaceFunctionSource("runDistanceCheck", source => source
+    // distance-entry.js が既にラップ済みの場合、Function再生成すると
+    // クロージャ originalRunDistanceCheck が失われるため、ラッパーは書き換えない。
+    if (!String(window.runDistanceCheck || "").includes("originalRunDistanceCheck")) {
+      replaceFunctionSource("runDistanceCheck", source => source
       .replace(/let resultStatus = "問題なし";/g, 'let resultStatus = "50m以上";')
       .replace(/resultStatus = "調整あり";/g, 'resultStatus = "30m未満あり";')
       .replace(/resultStatusIcon = "⚠";/g, 'resultStatusIcon = "🚨";')
@@ -192,7 +195,11 @@
       .replace(/⚪ 30〜50m参考：/g, "⚪ 30m〜50m未満：")
       .replace(/sectionTitleHtml\("距離チェックマップ", "OSM \/ 航空写真でPOI・活動範囲・近接ラインを確認できます。"\)/g,
         `sectionTitleHtml("距離チェックマップ", "50m：原則となるPOI間隔 / 40m：距離確認用（参考） / 30m：距離確認用（参考）")`)
-    );\n    }\n  }\n\n  function patchKmzFunctions() {
+    );
+    }
+  }
+
+  function patchKmzFunctions() {
     const transform = source => source
       .replace(/40m円（基本距離）/g, "40m円（参考）")
       .replace(/40m円（参考距離）/g, "40m円（参考）")
