@@ -329,13 +329,13 @@ function renderPreSubmitCheck() {
   const manualItems = [
     {
       id: "spacing40",
-      label: "POI間隔は40m以上を基本としている",
-      detail: "まず40m以上の間隔を目標に配置します。"
+      label: "POI間隔は50m以上を基本としている",
+      detail: "まず50m以上の間隔を目標に配置します。"
     },
     {
       id: "spacing30to40",
-      label: "40m確保が難しい箇所のみ、30m以上40m未満で調整している",
-      detail: "30m台は必要な箇所だけに限定し、30m未満は避けます。"
+      label: "50m確保が難しい箇所のみ、30m以上50m未満で調整している",
+      detail: "30m以上50m未満は必要な箇所だけに限定し、30m未満は避けます。"
     },
     {
       id: "playability",
@@ -366,7 +366,7 @@ function renderPreSubmitCheck() {
 
     <div class="pre-submit-note">
       <strong>距離の基本：</strong>
-      POI間隔は40m以上を基本とし、40m確保が難しい箇所のみ30m以上40m未満で調整します。
+      POI間隔は50m以上を基本とし、50m確保が難しい箇所のみ30m以上50m未満で調整します。
     </div>
 
     <div class="pre-submit-group">
