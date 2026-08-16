@@ -1,0 +1,8 @@
+/* CREATIVE MODE entry position tuning: keep Riku visible beneath controls. */
+.field-mode-entry-start{margin-top:clamp(12px,4vw,28px)}
+@media(max-width:520px){
+  .field-mode-entry-start{margin-top:clamp(8px,2.5vw,16px)}
+}
+@media(max-width:340px),(max-height:620px){
+  .field-mode-entry-start{margin-top:6px}
+}
