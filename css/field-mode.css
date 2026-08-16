@@ -510,3 +510,21 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* creative-poi-compact-controls-v2 */
+.field-creative-active.field-creative-tool-poi .field-mode-new-poi {
+  display: none !important;
+}
+.field-creative-active.field-creative-tool-poi .field-mode-poi-controls {
+  right: 6px;
+  bottom: 14px;
+  width: min(142px, 44vw);
+  gap: 0;
+}
+.field-creative-active.field-creative-tool-poi #fieldPoiTypeButton {
+  order: 1;
+  margin: 0;
+}
+.field-creative-active.field-creative-tool-poi .field-location-badge {
+  bottom: 74px;
+}
