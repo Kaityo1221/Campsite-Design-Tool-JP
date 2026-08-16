@@ -1,0 +1,74 @@
+name: preview-poi-controls-layout-once
+
+on:
+  push:
+    paths:
+      - '.github/workflows/preview-poi-controls-layout-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.ref == 'refs/heads/agent/creative-mode-apac-v4-preview'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/creative-mode-apac-v4-preview
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Patch POI controls layout
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('css/field-mode.css')
+          s=p.read_text(encoding='utf-8')
+          marker='/* creative-poi-compact-controls-v1 */'
+          block=r'''
+
+/* creative-poi-compact-controls-v1 */
+.field-creative-active.field-creative-tool-poi .field-mode-new-poi {
+  display: none !important;
+}
+
+.field-creative-active.field-creative-tool-poi .field-mode-poi-controls {
+  right: 8px;
+  bottom: 18px;
+  width: min(148px, 42vw);
+  gap: 0;
+}
+
+.field-creative-active.field-creative-tool-poi #fieldPoiTypeButton {
+  order: 1;
+  margin: 0;
+}
+
+.field-creative-active.field-creative-tool-poi .field-location-badge {
+  bottom: 74px;
+}
+
+@media (max-width: 420px) {
+  .field-creative-active.field-creative-tool-poi .field-mode-poi-controls {
+    right: 6px;
+    bottom: 14px;
+    width: min(142px, 44vw);
+  }
+}
+'''
+          if marker not in s:
+              s += block
+          p.write_text(s,encoding='utf-8')
+          PY
+          grep -q 'creative-poi-compact-controls-v1' css/field-mode.css
+      - name: Commit patch
+        shell: bash
+        run: |
+          git config user.name 'Kaityo1221'
+          git config user.email 'rakugo100@gmail.com'
+          git add css/field-mode.css
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Compact creative POI placement controls'
+          git push origin HEAD:agent/creative-mode-apac-v4-preview
