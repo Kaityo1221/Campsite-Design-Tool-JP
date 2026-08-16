@@ -22,7 +22,7 @@
     document.head.appendChild(link);
   }
   ensureStyle('css/field-mode-map-first.css?v=1','data-field-map-first-style');
-  ensureStyle('css/field-mode-entry.css?v=1','data-field-entry-style');
+  ensureStyle('css/field-mode-entry.css?v=2','data-field-entry-style');
 
   function loaded(){
     try{return typeof fileLoaded!=='undefined'&&!!fileLoaded;}catch(_){return /件を読み込み|読み込み完了|読込済|復元/.test(fileStatus?.textContent||'');}
@@ -43,6 +43,9 @@
     <div class="field-mode-entry-inner">
       <div class="field-mode-entry-kicker">CREATIVE MODE</div>
       <p class="field-mode-entry-copy">新しい世界の幕開けへ。</p>
+      <figure class="field-mode-entry-art">
+        <img src="assets/creative-mode-opening.png" alt="仲間と公園の宝物を探しに向かうCREATIVE MODEのオープニングイラスト">
+      </figure>
       <div class="field-mode-entry-card">
         <label class="field-mode-entry-file-label">設計KMZ／KMLを選択<div id="fieldModeEntryFileSlot"></div></label>
         <div id="fieldModeEntryFileState" class="field-mode-entry-file-state">KMZ / KML / ZIP を選択してください。</div>
