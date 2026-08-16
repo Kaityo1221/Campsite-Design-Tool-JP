@@ -14,6 +14,7 @@
 2. 結果補正処理が同じ判定カードを再度書き換える経路があり、UI更新がループする可能性があった。
 3. `#distanceMap` が実行前から表示されていたため、iPhone Safariでは大きな黒い空白として見えていた。
 4. 修正後に関連JavaScriptのキャッシュ番号更新が不足し、Safariで旧JSが残るケースがあった。
+5. その後の自動修正で `js/poi-spacing-policy.js` に、本来の改行ではなく文字列としての `\n` がコード中へ混入した。これにより50mポリシー読み込みが途中で壊れ、距離チェック結果UIや空マップ制御が正しく適用されない回帰が発生した。
 
 ## 対応
 - `js/poi-spacing-policy-ui.js` に再補正防止ガードを追加。
@@ -24,13 +25,24 @@
 - 完了後に結果位置へ自動スクロール。
 - JavaScriptエラー時は画面上にエラー内容を表示するよう改善。
 - 関連JSのキャッシュバージョンを更新。
+- `js/poi-spacing-policy.js` 内に混入した文字列 `\n` を正常な改行へ修復。
+- 修復時に `node --check js/poi-spacing-policy.js` を実行して構文エラーがないことを確認。
+- Safariに旧JSを残さないため、`poi-spacing-policy.js` のキャッシュ番号を更新。
 
 ## 確認結果
 - iPhone Safari上で距離チェックが正常に実行できることを確認。
 - 大きな空白表示も解消。
+- 2026-08-16 再発時も同症状を確認し、`poi-spacing-policy.js` の構文修復とキャッシュ更新後に実機で復旧を確認。
+
+## CREATIVE MODE / ブランチ統合時の注意
+- `main` を CREATIVE MODE ブランチへ取り込む行為そのものは、本番 `main` を変更しない。
+- ただし、`main` に潜在している不具合はブランチ統合時にもそのまま複製される。
+- GitHub Pages の公開元を preview ブランチと main の間で切り替えると、再デプロイによりSafariが新しいキャッシュ番号のJSを取得し、潜在不具合が表面化することがある。
+- 「CREATIVEへmainを取り込んだからmainが壊れた」とは限らない。今回の再発では、main内に既に存在していた構文不具合がPages再配信とSafariキャッシュ更新を契機に表面化した。
+- GitHub Pagesは原則 `main / root` 固定とし、CREATIVE MODE確認のために公開元ブランチを切り替えない。
 
 ## 再発防止
-距離チェック関連の改修時は、以下をリリース確認に含める。
+距離チェック関連の改修時、およびCREATIVE MODEへ最新mainを取り込む前後は、以下をリリース確認に含める。
 
 - 距離判定ロジック
 - 結果UIのDOM監視・再描画
@@ -38,8 +50,15 @@
 - 実行前/実行中/完了/エラーの各状態
 - キャッシュバージョン更新
 - main反映後の実機確認
+- `node --check js/poi-spacing-policy.js` による構文確認
+- `js/poi-spacing-policy.js` 内に意図しない文字列 `\n` が混入していないこと
+- `distance-entry.js` の `runDistanceCheck` ラッパーを `Function` 再生成で壊していないこと
+- GitHub Pages公開元が `main / root` のままであること
+- CREATIVE MODEブランチへmainを統合した後も、本番距離チェックを少なくとも1回実行確認すること
 
 ## 関連コミット
 - `1784e2b6` MutationObserver再更新ループ対策
 - `83b772c1` 旧40m表示の50m方針対応
 - `c4b38d4a` モバイル表示・実行状態・エラー表示改善
+- `1a357eb4` 距離チェックラッパー保護対応。ただし自動修正で文字列 `\n` 混入の起点となったため注意
+- `cda95701` `poi-spacing-policy.js` の構文修復とキャッシュ更新
