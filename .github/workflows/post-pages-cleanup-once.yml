@@ -1,0 +1,69 @@
+name: Post Pages cleanup once
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/post-pages-cleanup-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Delete merged work branches safely
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin '+refs/heads/*:refs/remotes/origin/*'
+          branches=(
+            'agent/poi-layer-name-standardization'
+            'hotfix/poi-layer-name-diff-update'
+            'hotfix/distance-layer-name-warning'
+            'hotfix/distance-pokestop-accent'
+            'hotfix/distance-layer-warning-ui'
+            'fix/pages-nojekyll-20260818'
+            'fix/pages-actions-deploy-20260818'
+            'cleanup/post-pages-20260818'
+          )
+          for branch in "${branches[@]}"; do
+            remote_ref="refs/remotes/origin/${branch}"
+            if ! git show-ref --verify --quiet "$remote_ref"; then
+              echo "skip missing: $branch"
+              continue
+            fi
+            if git merge-base --is-ancestor "$remote_ref" origin/main; then
+              echo "delete merged: $branch"
+              git push origin --delete "$branch"
+            else
+              echo "KEEP unmerged: $branch"
+            fi
+          done
+
+      - name: Remove temporary deployment files
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/deploy-triggers/pages-redeploy-layer-priority-20260818.txt
+          rmdir .github/deploy-triggers 2>/dev/null || true
+          rm -f .nojekyll
+          rm -f .github/workflows/post-pages-cleanup-once.yml
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          if git diff --cached --quiet; then
+            echo 'No cleanup commit needed.'
+            exit 0
+          fi
+          git commit -m 'Clean up temporary Pages migration files'
+          git push origin HEAD:main
