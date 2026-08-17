@@ -1,3 +1,95 @@
+function getFormalPoiLayerNameForWarning(layerName) {
+  const registry = window.CampsitePoiLayerNames;
+  const raw = String(layerName || "").trim();
+
+  if (!raw || !registry) return "";
+  if (typeof registry.isFormal === "function" && registry.isFormal(raw)) {
+    return raw;
+  }
+
+  const type = typeof getPoiTypeFromLayerName === "function"
+    ? getPoiTypeFromLayerName(raw)
+    : null;
+  const isExisting = typeof isExistingLayerName === "function"
+    ? isExistingLayerName(raw)
+    : false;
+  const isNew = typeof isAddedLayerName === "function"
+    ? isAddedLayerName(raw)
+    : false;
+
+  if (!type || (!isExisting && !isNew)) {
+    return typeof registry.canonicalize === "function"
+      ? registry.canonicalize(raw)
+      : "";
+  }
+
+  const formal = registry.FORMAL || {};
+  const keyByRoleAndType = {
+    existing: {
+      pokestop: "existingPokestop",
+      gym: "existingGym",
+      power: "existingPowerSpot"
+    },
+    new: {
+      pokestop: "newPokestop",
+      gym: "newGym",
+      power: "newPowerSpot"
+    }
+  };
+
+  const role = isExisting ? "existing" : "new";
+  return formal[keyByRoleAndType[role]?.[type]] || "";
+}
+
+function getDistancePoiLayerNameWarnings(layerNames = []) {
+  const registry = window.CampsitePoiLayerNames;
+  if (!registry || typeof registry.isFormal !== "function") return [];
+
+  return Array.from(new Set(layerNames.map(name => String(name || "").trim())))
+    .filter(Boolean)
+    .filter(layerName => {
+      if (typeof isAuxiliaryLayer === "function" && isAuxiliaryLayer(layerName)) {
+        return false;
+      }
+
+      const hasPoiRole =
+        (typeof isExistingLayerName === "function" && isExistingLayerName(layerName)) ||
+        (typeof isAddedLayerName === "function" && isAddedLayerName(layerName));
+
+      if (!hasPoiRole) return false;
+      return !registry.isFormal(layerName);
+    })
+    .map(layerName => ({
+      current: layerName,
+      recommended: getFormalPoiLayerNameForWarning(layerName)
+    }));
+}
+
+function renderDistancePoiLayerNameWarningHtml(warnings = []) {
+  if (!warnings.length) return "";
+
+  const rows = warnings.map(item => {
+    const current = escapeDistanceHtml(item.current || "");
+    const recommended = item.recommended && item.recommended !== item.current
+      ? ` → <strong>${escapeDistanceHtml(item.recommended)}</strong>`
+      : "";
+    return `<li><code>${current}</code>${recommended}</li>`;
+  }).join("");
+
+  return `
+    <div class="distance-warning" style="margin-bottom:12px;">
+      <strong>⚠ POIレイヤー名が正式名称と異なります</strong><br>
+      <small>距離チェックは続行できますが、提出前に正式名称へ統一してください。</small>
+      <ul style="margin:8px 0 0 1.2em;padding:0;line-height:1.7;">
+        ${rows}
+      </ul>
+      <div style="margin-top:8px;font-size:12px;line-height:1.6;opacity:.9;">
+        正式名称：既存 PokéStop / 既存 Gym / 既存 PowerSpot / 新規 PokéStop / 新規 Gym / 新規 PowerSpot
+      </div>
+    </div>
+  `;
+}
+
 function renderDistanceLoadErrorHtml(title, message = "") {
   return `
     <div class="distance-warning" style="
@@ -44,6 +136,7 @@ const fileName = file.name.toLowerCase();
   window._layerPoints = {};
   window._hasPolygon = false;
   window._activityPolygons = [];
+  window._distanceLayerNameWarnings = [];
 
   if (container) {
     container.innerHTML = "";
@@ -187,8 +280,12 @@ window._hasPolygon =
           window._layerPoints
         );
 
+      window._distanceLayerNameWarnings =
+        getDistancePoiLayerNameWarnings(layerNames);
+
       summary.innerHTML =
-  renderDistancePrecheckCompactHtml(counts);
+        renderDistancePoiLayerNameWarningHtml(window._distanceLayerNameWarnings) +
+        renderDistancePrecheckCompactHtml(counts);
     }
 
     } catch (error) {

@@ -429,10 +429,15 @@ function renderDistancePrecheckCompactHtml(counts) {
     counts.gym > POI_LIMITS.gym ||
     counts.power > POI_LIMITS.power;
 
+  const hasLayerNameWarning =
+    Array.isArray(window._distanceLayerNameWarnings) &&
+    window._distanceLayerNameWarnings.length > 0;
+
   const hasWarning =
     hasDuplicate ||
     !hasPolygon ||
-    poiLimitExceeded;
+    poiLimitExceeded ||
+    hasLayerNameWarning;
 
   const statusIcon =
     hasWarning ? "⚠" : "✅";
