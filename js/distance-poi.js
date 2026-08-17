@@ -471,6 +471,24 @@ function renderDistancePrecheckCompactHtml(counts) {
         <span>STEP 1</span>
       </div>
 
+      ${
+        hasLayerNameWarning
+          ? `
+            <div class="distance-precheck-priority-alert">
+              <div class="distance-precheck-priority-head">
+                <span class="distance-precheck-priority-badge">最優先</span>
+                <strong>レイヤー名の修正が必要です</strong>
+                <span class="distance-precheck-priority-count">${window._distanceLayerNameWarnings.length}件</span>
+              </div>
+              <div class="distance-precheck-priority-text">
+                最初にここを直してください。<br>
+                上の「レイヤー名に修正があります」を開き、正式名称へ変更してから距離チェックへ進んでください。
+              </div>
+            </div>
+          `
+          : ""
+      }
+
       <div class="distance-precheck-grid">
         <div>
           <small>判定対象POI</small>
