@@ -116,7 +116,7 @@ function setupDistanceEntryUi() {
     </div>
     <details class="distance-entry-details">
       <summary>判定対象とレイヤー名の詳細を見る</summary>
-      <div class="distance-entry-details-body">対象POIは、ポケストップ・ジム・パワースポットです。<br>例：既存ポケストップ、既存ジム、追加ポケストップ、追加パワースポット<br>30m・40m円などの補助レイヤーは自動的に除外されます。<br><br>iPhoneで <strong>.kmz.zip</strong> として保存された場合は、ファイルアプリの「名称変更」で末尾の <strong>.zip</strong> を削除してください。</div>
+      <div class="distance-entry-details-body">対象POIは、ポケストップ・ジム・パワースポットです。<br>正式名称：既存 PokéStop、既存 Gym、既存 PowerSpot、新規 PokéStop、新規 Gym、新規 PowerSpot<br>30m・40m円などの補助レイヤーは自動的に除外されます。<br><br>iPhoneで <strong>.kmz.zip</strong> として保存された場合は、ファイルアプリの「名称変更」で末尾の <strong>.zip</strong> を削除してください。</div>
     </details>
     <div class="distance-summary-slot"></div>
     <div class="distance-layer-results"></div>
