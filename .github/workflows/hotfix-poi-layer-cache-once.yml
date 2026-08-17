@@ -1,0 +1,52 @@
+name: POI layer hotfix cache verification
+
+on:
+  push:
+    branches:
+      - hotfix/poi-layer-name-diff-update
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: hotfix/poi-layer-name-diff-update
+          fetch-depth: 0
+      - name: Bump main loader cache
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          old = 'js/kmz-upload.js?v=5'
+          new = 'js/kmz-upload.js?v=6'
+          if old in s:
+              s = s.replace(old, new, 1)
+              p.write_text(s, encoding='utf-8')
+          elif new not in s:
+              raise SystemExit('kmz-upload cache reference not found')
+          PY
+      - name: Verify hotfix
+        run: |
+          node --check js/poi-spacing-kmz-diff.js
+          node --check js/kmz-upload.js
+          grep -F 'js/kmz-upload.js?v=6' index.html
+          grep -F 'import("./poi-spacing-kmz-diff.js?v=2")' js/kmz-upload.js
+          grep -F '["既存のポケストップ", "既存 PokéStop"]' js/poi-spacing-kmz-diff.js
+          grep -F '["既存のジム", "既存 Gym"]' js/poi-spacing-kmz-diff.js
+          grep -F '["既存のパワースポット", "既存 PowerSpot"]' js/poi-spacing-kmz-diff.js
+          grep -F '["追加希望ポケスト", "新規 PokéStop"]' js/poi-spacing-kmz-diff.js
+          grep -F '["追加希望ジム", "新規 Gym"]' js/poi-spacing-kmz-diff.js
+          grep -F '["追加希望パワスポ", "新規 PowerSpot"]' js/poi-spacing-kmz-diff.js
+      - name: Commit cache bump
+        run: |
+          git config user.name "Kaityo1221"
+          git config user.email "rakugo100@gmail.com"
+          git add index.html
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Bust KMZ loader cache for layer-name diff hotfix"
+          git push origin HEAD:hotfix/poi-layer-name-diff-update
