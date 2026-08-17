@@ -1,0 +1,297 @@
+name: POI layer name standardization package
+
+on:
+  push:
+    branches:
+      - agent/poi-layer-name-standardization
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/poi-layer-name-standardization
+          fetch-depth: 0
+
+      - name: Build release candidate package
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          formal = {
+              'existing_pokestop': '既存 PokéStop',
+              'existing_gym': '既存 Gym',
+              'existing_power': '既存 PowerSpot',
+              'new_pokestop': '新規 PokéStop',
+              'new_gym': '新規 Gym',
+              'new_power': '新規 PowerSpot',
+          }
+
+          legacy_to_formal = {
+              '既存のポケストップ': formal['existing_pokestop'],
+              '既存のジム': formal['existing_gym'],
+              '既存のパワースポット': formal['existing_power'],
+              '追加希望ポケスト': formal['new_pokestop'],
+              '追加希望ジム': formal['new_gym'],
+              '追加希望パワスポ': formal['new_power'],
+              '追加 PokéStop': formal['new_pokestop'],
+              '追加 Gym': formal['new_gym'],
+              '追加 PowerSpot': formal['new_power'],
+          }
+
+          layer_js = r'''(() => {
+            'use strict';
+
+            const FORMAL = Object.freeze({
+              existingPokestop: '既存 PokéStop',
+              existingGym: '既存 Gym',
+              existingPowerSpot: '既存 PowerSpot',
+              newPokestop: '新規 PokéStop',
+              newGym: '新規 Gym',
+              newPowerSpot: '新規 PowerSpot'
+            });
+
+            const EXACT_ALIASES = new Map([
+              ['既存 PokéStop', FORMAL.existingPokestop],
+              ['既存 Gym', FORMAL.existingGym],
+              ['既存 PowerSpot', FORMAL.existingPowerSpot],
+              ['新規 PokéStop', FORMAL.newPokestop],
+              ['新規 Gym', FORMAL.newGym],
+              ['新規 PowerSpot', FORMAL.newPowerSpot],
+              ['既存のポケストップ', FORMAL.existingPokestop],
+              ['既存のジム', FORMAL.existingGym],
+              ['既存のパワースポット', FORMAL.existingPowerSpot],
+              ['追加希望ポケスト', FORMAL.newPokestop],
+              ['追加希望ジム', FORMAL.newGym],
+              ['追加希望パワスポ', FORMAL.newPowerSpot],
+              ['追加 PokéStop', FORMAL.newPokestop],
+              ['追加 Gym', FORMAL.newGym],
+              ['追加 PowerSpot', FORMAL.newPowerSpot]
+            ]);
+
+            function normalizedKey(value) {
+              return String(value || '')
+                .normalize('NFKC')
+                .trim()
+                .toLowerCase()
+                .replace(/[\s　_＿\-－ー]+/g, '');
+            }
+
+            const NORMALIZED_ALIASES = new Map();
+            EXACT_ALIASES.forEach((canonical, alias) => {
+              NORMALIZED_ALIASES.set(normalizedKey(alias), canonical);
+            });
+
+            function canonicalize(value) {
+              const raw = String(value || '').trim();
+              return EXACT_ALIASES.get(raw) || NORMALIZED_ALIASES.get(normalizedKey(raw)) || raw;
+            }
+
+            const FORMAL_SET = new Set(Object.values(FORMAL));
+            function isFormal(value) {
+              return FORMAL_SET.has(String(value || '').trim());
+            }
+
+            window.CampsitePoiLayerNames = Object.freeze({ FORMAL, canonicalize, isFormal });
+          })();
+          '''
+          Path('js/poi-layer-names.js').write_text(layer_js, encoding='utf-8')
+
+          def read(path):
+              return Path(path).read_text(encoding='utf-8')
+
+          def write(path, text):
+              Path(path).write_text(text, encoding='utf-8')
+
+          # KMZ generation: outputs must always use the six formal names.
+          p = Path('js/kmz.js')
+          text = p.read_text(encoding='utf-8')
+          for old, new in legacy_to_formal.items():
+              text = text.replace(f'"{old}"', f'"{new}"').replace(f"'{old}'", f"'{new}'")
+          p.write_text(text, encoding='utf-8')
+
+          # Common KML/KMZ reader: normalize legacy folder names on input.
+          p = Path('js/util.js')
+          text = p.read_text(encoding='utf-8')
+          old = '      const layer = getParentFolderName(placemark);'
+          new = "      const rawLayer = getParentFolderName(placemark);\n      const layer = window.CampsitePoiLayerNames?.canonicalize(rawLayer) || rawLayer;"
+          if old not in text:
+              raise SystemExit('util.js: expected layer read anchor not found')
+          text = text.replace(old, new, 1)
+          p.write_text(text, encoding='utf-8')
+
+          # Field mode: new POIs go to formal names and old source folders are renamed on export.
+          p = Path('js/field-mode-export.js')
+          text = p.read_text(encoding='utf-8')
+          replacements = {
+              "pokestop:'追加希望ポケスト'": "pokestop:'新規 PokéStop'",
+              "gym:'追加希望ジム'": "gym:'新規 Gym'",
+              "power:'追加希望パワスポ'": "power:'新規 PowerSpot'",
+              "power_spot:'追加希望パワスポ'": "power_spot:'新規 PowerSpot'",
+              "||'追加希望ポケスト';": "||'新規 PokéStop';",
+          }
+          for old, new in replacements.items():
+              if old not in text:
+                  raise SystemExit(f'field-mode-export.js: anchor not found: {old}')
+              text = text.replace(old, new)
+
+          anchor = "  function directName(node){return Array.from(node.children||[]).find(el=>el.localName==='name')?.textContent?.trim()||'';}\n"
+          helper = """  function normalizePoiFolderNames(doc){const api=window.CampsitePoiLayerNames;if(!api)return;const targets=new Map();Array.from(doc.getElementsByTagNameNS('*','Folder')).forEach(folder=>{const raw=directName(folder),canonical=api.canonicalize(raw);if(!api.isFormal(canonical))return;const nameNode=Array.from(folder.children||[]).find(el=>el.localName==='name');if(nameNode)nameNode.textContent=canonical;const existing=targets.get(canonical);if(existing&&existing!==folder){Array.from(folder.children||[]).filter(el=>el.localName!=='name').forEach(el=>existing.appendChild(el));folder.remove();}else{targets.set(canonical,folder);}});}\n"""
+          if helper not in text:
+              if anchor not in text:
+                  raise SystemExit('field-mode-export.js: directName anchor not found')
+              text = text.replace(anchor, anchor + helper, 1)
+
+          export_anchor = "const documentNode=doc.getElementsByTagNameNS('*','Document')[0]||doc.documentElement,outZip=source.zip||new JSZip(),recordMap=buildOriginalPlacemarkMap(doc);"
+          export_repl = "const documentNode=doc.getElementsByTagNameNS('*','Document')[0]||doc.documentElement;normalizePoiFolderNames(doc);const outZip=source.zip||new JSZip(),recordMap=buildOriginalPlacemarkMap(doc);"
+          if export_anchor not in text:
+              raise SystemExit('field-mode-export.js: export anchor not found')
+          text = text.replace(export_anchor, export_repl, 1)
+          p.write_text(text, encoding='utf-8')
+
+          # Update exact layer-name UI references, but keep generic Japanese terms such as "追加POI" unchanged.
+          ui_files = [
+              Path('index.html'),
+              Path('field-mode.html'),
+              Path('js/support-faq-mymaps.js'),
+              Path('js/campsite-file-guide.js'),
+          ]
+          for p in ui_files:
+              if not p.exists():
+                  continue
+              text = p.read_text(encoding='utf-8')
+              for old, new in legacy_to_formal.items():
+                  text = text.replace(old, new)
+              p.write_text(text, encoding='utf-8')
+
+          # Tests: formal fixture/output expectations switch to the new names.
+          p = Path('tests/field-mode-layer-routing.spec.mjs')
+          text = p.read_text(encoding='utf-8')
+          for old, new in legacy_to_formal.items():
+              text = text.replace(old, new)
+
+          # Add a legacy-input fixture and explicit normalization test.
+          fixture_anchor = "const legacyCircleSourceKml=sourceKml\n"
+          legacy_fixture = """const legacyPoiSourceKml=sourceKml
+  .replace('既存 PokéStop','既存のポケストップ')
+  .replace('既存 Gym','既存のジム')
+  .replace('既存 PowerSpot','既存のパワースポット')
+  .replace('新規 PokéStop','追加希望ポケスト')
+  .replace('新規 Gym','追加希望ジム')
+  .replace('新規 PowerSpot','追加希望パワスポ');
+
+"""
+          if 'const legacyPoiSourceKml=' not in text:
+              if fixture_anchor not in text:
+                  raise SystemExit('test: legacyCircleSourceKml anchor not found')
+              text = text.replace(fixture_anchor, legacy_fixture + fixture_anchor, 1)
+
+          test_anchor = "test('旧距離円レイヤーは完成KMZで50m目安・30m/40m参考へ正規化する'"
+          legacy_test = """test('旧POIレイヤー名を読み込み、完成KMZでは正式名称へ正規化する',async({page})=>{
+  await openFieldMode(page,legacyPoiSourceKml);
+  await addCurrentTypePoi(page,'ポケストップ');
+  const kml=await downloadedKml(page);
+  expect(kml).toContain('<name>既存 PokéStop</name>');
+  expect(kml).toContain('<name>既存 Gym</name>');
+  expect(kml).toContain('<name>既存 PowerSpot</name>');
+  expect(kml).toContain('<name>新規 PokéStop</name>');
+  expect(kml).toContain('<name>新規 Gym</name>');
+  expect(kml).toContain('<name>新規 PowerSpot</name>');
+  expect(kml).not.toContain('<name>既存のポケストップ</name>');
+  expect(kml).not.toContain('<name>追加希望ポケスト</name>');
+});
+
+"""
+          if "旧POIレイヤー名を読み込み" not in text:
+              pos = text.find(test_anchor)
+              if pos < 0:
+                  raise SystemExit('test: legacy circle test anchor not found')
+              text = text[:pos] + legacy_test + text[pos:]
+          p.write_text(text, encoding='utf-8')
+
+          # Ensure the shared layer-name module loads before readers/exporters.
+          def ensure_script(path, before_patterns):
+              p = Path(path)
+              text = p.read_text(encoding='utf-8')
+              if 'js/poi-layer-names.js' in text:
+                  return
+              for pattern in before_patterns:
+                  m = re.search(pattern, text)
+                  if m:
+                      insert = '<script src="js/poi-layer-names.js?v=1"></script>\n'
+                      text = text[:m.start()] + insert + text[m.start():]
+                      p.write_text(text, encoding='utf-8')
+                      return
+              raise SystemExit(f'{path}: no insertion anchor found for poi-layer-names.js')
+
+          ensure_script('index.html', [r'<script[^>]+src="js/util\.js[^>]*></script>', r'<script[^>]+src="js/kmz\.js[^>]*></script>'])
+          ensure_script('field-mode.html', [r'<script[^>]+src="js/field-mode-export\.js[^>]*></script>', r'<script[^>]+src="js/field-mode-apac-v4\.js[^>]*></script>'])
+
+          # Cache-bust every changed JS reference wherever it is loaded.
+          changed_js = ['util.js', 'kmz.js', 'field-mode-export.js']
+          for html in Path('.').glob('*.html'):
+              text = html.read_text(encoding='utf-8')
+              original = text
+              for filename in changed_js:
+                  pattern = re.compile(rf'(src="js/{re.escape(filename)})(?:\?v=(\d+))?("[^>]*></script>)')
+                  def bump(m):
+                      n = int(m.group(2) or '0') + 1
+                      return f'{m.group(1)}?v={n}{m.group(3)}'
+                  text = pattern.sub(bump, text)
+              if text != original:
+                  html.write_text(text, encoding='utf-8')
+
+          # Package note for release-time review.
+          note = '''# POIレイヤー正式名称 23:00リリース候補
+
+正式名称:
+- 既存 PokéStop
+- 既存 Gym
+- 既存 PowerSpot
+- 新規 PokéStop
+- 新規 Gym
+- 新規 PowerSpot
+
+互換方針:
+- 旧KMZの「既存のポケストップ / 既存のジム / 既存のパワースポット」を読込可能。
+- 旧KMZの「追加希望ポケスト / 追加希望ジム / 追加希望パワスポ」を読込可能。
+- 一時的な「追加 PokéStop / 追加 Gym / 追加 PowerSpot」表記も読込互換に含む。
+- 新規生成・再出力時は必ず上記6つの正式名称へ正規化。
+- 一般文としての「追加POI」「追加する」はレイヤー名ではないため変更しない。
+
+リリース時確認:
+1. 旧KMZ読込
+2. 新規KMZ生成
+3. 距離チェック
+4. 現地モード編集→KMZ再出力
+5. 6レイヤー名の完全一致
+6. iPhone Safari再読込（キャッシュ更新確認）
+'''
+          Path('docs/POI_LAYER_NAME_RELEASE_20260817.md').write_text(note, encoding='utf-8')
+
+          # Report residual legacy literals. They are allowed only in compatibility/test definitions.
+          print('--- residual legacy layer literals ---')
+          for root in [Path('js'), Path('tests')]:
+              for p in root.rglob('*'):
+                  if not p.is_file() or p.suffix not in {'.js','.mjs','.html'}:
+                      continue
+                  text = p.read_text(encoding='utf-8', errors='ignore')
+                  hits = [old for old in legacy_to_formal if old in text]
+                  if hits:
+                      print(p, hits)
+          PY
+
+          rm -f .github/workflows/poi-layer-name-standardization-once.yml
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Package formal POI layer names with legacy KMZ compatibility"
+          git push origin HEAD:agent/poi-layer-name-standardization
