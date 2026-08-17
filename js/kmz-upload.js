@@ -62,7 +62,6 @@
         ✅ KMZ生成完了
       </div>
       <div style="margin-top:10px;font-size:13px;line-height:1.7;color:#cbd5e1;">
-        iPhoneでは通常のダウンロードだとKMZに <strong>.zip</strong> が付く場合があります。<br>
         下のボタンから共有シートを開き、<strong>「ファイルに保存」</strong>を選んでください。
       </div>
       <div id="campsiteIosKmzFileName" style="margin-top:12px;padding:10px 12px;border-radius:12px;background:rgba(30,41,59,.9);font-size:12px;line-height:1.5;word-break:break-all;color:#bae6fd;"></div>
