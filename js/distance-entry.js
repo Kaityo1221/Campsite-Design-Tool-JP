@@ -20,8 +20,19 @@ function ensureDistanceEntryStyles() {
     #distance .distance-file-meta{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px 12px;margin-top:10px;color:#94a3b8;font-size:12px;line-height:1.6}
     #distance .distance-file-meta a{color:#7dd3fc;font-weight:700}
     #distance .distance-file-meta a small{display:block;margin-top:2px;color:#bae6fd;font-size:11px;font-weight:600}
-    #distance .distance-layer-warning{margin-top:14px;padding:12px 14px;border:1px solid rgba(245,158,11,.4);border-radius:12px;background:rgba(245,158,11,.1);color:#fde68a;font-size:13px;line-height:1.7}
-    #distance .distance-layer-warning strong{display:block;margin-bottom:3px;color:#fef3c7}
+    #distance .distance-layer-name-warning{margin:0 0 12px;overflow:hidden;border:1px solid rgba(245,158,11,.42);border-radius:12px;background:rgba(245,158,11,.07);box-shadow:0 0 0 1px rgba(245,158,11,.03) inset}
+    #distance .distance-layer-name-warning summary{display:flex;align-items:center;gap:9px;padding:11px 13px;color:#fde68a;font-size:13px;font-weight:900;cursor:pointer;list-style:none;user-select:none}
+    #distance .distance-layer-name-warning summary::-webkit-details-marker{display:none}
+    #distance .distance-layer-name-warning summary::after{content:'›';margin-left:auto;color:#fbbf24;font-size:20px;line-height:1;transform:rotate(90deg);transition:transform .18s ease}
+    #distance .distance-layer-name-warning[open] summary::after{transform:rotate(270deg)}
+    #distance .distance-layer-name-warning-count{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 7px;border-radius:999px;background:rgba(245,158,11,.18);border:1px solid rgba(245,158,11,.32);color:#fef3c7;font-size:11px;font-weight:900}
+    #distance .distance-layer-name-warning-body{padding:0 12px 12px;border-top:1px solid rgba(245,158,11,.16)}
+    #distance .distance-layer-name-warning-note{margin:10px 1px 9px;color:#cbd5e1;font-size:12px;line-height:1.6}
+    #distance .distance-layer-name-row{display:grid;grid-template-columns:minmax(0,1fr) 26px minmax(0,1fr);align-items:center;gap:7px;margin-top:7px;padding:9px 10px;border-radius:10px;background:rgba(15,23,42,.68);border:1px solid rgba(148,163,184,.18)}
+    #distance .distance-layer-name-chip{display:block;min-width:0;padding:6px 8px;border-radius:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:inherit;font-size:12px;font-weight:800}
+    #distance .distance-layer-name-chip-current{background:rgba(148,163,184,.10);color:#cbd5e1;border:1px solid rgba(148,163,184,.20)}
+    #distance .distance-layer-name-chip-formal{background:rgba(56,189,248,.10);color:#bae6fd;border:1px solid rgba(56,189,248,.30);box-shadow:0 0 12px rgba(56,189,248,.06)}
+    #distance .distance-layer-name-arrow{text-align:center;color:#fbbf24;font-size:15px;font-weight:900}
     #distance .distance-entry-details,#distance .distance-rank-details,#distance .distance-result-details{margin-top:12px;overflow:hidden;border:1px solid rgba(148,163,184,.26);border-radius:12px;background:rgba(15,23,42,.52)}
     #distance .distance-entry-details summary,#distance .distance-rank-details summary,#distance .distance-result-details summary{padding:12px 14px;color:#bae6fd;font-size:13px;font-weight:800;cursor:pointer;list-style-position:inside}
     #distance .distance-entry-details-body,#distance .distance-result-details-body{padding:0 14px 14px;color:#cbd5e1;font-size:12px;line-height:1.75}
@@ -57,6 +68,9 @@ function ensureDistanceEntryStyles() {
       #distanceResult .distance-result-intro{padding:12px 13px}
       #distanceResult .distance-result-details-body{padding:0 12px 12px}
       #distanceResult .distance-classification-body>.distance-warning{padding:8px 10px}
+      #distance .distance-layer-name-row{grid-template-columns:1fr;gap:5px}
+      #distance .distance-layer-name-arrow{transform:rotate(90deg);line-height:1}
+      #distance .distance-layer-name-chip{white-space:normal;overflow-wrap:anywhere}
     }
   `;
   document.head.appendChild(style);
@@ -100,7 +114,6 @@ function setupDistanceEntryUi() {
       <span>KMZ / KML / ZIPに対応</span>
       <a href="docs/campsite-guide.pdf#page=12" target="_blank" rel="noopener">書き出し方法を確認<br><small>マニュアル12P「5-5」を参照</small></a>
     </div>
-    <div class="distance-layer-warning"><strong>レイヤー名の確認</strong>「既存」または「追加」を含めてください。<br>例：既存ポケストップ、追加ジム</div>
     <details class="distance-entry-details">
       <summary>判定対象とレイヤー名の詳細を見る</summary>
       <div class="distance-entry-details-body">対象POIは、ポケストップ・ジム・パワースポットです。<br>例：既存ポケストップ、既存ジム、追加ポケストップ、追加パワースポット<br>30m・40m円などの補助レイヤーは自動的に除外されます。<br><br>iPhoneで <strong>.kmz.zip</strong> として保存された場合は、ファイルアプリの「名称変更」で末尾の <strong>.zip</strong> を削除してください。</div>

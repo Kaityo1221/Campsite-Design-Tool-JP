@@ -70,23 +70,31 @@ function renderDistancePoiLayerNameWarningHtml(warnings = []) {
 
   const rows = warnings.map(item => {
     const current = escapeDistanceHtml(item.current || "");
-    const recommended = item.recommended && item.recommended !== item.current
-      ? ` → <strong>${escapeDistanceHtml(item.recommended)}</strong>`
-      : "";
-    return `<li><code>${current}</code>${recommended}</li>`;
+    const recommended = escapeDistanceHtml(item.recommended || item.current || "");
+
+    return `
+      <div class="distance-layer-name-row">
+        <code class="distance-layer-name-chip distance-layer-name-chip-current" title="${current}">${current}</code>
+        <span class="distance-layer-name-arrow" aria-hidden="true">→</span>
+        <code class="distance-layer-name-chip distance-layer-name-chip-formal" title="${recommended}">${recommended}</code>
+      </div>
+    `;
   }).join("");
 
   return `
-    <div class="distance-warning" style="margin-bottom:12px;">
-      <strong>⚠ POIレイヤー名が正式名称と異なります</strong><br>
-      <small>距離チェックは続行できますが、提出前に正式名称へ統一してください。</small>
-      <ul style="margin:8px 0 0 1.2em;padding:0;line-height:1.7;">
+    <details class="distance-layer-name-warning">
+      <summary>
+        <span aria-hidden="true">⚠</span>
+        <span>レイヤー名に修正があります</span>
+        <span class="distance-layer-name-warning-count">${warnings.length}件</span>
+      </summary>
+      <div class="distance-layer-name-warning-body">
+        <div class="distance-layer-name-warning-note">
+          距離チェックは続行できます。提出前に右側の正式名称へ変更してください。
+        </div>
         ${rows}
-      </ul>
-      <div style="margin-top:8px;font-size:12px;line-height:1.6;opacity:.9;">
-        正式名称：既存 PokéStop / 既存 Gym / 既存 PowerSpot / 新規 PokéStop / 新規 Gym / 新規 PowerSpot
       </div>
-    </div>
+    </details>
   `;
 }
 
