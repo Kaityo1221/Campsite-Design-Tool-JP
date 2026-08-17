@@ -3,7 +3,7 @@ import fs from 'node:fs';
 const exporter = fs.readFileSync('js/field-mode-export.js', 'utf8');
 const area = fs.readFileSync('js/field-mode-area.js', 'utf8');
 
-for (const folder of ['追加希望ポケスト', '追加希望ジム', '追加希望パワスポ']) {
+for (const folder of ['新規 PokéStop', '新規 Gym', '新規 PowerSpot']) {
   if (!exporter.includes(folder)) throw new Error(`field-mode-export.js missing formal folder: ${folder}`);
 }
 
