@@ -1,0 +1,2 @@
+GitHub Pages redeploy trigger for distance precheck layer-name priority card.
+No application logic is changed by this file.
