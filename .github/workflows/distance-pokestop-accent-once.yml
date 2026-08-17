@@ -1,0 +1,80 @@
+name: Distance PokéStop accent compatibility
+
+on:
+  push:
+    branches:
+      - hotfix/distance-pokestop-accent
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: hotfix/distance-pokestop-accent
+          fetch-depth: 0
+
+      - name: Patch PokéStop normalization and cache
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p = Path('js/distance-poi.js')
+          s = p.read_text(encoding='utf-8')
+          old = '''  const name = String(layerName || "")
+            .toLowerCase()
+            .replace(/[Ａ-Ｚａ-ｚ０-９]/g, s =>
+              String.fromCharCode(s.charCodeAt(0) - 0xFEE0)
+            );
+          '''
+          new = '''  const name = String(layerName || "")
+            .normalize("NFKD")
+            .replace(/[\\u0300-\\u036f]/g, "")
+            .toLowerCase()
+            .replace(/[Ａ-Ｚａ-ｚ０-９]/g, s =>
+              String.fromCharCode(s.charCodeAt(0) - 0xFEE0)
+            );
+          '''
+          if new not in s:
+              if old not in s:
+                  raise SystemExit('getPoiTypeFromLayerName normalization anchor not found')
+              s = s.replace(old, new, 1)
+          p.write_text(s, encoding='utf-8')
+
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          if 'js/distance-poi.js?v=2' in s:
+              s = s.replace('js/distance-poi.js?v=2', 'js/distance-poi.js?v=3', 1)
+          elif 'js/distance-poi.js?v=3' not in s:
+              raise SystemExit('distance-poi cache reference not found')
+          p.write_text(s, encoding='utf-8')
+          PY
+
+      - name: Verify syntax and accented official name
+        run: |
+          node --check js/distance-poi.js
+          grep -F '.normalize("NFKD")' js/distance-poi.js
+          grep -F 'replace(/[\u0300-\u036f]/g, "")' js/distance-poi.js
+          grep -F 'js/distance-poi.js?v=3' index.html
+          node - <<'NODE'
+          const normalized = String('既存 PokéStop')
+            .normalize('NFKD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase();
+          if (!normalized.includes('pokestop')) {
+            throw new Error('PokéStop accent normalization failed');
+          }
+          console.log('PokéStop accent normalization: OK');
+          NODE
+
+      - name: Commit implementation
+        run: |
+          git config user.name "Kaityo1221"
+          git config user.email "rakugo100@gmail.com"
+          git add js/distance-poi.js index.html
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Recognize formal PokéStop layer names in distance check"
+          git push origin HEAD:hotfix/distance-pokestop-accent
