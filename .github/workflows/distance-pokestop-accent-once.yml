@@ -24,24 +24,17 @@ jobs:
 
           p = Path('js/distance-poi.js')
           s = p.read_text(encoding='utf-8')
-          old = '''  const name = String(layerName || "")
-            .toLowerCase()
-            .replace(/[Ａ-Ｚａ-ｚ０-９]/g, s =>
-              String.fromCharCode(s.charCodeAt(0) - 0xFEE0)
-            );
-          '''
-          new = '''  const name = String(layerName || "")
-            .normalize("NFKD")
-            .replace(/[\\u0300-\\u036f]/g, "")
-            .toLowerCase()
-            .replace(/[Ａ-Ｚａ-ｚ０-９]/g, s =>
-              String.fromCharCode(s.charCodeAt(0) - 0xFEE0)
-            );
-          '''
-          if new not in s:
-              if old not in s:
-                  raise SystemExit('getPoiTypeFromLayerName normalization anchor not found')
-              s = s.replace(old, new, 1)
+          marker = 'function getPoiTypeFromLayerName(layerName) {'
+          if marker not in s:
+              raise SystemExit('getPoiTypeFromLayerName not found')
+          start = s.index(marker)
+          lower = '    .toLowerCase()'
+          pos = s.find(lower, start)
+          if pos < 0:
+              raise SystemExit('toLowerCase in getPoiTypeFromLayerName not found')
+          prefix = '    .normalize("NFKD")\n    .replace(/[\\u0300-\\u036f]/g, "")\n'
+          if prefix not in s[start:pos+len(lower)+200]:
+              s = s[:pos] + prefix + s[pos:]
           p.write_text(s, encoding='utf-8')
 
           p = Path('index.html')
