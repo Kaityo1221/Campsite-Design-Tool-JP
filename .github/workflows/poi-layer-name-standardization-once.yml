@@ -19,7 +19,7 @@ jobs:
       - name: Apply package
         run: python3 scripts/poi-layer-standardize.py
       - name: Install dependencies
-        run: npm ci
+        run: npm install --no-package-lock --no-audit --no-fund
       - name: Verify contract
         run: npx playwright test tests/poi-layer-name-contract.spec.mjs
       - name: Verify field mode static checks
