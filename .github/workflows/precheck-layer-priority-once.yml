@@ -1,0 +1,64 @@
+name: Precheck layer priority once
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Add priority layer warning to precheck
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          poi = Path('js/distance-poi.js')
+          s = poi.read_text(encoding='utf-8')
+          old = '''      <div class="distance-precheck-head">\n        <strong>${statusIcon} ${statusText}</strong>\n        <span>STEP 1</span>\n      </div>\n\n      <div class="distance-precheck-grid">'''
+          new = '''      <div class="distance-precheck-head">\n        <strong>${statusIcon} ${statusText}</strong>\n        <span>STEP 1</span>\n      </div>\n\n      ${\n        hasLayerNameWarning\n          ? `\n            <div class="distance-precheck-priority-alert">\n              <div class="distance-precheck-priority-head">\n                <span class="distance-precheck-priority-badge">最優先</span>\n                <strong>レイヤー名の修正が必要です</strong>\n                <span class="distance-precheck-priority-count">${window._distanceLayerNameWarnings.length}件</span>\n              </div>\n              <div class="distance-precheck-priority-text">\n                最初にここを直してください。<br>\n                上の「レイヤー名に修正があります」を開き、正式名称へ変更してから距離チェックへ進んでください。\n              </div>\n            </div>\n          `\n          : ""\n      }\n\n      <div class="distance-precheck-grid">'''
+          if old not in s:
+              raise SystemExit('distance-poi.js target block not found')
+          poi.write_text(s.replace(old, new, 1), encoding='utf-8')
+
+          css = Path('css/distance.css')
+          c = css.read_text(encoding='utf-8')
+          marker = '/* PRECHECK_LAYER_PRIORITY_20260818 */'
+          if marker not in c:
+              c += '''\n\n/* PRECHECK_LAYER_PRIORITY_20260818 */\n.distance-precheck-priority-alert {\n  margin: 14px 0 12px;\n  padding: 14px 15px;\n  border-radius: 14px;\n  border: 1px solid rgba(245, 158, 11, 0.72);\n  border-left: 5px solid #f59e0b;\n  background:\n    radial-gradient(circle at top right, rgba(245, 158, 11, 0.16), transparent 44%),\n    linear-gradient(135deg, rgba(120, 53, 15, 0.28), rgba(15, 23, 42, 0.90));\n  box-shadow:\n    inset 0 1px 0 rgba(255, 255, 255, 0.05),\n    0 10px 24px rgba(0, 0, 0, 0.22);\n}\n\n.distance-precheck-priority-head {\n  display: flex;\n  align-items: center;\n  gap: 8px;\n  flex-wrap: wrap;\n}\n\n.distance-precheck-priority-head strong {\n  color: #fef3c7;\n  font-size: 16px;\n  line-height: 1.45;\n}\n\n.distance-precheck-priority-badge {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  padding: 4px 8px;\n  border-radius: 999px;\n  background: #f59e0b;\n  color: #451a03;\n  font-size: 11px;\n  font-weight: 900;\n  letter-spacing: 0.03em;\n}\n\n.distance-precheck-priority-count {\n  margin-left: auto;\n  padding: 3px 8px;\n  border-radius: 999px;\n  background: rgba(245, 158, 11, 0.15);\n  border: 1px solid rgba(245, 158, 11, 0.38);\n  color: #fde68a;\n  font-size: 11px;\n  font-weight: 900;\n}\n\n.distance-precheck-priority-text {\n  margin-top: 8px;\n  color: #fde68a;\n  font-size: 13px;\n  font-weight: 700;\n  line-height: 1.7;\n}\n\n@media (max-width: 520px) {\n  .distance-precheck-priority-alert {\n    padding: 13px 13px;\n  }\n\n  .distance-precheck-priority-head {\n    align-items: flex-start;\n  }\n\n  .distance-precheck-priority-head strong {\n    flex: 1 1 180px;\n    font-size: 15px;\n  }\n\n  .distance-precheck-priority-count {\n    margin-left: 0;\n  }\n}\n'''
+          css.write_text(c, encoding='utf-8')
+
+          index = Path('index.html')
+          h = index.read_text(encoding='utf-8')
+          h2 = h.replace('css/distance.css?v=41', 'css/distance.css?v=42')
+          h2 = h2.replace('js/distance-poi.js?v=3', 'js/distance-poi.js?v=4')
+          if h2 == h:
+              raise SystemExit('index cache versions not updated')
+          index.write_text(h2, encoding='utf-8')
+          PY
+
+      - name: Verify
+        run: |
+          node --check js/distance-poi.js
+          grep -q 'レイヤー名の修正が必要です' js/distance-poi.js
+          grep -q '最初にここを直してください' js/distance-poi.js
+          grep -q 'distance-precheck-priority-alert' css/distance.css
+          grep -q 'css/distance.css?v=42' index.html
+          grep -q 'js/distance-poi.js?v=4' index.html
+
+      - name: Commit implementation
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add js/distance-poi.js css/distance.css index.html
+          git commit -m 'Highlight layer name correction in precheck'
+          git push origin HEAD:main
