@@ -1,0 +1,35 @@
+name: POI layer diff hotfix
+
+on:
+  push:
+    branches:
+      - hotfix/poi-layer-name-diff-update
+
+permissions:
+  contents: write
+
+jobs:
+  hotfix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: hotfix/poi-layer-name-diff-update
+          fetch-depth: 0
+      - name: Apply hotfix
+        run: python3 scripts/hotfix-poi-layer-names-in-diff.py
+      - name: Verify required tokens
+        run: |
+          grep -F 'function normalizePoiFolderNames(xml)' js/poi-spacing-kmz-diff.js
+          grep -F 'const renamedPoiFolders = normalizePoiFolderNames(xml);' js/poi-spacing-kmz-diff.js
+          grep -F 'import("./poi-spacing-kmz-diff.js?v=2")' js/kmz-upload.js
+          grep -F '["既存のポケストップ", "既存 PokéStop"]' js/poi-spacing-kmz-diff.js
+          grep -F '["追加希望ポケスト", "新規 PokéStop"]' js/poi-spacing-kmz-diff.js
+      - name: Commit hotfix
+        run: |
+          git config user.name "Kaityo1221"
+          git config user.email "rakugo100@gmail.com"
+          git add js/poi-spacing-kmz-diff.js js/kmz-upload.js
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Normalize legacy POI layer names during circle diff update"
+          git push origin HEAD:hotfix/poi-layer-name-diff-update
