@@ -4,7 +4,8 @@
    - 40m / 30m are optional additions
    - Existing 50m / 40m / 30m circle layers are never regenerated
    - Only missing requested radii are generated
-   - Existing non-circle layers and KMZ assets are preserved
+   - Existing non-circle layer contents and KMZ assets are preserved
+   - Legacy POI Folder names are normalized to the formal six names
    - Circle layer order is normalized to 50m -> 40m -> 30m
 ====================================================== */
 
@@ -82,6 +83,46 @@
       current = current.parentElement;
     }
     return "";
+  }
+
+  function canonicalPoiLayerName(value) {
+    const names = window.CampsitePoiLayerNames;
+    if (names && typeof names.canonicalize === "function") {
+      return names.canonicalize(value);
+    }
+
+    const fallback = new Map([
+      ["既存のポケストップ", "既存 PokéStop"],
+      ["既存のジム", "既存 Gym"],
+      ["既存のパワースポット", "既存 PowerSpot"],
+      ["追加希望ポケスト", "新規 PokéStop"],
+      ["追加希望ジム", "新規 Gym"],
+      ["追加希望パワスポ", "新規 PowerSpot"],
+      ["追加 PokéStop", "新規 PokéStop"],
+      ["追加 Gym", "新規 Gym"],
+      ["追加 PowerSpot", "新規 PowerSpot"]
+    ]);
+    return fallback.get(String(value || "").trim()) || String(value || "").trim();
+  }
+
+  function normalizePoiFolderNames(xml) {
+    let renamed = 0;
+    Array.from(xml.getElementsByTagName("Folder")).forEach(folder => {
+      if (circleMetersFromFolder(folder) !== null) return;
+
+      const nameNode = Array.from(folder.children || []).find(node =>
+        nodeName(node) === "name"
+      );
+      if (!nameNode) return;
+
+      const current = String(nameNode.textContent || "").trim();
+      const canonical = canonicalPoiLayerName(current);
+      if (!canonical || canonical === current) return;
+
+      nameNode.textContent = canonical;
+      renamed += 1;
+    });
+    return renamed;
   }
 
   function parseCoordinate(text) {
@@ -324,10 +365,12 @@
     }
 
     reorderCircleFolders(xml);
+    const renamedPoiFolders = normalizePoiFolderNames(xml);
 
     return {
       text: new XMLSerializer().serializeToString(xml),
-      result
+      result,
+      renamedPoiFolders
     };
   }
 
@@ -417,7 +460,8 @@
       const status = document.getElementById(statusId);
       if (status) {
         status.innerHTML =
-          "既存レイヤー・既存円は変更していません。<br>" +
+          `POIレイヤー名：${patched.renamedPoiFolders > 0 ? `${patched.renamedPoiFolders}件を正式名称へ更新` : "正式名称を確認"}<br>` +
+          "既存POI・既存円の内容は保持しています。<br>" +
           `✔ ${statusText(50, patched.result[50])}<br>` +
           `✔ ${statusText(40, patched.result[40])}<br>` +
           `✔ ${statusText(30, patched.result[30])}`;
