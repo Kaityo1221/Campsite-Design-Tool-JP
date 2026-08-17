@@ -1,0 +1,43 @@
+name: Distance layer warning UI once
+
+on:
+  push:
+    branches:
+      - hotfix/distance-layer-warning-ui
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-verify:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: hotfix/distance-layer-warning-ui
+
+      - name: Apply A+C warning UI
+        run: python3 scripts/apply-distance-layer-warning-ui.py
+
+      - name: Verify JavaScript syntax and UI contract
+        run: |
+          node --check js/distance-entry.js
+          node --check js/distance-file.js
+          grep -q 'レイヤー名に修正があります' js/distance-file.js
+          grep -q 'distance-layer-name-chip-formal' js/distance-entry.js
+          ! grep -q '「既存」または「追加」を含めてください' js/distance-entry.js
+          grep -q 'js/distance-entry.js?v=4' index.html
+          grep -q 'js/distance-file.js?v=4' index.html
+
+      - name: Commit implementation
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add js/distance-entry.js js/distance-file.js index.html
+          if git diff --cached --quiet; then
+            echo 'No implementation changes to commit.'
+            exit 0
+          fi
+          git commit -m 'Polish distance layer name warning UI'
+          git push origin HEAD:hotfix/distance-layer-warning-ui
