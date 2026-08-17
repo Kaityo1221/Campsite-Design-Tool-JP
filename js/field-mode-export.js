@@ -8,10 +8,10 @@
     {value:'power_spot',label:'パワースポット',short:'⚡ パワースポット'}
   ];
   const ADDITIONAL_FOLDER_BY_TYPE={
-    pokestop:'追加希望ポケスト',
-    gym:'追加希望ジム',
-    power:'追加希望パワスポ',
-    power_spot:'追加希望パワスポ'
+    pokestop:'新規 PokéStop',
+    gym:'新規 Gym',
+    power:'新規 PowerSpot',
+    power_spot:'新規 PowerSpot'
   };
   const FORMAL_ADDITIONAL_FOLDERS=new Set(Object.values(ADDITIONAL_FOLDER_BY_TYPE));
   let selectedPoiTypeIndex=0;
@@ -21,7 +21,7 @@
   function additionalFolderName(value,fallback=''){
     const raw=String(value||'').trim();
     if(FORMAL_ADDITIONAL_FOLDERS.has(raw))return raw;
-    return ADDITIONAL_FOLDER_BY_TYPE[raw.toLowerCase()]||ADDITIONAL_FOLDER_BY_TYPE[String(fallback||'').trim().toLowerCase()]||'追加希望ポケスト';
+    return ADDITIONAL_FOLDER_BY_TYPE[raw.toLowerCase()]||ADDITIONAL_FOLDER_BY_TYPE[String(fallback||'').trim().toLowerCase()]||'新規 PokéStop';
   }
   function currentPoiType(){return POI_TYPES[selectedPoiTypeIndex];}
   function setupPoiTypeCycler(){
@@ -114,6 +114,7 @@
   fileInput.addEventListener('change',()=>{const file=fileInput.files&&fileInput.files[0];setSourceFile(file);});
   function createElement(doc,name,text){const el=doc.createElementNS(doc.documentElement.namespaceURI||KML_NS,name);if(text!==undefined)el.textContent=text;return el;}
   function directName(node){return Array.from(node.children||[]).find(el=>el.localName==='name')?.textContent?.trim()||'';}
+  function normalizePoiFolderNames(doc){const api=window.CampsitePoiLayerNames;if(!api)return;const targets=new Map();Array.from(doc.getElementsByTagNameNS('*','Folder')).forEach(folder=>{const raw=directName(folder),canonical=api.canonicalize(raw);if(!api.isFormal(canonical))return;const nameNode=Array.from(folder.children||[]).find(el=>el.localName==='name');if(nameNode)nameNode.textContent=canonical;const target=targets.get(canonical);if(target&&target!==folder){Array.from(folder.children||[]).filter(el=>el.localName!=='name').forEach(el=>target.appendChild(el));folder.remove();}else{targets.set(canonical,folder);}});}
   function findFolderByName(doc,name){return Array.from(doc.getElementsByTagNameNS('*','Folder')).find(folder=>directName(folder)===name)||null;}
   function ensureTargetFolder(doc,documentNode,name){let folder=findFolderByName(doc,name);if(folder)return folder;folder=createElement(doc,'Folder');folder.appendChild(createElement(doc,'name',name));documentNode.appendChild(folder);return folder;}
   function removeOldFieldCircleFolders(doc){Array.from(doc.getElementsByTagNameNS('*','Folder')).forEach(folder=>{const name=directName(folder);if(name==='現地モード_30m円'||name==='現地モード_40m円'||name==='現地モード_50m円'||name==='現地モード_距離円')folder.remove();});}
@@ -132,7 +133,7 @@
   function appendNewPois(doc,documentNode,records,photoPaths){if(!records.length)return;records.forEach(record=>{const folder=ensureTargetFolder(doc,documentNode,additionalFolderName(record.poiType,record.folder));const pm=createElement(doc,'Placemark');pm.appendChild(createElement(doc,'name',record.name));setDescription(doc,pm,record,photoPaths.get(record)||'');addPoiTypeExtendedData(doc,pm,record);const point=createElement(doc,'Point');point.appendChild(createElement(doc,'coordinates',`${record.latlng[1]},${record.latlng[0]},0`));pm.appendChild(point);folder.appendChild(pm);});}
   function safeFileName(value){return String(value||'photo').replace(/[\\/:*?"<>|\s]+/g,'_').slice(0,60)||'photo';}
   async function attachPhotos(outZip,records){const paths=new Map();let seq=1;for(const record of records){if(record.fieldDeleted||!record.fieldPhoto?.blob)continue;const original=record.fieldPhoto.name||'photo.jpg',dot=original.lastIndexOf('.'),ext=dot>=0?original.slice(dot).toLowerCase():'.jpg',path=`field_photos/${String(seq).padStart(3,'0')}_${safeFileName(record.name)}${ext}`;outZip.file(path,record.fieldPhoto.blob);paths.set(record,path);seq++;}return paths;}
-  async function exportPreservedKmz(){const changed=changedRecords();if(!changed.length)return;const source=await sourcePromise;if(!source)throw new Error('元ファイルを再取得できませんでした。もう一度KMZを選択してください。');const doc=new DOMParser().parseFromString(source.kmlText,'application/xml');if(doc.querySelector('parsererror'))throw new Error('元KMLを解析できませんでした。');const documentNode=doc.getElementsByTagNameNS('*','Document')[0]||doc.documentElement,outZip=source.zip||new JSZip(),recordMap=buildOriginalPlacemarkMap(doc);const photoPaths=await attachPhotos(outZip,changed);replaceExistingRecords(changed,photoPaths,recordMap);deleteExistingRecords(recordMap);removeOldFieldCircleFolders(doc);const allRecords=poiRecords.filter(r=>!r.fieldDeleted),newRecords=allRecords.filter(r=>r.added&&r.isNew);appendNewPois(doc,documentNode,newRecords,photoPaths);appendGeneratedCirclesToExistingLayers(doc,documentNode,allRecords,newRecords);outZip.file(source.kmlPath||'doc.kml',new XMLSerializer().serializeToString(doc));const blob=await outZip.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:6},mimeType:'application/vnd.google-earth.kmz'}),stamp=new Date().toISOString().replace(/[:.]/g,'-'),base=sourceFileName.replace(/\.(kmz|kml|zip)$/i,''),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`${base}_現地調整_${stamp}.kmz`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),4000);saveNote.textContent=`${changed.length}件をKMZへ反映しました。`;modeStatus.textContent='KMZ保存完了';}
+  async function exportPreservedKmz(){const changed=changedRecords();if(!changed.length)return;const source=await sourcePromise;if(!source)throw new Error('元ファイルを再取得できませんでした。もう一度KMZを選択してください。');const doc=new DOMParser().parseFromString(source.kmlText,'application/xml');if(doc.querySelector('parsererror'))throw new Error('元KMLを解析できませんでした。');const documentNode=doc.getElementsByTagNameNS('*','Document')[0]||doc.documentElement;normalizePoiFolderNames(doc);const outZip=source.zip||new JSZip(),recordMap=buildOriginalPlacemarkMap(doc);const photoPaths=await attachPhotos(outZip,changed);replaceExistingRecords(changed,photoPaths,recordMap);deleteExistingRecords(recordMap);removeOldFieldCircleFolders(doc);const allRecords=poiRecords.filter(r=>!r.fieldDeleted),newRecords=allRecords.filter(r=>r.added&&r.isNew);appendNewPois(doc,documentNode,newRecords,photoPaths);appendGeneratedCirclesToExistingLayers(doc,documentNode,allRecords,newRecords);outZip.file(source.kmlPath||'doc.kml',new XMLSerializer().serializeToString(doc));const blob=await outZip.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:6},mimeType:'application/vnd.google-earth.kmz'}),stamp=new Date().toISOString().replace(/[:.]/g,'-'),base=sourceFileName.replace(/\.(kmz|kml|zip)$/i,''),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`${base}_現地調整_${stamp}.kmz`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),4000);saveNote.textContent=`${changed.length}件をKMZへ反映しました。`;modeStatus.textContent='KMZ保存完了';}
   updateSaveButton=function(){const n=changedRecords().length;saveButton.disabled=!n;saveButton.textContent=n?`変更したPOIをKMZ保存（${n}件）`:'変更したPOIをKMZ保存';saveNote.textContent=n?`${n}件の追加・移動・削除・メモ・写真をKMZへ反映します。`:'変更するとKMZ保存できるようになります。';};updateSaveButton();
   saveButton.addEventListener('click',async event=>{const activeAreaCount=window.FieldModeArea?.getRecords?.().filter(record=>!record.deleted).length||0;if(activeAreaCount)return;event.preventDefault();event.stopImmediatePropagation();saveButton.disabled=true;saveNote.textContent='写真・メモを含むKMZを作成中…';try{await exportPreservedKmz();}catch(error){console.error(error);saveNote.textContent=`⚠ ${error.message||'KMZを保存できませんでした。'}`;modeStatus.textContent='保存失敗';}finally{updateSaveButton();}},true);
   setupPoiTypeCycler();

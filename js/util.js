@@ -414,7 +414,8 @@ function parseKmlPoints(kmlText) {
         return null;
       }
 
-      const layer = getParentFolderName(placemark);
+      const rawLayer = getParentFolderName(placemark);
+      const layer = window.CampsitePoiLayerNames?.canonicalize(rawLayer) || rawLayer;
 
       return {
         name,

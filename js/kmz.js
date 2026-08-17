@@ -274,9 +274,9 @@ async function generateExistingOnlyKMZ() {
     const doc = outputXml.getElementsByTagName("Document")[0];
 
     const folders = {
-      pokestop: createFolder(outputXml, doc, "既存のポケストップ"),
-      gym: createFolder(outputXml, doc, "既存のジム"),
-      power: createFolder(outputXml, doc, "既存のパワースポット")
+      pokestop: createFolder(outputXml, doc, "既存 PokéStop"),
+      gym: createFolder(outputXml, doc, "既存 Gym"),
+      power: createFolder(outputXml, doc, "既存 PowerSpot")
     };
 
     const counts = {
@@ -525,13 +525,13 @@ iconStyle.appendChild(scale);
 hiddenStyle.appendChild(iconStyle);
 doc.appendChild(hiddenStyle);
   const folders = {
-  pokestop: createFolder(outputXml, doc, "既存のポケストップ"),
-  gym: createFolder(outputXml, doc, "既存のジム"),
-  power: createFolder(outputXml, doc, "既存のパワースポット"),
+  pokestop: createFolder(outputXml, doc, "既存 PokéStop"),
+  gym: createFolder(outputXml, doc, "既存 Gym"),
+  power: createFolder(outputXml, doc, "既存 PowerSpot"),
 
-  addPokestop: createFolder(outputXml, doc, "追加希望ポケスト"),
-  addGym: createFolder(outputXml, doc, "追加希望ジム"),
-  addPower: createFolder(outputXml, doc, "追加希望パワスポ"),
+  addPokestop: createFolder(outputXml, doc, "新規 PokéStop"),
+  addGym: createFolder(outputXml, doc, "新規 Gym"),
+  addPower: createFolder(outputXml, doc, "新規 PowerSpot"),
 
   circle40: createFolder(outputXml, doc, "40m円（基本距離）"),
   circle30: createFolder(outputXml, doc, "30m円（調整用）")

@@ -8,12 +8,12 @@ const jszipJs=fs.readFileSync('node_modules/jszip/dist/jszip.min.js','utf8');
 
 const sourceKml=`<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2"><Document>
-<Folder><name>既存のポケストップ</name><Placemark><name>既存地点</name><Point><coordinates>139.7666,35.6810,0</coordinates></Point></Placemark></Folder>
-<Folder><name>既存のジム</name></Folder>
-<Folder><name>既存のパワースポット</name></Folder>
-<Folder><name>追加希望ポケスト</name></Folder>
-<Folder><name>追加希望ジム</name></Folder>
-<Folder><name>追加希望パワスポ</name></Folder>
+<Folder><name>既存 PokéStop</name><Placemark><name>既存地点</name><Point><coordinates>139.7666,35.6810,0</coordinates></Point></Placemark></Folder>
+<Folder><name>既存 Gym</name></Folder>
+<Folder><name>既存 PowerSpot</name></Folder>
+<Folder><name>新規 PokéStop</name></Folder>
+<Folder><name>新規 Gym</name></Folder>
+<Folder><name>新規 PowerSpot</name></Folder>
 <Folder><name>活動範囲</name></Folder>
 <Folder><name>50m円（目安）</name></Folder>
 <Folder><name>40m円（参考距離）</name></Folder>
@@ -128,9 +128,9 @@ test('通常保存は新規POIを種類ごとの正式レイヤーへ振り分�
   await addAllThreeTypes(page);
 
   const kml=await downloadedKml(page);
-  expect(folderPointNames(kml,'追加希望ポケスト')).toContain('ポケストップ 1');
-  expect(folderPointNames(kml,'追加希望ジム')).toContain('ジム 1');
-  expect(folderPointNames(kml,'追加希望パワスポ')).toContain('パワースポット 1');
+  expect(folderPointNames(kml,'新規 PokéStop')).toContain('ポケストップ 1');
+  expect(folderPointNames(kml,'新規 Gym')).toContain('ジム 1');
+  expect(folderPointNames(kml,'新規 PowerSpot')).toContain('パワースポット 1');
   expect(folderPlacemarkNames(kml,'50m円（目安）')).toEqual(expect.arrayContaining([
     '既存地点_50m円','ポケストップ 1_50m円','ジム 1_50m円','パワースポット 1_50m円'
   ]));
@@ -216,9 +216,9 @@ test('活動範囲込み保存でも正式POIレイヤーと参考円選択を�
   await page.locator('[data-area-action="confirm"]').click();
 
   const kml=await downloadedKml(page);
-  expect(folderPointNames(kml,'追加希望ポケスト')).toContain('ポケストップ 1');
-  expect(folderPointNames(kml,'追加希望ジム')).toContain('ジム 1');
-  expect(folderPointNames(kml,'追加希望パワスポ')).toContain('パワースポット 1');
+  expect(folderPointNames(kml,'新規 PokéStop')).toContain('ポケストップ 1');
+  expect(folderPointNames(kml,'新規 Gym')).toContain('ジム 1');
+  expect(folderPointNames(kml,'新規 PowerSpot')).toContain('パワースポット 1');
   expect(folderPlacemarkNames(kml,'50m円（目安）')).toEqual(expect.arrayContaining(['既存地点_50m円','ポケストップ 1_50m円','ジム 1_50m円','パワースポット 1_50m円']));
   expect(folderPlacemarkNames(kml,'40m円（参考距離）')).toEqual(['ポケストップ 1_40m円']);
   expect(folderPlacemarkNames(kml,'30m円（参考距離）')).toEqual(['ポケストップ 1_30m円']);
