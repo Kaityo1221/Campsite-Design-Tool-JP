@@ -1,0 +1,53 @@
+name: Distance layer name warning hotfix
+
+on:
+  push:
+    branches:
+      - hotfix/distance-layer-name-warning
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: hotfix/distance-layer-name-warning
+          fetch-depth: 0
+
+      - name: Apply patch
+        run: python3 scripts/add-distance-layer-name-warning.py
+
+      - name: Verify syntax and contract
+        run: |
+          node --check js/distance-file.js
+          node --check js/distance-poi.js
+          grep -F 'function getDistancePoiLayerNameWarnings(layerNames = [])' js/distance-file.js
+          grep -F 'POIレイヤー名が正式名称と異なります' js/distance-file.js
+          grep -F 'window._distanceLayerNameWarnings.length > 0' js/distance-poi.js
+          grep -F 'js/distance-poi.js?v=2' index.html
+          grep -F 'js/distance-file.js?v=3' index.html
+          grep -F '既存 PokéStop / 既存 Gym / 既存 PowerSpot / 新規 PokéStop / 新規 Gym / 新規 PowerSpot' js/distance-file.js
+
+      - name: Verify warning semantics
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          s = Path('js/distance-file.js').read_text(encoding='utf-8')
+          assert 'isAuxiliaryLayer(layerName)' in s
+          assert 'registry.isFormal(layerName)' in s
+          assert '距離チェックは続行できますが、提出前に正式名称へ統一してください。' in s
+          assert 'getFormalPoiLayerNameForWarning(layerName)' in s
+          print('distance layer-name warning contract: OK')
+          PY
+
+      - name: Commit implementation
+        run: |
+          git config user.name "Kaityo1221"
+          git config user.email "rakugo100@gmail.com"
+          git add js/distance-file.js js/distance-poi.js index.html
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Warn on non-formal POI layer names in distance check"
+          git push origin HEAD:hotfix/distance-layer-name-warning
