@@ -1,6 +1,7 @@
 /* Campsite create/update file guide */
 (() => {
   const STYLE_ID = 'campsiteFileGuideStyles';
+  const SPONSOR_SCRIPT_ID = 'campsiteSponsorPoiScript';
 
   function ensureStyles() {
     if (document.getElementById(STYLE_ID)) return;
@@ -18,6 +19,16 @@
       .campsite-csv-choice-button.campsite-update-choice{border-color:rgba(167,139,250,.45);background:rgba(124,58,237,.11)}
     `;
     document.head.appendChild(style);
+  }
+
+  function ensureSponsorPoiScript() {
+    if (document.getElementById(SPONSOR_SCRIPT_ID)) return;
+
+    const script = document.createElement('script');
+    script.id = SPONSOR_SCRIPT_ID;
+    script.src = 'js/sponsor-poi.js?v=1';
+    script.async = true;
+    document.head.appendChild(script);
   }
 
   function setupFileGuide() {
@@ -144,6 +155,7 @@
     ensureStyles();
     setupStartModal();
     setupFileGuide();
+    ensureSponsorPoiScript();
   }
 
   if (document.readyState === 'loading') {
