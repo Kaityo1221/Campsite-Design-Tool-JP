@@ -3,6 +3,21 @@
   const STYLE_ID = 'campsiteFileGuideStyles';
   const SPONSOR_SCRIPT_ID = 'campsiteSponsorPoiScript';
 
+  const CURRENT_SPONSORS = [
+    'ナムコ',
+    '日本コカ・コーラ',
+    'マクドナルド',
+    'アピタ',
+    'ピアゴ',
+    'ユーストア',
+    'ファミリーマート',
+    'ドン・キホーテ',
+    '住友生命',
+    'GUCCI',
+    '小田急グループ',
+    'ソフトバンク'
+  ];
+
   function ensureStyles() {
     if (document.getElementById(STYLE_ID)) return;
 
@@ -21,13 +36,46 @@
     document.head.appendChild(style);
   }
 
+  function syncSponsorOptions() {
+    const select = document.getElementById('sponsorPoiSponsor');
+    if (!select) return false;
+
+    const previousValue = select.value;
+    const options = [
+      '<option value="">未選択</option>',
+      ...CURRENT_SPONSORS.map(name => `<option value="${name}">${name}</option>`),
+      '<option value="__other__">その他</option>'
+    ];
+
+    select.innerHTML = options.join('');
+
+    const values = Array.from(select.options).map(option => option.value);
+    if (values.includes(previousValue)) {
+      select.value = previousValue;
+    }
+
+    select.dataset.sponsorListUpdated = '2026-08-19';
+    return true;
+  }
+
+  function scheduleSponsorOptionSync() {
+    [0, 150, 400, 900, 1600].forEach(delay => {
+      setTimeout(syncSponsorOptions, delay);
+    });
+  }
+
   function ensureSponsorPoiScript() {
-    if (document.getElementById(SPONSOR_SCRIPT_ID)) return;
+    const existing = document.getElementById(SPONSOR_SCRIPT_ID);
+    if (existing) {
+      scheduleSponsorOptionSync();
+      return;
+    }
 
     const script = document.createElement('script');
     script.id = SPONSOR_SCRIPT_ID;
     script.src = 'js/sponsor-poi.js?v=1';
     script.async = true;
+    script.addEventListener('load', scheduleSponsorOptionSync, { once: true });
     document.head.appendChild(script);
   }
 
@@ -128,6 +176,7 @@
         tool?.classList.remove('csv-mode-update');
         const result = originalApply(mode);
         setupFileGuide();
+        scheduleSponsorOptionSync();
         return result;
       }
 
@@ -148,6 +197,7 @@
 
       window.ensureCampsiteStepNumberStyles?.();
       setupFileGuide();
+      scheduleSponsorOptionSync();
     };
   }
 
@@ -156,6 +206,7 @@
     setupStartModal();
     setupFileGuide();
     ensureSponsorPoiScript();
+    scheduleSponsorOptionSync();
   }
 
   if (document.readyState === 'loading') {
