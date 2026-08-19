@@ -40,7 +40,7 @@
   ) {
     const script = document.createElement('script');
     script.id = 'distanceBandClarityLoader';
-    script.src = './js/distance-band-clarity.js?v=1';
+    script.src = './js/distance-band-clarity-v2.js?v=1';
     script.async = true;
     document.head.appendChild(script);
   }
