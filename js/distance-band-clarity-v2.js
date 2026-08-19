@@ -4,6 +4,10 @@
 
   const FLAG = "__distanceBandClarityV2";
   const DISCLAIMER = "※この表示はキャンプサイト設計を補助するための参考情報です。審査・承認の可否を示すものではありません。";
+  let latestPairStats = {
+    affectedTargetPoiCount: 0,
+    totalTargetPoiCount: 0
+  };
 
   const bandFor = distance => {
     const d = Number(distance);
@@ -54,6 +58,45 @@
     return isExisting(warning?.a) && isExisting(warning?.b);
   };
 
+  const isTargetLayer = layerName => {
+    const layer = String(layerName || "");
+    if (typeof window.isAddedLayerName === "function") {
+      try {
+        if (window.isAddedLayerName(layer)) return true;
+      } catch (_) {}
+    }
+    return /(追加|希望|変更)/.test(layer);
+  };
+
+  const isTargetPoint = point => {
+    return isTargetLayer(point?.originalLayer || point?.layer || "");
+  };
+
+  const countAllTargetPois = () => {
+    let count = 0;
+    Object.entries(window._layerPoints || {}).forEach(([layerName, points]) => {
+      if (!isTargetLayer(layerName) || !Array.isArray(points)) return;
+      count += points.length;
+    });
+    return count;
+  };
+
+  const collectPairStats = warnings => {
+    const affectedTargets = new Set();
+
+    (warnings || []).forEach(warning => {
+      if (isReferencePair(warning)) return;
+      [warning?.a, warning?.b].forEach(point => {
+        if (point && isTargetPoint(point)) affectedTargets.add(point);
+      });
+    });
+
+    return {
+      affectedTargetPoiCount: affectedTargets.size,
+      totalTargetPoiCount: countAllTargetPois()
+    };
+  };
+
   const escapeHtml = value => {
     if (typeof window.escapeDistanceHtml === "function") {
       return window.escapeDistanceHtml(value);
@@ -91,6 +134,8 @@
 
   function installAccordion() {
     const renderer = warnings => {
+      latestPairStats = collectPairStats(warnings);
+
       const groups = {
         "密集": { target: [], reference: [] },
         "滞留": { target: [], reference: [] },
@@ -134,16 +179,16 @@
         return `
           <details style="margin-bottom:10px;padding:10px 12px 9px 14px;border-radius:12px;background:rgba(15,23,42,.45);border:1px solid rgba(148,163,184,.22);border-left:5px solid ${setting.color};">
             <summary style="cursor:pointer;font-weight:bold;color:${setting.color};font-size:15px;line-height:1.45;">
-              ${setting.icon} ${setting.label}（${total}件）
+              ${setting.icon} ${setting.label}（${total}組）
             </summary>
             <div style="margin-top:8px;padding:7px 0 0 2px;border-top:1px solid rgba(148,163,184,.18);">
-              <div style="margin-bottom:8px;font-size:12px;color:#cbd5e1;">追加・変更POIとの組み合わせ：${target.length}件 / 既存POI同士：${reference.length}件</div>
+              <div style="margin-bottom:8px;font-size:12px;color:#cbd5e1;">追加・変更POIを含むペア：${target.length}組 / 既存POI同士：${reference.length}組</div>
               <details style="margin-bottom:8px;padding:8px 10px;border-radius:10px;background:rgba(15,23,42,.38);border:1px solid rgba(148,163,184,.20);">
-                <summary style="cursor:pointer;font-weight:bold;color:${setting.color};">${setting.action}（${target.length}件）</summary>
+                <summary style="cursor:pointer;font-weight:bold;color:${setting.color};">${setting.action}（${target.length}組）</summary>
                 <div style="margin-top:7px;">${target.length ? target.map(w => cardHtml(w, type, false)).join("") : '<div style="opacity:.7;">該当なし</div>'}</div>
               </details>
               <details style="padding:8px 10px;border-radius:10px;background:rgba(148,163,184,.08);border:1px solid rgba(148,163,184,.18);">
-                <summary style="cursor:pointer;font-weight:bold;color:#cbd5e1;">ℹ 既存POI同士（${reference.length}件）</summary>
+                <summary style="cursor:pointer;font-weight:bold;color:#cbd5e1;">ℹ 既存POI同士（${reference.length}組）</summary>
                 <div style="margin-top:7px;">${reference.length ? reference.map(w => cardHtml(w, type, true)).join("") : '<div style="opacity:.7;">該当なし</div>'}</div>
               </details>
             </div>
@@ -153,7 +198,8 @@
 
       return `
         <div style="margin:0 0 12px;padding:11px 13px;border-radius:12px;background:rgba(56,189,248,.07);border:1px solid rgba(56,189,248,.24);color:#cbd5e1;font-size:12px;line-height:1.7;">
-          ${DISCLAIMER}
+          ${DISCLAIMER}<br>
+          ※「組」はPOI同士の組み合わせ数です。同じPOIが複数の組み合わせに含まれる場合があります。
         </div>
         <div class="distance-warning">${Object.keys(groups).map(groupHtml).join("")}</div>
       `;
@@ -184,7 +230,13 @@
       if (!card) return;
 
       const counts = renderedCounts();
-      const total = counts.dense + counts.stay + counts.light + counts.near50;
+      const totalPairs = counts.dense + counts.stay + counts.light + counts.near50;
+      const affectedTargetPoiCount = latestPairStats.affectedTargetPoiCount || 0;
+      const totalTargetPoiCount = Math.max(
+        latestPairStats.totalTargetPoiCount || 0,
+        affectedTargetPoiCount
+      );
+
       let status = "50m以上のみ";
       let icon = "✅";
       let color = "#22c55e";
@@ -203,15 +255,21 @@
         color = "#94a3b8";
       }
 
+      const targetPoiLine = totalTargetPoiCount > 0
+        ? `該当する追加・変更POI：${affectedTargetPoiCount} / ${totalTargetPoiCount}件<br>`
+        : `該当する追加・変更POI：${affectedTargetPoiCount}件<br>`;
+
       const nextHtml = `
         <strong style="color:${color};font-size:20px;">${icon} 距離チェック結果：${status}</strong><br><br>
-        🔴 20m未満（密集の目安）：${counts.dense}件<br>
-        🟠 20m以上30m未満（滞留の目安）：${counts.stay}件<br>
-        🟡 30m以上40m未満（近接の目安）：${counts.light}件<br>
-        ⚪ 40m以上50m未満（50m目安未満）：${counts.near50}件<br>
-        既存POI同士の50m未満：${counts.reference}件<br>
-        追加・変更POIに関係する50m未満：${total}件<br><br>
-        ${total === 0 ? "追加・変更POIに関係する50m未満の組み合わせはありません。" : "50m未満の組み合わせがあります。距離と地図を設計時の参考として確認できます。"}<br><br>
+        🔴 20m未満（密集の目安）：${counts.dense}組<br>
+        🟠 20m以上30m未満（滞留の目安）：${counts.stay}組<br>
+        🟡 30m以上40m未満（近接の目安）：${counts.light}組<br>
+        ⚪ 40m以上50m未満（50m目安未満）：${counts.near50}組<br>
+        既存POI同士の50m未満：${counts.reference}組<br>
+        <strong>追加・変更POIを含む50m未満のペア：${totalPairs}組</strong><br>
+        ${targetPoiLine}<br>
+        ${totalPairs === 0 ? "追加・変更POIを含む50m未満のペアはありません。" : "50m未満のペアがあります。距離と地図を設計時の参考として確認できます。"}<br><br>
+        <span style="font-size:12px;color:#cbd5e1;">※「組」はPOI同士の組み合わせ数です。同じPOIが複数のペアに含まれる場合があります。</span><br>
         <span style="font-size:12px;color:#cbd5e1;">${DISCLAIMER}</span>
       `;
 
@@ -221,6 +279,24 @@
 
     Object.defineProperty(normalizer, FLAG, { value: true });
     window.normalizeJudgementSection = normalizer;
+  }
+
+  function normalizeScorePairUnits() {
+    const sections = Array.from(document.querySelectorAll("#distanceResult .distance-result-section"));
+    const scoreSection = sections.find(section => {
+      const heading = section.querySelector(".distance-result-heading");
+      return (heading?.textContent || "").includes("拠点充実度");
+    });
+    if (!scoreSection) return;
+
+    scoreSection.querySelectorAll(".distance-warning").forEach(card => {
+      const nextHtml = card.innerHTML
+        .replace(/密集：(\d+)件/g, "密集ペア：$1組")
+        .replace(/滞留：(\d+)件/g, "滞留ペア：$1組")
+        .replace(/30〜50m参考：(\d+)件/g, "30〜50m未満ペア（参考）：$1組")
+        .replace(/既存POI同士の50m未満近接：(\d+)件/g, "既存POI同士の50m未満ペア：$1組");
+      if (card.innerHTML !== nextHtml) card.innerHTML = nextHtml;
+    });
   }
 
   function updateGuide() {
@@ -233,6 +309,7 @@
       🟡 30m以上40m未満：近接の目安。周辺状況を見るための参考値です。<br><br>
       ⚪ 40m以上50m未満：50m目安未満。設計時の距離感を見る参考値です。<br><br>
       ✅ 50m以上：50m以上の間隔があります。<br><br>
+      <span style="opacity:.9;">※件数ではなく、POI同士の「組み合わせ数」は「組」で表示します。</span><br>
       <span style="opacity:.9;">※「通行」は距離の閾値ではなく、狭い通路・入口・信号周辺などの現地環境を確認する項目です。</span><br>
       <span style="opacity:.9;">${DISCLAIMER}</span>
     `;
@@ -265,6 +342,8 @@
 
   function refreshResult() {
     updateGuide();
+    normalizeScorePairUnits();
+
     const result = document.getElementById("distanceResult");
     if (!result) return;
     const section = Array.from(result.querySelectorAll(".distance-result-section")).find(node => {
