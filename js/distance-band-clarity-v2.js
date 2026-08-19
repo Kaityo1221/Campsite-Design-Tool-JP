@@ -3,6 +3,7 @@
   "use strict";
 
   const FLAG = "__distanceBandClarityV2";
+  const DISCLAIMER = "※この表示はキャンプサイト設計を補助するための参考情報です。審査・承認の可否を示すものではありません。";
 
   const bandFor = distance => {
     const d = Number(distance);
@@ -18,30 +19,30 @@
     "密集": {
       icon: "🔴",
       color: "#ef4444",
-      label: "密集（20m未満）",
-      action: "⚠ 要修正",
-      message: "20m未満です。近すぎるため、配置の見直しをお願いします。"
+      label: "密集の目安（20m未満）",
+      action: "🔴 距離がかなり近い",
+      message: "20m未満です。イベント時の密集リスクを考えるための参考情報です。"
     },
     "滞留": {
       icon: "🟠",
       color: "#f97316",
-      label: "滞留（20m以上30m未満）",
-      action: "⚠ 要修正",
-      message: "20m以上30m未満です。滞留リスクを考慮し、配置の見直しをお願いします。"
+      label: "滞留の目安（20m以上30m未満）",
+      action: "🟠 距離が近い",
+      message: "20m以上30m未満です。イベント時の滞留リスクを考えるための参考情報です。"
     },
     "軽微": {
       icon: "🟡",
       color: "#facc15",
-      label: "軽微（30m以上40m未満）",
-      action: "🟡 軽微",
-      message: "30m以上40m未満です。近接しているため、配置と現地状況を確認してください。"
+      label: "近接の目安（30m以上40m未満）",
+      action: "🟡 近接",
+      message: "30m以上40m未満です。配置や周辺状況を見るための参考情報です。"
     },
     "要確認": {
-      icon: "⚠",
+      icon: "⚪",
       color: "#f59e0b",
-      label: "50m未満・要確認（40m以上50m未満）",
-      action: "⚠ 50m未満・要確認",
-      message: "40m以上50m未満です。POI間隔は原則50mのため、状況により調整が必要になる場合があります。"
+      label: "50m目安未満（40m以上50m未満）",
+      action: "⚪ 50m目安未満",
+      message: "40m以上50m未満です。50mは設計時の目安として表示しています。"
     }
   };
 
@@ -103,19 +104,12 @@
         groups[type][isReferencePair(warning) ? "reference" : "target"].push(warning);
       });
 
-      const actionableWarnings = (warnings || []).filter(w => {
-        return !isReferencePair(w) && Number(w?.distance) < 40;
-      });
-      const actionableHtml = typeof window.getDistanceActionableAdviceHtml === "function"
-        ? window.getDistanceActionableAdviceHtml(actionableWarnings)
-        : "";
-
       const cardHtml = (warning, type, reference) => {
         const setting = settings[type];
         const color = reference ? "#94a3b8" : setting.color;
-        const label = reference ? "ℹ 参考" : setting.action;
+        const label = reference ? "ℹ 既存POI同士" : setting.action;
         const message = reference
-          ? "既存POI同士の近接です。追加POIの調整対象には含めません。"
+          ? "既存POI同士の近接です。現在の配置状況を把握するための参考表示です。"
           : setting.message;
 
         return `
@@ -143,13 +137,13 @@
               ${setting.icon} ${setting.label}（${total}件）
             </summary>
             <div style="margin-top:8px;padding:7px 0 0 2px;border-top:1px solid rgba(148,163,184,.18);">
-              <div style="margin-bottom:8px;font-size:12px;color:#cbd5e1;">追加・変更対象：${target.length}件 / 参考：${reference.length}件</div>
+              <div style="margin-bottom:8px;font-size:12px;color:#cbd5e1;">追加・変更POIとの組み合わせ：${target.length}件 / 既存POI同士：${reference.length}件</div>
               <details style="margin-bottom:8px;padding:8px 10px;border-radius:10px;background:rgba(15,23,42,.38);border:1px solid rgba(148,163,184,.20);">
                 <summary style="cursor:pointer;font-weight:bold;color:${setting.color};">${setting.action}（${target.length}件）</summary>
                 <div style="margin-top:7px;">${target.length ? target.map(w => cardHtml(w, type, false)).join("") : '<div style="opacity:.7;">該当なし</div>'}</div>
               </details>
               <details style="padding:8px 10px;border-radius:10px;background:rgba(148,163,184,.08);border:1px solid rgba(148,163,184,.18);">
-                <summary style="cursor:pointer;font-weight:bold;color:#cbd5e1;">ℹ 参考：既存POI同士（${reference.length}件）</summary>
+                <summary style="cursor:pointer;font-weight:bold;color:#cbd5e1;">ℹ 既存POI同士（${reference.length}件）</summary>
                 <div style="margin-top:7px;">${reference.length ? reference.map(w => cardHtml(w, type, true)).join("") : '<div style="opacity:.7;">該当なし</div>'}</div>
               </details>
             </div>
@@ -157,7 +151,12 @@
         `;
       };
 
-      return `${actionableHtml}<div class="distance-warning">${Object.keys(groups).map(groupHtml).join("")}</div>`;
+      return `
+        <div style="margin:0 0 12px;padding:11px 13px;border-radius:12px;background:rgba(56,189,248,.07);border:1px solid rgba(56,189,248,.24);color:#cbd5e1;font-size:12px;line-height:1.7;">
+          ${DISCLAIMER}
+        </div>
+        <div class="distance-warning">${Object.keys(groups).map(groupHtml).join("")}</div>
+      `;
     };
 
     Object.defineProperty(renderer, FLAG, { value: true });
@@ -186,33 +185,34 @@
 
       const counts = renderedCounts();
       const total = counts.dense + counts.stay + counts.light + counts.near50;
-      let status = "50m以上";
+      let status = "50m以上のみ";
       let icon = "✅";
       let color = "#22c55e";
 
       if (counts.dense + counts.stay > 0) {
-        status = "要修正";
-        icon = "🚨";
-        color = "#ef4444";
+        status = "近い組み合わせあり";
+        icon = "📏";
+        color = "#f97316";
       } else if (counts.light + counts.near50 > 0) {
-        status = "50m未満あり";
-        icon = "⚠";
+        status = "50m目安未満あり";
+        icon = "📏";
         color = "#f59e0b";
       } else if (counts.reference > 0) {
-        status = "参考近接あり";
+        status = "既存POIの近接あり";
         icon = "ℹ";
         color = "#94a3b8";
       }
 
       const nextHtml = `
-        <strong style="color:${color};font-size:20px;">${icon} 判定結果：${status}</strong><br><br>
-        🔴 20m未満（密集）：${counts.dense}件<br>
-        🟠 20m以上30m未満（滞留）：${counts.stay}件<br>
-        🟡 30m以上40m未満（軽微）：${counts.light}件<br>
-        ⚠ 40m以上50m未満（50m未満・要確認）：${counts.near50}件<br>
-        参考：既存POI同士 ${counts.reference}件<br>
-        追加・変更対象の50m未満合計：${total}件<br><br>
-        ${total === 0 ? "追加・変更対象の50m未満の組み合わせはありません。" : "50m未満の組み合わせがあります。分類別チェックと地図で確認してください。"}
+        <strong style="color:${color};font-size:20px;">${icon} 距離チェック結果：${status}</strong><br><br>
+        🔴 20m未満（密集の目安）：${counts.dense}件<br>
+        🟠 20m以上30m未満（滞留の目安）：${counts.stay}件<br>
+        🟡 30m以上40m未満（近接の目安）：${counts.light}件<br>
+        ⚪ 40m以上50m未満（50m目安未満）：${counts.near50}件<br>
+        既存POI同士の50m未満：${counts.reference}件<br>
+        追加・変更POIに関係する50m未満：${total}件<br><br>
+        ${total === 0 ? "追加・変更POIに関係する50m未満の組み合わせはありません。" : "50m未満の組み合わせがあります。距離と地図を設計時の参考として確認できます。"}<br><br>
+        <span style="font-size:12px;color:#cbd5e1;">${DISCLAIMER}</span>
       `;
 
       card.style.borderColor = color;
@@ -227,13 +227,14 @@
     const guide = document.querySelector("#distance .rank-guide-box");
     if (!guide) return;
     const nextHtml = `
-      <strong>距離判定の見方</strong><br><br>
-      🔴 20m未満：密集。配置の見直しを強く推奨します。<br><br>
-      🟠 20m以上30m未満：滞留。配置の見直しを推奨します。<br><br>
-      🟡 30m以上40m未満：軽微。近接しているため確認します。<br><br>
-      ⚠ 40m以上50m未満：50m未満・要確認。POI間隔は原則50mです。<br><br>
-      ⚪ 50m以上：原則となる間隔を満たしています。<br><br>
-      <span style="opacity:.85;">※「通行」は距離の閾値ではなく、狭い通路・入口・信号周辺などの現地環境を確認する項目です。</span>
+      <strong>距離の見方（設計支援）</strong><br><br>
+      🔴 20m未満：密集の目安。イベント時の人の集まり方を見る参考値です。<br><br>
+      🟠 20m以上30m未満：滞留の目安。イベント時の滞留を考える参考値です。<br><br>
+      🟡 30m以上40m未満：近接の目安。周辺状況を見るための参考値です。<br><br>
+      ⚪ 40m以上50m未満：50m目安未満。設計時の距離感を見る参考値です。<br><br>
+      ✅ 50m以上：50m以上の間隔があります。<br><br>
+      <span style="opacity:.9;">※「通行」は距離の閾値ではなく、狭い通路・入口・信号周辺などの現地環境を確認する項目です。</span><br>
+      <span style="opacity:.9;">${DISCLAIMER}</span>
     `;
     if (guide.innerHTML !== nextHtml) guide.innerHTML = nextHtml;
   }
@@ -247,11 +248,11 @@
       const before = source;
       source = source.replace(
         `<div>\n          <span class="distance-legend-line light"></span>\n          30〜40m\n        </div>\n\n        <div>`,
-        `<div>\n          <span class="distance-legend-line light"></span>\n          30〜40m（軽微）\n        </div>\n\n        <div>\n          <span class="distance-legend-line light" style="border-top-color:#f59e0b;"></span>\n          40〜50m未満（要確認）\n        </div>\n\n        <div>`
+        `<div>\n          <span class="distance-legend-line light"></span>\n          30〜40m（近接の目安）\n        </div>\n\n        <div>\n          <span class="distance-legend-line light" style="border-top-color:#f59e0b;"></span>\n          40〜50m未満（50m目安未満）\n        </div>\n\n        <div>`
       );
       source = source.replace(
         `    let color = "#facc15";\n    let label = "軽微";\n\n    if (w.distance < 20) {\n      color = "#ef4444";\n      label = "密集";\n    } else if (w.distance < 30) {\n      color = "#f97316";\n      label = "滞留";\n    }`,
-        `    let color = "#f59e0b";\n    let label = "50m未満・要確認";\n\n    if (w.distance < 20) {\n      color = "#ef4444";\n      label = "密集";\n    } else if (w.distance < 30) {\n      color = "#f97316";\n      label = "滞留";\n    } else if (w.distance < 40) {\n      color = "#facc15";\n      label = "軽微";\n    }`
+        `    let color = "#f59e0b";\n    let label = "50m目安未満";\n\n    if (w.distance < 20) {\n      color = "#ef4444";\n      label = "密集の目安";\n    } else if (w.distance < 30) {\n      color = "#f97316";\n      label = "滞留の目安";\n    } else if (w.distance < 40) {\n      color = "#facc15";\n      label = "近接の目安";\n    }`
       );
       if (source === before) return;
       const patched = Function(`"use strict"; return (${source});`)();
@@ -267,7 +268,13 @@
     const result = document.getElementById("distanceResult");
     if (!result) return;
     const section = Array.from(result.querySelectorAll(".distance-result-section")).find(node => {
-      return (node.querySelector(".distance-result-heading")?.textContent || "").includes("判定結果");
+      const heading = node.querySelector(".distance-result-heading");
+      const text = heading?.textContent || "";
+      if (text.includes("判定結果") || text.includes("距離チェック結果")) {
+        if (heading && text.includes("判定結果")) heading.textContent = "距離チェック結果";
+        return true;
+      }
+      return false;
     });
     if (section) window.normalizeJudgementSection?.(section);
   }
