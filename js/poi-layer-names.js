@@ -21,6 +21,12 @@
     ['追加希望ポケスト', FORMAL.newPokestop],
     ['追加希望ジム', FORMAL.newGym],
     ['追加希望パワスポ', FORMAL.newPowerSpot],
+    ['追加希望のポケストップ候補', FORMAL.newPokestop],
+    ['追加希望のジム候補', FORMAL.newGym],
+    ['追加希望のパワースポット候補', FORMAL.newPowerSpot],
+    ['追加希望ポケストップ候補', FORMAL.newPokestop],
+    ['追加希望ジム候補', FORMAL.newGym],
+    ['追加希望パワースポット候補', FORMAL.newPowerSpot],
     ['追加 PokéStop', FORMAL.newPokestop],
     ['追加 Gym', FORMAL.newGym],
     ['追加 PowerSpot', FORMAL.newPowerSpot]
