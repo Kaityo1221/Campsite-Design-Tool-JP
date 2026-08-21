@@ -2,9 +2,9 @@
    管理者用 POIバックフィル操作
 
    - 管理者画面に「次の25件を処理」カードを追加
-   - 総件数 / 処理済み / 残り / 進捗率を表示
-   - 実行後に今回の処理件数と最新進捗を再取得
-   - 既存の管理者セッションを利用
+   - バックフィル本体はサーバー側バックグラウンドで継続
+   - 画面を閉じても / スリープしても処理継続
+   - 復帰時に進捗とジョブ状態を自動更新
 ====================================================== */
 
 (function () {
@@ -15,15 +15,8 @@
   const STATUS_ID = "adminPoiBackfillStatus";
   const PROGRESS_ID = "adminPoiBackfillProgress";
   const PROGRESS_FUNCTION = "admin-backfill-progress";
-
-  function escapeHtml(value) {
-    return String(value ?? "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
-  }
+  const POLL_INTERVAL_MS = 5000;
+  let pollTimer = null;
 
   function setStatus(message, type = "neutral") {
     const el = document.getElementById(STATUS_ID);
@@ -41,6 +34,13 @@
     el.style.borderColor = style.border;
     el.style.color = style.color;
     el.textContent = String(message || "");
+  }
+
+  function setButtonRunning(running, text = null) {
+    const button = document.getElementById(BUTTON_ID);
+    if (!button) return;
+    button.disabled = !!running;
+    button.textContent = text || (running ? "サーバーで処理中…" : "次の25件を処理");
   }
 
   function renderProgress(progress, latestSucceeded = null) {
@@ -92,6 +92,70 @@
     return data.progress;
   }
 
+  async function fetchJobStatus() {
+    if (!window.CampsiteAdminSecureApi?.invoke) return null;
+    const data = await window.CampsiteAdminSecureApi.invoke("backfill-job-status");
+    return data?.job || null;
+  }
+
+  function stopPolling() {
+    if (pollTimer) clearTimeout(pollTimer);
+    pollTimer = null;
+  }
+
+  function schedulePolling() {
+    stopPolling();
+    pollTimer = setTimeout(() => {
+      refreshJobState().catch(() => {});
+    }, POLL_INTERVAL_MS);
+  }
+
+  async function refreshJobState() {
+    const job = await fetchJobStatus().catch(() => null);
+    await fetchProgress().catch(() => {});
+
+    if (!job) {
+      setButtonRunning(false);
+      stopPolling();
+      return null;
+    }
+
+    if (job.running) {
+      setButtonRunning(true);
+      setStatus("サーバー側でバックフィル処理中です。ここからは画面を閉じても、スマホをスリープしても大丈夫です。", "running");
+      schedulePolling();
+      return job;
+    }
+
+    stopPolling();
+    setButtonRunning(false);
+
+    const attempted = Number(job.attempted) || 0;
+    const succeeded = Number(job.succeeded) || 0;
+    const failed = Number(job.failed) || 0;
+    const locked = job?.result?.locked === true || job?.result?.reason === "backfill_locked";
+
+    if (locked) {
+      setStatus("別のバックフィル処理が先に動いていました。進捗を更新しました。", "running");
+      return job;
+    }
+
+    if (attempted === 0) {
+      setStatus("未処理KMZはありません。バックフィル完了です。", "success");
+      return job;
+    }
+
+    if (failed > 0) {
+      setStatus(`処理完了：${attempted}件中 ${succeeded}件成功 / ${failed}件失敗。`, "error");
+      return job;
+    }
+
+    const progress = await fetchProgress().catch(() => null);
+    if (progress) renderProgress(progress, succeeded);
+    setStatus(`処理完了：${succeeded}/${attempted}件成功。サーバー側で最後まで処理しました。`, "success");
+    return job;
+  }
+
   async function runBackfill() {
     const button = document.getElementById(BUTTON_ID);
     if (!button) return;
@@ -106,45 +170,32 @@
       return;
     }
 
-    button.disabled = true;
-    button.textContent = "処理中…";
-    setStatus("次の未処理KMZを最大25件処理しています。", "running");
+    setButtonRunning(true, "開始中…");
+    setStatus("バックフィル処理をサーバーへ渡しています…", "running");
 
     try {
       const data = await window.CampsiteAdminSecureApi.invoke("run-backfill", { limit: 25 });
 
-      if (data?.locked || data?.backfill?.reason === "backfill_locked") {
-        setStatus("すでに別のバックフィルが処理中です。完了後にもう一度押してください。", "running");
-        await fetchProgress().catch(() => {});
+      if (data?.locked) {
+        setButtonRunning(true);
+        setStatus("すでにサーバー側でバックフィル処理中です。画面を閉じても、スマホをスリープしても大丈夫です。", "running");
+        schedulePolling();
         return;
       }
 
-      const attempted = Number(data?.attempted) || 0;
-      const succeeded = Number(data?.succeeded) || 0;
-      const failed = Number(data?.failed) || 0;
-      const progress = data?.backfill?.progress || null;
-
-      if (progress) renderProgress(progress, succeeded);
-      else await fetchProgress().then((p) => renderProgress(p, succeeded)).catch(() => {});
-
-      if (attempted === 0) {
-        setStatus("未処理KMZはありません。バックフィル完了です。", "success");
-        return;
+      if (!data?.accepted) {
+        throw new Error("サーバー側ジョブを開始できませんでした。");
       }
 
-      if (failed > 0) {
-        setStatus(`処理完了：${attempted}件中 ${succeeded}件成功 / ${failed}件失敗。`, "error");
-        return;
-      }
-
-      setStatus(`処理完了：${succeeded}/${attempted}件成功。画面の処理済み件数も更新しました。`, "success");
-    } catch (error) {
-      console.error("管理者POIバックフィルエラー", error);
-      setStatus(String(error?.message || "バックフィル処理に失敗しました。"), "error");
+      setButtonRunning(true);
+      setStatus("サーバー側で処理を開始しました。もう画面を閉じても、スマホをスリープしても大丈夫です。", "running");
       await fetchProgress().catch(() => {});
-    } finally {
-      button.disabled = false;
-      button.textContent = "次の25件を処理";
+      schedulePolling();
+    } catch (error) {
+      console.error("管理者POIバックフィル開始エラー", error);
+      setButtonRunning(false);
+      setStatus(String(error?.message || "バックフィル処理を開始できませんでした。"), "error");
+      await fetchProgress().catch(() => {});
     }
   }
 
@@ -162,10 +213,10 @@
     card.innerHTML = `
       <div class="step-no">POI DATA</div>
       <h3>過去KMZのPOIバックフィル</h3>
-      <p class="note">未処理KMZを最大25件ずつPOI Masterへ取り込みます。多重実行はサーバー側で防止します。</p>
+      <p class="note">未処理KMZを最大25件ずつPOI Masterへ取り込みます。開始後はサーバー側で継続するため、画面を閉じてもスリープしても大丈夫です。</p>
       <div id="${PROGRESS_ID}" style="margin:12px 0;padding:12px;border-radius:12px;background:rgba(2,6,23,.30);border:1px solid rgba(148,163,184,.16);">進捗を読み込み中…</div>
       <button type="button" id="${BUTTON_ID}" class="generate">次の25件を処理</button>
-      <div id="${STATUS_ID}" style="margin-top:12px;padding:10px 12px;border:1px solid rgba(96,165,250,.28);border-radius:10px;background:rgba(59,130,246,.10);color:#bfdbfe;font-size:13px;line-height:1.6;">押した結果は上の数字に反映されます。</div>
+      <div id="${STATUS_ID}" style="margin-top:12px;padding:10px 12px;border:1px solid rgba(96,165,250,.28);border-radius:10px;background:rgba(59,130,246,.10);color:#bfdbfe;font-size:13px;line-height:1.6;">開始後はサーバーが引き継ぎます。</div>
     `;
 
     const anchor = document.getElementById("aliasReviewAdminBox");
@@ -177,9 +228,16 @@
       console.error("POIバックフィル進捗取得エラー", error);
       renderProgress(null);
     });
+    refreshJobState().catch(() => {});
   }
 
-  window.AdminPoiBackfill = Object.freeze({ run: runBackfill, mount, refresh: fetchProgress });
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden && document.getElementById(CARD_ID)) {
+      refreshJobState().catch(() => {});
+    }
+  });
+
+  window.AdminPoiBackfill = Object.freeze({ run: runBackfill, mount, refresh: refreshJobState });
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mount);
   else mount();
