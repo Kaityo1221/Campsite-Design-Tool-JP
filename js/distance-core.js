@@ -196,7 +196,7 @@ function getPreSubmitLayerNames() {
 
 function getPreSubmitAddedPoiCount() {
   return getPreSubmitLayerNames().reduce((sum, name) => {
-    if (!/(追加|希望)/.test(name)) return sum;
+    if (!/新規/.test(name)) return sum;
     const points = window._layerPoints?.[name];
     return sum + (Array.isArray(points) ? points.length : 0);
   }, 0);
@@ -210,15 +210,15 @@ function getPreSubmitLayerState() {
   }
 
   const hasExisting = names.some(name => /既存/.test(name));
-  const hasAdded = names.some(name => /(追加|希望)/.test(name));
+  const hasAdded = names.some(name => /新規/.test(name));
   const hasAmbiguousPoiLayer = names.some(name => {
     const isPoi = /(ポケスト|pokestop|ジム|gym|パワー|power)/i.test(name);
-    return isPoi && !/(既存|追加|希望)/.test(name);
+    return isPoi && !/(既存|新規)/.test(name);
   });
 
   return hasExisting && hasAdded && !hasAmbiguousPoiLayer
-    ? { state: "ok", detail: "既存POIと追加POIを別レイヤーとして認識しています。" }
-    : { state: "ng", detail: "POIレイヤー名に「既存」または「追加」が入っているか確認してください。" };
+    ? { state: "ok", detail: "既存POIと新規POIを別レイヤーとして認識しています。" }
+    : { state: "ng", detail: "POIレイヤー名に「既存」または「新規」が入っているか確認してください。" };
 }
 
 function getPreSubmitDistanceRunState() {
@@ -249,13 +249,13 @@ function getPreSubmitAutoItems() {
   return [
     {
       id: "addedLimit",
-      label: "追加POIは25個以内に収まっている",
+      label: "新規POIは25個以内に収まっている",
       state: !hasData ? "warn" : (addedCount <= 25 ? "ok" : "ng"),
-      detail: !hasData ? "完成KMZを読み込むと自動確認します。" : `追加POI：${addedCount}件 / 最大25件`
+      detail: !hasData ? "完成KMZを読み込むと自動確認します。" : `新規POI：${addedCount}件 / 最大25件`
     },
     {
       id: "layers",
-      label: "既存POIと追加POIのレイヤーを分けている",
+      label: "既存POIと新規POIのレイヤーを分けている",
       ...getPreSubmitLayerState()
     },
     {
