@@ -9,6 +9,8 @@ const corsHeaders = {
 const ALLOWED_CATEGORIES = new Set(["REST", "STAY", "LOOP", "CAUTION", "EXCLUDE", "HOLD"]);
 const ALLOWED_DICTIONARY_STATUSES = new Set(["adopted", "later", "rejected"]);
 const AI_REVIEW_TAG = "AI_REVIEW";
+const BACKFILL_JOB_PREFIX = "admin_async_";
+const BACKFILL_ACTIVE_TTL_MS = 15 * 60 * 1000;
 
 function jsonResponse(body: Record<string, unknown>, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -53,6 +55,101 @@ async function validateSession(supabase: any, token: string): Promise<boolean> {
   return true;
 }
 
+async function getLatestBackfillJob(supabase: any) {
+  const { data, error } = await supabase
+    .from("poi_backfill_runs")
+    .select("run_key, created_at, completed_at, attempted, succeeded, failed, result")
+    .like("run_key", `${BACKFILL_JOB_PREFIX}%`)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return data || null;
+}
+
+async function getActiveBackfillJob(supabase: any) {
+  const activeSince = new Date(Date.now() - BACKFILL_ACTIVE_TTL_MS).toISOString();
+  const { data, error } = await supabase
+    .from("poi_backfill_runs")
+    .select("run_key, created_at, completed_at, attempted, succeeded, failed, result")
+    .like("run_key", `${BACKFILL_JOB_PREFIX}%`)
+    .is("completed_at", null)
+    .gte("created_at", activeSince)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return data || null;
+}
+
+function serializeBackfillJob(job: any) {
+  if (!job) return null;
+  return {
+    runKey: job.run_key,
+    createdAt: job.created_at,
+    completedAt: job.completed_at,
+    running: !job.completed_at,
+    attempted: Number(job.attempted) || 0,
+    succeeded: Number(job.succeeded) || 0,
+    failed: Number(job.failed) || 0,
+    result: job.result || null,
+  };
+}
+
+async function executeBackfillJob(
+  supabase: any,
+  url: string,
+  serviceKey: string,
+  runKey: string,
+  limit: number,
+) {
+  let payload: any = {};
+  let responseStatus = 500;
+
+  try {
+    const response = await fetch(`${url}/functions/v1/backfill-campsite-pois`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${serviceKey}`,
+        apikey: serviceKey,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ limit }),
+    });
+    responseStatus = response.status;
+    try {
+      payload = await response.json();
+    } catch (_) {
+      payload = { success: false, error: "バックフィル応答を読み取れませんでした。" };
+    }
+  } catch (error) {
+    payload = {
+      success: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+
+  const attempted = Number(payload?.attempted) || 0;
+  const succeeded = Number(payload?.succeeded) || 0;
+  const failed = Number(payload?.failed) || 0;
+  const locked = payload?.reason === "backfill_locked" || payload?.error === "backfill_locked" || payload?.locked === true;
+
+  await supabase
+    .from("poi_backfill_runs")
+    .update({
+      completed_at: new Date().toISOString(),
+      attempted,
+      succeeded,
+      failed,
+      result: {
+        ...payload,
+        response_status: responseStatus,
+        locked,
+      },
+    })
+    .eq("run_key", runKey);
+}
+
 Deno.serve(async (request: Request): Promise<Response> => {
   if (request.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (request.method !== "POST") return jsonResponse({ success: false, error: "POSTのみ受け付けます。" }, 405);
@@ -78,41 +175,39 @@ Deno.serve(async (request: Request): Promise<Response> => {
 
     if (action === "run-backfill") {
       const limit = Math.min(Math.max(Number(body?.limit) || 25, 1), 25);
-      const response = await fetch(`${url}/functions/v1/backfill-campsite-pois`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${serviceKey}`,
-          apikey: serviceKey,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ limit }),
-      });
-
-      let payload: any = {};
-      try {
-        payload = await response.json();
-      } catch (_) {}
-
-      if (payload?.error === "backfill_locked" || payload?.locked === true) {
-        return jsonResponse({ success: true, locked: true, attempted: 0, succeeded: 0, failed: 0, backfill: payload });
-      }
-
-      if (!response.ok) {
+      const activeJob = await getActiveBackfillJob(supabase);
+      if (activeJob) {
         return jsonResponse({
-          success: false,
-          error: payload?.error || "バックフィル処理に失敗しました。",
-          backfill: payload,
-        }, response.status);
+          success: true,
+          accepted: false,
+          locked: true,
+          job: serializeBackfillJob(activeJob),
+        });
       }
+
+      const runKey = `${BACKFILL_JOB_PREFIX}${Date.now()}_${crypto.randomUUID()}`;
+      const { error: insertError } = await supabase
+        .from("poi_backfill_runs")
+        .insert({ run_key: runKey });
+      if (insertError) throw insertError;
+
+      EdgeRuntime.waitUntil(executeBackfillJob(supabase, url, serviceKey, runKey, limit));
 
       return jsonResponse({
         success: true,
-        attempted: Number(payload?.attempted) || 0,
-        succeeded: Number(payload?.succeeded) || 0,
-        failed: Number(payload?.failed) || 0,
+        accepted: true,
         locked: false,
-        backfill: payload,
-      });
+        job: {
+          runKey,
+          running: true,
+          createdAt: new Date().toISOString(),
+        },
+      }, 202);
+    }
+
+    if (action === "backfill-job-status") {
+      const latestJob = await getLatestBackfillJob(supabase);
+      return jsonResponse({ success: true, job: serializeBackfillJob(latestJob) });
     }
 
     if (action === "remaining-count") {
