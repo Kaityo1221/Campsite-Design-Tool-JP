@@ -308,7 +308,7 @@ const debugHtml = `
 const simpleMapGuideHtml = `
   <div class="distance-warning">
     ※地図はOSM / 航空写真を切り替えて確認できます。<br>
-    既存POI・追加POI・活動範囲ポリゴン・近接ラインを表示します。
+    既存POI・新規POI・活動範囲ポリゴン・近接ラインを表示します。
   </div><br>
 `;
   if (warnings.length === 0) {
@@ -347,7 +347,7 @@ return;
       border:1px solid rgba(34,197,94,0.45);
       background:rgba(34,197,94,0.12);
     ">
-      ✅ 追加・変更対象の要注意近接はありません。<br>
+      ✅ 新規・変更対象の要注意近接はありません。<br>
       30m以上50m未満は参考距離として、上の分類別チェックで確認できます。
     </div>
   ` : targetWarnings.map(w => {
@@ -416,7 +416,7 @@ result.innerHTML =
     ℹ 参考：${displayCounts.reference}件
     <br><br>
   ` +
-  sectionTitleHtml("追加・変更対象の近接", "30m未満は要注意、30m以上50m未満は参考距離として確認します。") +
+  sectionTitleHtml("新規・変更対象の近接", "30m未満は要注意、30m以上50m未満は参考距離として確認します。") +
   targetWarningListHtml +
   sectionTitleHtml("距離チェックマップ", "OSM / 航空写真でPOI・活動範囲・近接ラインを確認できます。") +
   simpleMapGuideHtml;

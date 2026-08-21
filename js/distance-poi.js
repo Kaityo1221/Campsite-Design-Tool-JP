@@ -276,7 +276,7 @@ function renderPoiBreakdownHtml(breakdown) {
       ">
         <div style="opacity:0.75;">種別</div>
         <div style="text-align:right; opacity:0.75;">既存</div>
-        <div style="text-align:right; opacity:0.75;">追加</div>
+        <div style="text-align:right; opacity:0.75;">新規</div>
         <div style="text-align:right; opacity:0.75;">合計</div>
 
         ${rows.map(row => `
@@ -388,7 +388,7 @@ function renderPoiCountRow(label, current, limit, icon, type) {
 function renderPoiCountHtml(counts) {
   return `
     <div class="poi-count-box">
-      <h3>追加POI内訳</h3>
+      <h3>新規POI内訳</h3>
       ${renderPoiCountRow("ポケストップ", counts.pokestop, POI_LIMITS.pokestop, "🔵", "pokestop")}
       ${renderPoiCountRow("ジム", counts.gym, POI_LIMITS.gym, "🟡", "gym")}
       ${renderPoiCountRow("パワースポット", counts.power, POI_LIMITS.power, "🟣", "power")}
@@ -403,7 +403,7 @@ function renderPoiCountHtml(counts) {
       font-size:13px;
       line-height:1.7;
     ">
-      ※追加POIは最大25件です。<br>
+      ※新規POIは最大25件です。<br>
       必ず25件追加されるわけではありません。<br>
       実際の追加件数は、キャンプサイトの広さや既存POIの密度などにより調整されます。
     </div>
@@ -496,7 +496,7 @@ function renderDistancePrecheckCompactHtml(counts) {
         </div>
 
         <div class="${poiLimitExceeded ? "is-warning" : "is-ok"}">
-          <small>追加POI</small>
+          <small>新規POI</small>
           <strong>${addedPoiText}</strong>
         </div>
 
@@ -515,8 +515,8 @@ function renderDistancePrecheckCompactHtml(counts) {
         poiLimitExceeded
           ? `
             <div class="distance-precheck-alert">
-              ⚠ 追加POIが上限を超えています。<br>
-              追加POIは最大25件です。内訳を調整してください。
+              ⚠ 新規POIが上限を超えています。<br>
+              新規POIは最大25件です。内訳を調整してください。
             </div>
           `
           : ""
@@ -576,7 +576,7 @@ function renderDistancePrecheckFooterHtml() {
         ✅ STEP 1：事前チェック完了
       </strong>
 
-      読み込み内容と追加POI内訳を確認しました。<br>
+      読み込み内容と新規POI内訳を確認しました。<br>
       続いて、下の「距離チェック」へ進んでください。
 
       <button
@@ -643,7 +643,7 @@ function getPoiLimitWarningHtml(counts, addedTotalOverride = null) {
 
   if (total > 25) {
     warnings.push(
-      `追加POI合計：${total}件 / 上限25件`
+      `新規POI合計：${total}件 / 上限25件`
     );
   }
 
@@ -662,7 +662,7 @@ function getPoiLimitWarningHtml(counts, addedTotalOverride = null) {
       line-height:1.7;
     ">
       <strong style="color:#f87171;">
-        ⚠ 追加POIの上限を超えています
+        ⚠ 新規POIの上限を超えています
       </strong><br>
       ${warnings.map(w => `・${w}`).join("<br>")}
       <br>
@@ -700,6 +700,7 @@ function isDistanceTargetLayer(layerName) {
 
   return (
     originalName.includes("既存") ||
+    originalName.includes("新規") ||
     originalName.includes("追加") ||
     originalName.includes("追加希望") ||
     name.includes("current") ||

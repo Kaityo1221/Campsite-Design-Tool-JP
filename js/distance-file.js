@@ -266,7 +266,7 @@ window._hasPolygon =
         summary.innerHTML = renderDistanceLoadErrorHtml(
           "判定対象となるPOIが見つかりません",
           `
-            「既存」「追加」「追加希望」などのPOIレイヤーが含まれているか確認してください。<br>
+            「既存」「新規」などのPOIレイヤーが含まれているか確認してください。<br>
             円・Buffers・活動範囲ポリゴンなどの補助レイヤーだけでは距離判定できません。
           `
         );
@@ -706,7 +706,7 @@ function renderLayerSelector(layers, container) {
   container.innerHTML = `
     ${targetLayers.map(name => `
       <div class="layer-row">
-        <strong>${escapeDistanceHtml(cleanLayerName(name))}</strong>
+        <strong>${escapeDistanceHtml(name)}</strong>
         <span class="note">（${window._layerPoints[name]?.length || 0}件）</span>
       </div>
     `).join("")}
