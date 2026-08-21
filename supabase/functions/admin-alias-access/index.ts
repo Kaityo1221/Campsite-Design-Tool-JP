@@ -76,16 +76,52 @@ Deno.serve(async (request: Request): Promise<Response> => {
     const reviewMode = sanitizeText(body?.reviewMode, 20);
     const aiOnly = reviewMode === "ai";
 
+    if (action === "run-backfill") {
+      const limit = Math.min(Math.max(Number(body?.limit) || 25, 1), 25);
+      const response = await fetch(`${url}/functions/v1/backfill-campsite-pois`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${serviceKey}`,
+          apikey: serviceKey,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ limit }),
+      });
+
+      let payload: any = {};
+      try {
+        payload = await response.json();
+      } catch (_) {}
+
+      if (payload?.error === "backfill_locked" || payload?.locked === true) {
+        return jsonResponse({ success: true, locked: true, attempted: 0, succeeded: 0, failed: 0, backfill: payload });
+      }
+
+      if (!response.ok) {
+        return jsonResponse({
+          success: false,
+          error: payload?.error || "バックフィル処理に失敗しました。",
+          backfill: payload,
+        }, response.status);
+      }
+
+      return jsonResponse({
+        success: true,
+        attempted: Number(payload?.attempted) || 0,
+        succeeded: Number(payload?.succeeded) || 0,
+        failed: Number(payload?.failed) || 0,
+        locked: false,
+        backfill: payload,
+      });
+    }
+
     if (action === "remaining-count") {
       let query = supabase
         .from("alias_review_queue")
         .select("id", { count: "exact", head: true })
         .eq("review_status", "pending");
 
-      if (aiOnly) {
-        query = query.eq("suggested_category", AI_REVIEW_TAG);
-      }
-
+      if (aiOnly) query = query.eq("suggested_category", AI_REVIEW_TAG);
       const { count, error } = await query;
       if (error) throw error;
       return jsonResponse({ success: true, count: count || 0 });
@@ -97,9 +133,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
         .select("id, poi_name, normalized_name, count, sample_lat, sample_lng, source, review_status, suggested_category, review_note, created_at")
         .eq("review_status", "pending");
 
-      if (aiOnly) {
-        query = query.eq("suggested_category", AI_REVIEW_TAG);
-      }
+      if (aiOnly) query = query.eq("suggested_category", AI_REVIEW_TAG);
 
       const { data, error } = await query
         .order("count", { ascending: false })
