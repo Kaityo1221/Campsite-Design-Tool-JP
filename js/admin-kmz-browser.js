@@ -29,7 +29,7 @@
         await loadScript("js/admin-secure-api.js?v=1", "campsiteAdminSecureApiScript");
       }
 
-      await loadScript("js/admin-backfill-control.js?v=2", "campsiteAdminBackfillControlScript");
+      await loadScript("js/admin-backfill-control.js?v=3", "campsiteAdminBackfillControlScript");
       await loadScript("js/admin-kmz-browser-v2.js?v=2", "campsiteAdminKmzBrowserV2Script");
       await loadScript("js/admin-mobile-folders.js?v=3", "campsiteAdminMobileFoldersScript");
       await loadScript("js/ai-review-queue.js?v=1", "campsiteAiReviewQueueScript");
