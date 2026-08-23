@@ -58,6 +58,42 @@
     return raw.map(normalizePoint).filter(Boolean);
   }
 
+  function distanceMeters(a, b) {
+    const R = 6371000;
+    const lat1 = a[0] * Math.PI / 180;
+    const lat2 = b[0] * Math.PI / 180;
+    const dLat = (b[0] - a[0]) * Math.PI / 180;
+    const dLng = (b[1] - a[1]) * Math.PI / 180;
+    const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+    return 2 * R * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+  }
+
+  function isDistanceCirclePolygon(polygon) {
+    const pts = polygonPoints(polygon);
+    if (pts.length < 20) return false;
+
+    const unique = pts.length > 1 && distanceMeters(pts[0], pts[pts.length - 1]) < 1
+      ? pts.slice(0, -1)
+      : pts;
+    if (unique.length < 20) return false;
+
+    const center = [
+      unique.reduce((sum, p) => sum + p[0], 0) / unique.length,
+      unique.reduce((sum, p) => sum + p[1], 0) / unique.length
+    ];
+    const radii = unique.map(p => distanceMeters(center, p));
+    const avg = radii.reduce((sum, r) => sum + r, 0) / radii.length;
+    if (avg < 20 || avg > 60) return false;
+
+    const maxDeviation = Math.max(...radii.map(r => Math.abs(r - avg)));
+    return maxDeviation <= Math.max(2.5, avg * 0.08);
+  }
+
+  function collectActivityPolygons() {
+    const raw = Array.isArray(window._activityPolygons) ? window._activityPolygons : [];
+    return raw.filter(polygon => !isDistanceCirclePolygon(polygon));
+  }
+
   function canonicalLayer(layerName) {
     try {
       const type = typeof window.getPoiTypeFromLayerName === 'function'
@@ -153,7 +189,7 @@
     try {
       const points = collectPoints();
       if (points.length < 2) return;
-      const polygons = Array.isArray(window._activityPolygons) ? window._activityPolygons : [];
+      const polygons = collectActivityPolygons();
       const center = getCenter(points, polygons);
       const parkName = getParkName();
       const fingerprint = await hashText(canonicalDesign(points, polygons));
