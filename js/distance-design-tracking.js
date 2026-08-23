@@ -49,13 +49,23 @@
     return Number.isFinite(lat) && Number.isFinite(lng) ? [lat, lng] : null;
   }
 
+  function samePoint(a, b) {
+    return Array.isArray(a) && Array.isArray(b) &&
+      Math.abs(a[0] - b[0]) < 1e-9 &&
+      Math.abs(a[1] - b[1]) < 1e-9;
+  }
+
   function polygonPoints(polygon) {
     const raw = Array.isArray(polygon)
       ? polygon
       : (Array.isArray(polygon?.points)
           ? polygon.points
           : (Array.isArray(polygon?.coordinates) ? polygon.coordinates : []));
-    return raw.map(normalizePoint).filter(Boolean);
+    const points = raw.map(normalizePoint).filter(Boolean);
+    if (points.length > 3 && samePoint(points[0], points[points.length - 1])) {
+      points.pop();
+    }
+    return points;
   }
 
   function polygonAreaScore(polygon) {
@@ -83,12 +93,7 @@
       .map(polygon => ({ polygon, area: polygonAreaScore(polygon) }))
       .filter(item => item.area > 0)
       .sort((a, b) => b.area - a.area);
-
     if (!candidates.length) return [];
-
-    // Distance-check KMZs may contain one buffer polygon per POI.
-    // The activity area is the single large polygon that encloses the design,
-    // so tracking keeps only the largest polygon and ignores distance circles.
     return [candidates[0].polygon];
   }
 
@@ -174,7 +179,6 @@
         return Array.from(new Uint8Array(buffer), b => b.toString(16).padStart(2, '0')).join('');
       }
     } catch (_) {}
-
     let hash = 2166136261;
     for (let i = 0; i < text.length; i++) {
       hash ^= text.charCodeAt(i);
@@ -196,10 +200,7 @@
 
       await fetch(TRACK_URL, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          apikey: TRACK_KEY
-        },
+        headers: { 'Content-Type': 'application/json', apikey: TRACK_KEY },
         body: JSON.stringify({
           p_project_key: projectKey(parkName, center),
           p_park_name: parkName,
@@ -227,7 +228,6 @@
       return;
     }
     if (original.__designTrackingWrapped) return;
-
     const wrapped = async function (...args) {
       const result = await original.apply(this, args);
       void trackDistanceCheck();
