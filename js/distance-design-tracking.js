@@ -87,14 +87,107 @@
     return Math.abs(area2) / 2;
   }
 
-  function collectActivityPolygons() {
+  function normalizeLabel(value) {
+    return String(value || '')
+      .normalize('NFKC')
+      .toLowerCase()
+      .replace(/\s+/g, '')
+      .replace(/[＿_－ー\-]/g, '');
+  }
+
+  function isActivityFolderName(name) {
+    const n = normalizeLabel(name);
+    return n === 'ポリゴン' ||
+      n.includes('活動範囲') ||
+      n.includes('activityarea') ||
+      n.includes('activityrange') ||
+      n.includes('activitypolygon');
+  }
+
+  function directChildName(element) {
+    if (!element?.children) return '';
+    const node = Array.from(element.children)
+      .find(child => child.localName === 'name' || child.tagName === 'name');
+    return String(node?.textContent || '').trim();
+  }
+
+  function polygonFromXmlNode(polygonNode) {
+    const coordinatesNode = polygonNode?.getElementsByTagName('coordinates')?.[0];
+    if (!coordinatesNode) return null;
+    const points = String(coordinatesNode.textContent || '')
+      .trim()
+      .split(/\s+/)
+      .map(value => {
+        const [lng, lat] = value.split(',').map(Number);
+        return Number.isFinite(lat) && Number.isFinite(lng) ? [lat, lng] : null;
+      })
+      .filter(Boolean);
+    const normalized = polygonPoints(points);
+    return normalized.length >= 3 ? normalized : null;
+  }
+
+  async function readSourceKmlText() {
+    const file = window._distanceSourceFile;
+    if (!file) return '';
+    const name = String(file.name || '').toLowerCase();
+
+    if (name.endsWith('.kml')) {
+      return await file.text();
+    }
+
+    if (!window.JSZip || !/\.(kmz|zip)$/i.test(name)) {
+      return '';
+    }
+
+    const zip = await window.JSZip.loadAsync(file);
+    for (const entryName of Object.keys(zip.files)) {
+      if (entryName.toLowerCase().endsWith('.kml')) {
+        return await zip.files[entryName].async('text');
+      }
+    }
+    return '';
+  }
+
+  async function activityPolygonsFromSourceFile() {
+    try {
+      const text = await readSourceKmlText();
+      if (!text) return [];
+      const xml = new DOMParser().parseFromString(text, 'application/xml');
+      if (xml.getElementsByTagName('parsererror').length) return [];
+
+      const folders = Array.from(xml.getElementsByTagName('Folder'));
+      const activityFolders = folders.filter(folder => isActivityFolderName(directChildName(folder)));
+      if (!activityFolders.length) return [];
+
+      const polygons = [];
+      activityFolders.forEach(folder => {
+        Array.from(folder.getElementsByTagName('Polygon')).forEach(node => {
+          const polygon = polygonFromXmlNode(node);
+          if (polygon) polygons.push(polygon);
+        });
+      });
+      return polygons;
+    } catch (_) {
+      return [];
+    }
+  }
+
+  async function collectActivityPolygons() {
+    // CREATIVE MODE writes actual activity polygons into a dedicated "ポリゴン" folder.
+    // Prefer that semantic folder over geometry/area guesses so both tools derive the
+    // same center and fingerprint from the same design.
+    const sourcePolygons = await activityPolygonsFromSourceFile();
+    if (sourcePolygons.length) return sourcePolygons;
+
+    // Legacy/My Maps fallback: if no semantic activity folder exists, retain the
+    // previous conservative behavior and use the largest non-empty polygon.
     const raw = Array.isArray(window._activityPolygons) ? window._activityPolygons : [];
     const candidates = raw
       .map(polygon => ({ polygon, area: polygonAreaScore(polygon) }))
       .filter(item => item.area > 0)
       .sort((a, b) => b.area - a.area);
     if (!candidates.length) return [];
-    return [candidates[0].polygon];
+    return [polygonPoints(candidates[0].polygon)];
   }
 
   function canonicalLayer(layerName) {
@@ -191,7 +284,7 @@
     try {
       const points = collectPoints();
       if (points.length < 2) return;
-      const polygons = collectActivityPolygons();
+      const polygons = await collectActivityPolygons();
       const center = getCenter(points, polygons);
       const parkName = getParkName();
       const fingerprint = await hashText(canonicalDesign(points, polygons));
