@@ -29,10 +29,6 @@
     })
   });
 
-  /*
-    Main distance-check UI only:
-    clarify the 40m以上50m未満 band without changing shared field-mode policy.
-  */
   if (
     typeof document !== 'undefined' &&
     document.getElementById('distance') &&
@@ -45,10 +41,6 @@
     document.head.appendChild(script);
   }
 
-  /*
-    Distance-check design tracking:
-    records the final design route without surfacing duplicate/version details to users.
-  */
   if (
     typeof document !== 'undefined' &&
     document.getElementById('distance') &&
@@ -56,7 +48,7 @@
   ) {
     const script = document.createElement('script');
     script.id = 'distanceDesignTrackingLoader';
-    script.src = './js/distance-design-tracking.js?v=3';
+    script.src = './js/distance-design-tracking.js?v=4';
     script.async = true;
     document.head.appendChild(script);
   }
