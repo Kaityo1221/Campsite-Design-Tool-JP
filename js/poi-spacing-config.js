@@ -29,10 +29,6 @@
     })
   });
 
-  /*
-    Main distance-check UI only:
-    clarify the 40m以上50m未満 band without changing shared field-mode policy.
-  */
   if (
     typeof document !== 'undefined' &&
     document.getElementById('distance') &&
@@ -41,6 +37,18 @@
     const script = document.createElement('script');
     script.id = 'distanceBandClarityLoader';
     script.src = './js/distance-band-clarity-v2.js?v=2';
+    script.async = true;
+    document.head.appendChild(script);
+  }
+
+  if (
+    typeof document !== 'undefined' &&
+    document.getElementById('distance') &&
+    !document.getElementById('distanceDesignTrackingLoader')
+  ) {
+    const script = document.createElement('script');
+    script.id = 'distanceDesignTrackingLoader';
+    script.src = './js/distance-design-tracking.js?v=5';
     script.async = true;
     document.head.appendChild(script);
   }
