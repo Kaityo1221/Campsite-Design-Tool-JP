@@ -205,23 +205,73 @@
     `;
   }
 
+  function summaryValues() {
+    const s = payload?.summary || {};
+    const other = excludeCurrentDevice && Number(s.currentDeviceHistoryCount) > 0;
+    return {
+      s,
+      other,
+      values: {
+        unique: other ? s.otherUniqueFiles : s.uniqueFiles,
+        history: other ? s.otherDeviceHistoryCount : s.totalHistory,
+        dup: other ? s.otherDuplicateHistory : s.duplicateHistory,
+        devices: other ? s.otherDistinctDevices : s.distinctDevices,
+        today: other ? s.otherTodayCount : s.todayCount,
+        week: other ? s.otherLast7DaysCount : s.last7DaysCount,
+        kmz: other ? s.otherKmzGenerateCount : s.kmzGenerateCount,
+        distance: other ? s.otherDistanceCheckCount : s.distanceCheckCount
+      }
+    };
+  }
+
+  function bindCardEvents(scope) {
+    scope.querySelectorAll("[data-ak-download]").forEach(btn => {
+      if (btn.dataset.akBound) return;
+      btn.dataset.akBound = "1";
+      btn.addEventListener("click", () => download(btn.dataset.akDownload, btn));
+    });
+    scope.querySelectorAll("[data-ak-review]").forEach(btn => {
+      if (btn.dataset.akBound) return;
+      btn.dataset.akBound = "1";
+      btn.addEventListener("click", () => review(btn.dataset.akReview, btn));
+    });
+  }
+
+  function appendMore() {
+    const el = body();
+    if (!el || !payload) return;
+
+    const filtered = filteredRecords();
+    const list = el.querySelector(".ak-list");
+    const more = el.querySelector("[data-ak-more]");
+    const count = el.querySelector(".ak-head span");
+    if (!list || !more) return;
+
+    const start = visibleCount;
+    const next = filtered.slice(start, start + PAGE_SIZE);
+    if (!next.length) {
+      more.remove();
+      return;
+    }
+
+    const holder = document.createElement("div");
+    holder.innerHTML = next.map(card).join("");
+    const added = Array.from(holder.children);
+    added.forEach(node => list.appendChild(node));
+    bindCardEvents(list);
+
+    visibleCount = Math.min(start + next.length, filtered.length);
+    if (count) count.textContent = `${filtered.length}件中 ${visibleCount}件表示`;
+    if (visibleCount >= filtered.length) more.remove();
+
+    // 一覧全体は再描画しない。スクロール位置と既存カードの状態を保ったまま下へ追加する。
+  }
+
   function render() {
     const el = body();
     if (!el || !payload) return;
 
-    const s = payload.summary || {};
-    const other = excludeCurrentDevice && Number(s.currentDeviceHistoryCount) > 0;
-    const values = {
-      unique: other ? s.otherUniqueFiles : s.uniqueFiles,
-      history: other ? s.otherDeviceHistoryCount : s.totalHistory,
-      dup: other ? s.otherDuplicateHistory : s.duplicateHistory,
-      devices: other ? s.otherDistinctDevices : s.distinctDevices,
-      today: other ? s.otherTodayCount : s.todayCount,
-      week: other ? s.otherLast7DaysCount : s.last7DaysCount,
-      kmz: other ? s.otherKmzGenerateCount : s.kmzGenerateCount,
-      distance: other ? s.otherDistanceCheckCount : s.distanceCheckCount
-    };
-
+    const { s, other, values } = summaryValues();
     const filtered = filteredRecords();
     const visible = filtered.slice(0, visibleCount);
 
@@ -285,12 +335,8 @@
       visibleCount = PAGE_SIZE;
       render();
     }));
-    el.querySelector("[data-ak-more]")?.addEventListener("click", () => {
-      visibleCount += PAGE_SIZE;
-      render();
-    });
-    el.querySelectorAll("[data-ak-download]").forEach(btn => btn.addEventListener("click", () => download(btn.dataset.akDownload, btn)));
-    el.querySelectorAll("[data-ak-review]").forEach(btn => btn.addEventListener("click", () => review(btn.dataset.akReview, btn)));
+    el.querySelector("[data-ak-more]")?.addEventListener("click", appendMore);
+    bindCardEvents(el);
   }
 
   async function invoke(bodyData) {
