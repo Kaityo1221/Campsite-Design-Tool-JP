@@ -44,4 +44,20 @@
     script.async = true;
     document.head.appendChild(script);
   }
+
+  /*
+    Distance-check design tracking:
+    records the final design route without surfacing duplicate/version details to users.
+  */
+  if (
+    typeof document !== 'undefined' &&
+    document.getElementById('distance') &&
+    !document.getElementById('distanceDesignTrackingLoader')
+  ) {
+    const script = document.createElement('script');
+    script.id = 'distanceDesignTrackingLoader';
+    script.src = './js/distance-design-tracking.js?v=1';
+    script.async = true;
+    document.head.appendChild(script);
+  }
 })();
