@@ -56,7 +56,7 @@
   ) {
     const script = document.createElement('script');
     script.id = 'distanceDesignTrackingLoader';
-    script.src = './js/distance-design-tracking.js?v=2';
+    script.src = './js/distance-design-tracking.js?v=3';
     script.async = true;
     document.head.appendChild(script);
   }
