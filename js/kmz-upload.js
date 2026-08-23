@@ -404,7 +404,7 @@
 })();
 
 /* 50m POI spacing policy is loaded after the legacy KMZ/distance scripts. */
-import("./poi-spacing-config.js?v=2")
+import("./poi-spacing-config.js?v=3")
   .then(() => Promise.all([
     import("./poi-spacing-policy.js?v=7"),
     import("./poi-spacing-policy-filter.js?v=4"),
