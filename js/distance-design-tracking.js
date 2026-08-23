@@ -58,40 +58,38 @@
     return raw.map(normalizePoint).filter(Boolean);
   }
 
-  function distanceMeters(a, b) {
-    const R = 6371000;
-    const lat1 = a[0] * Math.PI / 180;
-    const lat2 = b[0] * Math.PI / 180;
-    const dLat = (b[0] - a[0]) * Math.PI / 180;
-    const dLng = (b[1] - a[1]) * Math.PI / 180;
-    const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
-    return 2 * R * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
-  }
-
-  function isDistanceCirclePolygon(polygon) {
+  function polygonAreaScore(polygon) {
     const pts = polygonPoints(polygon);
-    if (pts.length < 20) return false;
-
-    const unique = pts.length > 1 && distanceMeters(pts[0], pts[pts.length - 1]) < 1
-      ? pts.slice(0, -1)
-      : pts;
-    if (unique.length < 20) return false;
-
-    const center = [
-      unique.reduce((sum, p) => sum + p[0], 0) / unique.length,
-      unique.reduce((sum, p) => sum + p[1], 0) / unique.length
-    ];
-    const radii = unique.map(p => distanceMeters(center, p));
-    const avg = radii.reduce((sum, r) => sum + r, 0) / radii.length;
-    if (avg < 20 || avg > 60) return false;
-
-    const maxDeviation = Math.max(...radii.map(r => Math.abs(r - avg)));
-    return maxDeviation <= Math.max(2.5, avg * 0.08);
+    if (pts.length < 3) return 0;
+    const lat0 = pts.reduce((s, p) => s + p[0], 0) / pts.length;
+    const kx = 111320 * Math.cos(lat0 * Math.PI / 180);
+    const ky = 110540;
+    let area2 = 0;
+    for (let i = 0; i < pts.length; i++) {
+      const a = pts[i];
+      const b = pts[(i + 1) % pts.length];
+      const ax = a[1] * kx;
+      const ay = a[0] * ky;
+      const bx = b[1] * kx;
+      const by = b[0] * ky;
+      area2 += ax * by - bx * ay;
+    }
+    return Math.abs(area2) / 2;
   }
 
   function collectActivityPolygons() {
     const raw = Array.isArray(window._activityPolygons) ? window._activityPolygons : [];
-    return raw.filter(polygon => !isDistanceCirclePolygon(polygon));
+    const candidates = raw
+      .map(polygon => ({ polygon, area: polygonAreaScore(polygon) }))
+      .filter(item => item.area > 0)
+      .sort((a, b) => b.area - a.area);
+
+    if (!candidates.length) return [];
+
+    // Distance-check KMZs may contain one buffer polygon per POI.
+    // The activity area is the single large polygon that encloses the design,
+    // so tracking keeps only the largest polygon and ignores distance circles.
+    return [candidates[0].polygon];
   }
 
   function canonicalLayer(layerName) {
