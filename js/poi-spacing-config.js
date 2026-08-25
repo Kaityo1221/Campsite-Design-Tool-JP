@@ -52,4 +52,18 @@
     script.async = true;
     document.head.appendChild(script);
   }
+
+  /* field-mode.html / field-prep.html are standalone entry points.
+     Protect direct URL access with the same Japan CA gate. */
+  if (
+    typeof document !== 'undefined' &&
+    /\/(field-mode|field-prep)\.html$/i.test(window.location.pathname) &&
+    !document.getElementById('caAccessBootstrapLoader')
+  ) {
+    const script = document.createElement('script');
+    script.id = 'caAccessBootstrapLoader';
+    script.src = './js/ca-access-bootstrap.js?v=1';
+    script.async = false;
+    document.head.appendChild(script);
+  }
 })();

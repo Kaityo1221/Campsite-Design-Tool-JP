@@ -62,3 +62,11 @@ window.loadCampsiteEngineDecisions = loadCampsiteEngineDecisions;
     document.head.appendChild(script);
   });
 })();
+
+/* Japan CA access gate: Discord OAuth + approval status */
+(() => {
+  const script = document.createElement('script');
+  script.src = 'js/ca-access.js?v=1';
+  script.async = false;
+  document.head.appendChild(script);
+})();
