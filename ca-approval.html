@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>CAアクセス承認 | Campsite Design Tool JP</title>
+  <style>
+    :root{color-scheme:dark;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    *{box-sizing:border-box}
+    body{margin:0;background:#07111f;color:#e5eef9;min-height:100vh}
+    .wrap{max-width:980px;margin:0 auto;padding:24px 16px 56px}
+    .hero{padding:22px;border:1px solid #243b55;border-radius:18px;background:linear-gradient(180deg,#0d1c31,#0a1627)}
+    .eyebrow{font-size:12px;font-weight:800;letter-spacing:.14em;color:#79aee8}
+    h1{font-size:24px;margin:6px 0 8px}
+    .muted{color:#9db0c8;font-size:13px;line-height:1.7}
+    .status{margin-top:14px;padding:12px 14px;border-radius:12px;background:#0b223b;border:1px solid #274767;font-size:13px}
+    .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+    button{appearance:none;border:1px solid #375b7d;background:#163657;color:#f8fbff;border-radius:10px;padding:10px 14px;font-weight:800;cursor:pointer}
+    button:hover{filter:brightness(1.08)}
+    button:disabled{opacity:.45;cursor:not-allowed}
+    .primary{background:#5865f2;border-color:#7d87ff}
+    .danger{background:#5a1f2b;border-color:#944052}
+    .good{background:#174c35;border-color:#317b5a}
+    .warn{background:#5a421a;border-color:#9a7130}
+    .section{margin-top:24px}
+    .section h2{font-size:18px;margin:0 0 10px}
+    .grid{display:grid;gap:12px}
+    .card{border:1px solid #243b55;border-radius:15px;background:#0b182a;padding:14px}
+    .card-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+    .name{font-weight:900;font-size:16px}
+    .sub{font-size:12px;color:#9db0c8;margin-top:4px;word-break:break-all}
+    .badge{font-size:11px;font-weight:900;padding:4px 8px;border-radius:999px;background:#1d3147;color:#bfd5ef}
+    .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+    .empty{padding:18px;border:1px dashed #38516b;border-radius:12px;color:#92a6bd;text-align:center}
+    .hidden{display:none!important}
+    code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:#d6e6f7}
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="hero">
+      <div class="eyebrow">OWNER ONLY</div>
+      <h1>日本CA アクセス承認</h1>
+      <div class="muted">Campsite Design Toolの利用申請をDiscord本人情報で確認します。既存の管理者画面とは別系統です。</div>
+      <div id="approvalStatus" class="status">認証状態を確認しています…</div>
+      <div class="toolbar">
+        <button id="discordLoginButton" class="primary hidden" type="button">Discordでログイン</button>
+        <button id="refreshButton" class="hidden" type="button">一覧を更新</button>
+        <button id="logoutButton" class="hidden" type="button">ログアウト</button>
+      </div>
+      <div id="bootstrapBox" class="status hidden"></div>
+    </section>
+
+    <section id="approvalConsole" class="hidden">
+      <div class="section">
+        <h2>承認待ち</h2>
+        <div id="pendingList" class="grid"></div>
+      </div>
+      <div class="section">
+        <h2>利用中</h2>
+        <div id="approvedList" class="grid"></div>
+      </div>
+      <div class="section">
+        <h2>拒否・停止</h2>
+        <div id="blockedList" class="grid"></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/ca-approval.js?v=1"></script>
+</body>
+</html>
