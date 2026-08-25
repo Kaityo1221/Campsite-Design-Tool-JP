@@ -22,7 +22,7 @@
       return;
     }
 
-    show('日本CAアクセスを確認しています…');
+    show('Discordセッションを確認しています…');
     const { data: sessionData, error: sessionError } = await window.campsiteSupabase.auth.getSession();
     const session = sessionData?.session;
     if (sessionError || !session) {
@@ -30,30 +30,21 @@
       return;
     }
 
-    const { data: accessResult, error: accessError } = await window.campsiteSupabase.functions.invoke('ca-access', {
-      body: { action: 'status' }
-    });
-    if (accessError) {
-      console.error('Creative access check failed', accessError);
-      show('日本CAアクセスの確認に失敗しました。');
-      return;
-    }
-    if (!(accessResult?.isApproved === true || accessResult?.status === 'approved')) {
-      show('このアカウントはCreative Modeを利用できません。');
-      return;
-    }
-
-    document.getElementById('caAccessGate')?.remove();
-    show('Creative Modeを読み込んでいます…');
+    // Creative Runtime 側で Discord本人確認と approved 判定を再検証する。
+    // ca-access をここでも呼ぶと共通ゲートと二重実行になり、競合するため呼ばない。
+    show('Creative Modeの利用許可を確認しています…');
 
     const { data: bundleResult, error: bundleError } = await window.campsiteSupabase.functions.invoke('creative-runtime', {
       body: { action: 'bundle' }
     });
     if (bundleError || !bundleResult?.ok) {
       console.error('Creative runtime load failed', bundleError, bundleResult);
-      show('Creative Modeの読み込みに失敗しました。');
+      show('Creative Modeの利用許可または読み込みに失敗しました。');
       return;
     }
+
+    document.getElementById('caAccessGate')?.remove();
+    show('Creative Modeを読み込んでいます…');
 
     const assets = bundleResult.assets || {};
     const required = [
