@@ -12,9 +12,34 @@
 (async()=>{
   'use strict';
 
-  // Creative Mode本体は、日本CA承認が通るまで一切読み込まない。
+  // Creative Mode本体は、日本CA承認後に「開く」を押すまで読み込まない。
   while(!window.CampsiteCaAccess){await new Promise(r=>setTimeout(r,80));}
-  while(document.getElementById('caAccessGate')){await new Promise(r=>setTimeout(r,120));}
+
+  if(document.getElementById('caAccessGate')){
+    await new Promise(resolve=>{
+      let done=false;
+      let observer=null;
+      const finish=()=>{
+        if(done)return;
+        done=true;
+        document.removeEventListener('click',onClick,true);
+        if(observer)observer.disconnect();
+        setTimeout(resolve,0);
+      };
+      const onClick=e=>{
+        const target=e.target?.closest?.('#caEnterButton');
+        if(target)finish();
+      };
+      document.addEventListener('click',onClick,true);
+      observer=new MutationObserver(()=>{
+        if(!document.getElementById('caAccessGate'))finish();
+      });
+      observer.observe(document.documentElement,{childList:true,subtree:true});
+      if(!document.getElementById('caAccessGate'))finish();
+    });
+  }
+
+  document.body.innerHTML='<div style="min-height:100vh;display:grid;place-items:center;background:#020617;color:#fff;font-family:sans-serif;padding:24px;text-align:center">Creative Modeを読み込んでいます…</div>';
 
   // Runtime本体は公開GitHubから取得せず、承認済みCAだけが
   // Supabase Edge Function creative-runtime 経由で受け取る。
