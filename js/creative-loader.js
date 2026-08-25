@@ -77,7 +77,10 @@
       show('Creative Modeの基盤データを組み立てられませんでした。');
       return;
     }
-    src = src.replace(baseLoader, 'let html=' + JSON.stringify(baseHtml) + ';');
+    // baseHtml 内の </script> が、外側 runtime の <script> を途中終了させないように
+    // JavaScript 文字列リテラル上では <\/script> として埋め込む。
+    const safeBaseLiteral = JSON.stringify(baseHtml).replace(/<\/script/gi, '<\\/script');
+    src = src.replace(baseLoader, 'let html=' + safeBaseLiteral + ';');
 
     for (const name of ['creative-patches-v2.js', 'creative-patches-v3.js', 'creative-patches-v4.js']) {
       Function(assets[name])();
