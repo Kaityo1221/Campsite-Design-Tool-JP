@@ -5,15 +5,67 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover,user-scalable=no">
 <meta name="robots" content="noindex,nofollow,noarchive">
 <title>CREATIVE MODE | Campsite Lab</title>
-<style>
-  html,body{margin:0;min-height:100%;background:#020617}
-  #creativeBootStatus{min-height:100vh;display:grid;place-items:center;padding:24px;color:#fff;font-family:sans-serif;text-align:center;box-sizing:border-box}
-</style>
-<script src="../js/ca-access-bootstrap.js?v=4"></script>
+<script src="../js/ca-access-bootstrap.js?v=1"></script>
 </head>
 <body>
-<div id="creativeBootStatus">Creative Modeを準備しています…</div>
-<script src="../js/creative-safe-exec.js?v=1"></script>
-<script src="../js/creative-loader.js?v=2"></script>
+<script>
+(async()=>{
+  'use strict';
+
+  // Creative Mode本体は、日本CA承認が通るまで一切読み込まない。
+  while(!window.CampsiteCaAccess){await new Promise(r=>setTimeout(r,80));}
+  while(document.getElementById('caAccessGate')){await new Promise(r=>setTimeout(r,120));}
+
+  const SNAPSHOT='c3a23287cd49a6d6b8689d7dd4122687ff483856';
+  const ROOT=`https://raw.githubusercontent.com/Kaityo1221/Campsite-Design-Tool-Next-Lab/${SNAPSHOT}/creative/`;
+  const urls=['runtime-vnext.html','creative-patches-v2.js','creative-patches-v3.js','creative-patches-v4.js'];
+  const responses=await Promise.all(urls.map(name=>fetch(ROOT+name,{cache:'no-store'})));
+  if(responses.some(r=>!r.ok)){document.body.textContent='Creative Modeの読み込みに失敗しました。';return;}
+  let src=await responses[0].text();
+  for(let i=1;i<responses.length;i++) Function(await responses[i].text())();
+  if(typeof window.applyCreativePatches!=='function'){document.body.textContent='Creative Modeの拡張機能を読み込めませんでした。';return;}
+  src=window.applyCreativePatches(src);
+
+  // 日本CA向け設計支援。
+  // 25件上限 / 50m未満は自動NGにしない / 日本CA向け設計ガイド / 理由の再確認。
+  const helperNeedle='function snapshot(){';
+  const helpers=`const JP_MAX_ADDITIONAL=25;
+function jpAdditionalRecords(){return records.filter(r=>r&&!r.deleted&&isNew(r.layer))}
+function jpIssueSignature(r){if(!r||r.deleted||!isNew(r.layer))return'';const near=nearestRecord(r.latlng,r.id);if(!near||!Number.isFinite(near.distance)||near.distance>=50)return'';return String(near.record?.id||'')+'|'+near.distance.toFixed(1)}
+function jpRefreshReviews(){jpAdditionalRecords().forEach(r=>{const sig=jpIssueSignature(r),reason=String(r.applicationComment||'').trim();if(!sig){r.applicationCommentNeedsReview=false;return}r.applicationCommentNeedsReview=!reason||String(r.applicationCommentSignature||'')!==sig})}
+function ensureJpGuide(){let box=document.getElementById('jpCreativeGuide');if(box)return box;box=document.createElement('div');box.id='jpCreativeGuide';box.style.cssText='margin-top:10px;padding:9px;border:1px solid rgba(240,204,123,.55);border-radius:12px;background:rgba(255,248,230,.10);color:#fff8e8;font-size:10px;line-height:1.55';box.innerHTML='<div style="display:flex;justify-content:space-between;gap:8px;font-weight:900"><span>設計チェック</span><span id="jpCreativeCount">0 / 25</span></div><div style="display:flex;justify-content:space-between;gap:8px;margin-top:4px"><span>50m未満</span><span id="jpCreativeUnder50">0</span></div><div style="display:flex;justify-content:space-between;gap:8px"><span>理由の再確認</span><span id="jpCreativeReview">0</span></div><details style="margin-top:7px"><summary style="cursor:pointer;font-weight:900">日本CA向け設計ガイド</summary><div style="margin-top:6px">・50mを基本とし、50m未満は自動NGにせず要確認として扱います。<br>・ゲームスポットを一箇所へ集中させず、公園内を自然に移動できる配置を考えます。<br>・入口や狭い通路への滞留、本来の利用者と衝突しやすい場所への集中を避けます。<br>・活動範囲はミートアップで想定される移動範囲として確認します。<br>・30m / 40mは例外確認の参考表示です。</div></details>';circlePanel.appendChild(box);return box}
+function renderJpGuide(){jpRefreshReviews();const box=ensureJpGuide(),adds=jpAdditionalRecords(),under=adds.filter(r=>!!jpIssueSignature(r)),review=under.filter(r=>r.applicationCommentNeedsReview);const c=box.querySelector('#jpCreativeCount'),u=box.querySelector('#jpCreativeUnder50'),v=box.querySelector('#jpCreativeReview');if(c){c.textContent=adds.length+' / '+JP_MAX_ADDITIONAL;c.style.color=adds.length>JP_MAX_ADDITIONAL?'#ffb4a8':'#fff8e8'}if(u)u.textContent=String(under.length);if(v){v.textContent=String(review.length);v.style.color=review.length?'#ffd27d':'#bde3b9'}}
+`;
+  if(src.includes(helperNeedle))src=src.replace(helperNeedle,helpers+helperNeedle);
+
+  const addNeedle="if(helperRadius!==50)r.customRadius=helperRadius;records.push(r);drawRecord(r);";
+  const addReplacement="if(helperRadius!==50)r.customRadius=helperRadius;if(isNew(r.layer)&&jpAdditionalRecords().length>=JP_MAX_ADDITIONAL){msg('追加ゲームスポットは最大25個です',1800);renderJpGuide();return}records.push(r);drawRecord(r);";
+  if(src.includes(addNeedle))src=src.replace(addNeedle,addReplacement);
+
+  const legacyAddNeedle="const r={id:crypto.randomUUID?.()||String(Date.now()),layer:activeLayer,latlng:[ll.lat,ll.lng],title:layerDefs.find(x=>x[0]===activeLayer)?.[1]||'新規スポット',memo:'',deleted:false};records.push(r);drawRecord(r);";
+  const legacyAddReplacement="const r={id:crypto.randomUUID?.()||String(Date.now()),layer:activeLayer,latlng:[ll.lat,ll.lng],title:layerDefs.find(x=>x[0]===activeLayer)?.[1]||'新規スポット',memo:'',deleted:false};if(isNew(r.layer)&&jpAdditionalRecords().length>=JP_MAX_ADDITIONAL){msg('追加ゲームスポットは最大25個です',1800);renderJpGuide();return}records.push(r);drawRecord(r);";
+  src=src.split(legacyAddNeedle).join(legacyAddReplacement);
+
+  const commentNeedle="ft.oninput=()=>{r.applicationComment=ft.value.slice(0,300);if(ct)ct.textContent=r.applicationComment.length+' / 300';snapshot()}";
+  const commentReplacement="ft.oninput=()=>{r.applicationComment=ft.value.slice(0,300);r.applicationCommentSignature=jpIssueSignature(r);r.applicationCommentNeedsReview=false;if(ct)ct.textContent=r.applicationComment.length+' / 300';snapshot();renderJpGuide()}";
+  if(src.includes(commentNeedle))src=src.replace(commentNeedle,commentReplacement);
+
+  const moveNeedle="clearDraft();r.latlng=to;pushHistory({type:'move',id:r.id,from:old,to});drawAll();snapshot();msg('位置を調整しました')";
+  const moveReplacement="const oldSig=jpIssueSignature(r);clearDraft();r.latlng=to;const newSig=jpIssueSignature(r);if(isNew(r.layer)&&String(r.applicationComment||'').trim()&&oldSig!==newSig)r.applicationCommentNeedsReview=true;pushHistory({type:'move',id:r.id,from:old,to});drawAll();snapshot();renderJpGuide();msg(r.applicationCommentNeedsReview?'位置を調整しました。50m未満の理由を再確認してください':'位置を調整しました',1800)";
+  if(src.includes(moveNeedle))src=src.replace(moveNeedle,moveReplacement);
+
+  const beginNeedle="function beginEditor(){entry.classList.add('hidden');setTimeout(()=>map.invalidateSize(),50)}";
+  const beginReplacement="function beginEditor(){entry.classList.add('hidden');ensureJpGuide();renderJpGuide();setTimeout(()=>map.invalidateSize(),50)}";
+  if(src.includes(beginNeedle))src=src.replace(beginNeedle,beginReplacement);
+
+  const drawNeedle="function drawAll(){layerDefs.forEach(([k])=>groups[k].clearLayers());polygonGroup.clearLayers();records.forEach(drawRecord);polygons.forEach(p=>{if(!p.deleted)p.layerObj=L.polygon(p.points,{pane:'polygon',color:'#5a8b5f',weight:3,fillColor:'#6ea979',fillOpacity:.09,interactive:false}).addTo(polygonGroup)});if(polygonVisible){if(!map.hasLayer(polygonGroup))polygonGroup.addTo(map)}else if(map.hasLayer(polygonGroup))map.removeLayer(polygonGroup);renderRecordCircles()}";
+  if(src.includes(drawNeedle))src=src.replace(drawNeedle,drawNeedle.slice(0,-1)+";renderJpGuide()}");
+
+  src=src.replace("$('back').onclick=()=>history.back();","$('back').onclick=()=>location.href='../lab.html';");
+  src=src.replace(/<title>CREATIVE MODE \\| Next Lab<\\/title>/g,'<title>CREATIVE MODE | Campsite Lab</title>');
+
+  document.open();document.write(src);document.close();
+})().catch(err=>{console.error(err);document.body.textContent='Creative Modeの読み込みに失敗しました。';});
+</script>
 </body>
 </html>
