@@ -16,14 +16,45 @@
   while(!window.CampsiteCaAccess){await new Promise(r=>setTimeout(r,80));}
   while(document.getElementById('caAccessGate')){await new Promise(r=>setTimeout(r,120));}
 
-  const SNAPSHOT='c3a23287cd49a6d6b8689d7dd4122687ff483856';
-  const ROOT=`https://raw.githubusercontent.com/Kaityo1221/Campsite-Design-Tool-Next-Lab/${SNAPSHOT}/creative/`;
-  const urls=['runtime-vnext.html','creative-patches-v2.js','creative-patches-v3.js','creative-patches-v4.js'];
-  const responses=await Promise.all(urls.map(name=>fetch(ROOT+name,{cache:'no-store'})));
-  if(responses.some(r=>!r.ok)){document.body.textContent='Creative Modeの読み込みに失敗しました。';return;}
-  let src=await responses[0].text();
-  for(let i=1;i<responses.length;i++) Function(await responses[i].text())();
-  if(typeof window.applyCreativePatches!=='function'){document.body.textContent='Creative Modeの拡張機能を読み込めませんでした。';return;}
+  // Runtime本体は公開GitHubから取得せず、承認済みCAだけが
+  // Supabase Edge Function creative-runtime 経由で受け取る。
+  if(!window.campsiteSupabase?.functions){
+    document.body.textContent='Creative Modeの認証システムを読み込めませんでした。';
+    return;
+  }
+
+  const {data:bundleResult,error:bundleError}=await window.campsiteSupabase.functions.invoke('creative-runtime',{
+    body:{action:'bundle'}
+  });
+  if(bundleError||!bundleResult?.ok){
+    console.error('Creative runtime load failed',bundleError,bundleResult);
+    document.body.textContent='Creative Modeの読み込みに失敗しました。';
+    return;
+  }
+
+  const assets=bundleResult.assets||{};
+  const required=['base-v7.html','runtime-vnext.html','creative-patches-v2.js','creative-patches-v3.js','creative-patches-v4.js'];
+  if(required.some(name=>typeof assets[name]!=='string'||!assets[name])){
+    document.body.textContent='Creative Modeの実行データが不足しています。';
+    return;
+  }
+
+  let src=assets['runtime-vnext.html'];
+  const baseHtml=assets['base-v7.html'];
+  const baseLoader=/const res=await fetch\('\.\/base-v7\.html',\{cache:'no-store'\}\);if\(!res\.ok\)\{document\.body\.textContent='Creative Modeの読み込みに失敗しました。';return\}\s*let html=await res\.text\(\);/;
+  if(!baseLoader.test(src)){
+    document.body.textContent='Creative Modeの基盤データを組み立てられませんでした。';
+    return;
+  }
+  src=src.replace(baseLoader,'let html='+JSON.stringify(baseHtml)+';');
+
+  for(const name of ['creative-patches-v2.js','creative-patches-v3.js','creative-patches-v4.js']){
+    Function(assets[name])();
+  }
+  if(typeof window.applyCreativePatches!=='function'){
+    document.body.textContent='Creative Modeの拡張機能を読み込めませんでした。';
+    return;
+  }
   src=window.applyCreativePatches(src);
 
   // 日本CA向け設計支援。
