@@ -26,6 +26,40 @@
     });
   }
 
+  function enableCreativeAutoUnlock() {
+    if (!/\/creative(?:\/|$)/.test(window.location.pathname)) return;
+
+    // Creative Mode は Runtime 側でも approved を再検証するため、
+    // ca-access が承認済みとして「開く」ボタンを出した時点でUIゲートを自動解除する。
+    // これにより standalone ページと共通ゲート間の click / DOM race を避ける。
+    let finished = false;
+    const tryUnlock = () => {
+      if (finished) return true;
+      const gate = document.getElementById('caAccessGate');
+      const enter = document.getElementById('caEnterButton');
+      if (!gate || !enter) return false;
+      const visible = enter.style.display !== 'none' && !enter.disabled;
+      if (!visible) return false;
+
+      finished = true;
+      gate.remove();
+      window.dispatchEvent(new CustomEvent('campsite-ca-creative-ready'));
+      return true;
+    };
+
+    if (tryUnlock()) return;
+    const observer = new MutationObserver(() => {
+      if (tryUnlock()) observer.disconnect();
+    });
+    observer.observe(document.documentElement, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['style', 'disabled']
+    });
+    setTimeout(() => observer.disconnect(), 30000);
+  }
+
   async function boot() {
     if (!window.supabase?.createClient) {
       await loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2');
@@ -41,6 +75,8 @@
     if (!window.CampsiteCaAccess) {
       await loadScript(new URL('ca-access.js?v=1', scriptBase).href);
     }
+
+    enableCreativeAutoUnlock();
   }
 
   boot().catch((error) => {
