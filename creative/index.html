@@ -5,11 +5,17 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover,user-scalable=no">
 <meta name="robots" content="noindex,nofollow,noarchive">
 <title>CREATIVE MODE | Campsite Lab</title>
+<script src="../js/ca-access-bootstrap.js?v=1"></script>
 </head>
 <body>
 <script>
 (async()=>{
   'use strict';
+
+  // Creative Mode本体は、日本CA承認が通るまで一切読み込まない。
+  while(!window.CampsiteCaAccess){await new Promise(r=>setTimeout(r,80));}
+  while(document.getElementById('caAccessGate')){await new Promise(r=>setTimeout(r,120));}
+
   const SNAPSHOT='c3a23287cd49a6d6b8689d7dd4122687ff483856';
   const ROOT=`https://raw.githubusercontent.com/Kaityo1221/Campsite-Design-Tool-Next-Lab/${SNAPSHOT}/creative/`;
   const urls=['runtime-vnext.html','creative-patches-v2.js','creative-patches-v3.js','creative-patches-v4.js'];
