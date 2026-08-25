@@ -1,6 +1,9 @@
 (()=>{
   'use strict';
 
+  // Temporary direct-contact mode.
+  // The FAQ / guided support implementation remains in the repository and can
+  // be re-enabled later. For now, tapping "困った？" shows only "会長にDM".
   let directMode = false;
   let sending = false;
 
@@ -43,8 +46,59 @@
     messages.scrollTop = messages.scrollHeight;
   }
 
-  async function sendDirect(messages, input){
-    if(sending) return;
+  function setComposerVisible(root, visible){
+    const composer = root.querySelector('.support-bot-composer');
+    if(composer) composer.style.display = visible ? '' : 'none';
+  }
+
+  function renderDirectOnly(root){
+    const messages = root.querySelector('.support-bot-messages');
+    const input = root.querySelector('.support-bot-input');
+    if(!messages) return;
+
+    directMode = false;
+    sending = false;
+    messages.innerHTML = '';
+    if(input){
+      input.value = '';
+      input.placeholder = '会長へのDMを入力';
+    }
+    setComposerVisible(root, false);
+
+    const actions = document.createElement('div');
+    actions.className = 'support-bot-actions support-direct-only-actions';
+    actions.style.justifyContent = 'center';
+    actions.style.padding = '18px 10px';
+
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'support-bot-action purple';
+    button.dataset.directContactOnly = '1';
+    button.textContent = '会長にDM';
+
+    actions.appendChild(button);
+    messages.appendChild(actions);
+  }
+
+  function startDirect(root){
+    const messages = root.querySelector('.support-bot-messages');
+    const input = root.querySelector('.support-bot-input');
+    if(!messages || !input) return;
+
+    directMode = true;
+    messages.innerHTML = '';
+    addMessage(messages, '困っている内容を入力してください。会長に直接届きます。', false);
+    setComposerVisible(root, true);
+    input.focus();
+  }
+
+  async function sendDirect(root){
+    if(sending || !directMode) return;
+
+    const messages = root.querySelector('.support-bot-messages');
+    const input = root.querySelector('.support-bot-input');
+    if(!messages || !input) return;
+
     const text = String(input.value || '').trim();
     if(!text){
       addMessage(messages, '困っている内容を入力してください。', false);
@@ -68,7 +122,7 @@
       category: 'other',
       content: text.slice(0, 2000),
       bot_source: 'direct_contact',
-      flow_path: 'home > direct_contact',
+      flow_path: 'home > direct_contact_only',
       resolved: false,
       app_version: window.APP_VERSION || null,
       status: 'new'
@@ -84,67 +138,54 @@
     addMessage(messages, '会長へ送信しました。確認までお待ちください。', false);
     directMode = false;
     sending = false;
+    setComposerVisible(root, false);
   }
 
   function init(){
     const root = document.getElementById('campsiteSupportBotRoot');
-    if(!root || root.dataset.directContactReady === '1') return false;
+    if(!root || root.dataset.directContactOnlyReady === '1') return false;
 
-    const messages = root.querySelector('.support-bot-messages');
-    const input = root.querySelector('.support-bot-input');
+    const launcher = root.querySelector('.support-bot-launcher');
+    const backdrop = root.querySelector('.support-bot-backdrop');
     const send = root.querySelector('.support-bot-send');
-    if(!messages || !input || !send) return false;
+    const input = root.querySelector('.support-bot-input');
+    if(!launcher || !backdrop || !send || !input) return false;
 
-    root.dataset.directContactReady = '1';
+    root.dataset.directContactOnlyReady = '1';
 
-    function ensureButton(){
-      const actionGroups = [...messages.querySelectorAll('.support-bot-actions')];
-      const homeGroup = actionGroups.find(group =>
-        [...group.querySelectorAll('.support-bot-action')].some(btn => btn.textContent.trim() === '改善・要望を送る')
-      );
-      if(!homeGroup || homeGroup.querySelector('[data-direct-contact]')) return;
-
-      const improvement = [...homeGroup.querySelectorAll('.support-bot-action')]
-        .find(btn => btn.textContent.trim() === '改善・要望を送る');
-      if(!improvement) return;
-
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'support-bot-action';
-      button.dataset.directContact = '1';
-      button.textContent = 'チャットしても操作が分からない時';
-      button.addEventListener('click', () => {
-        directMode = true;
-        addMessage(messages, 'チャットしても操作が分からない時', true);
-        addMessage(messages, '会長に直接DMが届きます。困っている内容を入力してください。', false);
-        input.focus();
-      });
-      homeGroup.insertBefore(button, improvement);
-    }
-
-    const observer = new MutationObserver(ensureButton);
-    observer.observe(messages, { childList: true, subtree: true });
-    ensureButton();
-
+    // Capture first so the existing FAQ/menu listeners remain preserved but
+    // do not run while this temporary direct-only mode is enabled.
     root.addEventListener('click', (event) => {
       const button = event.target.closest('button');
       if(!button) return;
-      if(button.dataset.directContact === '1' || button === send) return;
-      if(directMode) directMode = false;
+
+      if(button === launcher){
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        backdrop.classList.add('show');
+        renderDirectOnly(root);
+        return;
+      }
+
+      if(button.dataset.directContactOnly === '1'){
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        startDirect(root);
+        return;
+      }
+
+      if(button === send && directMode){
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        sendDirect(root);
+      }
     }, true);
 
-    send.addEventListener('click', (event) => {
-      if(!directMode) return;
+    root.addEventListener('keydown', (event) => {
+      if(!directMode || event.target !== input || event.key !== 'Enter') return;
       event.preventDefault();
       event.stopImmediatePropagation();
-      sendDirect(messages, input);
-    }, true);
-
-    input.addEventListener('keydown', (event) => {
-      if(!directMode || event.key !== 'Enter') return;
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      sendDirect(messages, input);
+      sendDirect(root);
     }, true);
 
     return true;
