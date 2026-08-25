@@ -8,6 +8,13 @@
   const SUPABASE_URL = 'https://azkshxjgsbtjgwbapcfw.supabase.co';
   const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_rWbeIqdWJJHHBtphER8bdg__CaS_xGK';
 
+  // document.currentScript は await 後に null になることがあるため、
+  // bootstrap 自身の場所を同期的に先に固定しておく。
+  const bootstrapSrc = document.currentScript?.src || '';
+  const scriptBase = bootstrapSrc
+    ? new URL('.', bootstrapSrc)
+    : new URL('../js/', window.location.href);
+
   function loadScript(src) {
     return new Promise((resolve, reject) => {
       const script = document.createElement('script');
@@ -32,10 +39,7 @@
     }
 
     if (!window.CampsiteCaAccess) {
-      const current = document.currentScript;
-      const currentSrc = current?.src || '';
-      const base = currentSrc ? new URL('.', currentSrc) : new URL('./js/', window.location.href);
-      await loadScript(new URL('ca-access.js?v=1', base).href);
+      await loadScript(new URL('ca-access.js?v=1', scriptBase).href);
     }
   }
 
