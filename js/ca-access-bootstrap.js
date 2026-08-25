@@ -30,8 +30,8 @@
     if (!/\/creative(?:\/|$)/.test(window.location.pathname)) return;
 
     // Creative Mode は Runtime 側でも approved を再検証するため、
-    // ca-access が承認済みとして「開く」ボタンを出した時点でUIゲートを自動解除する。
-    // これにより standalone ページと共通ゲート間の click / DOM race を避ける。
+    // ca-access が承認済みとして「開く」ボタンを出した時点で同じクリック経路を通す。
+    // Creative 側の待機処理もこの click を受け取るため、直接DOMを消すより確実。
     let finished = false;
     const tryUnlock = () => {
       if (finished) return true;
@@ -42,8 +42,8 @@
       if (!visible) return false;
 
       finished = true;
-      gate.remove();
-      window.dispatchEvent(new CustomEvent('campsite-ca-creative-ready'));
+      window.__campsiteCreativeApproved = true;
+      enter.click();
       return true;
     };
 
