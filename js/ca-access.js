@@ -50,6 +50,7 @@
         <div class="ca-gate-badge">JAPAN COMMUNITY AMBASSADOR ONLY</div>
         <p class="ca-gate-copy">このツールは現在、日本国内のCommunity Ambassador限定で運用しています。<br>Discordで本人確認してください。</p>
         <button type="button" id="caDiscordLoginButton" class="ca-discord-btn">Discordでログイン</button>
+        <button type="button" id="caEnterButton" class="ca-discord-btn" style="display:none;">Campsite Design Toolを開く</button>
         <button type="button" id="caStatusButton" class="ca-secondary-btn" style="display:none;">承認状況を確認</button>
         <button type="button" id="caLogoutButton" class="ca-secondary-btn" style="display:none;">Discordからログアウト</button>
         <div id="caGateStatus" class="ca-gate-status"></div>
@@ -58,6 +59,7 @@
 
     document.body.appendChild(gate);
     gate.querySelector("#caDiscordLoginButton")?.addEventListener("click", signInWithDiscord);
+    gate.querySelector("#caEnterButton")?.addEventListener("click", unlockMainPage);
     gate.querySelector("#caStatusButton")?.addEventListener("click", checkAccess);
     gate.querySelector("#caLogoutButton")?.addEventListener("click", signOut);
     return gate;
@@ -70,13 +72,18 @@
     el.textContent = message || "";
   }
 
-  function setButtons({ login = true, status = false, logout = false, busy = false } = {}) {
+  function setButtons({ login = true, enter = false, status = false, logout = false, busy = false } = {}) {
     const loginBtn = document.getElementById("caDiscordLoginButton");
+    const enterBtn = document.getElementById("caEnterButton");
     const statusBtn = document.getElementById("caStatusButton");
     const logoutBtn = document.getElementById("caLogoutButton");
     if (loginBtn) {
       loginBtn.style.display = login ? "block" : "none";
       loginBtn.disabled = !!busy;
+    }
+    if (enterBtn) {
+      enterBtn.style.display = enter ? "block" : "none";
+      enterBtn.disabled = !!busy;
     }
     if (statusBtn) {
       statusBtn.style.display = status ? "block" : "none";
@@ -123,6 +130,15 @@
   }
 
   function unlockMainPage() {
+    const loginSound = document.getElementById("loginSound");
+    if (loginSound) {
+      try {
+        loginSound.currentTime = 0;
+        loginSound.volume = 0.08;
+        loginSound.play().catch(() => {});
+      } catch (_) {}
+    }
+
     document.getElementById(GATE_ID)?.remove();
 
     const legacyLogin = document.getElementById("loginScreen");
@@ -134,21 +150,12 @@
     document.body.classList.add("opening-mode");
     splash.classList.add("show");
 
-    const loginSound = document.getElementById("loginSound");
-    if (loginSound) {
-      try {
-        loginSound.currentTime = 0;
-        loginSound.volume = 0.08;
-        setTimeout(() => loginSound.play().catch(() => {}), 80);
-      } catch (_) {}
-    }
-
     setTimeout(() => {
       splash.remove();
       if (typeof window.showOpeningScreen === "function") {
         window.showOpeningScreen();
       }
-    }, 900);
+    }, 1600);
   }
 
   async function checkAccess() {
@@ -159,7 +166,7 @@
       return;
     }
 
-    setButtons({ login: false, status: false, logout: true, busy: true });
+    setButtons({ login: false, enter: false, status: false, logout: true, busy: true });
     setStatus("日本CAアクセスを確認しています…");
 
     const { data: sessionData, error: sessionError } = await window.campsiteSupabase.auth.getSession();
@@ -175,33 +182,33 @@
       const result = await invokeAccess();
 
       if (result?.isApproved === true || result?.status === "approved") {
-        setStatus("承認済みです。ようこそ！", "ok");
-        setTimeout(unlockMainPage, 220);
+        setButtons({ login: false, enter: true, status: false, logout: true });
+        setStatus("承認済みです。ボタンを押して開始してください。", "ok");
         return;
       }
 
       if (result?.status === "pending") {
-        setButtons({ login: false, status: true, logout: true });
+        setButtons({ login: false, enter: false, status: true, logout: true });
         setStatus(`承認申請を送信しました。会長の承認待ちです。${result.discordGlobalName || result.discordName ? ` (${result.discordGlobalName || result.discordName})` : ""}`, "pending");
         return;
       }
 
       if (result?.status === "rejected") {
-        setButtons({ login: false, status: true, logout: true });
+        setButtons({ login: false, enter: false, status: true, logout: true });
         setStatus("このアカウントの申請は現在承認されていません。", "error");
         return;
       }
 
       if (result?.status === "revoked") {
-        setButtons({ login: false, status: true, logout: true });
+        setButtons({ login: false, enter: false, status: true, logout: true });
         setStatus("このアカウントの利用許可は停止されています。", "error");
         return;
       }
 
-      setButtons({ login: false, status: true, logout: true });
+      setButtons({ login: false, enter: false, status: true, logout: true });
       setStatus("承認状態を確認できませんでした。", "error");
     } catch (_) {
-      setButtons({ login: false, status: true, logout: true });
+      setButtons({ login: false, enter: false, status: true, logout: true });
       setStatus("承認状態の確認に失敗しました。時間をおいて再度お試しください。", "error");
     }
   }
@@ -210,7 +217,7 @@
     if (window.campsiteSupabase?.auth) {
       try { await window.campsiteSupabase.auth.signOut(); } catch (_) {}
     }
-    setButtons({ login: true });
+    setButtons({ login: true, enter: false });
     setStatus("ログアウトしました。");
   }
 
