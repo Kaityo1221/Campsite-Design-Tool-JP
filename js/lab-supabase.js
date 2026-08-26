@@ -63,7 +63,7 @@ window.loadCampsiteEngineDecisions = loadCampsiteEngineDecisions;
   style.href = 'css/support-bot.css?v=1';
   document.head.appendChild(style);
 
-  ['js/support-faq-mymaps.js?v=6', 'js/support-bot.js?v=1', 'js/support-bot-menu.js?v=2', 'js/support-bot-direct-contact.js?v=1'].forEach((src) => {
+  ['js/support-faq-mymaps.js?v=6', 'js/support-bot.js?v=1', 'js/support-bot-menu.js?v=2', 'js/support-bot-direct-contact.js?v=2'].forEach((src) => {
     const script = document.createElement('script');
     script.src = src;
     script.async = false;
