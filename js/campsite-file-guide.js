@@ -2,6 +2,7 @@
 (() => {
   const STYLE_ID = 'campsiteFileGuideStyles';
   const SPONSOR_SCRIPT_ID = 'campsiteSponsorPoiScript';
+  const POWERSPOT_STATUS_NOTICE_CLASS = 'campsite-powerspot-status-notice';
 
   const CURRENT_SPONSORS = [
     'ナムコ',
@@ -30,6 +31,9 @@
       #tool .campsite-file-guide-card.update{border-color:rgba(167,139,250,.34);background:rgba(124,58,237,.09);color:#ede9fe}
       #tool .campsite-file-guide-card strong{display:block;margin-bottom:4px;color:#f8fafc;font-size:15px}
       #tool .campsite-file-guide-warning{margin:14px 0 0;padding:12px 14px;border:1px solid rgba(245,158,11,.42);border-radius:12px;background:rgba(245,158,11,.09);color:#fde68a;font-size:13px;line-height:1.7}
+      #tool .${POWERSPOT_STATUS_NOTICE_CLASS}{display:none;margin:10px 0 0;padding:12px 14px;border-radius:12px;font-size:13px;line-height:1.7}
+      #tool .${POWERSPOT_STATUS_NOTICE_CLASS}.is-warning{display:block;border:1px solid rgba(245,158,11,.56);background:rgba(245,158,11,.12);color:#fde68a}
+      #tool .${POWERSPOT_STATUS_NOTICE_CLASS}.is-ok{display:block;border:1px solid rgba(34,197,94,.42);background:rgba(34,197,94,.09);color:#bbf7d0}
       #tool.csv-mode-update .campsite-file-guide-card.update{border-color:rgba(167,139,250,.72);box-shadow:0 0 0 1px rgba(167,139,250,.16) inset}
       .campsite-csv-choice-button.campsite-update-choice{border-color:rgba(167,139,250,.45);background:rgba(124,58,237,.11)}
     `;
@@ -79,6 +83,119 @@
     document.head.appendChild(script);
   }
 
+  function normalizeCsvHeader(value) {
+    return String(value || '')
+      .replace(/^\uFEFF/, '')
+      .normalize('NFKC')
+      .trim()
+      .toLowerCase()
+      .replace(/[\s_-]+/g, '');
+  }
+
+  function csvHasGameStatusColumn(text) {
+    if (typeof parseCSVRows !== 'function') return false;
+
+    const rows = parseCSVRows(text);
+    if (rows.length === 0) return false;
+
+    return rows[0].some(header => normalizeCsvHeader(header) === 'gamestatus');
+  }
+
+  function isPowerSpotType(value) {
+    const normalized = String(value || '')
+      .normalize('NFKC')
+      .trim()
+      .toUpperCase()
+      .replace(/[\s_-]+/g, '');
+
+    return normalized === 'POWERSPOT' ||
+      normalized === 'パワースポット' ||
+      normalized === 'パワスポ';
+  }
+
+  async function summarizePowerSpotCsv(files) {
+    const summary = {
+      statusAwareFiles: 0,
+      powerTotal: 0,
+      active: 0,
+      inactive: 0,
+      otherStatus: 0
+    };
+
+    if (typeof parseCSV !== 'function') return summary;
+
+    for (const file of files) {
+      if (!String(file?.name || '').toLowerCase().endsWith('.csv')) continue;
+
+      const text = await file.text();
+      if (!csvHasGameStatusColumn(text)) continue;
+
+      summary.statusAwareFiles++;
+
+      parseCSV(text).forEach(point => {
+        if (!isPowerSpotType(point?.type)) return;
+
+        summary.powerTotal++;
+        const status = String(point?.gameStatus || '').trim().toUpperCase();
+
+        if (status === 'INACTIVE') {
+          summary.inactive++;
+        } else if (status === 'ACTIVE') {
+          summary.active++;
+        } else {
+          summary.otherStatus++;
+        }
+      });
+    }
+
+    return summary;
+  }
+
+  async function updatePowerSpotCsvNotice(input, notice) {
+    const files = Array.from(input.files || []);
+    notice.classList.remove('is-warning', 'is-ok');
+    notice.textContent = '';
+
+    if (files.length === 0) return;
+
+    try {
+      const summary = await summarizePowerSpotCsv(files);
+
+      if (summary.statusAwareFiles === 0 || summary.powerTotal === 0) {
+        return;
+      }
+
+      if (summary.inactive === 0) {
+        notice.classList.add('is-warning');
+        notice.innerHTML = '⚠️ INACTIVE Power Spotが0件です。Wayfarer Map Modsの<strong>「Display inactive Power Spots the same as active」</strong>をONにして、Nearby WayspotsからCSVを再出力したか確認してください。<br><small>※抽出範囲によっては実際に0件の場合もあります。</small>';
+        return;
+      }
+
+      notice.classList.add('is-ok');
+      notice.textContent = `✓ Power Spotを確認：ACTIVE ${summary.active}件 / INACTIVE ${summary.inactive}件。INACTIVEも既存PowerSpotとして取り込みます。`;
+    } catch (error) {
+      console.warn('Power Spot CSV status check failed', error);
+    }
+  }
+
+  function setupPowerSpotCsvCheck(input, step) {
+    let notice = step.querySelector(`:scope > .${POWERSPOT_STATUS_NOTICE_CLASS}`);
+
+    if (!notice) {
+      notice = document.createElement('div');
+      notice.className = POWERSPOT_STATUS_NOTICE_CLASS;
+      const warning = step.querySelector(':scope > .campsite-file-guide-warning');
+      (warning || input).insertAdjacentElement('afterend', notice);
+    }
+
+    if (input.dataset.powerSpotStatusCheckBound === '1') return;
+
+    input.dataset.powerSpotStatusCheckBound = '1';
+    input.addEventListener('change', () => {
+      void updatePowerSpotCsvNotice(input, notice);
+    });
+  }
+
   function setupFileGuide() {
     const input = document.getElementById('fileInput');
     const step = input?.closest('.step');
@@ -87,7 +204,10 @@
     step.classList.add('campsite-file-input-step');
 
     Array.from(step.children).forEach(el => {
-      if (el === input || el.matches?.('h3,.step-no,.campsite-file-guide,.campsite-file-guide-warning')) return;
+      if (
+        el === input ||
+        el.matches?.(`h3,.step-no,.campsite-file-guide,.campsite-file-guide-warning,.${POWERSPOT_STATUS_NOTICE_CLASS}`)
+      ) return;
 
       const text = String(el.textContent || '').replace(/\s+/g, ' ').trim();
       if (
@@ -118,7 +238,8 @@
     guide.innerHTML = `
       <div class="campsite-file-guide-card new">
         <strong>新しくキャンプサイトを作る方</strong>
-        Wayfarer Mapから抽出したCSV、または自作CSVを選択してください。
+        Wayfarer Mapから抽出したCSV、または自作CSVを選択してください。<br>
+        Wayfarer Map Modsを使う場合は、<strong>「Display inactive Power Spots the same as active」をON</strong>にしてから Nearby Wayspots でCSVを出力してください。
       </div>
       <div class="campsite-file-guide-card update">
         <strong>すでにあるキャンプサイトを更新する方</strong>
@@ -135,6 +256,7 @@
     }
 
     warning.innerHTML = '⚠️ Google My Mapsから<strong>書き出したCSVは使用しないでください。</strong><br>更新するときは、地図全体のKMZを使用してください。';
+    setupPowerSpotCsvCheck(input, step);
   }
 
   function setupStartModal() {
