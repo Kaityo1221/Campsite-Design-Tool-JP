@@ -2,8 +2,9 @@
    POI spacing KMZ differential updater
    - 50m is always part of the desired output
    - 40m / 30m are optional additions
-   - Existing 50m / 40m / 30m circle layers are never regenerated
-   - Only missing requested radii are generated
+   - Existing circle polygons are preserved as-is
+   - Legacy labels such as "50m サークル" are recognized
+   - Missing circles are added per POI center only
    - Existing non-circle layer contents and KMZ assets are preserved
    - Legacy POI Folder names are normalized to the formal six names
    - Circle layer order is normalized to 50m -> 40m -> 30m
@@ -14,6 +15,7 @@
 
   const KML_NS = "http://www.opengis.net/kml/2.2";
   const WRAPPED = "__poiSpacingDiffWrapped";
+  const CENTER_MATCH_TOLERANCE_METERS = 3;
 
   function nodeName(node) {
     return String(node?.localName || node?.tagName || "").toLowerCase();
@@ -44,30 +46,22 @@
     return documentNode;
   }
 
+  function circleMetersFromName(value) {
+    const name = String(value || "").normalize("NFKC").trim();
+    if (!/(円|サークル|circle)/i.test(name)) return null;
+    const match = name.match(/(?:^|[^0-9])(50|40|30)\s*m/i);
+    return match ? Number(match[1]) : null;
+  }
+
   function circleMetersFromFolder(folder) {
     if (!folder || nodeName(folder) !== "folder") return null;
-    const name = directChildText(folder, "name");
-    if (!name.includes("円")) return null;
-    const match = name.match(/(?:^|[^0-9])(50|40|30)m/i);
-    return match ? Number(match[1]) : null;
+    return circleMetersFromName(directChildText(folder, "name"));
   }
 
   function findCircleFolders(xml, meters) {
     return Array.from(xml.getElementsByTagName("Folder")).filter(folder =>
       circleMetersFromFolder(folder) === meters
     );
-  }
-
-  function countPolygons(folder) {
-    return folder
-      ? Array.from(folder.getElementsByTagName("Placemark")).filter(placemark =>
-          Boolean(placemark.getElementsByTagName("Polygon")[0])
-        ).length
-      : 0;
-  }
-
-  function hasUsableCircle(xml, meters) {
-    return findCircleFolders(xml, meters).some(folder => countPolygons(folder) > 0);
   }
 
   function hasAnyKnownCircle(xml) {
@@ -102,11 +96,13 @@
       ["追加 Gym", "新規 Gym"],
       ["追加 PowerSpot", "新規 PowerSpot"]
     ]);
+
     return fallback.get(String(value || "").trim()) || String(value || "").trim();
   }
 
   function normalizePoiFolderNames(xml) {
     let renamed = 0;
+
     Array.from(xml.getElementsByTagName("Folder")).forEach(folder => {
       if (circleMetersFromFolder(folder) !== null) return;
 
@@ -122,6 +118,7 @@
       nameNode.textContent = canonical;
       renamed += 1;
     });
+
     return renamed;
   }
 
@@ -129,16 +126,35 @@
     const parts = String(text || "").trim().split(",");
     const lng = Number(parts[0]);
     const lat = Number(parts[1]);
+
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
     return { lat, lng };
+  }
+
+  function distanceMeters(a, b) {
+    const earthRadius = 6378137;
+    const lat1 = Number(a.lat) * Math.PI / 180;
+    const lat2 = Number(b.lat) * Math.PI / 180;
+    const dLat = (Number(b.lat) - Number(a.lat)) * Math.PI / 180;
+    const dLng = (Number(b.lng) - Number(a.lng)) * Math.PI / 180;
+
+    const h =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+
+    return 2 * earthRadius * Math.asin(Math.sqrt(h));
   }
 
   function addUniqueCenter(centers, seen, center, name) {
     if (!center) return;
     const key = `${center.lat.toFixed(7)},${center.lng.toFixed(7)}`;
     if (seen.has(key)) return;
+
     seen.add(key);
-    centers.push({ ...center, name: name || "POI" });
+    centers.push({
+      ...center,
+      name: name || "POI"
+    });
   }
 
   function collectPointCenters(xml) {
@@ -152,7 +168,7 @@
       if (!pointNode) return;
 
       const folderName = getParentFolderName(placemark);
-      if (/円|30m|40m|50m/i.test(folderName)) return;
+      if (circleMetersFromName(folderName) !== null) return;
 
       const name = directChildText(placemark, "name");
       const description = directChildText(placemark, "description");
@@ -179,8 +195,13 @@
   }
 
   function polygonCenter(placemark) {
-    const polygon = placemark.getElementsByTagName("Polygon")[0];
-    const text = polygon?.getElementsByTagName("coordinates")[0]?.textContent?.trim();
+    const polygon = Array.from(placemark.children || []).find(node =>
+      nodeName(node) === "polygon"
+    ) || placemark.getElementsByTagName("Polygon")[0];
+
+    if (!polygon) return null;
+
+    const text = polygon.getElementsByTagName("coordinates")[0]?.textContent?.trim();
     if (!text) return null;
 
     const points = text
@@ -212,30 +233,46 @@
     };
   }
 
-  function collectExistingCircleCenters(xml) {
+  function collectCircleCentersForRadius(xml, meters) {
     const centers = [];
     const seen = new Set();
 
-    for (const meters of [50, 40, 30]) {
-      const folders = findCircleFolders(xml, meters);
-      for (const folder of folders) {
-        Array.from(folder.getElementsByTagName("Placemark")).forEach(placemark => {
-          const rawName = directChildText(placemark, "name") || "POI";
-          const cleanName = rawName.replace(/_(50|40|30)m円.*$/i, "");
-          addUniqueCenter(centers, seen, polygonCenter(placemark), cleanName);
-        });
-      }
-      if (centers.length > 0) break;
-    }
+    findCircleFolders(xml, meters).forEach(folder => {
+      Array.from(folder.getElementsByTagName("Placemark")).forEach(placemark => {
+        const center = polygonCenter(placemark);
+        if (!center) return;
+
+        const rawName = directChildText(placemark, "name") || "POI";
+        const cleanName = rawName
+          .replace(/_(50|40|30)\s*m(?:円|サークル|circle).*$/i, "")
+          .trim();
+
+        addUniqueCenter(centers, seen, center, cleanName);
+      });
+    });
 
     return centers;
+  }
+
+  function collectAnyExistingCircleCenters(xml) {
+    for (const meters of [50, 40, 30]) {
+      const centers = collectCircleCentersForRadius(xml, meters);
+      if (centers.length > 0) return centers;
+    }
+    return [];
   }
 
   function getCenters(xml) {
     const pointCenters = collectPointCenters(xml);
     return pointCenters.length > 0
       ? pointCenters
-      : collectExistingCircleCenters(xml);
+      : collectAnyExistingCircleCenters(xml);
+  }
+
+  function hasMatchingCenter(point, centers) {
+    return centers.some(center =>
+      distanceMeters(point, center) <= CENTER_MATCH_TOLERANCE_METERS
+    );
   }
 
   function createCircleCoordinates(lat, lng, radiusMeters, steps = 72) {
@@ -244,6 +281,14 @@
     const centerLat = Number(lat) * Math.PI / 180;
     const centerLng = Number(lng) * Math.PI / 180;
     const radius = Number(radiusMeters);
+
+    if (
+      !Number.isFinite(centerLat) ||
+      !Number.isFinite(centerLng) ||
+      !Number.isFinite(radius)
+    ) {
+      return "";
+    }
 
     for (let i = 0; i <= steps; i++) {
       const angle = (i / steps) * 2 * Math.PI;
@@ -255,6 +300,7 @@
         Math.sin(angle) * Math.sin(radius / earthRadius) * Math.cos(centerLat),
         Math.cos(radius / earthRadius) - Math.sin(centerLat) * Math.sin(pointLat)
       );
+
       coordinates.push(
         `${pointLng * 180 / Math.PI},${pointLat * 180 / Math.PI},0`
       );
@@ -265,6 +311,7 @@
 
   function createCirclePlacemark(xml, point, meters) {
     const placemark = xml.createElementNS(KML_NS, "Placemark");
+
     const name = xml.createElementNS(KML_NS, "name");
     name.textContent = point.name ? `${point.name}_${meters}m円` : "";
     placemark.appendChild(name);
@@ -279,6 +326,7 @@
     outer.appendChild(ring);
     polygon.appendChild(outer);
     placemark.appendChild(polygon);
+
     return placemark;
   }
 
@@ -288,35 +336,50 @@
       : `${meters}m円（参考距離）`;
   }
 
-  function ensureRadius(xml, meters, centers) {
-    const existingFolders = findCircleFolders(xml, meters);
-    const usable = existingFolders.find(folder => countPolygons(folder) > 0);
+  function ensureCircleFolder(xml, meters) {
+    const existing = findCircleFolders(xml, meters)[0];
+    if (existing) return existing;
 
-    if (usable) {
+    const folder = xml.createElementNS(KML_NS, "Folder");
+    const name = xml.createElementNS(KML_NS, "name");
+    name.textContent = labelForRadius(meters);
+    folder.appendChild(name);
+    getDocumentNode(xml).appendChild(folder);
+
+    return folder;
+  }
+
+  function ensureRadius(xml, meters, centers) {
+    const existingCenters = collectCircleCentersForRadius(xml, meters);
+    const missingCenters = centers.filter(point =>
+      !hasMatchingCenter(point, existingCenters)
+    );
+
+    if (missingCenters.length === 0) {
       return "kept";
     }
 
-    let folder = existingFolders[0] || null;
-    if (!folder) {
-      folder = xml.createElementNS(KML_NS, "Folder");
-      const name = xml.createElementNS(KML_NS, "name");
-      name.textContent = labelForRadius(meters);
-      folder.appendChild(name);
-      getDocumentNode(xml).appendChild(folder);
-    }
-
-    centers.forEach(point => {
+    const folder = ensureCircleFolder(xml, meters);
+    missingCenters.forEach(point => {
       folder.appendChild(createCirclePlacemark(xml, point, meters));
     });
 
     return "added";
   }
 
+  function hasUsableCircle(xml, meters) {
+    return collectCircleCentersForRadius(xml, meters).length > 0;
+  }
+
   function reorderCircleFolders(xml) {
     const documentNode = getDocumentNode(xml);
     const children = Array.from(documentNode.children || []);
     const circles = children
-      .map((node, index) => ({ node, index, meters: circleMetersFromFolder(node) }))
+      .map((node, index) => ({
+        node,
+        index,
+        meters: circleMetersFromFolder(node)
+      }))
       .filter(item => item.meters !== null);
 
     if (circles.length <= 1) return;
@@ -328,6 +391,7 @@
     });
 
     circles.forEach(item => item.node.remove());
+
     const remaining = Array.from(documentNode.children || []);
     const reference = remaining[firstIndex] || null;
     sorted.forEach(item => documentNode.insertBefore(item.node, reference));
@@ -335,18 +399,21 @@
 
   function desiredRadii(groupName) {
     const desired = [50];
+
     if (document.querySelector(`input[name="${groupName}"][value="40"]`)?.checked) {
       desired.push(40);
     }
     if (document.querySelector(`input[name="${groupName}"][value="30"]`)?.checked) {
       desired.push(30);
     }
+
     return desired;
   }
 
   function patchKmlByDifference(kmlText, groupName) {
     const xml = parseXml(kmlText);
     const centers = getCenters(xml);
+
     if (centers.length === 0) {
       throw new Error("円を作成できるPOI座標が見つかりませんでした");
     }
@@ -378,12 +445,19 @@
     const name = String(file?.name || "").toLowerCase();
 
     if (name.endsWith(".kmz") || name.endsWith(".zip")) {
-      if (!window.JSZip) throw new Error("JSZipが読み込まれていません");
+      if (!window.JSZip) {
+        throw new Error("JSZipが読み込まれていません");
+      }
+
       const zip = await window.JSZip.loadAsync(file);
       const kmlName = Object.keys(zip.files).find(path =>
         path.toLowerCase().endsWith(".kml") && !zip.files[path].dir
       );
-      if (!kmlName) throw new Error("KMZ内にKMLが見つかりませんでした");
+
+      if (!kmlName) {
+        throw new Error("KMZ内にKMLが見つかりませんでした");
+      }
+
       return {
         type: "zip",
         zip,
@@ -408,11 +482,13 @@
     const base = String(fileName || "campsite")
       .replace(/\.kmz\.zip$/i, "")
       .replace(/\.(kmz|zip|kml)$/i, "");
+
     return `${base}_円差分更新.kmz`;
   }
 
   async function savePatched(file, source, patchedText) {
     let zip;
+
     if (source.type === "zip") {
       zip = source.zip;
       zip.file(source.kmlName, patchedText);
@@ -426,6 +502,7 @@
     const a = document.createElement("a");
     a.href = url;
     a.download = outputName(file.name);
+
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -491,7 +568,9 @@
         if (await tryDiffUpdate(inputId, statusId, groupName)) return;
       } catch (error) {
         console.error("円の差分更新に失敗しました。", error);
-        if (typeof window.hideLoading === "function") window.hideLoading();
+        if (typeof window.hideLoading === "function") {
+          window.hideLoading();
+        }
         alert(
           "円の差分更新中にエラーが発生しました。\n\n" +
           (error?.message || String(error))
@@ -507,5 +586,10 @@
   }
 
   wrap("generateKMZ", "fileInput", "status", "radius");
-  wrap("generateCircleOnlyKMZ", "circleOnlyFileInput", "circleOnlyStatus", "circleOnlyRadius");
+  wrap(
+    "generateCircleOnlyKMZ",
+    "circleOnlyFileInput",
+    "circleOnlyStatus",
+    "circleOnlyRadius"
+  );
 })();
