@@ -3,6 +3,7 @@
   const STYLE_ID = 'campsiteFileGuideStyles';
   const SPONSOR_SCRIPT_ID = 'campsiteSponsorPoiScript';
   const POWERSPOT_STATUS_NOTICE_CLASS = 'campsite-powerspot-status-notice';
+  const KML_POINT_PARSER_GUARD = '__campsitePointGeometryGuard';
 
   const CURRENT_SPONSORS = [
     'ナムコ',
@@ -18,6 +19,56 @@
     '小田急グループ',
     'ソフトバンク'
   ];
+
+  function coordinateKey(lat, lng) {
+    const nLat = Number(lat);
+    const nLng = Number(lng);
+    if (!Number.isFinite(nLat) || !Number.isFinite(nLng)) return '';
+    return `${nLat.toFixed(7)},${nLng.toFixed(7)}`;
+  }
+
+  function patchKmlPointParser() {
+    const original = window.parseKmlPoints;
+    if (typeof original !== 'function' || original[KML_POINT_PARSER_GUARD]) return false;
+
+    const wrapped = function(kmlText) {
+      const parsed = original.call(this, kmlText);
+
+      try {
+        const xml = new DOMParser().parseFromString(kmlText, 'application/xml');
+        if (xml.getElementsByTagName('parsererror').length > 0) return parsed;
+
+        const pointCoordinateKeys = new Set();
+        Array.from(xml.getElementsByTagName('Placemark')).forEach(placemark => {
+          const point = placemark.getElementsByTagName('Point')[0];
+          if (!point) return;
+
+          const coordinatesText = point.getElementsByTagName('coordinates')[0]?.textContent?.trim();
+          if (!coordinatesText) return;
+
+          const first = coordinatesText.split(/\s+/)[0];
+          const parts = first.split(',');
+          const key = coordinateKey(parts[1], parts[0]);
+          if (key) pointCoordinateKeys.add(key);
+        });
+
+        return parsed.filter(point => pointCoordinateKeys.has(coordinateKey(point?.lat, point?.lng)));
+      } catch (error) {
+        console.warn('KML geometry guard failed', error);
+        return parsed;
+      }
+    };
+
+    Object.defineProperty(wrapped, KML_POINT_PARSER_GUARD, { value: true });
+    window.parseKmlPoints = wrapped;
+    return true;
+  }
+
+  function scheduleKmlPointParserPatch() {
+    [0, 50, 150, 400, 900].forEach(delay => {
+      setTimeout(patchKmlPointParser, delay);
+    });
+  }
 
   function ensureStyles() {
     if (document.getElementById(STYLE_ID)) return;
@@ -324,6 +375,8 @@
   }
 
   function setup() {
+    patchKmlPointParser();
+    scheduleKmlPointParserPatch();
     ensureStyles();
     setupStartModal();
     setupFileGuide();
