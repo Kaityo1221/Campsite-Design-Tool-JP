@@ -128,3 +128,56 @@ window.megaFinaleSupabase = (window.supabase && typeof window.supabase.createCli
     }, true);
   });
 })();
+
+(() => {
+  function addWizardBackButton() {
+    const wizard = document.getElementById('wizard');
+    if (!wizard || wizard.querySelector('.mega-wizard-back')) return;
+    const qText = wizard.querySelector('.muted')?.textContent || '';
+    const match = qText.match(/Q\s*(\d+)\s*\/\s*(\d+)/i);
+    if (!match) return;
+
+    const current = Number(match[1]);
+    const wrap = document.createElement('div');
+    wrap.style.marginTop = '12px';
+    wrap.style.display = 'flex';
+    wrap.style.justifyContent = 'flex-start';
+
+    const back = document.createElement('button');
+    back.type = 'button';
+    back.className = 'mega-wizard-back';
+    back.textContent = '← 戻る';
+    back.style.border = '1px solid #e5e7eb';
+    back.style.background = current <= 1 ? '#f3f4f6' : '#fff';
+    back.style.color = current <= 1 ? '#9ca3af' : '#374151';
+    back.style.borderRadius = '12px';
+    back.style.padding = '10px 14px';
+    back.style.fontWeight = '900';
+    back.style.cursor = current <= 1 ? 'default' : 'pointer';
+    back.disabled = current <= 1;
+
+    back.addEventListener('click', () => {
+      if (current <= 1) return;
+      try {
+        qi = Math.max(0, qi - 1);
+        ans = ans.slice(0, qi);
+        const messageArea = document.getElementById('messageArea');
+        if (messageArea) messageArea.style.display = 'none';
+        drawWizard();
+      } catch (e) {
+        console.error('wizard back failed', e);
+      }
+    });
+
+    wrap.appendChild(back);
+    wizard.appendChild(wrap);
+  }
+
+  window.addEventListener('DOMContentLoaded', () => {
+    const wizard = document.getElementById('wizard');
+    if (!wizard) return;
+    const observer = new MutationObserver(() => queueMicrotask(addWizardBackButton));
+    observer.observe(wizard, { childList: true, subtree: true });
+    addWizardBackButton();
+  });
+})();
