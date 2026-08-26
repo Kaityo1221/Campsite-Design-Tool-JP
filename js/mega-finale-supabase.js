@@ -45,6 +45,10 @@ window.megaFinaleSupabase = (window.supabase && typeof window.supabase.createCli
   function ensureLayers() {
     try {
       if (typeof map === 'undefined' || !map || typeof L === 'undefined') return false;
+      if (!map.getPane('megaExistingPane')) {
+        const pane = map.createPane('megaExistingPane');
+        pane.style.zIndex = '390';
+      }
       if (!nearbyExistingLayer) nearbyExistingLayer = L.layerGroup().addTo(map);
       return true;
     } catch {
@@ -53,10 +57,11 @@ window.megaFinaleSupabase = (window.supabase && typeof window.supabase.createCli
   }
 
   function existingStyle(type) {
-    if (type === 'gym') return { radius: 5, color: '#6b7280', weight: 2, fillColor: '#f59e0b', fillOpacity: .55 };
-    if (type === 'pokestop') return { radius: 5, color: '#6b7280', weight: 2, fillColor: '#60a5fa', fillOpacity: .55 };
-    if (type === 'power_spot') return { radius: 5, color: '#6b7280', weight: 2, fillColor: '#a78bfa', fillOpacity: .55 };
-    return { radius: 4, color: '#6b7280', weight: 2, fillColor: '#9ca3af', fillOpacity: .5 };
+    const base = { pane: 'megaExistingPane' };
+    if (type === 'gym') return { ...base, radius: 5, color: '#6b7280', weight: 2, fillColor: '#f59e0b', fillOpacity: .55 };
+    if (type === 'pokestop') return { ...base, radius: 5, color: '#6b7280', weight: 2, fillColor: '#60a5fa', fillOpacity: .55 };
+    if (type === 'power_spot') return { ...base, radius: 5, color: '#6b7280', weight: 2, fillColor: '#a78bfa', fillOpacity: .55 };
+    return { ...base, radius: 4, color: '#6b7280', weight: 2, fillColor: '#9ca3af', fillOpacity: .5 };
   }
 
   function fitNearbyArea() {
@@ -137,7 +142,8 @@ window.megaFinaleSupabase = (window.supabase && typeof window.supabase.createCli
         dashArray: '5 6',
         fillColor: '#94a3b8',
         fillOpacity: .025,
-        interactive: false
+        interactive: false,
+        pane: 'megaExistingPane'
       }).addTo(map);
 
       visibleExisting.forEach(p => {
@@ -149,9 +155,15 @@ window.megaFinaleSupabase = (window.supabase && typeof window.supabase.createCli
         m.addTo(nearbyExistingLayer);
       });
 
+      if (typeof markerLayer !== 'undefined' && markerLayer && typeof markerLayer.eachLayer === 'function') {
+        markerLayer.eachLayer(layer => {
+          try { layer.bringToFront?.(); } catch {}
+        });
+      }
+
       if (status) status.innerHTML = `<b>既存スポット ${visibleExisting.length}件</b>を周辺3kmから表示中。` +
         (excluded ? `<br><span style="color:#16855b">今回の新規POIと重なる ${excluded}件は既存表示から除外しました。</span>` : '') +
-        `<br><span style="color:#6b7280">薄い小さなマーカーが既存です。地図は3km全体が見える縮尺に自動調整します。</span>`;
+        `<br><span style="color:#6b7280">薄い小さなマーカーが既存です。新規POIは常に手前に表示します。</span>`;
 
       fitNearbyArea();
       setTimeout(fitNearbyArea, 250);
