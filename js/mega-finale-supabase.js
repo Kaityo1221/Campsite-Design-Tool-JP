@@ -21,22 +21,26 @@ window.megaFinaleSupabase = (window.supabase && typeof window.supabase.createCli
     power_spot: 'パワースポット'
   }[t] || '既存スポット');
 
-  function ensureStatus() {
-    if (nearbyStatus) return nearbyStatus;
-    const manual = document.getElementById('manual');
-    if (!manual) return null;
-    nearbyStatus = document.createElement('div');
-    nearbyStatus.id = 'nearbyExistingStatus';
-    nearbyStatus.style.marginTop = '10px';
-    nearbyStatus.style.padding = '10px 12px';
-    nearbyStatus.style.borderRadius = '12px';
-    nearbyStatus.style.background = '#f7f8fa';
-    nearbyStatus.style.border = '1px solid #e5e7eb';
-    nearbyStatus.style.fontSize = '13px';
-    nearbyStatus.style.lineHeight = '1.55';
-    nearbyStatus.textContent = '新規地点を追加すると、周辺3kmの既存スポットをデータベースから表示します。';
-    manual.appendChild(nearbyStatus);
-    return nearbyStatus;
+  function ensureStatus(mode = 'manual') {
+    const host = mode === 'kmz' ? document.getElementById('kmz') : document.getElementById('manual');
+    if (!host) return null;
+    const id = mode === 'kmz' ? 'nearbyExistingStatusKmz' : 'nearbyExistingStatus';
+    let el = document.getElementById(id);
+    if (el) return el;
+    el = document.createElement('div');
+    el.id = id;
+    el.style.marginTop = '10px';
+    el.style.padding = '10px 12px';
+    el.style.borderRadius = '12px';
+    el.style.background = '#f7f8fa';
+    el.style.border = '1px solid #e5e7eb';
+    el.style.fontSize = '13px';
+    el.style.lineHeight = '1.55';
+    el.textContent = mode === 'kmz'
+      ? 'KMZを読み込むと、新規POI群の中心から周辺3kmの既存スポットも表示します。'
+      : '新規地点を追加すると、周辺3kmの既存スポットをデータベースから表示します。';
+    host.appendChild(el);
+    return el;
   }
 
   function ensureLayers() {
@@ -70,9 +74,9 @@ window.megaFinaleSupabase = (window.supabase && typeof window.supabase.createCli
     }
   }
 
-  async function loadNearbyExistingPois(lat, lng) {
+  async function loadNearbyExistingPois(lat, lng, mode = 'manual') {
     const seq = ++requestSeq;
-    const status = ensureStatus();
+    const status = ensureStatus(mode);
     if (status) status.textContent = '周辺3kmの既存スポットを読み込み中…';
 
     if (!window.megaFinaleSupabase) {
@@ -122,7 +126,7 @@ window.megaFinaleSupabase = (window.supabase && typeof window.supabase.createCli
         m.addTo(nearbyExistingLayer);
       });
 
-      if (status) status.innerHTML = `<b>既存スポット ${data?.length || 0}件</b>を周辺3kmから表示中。<br><span style="color:#6b7280">地図は3km全体が見える縮尺に自動調整します。薄い小さなマーカーが既存です。</span>`;
+      if (status) status.innerHTML = `<b>既存スポット ${data?.length || 0}件</b>を周辺3kmから表示中。<br><span style="color:#6b7280">薄い小さなマーカーが既存です。地図は3km全体が見える縮尺に自動調整します。</span>`;
 
       fitNearbyArea();
       setTimeout(fitNearbyArea, 250);
@@ -131,19 +135,49 @@ window.megaFinaleSupabase = (window.supabase && typeof window.supabase.createCli
     draw();
   }
 
+  function loadNearbyForKmz() {
+    try {
+      if (typeof pois === 'undefined' || !Array.isArray(pois) || !pois.length) return;
+      const valid = pois.filter(p => Number.isFinite(Number(p.lat)) && Number.isFinite(Number(p.lng)));
+      if (!valid.length) return;
+      const minLat = Math.min(...valid.map(p => Number(p.lat)));
+      const maxLat = Math.max(...valid.map(p => Number(p.lat)));
+      const minLng = Math.min(...valid.map(p => Number(p.lng)));
+      const maxLng = Math.max(...valid.map(p => Number(p.lng)));
+      const centerLat = (minLat + maxLat) / 2;
+      const centerLng = (minLng + maxLng) / 2;
+      loadNearbyExistingPois(centerLat, centerLng, 'kmz');
+    } catch (e) {
+      console.warn('KMZ nearby POI load skipped', e);
+    }
+  }
+
   window.loadMegaFinaleNearbyExistingPois = loadNearbyExistingPois;
+  window.loadMegaFinaleNearbyForKmz = loadNearbyForKmz;
 
   window.addEventListener('DOMContentLoaded', () => {
-    ensureStatus();
-    const add = document.getElementById('addManual');
-    if (!add) return;
+    ensureStatus('manual');
+    ensureStatus('kmz');
 
-    add.addEventListener('click', () => {
-      const lat = Number(document.getElementById('mLat')?.value);
-      const lng = Number(document.getElementById('mLng')?.value);
-      if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) return;
-      setTimeout(() => loadNearbyExistingPois(lat, lng), 80);
-    }, true);
+    const add = document.getElementById('addManual');
+    if (add) {
+      add.addEventListener('click', () => {
+        const lat = Number(document.getElementById('mLat')?.value);
+        const lng = Number(document.getElementById('mLng')?.value);
+        if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) return;
+        setTimeout(() => loadNearbyExistingPois(lat, lng, 'manual'), 80);
+      }, true);
+    }
+
+    const file = document.getElementById('file');
+    if (file) {
+      file.addEventListener('change', () => {
+        // The main page finishes parsing/rendering the KMZ asynchronously.
+        // Wait for the new POI list, then query existing POIs around its center.
+        setTimeout(loadNearbyForKmz, 450);
+        setTimeout(loadNearbyForKmz, 1000);
+      });
+    }
   });
 })();
 
