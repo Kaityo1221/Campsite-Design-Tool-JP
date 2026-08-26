@@ -34,7 +34,7 @@ window.megaFinaleSupabase = (window.supabase && typeof window.supabase.createCli
     nearbyStatus.style.border = '1px solid #e5e7eb';
     nearbyStatus.style.fontSize = '13px';
     nearbyStatus.style.lineHeight = '1.55';
-    nearbyStatus.textContent = '新規地点を追加すると、周辺1.5kmの既存スポットをデータベースから表示します。';
+    nearbyStatus.textContent = '新規地点を追加すると、周辺3kmの既存スポットをデータベースから表示します。';
     manual.appendChild(nearbyStatus);
     return nearbyStatus;
   }
@@ -63,7 +63,7 @@ window.megaFinaleSupabase = (window.supabase && typeof window.supabase.createCli
       map.fitBounds(nearbyRadiusLayer.getBounds(), {
         padding: [18, 18],
         animate: true,
-        maxZoom: 15
+        maxZoom: 14
       });
     } catch (e) {
       console.warn('nearby area fit failed', e);
@@ -73,7 +73,7 @@ window.megaFinaleSupabase = (window.supabase && typeof window.supabase.createCli
   async function loadNearbyExistingPois(lat, lng) {
     const seq = ++requestSeq;
     const status = ensureStatus();
-    if (status) status.textContent = '周辺1.5kmの既存スポットを読み込み中…';
+    if (status) status.textContent = '周辺3kmの既存スポットを読み込み中…';
 
     if (!window.megaFinaleSupabase) {
       if (status) status.textContent = '既存スポットのデータベースに接続できませんでした。';
@@ -83,7 +83,7 @@ window.megaFinaleSupabase = (window.supabase && typeof window.supabase.createCli
     const { data, error } = await window.megaFinaleSupabase.rpc('mega_finale_nearby_pois', {
       p_lat: lat,
       p_lng: lng,
-      p_radius_m: 1500
+      p_radius_m: 3000
     });
     if (seq !== requestSeq) return;
 
@@ -104,7 +104,7 @@ window.megaFinaleSupabase = (window.supabase && typeof window.supabase.createCli
         try { map.removeLayer(nearbyRadiusLayer); } catch {}
       }
       nearbyRadiusLayer = L.circle([lat, lng], {
-        radius: 1500,
+        radius: 3000,
         color: '#64748b',
         weight: 1,
         dashArray: '5 6',
@@ -122,10 +122,8 @@ window.megaFinaleSupabase = (window.supabase && typeof window.supabase.createCli
         m.addTo(nearbyExistingLayer);
       });
 
-      if (status) status.innerHTML = `<b>既存スポット ${data?.length || 0}件</b>を周辺1.5kmから表示中。<br><span style="color:#6b7280">地図は1.5km全体が見える縮尺に自動調整します。薄い小さなマーカーが既存です。</span>`;
+      if (status) status.innerHTML = `<b>既存スポット ${data?.length || 0}件</b>を周辺3kmから表示中。<br><span style="color:#6b7280">地図は3km全体が見える縮尺に自動調整します。薄い小さなマーカーが既存です。</span>`;
 
-      // The main page briefly zooms to the newly added point. Re-fit after it finishes
-      // so all nearby existing POIs remain visible without manual zooming out.
       fitNearbyArea();
       setTimeout(fitNearbyArea, 250);
       setTimeout(fitNearbyArea, 650);
