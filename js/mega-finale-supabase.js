@@ -56,6 +56,20 @@ window.megaFinaleSupabase = (window.supabase && typeof window.supabase.createCli
     return { radius: 4, color: '#6b7280', weight: 2, fillColor: '#9ca3af', fillOpacity: .5 };
   }
 
+  function fitNearbyArea() {
+    if (!nearbyRadiusLayer || typeof map === 'undefined' || !map) return;
+    try {
+      map.invalidateSize();
+      map.fitBounds(nearbyRadiusLayer.getBounds(), {
+        padding: [18, 18],
+        animate: true,
+        maxZoom: 15
+      });
+    } catch (e) {
+      console.warn('nearby area fit failed', e);
+    }
+  }
+
   async function loadNearbyExistingPois(lat, lng) {
     const seq = ++requestSeq;
     const status = ensureStatus();
@@ -108,7 +122,13 @@ window.megaFinaleSupabase = (window.supabase && typeof window.supabase.createCli
         m.addTo(nearbyExistingLayer);
       });
 
-      if (status) status.innerHTML = `<b>既存スポット ${data?.length || 0}件</b>を周辺1.5kmから表示中。<br><span style="color:#6b7280">薄い小さなマーカーが既存、新しく追加する地点は従来どおり選択できます。</span>`;
+      if (status) status.innerHTML = `<b>既存スポット ${data?.length || 0}件</b>を周辺1.5kmから表示中。<br><span style="color:#6b7280">地図は1.5km全体が見える縮尺に自動調整します。薄い小さなマーカーが既存です。</span>`;
+
+      // The main page briefly zooms to the newly added point. Re-fit after it finishes
+      // so all nearby existing POIs remain visible without manual zooming out.
+      fitNearbyArea();
+      setTimeout(fitNearbyArea, 250);
+      setTimeout(fitNearbyArea, 650);
     };
     draw();
   }
