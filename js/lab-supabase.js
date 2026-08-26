@@ -48,6 +48,14 @@ window.loadCampsiteEngineDecisions = loadCampsiteEngineDecisions;
   document.head.appendChild(script);
 })();
 
+/* Differential KMZ circle optimization */
+(() => {
+  const script = document.createElement('script');
+  script.src = 'js/poi-spacing-kmz-diff-36-guard.js?v=1';
+  script.async = false;
+  document.head.appendChild(script);
+})();
+
 /* Support bot extension */
 (() => {
   const style = document.createElement('link');
