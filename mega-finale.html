@@ -21,74 +21,34 @@
     <h1>POI申請 座標ヘルパー</h1>
     <p>My Mapsで作成済みのKMZから、Googleフォームに必要な緯度・経度を抜き出します。</p>
   </section>
-
   <div class="notice"><b>今回の臨時申請向け</b><br>ポケストップ最大6個 / ジム最大10個。今回のフォームではゲームスポット間隔は最低30〜40mが案内されています。正式なCampsiteの50m条件とは分けて扱います。</div>
-
   <section class="card">
     <h2>0. フォーム共通項目</h2>
     <p class="muted">スクリーンショットで確認できた設問に合わせています。ここに入れておくと、フォームへ移る前のメモ兼コピー台になります。</p>
-    <div class="row">
-      <div class="field"><label>あなたのトレーナー名</label><input id="trainerName" placeholder="トレーナー名"></div>
-      <div class="field"><label>コミュニティのグループ名</label><input id="communityName" placeholder="グループ名"></div>
-    </div>
-    <div class="row">
-      <div class="field"><label>申請する候補地の名称</label><input id="candidateName" placeholder="例：〇〇公園"></div>
-      <div class="field"><label>候補地の住所・GoogleマップURL</label><input id="candidateUrl" placeholder="住所またはURL"></div>
-    </div>
+    <div class="row"><div class="field"><label>あなたのトレーナー名</label><input id="trainerName" placeholder="トレーナー名"></div><div class="field"><label>コミュニティのグループ名</label><input id="communityName" placeholder="グループ名"></div></div>
+    <div class="row"><div class="field"><label>申請する候補地の名称</label><input id="candidateName" placeholder="例：〇〇公園"></div><div class="field"><label>候補地の住所・GoogleマップURL</label><input id="candidateUrl" placeholder="住所またはURL"></div></div>
     <div class="actions"><button class="btn soft" onclick="copyCommon()">共通項目をまとめてコピー</button></div>
   </section>
-
   <section class="card">
     <h2>1. 座標を読み込む</h2>
-    <div class="tabs">
-      <button class="tab active" data-tab="kmz">KMZから</button>
-      <button class="tab" data-tab="manual">これから作る</button>
-    </div>
+    <div class="tabs"><button class="tab active" data-tab="kmz">KMZから</button><button class="tab" data-tab="manual">これから作る</button></div>
     <div id="kmz" class="panel active">
-      <label class="upload">
-        <strong>KMZ / KML を選択</strong>
-        <span class="muted">My Mapsから書き出したファイルをそのまま選べます</span>
-        <input id="file" type="file" accept=".kmz,.kml,application/vnd.google-earth.kmz,application/vnd.google-earth.kml+xml">
-      </label>
+      <label class="upload"><strong>KMZ / KML を選択</strong><span class="muted">My Mapsから書き出したファイルをそのまま選べます</span><input id="file" type="file"></label>
       <div id="fileInfo" class="muted" style="margin-top:10px"></div>
     </div>
     <div id="manual" class="panel">
       <p class="muted">これから作る場合は、Google Maps等で取得した地点の緯度・経度を追加できます。</p>
       <div class="field"><label>地点名</label><input id="mName" placeholder="例：中央広場"></div>
-      <div class="row">
-        <div class="field"><label>緯度</label><input id="mLat" inputmode="decimal" placeholder="35.681236"></div>
-        <div class="field"><label>経度</label><input id="mLng" inputmode="decimal" placeholder="139.767125"></div>
-      </div>
+      <div class="row"><div class="field"><label>緯度</label><input id="mLat" inputmode="decimal" placeholder="35.681236"></div><div class="field"><label>経度</label><input id="mLng" inputmode="decimal" placeholder="139.767125"></div></div>
       <div class="actions"><button id="addManual" class="btn primary">地点を追加</button><button id="useLocation" class="btn soft">現在地を入れる</button></div>
     </div>
   </section>
-
   <section class="card">
-    <h2>2. 申請する地点を選ぶ</h2>
-    <p class="muted">各地点を「ポケストップ」「ジム」に振り分けます。選ばない地点はそのままでOKです。</p>
-    <div class="stats"><div class="stat"><b id="stopCount">0 / 6</b><span>ポケストップ</span></div><div class="stat"><b id="gymCount">0 / 10</b><span>ジム</span></div></div>
-    <div id="limitMsg" class="muted"></div>
-    <div id="poiList"><div class="empty">KMZを読み込むか、地点を追加してください。</div></div>
-    <div id="distanceBox" class="distance">地点を選ぶと、選択したゲームスポット同士の最短距離を確認します。</div>
+    <h2>2. 申請する地点を選ぶ</h2><p class="muted">各地点を「ポケストップ」「ジム」に振り分けます。選ばない地点はそのままでOKです。</p>
+    <div class="stats"><div class="stat"><b id="stopCount">0 / 6</b><span>ポケストップ</span></div><div class="stat"><b id="gymCount">0 / 10</b><span>ジム</span></div></div><div id="limitMsg" class="muted"></div><div id="poiList"><div class="empty">KMZを読み込むか、地点を追加してください。</div></div><div id="distanceBox" class="distance">地点を選ぶと、選択したゲームスポット同士の最短距離を確認します。</div>
   </section>
-
-  <section class="card">
-    <h2>3. Googleフォーム順にコピー</h2>
-    <p class="muted">フォームの「ポケストップ1：緯度 → 経度」「ジム1：緯度 → 経度」の並びに合わせて出力します。ジムはSMR（スーパーメガレイド）の希望もメモできます。</p>
-    <div id="summary" class="summary">まだ申請地点がありません。</div>
-    <div class="actions"><button id="copyAll" class="btn primary" disabled>座標一覧をまとめてコピー</button><a class="btn green" target="_blank" rel="noopener" href="https://docs.google.com/forms/d/e/1FAIpQLSdtscRMZh8OaAQh999WuIU1Ip7cWyCeN5dT9BltU7GfkSjWrQ/viewform">Googleフォームを開く</a><button id="clearTypes" class="btn danger">選択をリセット</button></div>
-  </section>
-
-  <section class="card thought" id="thoughtCard">
-    <h2>4. 最後に、ひとつだけ。</h2>
-    <div class="prompt">📍 今回のマップ作成にかける想いをどうぞ！</div>
-    <p class="muted">この場所を選んだ理由、参加する人への想い、地域への気持ち。どんなことでも構いません。任意回答です。</p>
-    <div class="field"><textarea id="mapMessage" maxlength="1000" placeholder="このマップに込めた想いを残してください。"></textarea></div>
-    <label class="muted" style="display:flex;gap:8px;align-items:flex-start;margin-top:10px"><input id="consentPublic" type="checkbox" style="margin-top:3px">将来、個人が特定されない形で「MAP MAKERS' VOICES」等に紹介しても構いません。</label>
-    <div class="actions"><button id="saveThought" class="btn orange">想いを残す</button><button id="skipThought" class="btn soft">今回は残さない</button></div>
-    <div id="complete" class="complete"><div class="big">想い、確かに預かりました。</div><div>この座標の先で、誰かの楽しい一日が生まれますように。<br><b>いってらっしゃい。📍</b></div></div>
-  </section>
-
+  <section class="card"><h2>3. Googleフォーム順にコピー</h2><p class="muted">フォームの「ポケストップ1：緯度 → 経度」「ジム1：緯度 → 経度」の並びに合わせて出力します。ジムはSMR（スーパーメガレイド）の希望もメモできます。</p><div id="summary" class="summary">まだ申請地点がありません。</div><div class="actions"><button id="copyAll" class="btn primary" disabled>座標一覧をまとめてコピー</button><a class="btn green" target="_blank" rel="noopener" href="https://docs.google.com/forms/d/e/1FAIpQLSdtscRMZh8OaAQh999WuIU1Ip7cWyCeN5dT9BltU7GfkSjWrQ/viewform">Googleフォームを開く</a><button id="clearTypes" class="btn danger">選択をリセット</button></div></section>
+  <section class="card thought" id="thoughtCard"><h2>4. 最後に、ひとつだけ。</h2><div class="prompt">📍 今回のマップ作成にかける想いをどうぞ！</div><p class="muted">この場所を選んだ理由、参加する人への想い、地域への気持ち。どんなことでも構いません。任意回答です。</p><div class="field"><textarea id="mapMessage" maxlength="1000" placeholder="このマップに込めた想いを残してください。"></textarea></div><label class="muted" style="display:flex;gap:8px;align-items:flex-start;margin-top:10px"><input id="consentPublic" type="checkbox" style="margin-top:3px">将来、個人が特定されない形で「MAP MAKERS' VOICES」等に紹介しても構いません。</label><div class="actions"><button id="saveThought" class="btn orange">想いを残す</button><button id="skipThought" class="btn soft">今回は残さない</button></div><div id="complete" class="complete"><div class="big">想い、確かに預かりました。</div><div>この座標の先で、誰かの楽しい一日が生まれますように。<br><b>いってらっしゃい。📍</b></div></div></section>
   <div class="footer">MEGA FINALE 臨時POI申請用の補助ページ<br>KMZ・座標そのものはブラウザ内で処理します。「想いを残す」を選んだ場合のみ、入力した想いと件数等を保存します。</div>
 </div>
 <div id="toast" class="toast">コピーしました</div>
@@ -106,7 +66,7 @@ function distanceStatus(selected){const box=$('#distanceBox');if(selected.length
 function render(){const stops=pois.filter(x=>x.type==='stop'),gyms=pois.filter(x=>x.type==='gym');$('#stopCount').textContent=`${stops.length} / 6`;$('#gymCount').textContent=`${gyms.length} / 10`;$('#limitMsg').innerHTML=(stops.length===6?'<span class="warn">ポケストップ上限です。</span> ':'')+(gyms.length===10?'<span class="warn">ジム上限です。</span>':'');const list=$('#poiList');if(!pois.length){list.innerHTML='<div class="empty">KMZを読み込むか、地点を追加してください。</div>'}else{list.innerHTML=pois.map((p,i)=>`<div class="poi"><div class="poi-top"><div><div class="poi-name">${i+1}. ${esc(p.name||'名称なし')}</div><div class="coord">${fmt(p.lat)}, ${fmt(p.lng)}</div></div><button class="btn danger" style="padding:7px 9px;width:auto" onclick="removePoi('${p.id}')">×</button></div><div class="typebar"><button class="typebtn stop ${p.type==='stop'?'on':''}" onclick="setType('${p.id}','stop')">ポケストップ</button><button class="typebtn gym ${p.type==='gym'?'on':''}" onclick="setType('${p.id}','gym')">ジム</button></div><div class="copygrid"><button class="copy-lat" onclick="copy('${fmt(p.lat)}')">緯度をコピー</button><button class="copy-lng" onclick="copy('${fmt(p.lng)}')">経度をコピー</button></div>${p.type==='gym'?`<div class="helper"><b>SMR（スーパーメガレイド）を可能にするジム？</b><div class="choice"><button class="${p.smr===true?'on':''}" onclick="setSmr('${p.id}',true)">はい</button><button class="${p.smr===false?'on':''}" onclick="setSmr('${p.id}',false)">いいえ</button></div></div>`:''}</div>`).join('')}distanceStatus([...stops,...gyms]);const lines=[];stops.forEach((p,i)=>lines.push(`ポケストップ${i+1}：緯度\n${fmt(p.lat)}\nポケストップ${i+1}：経度\n${fmt(p.lng)}`));gyms.forEach((p,i)=>lines.push(`ジム${i+1}：緯度\n${fmt(p.lat)}\nジム${i+1}：経度\n${fmt(p.lng)}\nジム${i+1}：SMR\n${p.smr===true?'はい':p.smr===false?'いいえ':'未選択'}`));const text=lines.join('\n\n');$('#summary').textContent=text||'まだ申請地点がありません。';$('#copyAll').disabled=!text;$('#copyAll').dataset.text=text}
 window.setType=setType;window.setSmr=setSmr;window.copy=copy;window.removePoi=id=>{pois=pois.filter(p=>p.id!==id);render()};
 function parseKml(text){const xml=new DOMParser().parseFromString(text,'application/xml');if(xml.querySelector('parsererror'))throw new Error('KMLを読み込めませんでした');const out=[];[...xml.getElementsByTagName('Placemark')].forEach((pm,idx)=>{const point=pm.getElementsByTagName('Point')[0];if(!point)return;const c=point.getElementsByTagName('coordinates')[0]?.textContent?.trim();if(!c)return;const [lng,lat]=c.split(',').map(Number);if(!Number.isFinite(lat)||!Number.isFinite(lng))return;const name=pm.getElementsByTagName('name')[0]?.textContent?.trim()||`地点${idx+1}`;out.push({id:uid(),name,lat,lng,type:null,smr:null})});return out}
-$('#file').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;try{let kml='';if(f.name.toLowerCase().endsWith('.kmz')){const zip=await JSZip.loadAsync(f);const names=Object.keys(zip.files).filter(n=>n.toLowerCase().endsWith('.kml'));if(!names.length)throw new Error('KMZ内にKMLがありません');kml=await zip.file(names[0]).async('string')}else{kml=await f.text()}const found=parseKml(kml);if(!found.length)throw new Error('Point形式の地点が見つかりません');pois=found;$('#fileInfo').innerHTML=`<span class="ok">${esc(f.name)}：${found.length}地点を読み込みました。</span>`;render();toast(`${found.length}地点を読み込みました`)}catch(err){$('#fileInfo').innerHTML=`<span class="bad">${esc(err.message)}</span>`}});
+$('#file').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;try{const lower=f.name.toLowerCase();if(!lower.endsWith('.kmz')&&!lower.endsWith('.kml'))throw new Error('KMZ または KML ファイルを選択してください');let kml='';if(lower.endsWith('.kmz')){const zip=await JSZip.loadAsync(f);const names=Object.keys(zip.files).filter(n=>n.toLowerCase().endsWith('.kml'));if(!names.length)throw new Error('KMZ内にKMLがありません');kml=await zip.file(names[0]).async('string')}else{kml=await f.text()}const found=parseKml(kml);if(!found.length)throw new Error('Point形式の地点が見つかりません');pois=found;$('#fileInfo').innerHTML=`<span class="ok">${esc(f.name)}：${found.length}地点を読み込みました。</span>`;render();toast(`${found.length}地点を読み込みました`)}catch(err){$('#fileInfo').innerHTML=`<span class="bad">${esc(err.message)}</span>`}});
 $('#addManual').onclick=()=>{const name=$('#mName').value.trim()||'追加地点',lat=Number($('#mLat').value),lng=Number($('#mLng').value);if(!Number.isFinite(lat)||!Number.isFinite(lng)||Math.abs(lat)>90||Math.abs(lng)>180)return toast('緯度・経度を確認してください');pois.push({id:uid(),name,lat,lng,type:null,smr:null});$('#mName').value='';$('#mLat').value='';$('#mLng').value='';render();toast('地点を追加しました')};
 $('#useLocation').onclick=()=>{if(!navigator.geolocation)return toast('現在地を取得できません');navigator.geolocation.getCurrentPosition(pos=>{$('#mLat').value=fmt(pos.coords.latitude);$('#mLng').value=fmt(pos.coords.longitude);toast('現在地を入力しました')},()=>toast('現在地を取得できませんでした'),{enableHighAccuracy:true,timeout:10000})};
 window.copyCommon=()=>{const t=`トレーナー名\n${$('#trainerName').value}\n\nコミュニティのグループ名\n${$('#communityName').value}\n\n申請する候補地の名称\n${$('#candidateName').value}\n\n候補地の住所・GoogleマップURL\n${$('#candidateUrl').value}`;copy(t)};
