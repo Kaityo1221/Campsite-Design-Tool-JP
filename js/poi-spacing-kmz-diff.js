@@ -5,6 +5,7 @@
    - Existing circle polygons are preserved as-is
    - Legacy labels such as "50m サークル" are recognized
    - Missing circles are added per POI center only
+   - Missing circles inherit an existing style for the same radius when available
    - Existing non-circle layer contents and KMZ assets are preserved
    - Legacy POI Folder names are normalized to the formal six names
    - Circle layer order is normalized to 50m -> 40m -> 30m
@@ -254,6 +255,25 @@
     return centers;
   }
 
+  function findCircleStyleTemplate(xml, meters) {
+    for (const folder of findCircleFolders(xml, meters)) {
+      for (const placemark of Array.from(folder.getElementsByTagName("Placemark"))) {
+        if (!polygonCenter(placemark)) continue;
+
+        const styleNode = Array.from(placemark.children || []).find(node => {
+          const name = nodeName(node);
+          return name === "styleurl" || name === "style" || name === "stylemap";
+        });
+
+        if (styleNode) {
+          return styleNode;
+        }
+      }
+    }
+
+    return null;
+  }
+
   function collectAnyExistingCircleCenters(xml) {
     for (const meters of [50, 40, 30]) {
       const centers = collectCircleCentersForRadius(xml, meters);
@@ -309,12 +329,16 @@
     return coordinates.join(" ");
   }
 
-  function createCirclePlacemark(xml, point, meters) {
+  function createCirclePlacemark(xml, point, meters, styleTemplate = null) {
     const placemark = xml.createElementNS(KML_NS, "Placemark");
 
     const name = xml.createElementNS(KML_NS, "name");
     name.textContent = point.name ? `${point.name}_${meters}m円` : "";
     placemark.appendChild(name);
+
+    if (styleTemplate) {
+      placemark.appendChild(styleTemplate.cloneNode(true));
+    }
 
     const polygon = xml.createElementNS(KML_NS, "Polygon");
     const outer = xml.createElementNS(KML_NS, "outerBoundaryIs");
@@ -359,9 +383,12 @@
       return "kept";
     }
 
+    const styleTemplate = findCircleStyleTemplate(xml, meters);
     const folder = ensureCircleFolder(xml, meters);
     missingCenters.forEach(point => {
-      folder.appendChild(createCirclePlacemark(xml, point, meters));
+      folder.appendChild(
+        createCirclePlacemark(xml, point, meters, styleTemplate)
+      );
     });
 
     return "added";
