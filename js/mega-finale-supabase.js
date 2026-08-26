@@ -8,7 +8,6 @@ window.megaFinaleSupabase = (window.supabase && typeof window.supabase.createCli
 (() => {
   let nearbyExistingLayer = null;
   let nearbyRadiusLayer = null;
-  let nearbyStatus = null;
   let requestSeq = 0;
 
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({
@@ -64,14 +63,34 @@ window.megaFinaleSupabase = (window.supabase && typeof window.supabase.createCli
     if (!nearbyRadiusLayer || typeof map === 'undefined' || !map) return;
     try {
       map.invalidateSize();
-      map.fitBounds(nearbyRadiusLayer.getBounds(), {
-        padding: [18, 18],
-        animate: true,
-        maxZoom: 14
-      });
+      map.fitBounds(nearbyRadiusLayer.getBounds(), { padding: [18, 18], animate: true, maxZoom: 14 });
     } catch (e) {
       console.warn('nearby area fit failed', e);
     }
+  }
+
+  function metersBetween(aLat, aLng, bLat, bLng) {
+    const R = 6371000;
+    const rad = d => d * Math.PI / 180;
+    const dLat = rad(bLat - aLat);
+    const dLng = rad(bLng - aLng);
+    const s = Math.sin(dLat / 2) ** 2 + Math.cos(rad(aLat)) * Math.cos(rad(bLat)) * Math.sin(dLng / 2) ** 2;
+    return 2 * R * Math.asin(Math.sqrt(s));
+  }
+
+  function currentNewPois() {
+    try {
+      if (typeof pois === 'undefined' || !Array.isArray(pois)) return [];
+      return pois.filter(p => Number.isFinite(Number(p.lat)) && Number.isFinite(Number(p.lng)));
+    } catch {
+      return [];
+    }
+  }
+
+  function isCurrentNewPoi(dbPoi, newPois) {
+    const lat = Number(dbPoi.sample_lat), lng = Number(dbPoi.sample_lng);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return false;
+    return newPois.some(p => metersBetween(lat, lng, Number(p.lat), Number(p.lng)) <= 20);
   }
 
   async function loadNearbyExistingPois(lat, lng, mode = 'manual') {
@@ -97,6 +116,10 @@ window.megaFinaleSupabase = (window.supabase && typeof window.supabase.createCli
       return;
     }
 
+    const newPois = currentNewPois();
+    const visibleExisting = (data || []).filter(p => !isCurrentNewPoi(p, newPois));
+    const excluded = (data || []).length - visibleExisting.length;
+
     const draw = () => {
       if (!ensureLayers()) {
         setTimeout(draw, 100);
@@ -117,7 +140,7 @@ window.megaFinaleSupabase = (window.supabase && typeof window.supabase.createCli
         interactive: false
       }).addTo(map);
 
-      (data || []).forEach(p => {
+      visibleExisting.forEach(p => {
         const m = L.circleMarker([p.sample_lat, p.sample_lng], existingStyle(p.poi_type));
         m.bindPopup(
           `<div style="font-weight:900;margin-bottom:5px">既存｜${esc(p.canonical_name)}</div>` +
@@ -126,7 +149,9 @@ window.megaFinaleSupabase = (window.supabase && typeof window.supabase.createCli
         m.addTo(nearbyExistingLayer);
       });
 
-      if (status) status.innerHTML = `<b>既存スポット ${data?.length || 0}件</b>を周辺3kmから表示中。<br><span style="color:#6b7280">薄い小さなマーカーが既存です。地図は3km全体が見える縮尺に自動調整します。</span>`;
+      if (status) status.innerHTML = `<b>既存スポット ${visibleExisting.length}件</b>を周辺3kmから表示中。` +
+        (excluded ? `<br><span style="color:#16855b">今回の新規POIと重なる ${excluded}件は既存表示から除外しました。</span>` : '') +
+        `<br><span style="color:#6b7280">薄い小さなマーカーが既存です。地図は3km全体が見える縮尺に自動調整します。</span>`;
 
       fitNearbyArea();
       setTimeout(fitNearbyArea, 250);
@@ -137,16 +162,13 @@ window.megaFinaleSupabase = (window.supabase && typeof window.supabase.createCli
 
   function loadNearbyForKmz() {
     try {
-      if (typeof pois === 'undefined' || !Array.isArray(pois) || !pois.length) return;
-      const valid = pois.filter(p => Number.isFinite(Number(p.lat)) && Number.isFinite(Number(p.lng)));
+      const valid = currentNewPois();
       if (!valid.length) return;
       const minLat = Math.min(...valid.map(p => Number(p.lat)));
       const maxLat = Math.max(...valid.map(p => Number(p.lat)));
       const minLng = Math.min(...valid.map(p => Number(p.lng)));
       const maxLng = Math.max(...valid.map(p => Number(p.lng)));
-      const centerLat = (minLat + maxLat) / 2;
-      const centerLng = (minLng + maxLng) / 2;
-      loadNearbyExistingPois(centerLat, centerLng, 'kmz');
+      loadNearbyExistingPois((minLat + maxLat) / 2, (minLng + maxLng) / 2, 'kmz');
     } catch (e) {
       console.warn('KMZ nearby POI load skipped', e);
     }
@@ -165,17 +187,15 @@ window.megaFinaleSupabase = (window.supabase && typeof window.supabase.createCli
         const lat = Number(document.getElementById('mLat')?.value);
         const lng = Number(document.getElementById('mLng')?.value);
         if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) return;
-        setTimeout(() => loadNearbyExistingPois(lat, lng, 'manual'), 80);
+        setTimeout(() => loadNearbyExistingPois(lat, lng, 'manual'), 120);
       }, true);
     }
 
     const file = document.getElementById('file');
     if (file) {
       file.addEventListener('change', () => {
-        // The main page finishes parsing/rendering the KMZ asynchronously.
-        // Wait for the new POI list, then query existing POIs around its center.
-        setTimeout(loadNearbyForKmz, 450);
-        setTimeout(loadNearbyForKmz, 1000);
+        setTimeout(loadNearbyForKmz, 500);
+        setTimeout(loadNearbyForKmz, 1100);
       });
     }
   });
