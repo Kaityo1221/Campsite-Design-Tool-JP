@@ -35,7 +35,7 @@
       const current = document.currentScript;
       const currentSrc = current?.src || '';
       const base = currentSrc ? new URL('.', currentSrc) : new URL('./js/', window.location.href);
-      await loadScript(new URL('ca-access.js?v=1', base).href);
+      await loadScript(new URL('ca-access.js?v=2', base).href);
     }
   }
 
