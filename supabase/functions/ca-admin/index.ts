@@ -1,6 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import nodemailer from "npm:nodemailer@6.9.15";
+import { CAMPSITE_ICON_BASE64 } from "./icon-base64.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -20,15 +21,6 @@ function firstString(...values: unknown[]) {
     if (typeof value === "string" && value.trim()) return value.trim();
   }
   return "";
-}
-
-function escapeHtml(value: string) {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
 }
 
 async function getDiscordIdentity(req: Request) {
@@ -81,7 +73,7 @@ async function getDiscordIdentity(req: Request) {
   return { authUserId: user.id, discordUserId, discordName, discordGlobalName };
 }
 
-async function sendApprovalEmail(admin: any, authUserId: string, displayName: string) {
+async function sendApprovalEmail(admin: any, authUserId: string) {
   const smtpUser = Deno.env.get("GMAIL_SMTP_USER") || "";
   const smtpPassword = Deno.env.get("GMAIL_SMTP_APP_PASSWORD") || "";
   if (!smtpUser || !smtpPassword) {
@@ -105,25 +97,24 @@ async function sendApprovalEmail(admin: any, authUserId: string, displayName: st
     }
   });
 
-  const safeName = escapeHtml(displayName || "ご利用者様");
   const subject = "Campsite Design Tool への参加が承認されました";
   const text = [
-    `${displayName || "ご利用者様"} さん`,
-    "",
     "Campsite Design Tool への参加が承認されました 🎉",
     "",
     "Discord認証いただいたアカウントで、Campsite Design Toolをご利用いただけます。",
+    "",
     "これからキャンプサイト設計の各機能をお使いいただけます。",
     "",
     "Campsite Design Tool"
   ].join("\n");
+
   const html = `
-    <div style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;line-height:1.8;color:#1f2937">
-      <p>${safeName} さん</p>
-      <h2 style="margin:20px 0 12px">Campsite Design Tool への参加が承認されました 🎉</h2>
-      <p>Discord認証いただいたアカウントで、Campsite Design Toolをご利用いただけます。</p>
-      <p>これからキャンプサイト設計の各機能をお使いいただけます。</p>
-      <p style="margin-top:28px;color:#6b7280">Campsite Design Tool</p>
+    <div style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;line-height:1.8;color:#1f2937;max-width:560px;margin:0 auto;padding:24px 20px;">
+      <img src="cid:campsite-design-tool-icon" alt="Campsite Design Tool" width="96" height="96" style="display:block;width:96px;height:96px;margin:0 auto 24px;border-radius:22px;" />
+      <h2 style="margin:0 0 18px;text-align:center;font-size:22px;line-height:1.5;color:#111827;">Campsite Design Tool への参加が承認されました 🎉</h2>
+      <p style="margin:0 0 16px;">Discord認証いただいたアカウントで、Campsite Design Toolをご利用いただけます。</p>
+      <p style="margin:0 0 24px;">これからキャンプサイト設計の各機能をお使いいただけます。</p>
+      <p style="margin:0;color:#6b7280;">Campsite Design Tool</p>
     </div>
   `;
 
@@ -133,7 +124,16 @@ async function sendApprovalEmail(admin: any, authUserId: string, displayName: st
       to: recipient,
       subject,
       text,
-      html
+      html,
+      attachments: [
+        {
+          filename: "campsite-design-tool.jpg",
+          content: CAMPSITE_ICON_BASE64,
+          encoding: "base64",
+          cid: "campsite-design-tool-icon",
+          contentType: "image/jpeg"
+        }
+      ]
     });
     return { sent: true };
   } catch (error) {
@@ -253,8 +253,7 @@ Deno.serve(async (req: Request) => {
 
   let approvalEmail = { sent: false, reason: "not_applicable" } as { sent: boolean; reason?: string };
   if (action === "approve" && target.status !== "approved" && target.auth_user_id) {
-    const displayName = firstString(target.discord_global_name, target.discord_name) || "ご利用者様";
-    approvalEmail = await sendApprovalEmail(admin, target.auth_user_id, displayName);
+    approvalEmail = await sendApprovalEmail(admin, target.auth_user_id);
   }
 
   return json({ ok: true, request: updated, approvalEmail });
