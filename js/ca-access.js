@@ -129,6 +129,52 @@
     return data;
   }
 
+  async function waitForSession(timeoutMs = 6000) {
+    const auth = window.campsiteSupabase?.auth;
+    if (!auth) return null;
+
+    try {
+      const { data, error } = await auth.getSession();
+      if (!error && data?.session) return data.session;
+    } catch (error) {
+      console.warn("Initial session check failed", error);
+    }
+
+    return new Promise((resolve) => {
+      let settled = false;
+      let pollTimer = null;
+      let timeoutTimer = null;
+      let subscription = null;
+
+      const finish = (session) => {
+        if (settled) return;
+        settled = true;
+        if (pollTimer) clearInterval(pollTimer);
+        if (timeoutTimer) clearTimeout(timeoutTimer);
+        try { subscription?.unsubscribe?.(); } catch (_) {}
+        resolve(session || null);
+      };
+
+      try {
+        const { data } = auth.onAuthStateChange((_event, session) => {
+          if (session) finish(session);
+        });
+        subscription = data?.subscription || null;
+      } catch (error) {
+        console.warn("Auth state listener failed", error);
+      }
+
+      pollTimer = setInterval(async () => {
+        try {
+          const { data, error } = await auth.getSession();
+          if (!error && data?.session) finish(data.session);
+        } catch (_) {}
+      }, 300);
+
+      timeoutTimer = setTimeout(() => finish(null), timeoutMs);
+    });
+  }
+
   function unlockMainPage() {
     const loginSound = document.getElementById("loginSound");
     if (loginSound) {
@@ -169,10 +215,9 @@
     setButtons({ login: false, enter: false, status: false, logout: true, busy: true });
     setStatus("日本CAアクセスを確認しています…");
 
-    const { data: sessionData, error: sessionError } = await window.campsiteSupabase.auth.getSession();
-    const session = sessionData?.session;
+    const session = await waitForSession();
 
-    if (sessionError || !session) {
+    if (!session) {
       setButtons({ login: true });
       setStatus("");
       return;
