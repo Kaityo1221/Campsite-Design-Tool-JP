@@ -22,6 +22,7 @@
     .error { color:#fca5a5; }
     .adapter { margin-top:18px; padding:14px; border:1px solid #334155; border-radius:12px; background:#111827; }
     button { margin-top:18px; width:100%; border:0; border-radius:10px; padding:11px 14px; font-weight:800; cursor:pointer; }
+    #continueBtn { display:none; background:#dcfce7; color:#14532d; }
   </style>
 </head>
 <body>
@@ -50,6 +51,7 @@
         </div>
       </div>
 
+      <button id="continueBtn" type="button">🏕 このPOIでCampsite Design Toolを続ける</button>
       <button id="clearBtn" type="button">受信データを消去</button>
     </div>
   </div>
@@ -109,8 +111,6 @@
     return result;
   }
 
-  // Bridge canonical model -> existing Campsite internal POI model.
-  // Existing CSV path produces: name, lat, lng, type, gameStatus, guid, layer.
   function toCampsitePoi(bridgePoi) {
     if (!bridgePoi || typeof bridgePoi !== 'object') return null;
     const name = String(bridgePoi.title || '').trim();
@@ -124,15 +124,7 @@
     if (!ALLOWED_ENTITIES.has(type)) return null;
     if (!ALLOWED_STATUSES.has(gameStatus)) return null;
 
-    return {
-      name,
-      lat,
-      lng,
-      type,
-      gameStatus,
-      guid,
-      layer: 'BRIDGE'
-    };
+    return { name, lat, lng, type, gameStatus, guid, layer:'BRIDGE' };
   }
 
   function adaptForCampsite(bridgePois) {
@@ -151,11 +143,11 @@
 
     const deduped = dedupeByGuid(converted);
     return {
-      beforeCount: input.length,
-      afterCount: deduped.pois.length,
+      beforeCount:input.length,
+      afterCount:deduped.pois.length,
       failedCount,
-      duplicateCount: deduped.duplicateCount,
-      pois: deduped.pois
+      duplicateCount:deduped.duplicateCount,
+      pois:deduped.pois
     };
   }
 
@@ -185,29 +177,35 @@
     $('duplicateCount').textContent = adapterResult.duplicateCount;
 
     const adapterStatus = $('adapterStatus');
-    if (adapterResult.beforeCount > 0 &&
-        adapterResult.beforeCount === adapterResult.afterCount &&
-        adapterResult.failedCount === 0 &&
-        adapterResult.duplicateCount === 0) {
+    const continueBtn = $('continueBtn');
+    const clean = adapterResult.beforeCount > 0 &&
+      adapterResult.beforeCount === adapterResult.afterCount &&
+      adapterResult.failedCount === 0 &&
+      adapterResult.duplicateCount === 0;
+
+    if (clean) {
       adapterStatus.className = 'status ok';
       adapterStatus.textContent = `✅ ${adapterResult.afterCount}件をCampsite内部形式へ変換しました`;
+      continueBtn.style.display = 'block';
     } else if (adapterResult.beforeCount > 0) {
       adapterStatus.className = 'status warn';
       adapterStatus.textContent = '⚠ 変換結果を確認してください';
+      continueBtn.style.display = 'none';
     } else {
       adapterStatus.className = 'status warn';
       adapterStatus.textContent = '受信後に自動変換します';
+      continueBtn.style.display = 'none';
     }
 
     sessionStorage.setItem(ADAPTER_STORAGE_KEY, JSON.stringify({
-      version:'0.3.1',
+      version:'0.4.0',
       adaptedAt:new Date().toISOString(),
       sourceCount:adapterResult.beforeCount,
       pois:adapterResult.pois
     }));
 
     window.CampsiteBridgeAdapter = Object.freeze({
-      version:'0.3.1',
+      version:'0.4.0',
       result:adapterResult,
       pois:adapterResult.pois
     });
@@ -216,7 +214,7 @@
   function savePayload(payload) {
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
     window.CampsiteBridgeReceiver = Object.freeze({
-      version:'0.3.1',
+      version:'0.4.0',
       payload,
       pois:payload.pois,
       counts:counts(payload.pois)
@@ -251,6 +249,10 @@
         count:window.CampsiteBridgeReceiver?.pois?.length || 0
       }, event.origin);
     }
+  });
+
+  $('continueBtn').addEventListener('click', () => {
+    location.href = './index.html?campsiteBridgeImport=1';
   });
 
   $('clearBtn').addEventListener('click', () => {
