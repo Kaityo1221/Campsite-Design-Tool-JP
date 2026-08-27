@@ -23,7 +23,9 @@
       #${GATE_ID} .ca-gate-lock{font-size:34px;margin-bottom:8px}
       #${GATE_ID} h2{margin:0 0 8px;font-size:24px}
       #${GATE_ID} .ca-gate-badge{display:inline-block;margin:0 0 16px;padding:5px 10px;border:1px solid rgba(96,165,250,.4);border-radius:999px;background:rgba(59,130,246,.12);color:#bfdbfe;font-size:12px;font-weight:800;letter-spacing:.04em}
-      #${GATE_ID} .ca-gate-copy{margin:0 0 18px;color:#cbd5e1;font-size:14px;line-height:1.7}
+      #${GATE_ID} .ca-gate-copy{margin:0 0 14px;color:#cbd5e1;font-size:14px;line-height:1.7}
+      #${GATE_ID} .ca-gate-flow{margin:0 0 14px;padding:10px 12px;border:1px solid rgba(148,163,184,.18);border-radius:12px;background:rgba(2,6,23,.36);color:#cbd5e1;font-size:12px;line-height:1.7}
+      #${GATE_ID} .ca-gate-flow strong{color:#fff;font-weight:900}
       #${GATE_ID} .ca-discord-btn{width:100%;border:0;border-radius:13px;padding:14px 16px;background:#5865f2;color:#fff;font-size:16px;font-weight:900;cursor:pointer;box-shadow:0 10px 28px rgba(88,101,242,.22)}
       #${GATE_ID} .ca-discord-btn:disabled{opacity:.55;cursor:wait}
       #${GATE_ID} .ca-secondary-btn{margin-top:10px;width:100%;border:1px solid #475569;border-radius:12px;padding:11px 14px;background:#111827;color:#e2e8f0;font-size:14px;font-weight:800;cursor:pointer}
@@ -49,12 +51,16 @@
         <h2>Campsite Design Tool</h2>
         <div class="ca-gate-badge">JAPAN COMMUNITY AMBASSADOR ONLY</div>
         <p class="ca-gate-copy">このツールは現在、日本国内のCommunity Ambassador限定で運用しています。<br>Discordで本人確認してください。</p>
+        <div class="ca-gate-flow">
+          <div><strong>🔐 Discord認証</strong> → <strong>👀 会長確認</strong> → <strong>📩 承認メール</strong></div>
+          <div>承認後、Campsite Design Toolをご利用いただけます。</div>
+        </div>
         <button type="button" id="caDiscordLoginButton" class="ca-discord-btn">Discordでログイン</button>
         <button type="button" id="caEnterButton" class="ca-discord-btn" style="display:none;">Campsite Design Toolを開く</button>
         <button type="button" id="caStatusButton" class="ca-secondary-btn" style="display:none;">承認状況を確認</button>
         <button type="button" id="caLogoutButton" class="ca-secondary-btn" style="display:none;">Discordからログアウト</button>
         <div id="caGateStatus" class="ca-gate-status"></div>
-        <p class="ca-gate-note">初回ログイン時は会長の承認が必要です。<br>第三者・海外CAへのアカウント共有はできません。</p>
+        <p class="ca-gate-note">第三者・海外CAへのアカウント共有はできません。</p>
       </div>`;
 
     document.body.appendChild(gate);
