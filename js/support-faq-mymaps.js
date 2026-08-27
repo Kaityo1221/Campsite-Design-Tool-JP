@@ -44,5 +44,6 @@ window.CAMPSITE_SUPPORT_FAQS = [
 {id:'FAQ-43',c:'file',q:'AndroidでKMZを生成しましたが、保存先が分かりません',a:'Androidでは保存先を選ぶ画面が表示されず、ダウンロードフォルダへ自動保存される場合があります。Files／ファイル／マイファイルを開いて「ダウンロード」を確認し、「.kmz」で終わるファイルを探してください。端末によっては「/storage/emulated/0/Download/」に保存されています。'},
 {id:'FAQ-44',c:'mymaps',q:'生成したKMZがGoogle My Mapsへ正しく読み込めたか確認したいです',a:'My Mapsの「凡例」を開いてレイヤー一覧を確認してください。既存PokéStop／既存Gym／既存PowerSpot、新規PokéStop／新規Gym／新規PowerSpot、50m円などが分かれていれば正常です。活動範囲ポリゴンを作成済みなら、そのレイヤーも確認してください。'},
 {id:'FAQ-45',c:'mymaps',q:'AndroidのGoogle My Mapsでピンを動かしづらい、タップしても反応しません',a:'AndroidのGoogle My Mapsはパソコンより操作しづらい場合があります。POIを選択して吹き出しが出ている状態では動かせる場合があります。細かな編集はパソコンを推奨します。操作が難しい場合は、生成したKMZをCREATIVE MODEへ読み込んで配置を続ける方法もあります。'},
-{id:'FAQ-46',c:'mymaps',q:'Wayfarer CSVをGoogle My Mapsへ直接インポートしてしまいました',a:'まだ設計編集を始めていなければ、一度Campsite Design Toolへ戻るのがおすすめです。Wayfarer Mapから直接ダウンロードした元CSVをCampsite Design Toolへ読み込ませ、KMZを生成してください。そのKMZを新しいGoogle My Mapsへインポートすると、既存／新規のPOI種別や50m円が自動で整理されます。'}
+{id:'FAQ-46',c:'mymaps',q:'Wayfarer CSVをGoogle My Mapsへ直接インポートしてしまいました',a:'まだ設計編集を始めていなければ、一度Campsite Design Toolへ戻るのがおすすめです。Wayfarer Mapから直接ダウンロードした元CSVをCampsite Design Toolへ読み込ませ、KMZを生成してください。そのKMZを新しいGoogle My Mapsへインポートすると、既存／新規のPOI種別や50m円が自動で整理されます。'},
+{id:'FAQ-47',c:'other',q:'Discordログイン画面が繰り返し表示され、Campsite Design Tool JPにログインできません',a:'Discordアカウントにメールアドレスが登録されているか確認してください。Discordアプリの「設定」→「アカウント」→「メールアドレス」を開きます。メールアドレスが未登録の場合は追加し、必要な認証を完了してからCampsite Design Tool JPへもう一度ログインしてください。実際に、Discordのメールアドレスを追加することでログインループが解消したケースがあります。'}
 ];

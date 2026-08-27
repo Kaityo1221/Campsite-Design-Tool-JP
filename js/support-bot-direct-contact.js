@@ -121,16 +121,14 @@
       feedback_type: 'question',
       category: 'other',
       content: text.slice(0, 2000),
-      bot_source: 'direct_contact',
-      flow_path: 'home > direct_contact_only',
       resolved: false,
       app_version: window.APP_VERSION || null,
       status: 'new'
     });
 
     if(error){
-      console.warn('direct support send error:', error.message);
-      addMessage(messages, '送信に失敗しました。通信状況を確認して、もう一度お試しください。', false);
+      console.warn('direct support send error:', error);
+      addMessage(messages, '送信に失敗しました。もう一度お試しください。', false);
       sending = false;
       return;
     }
