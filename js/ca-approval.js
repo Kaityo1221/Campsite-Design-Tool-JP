@@ -188,6 +188,18 @@
     }
   }
 
+  function emailResultMessage(result) {
+    const mail = result?.approvalEmail;
+    if (!mail || mail.reason === 'not_applicable') return '';
+    if (mail.sent) return ' ｜ 📧 メール送信成功';
+    const reasons = {
+      smtp_not_configured: 'SMTP未設定',
+      recipient_not_found: '宛先メールアドレス未取得',
+      send_failed: '送信処理エラー'
+    };
+    return ` ｜ ⚠️ メール送信失敗（${reasons[mail.reason] || mail.reason || '原因不明'}）`;
+  }
+
   async function changeStatus(requestId, action, name) {
     const labels = {
       approve: '許可',
@@ -198,8 +210,9 @@
     if (!confirm(`${name} を「${labels[action]}」にしますか？`)) return;
     setStatus(`${name} を更新しています…`);
     try {
-      await invokeAdmin({ action, requestId });
+      const result = await invokeAdmin({ action, requestId });
       await loadRequests();
+      setStatus(`${name}：${labels[action]}しました${emailResultMessage(result)}`);
     } catch (error) {
       setStatus(`更新できませんでした: ${error.message}`);
     }
