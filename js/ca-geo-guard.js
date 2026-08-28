@@ -6,15 +6,17 @@
   window.__campsiteCaGeoGuardLoaded = true;
 
   const FUNCTION_NAME = 'ca-geo-guard';
-  const GPS_ACCURACY_LIMIT_METERS = 100;
   const GRACE_MS = 15000;
   const POSITION_TIMEOUT_MS = 7000;
   const RETRY_INTERVAL_MS = 1800;
+  const TEST_FALLBACK_POSITION = Object.freeze({
+    coords: Object.freeze({ latitude: 35.681236, longitude: 139.767125, accuracy: 20 }),
+    timestamp: 0
+  });
 
   let currentCheck = null;
   let lastPosition = null;
   let lastResult = null;
-  let lastTestScenario = '';
   let bypassNextEnterClick = false;
   let wasEnterVisible = false;
   let startupGeneration = 0;
@@ -126,7 +128,6 @@
     const actions = document.createElement('div');
     actions.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;';
     actions.appendChild(makeButton('もう一度確認', () => runGuard({ phase: 'retry' }), 'primary'));
-
     if (result?.canContinueTest && result?.testScenario) {
       actions.appendChild(makeButton('テストとして続行', () => continueTest(result.testScenario), 'secondary'));
     }
@@ -180,6 +181,24 @@
     });
   }
 
+  function getTestPosition() {
+    const coords = lastPosition?.coords;
+    if (Number.isFinite(Number(coords?.latitude)) &&
+        Number.isFinite(Number(coords?.longitude)) &&
+        Number.isFinite(Number(coords?.accuracy))) {
+      return lastPosition;
+    }
+    return TEST_FALLBACK_POSITION;
+  }
+
+  function positionPayload(position) {
+    return {
+      latitude: Number(position?.coords?.latitude),
+      longitude: Number(position?.coords?.longitude),
+      accuracy: Number(position?.coords?.accuracy)
+    };
+  }
+
   async function invokeGuard(payload) {
     const client = getClient();
     if (!client?.functions?.invoke) throw new Error('認証クライアントを利用できません。');
@@ -191,14 +210,6 @@
       throw wrapped;
     }
     return data || {};
-  }
-
-  function positionPayload(position) {
-    return {
-      latitude: Number(position?.coords?.latitude),
-      longitude: Number(position?.coords?.longitude),
-      accuracy: Number(position?.coords?.accuracy)
-    };
   }
 
   async function invokeWithIpRetries(payload) {
@@ -230,23 +241,7 @@
     return result;
   }
 
-  async function acquireAndEvaluate(testScenario, finalize) {
-    if (testScenario === 'location_denied') {
-      return { result: withScenario(await reportPermissionDenied(testScenario), testScenario), position: null };
-    }
-
-    let position;
-    try {
-      position = await getPosition();
-      lastPosition = position;
-    } catch (error) {
-      if (error?.code === 1) {
-        const result = await reportPermissionDenied(testScenario);
-        return { result: withScenario(result, testScenario), position: null };
-      }
-      throw error;
-    }
-
+  async function evaluatePosition(position, testScenario, finalize) {
     const payload = {
       ...positionPayload(position),
       testScenario: testScenario || undefined,
@@ -255,6 +250,36 @@
     };
     const result = await invokeWithIpRetries(payload);
     return { result: withScenario(result, testScenario), position };
+  }
+
+  async function acquireAndEvaluate(testScenario, finalize) {
+    if (testScenario === 'location_denied') {
+      return { result: withScenario(await reportPermissionDenied(testScenario), testScenario), position: null };
+    }
+
+    // Chairman test scenarios simulate the condition itself. Requiring a fresh
+    // device GPS fix here makes the test fail for reasons unrelated to the
+    // scenario (for example an indoor GPS timeout), so reuse the last good fix
+    // or a clearly test-only Japan coordinate.
+    if (testScenario) {
+      const position = getTestPosition();
+      lastPosition = position;
+      return evaluatePosition(position, testScenario, finalize);
+    }
+
+    let position;
+    try {
+      position = await getPosition();
+      lastPosition = position;
+    } catch (error) {
+      if (error?.code === 1) {
+        const result = await reportPermissionDenied('');
+        return { result, position: null };
+      }
+      throw error;
+    }
+
+    return evaluatePosition(position, '', finalize);
   }
 
   async function resolveGrace(initialResult, initialPosition, testScenario) {
@@ -273,6 +298,7 @@
           : `現在地を再確認しています… 残り約${remaining}秒`,
         'warn'
       );
+
       await sleep(Math.min(RETRY_INTERVAL_MS, Math.max(250, deadline - Date.now())));
       if (Date.now() >= deadline) break;
 
@@ -285,6 +311,8 @@
           result = withScenario(await reportPermissionDenied(testScenario), testScenario);
           break;
         }
+        // Keep the last valid fix during the grace period. A temporary GPS
+        // timeout must not erase an already observed overseas/low-accuracy fix.
         continue;
       }
 
@@ -296,20 +324,17 @@
       }
     }
 
-    if (result?.status === 'retry_accuracy') {
-      const final = await acquireAndEvaluate(testScenario, { lowAccuracy: true });
-      return final;
+    if (result?.status === 'retry_accuracy' && position) {
+      return evaluatePosition(position, testScenario, { lowAccuracy: true });
     }
-    if (result?.status === 'retry_overseas') {
-      const final = await acquireAndEvaluate(testScenario, { overseas: true });
-      return final;
+    if (result?.status === 'retry_overseas' && position) {
+      return evaluatePosition(position, testScenario, { overseas: true });
     }
     return { result, position };
   }
 
   function showAllowed(result) {
     lastResult = result;
-    lastTestScenario = '';
     setEnterEnabled(true);
     setStatus('日本国内からの利用を確認しました。ボタンを押して開始してください。', 'ok');
     clearPanel();
@@ -318,7 +343,6 @@
 
   function showBlocked(result) {
     lastResult = result;
-    lastTestScenario = result?.testScenario || '';
     setEnterEnabled(false);
     setStatus(result?.message || '利用地域を確認できませんでした。', 'error');
     renderBlocked(result || {});
@@ -433,7 +457,15 @@
   function checkApprovedTransition() {
     ensureDisclosure();
     const button = getEnterButton();
-    if (!button) return;
+    if (!button) {
+      if (wasEnterVisible) {
+        wasEnterVisible = false;
+        startupGeneration += 1;
+        lastResult = null;
+      }
+      return;
+    }
+
     const visible = button.style.display !== 'none' && getComputedStyle(button).display !== 'none';
     if (visible && !wasEnterVisible) {
       wasEnterVisible = true;
@@ -447,7 +479,6 @@
       wasEnterVisible = false;
       startupGeneration += 1;
       lastResult = null;
-      lastTestScenario = '';
       clearPanel();
     }
   }
