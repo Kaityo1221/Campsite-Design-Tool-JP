@@ -28,7 +28,7 @@
   }
 
   function getStatusEl() {
-    return document.getElementById('caAccessStatus');
+    return document.getElementById('caGateStatus') || document.getElementById('caAccessStatus');
   }
 
   function getEnterButton() {
