@@ -12,6 +12,10 @@
 
   const FUNCTION_NAME = "ca-access";
   const GATE_ID = "caAccessGate";
+  const LOGIN_SOUND_URL = "assets/login.mp3";
+  const LOGIN_SOUND_GAIN = 0.08;
+
+  let loginSoundBufferPromise = null;
 
   function addStyles() {
     if (document.getElementById("caAccessGateStyles")) return;
@@ -101,6 +105,73 @@
     }
   }
 
+  function getAudioContextConstructor() {
+    return window.AudioContext || window.webkitAudioContext || null;
+  }
+
+  async function loadLoginSoundBuffer(audioContext) {
+    if (!loginSoundBufferPromise) {
+      loginSoundBufferPromise = fetch(LOGIN_SOUND_URL, { cache: "force-cache" })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(`Login sound fetch failed: ${response.status}`);
+          }
+          return response.arrayBuffer();
+        })
+        .then((arrayBuffer) => audioContext.decodeAudioData(arrayBuffer))
+        .catch((error) => {
+          loginSoundBufferPromise = null;
+          throw error;
+        });
+    }
+
+    return loginSoundBufferPromise;
+  }
+
+  function playLoginSoundRespectingSilentMode() {
+    const AudioContextConstructor = getAudioContextConstructor();
+
+    // HTMLAudioElement へフォールバックすると iPhone のサイレントスイッチを
+    // 無視して鳴る場合があるため、Web Audio 非対応時はあえて無音にする。
+    if (!AudioContextConstructor) return;
+
+    let audioContext;
+
+    try {
+      // 「ツールを開く」のユーザー操作内で生成・resume することで
+      // iOS の自動再生制限にも対応する。
+      audioContext = new AudioContextConstructor();
+      const resumePromise = audioContext.state === "suspended"
+        ? audioContext.resume()
+        : Promise.resolve();
+
+      Promise.resolve(resumePromise)
+        .then(() => loadLoginSoundBuffer(audioContext))
+        .then((buffer) => {
+          const source = audioContext.createBufferSource();
+          const gain = audioContext.createGain();
+
+          source.buffer = buffer;
+          gain.gain.value = LOGIN_SOUND_GAIN;
+          source.connect(gain);
+          gain.connect(audioContext.destination);
+
+          source.addEventListener("ended", () => {
+            try { audioContext.close(); } catch (_) {}
+          }, { once: true });
+
+          source.start(0);
+        })
+        .catch((error) => {
+          console.warn("Login sound skipped", error);
+          try { audioContext.close(); } catch (_) {}
+        });
+    } catch (error) {
+      console.warn("Login sound skipped", error);
+      try { audioContext?.close?.(); } catch (_) {}
+    }
+  }
+
   async function signInWithDiscord() {
     if (!window.campsiteSupabase?.auth) {
       setStatus("認証システムを読み込めませんでした。再読み込みしてください。", "error");
@@ -182,14 +253,7 @@
   }
 
   function unlockMainPage() {
-    const loginSound = document.getElementById("loginSound");
-    if (loginSound) {
-      try {
-        loginSound.currentTime = 0;
-        loginSound.volume = 0.08;
-        loginSound.play().catch(() => {});
-      } catch (_) {}
-    }
+    playLoginSoundRespectingSilentMode();
 
     document.getElementById(GATE_ID)?.remove();
 
