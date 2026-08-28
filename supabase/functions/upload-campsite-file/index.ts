@@ -1,0 +1,48 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const corsHeaders={"Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"authorization, x-client-info, apikey, content-type","Access-Control-Allow-Methods":"POST, OPTIONS"};
+const BUCKET_NAME="campsite-kmz"; const MAX_FILE_SIZE=20*1024*1024;
+const ALLOWED_ACTION_TYPES=["kmz_generate","distance_check","creative_mode"] as const;
+const ALLOWED_EXTENSIONS=[".kmz",".kml"];
+const ALLOWED_MIME_TYPES=["application/vnd.google-earth.kmz","application/vnd.google-earth.kml+xml","application/zip","application/octet-stream"];
+type ActionType=typeof ALLOWED_ACTION_TYPES[number];
+function jsonResponse(body:Record<string,unknown>,status=200){return new Response(JSON.stringify(body),{status,headers:{...corsHeaders,"Content-Type":"application/json; charset=utf-8"}})}
+function sanitizeText(value:FormDataEntryValue|null,fallback="",maxLength=200){const text=typeof value==="string"?value.trim():"";return(text||fallback).replace(/[\u0000-\u001f\u007f]/g,"").slice(0,maxLength)}
+function sanitizeFileName(value:string){return value.normalize("NFKC").replace(/[\\/:*?"<>|]/g,"").replace(/\s+/g,"_").replace(/_+/g,"_").replace(/^\.+/,"").slice(0,120)||"campsite_file.kmz"}
+function sanitizeParkName(value:string){return sanitizeFileName(value||"公園名不明").replace(/\.(kmz|kml)$/i,"").slice(0,50)||"公園名不明"}
+function toNullableInteger(value:FormDataEntryValue|null){if(typeof value!=="string"||value.trim()==="")return null;const n=Number(value);return Number.isFinite(n)?Math.max(0,Math.trunc(n)):null}
+function toNullableNumber(value:FormDataEntryValue|null){if(typeof value!=="string"||value.trim()==="")return null;const n=Number(value);return Number.isFinite(n)?n:null}
+function bytesToHex(bytes:Uint8Array){return Array.from(bytes).map(b=>b.toString(16).padStart(2,"0")).join("")}
+async function calculateSha256(arrayBuffer:ArrayBuffer){return bytesToHex(new Uint8Array(await crypto.subtle.digest("SHA-256",arrayBuffer)))}
+function getDateParts(){const now=new Date();const parts=new Intl.DateTimeFormat("ja-JP",{timeZone:"Asia/Tokyo",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false}).formatToParts(now);const map=Object.fromEntries(parts.map(p=>[p.type,p.value]));return{year:map.year,month:map.month,day:map.day,timestamp:`${map.year}${map.month}${map.day}_${map.hour}${map.minute}${map.second}`}}
+async function triggerPoiIngest(supabaseUrl:string,serviceRoleKey:string,recordId:string){try{const r=await fetch(`${supabaseUrl}/functions/v1/ingest-campsite-pois`,{method:"POST",headers:{Authorization:`Bearer ${serviceRoleKey}`,apikey:serviceRoleKey,"Content-Type":"application/json"},body:JSON.stringify({record_id:recordId})});const text=await r.text();if(!r.ok)console.error("POI ingest failed",r.status,text);else console.log("POI ingest complete",recordId,text)}catch(e){console.error("POI ingest trigger error",e)}}
+async function triggerBackfill(supabaseUrl:string,serviceRoleKey:string){try{const r=await fetch(`${supabaseUrl}/functions/v1/backfill-campsite-pois`,{method:"POST",headers:{Authorization:`Bearer ${serviceRoleKey}`,apikey:serviceRoleKey,"Content-Type":"application/json"},body:JSON.stringify({limit:25})});const text=await r.text();if(!r.ok)console.error("POI backfill failed",r.status,text);else console.log("POI backfill complete",text)}catch(e){console.error("POI backfill trigger error",e)}}
+Deno.serve(async(request:Request):Promise<Response>=>{
+ if(request.method==="OPTIONS")return new Response("ok",{headers:corsHeaders});
+ if(request.method!=="POST")return jsonResponse({success:false,error:"POSTリクエストのみ受け付けます。"},405);
+ const supabaseUrl=Deno.env.get("SUPABASE_URL");const anonKey=Deno.env.get("SUPABASE_ANON_KEY");const serviceRoleKey=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");if(!supabaseUrl||!anonKey||!serviceRoleKey)return jsonResponse({success:false,error:"サーバー設定に問題があります。"},500);
+ const authHeader=request.headers.get("Authorization")||"";if(!authHeader.startsWith("Bearer "))return jsonResponse({success:false,error:"Discord認証が必要です。"},401);
+ const userClient=createClient(supabaseUrl,anonKey,{global:{headers:{Authorization:authHeader}},auth:{persistSession:false,autoRefreshToken:false}});
+ const {data:userData,error:userError}=await userClient.auth.getUser();const user=userData?.user;if(userError||!user)return jsonResponse({success:false,error:"Discord認証を確認できませんでした。"},401);
+ const supabase=createClient(supabaseUrl,serviceRoleKey,{auth:{persistSession:false,autoRefreshToken:false}});
+ const {data:creator,error:creatorError}=await supabase.from("ca_access_requests").select("auth_user_id,discord_user_id,discord_name,discord_global_name,status").eq("auth_user_id",user.id).maybeSingle();
+ if(creatorError){console.error("creator lookup failed",creatorError);return jsonResponse({success:false,error:"作成者情報を確認できませんでした。"},500)}
+ if(!creator||creator.status!=="approved")return jsonResponse({success:false,error:"承認済みCAアカウントが必要です。"},403);
+ try{
+  const formData=await request.formData();const fileValue=formData.get("file");if(!(fileValue instanceof File))return jsonResponse({success:false,error:"送信ファイルがありません。"},400);
+  const actionType=sanitizeText(formData.get("action_type")) as ActionType;if(!ALLOWED_ACTION_TYPES.includes(actionType))return jsonResponse({success:false,error:"実行種別が正しくありません。"},400);
+  if(fileValue.size<=0)return jsonResponse({success:false,error:"ファイルが空です。"},400);if(fileValue.size>MAX_FILE_SIZE)return jsonResponse({success:false,error:"ファイルサイズが20MBを超えています。"},413);
+  const originalFileName=sanitizeFileName(sanitizeText(formData.get("original_file_name"),fileValue.name));const lowerName=originalFileName.toLowerCase();if(!ALLOWED_EXTENSIONS.some(x=>lowerName.endsWith(x)))return jsonResponse({success:false,error:"KMZまたはKMLファイルのみ送信できます。"},400);
+  const mimeType=fileValue.type||"application/octet-stream";if(mimeType&&!ALLOWED_MIME_TYPES.includes(mimeType))return jsonResponse({success:false,error:"許可されていないファイル形式です。"},400);
+  const anonymousDeviceId=sanitizeText(formData.get("anonymous_device_id"),"",100);if(!anonymousDeviceId)return jsonResponse({success:false,error:"匿名端末IDがありません。"},400);
+  const parkName=sanitizeParkName(sanitizeText(formData.get("park_name"),"公園名不明"));const arrayBuffer=await fileValue.arrayBuffer();const fileHash=await calculateSha256(arrayBuffer);
+  const {data:duplicateRecord,error:duplicateSearchError}=await supabase.from("campsite_kmz_uploads").select("id, storage_path, display_file_name").eq("file_hash",fileHash).not("storage_path","is",null).is("deleted_at",null).order("created_at",{ascending:false}).limit(1).maybeSingle();if(duplicateSearchError)throw new Error(`重複確認に失敗しました: ${duplicateSearchError.message}`);
+  const date=getDateParts();const prefix=actionType==="kmz_generate"?"KMZ作成":actionType==="distance_check"?"距離チェック":"CREATIVE";const extension=lowerName.endsWith(".kml")?".kml":".kmz";const displayFileName=sanitizeFileName(`推定_${parkName}_${prefix}_${date.timestamp}${extension}`);
+  let storagePath:string|null=duplicateRecord?.storage_path??null;const uploadStatus=duplicateRecord?"duplicate":"uploaded";
+  if(!duplicateRecord){const folder=actionType==="kmz_generate"?"kmz-generate":actionType==="distance_check"?"distance-check":"creative-mode";const shortId=crypto.randomUUID().slice(0,8);const storageFileName=`${actionType}_${date.timestamp}_${shortId}${extension}`;storagePath=`${folder}/${date.year}/${date.month}/${date.day}/${storageFileName}`;const {error:storageError}=await supabase.storage.from(BUCKET_NAME).upload(storagePath,new Uint8Array(arrayBuffer),{contentType:mimeType,upsert:false});if(storageError)return jsonResponse({success:false,error:"ファイルをサーバーへ保存できませんでした。"},500)}
+  const insertData={anonymous_device_id:anonymousDeviceId,action_type:actionType,original_file_name:originalFileName,display_file_name:duplicateRecord?.display_file_name??displayFileName,park_name:parkName,storage_bucket:BUCKET_NAME,storage_path:storagePath,file_hash:fileHash,file_size_bytes:fileValue.size,mime_type:mimeType,poi_count:toNullableInteger(formData.get("poi_count")),existing_poi_count:toNullableInteger(formData.get("existing_poi_count")),added_poi_count:toNullableInteger(formData.get("added_poi_count")),warning_count:toNullableInteger(formData.get("warning_count")),campsite_score:toNullableNumber(formData.get("campsite_score")),campsite_rank:sanitizeText(formData.get("campsite_rank"),"",50)||null,upload_status:uploadStatus,duplicate_of:duplicateRecord?.id??null,error_message:null,created_by_auth_user_id:user.id,created_by_discord_user_id:creator.discord_user_id,created_by_discord_name:creator.discord_name,created_by_discord_global_name:creator.discord_global_name||null};
+  const {data:insertedRecord,error:insertError}=await supabase.from("campsite_kmz_uploads").insert(insertData).select("id, upload_status, created_at, expires_at").single();if(insertError){if(!duplicateRecord&&storagePath)await supabase.storage.from(BUCKET_NAME).remove([storagePath]);throw new Error(`履歴登録に失敗しました: ${insertError.message}`)}
+  EdgeRuntime.waitUntil(Promise.allSettled([triggerPoiIngest(supabaseUrl,serviceRoleKey,insertedRecord.id),triggerBackfill(supabaseUrl,serviceRoleKey)]));
+  return jsonResponse({success:true,duplicate:Boolean(duplicateRecord),upload_status:uploadStatus,record_id:insertedRecord.id,display_file_name:duplicateRecord?.display_file_name??displayFileName,created_at:insertedRecord.created_at,expires_at:insertedRecord.expires_at});
+ }catch(error){console.error("upload-campsite-file:",error);return jsonResponse({success:false,error:error instanceof Error?error.message:"不明なエラーが発生しました。"},500)}
+});
