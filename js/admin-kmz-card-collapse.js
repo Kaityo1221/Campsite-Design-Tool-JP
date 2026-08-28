@@ -1,10 +1,16 @@
-/* 管理者画面: 推測地点カードの詳細折りたたみ */
+/* 管理者画面: 推測地点カードの詳細折りたたみ + 作成者表示 */
 (function () {
   "use strict";
 
   const STYLE_ID = "adminKmzCardCollapseStyles";
   const CARD_SELECTOR = ".ak-card";
   const ENHANCED_ATTR = "data-ak-collapsible";
+  const CREATOR_ATTR = "data-ak-creator-ready";
+  const FUNCTION_NAME = "admin-kmz-access";
+
+  let creatorIndex = new Map();
+  let creatorLoading = null;
+  let creatorFetchedAt = 0;
 
   function ensureStyles() {
     if (document.getElementById(STYLE_ID)) return;
@@ -21,18 +27,113 @@
       .ak-card[${ENHANCED_ATTR}="1"]>.ak-card-collapse:not([open])~*{display:none!important}
       .ak-card[${ENHANCED_ATTR}="1"]>.ak-card-top{margin:0;padding:10px 14px 0}
       .ak-card[${ENHANCED_ATTR}="1"]>.ak-card-top .ak-title h4{display:none}
+      .ak-card[${ENHANCED_ATTR}="1"]>.ak-creator-line{margin:10px 14px 0;padding:10px 12px;border:1px solid rgba(167,139,250,.2);border-radius:11px;background:rgba(124,58,237,.07);color:#cbd5e1;font-size:9px;line-height:1.55}
+      .ak-card[${ENHANCED_ATTR}="1"]>.ak-creator-line strong{display:block;margin-bottom:2px;color:#ede9fe;font-size:11px;overflow-wrap:anywhere}
+      .ak-card[${ENHANCED_ATTR}="1"]>.ak-creator-line small{color:#7c8aa0;font-size:8px;overflow-wrap:anywhere}
       .ak-card[${ENHANCED_ATTR}="1"]>.ak-meta{margin:12px 14px 0}
       .ak-card[${ENHANCED_ATTR}="1"]>.ak-actions{margin:12px 14px 14px}
       .ak-card[${ENHANCED_ATTR}="1"]>.admin-kmz-quick{margin:11px 14px 0}
       .ak-card[${ENHANCED_ATTR}="1"]>.admin-kmz-detail{margin:8px 14px 0}
-      @media(max-width:680px){.ak-card[${ENHANCED_ATTR}="1"]>.ak-card-collapse>summary{padding:12px 13px}.ak-card[${ENHANCED_ATTR}="1"]>.ak-card-top{padding-left:13px;padding-right:13px}.ak-card[${ENHANCED_ATTR}="1"]>.ak-meta,.ak-card[${ENHANCED_ATTR}="1"]>.admin-kmz-quick,.ak-card[${ENHANCED_ATTR}="1"]>.admin-kmz-detail{margin-left:13px;margin-right:13px}.ak-card[${ENHANCED_ATTR}="1"]>.ak-actions{margin-left:13px;margin-right:13px;margin-bottom:13px}}
+      @media(max-width:680px){.ak-card[${ENHANCED_ATTR}="1"]>.ak-card-collapse>summary{padding:12px 13px}.ak-card[${ENHANCED_ATTR}="1"]>.ak-card-top{padding-left:13px;padding-right:13px}.ak-card[${ENHANCED_ATTR}="1"]>.ak-creator-line,.ak-card[${ENHANCED_ATTR}="1"]>.ak-meta,.ak-card[${ENHANCED_ATTR}="1"]>.admin-kmz-quick,.ak-card[${ENHANCED_ATTR}="1"]>.admin-kmz-detail{margin-left:13px;margin-right:13px}.ak-card[${ENHANCED_ATTR}="1"]>.ak-actions{margin-left:13px;margin-right:13px;margin-bottom:13px}}
     `;
     document.head.appendChild(style);
   }
 
+  function recordIdForCard(card) {
+    return card.querySelector("[data-ak-download]")?.dataset?.akDownload || "";
+  }
+
+  function renderCreator(card) {
+    if (!(card instanceof HTMLElement)) return;
+    if (card.getAttribute(CREATOR_ATTR) === "1") return;
+
+    const recordId = recordIdForCard(card);
+    if (!recordId) return;
+    const record = creatorIndex.get(recordId);
+    if (!record) return;
+
+    const line = document.createElement("div");
+    line.className = "ak-creator-line";
+
+    const label = document.createElement("strong");
+    if (record.hasCreatorIdentity) {
+      label.textContent = `👤 作成者　${record.creatorDisplayName || "作成者"}`;
+      line.appendChild(label);
+
+      const id = document.createElement("small");
+      id.textContent = `Discord User ID: ${record.creatorDiscordUserId || "-"}`;
+      line.appendChild(id);
+    } else {
+      label.textContent = "👤 作成者　記録なし";
+      line.appendChild(label);
+
+      const note = document.createElement("small");
+      note.textContent = "Discord認証の作成者記録を開始する前の履歴です";
+      line.appendChild(note);
+    }
+
+    const top = card.querySelector(":scope > .ak-card-top");
+    if (top) top.insertAdjacentElement("afterend", line);
+    else card.appendChild(line);
+    card.setAttribute(CREATOR_ATTR, "1");
+  }
+
+  function renderCreators(root = document) {
+    const scope = root?.querySelectorAll ? root : document;
+    if (scope.matches?.(CARD_SELECTOR)) renderCreator(scope);
+    scope.querySelectorAll?.(`${CARD_SELECTOR}:not([${CREATOR_ATTR}="1"])`).forEach(renderCreator);
+  }
+
+  async function loadCreatorIndex(force = false) {
+    if (!window.CampsiteAdminAuth?.isUnlocked?.()) return;
+    if (!window.campsiteSupabase?.functions) return;
+    if (creatorLoading) return creatorLoading;
+    if (!force && creatorIndex.size && Date.now() - creatorFetchedAt < 30000) {
+      renderCreators(document);
+      return;
+    }
+
+    const sessionToken = window.CampsiteAdminAuth?.getSessionToken?.() || "";
+    if (!sessionToken) return;
+
+    creatorLoading = (async () => {
+      try {
+        const { data, error } = await window.campsiteSupabase.functions.invoke(FUNCTION_NAME, {
+          body: {
+            action: "list",
+            sessionToken,
+            currentDeviceId: localStorage.getItem("campsiteUserId") || ""
+          }
+        });
+        if (error || !data?.success) return;
+
+        const next = new Map();
+        [...(data.historyRecords || []), ...(data.uniqueRecords || [])].forEach(record => {
+          if (record?.id) next.set(String(record.id), record);
+        });
+        creatorIndex = next;
+        creatorFetchedAt = Date.now();
+        document.querySelectorAll(`[${CREATOR_ATTR}="1"]`).forEach(card => {
+          card.removeAttribute(CREATOR_ATTR);
+          card.querySelector(":scope > .ak-creator-line")?.remove();
+        });
+        renderCreators(document);
+      } catch (error) {
+        console.warn("作成者情報の取得をスキップしました", error);
+      } finally {
+        creatorLoading = null;
+      }
+    })();
+
+    return creatorLoading;
+  }
+
   function enhanceCard(card) {
     if (!(card instanceof HTMLElement)) return;
-    if (card.getAttribute(ENHANCED_ATTR) === "1") return;
+    if (card.getAttribute(ENHANCED_ATTR) === "1") {
+      renderCreator(card);
+      return;
+    }
 
     const top = card.querySelector(":scope > .ak-card-top");
     const title = top?.querySelector(".ak-title h4");
@@ -48,25 +149,42 @@
     details.appendChild(summary);
     card.insertBefore(details, card.firstChild);
     card.setAttribute(ENHANCED_ATTR, "1");
+    renderCreator(card);
   }
 
   function enhanceAll(root) {
     const scope = root?.querySelectorAll ? root : document;
     if (scope.matches?.(CARD_SELECTOR)) enhanceCard(scope);
     scope.querySelectorAll?.(`${CARD_SELECTOR}:not([${ENHANCED_ATTR}="1"])`).forEach(enhanceCard);
+    renderCreators(scope);
+  }
+
+  function hasUnknownCard(root) {
+    const scope = root?.querySelectorAll ? root : document;
+    const cards = [];
+    if (scope.matches?.(CARD_SELECTOR)) cards.push(scope);
+    scope.querySelectorAll?.(CARD_SELECTOR).forEach(card => cards.push(card));
+    return cards.some(card => {
+      const id = recordIdForCard(card);
+      return id && !creatorIndex.has(id);
+    });
   }
 
   function start() {
     ensureStyles();
     enhanceAll(document);
+    loadCreatorIndex(false);
 
     const observer = new MutationObserver((mutations) => {
+      let shouldRefreshCreators = false;
       for (const mutation of mutations) {
         for (const node of mutation.addedNodes) {
           if (!(node instanceof HTMLElement)) continue;
           enhanceAll(node);
+          if (hasUnknownCard(node)) shouldRefreshCreators = true;
         }
       }
+      if (shouldRefreshCreators) loadCreatorIndex(true);
     });
 
     observer.observe(document.body, { childList: true, subtree: true });
