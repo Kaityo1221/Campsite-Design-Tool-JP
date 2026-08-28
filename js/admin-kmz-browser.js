@@ -33,6 +33,7 @@
       await loadScript("js/admin-kmz-browser-v2.js?v=2", "campsiteAdminKmzBrowserV2Script");
       await loadScript("js/admin-kmz-card-collapse.js?v=2", "campsiteAdminKmzCardCollapseScript");
       await loadScript("js/admin-mobile-folders.js?v=3", "campsiteAdminMobileFoldersScript");
+      await loadScript("js/admin-kmz-creator-inference.js?v=1", "campsiteAdminKmzCreatorInferenceScript");
       await loadScript("js/admin-map-deps.js?v=1", "campsiteAdminMapDepsScript");
       await window.CampsiteAdminMapDeps?.ready?.();
       await loadScript("js/admin-past-site-state.js?v=1", "campsiteAdminPastSiteStateScript");
