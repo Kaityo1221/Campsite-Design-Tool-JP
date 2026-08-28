@@ -11,11 +11,7 @@ const MAX_ROWS = 5000;
 function jsonResponse(body: Record<string, unknown>, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,
-    headers: {
-      ...corsHeaders,
-      "Content-Type": "application/json; charset=utf-8",
-      "Cache-Control": "no-store",
-    },
+    headers: { ...corsHeaders, "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" },
   });
 }
 
@@ -67,75 +63,103 @@ function displayName(profile: CreatorProfile): string {
   return `Discord ${profile.discordUserId}`;
 }
 
+function addEvidence(
+  creatorsByDevice: Map<string, Map<string, CreatorProfile>>,
+  deviceId: string,
+  profile: Omit<CreatorProfile, "evidenceCount">,
+  weight = 1,
+) {
+  if (!deviceId || !profile.discordUserId) return;
+  if (!creatorsByDevice.has(deviceId)) creatorsByDevice.set(deviceId, new Map());
+  const deviceCreators = creatorsByDevice.get(deviceId)!;
+  const existing = deviceCreators.get(profile.discordUserId);
+
+  if (!existing) {
+    deviceCreators.set(profile.discordUserId, { ...profile, evidenceCount: Math.max(1, weight) });
+    return;
+  }
+
+  existing.evidenceCount += Math.max(1, weight);
+  if (profile.firstVerifiedAt && (!existing.firstVerifiedAt || profile.firstVerifiedAt < existing.firstVerifiedAt)) {
+    existing.firstVerifiedAt = profile.firstVerifiedAt;
+  }
+  if (profile.lastVerifiedAt && (!existing.lastVerifiedAt || profile.lastVerifiedAt > existing.lastVerifiedAt)) {
+    existing.lastVerifiedAt = profile.lastVerifiedAt;
+    existing.authUserId = profile.authUserId || existing.authUserId;
+    existing.discordName = profile.discordName || existing.discordName;
+    existing.discordGlobalName = profile.discordGlobalName || existing.discordGlobalName;
+  }
+}
+
 Deno.serve(async (request: Request): Promise<Response> => {
   if (request.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
-  if (request.method !== "POST") {
-    return jsonResponse({ success: false, error: "POSTリクエストのみ受け付けます。" }, 405);
-  }
+  if (request.method !== "POST") return jsonResponse({ success: false, error: "POSTリクエストのみ受け付けます。" }, 405);
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  if (!supabaseUrl || !serviceRoleKey) {
-    return jsonResponse({ success: false, error: "サーバー設定に問題があります。" }, 500);
-  }
+  if (!supabaseUrl || !serviceRoleKey) return jsonResponse({ success: false, error: "サーバー設定に問題があります。" }, 500);
 
-  const supabase = createClient(supabaseUrl, serviceRoleKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+  const supabase = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false, autoRefreshToken: false } });
 
   try {
     const body = await request.json().catch(() => ({}));
     const sessionToken = sanitizeText(body?.sessionToken, 500);
     const session = await requireAdminSession(supabase, sessionToken);
-    if (!session) {
-      return jsonResponse({ success: false, authRequired: true, error: "管理者セッションが無効です。" }, 401);
-    }
+    if (!session) return jsonResponse({ success: false, authRequired: true, error: "管理者セッションが無効です。" }, 401);
 
-    const { data, error } = await supabase
+    const { data: uploadData, error: uploadError } = await supabase
       .from("campsite_kmz_uploads")
       .select("id, anonymous_device_id, created_at, created_by_auth_user_id, created_by_discord_user_id, created_by_discord_name, created_by_discord_global_name")
       .is("deleted_at", null)
       .order("created_at", { ascending: false })
       .limit(MAX_ROWS);
 
-    if (error) {
-      console.error("creator inference query failed", error);
+    if (uploadError) {
+      console.error("creator inference upload query failed", uploadError);
       return jsonResponse({ success: false, error: "作成者推定情報を取得できませんでした。" }, 500);
     }
 
-    const rows = data || [];
+    const { data: linkData, error: linkError } = await supabase
+      .from("ca_device_identity_links")
+      .select("anonymous_device_id, auth_user_id, discord_user_id, discord_name, discord_global_name, first_seen_at, last_seen_at")
+      .order("last_seen_at", { ascending: false })
+      .limit(MAX_ROWS);
+
+    if (linkError) {
+      console.error("creator inference link query failed", linkError);
+      return jsonResponse({ success: false, error: "端末本人確認情報を取得できませんでした。" }, 500);
+    }
+
+    const rows = uploadData || [];
+    const links = linkData || [];
     const creatorsByDevice = new Map<string, Map<string, CreatorProfile>>();
+
+    for (const link of links) {
+      const deviceId = sanitizeText(link.anonymous_device_id, 120);
+      const discordUserId = sanitizeText(link.discord_user_id, 100);
+      addEvidence(creatorsByDevice, deviceId, {
+        authUserId: sanitizeText(link.auth_user_id, 80) || null,
+        discordUserId,
+        discordName: sanitizeText(link.discord_name, 100) || null,
+        discordGlobalName: sanitizeText(link.discord_global_name, 100) || null,
+        firstVerifiedAt: sanitizeText(link.first_seen_at, 80) || null,
+        lastVerifiedAt: sanitizeText(link.last_seen_at, 80) || null,
+      });
+    }
 
     for (const row of rows) {
       const deviceId = sanitizeText(row.anonymous_device_id, 120);
       const discordUserId = sanitizeText(row.created_by_discord_user_id, 100);
       if (!deviceId || !discordUserId) continue;
-
-      if (!creatorsByDevice.has(deviceId)) creatorsByDevice.set(deviceId, new Map());
-      const deviceCreators = creatorsByDevice.get(deviceId)!;
-      const existing = deviceCreators.get(discordUserId);
       const createdAt = sanitizeText(row.created_at, 80) || null;
-
-      if (!existing) {
-        deviceCreators.set(discordUserId, {
-          authUserId: sanitizeText(row.created_by_auth_user_id, 80) || null,
-          discordUserId,
-          discordName: sanitizeText(row.created_by_discord_name, 100) || null,
-          discordGlobalName: sanitizeText(row.created_by_discord_global_name, 100) || null,
-          evidenceCount: 1,
-          firstVerifiedAt: createdAt,
-          lastVerifiedAt: createdAt,
-        });
-      } else {
-        existing.evidenceCount += 1;
-        if (createdAt && (!existing.firstVerifiedAt || createdAt < existing.firstVerifiedAt)) existing.firstVerifiedAt = createdAt;
-        if (createdAt && (!existing.lastVerifiedAt || createdAt > existing.lastVerifiedAt)) {
-          existing.lastVerifiedAt = createdAt;
-          existing.authUserId = sanitizeText(row.created_by_auth_user_id, 80) || existing.authUserId;
-          existing.discordName = sanitizeText(row.created_by_discord_name, 100) || existing.discordName;
-          existing.discordGlobalName = sanitizeText(row.created_by_discord_global_name, 100) || existing.discordGlobalName;
-        }
-      }
+      addEvidence(creatorsByDevice, deviceId, {
+        authUserId: sanitizeText(row.created_by_auth_user_id, 80) || null,
+        discordUserId,
+        discordName: sanitizeText(row.created_by_discord_name, 100) || null,
+        discordGlobalName: sanitizeText(row.created_by_discord_global_name, 100) || null,
+        firstVerifiedAt: createdAt,
+        lastVerifiedAt: createdAt,
+      });
     }
 
     let directCount = 0;
@@ -237,6 +261,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
         unknown: unknownCount,
         identifiedDevices: [...creatorsByDevice.values()].filter((creators) => creators.size === 1).length,
         ambiguousDevices: [...creatorsByDevice.values()].filter((creators) => creators.size > 1).length,
+        linkedDevices: links.length,
       },
       records,
     });
