@@ -1,0 +1,60 @@
+name: CA geo guard check
+
+on:
+  pull_request:
+    paths:
+      - 'js/ca-geo-guard.js'
+      - 'js/ca-geo-log-viewer.js'
+      - 'js/ca-access-bootstrap.js'
+      - 'ca-approval.html'
+      - 'supabase/functions/ca-geo-guard/**'
+      - 'supabase/functions/ca-geo-admin/**'
+      - 'supabase/migrations/*ca_geo_block_log*'
+      - '.github/workflows/ca-geo-guard-check.yml'
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Check browser JavaScript syntax
+        run: |
+          node --check js/ca-geo-guard.js
+          node --check js/ca-geo-log-viewer.js
+          node --check js/ca-access-bootstrap.js
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Check Edge Function TypeScript
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          pairs = [
+              ('supabase/functions/ca-geo-guard/index.ts', '/tmp/ca-geo-guard-check.ts'),
+              ('supabase/functions/ca-geo-admin/index.ts', '/tmp/ca-geo-admin-check.ts'),
+          ]
+          for src, dst in pairs:
+              text = Path(src).read_text()
+              text = text.replace('import "jsr:@supabase/functions-js/edge-runtime.d.ts";\n', '')
+              text = text.replace('import { createClient } from "jsr:@supabase/supabase-js@2";\n', 'declare function createClient(...args: any[]): any;\n')
+              Path(dst).write_text(text)
+          PY
+          deno check /tmp/ca-geo-guard-check.ts
+          deno check /tmp/ca-geo-admin-check.ts
+
+      - name: Check integration contracts
+        run: |
+          grep -q "ca-geo-guard.js?v=1" js/ca-access-bootstrap.js
+          grep -q "ca-geo-log-viewer.js?v=1" ca-approval.html
+          grep -q "interval '30 days'" supabase/migrations/20260828210000_add_ca_geo_block_log.sql
+          grep -q "COAST_BUFFER_METERS = 500" supabase/functions/ca-geo-guard/index.ts
+          grep -q "GPS_ACCURACY_LIMIT_METERS = 100" supabase/functions/ca-geo-guard/index.ts
+          grep -q "NOTIFY_SUPPRESSION_MINUTES = 30" supabase/functions/ca-geo-guard/index.ts

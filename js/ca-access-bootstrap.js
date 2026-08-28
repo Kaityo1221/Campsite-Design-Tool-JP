@@ -39,6 +39,10 @@
       await loadScript(new URL('ca-access.js?v=3', base).href);
     }
 
+    if (!window.CampsiteCaGeoGuard) {
+      await loadScript(new URL('ca-geo-guard.js?v=1', base).href);
+    }
+
     if (!window.CampsiteCaDeviceLink) {
       await loadScript(new URL('ca-device-link.js?v=1', base).href);
     }

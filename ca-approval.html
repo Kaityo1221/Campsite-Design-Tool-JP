@@ -65,10 +65,20 @@
         <h2>利用中</h2>
         <div id="approvedList" class="grid"></div>
       </div>
+      <div id="geoLogSection" class="section hidden">
+        <h2>海外・位置判定ログ</h2>
+        <div class="muted">ブロック判定が発生した時だけ記録します。座標を含む診断ログは会長のみ閲覧でき、30日後に自動削除されます。</div>
+        <div class="toolbar">
+          <button id="geoLogRefreshButton" type="button">ログを更新</button>
+        </div>
+        <div id="geoLogStatus" class="status">位置判定ログを確認しています…</div>
+        <div id="geoLogList" class="grid" style="margin-top:12px"></div>
+      </div>
     </section>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/ca-approval.js?v=3"></script>
+  <script src="js/ca-geo-log-viewer.js?v=1"></script>
 </body>
 </html>
