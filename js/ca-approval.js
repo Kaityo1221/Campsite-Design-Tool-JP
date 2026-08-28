@@ -94,6 +94,15 @@
     return globalName && globalName !== name ? `${globalName} (@${name})` : `@${name}`;
   }
 
+  function statusLabel(status) {
+    return ({
+      pending: '承認待ち',
+      approved: '利用中',
+      rejected: '拒否',
+      revoked: '停止中'
+    })[status] || status;
+  }
+
   function button(label, className, handler) {
     const el = document.createElement('button');
     el.type = 'button';
@@ -119,7 +128,7 @@
     left.append(name, sub);
     const badge = document.createElement('span');
     badge.className = 'badge';
-    badge.textContent = row.status;
+    badge.textContent = statusLabel(row.status);
     head.append(left, badge);
 
     const actions = document.createElement('div');
@@ -131,9 +140,11 @@
         button('拒否', 'danger', () => changeStatus(row.id, 'reject', displayName(row)))
       );
     } else if (row.status === 'approved') {
-      actions.append(button('許可解除', 'warn', () => changeStatus(row.id, 'revoke', displayName(row))));
-    } else {
-      actions.append(button('再許可', 'good', () => changeStatus(row.id, 'restore', displayName(row))));
+      actions.append(button('利用停止', 'warn', () => changeStatus(row.id, 'revoke', displayName(row))));
+    } else if (row.status === 'revoked') {
+      actions.append(button('🔓 利用再開', 'good', () => changeStatus(row.id, 'restore', displayName(row))));
+    } else if (row.status === 'rejected') {
+      actions.append(button('再審査して許可', 'good', () => changeStatus(row.id, 'restore', displayName(row))));
     }
 
     card.append(head, actions);
@@ -178,7 +189,12 @@
   }
 
   async function changeStatus(requestId, action, name) {
-    const labels = { approve: '許可', reject: '拒否', revoke: '許可解除', restore: '再許可' };
+    const labels = {
+      approve: '許可',
+      reject: '拒否',
+      revoke: '利用停止',
+      restore: '利用再開'
+    };
     if (!confirm(`${name} を「${labels[action]}」にしますか？`)) return;
     setStatus(`${name} を更新しています…`);
     try {
