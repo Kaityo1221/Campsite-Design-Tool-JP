@@ -252,7 +252,7 @@ Deno.serve(async (req: Request) => {
   if (auditError) console.error("audit insert failed", auditError);
 
   let approvalEmail = { sent: false, reason: "not_applicable" } as { sent: boolean; reason?: string };
-  if (action === "approve" && target.status !== "approved" && target.auth_user_id) {
+  if ((action === "approve" || action === "restore") && target.status !== "approved" && target.auth_user_id) {
     approvalEmail = await sendApprovalEmail(admin, target.auth_user_id);
   }
 
