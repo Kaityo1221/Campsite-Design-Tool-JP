@@ -11,6 +11,8 @@ const JAPAN_GEOJSON_URL = "https://raw.githubusercontent.com/ricewin/simplify-ja
 const COAST_BUFFER_METERS = 500;
 const GPS_ACCURACY_LIMIT_METERS = 100;
 const NOTIFY_SUPPRESSION_MINUTES = 30;
+const IP_COUNTRY_LOOKUP_URL = "https://api.country.is";
+const IP_COUNTRY_LOOKUP_TIMEOUT_MS = 3500;
 const TEST_SCENARIOS = new Set(["foreign_ip", "gps_overseas", "gps_low_accuracy", "location_denied"]);
 
 type GeoFeature = {
@@ -45,6 +47,11 @@ type BlockParams = {
   metadata?: Record<string, unknown>;
 };
 
+type IpCountryResolution = {
+  country: string;
+  source: string;
+};
+
 let japanFeaturesPromise: Promise<GeoFeature[]> | null = null;
 
 function json(body: unknown, status = 200): Response {
@@ -69,6 +76,62 @@ function normalizeCountry(value: string | null): string {
   const code = (value || "").trim().toUpperCase();
   if (!code || code === "XX" || code === "T1") return "";
   return /^[A-Z]{2}$/.test(code) ? code : "";
+}
+
+function firstForwardedIp(value: string | null): string {
+  if (!value) return "";
+  for (const part of value.split(",")) {
+    const ip = part.trim();
+    if (ip && ip.toLowerCase() !== "unknown") return ip;
+  }
+  return "";
+}
+
+function resolveClientIp(req: Request): { ip: string; source: string } {
+  const cfConnectingIp = firstString(req.headers.get("cf-connecting-ip"));
+  if (cfConnectingIp) return { ip: cfConnectingIp, source: "cf-connecting-ip" };
+
+  const forwardedIp = firstForwardedIp(req.headers.get("x-forwarded-for"));
+  if (forwardedIp) return { ip: forwardedIp, source: "x-forwarded-for" };
+
+  const realIp = firstString(req.headers.get("x-real-ip"));
+  if (realIp) return { ip: realIp, source: "x-real-ip" };
+
+  return { ip: "", source: "none" };
+}
+
+async function lookupCountryByIp(ip: string): Promise<string> {
+  if (!ip) return "";
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), IP_COUNTRY_LOOKUP_TIMEOUT_MS);
+  try {
+    const response = await fetch(`${IP_COUNTRY_LOOKUP_URL}/${encodeURIComponent(ip)}`, {
+      headers: { Accept: "application/json" },
+      signal: controller.signal
+    });
+    if (!response.ok) return "";
+    const data: any = await response.json();
+    return normalizeCountry(typeof data?.country === "string" ? data.country : "");
+  } catch (error) {
+    console.warn("Geo guard IP country lookup failed", error instanceof Error ? error.message : String(error));
+    return "";
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function resolveIpCountry(req: Request): Promise<IpCountryResolution> {
+  const directCountry = normalizeCountry(req.headers.get("cf-ipcountry"));
+  if (directCountry) return { country: directCountry, source: "cf-ipcountry" };
+
+  const clientIp = resolveClientIp(req);
+  if (!clientIp.ip) return { country: "", source: "none" };
+
+  const country = await lookupCountryByIp(clientIp.ip);
+  return {
+    country,
+    source: country ? `country.is:${clientIp.source}` : clientIp.source
+  };
 }
 
 function asRing(value: unknown): number[][] {
@@ -397,8 +460,13 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return json({ error: "Test scenario is not allowed" }, 403);
   }
 
-  let ipCountry = normalizeCountry(req.headers.get("cf-ipcountry"));
-  if (testScenario === "foreign_ip") ipCountry = "US";
+  const ipResolution = await resolveIpCountry(req);
+  let ipCountry = ipResolution.country;
+  let ipCountrySource = ipResolution.source;
+  if (testScenario === "foreign_ip") {
+    ipCountry = "US";
+    ipCountrySource = "chairman_test";
+  }
 
   const latitude = isFiniteNumber(body?.latitude) ? body.latitude : null;
   const longitude = isFiniteNumber(body?.longitude) ? body.longitude : null;
@@ -413,7 +481,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       blockReason: "test_bypass",
       testScenario,
       testBypass: true,
-      metadata: { source: "chairman_test_mode" }
+      metadata: { source: "chairman_test_mode", ip_country_source: ipCountrySource }
     });
     return json({ ok: true, status: "allowed", isAdmin: true, testBypass: true });
   }
@@ -424,7 +492,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       gpsResult: "permission_denied",
       blockReason: "location_permission_denied",
       testScenario: testScenario || null,
-      metadata: { source: testScenario ? "chairman_test_mode" : "browser" }
+      metadata: { source: testScenario ? "chairman_test_mode" : "browser", ip_country_source: ipCountrySource }
     });
     return json({
       ok: true,
@@ -434,7 +502,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
       ipCountry: ipCountry || null,
       gpsResult: "permission_denied",
       isAdmin: context.isAdmin,
-      canContinueTest: context.isAdmin && !!testScenario
+      canContinueTest: context.isAdmin && !!testScenario,
+      ...(context.isAdmin ? { ipCountrySource } : {})
     });
   }
 
@@ -462,15 +531,23 @@ Deno.serve(async (req: Request): Promise<Response> => {
         latitude, longitude, accuracy, ipCountry: null, gpsResult,
         blockReason: "ip_country_unknown",
         testScenario: testScenario || null,
-        metadata: { attempts: 3, distance_to_boundary_m: geo.distanceToBoundaryM }
+        metadata: { attempts: 3, distance_to_boundary_m: geo.distanceToBoundaryM, ip_country_source: ipCountrySource }
       });
       return json({
         ok: true, status: "blocked", blockReason: "ip_country_unknown",
         message: "接続地域を確認できませんでした。通信環境を確認して、もう一度お試しください。",
-        ipCountry: null, gpsResult, isAdmin: context.isAdmin, canContinueTest: false
+        ipCountry: null, gpsResult, isAdmin: context.isAdmin, canContinueTest: false,
+        ...(context.isAdmin ? { ipCountrySource } : {})
       });
     }
-    return json({ ok: true, status: "ip_unknown", ipCountry: null, gpsResult, isAdmin: context.isAdmin });
+    return json({
+      ok: true,
+      status: "ip_unknown",
+      ipCountry: null,
+      gpsResult,
+      isAdmin: context.isAdmin,
+      ...(context.isAdmin ? { ipCountrySource } : {})
+    });
   }
 
   if (ipCountry !== "JP") {
@@ -478,13 +555,14 @@ Deno.serve(async (req: Request): Promise<Response> => {
       latitude, longitude, accuracy, ipCountry, gpsResult,
       blockReason: "foreign_ip",
       testScenario: testScenario || null,
-      metadata: { distance_to_boundary_m: geo.distanceToBoundaryM }
+      metadata: { distance_to_boundary_m: geo.distanceToBoundaryM, ip_country_source: ipCountrySource }
     });
     return json({
       ok: true, status: "blocked", blockReason: "foreign_ip",
       message: "海外からの接続として判定されました。VPN等を使用している場合はオフにしてください。解消しない場合は、別のWi-Fiまたは国内のモバイル回線をお試しください。",
       ipCountry, gpsResult, isAdmin: context.isAdmin,
-      canContinueTest: context.isAdmin && !!testScenario
+      canContinueTest: context.isAdmin && !!testScenario,
+      ...(context.isAdmin ? { ipCountrySource } : {})
     });
   }
 
@@ -494,16 +572,25 @@ Deno.serve(async (req: Request): Promise<Response> => {
         latitude, longitude, accuracy, ipCountry, gpsResult,
         blockReason: "gps_low_accuracy",
         testScenario: testScenario || null,
-        metadata: { accuracy_limit_m: GPS_ACCURACY_LIMIT_METERS }
+        metadata: { accuracy_limit_m: GPS_ACCURACY_LIMIT_METERS, ip_country_source: ipCountrySource }
       });
       return json({
         ok: true, status: "blocked", blockReason: "gps_low_accuracy",
         message: "位置情報の精度を確認できませんでした。空が開けた場所へ移動するか、位置情報を再取得してください。",
         ipCountry, gpsResult, isAdmin: context.isAdmin,
-        canContinueTest: context.isAdmin && !!testScenario
+        canContinueTest: context.isAdmin && !!testScenario,
+        ...(context.isAdmin ? { ipCountrySource } : {})
       });
     }
-    return json({ ok: true, status: "retry_accuracy", ipCountry, gpsResult, accuracy, isAdmin: context.isAdmin });
+    return json({
+      ok: true,
+      status: "retry_accuracy",
+      ipCountry,
+      gpsResult,
+      accuracy,
+      isAdmin: context.isAdmin,
+      ...(context.isAdmin ? { ipCountrySource } : {})
+    });
   }
 
   if (!geo.inJapan) {
@@ -512,18 +599,24 @@ Deno.serve(async (req: Request): Promise<Response> => {
         latitude, longitude, accuracy, ipCountry, gpsResult,
         blockReason: "gps_overseas",
         testScenario: testScenario || null,
-        metadata: { distance_to_boundary_m: geo.distanceToBoundaryM, grace_seconds: 15 }
+        metadata: { distance_to_boundary_m: geo.distanceToBoundaryM, grace_seconds: 15, ip_country_source: ipCountrySource }
       });
       return json({
         ok: true, status: "blocked", blockReason: "gps_overseas",
         message: "現在地が日本国内として確認できませんでした。位置情報を確認して、もう一度お試しください。",
         ipCountry, gpsResult, isAdmin: context.isAdmin,
-        canContinueTest: context.isAdmin && !!testScenario
+        canContinueTest: context.isAdmin && !!testScenario,
+        ...(context.isAdmin ? { ipCountrySource } : {})
       });
     }
     return json({
-      ok: true, status: "retry_overseas", ipCountry, gpsResult,
-      isAdmin: context.isAdmin, distanceToBoundaryM: geo.distanceToBoundaryM
+      ok: true,
+      status: "retry_overseas",
+      ipCountry,
+      gpsResult,
+      isAdmin: context.isAdmin,
+      distanceToBoundaryM: geo.distanceToBoundaryM,
+      ...(context.isAdmin ? { ipCountrySource } : {})
     });
   }
 
@@ -534,6 +627,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     gpsResult,
     withinCoastBuffer: geo.withinBuffer,
     distanceToBoundaryM: geo.distanceToBoundaryM,
-    isAdmin: context.isAdmin
+    isAdmin: context.isAdmin,
+    ...(context.isAdmin ? { ipCountrySource } : {})
   });
 });
