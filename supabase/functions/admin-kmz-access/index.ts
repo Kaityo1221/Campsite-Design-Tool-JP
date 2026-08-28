@@ -69,6 +69,15 @@ function buildDeviceLabels(rows: any[], currentDeviceId: string) {
   return labels;
 }
 
+function creatorDisplayName(row: any): string {
+  const globalName = sanitizeText(row.created_by_discord_global_name, 100);
+  const userName = sanitizeText(row.created_by_discord_name, 100);
+  if (globalName && userName && globalName !== userName) return `${globalName} (@${userName})`;
+  if (userName) return `@${userName}`;
+  if (globalName) return globalName;
+  return "作成者情報なし";
+}
+
 function toPublic(row: any, labels: Map<string, string>, currentDeviceId: string) {
   return {
     id: row.id,
@@ -89,6 +98,12 @@ function toPublic(row: any, labels: Map<string, string>, currentDeviceId: string
     expiresAt: row.expires_at,
     deviceLabel: labels.get(row.anonymous_device_id) || "端末不明",
     isCurrentDevice: Boolean(currentDeviceId && row.anonymous_device_id === currentDeviceId),
+    creatorAuthUserId: row.created_by_auth_user_id || null,
+    creatorDiscordUserId: row.created_by_discord_user_id || null,
+    creatorDiscordName: row.created_by_discord_name || null,
+    creatorDiscordGlobalName: row.created_by_discord_global_name || null,
+    creatorDisplayName: creatorDisplayName(row),
+    hasCreatorIdentity: Boolean(row.created_by_discord_user_id),
   };
 }
 
@@ -162,7 +177,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
       const currentDeviceId = sanitizeText(body?.currentDeviceId, 100);
       const { data, error } = await supabase
         .from("campsite_kmz_uploads")
-        .select("id, anonymous_device_id, action_type, original_file_name, display_file_name, park_name, storage_bucket, storage_path, file_hash, file_size_bytes, poi_count, existing_poi_count, added_poi_count, warning_count, campsite_score, campsite_rank, upload_status, duplicate_of, created_at, expires_at")
+        .select("id, anonymous_device_id, action_type, original_file_name, display_file_name, park_name, storage_bucket, storage_path, file_hash, file_size_bytes, poi_count, existing_poi_count, added_poi_count, warning_count, campsite_score, campsite_rank, upload_status, duplicate_of, created_at, expires_at, created_by_auth_user_id, created_by_discord_user_id, created_by_discord_name, created_by_discord_global_name")
         .is("deleted_at", null)
         .order("created_at", { ascending: false })
         .limit(MAX_ROWS);
