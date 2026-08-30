@@ -26,6 +26,14 @@
   if(typeof window.applyCreativePatches!=='function'){document.body.textContent='Creative Modeの拡張機能を読み込めませんでした。';return;}
   src=window.applyCreativePatches(src);
 
+  // 開発中の雨雲チェック。Creative Modeのオープニングだけに小さな入口を出す。
+  // Client IDはrain-dev.html側のlocalStorageだけに保存し、リポジトリには持たない。
+  const rainDevNeedle="  let html=await res.text();";
+  const rainDevReplacement=`  let html=await res.text();
+  html=html.replace('</style>', '.rain-dev-entry{position:absolute;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:3;padding:7px 10px;border:1px solid rgba(158,207,255,.45);border-radius:999px;background:rgba(20,31,43,.55);color:rgba(220,239,255,.84);font-size:10px;font-weight:950;letter-spacing:.06em;text-decoration:none;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}.rain-dev-entry:active{transform:scale(.97)}</style>');
+  html=html.replace('<div id="entry" class="entry">','<div id="entry" class="entry"><a class="rain-dev-entry" href="./rain-dev.html" aria-label="開発中の雨雲チェック">☔ 開発中</a>');`;
+  if(src.includes(rainDevNeedle))src=src.replace(rainDevNeedle,rainDevReplacement);
+
   // 日本CA向け設計支援。
   // 25件上限 / 50m未満は自動NGにしない / 日本CA向け設計ガイド / 理由の再確認。
   const helperNeedle='function snapshot(){';
