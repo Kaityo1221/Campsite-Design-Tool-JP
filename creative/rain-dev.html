@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>RAIN WATCH DEV | Campsite Lab</title>
+<script src="../js/ca-access-bootstrap.js?v=1"></script>
+<style>
+:root{--ink:#382d1d;--gold:#d8b766;--edge:#8a6b31;--paper:#fffaf0;--muted:#746957;--rain:#2c76be}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#17130f;color:#fff8e8}button,input{font:inherit}button{touch-action:manipulation}
+body{padding:calc(14px + env(safe-area-inset-top)) 14px calc(24px + env(safe-area-inset-bottom));background:radial-gradient(circle at 85% 10%,rgba(44,118,190,.28),transparent 35%),linear-gradient(180deg,#201b15,#15120f)}
+.shell{width:min(720px,100%);margin:0 auto}.top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}.back{min-height:42px;padding:0 13px;border:1px solid rgba(255,239,200,.4);border-radius:13px;background:rgba(255,253,247,.1);color:#fff8e8;font-weight:900}.dev{padding:6px 9px;border:1px solid rgba(255,213,92,.55);border-radius:999px;background:rgba(216,183,102,.14);color:#f7dfaa;font-size:11px;font-weight:950;letter-spacing:.08em}.hero{padding:18px;border:1px solid rgba(255,239,200,.25);border-radius:22px;background:rgba(42,36,28,.78);box-shadow:0 18px 45px rgba(0,0,0,.22)}.eyebrow{font-size:11px;font-weight:950;letter-spacing:.13em;color:#9ecfff}.hero h1{margin:5px 0 3px;font-size:clamp(28px,8vw,44px);line-height:1}.hero p{margin:9px 0 0;color:#e9ddc7;font-size:13px;line-height:1.65}.card{margin-top:12px;padding:14px;border:1px solid rgba(255,239,200,.22);border-radius:18px;background:rgba(33,29,23,.9)}.card h2{margin:0 0 10px;font-size:15px}.label{display:block;margin-top:10px;font-size:11px;font-weight:900;color:#f7dfaa}.input{width:100%;margin-top:6px;padding:12px;border:1px solid rgba(255,239,200,.35);border-radius:12px;background:#fffdf7;color:var(--ink)}.file{position:relative;display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;margin-top:6px;padding:13px;border:1px dashed rgba(158,207,255,.6);border-radius:14px;background:rgba(44,118,190,.09);font-weight:900}.file input{position:absolute;inset:0;width:100%;height:100%;opacity:0}.sub{margin-top:6px;font-size:11px;color:#cfc4b2;line-height:1.5}.row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.btn{min-height:48px;border:1px solid rgba(255,239,200,.42);border-radius:13px;background:#fff8e6;color:var(--ink);font-weight:950}.btn.primary{background:linear-gradient(180deg,#b7d9f6,#6eace2);border-color:#8fc3ef;color:#173956}.btn:disabled{opacity:.42}.status{margin-top:10px;padding:10px 11px;border-radius:12px;background:rgba(255,255,255,.07);font-size:12px;font-weight:850;line-height:1.5}.coord{font-variant-numeric:tabular-nums;color:#9ecfff}.summary{display:none}.summary.show{display:block}.score{display:flex;align-items:center;justify-content:space-between;gap:12px}.score strong{font-size:26px}.score .level{font-size:13px;font-weight:950}.timeline{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:12px}.slot{padding:9px 5px;border:1px solid rgba(255,239,200,.18);border-radius:12px;background:rgba(255,255,255,.055);text-align:center}.slot time{display:block;font-size:10px;color:#cfc4b2}.slot b{display:block;margin-top:5px;font-size:15px}.slot small{font-size:9px;color:#cfc4b2}.advice{margin-top:12px;padding:12px;border-left:4px solid #9ecfff;border-radius:8px;background:rgba(44,118,190,.12);font-size:13px;font-weight:850;line-height:1.6}.foot{margin-top:12px;font-size:10px;color:#bfb3a0;line-height:1.6}.danger{color:#ffb6aa}.ok{color:#bde3b9}@media(max-width:520px){.timeline{grid-template-columns:repeat(3,minmax(0,1fr))}.row{grid-template-columns:1fr}.hero{padding:15px}}
+</style>
+</head>
+<body>
+<main class="shell">
+  <div class="top"><button class="back" type="button" onclick="location.href='./index.html'">← CREATIVE MODE</button><span class="dev">DEVELOPMENT</span></div>
+  <section class="hero">
+    <div class="eyebrow">CAMPSITE RAIN WATCH</div>
+    <h1>☔ 雨雲チェック</h1>
+    <p>KMZの中心地点、または現在地を使って、Yahoo! JAPAN 気象情報APIの現在の降水強度と60分先までの予測を確認します。</p>
+  </section>
+
+  <section class="card">
+    <h2>1. Yahoo Client ID</h2>
+    <label class="label" for="clientId">Client ID（この端末だけに保存）</label>
+    <input id="clientId" class="input" type="password" autocomplete="off" placeholder="Yahoo!デベロッパーネットワークのClient ID">
+    <div class="sub">GitHubやKMZには保存しません。このブラウザのlocalStorageだけに保持します。</div>
+  </section>
+
+  <section class="card">
+    <h2>2. 地点を決める</h2>
+    <label class="file" for="rainFile"><span>🗺️</span><span id="rainFileLabel">KMZ / KMLを選ぶ</span><input id="rainFile" type="file" accept=".kmz,.kml"></label>
+    <div class="row"><button id="useGps" class="btn" type="button">◎ 現在地を使う</button><button id="checkRain" class="btn primary" type="button" disabled>雨予報を取得</button></div>
+    <div id="locationStatus" class="status">地点を選んでください。</div>
+  </section>
+
+  <section id="rainSummary" class="card summary" aria-live="polite">
+    <div class="score"><div><div class="eyebrow">MEETUP RAIN NOWCAST</div><strong id="rainHeadline">判定中</strong></div><div id="rainLevel" class="level"></div></div>
+    <div id="rainTimeline" class="timeline"></div>
+    <div id="rainAdvice" class="advice"></div>
+    <div id="rainUpdated" class="foot"></div>
+  </section>
+
+  <div class="foot">※ 降水強度は気象レーダーから時間雨量（mm/h）へ換算した値で、実際の雨量そのものではありません。開発中機能です。</div>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+(async()=>{
+  'use strict';
+  while(!window.CampsiteCaAccess){await new Promise(r=>setTimeout(r,80));}
+  while(document.getElementById('caAccessGate')){await new Promise(r=>setTimeout(r,120));}
+
+  const ID_KEY='campsite-yahoo-weather-client-id';
+  const clientId=document.getElementById('clientId');
+  const fileInput=document.getElementById('rainFile');
+  const fileLabel=document.getElementById('rainFileLabel');
+  const gpsButton=document.getElementById('useGps');
+  const checkButton=document.getElementById('checkRain');
+  const locationStatus=document.getElementById('locationStatus');
+  const summary=document.getElementById('rainSummary');
+  const headline=document.getElementById('rainHeadline');
+  const level=document.getElementById('rainLevel');
+  const timeline=document.getElementById('rainTimeline');
+  const advice=document.getElementById('rainAdvice');
+  const updated=document.getElementById('rainUpdated');
+  let point=null;
+
+  try{clientId.value=localStorage.getItem(ID_KEY)||'';}catch{}
+  clientId.addEventListener('change',()=>{try{const v=clientId.value.trim();if(v)localStorage.setItem(ID_KEY,v);else localStorage.removeItem(ID_KEY);}catch{} updateReady();});
+  clientId.addEventListener('input',updateReady);
+
+  function updateReady(){checkButton.disabled=!(point&&clientId.value.trim());}
+  function setPoint(lat,lng,source){point={lat,lng,source};locationStatus.innerHTML=`${source}<br><span class="coord">${lat.toFixed(6)}, ${lng.toFixed(6)}</span>`;updateReady();}
+  function parseCoordinates(kml){
+    const doc=new DOMParser().parseFromString(kml,'application/xml');
+    if(doc.querySelector('parsererror'))throw new Error('KMLを解析できませんでした。');
+    const pts=[];
+    doc.querySelectorAll('coordinates').forEach(node=>{
+      String(node.textContent||'').trim().split(/\s+/).forEach(token=>{
+        const [lng,lat]=token.split(',').map(Number);
+        if(Number.isFinite(lat)&&Number.isFinite(lng))pts.push([lat,lng]);
+      });
+    });
+    if(!pts.length)throw new Error('KMZ / KML内に座標が見つかりませんでした。');
+    let minLat=90,maxLat=-90,minLng=180,maxLng=-180;
+    pts.forEach(([lat,lng])=>{minLat=Math.min(minLat,lat);maxLat=Math.max(maxLat,lat);minLng=Math.min(minLng,lng);maxLng=Math.max(maxLng,lng);});
+    return {lat:(minLat+maxLat)/2,lng:(minLng+maxLng)/2,count:pts.length};
+  }
+  async function kmlTextFromFile(file){
+    if(/\.kml$/i.test(file.name))return file.text();
+    if(!/\.kmz$/i.test(file.name))throw new Error('KMZ / KMLを選択してください。');
+    const zip=await JSZip.loadAsync(file);
+    const names=Object.keys(zip.files).filter(n=>/\.kml$/i.test(n)&&!zip.files[n].dir);
+    if(!names.length)throw new Error('KMZ内にKMLが見つかりませんでした。');
+    const preferred=names.find(n=>/(^|\/)doc\.kml$/i.test(n))||names[0];
+    return zip.files[preferred].async('text');
+  }
+
+  fileInput.addEventListener('change',async()=>{
+    const file=fileInput.files&&fileInput.files[0];if(!file)return;
+    fileLabel.textContent=file.name;locationStatus.textContent='KMZ / KMLを解析中…';checkButton.disabled=true;
+    try{const p=parseCoordinates(await kmlTextFromFile(file));setPoint(p.lat,p.lng,`🗺️ ${file.name} の中心地点（${p.count}座標から算出）`);}catch(err){point=null;locationStatus.innerHTML=`<span class="danger">${escapeHtml(err.message||'読み込みに失敗しました。')}</span>`;updateReady();}
+  });
+
+  gpsButton.addEventListener('click',()=>{
+    if(!navigator.geolocation){locationStatus.textContent='この端末では位置情報を利用できません。';return;}
+    locationStatus.textContent='現在地を取得中…';gpsButton.disabled=true;
+    navigator.geolocation.getCurrentPosition(pos=>{gpsButton.disabled=false;setPoint(pos.coords.latitude,pos.coords.longitude,`◎ 現在地 ±${Math.round(pos.coords.accuracy||0)}m`);},()=>{gpsButton.disabled=false;locationStatus.innerHTML='<span class="danger">位置情報を取得できませんでした。</span>';},{enableHighAccuracy:true,maximumAge:5000,timeout:15000});
+  });
+
+  function escapeHtml(v){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+  function yahooJsonp(lat,lng,appid){return new Promise((resolve,reject)=>{
+    const cb='__campsiteYahooRain'+Date.now()+Math.random().toString(36).slice(2);
+    const script=document.createElement('script');
+    const timer=setTimeout(()=>finish(new Error('Yahoo雨予報の応答がありませんでした。')),15000);
+    function finish(err,data){clearTimeout(timer);try{delete window[cb];}catch{window[cb]=undefined;}script.remove();err?reject(err):resolve(data);}
+    window[cb]=data=>finish(null,data);
+    script.onerror=()=>finish(new Error('Yahoo雨予報を取得できませんでした。Client IDや通信状態を確認してください。'));
+    const params=new URLSearchParams({coordinates:`${lng},${lat}`,appid,output:'json',interval:'5',past:'1',callback:cb});
+    script.src='https://map.yahooapis.jp/weather/V1/place?'+params.toString();
+    document.head.appendChild(script);
+  });}
+  function weatherArray(data){
+    const root=data?.YDF||data;
+    let feature=root?.Feature||root?.features||[];if(!Array.isArray(feature))feature=[feature];
+    const out=[];
+    feature.filter(Boolean).forEach(f=>{let w=f?.Property?.WeatherList?.Weather||f?.property?.weatherList?.weather||[];if(!Array.isArray(w))w=[w];w.filter(Boolean).forEach(x=>out.push({type:String(x.Type||x.type||''),date:String(x.Date||x.date||''),rain:Number(x.Rainfall??x.rainfall)}));});
+    return out.filter(x=>/^\d{12}$/.test(x.date)&&Number.isFinite(x.rain)).sort((a,b)=>a.date.localeCompare(b.date));
+  }
+  function formatTime(s){return `${s.slice(8,10)}:${s.slice(10,12)}`;}
+  function classify(maxRain){if(maxRain>=20)return {title:'強い雨に注意',label:'HIGH',advice:'60分以内に強い雨が予測されています。屋根付き退避地点と移動時間を先に確認してください。'};if(maxRain>=10)return {title:'雨への備え推奨',label:'CAUTION',advice:'まとまった雨が予測されています。雨宿り場所と滑りやすい区間を確認しておくと安心です。'};if(maxRain>=5)return {title:'雨に注意',label:'WATCH',advice:'このあと雨が強まる可能性があります。屋根のある休憩地点を意識して設計してください。'};if(maxRain>0)return {title:'弱い雨の可能性',label:'LIGHT',advice:'弱い降水が予測されています。大きな影響は小さそうですが、現地の空模様も確認してください。'};return {title:'60分先まで雨なし',label:'CLEAR',advice:'現時点の雨雲予測では60分先まで降水は見込まれていません。現地状況の変化には注意してください。'};}
+
+  checkButton.addEventListener('click',async()=>{
+    if(!point||!clientId.value.trim())return;
+    try{localStorage.setItem(ID_KEY,clientId.value.trim());}catch{}
+    checkButton.disabled=true;checkButton.textContent='取得中…';summary.classList.remove('show');
+    try{
+      const data=await yahooJsonp(point.lat,point.lng,clientId.value.trim());
+      const rows=weatherArray(data);if(!rows.length)throw new Error('降水データを読み取れませんでした。');
+      const forecasts=rows.filter(x=>x.type==='forecast');
+      const observations=rows.filter(x=>x.type==='observation');
+      const current=observations[observations.length-1]||rows[0];
+      const future=forecasts.slice(0,13);
+      const maxRain=Math.max(current?.rain||0,...future.map(x=>x.rain));
+      const c=classify(maxRain);
+      headline.textContent=c.title;level.textContent=c.label;level.className='level '+(c.label==='CLEAR'?'ok':c.label==='HIGH'?'danger':'');
+      const display=[current,...future].filter(Boolean).filter((x,i,a)=>i===0||x.date!==a[i-1].date).slice(0,13);
+      timeline.innerHTML=display.map((x,i)=>`<div class="slot"><time>${i===0?'現在':formatTime(x.date)}</time><b>${x.rain.toFixed(1)}</b><small>mm/h</small></div>`).join('');
+      advice.textContent=c.advice;
+      const areaCode=(data?.YDF?.Feature?.[0]||data?.YDF?.Feature||data?.Feature?.[0]||data?.Feature)?.Property?.WeatherAreaCode;
+      updated.textContent=`最大予測 ${maxRain.toFixed(1)} mm/h / 取得地点 ${point.lat.toFixed(5)}, ${point.lng.toFixed(5)}${areaCode?` / WeatherAreaCode ${areaCode}`:''}`;
+      summary.classList.add('show');
+    }catch(err){summary.classList.add('show');headline.textContent='取得できませんでした';level.textContent='ERROR';level.className='level danger';timeline.innerHTML='';advice.textContent=err.message||'Yahoo雨予報の取得に失敗しました。';updated.textContent='Client ID、ネットワーク、Yahoo APIの利用状態を確認してください。';}
+    finally{checkButton.textContent='雨予報を取得';updateReady();}
+  });
+})();
+</script>
+</body>
+</html>
