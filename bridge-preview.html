@@ -8,98 +8,23 @@
   <title>Campsite Bridge Preview</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
   <style>
-    :root {
-      color-scheme: dark;
-      --bg:#020617;
-      --panel:#0f172a;
-      --panel2:#111827;
-      --line:#334155;
-      --text:#e2e8f0;
-      --muted:#94a3b8;
-      --green:#86efac;
-      --cyan:#67e8f9;
-      --amber:#fde68a;
-      --danger:#fca5a5;
-    }
-    html,body { margin:0; min-height:100%; background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
-    body { display:none; }
-    html.bridge-preview-enabled body { display:block; }
-    * { box-sizing:border-box; }
-    button,input { font:inherit; }
-    .page { max-width:760px; margin:0 auto; padding:18px 16px 48px; }
-    .top { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:18px; }
-    .eyebrow { margin:0 0 4px; color:var(--cyan); font-size:12px; font-weight:800; letter-spacing:.08em; }
-    h1 { margin:0; font-size:25px; }
-    .sub { margin:6px 0 0; color:var(--muted); font-size:13px; line-height:1.6; }
-    .status-chip { flex:0 0 auto; border:1px solid var(--line); border-radius:999px; padding:7px 10px; font-size:12px; font-weight:900; }
-    .status-chip.live { color:var(--green); border-color:#166534; background:#052e16; }
-    .status-chip.frozen { color:var(--amber); border-color:#854d0e; background:#422006; }
-    .steps { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; margin:0 0 18px; }
-    .step { min-width:0; padding:9px 4px; border:1px solid #1e293b; border-radius:10px; text-align:center; color:#64748b; font-size:10px; }
-    .step b { display:block; margin-bottom:2px; font-size:12px; }
-    .step.active { color:var(--text); border-color:#0e7490; background:#083344; }
-    .step.done { color:var(--green); border-color:#166534; background:#052e16; }
-    .card { border:1px solid var(--line); border-radius:18px; background:linear-gradient(180deg,var(--panel),#0b1220); box-shadow:0 18px 60px rgba(0,0,0,.28); overflow:hidden; }
-    .card-head { padding:18px; border-bottom:1px solid #1e293b; }
-    .card-head h2 { margin:0; font-size:20px; }
-    .card-head p { margin:7px 0 0; color:var(--muted); font-size:13px; line-height:1.65; }
-    .counter-main { padding:22px 18px 12px; text-align:center; }
-    .counter-main small { display:block; color:var(--muted); font-weight:700; }
-    .counter-main strong { display:block; margin-top:2px; font-size:52px; line-height:1; letter-spacing:-.04em; }
-    .counter-main span { display:block; margin-top:6px; color:var(--cyan); font-size:12px; }
-    .counts { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; padding:0 14px 16px; }
-    .count { padding:12px 8px; border:1px solid #1e293b; border-radius:12px; background:var(--panel2); text-align:center; }
-    .count span { display:block; color:var(--muted); font-size:11px; }
-    .count b { display:block; margin-top:4px; font-size:18px; }
-    .collector { padding:16px; border-top:1px solid #1e293b; }
-    .drop { display:flex; min-height:104px; align-items:center; justify-content:center; padding:16px; border:1px dashed #475569; border-radius:14px; text-align:center; cursor:pointer; background:#07111f; transition:.15s ease; }
-    .drop.dragover { border-color:var(--cyan); background:#083344; transform:translateY(-1px); }
-    .drop.disabled { opacity:.45; cursor:not-allowed; }
-    .drop strong { display:block; font-size:14px; }
-    .drop span { display:block; margin-top:5px; color:var(--muted); font-size:11px; line-height:1.5; }
-    .hint { margin:12px 0 0; padding:11px 12px; border-radius:10px; background:#0b2030; color:#bae6fd; font-size:12px; line-height:1.6; }
-    .history { margin-top:16px; }
-    .history-title { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px; }
-    .history-title h3 { margin:0; font-size:14px; }
-    .history-title span { color:var(--muted); font-size:11px; }
-    #snapshotList { display:grid; gap:7px; max-height:270px; overflow:auto; }
-    .snapshot-row { display:flex; justify-content:space-between; gap:14px; padding:11px 12px; border:1px solid #1e293b; border-radius:11px; background:#0b1220; }
-    .snapshot-row strong { display:block; font-size:12px; }
-    .snapshot-row small { display:block; margin-top:3px; color:var(--muted); font-size:10px; }
-    .snapshot-numbers { flex:0 0 auto; display:grid; justify-items:end; gap:1px; font-size:10px; color:var(--muted); }
-    .snapshot-numbers b { color:var(--green); font-size:14px; }
-    .snapshot-empty { padding:18px; border:1px dashed #334155; border-radius:11px; color:var(--muted); text-align:center; font-size:12px; }
-    .actions { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:16px; }
-    .actions button { border:0; border-radius:12px; padding:12px 10px; font-weight:900; cursor:pointer; }
-    .primary { grid-column:1/-1; background:#22c55e; color:#052e16; }
-    .secondary { background:#1e293b; color:var(--text); }
-    .danger { background:#3f151a; color:#fecaca; }
-    .map-summary { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; padding:14px; }
-    .map-summary .count:first-child { border-color:#0e7490; background:#083344; }
-    #bridgeMap { width:100%; height:min(62vh,560px); min-height:390px; background:#07111f; border-top:1px solid #1e293b; border-bottom:1px solid #1e293b; }
-    .map-tools { padding:14px; }
-    .legend { display:flex; flex-wrap:wrap; gap:8px 14px; margin-bottom:12px; color:var(--muted); font-size:11px; }
-    .legend span { display:inline-flex; align-items:center; gap:5px; }
-    .dot { width:9px; height:9px; border-radius:50%; display:inline-block; }
-    .dot.stop { background:#38bdf8; }
-    .dot.gym { background:#f472b6; }
-    .dot.power { background:#facc15; }
-    .map-message { margin:0 0 12px; padding:10px 12px; border-radius:10px; background:#0b2030; color:#bae6fd; font-size:12px; line-height:1.55; }
-    .m2-next { opacity:.45; cursor:not-allowed !important; }
-    .leaflet-container { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
-    .leaflet-popup-content-wrapper,.leaflet-popup-tip { background:#0f172a; color:#e2e8f0; }
-    .leaflet-popup-content { margin:10px 12px; font-size:12px; line-height:1.45; }
-    .footer-note { margin:14px 2px 0; color:#64748b; font-size:10px; line-height:1.6; }
-    [hidden] { display:none !important; }
-    @media (max-width:480px) {
-      .page { padding-left:12px; padding-right:12px; }
-      .steps { gap:4px; }
-      .step { font-size:9px; }
-      .counter-main strong { font-size:46px; }
-      .snapshot-row { flex-direction:column; }
-      .snapshot-numbers { grid-template-columns:auto auto auto; justify-content:start; justify-items:start; gap:10px; }
-      #bridgeMap { min-height:430px; height:58vh; }
-    }
+    :root{color-scheme:dark;--bg:#020617;--panel:#0f172a;--panel2:#111827;--line:#334155;--text:#e2e8f0;--muted:#94a3b8;--green:#86efac;--cyan:#67e8f9;--amber:#fde68a;--danger:#fca5a5}
+    html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    body{display:none}html.bridge-preview-enabled body{display:block}*{box-sizing:border-box}button,input{font:inherit}
+    .page{max-width:760px;margin:0 auto;padding:18px 16px 48px}.top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:18px}
+    .eyebrow{margin:0 0 4px;color:var(--cyan);font-size:12px;font-weight:800;letter-spacing:.08em}h1{margin:0;font-size:25px}.sub{margin:6px 0 0;color:var(--muted);font-size:13px;line-height:1.6}
+    .status-chip{flex:0 0 auto;border:1px solid var(--line);border-radius:999px;padding:7px 10px;font-size:12px;font-weight:900}.status-chip.live{color:var(--green);border-color:#166534;background:#052e16}.status-chip.frozen{color:var(--amber);border-color:#854d0e;background:#422006}
+    .steps{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:0 0 18px}.step{min-width:0;padding:9px 4px;border:1px solid #1e293b;border-radius:10px;text-align:center;color:#64748b;font-size:10px}.step b{display:block;margin-bottom:2px;font-size:12px}.step.active{color:var(--text);border-color:#0e7490;background:#083344}.step.done{color:var(--green);border-color:#166534;background:#052e16}
+    .card{border:1px solid var(--line);border-radius:18px;background:linear-gradient(180deg,var(--panel),#0b1220);box-shadow:0 18px 60px rgba(0,0,0,.28);overflow:hidden}.card-head{padding:18px;border-bottom:1px solid #1e293b}.card-head h2{margin:0;font-size:20px}.card-head p{margin:7px 0 0;color:var(--muted);font-size:13px;line-height:1.65}
+    .counter-main{padding:22px 18px 12px;text-align:center}.counter-main small{display:block;color:var(--muted);font-weight:700}.counter-main strong{display:block;margin-top:2px;font-size:52px;line-height:1;letter-spacing:-.04em}.counter-main span{display:block;margin-top:6px;color:var(--cyan);font-size:12px}
+    .counts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 14px 16px}.count{padding:12px 8px;border:1px solid #1e293b;border-radius:12px;background:var(--panel2);text-align:center}.count span{display:block;color:var(--muted);font-size:11px}.count b{display:block;margin-top:4px;font-size:18px}
+    .collector{padding:16px;border-top:1px solid #1e293b}.drop{display:flex;min-height:104px;align-items:center;justify-content:center;padding:16px;border:1px dashed #475569;border-radius:14px;text-align:center;cursor:pointer;background:#07111f}.drop strong{display:block;font-size:14px}.drop span{display:block;margin-top:5px;color:var(--muted);font-size:11px;line-height:1.5}
+    .history{margin-top:16px}.history-title{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}.history-title h3{margin:0;font-size:14px}.history-title span{color:var(--muted);font-size:11px}#snapshotList{display:grid;gap:7px;max-height:270px;overflow:auto}.snapshot-row{display:flex;justify-content:space-between;gap:14px;padding:11px 12px;border:1px solid #1e293b;border-radius:11px;background:#0b1220}.snapshot-row strong{display:block;font-size:12px}.snapshot-row small{display:block;margin-top:3px;color:var(--muted);font-size:10px}.snapshot-numbers{flex:0 0 auto;display:grid;justify-items:end;gap:1px;font-size:10px;color:var(--muted)}.snapshot-numbers b{color:var(--green);font-size:14px}.snapshot-empty{padding:18px;border:1px dashed #334155;border-radius:11px;color:var(--muted);text-align:center;font-size:12px}
+    .actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}.actions button{border:0;border-radius:12px;padding:13px 10px;font-weight:900;cursor:pointer;min-height:46px}.primary{grid-column:1/-1;background:#22c55e;color:#052e16}.secondary{background:#1e293b;color:var(--text)}.danger{background:#3f151a;color:#fecaca}.disabled-button{opacity:.38;cursor:not-allowed!important}.drawing{background:#14532d!important;color:#dcfce7!important}
+    .map-summary{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;padding:14px}.map-summary .count:first-child{border-color:#0e7490;background:#083344}#bridgeMap{width:100%;height:min(62vh,560px);min-height:420px;background:#07111f;border-top:1px solid #1e293b;border-bottom:1px solid #1e293b}.map-tools{padding:14px}.legend{display:flex;flex-wrap:wrap;gap:8px 14px;margin-bottom:12px;color:var(--muted);font-size:11px}.legend span{display:inline-flex;align-items:center;gap:5px}.dot{width:9px;height:9px;border-radius:50%;display:inline-block}.dot.stop{background:#38bdf8}.dot.gym{background:#f472b6}.dot.power{background:#facc15}.map-message{margin:0 0 12px;padding:10px 12px;border-radius:10px;background:#0b2030;color:#bae6fd;font-size:12px;line-height:1.55}
+    .crop-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:12px 0}.crop-summary .count:first-child{border-color:#166534;background:#052e16}.crop-summary .count{padding:10px 5px}.crop-summary .count b{font-size:17px}.crop-guide{padding:12px;border:1px solid #166534;border-radius:12px;background:#052e16;color:#dcfce7;font-size:12px;line-height:1.65}.vertex-note{margin-top:8px;color:var(--muted);font-size:11px}.footer-note{margin:14px 2px 0;color:#64748b;font-size:10px;line-height:1.6}
+    .leaflet-container{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#0f172a;color:#e2e8f0}.leaflet-popup-content{margin:10px 12px;font-size:12px;line-height:1.45}[hidden]{display:none!important}
+    @media(max-width:480px){.page{padding-left:12px;padding-right:12px}.steps{gap:4px}.step{font-size:9px}.counter-main strong{font-size:46px}.snapshot-row{flex-direction:column}.snapshot-numbers{grid-template-columns:auto auto auto;justify-content:start;justify-items:start;gap:10px}#bridgeMap{min-height:430px;height:58vh}.crop-summary{grid-template-columns:repeat(2,1fr)}}
   </style>
 </head>
 <body>
@@ -108,7 +33,7 @@
       <div>
         <p class="eyebrow">HIDDEN DEVELOPMENT PREVIEW</p>
         <h1>🌉 Campsite Bridge</h1>
-        <p class="sub">v0.9 / Milestone 2 · Independent POI Map</p>
+        <p class="sub">v0.9 / Milestone 3 · Polygon Cutter</p>
       </div>
       <span id="collectorState" class="status-chip live">収集中</span>
     </header>
@@ -116,88 +41,60 @@
     <nav class="steps" aria-label="Bridge開発ステップ">
       <div id="step1Nav" class="step active"><b>1</b>収集</div>
       <div id="step2Nav" class="step"><b>2</b>地図</div>
-      <div class="step"><b>3</b>切取</div>
-      <div class="step"><b>4</b>確認</div>
-      <div class="step"><b>5</b>送信</div>
+      <div id="step3Nav" class="step"><b>3</b>切取</div>
+      <div id="step4Nav" class="step"><b>4</b>確認</div>
+      <div id="step5Nav" class="step"><b>5</b>送信</div>
     </nav>
 
     <section id="collectorCard" class="card">
-      <div class="card-head">
-        <h2>Step 1 · POIを集める</h2>
-        <p>Wayfarerで拡大したまま周辺を移動します。Bridgeは画面ごとのPOIを足し続け、同じGUIDは自動で1件にまとめます。</p>
-      </div>
-
-      <div class="counter-main">
-        <small>取得済みPOI</small>
-        <strong id="totalCount">0</strong>
-        <span>Snapshot <b id="snapshotCount">0</b> · Session <b id="sessionId">--------</b></span>
-      </div>
-
-      <div class="counts">
-        <div class="count"><span>PokéStop</span><b id="pokestopCount">0</b></div>
-        <div class="count"><span>Gym</span><b id="gymCount">0</b></div>
-        <div class="count"><span>Power Spot</span><b id="powerspotCount">0</b></div>
-      </div>
-
+      <div class="card-head"><h2>Step 1 · POIを集める</h2><p>Bridgeは複数の取得結果を足し続け、同じGUIDは自動で1件にまとめます。</p></div>
+      <div class="counter-main"><small>取得済みPOI</small><strong id="totalCount">0</strong><span>Snapshot <b id="snapshotCount">0</b> · Session <b id="sessionId">--------</b></span></div>
+      <div class="counts"><div class="count"><span>PokéStop</span><b id="pokestopCount">0</b></div><div class="count"><span>Gym</span><b id="gymCount">0</b></div><div class="count"><span>Power Spot</span><b id="powerspotCount">0</b></div></div>
       <div class="collector">
         <input id="fileInput" type="file" accept="application/json,.json" multiple hidden>
-        <div id="dropZone" class="drop" role="button" tabindex="0">
-          <div>
-            <strong>🧪 Preview QA: Bridge診断JSONを追加</strong>
-            <span>本番ではWayfarerから自動受信。ここではM1検証用に複数JSONを重ねて投入できます。</span>
-          </div>
-        </div>
-
-        <p id="nextHint" class="hint">Wayfarerで地図を移動するたび、同じGUIDを重複させずに累積します。</p>
-
-        <div class="history">
-          <div class="history-title">
-            <h3>取得履歴</h3>
-            <span>追加 / 重複 / 累積</span>
-          </div>
-          <div id="snapshotList"></div>
-        </div>
-
-        <div class="actions">
-          <button id="finishBtn" class="primary" type="button">✅ 収集完了 → 地図を見る</button>
-          <button id="exportBtn" class="secondary" type="button">診断JSONを書き出す</button>
-          <button id="resetBtn" class="danger" type="button">収集をリセット</button>
-        </div>
+        <div id="dropZone" class="drop" role="button" tabindex="0"><div><strong>🧪 Preview QA: Bridge診断JSONを追加</strong><span>複数JSONを重ねて投入できます。本番ではWayfarerから自動受信します。</span></div></div>
+        <div class="history"><div class="history-title"><h3>取得履歴</h3><span>追加 / 重複 / 累積</span></div><div id="snapshotList"></div></div>
+        <div class="actions"><button id="finishBtn" class="primary" type="button">✅ 収集完了 → 地図を見る</button><button id="exportBtn" class="secondary" type="button">診断JSONを書き出す</button><button id="resetBtn" class="danger" type="button">収集をリセット</button></div>
       </div>
     </section>
 
     <section id="mapCard" class="card" hidden>
-      <div class="card-head">
-        <h2>Step 2 · 集めたPOIを地図で確認</h2>
-        <p>ここからはWayfarer Mapではありません。収集済みPOIだけをBridgeの独立地図へ描画し、全体が見える倍率へ自動調整します。</p>
-      </div>
-
-      <div class="map-summary">
-        <div class="count"><span>地図に表示</span><b id="mappedCount">0</b></div>
-        <div class="count"><span>Snapshot</span><b id="mappedSnapshotCount">0</b></div>
-      </div>
-
+      <div class="card-head"><h2>Bridge独立地図</h2><p>収集済みPOIはここで固定されています。地図を拡大・縮小してもPOI数は減りません。</p></div>
+      <div class="map-summary"><div class="count"><span>地図に表示</span><b id="mappedCount">0</b></div><div class="count"><span>Snapshot</span><b id="mappedSnapshotCount">0</b></div></div>
       <div id="bridgeMap" aria-label="収集済みPOIの独立地図"></div>
-
       <div class="map-tools">
-        <div class="legend">
-          <span><i class="dot stop"></i>PokéStop</span>
-          <span><i class="dot gym"></i>Gym</span>
-          <span><i class="dot power"></i>Power Spot</span>
-        </div>
+        <div class="legend"><span><i class="dot stop"></i>PokéStop</span><span><i class="dot gym"></i>Gym</span><span><i class="dot power"></i>Power Spot</span></div>
         <p id="mapMessage" class="map-message">POIを地図へ配置しています…</p>
-        <div class="actions">
-          <button id="fitAllBtn" class="secondary" type="button">🗺️ 全POIを表示</button>
-          <button id="backToCollectBtn" class="secondary" type="button">← 収集に戻る</button>
-          <button class="primary m2-next" type="button" disabled>次へ：範囲を切り取る（M3）</button>
+
+        <div id="m2Tools">
+          <div class="actions"><button id="fitAllBtn" class="secondary" type="button">🗺️ 全POIを表示</button><button id="backToCollectBtn" class="secondary" type="button">← 収集に戻る</button><button id="startCropBtn" class="primary" type="button">次へ：範囲を切り取る ✂️</button></div>
+        </div>
+
+        <div id="m3Tools" hidden>
+          <div class="crop-guide"><strong>Step 3 · 公園を囲む</strong><br>まず地図を目的の公園まで移動・拡大してください。その後「ポリゴンを描く」を押し、公園の外周を順番にタップします。</div>
+          <div class="crop-summary">
+            <div class="count"><span>選択中</span><b id="selectedTotal">0</b></div>
+            <div class="count"><span>PokéStop</span><b id="selectedPokestop">0</b></div>
+            <div class="count"><span>Gym</span><b id="selectedGym">0</b></div>
+            <div class="count"><span>Power Spot</span><b id="selectedPower">0</b></div>
+          </div>
+          <p id="cropMessage" class="map-message">ポリゴンを描いてください。</p>
+          <p class="vertex-note">頂点 <b id="vertexCount">0</b> 点 · 3点以上で切り取り範囲になります。</p>
+          <div class="actions">
+            <button id="drawBtn" class="primary" type="button">✂️ ポリゴンを描く</button>
+            <button id="undoVertexBtn" class="secondary" type="button">↶ 1点戻す</button>
+            <button id="clearPolygonBtn" class="secondary" type="button">🧹 やり直す</button>
+            <button id="backToMapBtn" class="secondary" type="button">← 地図確認へ</button>
+            <button id="confirmCropBtn" class="primary disabled-button" type="button" disabled>この範囲で切り取る</button>
+          </div>
         </div>
       </div>
     </section>
 
-    <p class="footer-note">このページは開発検証専用です。通常のCampsite Design Toolからリンクせず、検索エンジンにも公開しません。M2では「収集済みPOIをWayfarerから切り離した独立地図に描画し、全体表示できること」を検証します。</p>
+    <p class="footer-note">開発検証専用ページです。通常のCampsite Design Toolからリンクせず、検索エンジンにも公開しません。M3では独立地図上のポリゴン切り取りだけを検証します。</p>
   </main>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9coqIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script src="js/bridge-preview-m2.js?v=1"></script>
+  <script src="js/bridge-preview-m3.js?v=1"></script>
 </body>
 </html>
