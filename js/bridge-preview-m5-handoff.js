@@ -25,39 +25,31 @@
     if (!guid || !Number.isFinite(lat) || !Number.isFinite(lng)) return null;
     if (!ALLOWED_ENTITIES.has(type) || !ALLOWED_STATUSES.has(gameStatus)) return null;
 
-    return {
-      name,
-      lat,
-      lng,
-      type,
-      gameStatus,
-      guid,
-      layer: 'BRIDGE'
-    };
+    return { name, lat, lng, type, gameStatus, guid, layer:'BRIDGE' };
   }
 
   function getVerifiedSelection() {
     const api = window.CampsiteBridgePreview;
     if (!api || api.milestone !== 'M4' || typeof api.verifyCrop !== 'function') {
-      return { ok: false, reason: 'M4確認データを取得できません', pois: [] };
+      return { ok:false, reason:'M4確認データを取得できません', pois:[] };
     }
 
     const check = api.verifyCrop();
     if (!check?.ok || !Array.isArray(check.selected) || check.selected.length === 0) {
-      return { ok: false, reason: '切り取りデータの整合性を確認できません', pois: [] };
+      return { ok:false, reason:'切り取りデータの整合性を確認できません', pois:[] };
     }
 
     const converted = check.selected.map(toCampsitePoi).filter(Boolean);
     if (converted.length !== check.selected.length) {
-      return { ok: false, reason: 'Campsite形式へ変換できないPOIがあります', pois: [] };
+      return { ok:false, reason:'Campsite形式へ変換できないPOIがあります', pois:[] };
     }
 
     const byGuid = new Map(converted.map(poi => [poi.guid, poi]));
     if (byGuid.size !== converted.length) {
-      return { ok: false, reason: 'GUID重複が残っています', pois: [] };
+      return { ok:false, reason:'GUID重複が残っています', pois:[] };
     }
 
-    return { ok: true, pois: [...byGuid.values()], state: api.state };
+    return { ok:true, pois:[...byGuid.values()], state:api.state };
   }
 
   function refreshButton() {
@@ -84,22 +76,22 @@
 
     const state = result.state || {};
     const handoff = {
-      bridge: 'Campsite Bridge',
-      version: '0.9.0-m5',
-      milestone: 'M5_CAMPSITE_HANDOFF',
-      adaptedAt: new Date().toISOString(),
-      sourceCount: Array.isArray(state.pois) ? state.pois.length : result.pois.length,
-      selectedCount: result.pois.length,
-      polygon: state.crop?.polygon || null,
-      pois: result.pois
+      bridge:'Campsite Bridge',
+      version:'0.9.0-m5',
+      milestone:'M5_CAMPSITE_HANDOFF',
+      adaptedAt:new Date().toISOString(),
+      sourceCount:Array.isArray(state.pois) ? state.pois.length : result.pois.length,
+      selectedCount:result.pois.length,
+      polygon:state.crop?.polygon || null,
+      pois:result.pois
     };
 
     try {
       sessionStorage.setItem(ADAPTER_STORAGE_KEY, JSON.stringify({
-        version: '0.9.0-m5',
-        adaptedAt: handoff.adaptedAt,
-        sourceCount: result.pois.length,
-        pois: result.pois
+        version:'0.9.0-m5',
+        adaptedAt:handoff.adaptedAt,
+        sourceCount:result.pois.length,
+        pois:result.pois
       }));
       sessionStorage.setItem(HANDOFF_STORAGE_KEY, JSON.stringify(handoff));
     } catch (error) {
@@ -110,14 +102,13 @@
 
     button.disabled = true;
     button.textContent = `🌉 ${result.pois.length.toLocaleString('ja-JP')}件を受け渡しています…`;
-
-    location.href = './index.html?campsiteBridgeImport=1&campsiteBridgeDev=1';
+    location.href = './bridge-campsite.html?campsiteBridgeImport=1&campsiteBridgeDev=1';
   });
 
   window.CampsiteBridgeM5Handoff = Object.freeze({
-    version: '0.9.0-m5',
+    version:'0.9.0-m5',
     getVerifiedSelection,
-    refresh: refreshButton
+    refresh:refreshButton
   });
 
   refreshButton();
