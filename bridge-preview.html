@@ -22,9 +22,10 @@
     .history{margin-top:16px}.history-title{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}.history-title h3{margin:0;font-size:14px}.history-title span{color:var(--muted);font-size:11px}#snapshotList{display:grid;gap:7px;max-height:270px;overflow:auto}.snapshot-row{display:flex;justify-content:space-between;gap:14px;padding:11px 12px;border:1px solid #1e293b;border-radius:11px;background:#0b1220}.snapshot-row strong{display:block;font-size:12px}.snapshot-row small{display:block;margin-top:3px;color:var(--muted);font-size:10px}.snapshot-numbers{flex:0 0 auto;display:grid;justify-items:end;gap:1px;font-size:10px;color:var(--muted)}.snapshot-numbers b{color:var(--green);font-size:14px}.snapshot-empty{padding:18px;border:1px dashed #334155;border-radius:11px;color:var(--muted);text-align:center;font-size:12px}
     .actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}.actions button{border:0;border-radius:12px;padding:13px 10px;font-weight:900;cursor:pointer;min-height:46px}.primary{grid-column:1/-1;background:#22c55e;color:#052e16}.secondary{background:#1e293b;color:var(--text)}.danger{background:#3f151a;color:#fecaca}.disabled-button{opacity:.38;cursor:not-allowed!important}.drawing{background:#14532d!important;color:#dcfce7!important}
     .map-summary{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;padding:14px}.map-summary .count:first-child{border-color:#0e7490;background:#083344}#bridgeMap{width:100%;height:min(62vh,560px);min-height:420px;background:#07111f;border-top:1px solid #1e293b;border-bottom:1px solid #1e293b}.map-tools{padding:14px}.legend{display:flex;flex-wrap:wrap;gap:8px 14px;margin-bottom:12px;color:var(--muted);font-size:11px}.legend span{display:inline-flex;align-items:center;gap:5px}.dot{width:9px;height:9px;border-radius:50%;display:inline-block}.dot.stop{background:#38bdf8}.dot.gym{background:#f472b6}.dot.power{background:#facc15}.map-message{margin:0 0 12px;padding:10px 12px;border-radius:10px;background:#0b2030;color:#bae6fd;font-size:12px;line-height:1.55}
-    .crop-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:12px 0}.crop-summary .count:first-child{border-color:#166534;background:#052e16}.crop-summary .count{padding:10px 5px}.crop-summary .count b{font-size:17px}.crop-guide{padding:12px;border:1px solid #166534;border-radius:12px;background:#052e16;color:#dcfce7;font-size:12px;line-height:1.65}.vertex-note{margin-top:8px;color:var(--muted);font-size:11px}.footer-note{margin:14px 2px 0;color:#64748b;font-size:10px;line-height:1.6}
-    .leaflet-container{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#0f172a;color:#e2e8f0}.leaflet-popup-content{margin:10px 12px;font-size:12px;line-height:1.45}[hidden]{display:none!important}
-    @media(max-width:480px){.page{padding-left:12px;padding-right:12px}.steps{gap:4px}.step{font-size:9px}.counter-main strong{font-size:46px}.snapshot-row{flex-direction:column}.snapshot-numbers{grid-template-columns:auto auto auto;justify-content:start;justify-items:start;gap:10px}#bridgeMap{min-height:430px;height:58vh}.crop-summary{grid-template-columns:repeat(2,1fr)}}
+    .crop-summary,.review-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:12px 0}.crop-summary .count:first-child,.review-summary .count:first-child{border-color:#166534;background:#052e16}.crop-summary .count,.review-summary .count{padding:10px 5px}.crop-summary .count b,.review-summary .count b{font-size:17px}.crop-guide,.review-guide{padding:12px;border:1px solid #166534;border-radius:12px;background:#052e16;color:#dcfce7;font-size:12px;line-height:1.65}.vertex-note{margin-top:8px;color:var(--muted);font-size:11px}
+    .review-integrity{margin:10px 0;padding:11px 12px;border-radius:10px;font-size:12px;font-weight:800}.review-integrity.ok{background:#052e16;color:#bbf7d0;border:1px solid #166534}.review-integrity.warn{background:#422006;color:#fde68a;border:1px solid #854d0e}.review-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}.review-meta div{padding:10px 12px;border:1px solid #1e293b;border-radius:10px;background:#0b1220}.review-meta span{display:block;color:var(--muted);font-size:10px}.review-meta b{display:block;margin-top:3px;font-size:16px}.review-list-title{margin:14px 0 8px;font-size:13px}.review-list{display:grid;gap:6px;max-height:280px;overflow:auto}.review-poi{display:flex;justify-content:space-between;gap:12px;padding:9px 10px;border:1px solid #1e293b;border-radius:9px;background:#0b1220}.review-poi span{min-width:0;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.review-poi small{flex:0 0 auto;color:var(--muted)}.review-more{padding:10px;color:var(--muted);text-align:center;font-size:11px}
+    .footer-note{margin:14px 2px 0;color:#64748b;font-size:10px;line-height:1.6}.leaflet-container{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#0f172a;color:#e2e8f0}.leaflet-popup-content{margin:10px 12px;font-size:12px;line-height:1.45}[hidden]{display:none!important}
+    @media(max-width:480px){.page{padding-left:12px;padding-right:12px}.steps{gap:4px}.step{font-size:9px}.counter-main strong{font-size:46px}.snapshot-row{flex-direction:column}.snapshot-numbers{grid-template-columns:auto auto auto;justify-content:start;justify-items:start;gap:10px}#bridgeMap{min-height:430px;height:58vh}.crop-summary,.review-summary{grid-template-columns:repeat(2,1fr)}}
   </style>
 </head>
 <body>
@@ -33,7 +34,7 @@
       <div>
         <p class="eyebrow">HIDDEN DEVELOPMENT PREVIEW</p>
         <h1>🌉 Campsite Bridge</h1>
-        <p class="sub">v0.9 / Milestone 3 · Polygon Cutter</p>
+        <p class="sub">v0.9 / Milestone 4 · Final Confirmation</p>
       </div>
       <span id="collectorState" class="status-chip live">収集中</span>
     </header>
@@ -71,7 +72,7 @@
         </div>
 
         <div id="m3Tools" hidden>
-          <div class="crop-guide"><strong>Step 3 · 公園を囲む</strong><br>まず地図を目的の公園まで移動・拡大してください。その後「ポリゴンを描く」を押し、公園の外周を順番にタップします。</div>
+          <div class="crop-guide"><strong>Step 3 · 公園を囲む</strong><br>地図を目的の公園まで移動・拡大したあと「ポリゴンを描く」を押し、公園の外周を順番にタップします。</div>
           <div class="crop-summary">
             <div class="count"><span>選択中</span><b id="selectedTotal">0</b></div>
             <div class="count"><span>PokéStop</span><b id="selectedPokestop">0</b></div>
@@ -85,16 +86,37 @@
             <button id="undoVertexBtn" class="secondary" type="button">↶ 1点戻す</button>
             <button id="clearPolygonBtn" class="secondary" type="button">🧹 やり直す</button>
             <button id="backToMapBtn" class="secondary" type="button">← 地図確認へ</button>
-            <button id="confirmCropBtn" class="primary disabled-button" type="button" disabled>この範囲で切り取る</button>
+            <button id="confirmCropBtn" class="primary disabled-button" type="button" disabled>この範囲で切り取る → 確認</button>
+          </div>
+        </div>
+
+        <div id="m4Tools" hidden>
+          <div class="review-guide"><strong>Step 4 · 切り取り結果を確認</strong><br>ポリゴン内として固定されたPOIだけを表示しています。元データとの整合性も再計算します。</div>
+          <div class="review-meta">
+            <div><span>収集した母集団</span><b id="reviewSourceTotal">0</b></div>
+            <div><span>ポリゴン頂点</span><b id="reviewVertexCount">0</b></div>
+          </div>
+          <div class="review-summary">
+            <div class="count"><span>切り取り後</span><b id="reviewTotal">0</b></div>
+            <div class="count"><span>PokéStop</span><b id="reviewPokestop">0</b></div>
+            <div class="count"><span>Gym</span><b id="reviewGym">0</b></div>
+            <div class="count"><span>Power Spot</span><b id="reviewPower">0</b></div>
+          </div>
+          <p id="reviewIntegrity" class="review-integrity ok">整合性を確認しています…</p>
+          <h3 class="review-list-title">選択POI</h3>
+          <div id="reviewPoiList" class="review-list"></div>
+          <div class="actions">
+            <button id="reviewEditBtn" class="secondary" type="button">← 範囲を修正する</button>
+            <button class="primary disabled-button" type="button" disabled>次へ：Campsiteへ送る（M5）</button>
           </div>
         </div>
       </div>
     </section>
 
-    <p class="footer-note">開発検証専用ページです。通常のCampsite Design Toolからリンクせず、検索エンジンにも公開しません。M3では独立地図上のポリゴン切り取りだけを検証します。</p>
+    <p class="footer-note">開発検証専用ページです。通常のCampsite Design Toolからリンクせず、検索エンジンにも公開しません。M4では切り取り後のPOI件数・地図・GUID整合性の確認だけを検証します。</p>
   </main>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9coqIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script src="js/bridge-preview-m3.js?v=1"></script>
+  <script src="js/bridge-preview-m4.js?v=1"></script>
 </body>
 </html>
