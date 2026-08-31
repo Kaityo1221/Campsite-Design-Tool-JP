@@ -6,11 +6,29 @@
 
   const ADAPTER_STORAGE_KEY = 'campsiteBridgeAdapter.v0.3';
   const HANDOFF_STORAGE_KEY = 'campsiteBridgeM5Handoff.v0.9';
+  const CREATIVE_HANDOFF_KEY = 'campsiteBridgeCreativeHandoff.v0.9';
   const ALLOWED_ENTITIES = new Set(['POKESTOP', 'GYM', 'POWERSPOT']);
   const ALLOWED_STATUSES = new Set(['ACTIVE', 'INACTIVE']);
 
   const button = document.getElementById('sendToCampsiteBtn');
   if (!button) return;
+
+  const actions = button.closest('.actions');
+  const creativeButton = document.createElement('button');
+  creativeButton.id = 'sendToCreativeBtn';
+  creativeButton.type = 'button';
+  creativeButton.className = 'primary disabled-button';
+  creativeButton.disabled = true;
+  creativeButton.textContent = 'CREATIVE MODEへ送る準備中…';
+  actions?.appendChild(creativeButton);
+
+  const subtitle = document.querySelector('.sub');
+  if (subtitle) subtitle.textContent = 'v0.9 / Milestone 6 · Creative Mode Entry';
+
+  const footer = document.querySelector('.footer-note');
+  if (footer) {
+    footer.textContent = '開発検証専用ページです。通常のCampsite Design ToolやCREATIVE MODEからリンクせず、検索エンジンにも公開しません。M6ではM4で確定したPOIを隠しCREATIVE MODE入口へ自動受け渡しします。';
+  }
 
   function toCampsitePoi(raw) {
     if (!raw || typeof raw !== 'object') return null;
@@ -52,17 +70,38 @@
     return { ok:true, pois:[...byGuid.values()], state:api.state };
   }
 
+  function makeHandoff(result, milestone, version) {
+    const state = result.state || {};
+    return {
+      bridge:'Campsite Bridge',
+      version,
+      milestone,
+      adaptedAt:new Date().toISOString(),
+      sourceCount:Array.isArray(state.pois) ? state.pois.length : result.pois.length,
+      selectedCount:result.pois.length,
+      polygon:state.crop?.polygon || null,
+      pois:result.pois
+    };
+  }
+
   function refreshButton() {
     const result = getVerifiedSelection();
     button.disabled = !result.ok;
     button.classList.toggle('disabled-button', !result.ok);
+    creativeButton.disabled = !result.ok;
+    creativeButton.classList.toggle('disabled-button', !result.ok);
 
     if (result.ok) {
-      button.textContent = `🏕 ${result.pois.length.toLocaleString('ja-JP')}件をCampsiteへ送る`;
+      const count = result.pois.length.toLocaleString('ja-JP');
+      button.textContent = `🏕 ${count}件をCampsiteへ送る`;
       button.dataset.ready = '1';
+      creativeButton.textContent = `🎨 ${count}件でCREATIVE MODEを開く`;
+      creativeButton.dataset.ready = '1';
     } else {
       button.textContent = 'Campsiteへ送る準備中…';
       button.dataset.ready = '0';
+      creativeButton.textContent = 'CREATIVE MODEへ送る準備中…';
+      creativeButton.dataset.ready = '0';
     }
   }
 
@@ -74,17 +113,7 @@
       return;
     }
 
-    const state = result.state || {};
-    const handoff = {
-      bridge:'Campsite Bridge',
-      version:'0.9.0-m5',
-      milestone:'M5_CAMPSITE_HANDOFF',
-      adaptedAt:new Date().toISOString(),
-      sourceCount:Array.isArray(state.pois) ? state.pois.length : result.pois.length,
-      selectedCount:result.pois.length,
-      polygon:state.crop?.polygon || null,
-      pois:result.pois
-    };
+    const handoff = makeHandoff(result, 'M5_CAMPSITE_HANDOFF', '0.9.0-m5');
 
     try {
       sessionStorage.setItem(ADAPTER_STORAGE_KEY, JSON.stringify({
@@ -105,8 +134,31 @@
     location.href = './bridge-campsite.html?campsiteBridgeImport=1&campsiteBridgeDev=1';
   });
 
+  creativeButton.addEventListener('click', () => {
+    const result = getVerifiedSelection();
+    if (!result.ok) {
+      alert(result.reason || 'CREATIVE MODEへ送る準備ができていません');
+      refreshButton();
+      return;
+    }
+
+    const handoff = makeHandoff(result, 'M6_CREATIVE_HANDOFF', '0.9.0-m6');
+
+    try {
+      sessionStorage.setItem(CREATIVE_HANDOFF_KEY, JSON.stringify(handoff));
+    } catch (error) {
+      console.error('[Campsite Bridge M6] Creative handoff storage failed', error);
+      alert('CREATIVE MODEへの受け渡しデータを保存できませんでした');
+      return;
+    }
+
+    creativeButton.disabled = true;
+    creativeButton.textContent = `🎨 ${result.pois.length.toLocaleString('ja-JP')}件をCREATIVE MODEへ準備中…`;
+    location.href = './creative/bridge-preview.html?campsiteBridgeImport=1&campsiteBridgeDev=1';
+  });
+
   window.CampsiteBridgeM5Handoff = Object.freeze({
-    version:'0.9.0-m5',
+    version:'0.9.0-m6',
     getVerifiedSelection,
     refresh:refreshButton
   });
