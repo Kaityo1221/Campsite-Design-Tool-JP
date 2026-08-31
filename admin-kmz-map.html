@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="googlebot" content="noindex, nofollow">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>提出KMZ MAP VIEWER | Campsite Design Tool JP</title>
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/icon.png">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <link rel="stylesheet" href="css/admin-kmz-map.css?v=1">
+</head>
+<body>
+  <div class="kmv-shell">
+    <header class="kmv-header">
+      <div>
+        <p class="kmv-eyebrow">ADMIN · SUBMITTED KMZ</p>
+        <h1>🗺 提出KMZ MAP VIEWER</h1>
+        <p>提出KMZを選び、地図上で連続確認します。</p>
+      </div>
+      <button id="kmvBackButton" class="kmv-back" type="button">← 管理画面へ戻る</button>
+    </header>
+
+    <main id="kmvApp" class="kmv-app" aria-live="polite">
+      <aside class="kmv-sidebar">
+        <div class="kmv-search-wrap">
+          <input id="kmvSearch" class="kmv-search" type="search" placeholder="公園名・ファイル名・作成者で検索" autocomplete="off">
+          <label class="kmv-own-filter">
+            <input id="kmvExcludeOwn" type="checkbox" checked>
+            <span>この端末の履歴を除く</span>
+          </label>
+          <div id="kmvListCount" class="kmv-list-count">読み込み中…</div>
+        </div>
+        <div id="kmvRecordList" class="kmv-record-list"></div>
+      </aside>
+
+      <section class="kmv-main">
+        <div class="kmv-toolbar">
+          <button id="kmvPrev" type="button">← 前のKMZ</button>
+          <div id="kmvPosition" class="kmv-position">- / -</div>
+          <button id="kmvNext" type="button">次のKMZ →</button>
+        </div>
+
+        <div class="kmv-map-wrap">
+          <div id="kmvMap"></div>
+          <div id="kmvMapState" class="kmv-map-state">提出KMZ一覧を読み込んでいます…</div>
+          <div class="kmv-legend" aria-label="地図凡例">
+            <span><i class="kmv-dot existing"></i>POI</span>
+            <span><i class="kmv-dot added"></i>追加予定</span>
+            <span><i class="kmv-line circle50"></i>50m系</span>
+            <span><i class="kmv-line area"></i>範囲</span>
+          </div>
+        </div>
+
+        <article class="kmv-info">
+          <div class="kmv-info-head">
+            <div>
+              <p class="kmv-info-label">選択中</p>
+              <h2 id="kmvTitle">KMZを選択してください</h2>
+              <div id="kmvFileName" class="kmv-file-name">-</div>
+            </div>
+            <button id="kmvDownload" class="kmv-download" type="button" disabled>⬇ KMZを保存</button>
+          </div>
+          <div id="kmvMeta" class="kmv-meta"></div>
+          <div id="kmvRenderStatus" class="kmv-render-status"></div>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9coqIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/admin-kmz-map.js?v=1"></script>
+</body>
+</html>
