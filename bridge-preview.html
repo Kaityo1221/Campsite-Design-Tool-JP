@@ -6,6 +6,7 @@
   <meta name="robots" content="noindex, nofollow, noarchive">
   <meta name="googlebot" content="noindex, nofollow, noarchive">
   <title>Campsite Bridge Preview</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
   <style>
     :root {
       color-scheme: dark;
@@ -25,7 +26,7 @@
     html.bridge-preview-enabled body { display:block; }
     * { box-sizing:border-box; }
     button,input { font:inherit; }
-    .page { max-width:720px; margin:0 auto; padding:18px 16px 48px; }
+    .page { max-width:760px; margin:0 auto; padding:18px 16px 48px; }
     .top { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:18px; }
     .eyebrow { margin:0 0 4px; color:var(--cyan); font-size:12px; font-weight:800; letter-spacing:.08em; }
     h1 { margin:0; font-size:25px; }
@@ -37,6 +38,7 @@
     .step { min-width:0; padding:9px 4px; border:1px solid #1e293b; border-radius:10px; text-align:center; color:#64748b; font-size:10px; }
     .step b { display:block; margin-bottom:2px; font-size:12px; }
     .step.active { color:var(--text); border-color:#0e7490; background:#083344; }
+    .step.done { color:var(--green); border-color:#166534; background:#052e16; }
     .card { border:1px solid var(--line); border-radius:18px; background:linear-gradient(180deg,var(--panel),#0b1220); box-shadow:0 18px 60px rgba(0,0,0,.28); overflow:hidden; }
     .card-head { padding:18px; border-bottom:1px solid #1e293b; }
     .card-head h2 { margin:0; font-size:20px; }
@@ -72,6 +74,21 @@
     .primary { grid-column:1/-1; background:#22c55e; color:#052e16; }
     .secondary { background:#1e293b; color:var(--text); }
     .danger { background:#3f151a; color:#fecaca; }
+    .map-summary { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; padding:14px; }
+    .map-summary .count:first-child { border-color:#0e7490; background:#083344; }
+    #bridgeMap { width:100%; height:min(62vh,560px); min-height:390px; background:#07111f; border-top:1px solid #1e293b; border-bottom:1px solid #1e293b; }
+    .map-tools { padding:14px; }
+    .legend { display:flex; flex-wrap:wrap; gap:8px 14px; margin-bottom:12px; color:var(--muted); font-size:11px; }
+    .legend span { display:inline-flex; align-items:center; gap:5px; }
+    .dot { width:9px; height:9px; border-radius:50%; display:inline-block; }
+    .dot.stop { background:#38bdf8; }
+    .dot.gym { background:#f472b6; }
+    .dot.power { background:#facc15; }
+    .map-message { margin:0 0 12px; padding:10px 12px; border-radius:10px; background:#0b2030; color:#bae6fd; font-size:12px; line-height:1.55; }
+    .m2-next { opacity:.45; cursor:not-allowed !important; }
+    .leaflet-container { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    .leaflet-popup-content-wrapper,.leaflet-popup-tip { background:#0f172a; color:#e2e8f0; }
+    .leaflet-popup-content { margin:10px 12px; font-size:12px; line-height:1.45; }
     .footer-note { margin:14px 2px 0; color:#64748b; font-size:10px; line-height:1.6; }
     [hidden] { display:none !important; }
     @media (max-width:480px) {
@@ -81,6 +98,7 @@
       .counter-main strong { font-size:46px; }
       .snapshot-row { flex-direction:column; }
       .snapshot-numbers { grid-template-columns:auto auto auto; justify-content:start; justify-items:start; gap:10px; }
+      #bridgeMap { min-height:430px; height:58vh; }
     }
   </style>
 </head>
@@ -90,20 +108,20 @@
       <div>
         <p class="eyebrow">HIDDEN DEVELOPMENT PREVIEW</p>
         <h1>🌉 Campsite Bridge</h1>
-        <p class="sub">v0.9 / Milestone 1 · Multi-Snapshot Collector</p>
+        <p class="sub">v0.9 / Milestone 2 · Independent POI Map</p>
       </div>
       <span id="collectorState" class="status-chip live">収集中</span>
     </header>
 
     <nav class="steps" aria-label="Bridge開発ステップ">
-      <div class="step active"><b>1</b>収集</div>
-      <div class="step"><b>2</b>地図</div>
+      <div id="step1Nav" class="step active"><b>1</b>収集</div>
+      <div id="step2Nav" class="step"><b>2</b>地図</div>
       <div class="step"><b>3</b>切取</div>
       <div class="step"><b>4</b>確認</div>
       <div class="step"><b>5</b>送信</div>
     </nav>
 
-    <section class="card">
+    <section id="collectorCard" class="card">
       <div class="card-head">
         <h2>Step 1 · POIを集める</h2>
         <p>Wayfarerで拡大したまま周辺を移動します。Bridgeは画面ごとのPOIを足し続け、同じGUIDは自動で1件にまとめます。</p>
@@ -141,17 +159,45 @@
         </div>
 
         <div class="actions">
-          <button id="finishBtn" class="primary" type="button">✅ 収集完了</button>
-          <button id="resumeBtn" class="primary" type="button" hidden>↩ 収集を再開</button>
+          <button id="finishBtn" class="primary" type="button">✅ 収集完了 → 地図を見る</button>
           <button id="exportBtn" class="secondary" type="button">診断JSONを書き出す</button>
           <button id="resetBtn" class="danger" type="button">収集をリセット</button>
         </div>
       </div>
     </section>
 
-    <p class="footer-note">このページは開発検証専用です。通常のCampsite Design Toolからリンクせず、検索エンジンにも公開しません。M1では「複数取得・GUID統合・状態保持・収集完了」だけを検証します。</p>
+    <section id="mapCard" class="card" hidden>
+      <div class="card-head">
+        <h2>Step 2 · 集めたPOIを地図で確認</h2>
+        <p>ここからはWayfarer Mapではありません。収集済みPOIだけをBridgeの独立地図へ描画し、全体が見える倍率へ自動調整します。</p>
+      </div>
+
+      <div class="map-summary">
+        <div class="count"><span>地図に表示</span><b id="mappedCount">0</b></div>
+        <div class="count"><span>Snapshot</span><b id="mappedSnapshotCount">0</b></div>
+      </div>
+
+      <div id="bridgeMap" aria-label="収集済みPOIの独立地図"></div>
+
+      <div class="map-tools">
+        <div class="legend">
+          <span><i class="dot stop"></i>PokéStop</span>
+          <span><i class="dot gym"></i>Gym</span>
+          <span><i class="dot power"></i>Power Spot</span>
+        </div>
+        <p id="mapMessage" class="map-message">POIを地図へ配置しています…</p>
+        <div class="actions">
+          <button id="fitAllBtn" class="secondary" type="button">🗺️ 全POIを表示</button>
+          <button id="backToCollectBtn" class="secondary" type="button">← 収集に戻る</button>
+          <button class="primary m2-next" type="button" disabled>次へ：範囲を切り取る（M3）</button>
+        </div>
+      </div>
+    </section>
+
+    <p class="footer-note">このページは開発検証専用です。通常のCampsite Design Toolからリンクせず、検索エンジンにも公開しません。M2では「収集済みPOIをWayfarerから切り離した独立地図に描画し、全体表示できること」を検証します。</p>
   </main>
 
-  <script src="js/bridge-preview-m1.js?v=1"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9coqIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="js/bridge-preview-m2.js?v=1"></script>
 </body>
 </html>
