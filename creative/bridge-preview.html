@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover,user-scalable=no">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<meta name="googlebot" content="noindex,nofollow,noarchive">
+<title>CREATIVE MODE | Bridge Preview</title>
+<style>
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#17130f;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+#creativeFrame{position:fixed;inset:0;width:100%;height:100%;border:0;background:#17130f}
+#bridgeStatus{position:fixed;left:50%;top:calc(10px + env(safe-area-inset-top));transform:translateX(-50%);z-index:99999;max-width:88vw;padding:8px 12px;border:1px solid rgba(125,211,252,.45);border-radius:999px;background:rgba(2,6,23,.86);color:#e0f2fe;font-size:11px;font-weight:900;line-height:1.35;text-align:center;box-shadow:0 6px 20px rgba(0,0,0,.28);pointer-events:none;transition:opacity .25s}
+#bridgeStatus.ok{border-color:rgba(74,222,128,.5);color:#dcfce7;background:rgba(5,46,22,.88)}
+#bridgeStatus.warn{border-color:rgba(251,191,36,.5);color:#fef3c7;background:rgba(66,32,6,.9)}
+#bridgeStatus.error{border-color:rgba(248,113,113,.55);color:#fecaca;background:rgba(69,10,10,.9)}
+#bridgeStatus.fade{opacity:0}
+</style>
+</head>
+<body>
+<iframe id="creativeFrame" title="CREATIVE MODE Bridge Preview" src="about:blank"></iframe>
+<div id="bridgeStatus">🌉 Bridgeデータを確認しています…</div>
+<script>
+(() => {
+  'use strict';
+
+  const params = new URLSearchParams(location.search);
+  const frame = document.getElementById('creativeFrame');
+  const status = document.getElementById('bridgeStatus');
+  const HANDOFF_KEY = 'campsiteBridgeCreativeHandoff.v0.9';
+  const ALLOWED_TYPES = new Set(['POKESTOP','GYM','POWERSPOT']);
+  const ALLOWED_STATUS = new Set(['ACTIVE','INACTIVE']);
+  let started = false;
+  let completed = false;
+  let retryTimer = null;
+
+  function setStatus(text, kind = '') {
+    status.textContent = text;
+    status.className = kind;
+  }
+
+  function fail(text) {
+    setStatus(`⚠️ ${text}`, 'error');
+  }
+
+  if (params.get('campsiteBridgeDev') !== '1' || params.get('campsiteBridgeImport') !== '1') {
+    document.body.innerHTML = '';
+    return;
+  }
+
+  function readHandoff() {
+    try {
+      const value = JSON.parse(sessionStorage.getItem(HANDOFF_KEY) || 'null');
+      if (!value || value.milestone !== 'M6_CREATIVE_HANDOFF' || !Array.isArray(value.pois)) return null;
+      const pois = value.pois.map(raw => {
+        const guid = String(raw?.guid || '').trim();
+        const name = String(raw?.name || raw?.title || '').trim();
+        const lat = Number(raw?.lat);
+        const lng = Number(raw?.lng);
+        const type = String(raw?.type || raw?.gameEntity || '').trim().toUpperCase();
+        const gameStatus = String(raw?.gameStatus || 'ACTIVE').trim().toUpperCase();
+        if (!guid || !Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+        if (!ALLOWED_TYPES.has(type) || !ALLOWED_STATUS.has(gameStatus)) return null;
+        return { guid, name, lat, lng, type, gameStatus };
+      }).filter(Boolean);
+      if (!pois.length || pois.length !== value.pois.length) return null;
+      if (new Set(pois.map(p => p.guid)).size !== pois.length) return null;
+      return { ...value, pois };
+    } catch (_) {
+      return null;
+    }
+  }
+
+  const handoff = readHandoff();
+  if (!handoff) {
+    fail('BridgeのM6受け渡しデータを確認できません。Bridge Previewへ戻って再送してください。');
+    return;
+  }
+
+  function csvCell(value) {
+    const text = String(value ?? '');
+    if (!/[",\r\n]/.test(text)) return text;
+    return `"${text.replaceAll('"','""')}"`;
+  }
+
+  const layerByType = {
+    POKESTOP:'existing-pokestop',
+    GYM:'existing-gym',
+    POWERSPOT:'existing-power'
+  };
+  const fileNameByType = {
+    POKESTOP:'既存 PokéStop.csv',
+    GYM:'既存 Gym.csv',
+    POWERSPOT:'既存 PowerSpot.csv'
+  };
+
+  function buildFile(type) {
+    const pois = handoff.pois.filter(p => p.type === type);
+    if (!pois.length) return null;
+    const rows = [
+      ['name','lat','lng','type','gameStatus','guid','nextlab-layer'],
+      ...pois.map(p => [p.name,p.lat,p.lng,p.type,p.gameStatus,p.guid,layerByType[type]])
+    ];
+    const csv = '\uFEFF' + rows.map(row => row.map(csvCell).join(',')).join('\r\n');
+    return new File([csv], fileNameByType[type], { type:'text/csv;charset=utf-8', lastModified:Date.now() });
+  }
+
+  function makeTransfer() {
+    try { return new DataTransfer(); } catch (_) {}
+    try {
+      const event = new ClipboardEvent('paste');
+      if (event.clipboardData) return event.clipboardData;
+    } catch (_) {}
+    return null;
+  }
+
+  function addBridgeBadge(doc) {
+    if (doc.getElementById('bridgeCreativeM6Badge')) return;
+    const badge = doc.createElement('div');
+    badge.id = 'bridgeCreativeM6Badge';
+    badge.textContent = `🌉 Bridge ${handoff.pois.length.toLocaleString('ja-JP')}件`;
+    badge.style.cssText = [
+      'position:fixed',
+      'left:50%',
+      'top:calc(10px + env(safe-area-inset-top))',
+      'transform:translateX(-50%)',
+      'z-index:1900',
+      'padding:7px 11px',
+      'border:1px solid rgba(74,222,128,.55)',
+      'border-radius:999px',
+      'background:rgba(5,46,22,.88)',
+      'color:#dcfce7',
+      'font-size:10px',
+      'font-weight:950',
+      'pointer-events:none',
+      'box-shadow:0 5px 16px rgba(0,0,0,.25)'
+    ].join(';');
+    doc.body.appendChild(badge);
+    setTimeout(() => { if (badge.isConnected) badge.style.opacity = '.72'; }, 2200);
+  }
+
+  function scheduleRetry(delay = 220) {
+    if (completed) return;
+    clearTimeout(retryTimer);
+    retryTimer = setTimeout(tryInject, delay);
+  }
+
+  function tryInject() {
+    if (completed) return;
+
+    let doc;
+    try { doc = frame.contentDocument; } catch (_) { return scheduleRetry(350); }
+    if (!doc?.documentElement) return scheduleRetry();
+
+    if (doc.getElementById('caAccessGate')) {
+      setStatus('🔐 CA認証後にBridge POIを自動読込します', 'warn');
+      return scheduleRetry(400);
+    }
+
+    const input = doc.getElementById('entryFile');
+    const start = doc.getElementById('startButton');
+    const entry = doc.getElementById('entry');
+
+    if (started) {
+      if (entry?.classList.contains('hidden')) {
+        completed = true;
+        addBridgeBadge(doc);
+        setStatus(`✅ Bridgeの${handoff.pois.length.toLocaleString('ja-JP')}件でCREATIVE MODEを開始しました`, 'ok');
+        setTimeout(() => status.classList.add('fade'), 2200);
+        return;
+      }
+      return scheduleRetry(300);
+    }
+
+    if (!input || !start || typeof input.dispatchEvent !== 'function') {
+      setStatus(`🌉 ${handoff.pois.length.toLocaleString('ja-JP')}件をCREATIVE MODEへ準備中…`);
+      return scheduleRetry();
+    }
+
+    const transfer = makeTransfer();
+    if (!transfer?.items) {
+      fail('このブラウザではCREATIVE MODEへの自動ファイル受け渡しを開始できませんでした。');
+      return;
+    }
+
+    const files = ['POKESTOP','GYM','POWERSPOT'].map(buildFile).filter(Boolean);
+    if (!files.length) {
+      fail('CREATIVE MODEへ渡せるPOIがありません。');
+      return;
+    }
+
+    try {
+      files.forEach(file => transfer.items.add(file));
+      input.files = transfer.files;
+      input.dispatchEvent(new Event('change', { bubbles:true }));
+    } catch (error) {
+      console.error('[Campsite Bridge M6] Creative virtual CSV assignment failed', error);
+      fail('Bridge POIをCREATIVE MODEの読込欄へ設定できませんでした。');
+      return;
+    }
+
+    setStatus(`🎨 ${handoff.pois.length.toLocaleString('ja-JP')}件をCREATIVE MODEへ読み込んでいます…`);
+
+    setTimeout(() => {
+      if (!start.disabled) {
+        started = true;
+        start.click();
+        scheduleRetry(300);
+      } else {
+        scheduleRetry(260);
+      }
+    }, 180);
+  }
+
+  setStatus(`🌉 Bridgeの${handoff.pois.length.toLocaleString('ja-JP')}件をCREATIVE MODEへ準備中…`);
+  frame.src = './index.html';
+  frame.addEventListener('load', () => scheduleRetry(160));
+  scheduleRetry(350);
+})();
+</script>
+</body>
+</html>
