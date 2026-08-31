@@ -34,9 +34,29 @@
       .ak-card[${ENHANCED_ATTR}="1"]>.ak-actions{margin:12px 14px 14px}
       .ak-card[${ENHANCED_ATTR}="1"]>.admin-kmz-quick{margin:11px 14px 0}
       .ak-card[${ENHANCED_ATTR}="1"]>.admin-kmz-detail{margin:8px 14px 0}
-      @media(max-width:680px){.ak-card[${ENHANCED_ATTR}="1"]>.ak-card-collapse>summary{padding:12px 13px}.ak-card[${ENHANCED_ATTR}="1"]>.ak-card-top{padding-left:13px;padding-right:13px}.ak-card[${ENHANCED_ATTR}="1"]>.ak-creator-line,.ak-card[${ENHANCED_ATTR}="1"]>.ak-meta,.ak-card[${ENHANCED_ATTR}="1"]>.admin-kmz-quick,.ak-card[${ENHANCED_ATTR}="1"]>.admin-kmz-detail{margin-left:13px;margin-right:13px}.ak-card[${ENHANCED_ATTR}="1"]>.ak-actions{margin-left:13px;margin-right:13px;margin-bottom:13px}}
+      .admin-kmz-map-launch{display:flex;align-items:center;justify-content:center;gap:7px;width:calc(100% - 44px);margin:0 22px 14px;padding:11px 14px;border:1px solid rgba(56,189,248,.34);border-radius:12px;background:linear-gradient(135deg,rgba(14,165,233,.15),rgba(99,102,241,.13));color:#e0f2fe;font-size:11px;font-weight:900;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(125,211,252,.05)}
+      .admin-kmz-map-launch:hover{border-color:rgba(125,211,252,.58);background:linear-gradient(135deg,rgba(14,165,233,.22),rgba(99,102,241,.18))}
+      @media(max-width:680px){.ak-card[${ENHANCED_ATTR}="1"]>.ak-card-collapse>summary{padding:12px 13px}.ak-card[${ENHANCED_ATTR}="1"]>.ak-card-top{padding-left:13px;padding-right:13px}.ak-card[${ENHANCED_ATTR}="1"]>.ak-creator-line,.ak-card[${ENHANCED_ATTR}="1"]>.ak-meta,.ak-card[${ENHANCED_ATTR}="1"]>.admin-kmz-quick,.ak-card[${ENHANCED_ATTR}="1"]>.admin-kmz-detail{margin-left:13px;margin-right:13px}.ak-card[${ENHANCED_ATTR}="1"]>.ak-actions{margin-left:13px;margin-right:13px;margin-bottom:13px}.admin-kmz-map-launch{width:calc(100% - 28px);margin-left:14px;margin-right:14px}}
     `;
     document.head.appendChild(style);
+  }
+
+  function ensureMapViewerButton() {
+    const root = document.getElementById("adminKmzBrowserV2");
+    if (!root || root.querySelector("[data-admin-kmz-map-launch]")) return;
+
+    const body = root.querySelector("#adminKmzBrowserV2Body");
+    if (!body) return;
+
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "admin-kmz-map-launch";
+    button.dataset.adminKmzMapLaunch = "1";
+    button.textContent = "🗺 MAPで確認";
+    button.addEventListener("click", () => {
+      window.location.href = "admin-kmz-map.html";
+    });
+    root.insertBefore(button, body);
   }
 
   function recordIdForCard(card) {
@@ -153,6 +173,7 @@
   }
 
   function enhanceAll(root) {
+    ensureMapViewerButton();
     const scope = root?.querySelectorAll ? root : document;
     if (scope.matches?.(CARD_SELECTOR)) enhanceCard(scope);
     scope.querySelectorAll?.(`${CARD_SELECTOR}:not([${ENHANCED_ATTR}="1"])`).forEach(enhanceCard);
@@ -172,6 +193,7 @@
 
   function start() {
     ensureStyles();
+    ensureMapViewerButton();
     enhanceAll(document);
     loadCreatorIndex(false);
 
@@ -184,6 +206,7 @@
           if (hasUnknownCard(node)) shouldRefreshCreators = true;
         }
       }
+      ensureMapViewerButton();
       if (shouldRefreshCreators) loadCreatorIndex(true);
     });
 
