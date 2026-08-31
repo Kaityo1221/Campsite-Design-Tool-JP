@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '0.9.0-m2';
+  const VERSION = '0.9.1-m2';
   const STORAGE_KEY = 'campsiteBridge.preview.m1.v0.9';
   const DEV_PARAM = 'campsiteBridgeDev';
   const ALLOWED_ORIGINS = new Set([
@@ -10,6 +10,8 @@
   ]);
   const ALLOWED_ENTITIES = new Set(['POKESTOP', 'GYM', 'POWERSPOT']);
   const ALLOWED_STATUSES = new Set(['ACTIVE', 'INACTIVE']);
+  const LEAFLET_FALLBACK_JS = 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js';
+  const LEAFLET_FALLBACK_CSS = 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css';
 
   const params = new URLSearchParams(location.search);
   if (params.get(DEV_PARAM) !== '1') return;
@@ -54,6 +56,7 @@
   let bridgeMap = null;
   let markerLayer = null;
   let poiBounds = null;
+  let leafletPromise = null;
 
   function saveState() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -220,11 +223,59 @@
     return `<strong>${escapeHtml(poi.title || '名称なし')}</strong><br>${label} · ${escapeHtml(poi.gameStatus)}<br><small>${poi.lat.toFixed(6)}, ${poi.lng.toFixed(6)}</small>`;
   }
 
-  function ensureMap() {
+  function ensureFallbackCss() {
+    if ([...document.styleSheets].some(sheet => String(sheet.href || '').includes('leaflet'))) return;
+    if (document.querySelector('link[data-bridge-leaflet-fallback]')) return;
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = LEAFLET_FALLBACK_CSS;
+    link.dataset.bridgeLeafletFallback = '1';
+    document.head.appendChild(link);
+  }
+
+  function loadFallbackLeaflet() {
+    if (window.L) return Promise.resolve(window.L);
+    if (leafletPromise) return leafletPromise;
+
+    ensureFallbackCss();
+    $('mapMessage').textContent = '地図ライブラリを読み込んでいます…';
+
+    leafletPromise = new Promise((resolve, reject) => {
+      const existing = document.querySelector('script[data-bridge-leaflet-fallback]');
+      if (existing) {
+        existing.addEventListener('load', () => window.L ? resolve(window.L) : reject(new Error('Leaflet global missing')),{ once:true });
+        existing.addEventListener('error', () => reject(new Error('Leaflet fallback load failed')),{ once:true });
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.src = LEAFLET_FALLBACK_JS;
+      script.async = true;
+      script.dataset.bridgeLeafletFallback = '1';
+      script.onload = () => window.L ? resolve(window.L) : reject(new Error('Leaflet global missing'));
+      script.onerror = () => reject(new Error('Leaflet fallback load failed'));
+      document.head.appendChild(script);
+    }).catch(error => {
+      leafletPromise = null;
+      throw error;
+    });
+
+    return leafletPromise;
+  }
+
+  async function ensureMap() {
     if (!state.frozenAt || !$('mapCard') || $('mapCard').hidden) return;
 
+    try {
+      if (!window.L) await loadFallbackLeaflet();
+    } catch (error) {
+      console.error('[Campsite Bridge M2] Leaflet load failed', error);
+      $('mapMessage').textContent = '地図ライブラリを読み込めませんでした。「全POIを表示」を押すと再試行します。';
+      return;
+    }
+
     if (!window.L) {
-      $('mapMessage').textContent = 'Leafletの読み込みに失敗しました。通信状態を確認して再読み込みしてください。';
+      $('mapMessage').textContent = '地図ライブラリを読み込めませんでした。「全POIを表示」を押すと再試行します。';
       return;
     }
 
@@ -270,7 +321,11 @@
   }
 
   function fitAllPois() {
-    if (!bridgeMap || !poiBounds || !poiBounds.isValid()) return;
+    if (!bridgeMap || !poiBounds || !poiBounds.isValid()) {
+      ensureMap();
+      return;
+    }
+    bridgeMap.invalidateSize();
     bridgeMap.fitBounds(poiBounds, { padding: [24, 24], maxZoom: 17 });
   }
 
@@ -281,9 +336,7 @@
     $('step1Nav').className = frozen ? 'step done' : 'step active';
     $('step2Nav').className = frozen ? 'step active' : 'step';
 
-    if (frozen) {
-      requestAnimationFrame(ensureMap);
-    }
+    if (frozen) requestAnimationFrame(() => ensureMap());
   }
 
   function render() {
@@ -410,7 +463,10 @@
     render();
   });
 
-  $('fitAllBtn').addEventListener('click', fitAllPois);
+  $('fitAllBtn').addEventListener('click', () => {
+    if (!window.L || !bridgeMap) ensureMap();
+    else fitAllPois();
+  });
 
   $('resetBtn').addEventListener('click', () => {
     if (!confirm('収集データをすべて消去しますか？')) return;
