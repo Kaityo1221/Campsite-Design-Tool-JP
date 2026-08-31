@@ -30,7 +30,7 @@
         return response.text();
       })
       .then(html => {
-        const importScript = '<script src="js/bridge-import.js?v=1"><\\/script>';
+        const importScript = '<script src="js/bridge-import.js?v=1"><\/script>';
         const injected = html.includes('</body>')
           ? html.replace('</body>', `${importScript}</body>`)
           : `${html}${importScript}`;
