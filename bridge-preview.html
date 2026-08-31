@@ -34,7 +34,7 @@
       <div>
         <p class="eyebrow">HIDDEN DEVELOPMENT PREVIEW</p>
         <h1>🌉 Campsite Bridge</h1>
-        <p class="sub">v0.9 / Milestone 4 · Final Confirmation</p>
+        <p class="sub">v0.9 / Milestone 5 · Campsite Handoff</p>
       </div>
       <span id="collectorState" class="status-chip live">収集中</span>
     </header>
@@ -107,16 +107,17 @@
           <div id="reviewPoiList" class="review-list"></div>
           <div class="actions">
             <button id="reviewEditBtn" class="secondary" type="button">← 範囲を修正する</button>
-            <button class="primary disabled-button" type="button" disabled>次へ：Campsiteへ送る（M5）</button>
+            <button id="sendToCampsiteBtn" class="primary disabled-button" type="button" disabled>Campsiteへ送る準備中…</button>
           </div>
         </div>
       </div>
     </section>
 
-    <p class="footer-note">開発検証専用ページです。通常のCampsite Design Toolからリンクせず、検索エンジンにも公開しません。M4では切り取り後のPOI件数・地図・GUID整合性の確認だけを検証します。</p>
+    <p class="footer-note">開発検証専用ページです。通常のCampsite Design Toolからリンクせず、検索エンジンにも公開しません。M5ではM4で確定したPOIを既存のCampsite読込経路へ受け渡すところまで検証します。</p>
   </main>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9coqIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="js/bridge-preview-m4.js?v=1"></script>
+  <script src="js/bridge-preview-m5-handoff.js?v=1"></script>
 </body>
 </html>
