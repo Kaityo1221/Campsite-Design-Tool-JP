@@ -2,6 +2,12 @@
 (function () {
   "use strict";
 
+  const SESSION_TOKEN_KEY = "campsiteAdminSessionToken";
+  const SESSION_EXPIRES_KEY = "campsiteAdminSessionExpiresAt";
+  const LEGACY_UNLOCK_KEY = "campsiteAdminUnlocked";
+  const SUPABASE_URL = "https://azkshxjgsbtjgwbapcfw.supabase.co";
+  const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_rWbeIqdWJJHHBtphER8bdg__CaS_xGK";
+
   function setStatus(message, isError) {
     const list = document.getElementById("kmvListCount");
     const mapState = document.getElementById("kmvMapState");
@@ -11,6 +17,14 @@
       mapState.classList.remove("hidden", "error");
       if (isError) mapState.classList.add("error");
     }
+  }
+
+  function hasLiveAdminSession() {
+    const token = sessionStorage.getItem(SESSION_TOKEN_KEY) || "";
+    const expiresAt = sessionStorage.getItem(SESSION_EXPIRES_KEY) || "";
+    if (!token || !expiresAt) return false;
+    const expires = new Date(expiresAt).getTime();
+    return Number.isFinite(expires) && expires > Date.now();
   }
 
   function ensureStylesheet(href, id) {
@@ -58,6 +72,91 @@
     });
   }
 
+  function ensureAdminSession() {
+    if (hasLiveAdminSession()) return Promise.resolve();
+
+    return new Promise((resolve, reject) => {
+      const mapState = document.getElementById("kmvMapState");
+      const list = document.getElementById("kmvListCount");
+      if (!mapState) {
+        reject(new Error("管理者ログイン画面を表示できませんでした。"));
+        return;
+      }
+
+      if (list) list.textContent = "管理者認証が必要です";
+      mapState.classList.remove("hidden", "error");
+      mapState.innerHTML = `
+        <div style="font-weight:900;font-size:15px;color:#f8fafc;margin-bottom:6px;">🔐 管理者ログイン</div>
+        <div style="font-size:11px;color:#94a3b8;margin-bottom:12px;">MAP VIEWERを直接開いた場合は、ここで管理者コードを入力できます。</div>
+        <input id="kmvAdminPassword" type="password" autocomplete="current-password" placeholder="管理者コード" style="width:100%;padding:11px 12px;border-radius:10px;border:1px solid rgba(148,163,184,.28);background:#0f172a;color:#f8fafc;font-size:16px;box-sizing:border-box;">
+        <button id="kmvAdminLogin" type="button" style="width:100%;margin-top:9px;padding:11px 12px;border-radius:10px;border:1px solid rgba(56,189,248,.45);background:rgba(14,165,233,.16);color:#e0f2fe;font-weight:900;">管理者として開く</button>
+        <div id="kmvAdminLoginError" style="min-height:18px;margin-top:8px;color:#fecaca;font-size:11px;"></div>
+      `;
+
+      const input = document.getElementById("kmvAdminPassword");
+      const button = document.getElementById("kmvAdminLogin");
+      const errorBox = document.getElementById("kmvAdminLoginError");
+
+      const login = async () => {
+        const password = String(input?.value || "").trim();
+        if (!password) {
+          if (errorBox) errorBox.textContent = "管理者コードを入力してください。";
+          return;
+        }
+
+        if (button) button.disabled = true;
+        if (errorBox) errorBox.textContent = "認証中…";
+
+        try {
+          if (!window.campsiteSupabase) {
+            window.campsiteSupabase = window.supabase.createClient(
+              SUPABASE_URL,
+              SUPABASE_PUBLISHABLE_KEY
+            );
+          }
+
+          const { data, error } = await window.campsiteSupabase.functions.invoke(
+            "admin-auth",
+            { body: { action: "login", password } }
+          );
+
+          if (error) {
+            let message = error.message || "管理者認証に失敗しました。";
+            try {
+              const details = error.context && typeof error.context.json === "function"
+                ? await error.context.json()
+                : null;
+              if (details?.error) message = details.error;
+            } catch (_) {}
+            throw new Error(message);
+          }
+
+          if (!data?.success || !data?.sessionToken || !data?.expiresAt) {
+            throw new Error(data?.error || "管理者認証に失敗しました。" );
+          }
+
+          sessionStorage.setItem(SESSION_TOKEN_KEY, data.sessionToken);
+          sessionStorage.setItem(SESSION_EXPIRES_KEY, data.expiresAt);
+          sessionStorage.setItem(LEGACY_UNLOCK_KEY, "true");
+          if (input) input.value = "";
+          mapState.textContent = "認証しました。MAP VIEWERを起動しています…";
+          if (list) list.textContent = "起動中…";
+          resolve();
+        } catch (error) {
+          if (errorBox) errorBox.textContent = error?.message || "管理者認証に失敗しました。";
+        } finally {
+          if (button) button.disabled = false;
+        }
+      };
+
+      button?.addEventListener("click", login);
+      input?.addEventListener("keydown", event => {
+        if (event.key === "Enter") login();
+      });
+      setTimeout(() => input?.focus(), 80);
+    });
+  }
+
   function loadAppScript() {
     return new Promise((resolve, reject) => {
       const old = document.getElementById("adminKmzMapAppScript");
@@ -65,7 +164,7 @@
 
       const script = document.createElement("script");
       script.id = "adminKmzMapAppScript";
-      script.src = `js/admin-kmz-map-v2.js?v=4&ts=${Date.now()}`;
+      script.src = `js/admin-kmz-map-v2.js?v=5&ts=${Date.now()}`;
       script.async = false;
       script.onload = resolve;
       script.onerror = () => reject(new Error("MAP VIEWER本体を読み込めませんでした。"));
@@ -111,6 +210,8 @@
         () => Boolean(window.supabase?.createClient),
         "supabase"
       );
+
+      await ensureAdminSession();
 
       setStatus("軽量一覧を読み込み中…", false);
       await loadAppScript();
