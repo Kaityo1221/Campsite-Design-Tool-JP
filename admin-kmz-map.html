@@ -7,7 +7,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>提出KMZ MAP VIEWER | Campsite Design Tool JP</title>
   <link rel="apple-touch-icon" sizes="180x180" href="assets/icon.png">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
   <link rel="stylesheet" href="css/admin-kmz-map.css?v=1">
 </head>
 <body>
@@ -29,7 +28,7 @@
             <input id="kmvExcludeOwn" type="checkbox" checked>
             <span>この端末の履歴を除く</span>
           </label>
-          <div id="kmvListCount" class="kmv-list-count">軽量一覧を読み込み中…</div>
+          <div id="kmvListCount" class="kmv-list-count">起動準備中…</div>
         </div>
         <div id="kmvRecordList" class="kmv-record-list"></div>
       </aside>
@@ -43,7 +42,7 @@
 
         <div class="kmv-map-wrap">
           <div id="kmvMap"></div>
-          <div id="kmvMapState" class="kmv-map-state">軽量一覧を読み込んでいます…</div>
+          <div id="kmvMapState" class="kmv-map-state">MAP VIEWERを起動しています…</div>
           <div class="kmv-legend" aria-label="地図凡例">
             <span><i class="kmv-dot existing"></i>POI</span>
             <span><i class="kmv-dot added"></i>追加予定</span>
@@ -68,9 +67,6 @@
     </main>
   </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9coqIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/admin-kmz-map-v2.js?v=2"></script>
+  <script src="js/admin-kmz-map-bootstrap.js?v=1"></script>
 </body>
 </html>
