@@ -157,19 +157,40 @@
     });
   }
 
-  function loadAppScript() {
-    return new Promise((resolve, reject) => {
-      const old = document.getElementById("adminKmzMapAppScript");
-      if (old) old.remove();
+  async function loadAppScript() {
+    const old = document.getElementById("adminKmzMapAppScript");
+    if (old) old.remove();
 
-      const script = document.createElement("script");
-      script.id = "adminKmzMapAppScript";
-      script.src = `js/admin-kmz-map-v2.js?v=5&ts=${Date.now()}`;
-      script.async = false;
-      script.onload = resolve;
-      script.onerror = () => reject(new Error("MAP VIEWER本体を読み込めませんでした。"));
-      document.body.appendChild(script);
-    });
+    const appUrl = `js/admin-kmz-map-v2.js?v=6&ts=${Date.now()}`;
+    const response = await fetch(appUrl, { cache: "no-store" });
+    if (!response.ok) throw new Error("MAP VIEWER本体を読み込めませんでした。");
+
+    let source = await response.text();
+
+    // 正式KMZの「新規 PokéStop / Gym / PowerSpot」も新規POIとして扱う。
+    source = source.replace(
+      'if (/追加|追加予定|追加希望|追加候補|候補|新設|planned|candidate|proposed|add/.test(text)) return "added";',
+      'if (/追加|追加予定|追加希望|追加候補|候補|新設|新規|planned|candidate|proposed|add/.test(text)) return "added";'
+    );
+
+    // 審査時に一目で分かるよう、既存=青、新規=赤系で強く色分けする。
+    source = source.replace(
+      'addedPoi: "★ 追加予定POI",',
+      'addedPoi: "★ 新規POI（赤）",'
+    );
+    source = source.replace(
+      'radius: added ? 8 : 7,\n        weight: 2,\n        color: "#f8fafc",\n        fillColor: added ? "#fbbf24" : "#38bdf8",',
+      'radius: added ? 9 : 7,\n        weight: added ? 3 : 2,\n        color: added ? "#9f1239" : "#f8fafc",\n        fillColor: added ? "#fb7185" : "#38bdf8",'
+    );
+
+    if (!source.includes('新規|planned') || !source.includes('#fb7185')) {
+      throw new Error("新規POI色分けパッチを適用できませんでした。");
+    }
+
+    const script = document.createElement("script");
+    script.id = "adminKmzMapAppScript";
+    script.textContent = source;
+    document.body.appendChild(script);
   }
 
   async function boot() {
