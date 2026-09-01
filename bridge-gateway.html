@@ -36,13 +36,21 @@
         return response.text();
       })
       .then(html => {
+        const leafletCss = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">';
         const bridgeScripts = [
-          '<script src="js/bridge-entry.js?v=1"></' + 'script>',
-          '<script src="js/bridge-selection.js?v=1"></' + 'script>'
+          '<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></' + 'script>',
+          '<script src="js/bridge-entry.js?v=2"></' + 'script>',
+          '<script src="js/bridge-selection.js?v=2"></' + 'script>'
         ].join('');
-        const injected = html.includes('</body>')
-          ? html.replace('</body>', `${bridgeScripts}</body>`)
-          : `${html}${bridgeScripts}`;
+
+        let injected = html.includes('</head>')
+          ? html.replace('</head>', `${leafletCss}</head>`)
+          : `${leafletCss}${html}`;
+
+        injected = injected.includes('</body>')
+          ? injected.replace('</body>', `${bridgeScripts}</body>`)
+          : `${injected}${bridgeScripts}`;
+
         document.open();
         document.write(injected);
         document.close();
