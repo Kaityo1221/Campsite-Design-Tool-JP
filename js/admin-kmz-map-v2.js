@@ -1,9 +1,10 @@
 /* ======================================================
-   管理者専用: 提出KMZ MAP VIEWER v2
+   管理者専用: 提出KMZ MAP VIEWER v3
    - MAP専用の軽量一覧 API を使用
    - 検索時のみサーバーへ再問い合わせ
    - 選択したKMZだけ取得・解凍・描画
    - 地図左上に50m距離判定を表示
+   - POI / 距離円 / 活動範囲を個別レイヤー化
 ====================================================== */
 (function () {
   "use strict";
@@ -31,9 +32,10 @@
   const els = {};
   let client = null;
   let map = null;
-  let dataLayer = null;
   let distanceControl = null;
   let distanceControlEl = null;
+  let layerControl = null;
+  const layerGroups = {};
 
   function cacheElements() {
     [
@@ -196,6 +198,31 @@
     distanceControlEl.title = "";
   }
 
+  function createLayerGroups() {
+    const definitions = {
+      existingPoi: "● 既存POI",
+      addedPoi: "★ 追加予定POI",
+      circle50: "◯ 50m",
+      circle40: "◯ 40m",
+      circle30: "◯ 30m",
+      area: "▱ 活動範囲",
+      other: "その他"
+    };
+
+    const overlays = {};
+    Object.entries(definitions).forEach(([key, label]) => {
+      const group = L.layerGroup();
+      layerGroups[key] = group;
+      overlays[label] = group;
+      group.addTo(map);
+    });
+    return overlays;
+  }
+
+  function clearDataLayers() {
+    Object.values(layerGroups).forEach(group => group?.clearLayers?.());
+  }
+
   function initMap() {
     map = L.map("kmvMap", { zoomControl: true }).setView([35.6812, 139.7671], 13);
     map.attributionControl.setPosition("bottomright");
@@ -205,8 +232,14 @@
     const aerial = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
       maxZoom: 20, attribution: "Tiles &copy; Esri"
     });
-    L.control.layers({ "地図": base, "航空写真": aerial }, null, { position: "topright" }).addTo(map);
-    dataLayer = L.layerGroup().addTo(map);
+
+    const overlays = createLayerGroups();
+    layerControl = L.control.layers(
+      { "地図": base, "航空写真": aerial },
+      overlays,
+      { position: "topright", collapsed: true }
+    ).addTo(map);
+
     createDistanceControl();
   }
 
@@ -350,6 +383,22 @@
     return { color: "#94a3b8", weight: 2, opacity: .72, fillColor: "#64748b", fillOpacity: .04 };
   }
 
+  function groupFor(category, geometryType) {
+    if (geometryType === "point") {
+      if (category === "added") return layerGroups.addedPoi;
+      if (category === "circle50") return layerGroups.circle50;
+      if (category === "circle40") return layerGroups.circle40;
+      if (category === "circle30") return layerGroups.circle30;
+      if (category === "area") return layerGroups.area;
+      return layerGroups.existingPoi;
+    }
+    if (category === "circle50") return layerGroups.circle50;
+    if (category === "circle40") return layerGroups.circle40;
+    if (category === "circle30") return layerGroups.circle30;
+    if (category === "area") return layerGroups.area;
+    return layerGroups.other;
+  }
+
   function distanceSummary(points) {
     const added = points.filter(p => p.category === "added");
     if (!added.length) return { kind: "none", count: 0, nearest: null };
@@ -394,25 +443,33 @@
       });
     });
 
-    dataLayer.clearLayers();
+    clearDataLayers();
     const bounds = L.latLngBounds([]);
     geometries.polygons.forEach(item => {
       item.coords.forEach(coord => bounds.extend(coord));
-      L.polygon(item.coords, polygonStyle(item.category)).bindPopup(popupHtml(item.name, item.folder)).addTo(dataLayer);
+      L.polygon(item.coords, polygonStyle(item.category))
+        .bindPopup(popupHtml(item.name, item.folder))
+        .addTo(groupFor(item.category, "polygon"));
     });
     geometries.lines.forEach(item => {
       item.coords.forEach(coord => bounds.extend(coord));
       const style = polygonStyle(item.category);
       L.polyline(item.coords, { color: style.color, weight: Math.max(2, style.weight), opacity: style.opacity })
-        .bindPopup(popupHtml(item.name, item.folder)).addTo(dataLayer);
+        .bindPopup(popupHtml(item.name, item.folder))
+        .addTo(groupFor(item.category, "line"));
     });
     geometries.points.forEach(item => {
       bounds.extend(item.coords);
       const added = item.category === "added";
       L.circleMarker(item.coords, {
-        radius: added ? 8 : 7, weight: 2, color: "#f8fafc",
-        fillColor: added ? "#fbbf24" : "#38bdf8", fillOpacity: .95
-      }).bindPopup(popupHtml(item.name, item.folder)).addTo(dataLayer);
+        radius: added ? 8 : 7,
+        weight: 2,
+        color: "#f8fafc",
+        fillColor: added ? "#fbbf24" : "#38bdf8",
+        fillOpacity: .95
+      })
+        .bindPopup(popupHtml(item.name, item.folder))
+        .addTo(groupFor(item.category, "point"));
     });
     if (bounds.isValid()) map.fitBounds(bounds.pad(.08), { maxZoom: 18, animate: false });
     else map.setView([35.6812, 139.7671], 13, { animate: false });
@@ -460,13 +517,13 @@
       els.kmvFileName.textContent = fileName;
       els.kmvDownload.disabled = false;
       renderMeta(item, featureSummary);
-      els.kmvRenderStatus.textContent = `Placemark ${featureSummary.placemarks}件を地図へ描画しました。`;
+      els.kmvRenderStatus.textContent = `Placemark ${featureSummary.placemarks}件を地図へ描画しました。右上のレイヤーから表示を切り替えられます。`;
       hideMapState();
       setTimeout(() => map.invalidateSize(false), 0);
     } catch (error) {
       if (sequence !== state.loadSequence) return;
       console.error("KMZ map render error", error);
-      dataLayer.clearLayers();
+      clearDataLayers();
       setDistanceStatus("waiting");
       els.kmvRenderStatus.textContent = error?.message || "KMZを地図へ描画できませんでした。";
       showMapState(error?.message || "KMZを地図へ描画できませんでした。", true);
@@ -496,6 +553,7 @@
     els.kmvMeta.innerHTML = "";
     els.kmvRenderStatus.textContent = "";
     els.kmvDownload.disabled = true;
+    clearDataLayers();
     setDistanceStatus("waiting");
     updateNavigation();
     showMapState("🔒 管理画面へ戻って管理者認証を行ってください。", true);
@@ -525,7 +583,7 @@
       renderRecordList();
       if (!state.records.length) {
         state.loadSequence += 1;
-        dataLayer.clearLayers();
+        clearDataLayers();
         setDistanceStatus("waiting");
         showMapState(state.search ? "検索条件に一致する提出KMZはありません。" : "表示できる提出KMZがありません。");
         return;
