@@ -36,10 +36,13 @@
         return response.text();
       })
       .then(html => {
-        const importScript = '<script src="js/bridge-selection.js?v=1"></' + 'script>';
+        const bridgeScripts = [
+          '<script src="js/bridge-entry.js?v=1"></' + 'script>',
+          '<script src="js/bridge-selection.js?v=1"></' + 'script>'
+        ].join('');
         const injected = html.includes('</body>')
-          ? html.replace('</body>', `${importScript}</body>`)
-          : `${html}${importScript}`;
+          ? html.replace('</body>', `${bridgeScripts}</body>`)
+          : `${html}${bridgeScripts}`;
         document.open();
         document.write(injected);
         document.close();
