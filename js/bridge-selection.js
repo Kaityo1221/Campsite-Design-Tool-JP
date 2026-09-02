@@ -111,18 +111,25 @@
       #campsiteBridgeSelection .bridge-count{padding:9px 6px;border:1px solid #334155;border-radius:11px;background:#0f172a;text-align:center}
       #campsiteBridgeSelection .bridge-count span{display:block;color:#94a3b8;font-size:10px}
       #campsiteBridgeSelection .bridge-count b{display:block;margin-top:2px;color:#f8fafc;font-size:17px}
+      #campsiteBridgeSelection .bridge-map-wrap{position:relative}
       #campsiteBridgeMap{width:100%;height:520px;min-height:420px;background:#07111f;border-top:1px solid #1e293b;border-bottom:1px solid #1e293b}
+      #campsiteBridgeMap.bridge-draw-mode{cursor:crosshair}
+      #campsiteBridgeSelection .bridge-map-toolbar{position:absolute;z-index:700;top:10px;right:10px;display:flex;align-items:center;gap:7px;padding:6px;border-radius:14px;background:rgba(2,6,23,.78);border:1px solid rgba(148,163,184,.28);box-shadow:0 8px 24px rgba(2,6,23,.28);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+      #campsiteBridgeSelection .bridge-map-toolbar button{border:1px solid rgba(148,163,184,.24);background:#0f172a;color:#e2e8f0;border-radius:10px;height:42px;min-width:42px;padding:0 11px;font-size:18px;font-weight:900;line-height:1;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+      #campsiteBridgeSelection .bridge-map-toolbar .bridge-map-draw{font-size:13px;padding:0 13px;white-space:nowrap}
+      #campsiteBridgeSelection .bridge-map-toolbar .bridge-drawing{background:#14532d!important;color:#dcfce7!important;border-color:rgba(34,197,94,.52)!important}
+      #campsiteBridgeSelection.bridge-is-drawing .bridge-poi-marker{pointer-events:none!important}
       #campsiteBridgeSelection .bridge-tools{padding:14px}
       #campsiteBridgeSelection .bridge-guide{margin:0 0 11px;padding:11px 12px;border-radius:11px;background:rgba(20,83,45,.32);border:1px solid rgba(34,197,94,.35);color:#dcfce7;font-size:12px;line-height:1.65}
       #campsiteBridgeSelection .bridge-legend{display:flex;flex-wrap:wrap;gap:8px 14px;margin:0 0 11px;color:#94a3b8;font-size:11px}
       #campsiteBridgeSelection .bridge-legend span{display:inline-flex;align-items:center;gap:5px}.bridge-dot{width:9px;height:9px;border-radius:50%;display:inline-block}.bridge-dot.stop{background:#38bdf8}.bridge-dot.gym{background:#f472b6}.bridge-dot.power{background:#facc15}.bridge-dot.selected{background:#22c55e}
-      #campsiteBridgeSelection .bridge-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+      #campsiteBridgeSelection .bridge-actions{display:grid;grid-template-columns:1fr;gap:8px}
       #campsiteBridgeSelection .bridge-actions button{border:0;border-radius:12px;padding:12px 10px;min-height:46px;font-weight:900;cursor:pointer}
-      #campsiteBridgeSelection .bridge-primary{grid-column:1/-1;background:#22c55e;color:#052e16}.bridge-secondary{background:#1e293b;color:#e2e8f0}.bridge-drawing{background:#14532d!important;color:#dcfce7!important}.bridge-disabled{opacity:.38;cursor:not-allowed!important}
+      #campsiteBridgeSelection .bridge-primary{background:#22c55e;color:#052e16}.bridge-secondary{background:#1e293b;color:#e2e8f0}.bridge-disabled{opacity:.38;cursor:not-allowed!important}
       #campsiteBridgeSelection .bridge-status{margin:10px 0 0;color:#bae6fd;font-size:12px;line-height:1.6}
       #campsiteBridgeImportNotice{margin:14px 0;padding:13px 15px;border-radius:13px;border:1px solid rgba(34,197,94,.38);background:rgba(20,83,45,.24);color:#dcfce7;font-weight:800;line-height:1.65}
       #campsiteBridgeSelection .leaflet-container{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#0f172a;color:#e2e8f0}.leaflet-popup-content{margin:10px 12px;font-size:12px;line-height:1.45}
-      @media(max-width:600px){#campsiteBridgeSelection .bridge-summary{grid-template-columns:repeat(2,minmax(0,1fr))}#campsiteBridgeMap{height:480px;min-height:400px}}
+      @media(max-width:600px){#campsiteBridgeSelection .bridge-summary{grid-template-columns:repeat(2,minmax(0,1fr))}#campsiteBridgeMap{height:480px;min-height:400px}#campsiteBridgeSelection .bridge-map-toolbar{top:8px;right:8px;gap:5px;padding:5px}#campsiteBridgeSelection .bridge-map-toolbar button{height:40px;min-width:40px;padding:0 9px}#campsiteBridgeSelection .bridge-map-toolbar .bridge-map-draw{font-size:12px;padding:0 10px}}
     `;
     document.head.appendChild(style);
   }
@@ -160,15 +167,19 @@
         <div class="bridge-count"><span>Gym</span><b id="bridgeSelectedGym">0</b></div>
         <div class="bridge-count"><span>Power Spot</span><b id="bridgeSelectedPower">0</b></div>
       </div>
-      <div id="campsiteBridgeMap"></div>
+      <div class="bridge-map-wrap">
+        <div id="campsiteBridgeMap"></div>
+        <div class="bridge-map-toolbar" aria-label="ポリゴン操作">
+          <button id="bridgeDrawBtn" class="bridge-map-draw" type="button" aria-pressed="false">✏️ 描く</button>
+          <button id="bridgeUndoBtn" type="button" title="1点戻す" aria-label="1点戻す">↶</button>
+          <button id="bridgeClearBtn" type="button" title="ポリゴンをやり直す" aria-label="ポリゴンをやり直す">🗑</button>
+          <button id="bridgeFitBtn" type="button" title="全POIを表示" aria-label="全POIを表示">🗺</button>
+        </div>
+      </div>
       <div class="bridge-tools">
         <div class="bridge-legend"><span><i class="bridge-dot stop"></i>PokéStop</span><span><i class="bridge-dot gym"></i>Gym</span><span><i class="bridge-dot power"></i>Power Spot</span><span><i class="bridge-dot selected"></i>ポリゴン内</span></div>
-        <div class="bridge-guide"><strong>公園を囲む</strong><br>「ポリゴンを描く」を押してから、地図上で外周を順番にクリックしてください。3点以上で範囲になります。</div>
+        <div class="bridge-guide"><strong>公園を囲む</strong><br>地図右上の「✏️ 描く」を押してから、外周を順番にタップしてください。描画中はPOIを触ってもポップアップは開きません。</div>
         <div class="bridge-actions">
-          <button id="bridgeDrawBtn" class="bridge-secondary" type="button">✏️ ポリゴンを描く</button>
-          <button id="bridgeFitBtn" class="bridge-secondary" type="button">🗺 全POIを表示</button>
-          <button id="bridgeUndoBtn" class="bridge-secondary" type="button">↶ 1点戻す</button>
-          <button id="bridgeClearBtn" class="bridge-secondary" type="button">🧹 やり直す</button>
           <button id="bridgeConfirmBtn" class="bridge-primary bridge-disabled" type="button" disabled>この範囲をCampsiteで使う</button>
         </div>
         <div id="bridgeSelectionStatus" class="bridge-status">ポリゴンはまだ作成されていません。</div>
@@ -186,7 +197,8 @@
       color: selected ? '#dcfce7' : '#0f172a',
       weight: selected ? 2 : 1,
       fillColor,
-      fillOpacity: poi.gameStatus === 'INACTIVE' ? 0.48 : 0.92
+      fillOpacity: poi.gameStatus === 'INACTIVE' ? 0.48 : 0.92,
+      className: 'bridge-poi-marker'
     };
   }
 
@@ -223,7 +235,9 @@
     markerByGuid = new Map();
     pois.forEach(poi => {
       const selected = selectedGuids.has(poi.guid);
-      const marker = L.circleMarker([poi.lat, poi.lng], markerStyle(poi, selected)).bindPopup(popupHtml(poi));
+      const options = { ...markerStyle(poi, selected), interactive: !drawMode };
+      const marker = L.circleMarker([poi.lat, poi.lng], options);
+      if (!drawMode) marker.bindPopup(popupHtml(poi));
       marker.addTo(markerLayer);
       markerByGuid.set(poi.guid, marker);
     });
@@ -233,6 +247,22 @@
     if (!map || !pois.length) return;
     const bounds = L.latLngBounds(pois.map(p => [p.lat, p.lng]));
     if (bounds.isValid()) map.fitBounds(bounds, { padding:[24,24], maxZoom:17 });
+  }
+
+  function setDrawMode(enabled) {
+    drawMode = Boolean(enabled);
+    const btn = $('bridgeDrawBtn');
+    const panel = $('campsiteBridgeSelection');
+    const mapEl = $('campsiteBridgeMap');
+    if (btn) {
+      btn.classList.toggle('bridge-drawing', drawMode);
+      btn.setAttribute('aria-pressed', String(drawMode));
+      btn.textContent = drawMode ? '✅ 描画中' : '✏️ 描く';
+    }
+    panel?.classList.toggle('bridge-is-drawing', drawMode);
+    mapEl?.classList.toggle('bridge-draw-mode', drawMode);
+    if (drawMode) map?.closePopup();
+    renderMarkers();
   }
 
   function updateSelection() {
@@ -412,18 +442,25 @@
   }
 
   function bindControls(panel) {
-    $('bridgeDrawBtn')?.addEventListener('click', () => {
-      drawMode = !drawMode;
-      const btn = $('bridgeDrawBtn');
-      btn?.classList.toggle('bridge-drawing', drawMode);
-      if (btn) btn.textContent = drawMode ? '✅ 描画中・地図をクリック' : '✏️ ポリゴンを描く';
+    $('bridgeDrawBtn')?.addEventListener('click', event => {
+      event.preventDefault();
+      event.stopPropagation();
+      setDrawMode(!drawMode);
     });
-    $('bridgeFitBtn')?.addEventListener('click', fitAll);
-    $('bridgeUndoBtn')?.addEventListener('click', () => {
+    $('bridgeFitBtn')?.addEventListener('click', event => {
+      event.preventDefault();
+      event.stopPropagation();
+      fitAll();
+    });
+    $('bridgeUndoBtn')?.addEventListener('click', event => {
+      event.preventDefault();
+      event.stopPropagation();
       polygonPoints.pop();
       redrawPolygon();
     });
-    $('bridgeClearBtn')?.addEventListener('click', () => {
+    $('bridgeClearBtn')?.addEventListener('click', event => {
+      event.preventDefault();
+      event.stopPropagation();
       polygonPoints = [];
       selectedGuids.clear();
       redrawPolygon();
