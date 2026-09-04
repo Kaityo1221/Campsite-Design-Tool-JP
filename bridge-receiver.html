@@ -42,12 +42,13 @@
 (() => {
   'use strict';
 
-  const VERSION = '0.8.5';
+  const VERSION = '0.8.8';
   const DEV_PARAM = 'campsiteBridgeDev';
   const STORAGE_KEY = 'campsiteBridgePoC.v0.3';
   const ADAPTER_STORAGE_KEY = 'campsiteBridgeAdapter.v0.3';
   const ALLOWED_ENTITIES = new Set(['POKESTOP','GYM','POWERSPOT']);
   const ALLOWED_STATUSES = new Set(['ACTIVE','INACTIVE','UNKNOWN']);
+  const ALLOWED_PROVENANCE = new Set(['WAYFARER_PASSIVE','WFMM_CACHE','BRIDGE_ENRICHMENT']);
   const ALLOWED_ORIGINS = new Set([
     'https://wayfarer.scopely.com',
     'https://wayfarer.nianticlabs.com'
@@ -64,6 +65,17 @@
     if (value === true || String(value).toLowerCase() === 'true') return true;
     if (value === false || String(value).toLowerCase() === 'false') return false;
     return null;
+  }
+
+  function normalizeProvenance(value) {
+    const input = Array.isArray(value) ? value : value ? [value] : [];
+    const result = [];
+    for (const item of input) {
+      const normalized = String(item || '').trim().toUpperCase();
+      if (!ALLOWED_PROVENANCE.has(normalized) || result.includes(normalized)) continue;
+      result.push(normalized);
+    }
+    return result;
   }
 
   function normalizePoi(raw) {
@@ -88,7 +100,8 @@
       imageUrl: String(raw.imageUrl || ''),
       description: String(raw.description || ''),
       s2L14: String(raw.s2L14 || ''),
-      s2L17: String(raw.s2L17 || '')
+      s2L17: String(raw.s2L17 || ''),
+      provenance: normalizeProvenance(raw.provenance)
     };
   }
 
@@ -126,13 +139,14 @@
       gameEntity: poi.gameEntity,
       gameStatus: poi.gameStatus,
       guid: poi.guid,
-      layer: 'BRIDGE',
+      importChannel: 'BRIDGE',
       sponsored: poi.sponsored,
       smr: poi.smr,
       imageUrl: poi.imageUrl,
       description: poi.description,
       s2L14: poi.s2L14,
-      s2L17: poi.s2L17
+      s2L17: poi.s2L17,
+      provenance: poi.provenance
     };
   }
 
@@ -231,7 +245,7 @@
       bridge: 'Campsite Bridge',
       bridgeVersion: String(data.bridgeVersion || ''),
       protocol: 'CAMPSITE_BRIDGE_POI_V1',
-      schemaVersion: String(data.schemaVersion || '1.1'),
+      schemaVersion: String(data.schemaVersion || '1.2'),
       receivedAt: new Date().toISOString(),
       selectedBounds: data.selectedBounds || null,
       pois: deduped.pois
