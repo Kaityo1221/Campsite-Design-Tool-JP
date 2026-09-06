@@ -11,6 +11,15 @@
     } catch (_) {}
   }
 
+  function loadScriptGuideV2() {
+    if (document.querySelector('script[data-script-guide-v2]')) return;
+
+    const script = document.createElement('script');
+    script.src = 'js/script-guide-v2.js?v=20260906-1';
+    script.setAttribute('data-script-guide-v2', '1');
+    document.head.appendChild(script);
+  }
+
   function ensureStyles() {
     if (document.getElementById(STYLE_ID)) return;
 
@@ -83,6 +92,7 @@
 
   function setup() {
     clearWorkflowResumeState();
+    loadScriptGuideV2();
     ensureStyles();
     if (enhanceReturnModal()) return;
 
