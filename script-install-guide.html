@@ -10,7 +10,6 @@
     color-scheme: dark;
     --bg: #020617;
     --panel: rgba(15, 23, 42, 0.86);
-    --panel-strong: rgba(15, 23, 42, 0.96);
     --line: rgba(148, 163, 184, 0.18);
     --text: #f8fafc;
     --muted: #cbd5e1;
@@ -18,14 +17,9 @@
     --purple: #a78bfa;
     --green: #4ade80;
     --amber: #fbbf24;
-    --danger: #fb7185;
-    --radius: 20px;
   }
-
   * { box-sizing: border-box; }
-
   html { scroll-behavior: smooth; }
-
   body {
     margin: 0;
     min-height: 100vh;
@@ -37,310 +31,94 @@
       radial-gradient(circle at 90% 16%, rgba(167,139,250,.12), transparent 30%),
       var(--bg);
   }
-
-  a { color: inherit; }
   button, a { -webkit-tap-highlight-color: transparent; }
-
   .page {
-    width: min(100% - 24px, 860px);
+    width: min(100% - 20px, 860px);
     margin: 0 auto;
     padding: max(22px, env(safe-area-inset-top)) 0 calc(64px + env(safe-area-inset-bottom));
   }
-
-  .hero {
-    padding: 24px 4px 20px;
-    text-align: center;
-  }
-
+  .hero { padding: 24px 4px 20px; text-align: center; }
   .eyebrow {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 7px 12px;
-    border: 1px solid rgba(56,189,248,.34);
-    border-radius: 999px;
-    background: rgba(14,165,233,.09);
-    color: #bae6fd;
-    font-size: 12px;
-    font-weight: 800;
-    letter-spacing: .04em;
+    display: inline-flex; padding: 7px 12px; border: 1px solid rgba(56,189,248,.34);
+    border-radius: 999px; background: rgba(14,165,233,.09); color: #bae6fd;
+    font-size: 12px; font-weight: 800;
   }
-
-  h1 {
-    margin: 16px 0 10px;
-    font-size: clamp(30px, 8vw, 48px);
-    line-height: 1.12;
-    letter-spacing: -.03em;
-  }
-
-  .lead {
-    max-width: 650px;
-    margin: 0 auto;
-    color: var(--muted);
-    font-size: 14px;
-    line-height: 1.8;
-  }
-
+  h1 { margin: 16px 0 10px; font-size: clamp(30px, 8vw, 48px); line-height: 1.12; }
+  .lead { margin: 0 auto; max-width: 650px; color: var(--muted); font-size: 14px; line-height: 1.8; }
   .single-script {
-    margin: 14px auto 0;
-    max-width: 680px;
-    padding: 13px 15px;
-    border: 1px solid rgba(74,222,128,.32);
-    border-radius: 15px;
-    background: rgba(34,197,94,.08);
-    color: #dcfce7;
-    font-size: 13px;
-    line-height: 1.7;
+    margin: 14px auto 0; max-width: 680px; padding: 13px 15px;
+    border: 1px solid rgba(74,222,128,.32); border-radius: 15px;
+    background: rgba(34,197,94,.08); color: #dcfce7; font-size: 13px; line-height: 1.7;
   }
-
   .single-script strong { color: #86efac; }
-
   .panel {
-    margin-top: 16px;
-    padding: 18px;
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
+    margin-top: 16px; padding: 18px; border: 1px solid var(--line); border-radius: 20px;
     background: linear-gradient(180deg, rgba(15,23,42,.92), rgba(15,23,42,.72));
-    box-shadow: 0 20px 60px rgba(0,0,0,.18);
-    backdrop-filter: blur(12px);
   }
-
-  .panel-title {
-    margin: 0 0 6px;
-    font-size: 19px;
-  }
-
-  .panel-sub {
-    margin: 0 0 16px;
-    color: var(--muted);
-    font-size: 13px;
-    line-height: 1.7;
-  }
-
-  .device-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 10px;
-  }
-
+  .panel-title { margin: 0 0 6px; font-size: 19px; }
+  .panel-sub { margin: 0 0 16px; color: var(--muted); font-size: 13px; line-height: 1.7; }
+  .device-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; }
   .device-card {
-    min-height: 104px;
-    padding: 14px 8px;
-    border: 1px solid rgba(148,163,184,.2);
-    border-radius: 16px;
-    background: rgba(15,23,42,.72);
-    color: var(--text);
-    cursor: pointer;
-    transition: transform .16s ease, border-color .16s ease, background .16s ease;
+    min-height: 96px; padding: 12px 6px; border: 1px solid rgba(148,163,184,.2);
+    border-radius: 16px; background: rgba(15,23,42,.72); color: var(--text); cursor: pointer;
   }
-
-  .device-card:active { transform: scale(.98); }
-  .device-card.selected {
-    border-color: rgba(56,189,248,.72);
-    background: rgba(14,165,233,.13);
-    box-shadow: inset 0 0 0 1px rgba(56,189,248,.1), 0 0 26px rgba(14,165,233,.08);
-  }
-
-  .device-icon {
-    display: block;
-    margin-bottom: 6px;
-    font-size: 26px;
-  }
-
-  .device-card strong {
-    display: block;
-    font-size: 15px;
-  }
-
-  .device-card small {
-    display: block;
-    margin-top: 4px;
-    color: #94a3b8;
-    font-size: 11px;
-  }
-
+  .device-card.selected { border-color: rgba(56,189,248,.72); background: rgba(14,165,233,.13); }
+  .device-icon { display: block; margin-bottom: 6px; font-size: 26px; }
+  .device-card strong { display: block; font-size: 13px; }
+  .device-card small { display: block; margin-top: 4px; color: #94a3b8; font-size: 11px; }
   .flow { display: none; margin-top: 18px; }
   .flow.active { display: block; }
-
   .step {
-    position: relative;
-    padding: 18px;
-    border: 1px solid rgba(148,163,184,.16);
-    border-radius: 18px;
+    padding: 18px; border: 1px solid rgba(148,163,184,.16); border-radius: 18px;
     background: rgba(2,6,23,.52);
   }
-
-  .step + .arrow { margin: 7px 0; text-align: center; color: #64748b; font-size: 20px; }
-
+  .arrow { margin: 7px 0; text-align: center; color: #64748b; font-size: 24px; }
   .step-no {
-    display: inline-flex;
-    margin-bottom: 10px;
-    padding: 5px 9px;
-    border: 1px solid rgba(167,139,250,.32);
-    border-radius: 999px;
-    background: rgba(139,92,246,.1);
-    color: #ddd6fe;
-    font-size: 11px;
-    font-weight: 900;
+    display: inline-flex; margin-bottom: 10px; padding: 5px 9px;
+    border: 1px solid rgba(167,139,250,.32); border-radius: 999px;
+    background: rgba(139,92,246,.1); color: #ddd6fe; font-size: 11px; font-weight: 900;
     letter-spacing: .06em;
   }
-
-  .step h3 {
-    margin: 0 0 8px;
-    font-size: 18px;
-    line-height: 1.5;
+  .step h3 { margin: 0 0 8px; font-size: 18px; line-height: 1.5; }
+  .note { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.78; }
+  ol.note { margin-top: 10px; padding-left: 22px; }
+  .link-btn, .copy-btn {
+    display: flex; align-items: center; justify-content: center; width: 100%; min-height: 48px;
+    margin-top: 14px; padding: 12px 14px; border-radius: 14px; text-decoration: none;
+    text-align: center; font-size: 14px; font-weight: 900; cursor: pointer;
   }
-
-  .note {
-    margin: 0;
-    color: var(--muted);
-    font-size: 13px;
-    line-height: 1.78;
-  }
-
-  ol.note, ul.note {
-    margin-top: 10px;
-    padding-left: 22px;
-  }
-
   .link-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 48px;
-    margin-top: 14px;
-    padding: 12px 14px;
     border: 1px solid rgba(56,189,248,.38);
-    border-radius: 14px;
-    background: linear-gradient(180deg, rgba(14,165,233,.22), rgba(2,132,199,.16));
-    color: #e0f2fe;
-    font-size: 14px;
-    font-weight: 900;
-    text-decoration: none;
-    text-align: center;
+    background: linear-gradient(180deg, rgba(14,165,233,.22), rgba(2,132,199,.16)); color: #e0f2fe;
   }
-
-  .link-btn.primary {
-    border-color: rgba(74,222,128,.42);
-    background: linear-gradient(180deg, rgba(34,197,94,.22), rgba(22,163,74,.15));
-    color: #dcfce7;
+  .copy-btn {
+    border: 1px solid rgba(74,222,128,.42);
+    background: linear-gradient(180deg, rgba(34,197,94,.22), rgba(22,163,74,.15)); color: #dcfce7;
   }
-
+  .url-box {
+    margin-top: 12px; padding: 12px; border: 1px solid rgba(148,163,184,.2); border-radius: 12px;
+    background: rgba(2,6,23,.72); color: #bfdbfe; font-size: 11px; line-height: 1.6;
+    word-break: break-all; user-select: all;
+  }
   .callout {
-    margin-top: 14px;
-    padding: 13px 14px;
-    border-radius: 14px;
-    font-size: 13px;
-    line-height: 1.75;
+    margin-top: 14px; padding: 13px 14px; border-radius: 14px; font-size: 13px; line-height: 1.75;
   }
-
-  .callout.info {
-    border: 1px solid rgba(96,165,250,.34);
-    background: rgba(59,130,246,.1);
-    color: #dbeafe;
+  .callout.info { border: 1px solid rgba(96,165,250,.34); background: rgba(59,130,246,.1); color: #dbeafe; }
+  .callout.warn { border: 1px solid rgba(251,191,36,.34); background: rgba(245,158,11,.09); color: #fef3c7; }
+  .callout.success { border: 1px solid rgba(74,222,128,.34); background: rgba(34,197,94,.09); color: #dcfce7; }
+  .handoff {
+    margin: 10px 0; padding: 16px; border: 1px solid rgba(56,189,248,.4); border-radius: 16px;
+    background: linear-gradient(180deg, rgba(14,165,233,.13), rgba(30,64,175,.08)); color: #dbeafe;
   }
-
-  .callout.warn {
-    border: 1px solid rgba(251,191,36,.34);
-    background: rgba(245,158,11,.09);
-    color: #fef3c7;
-  }
-
-  .callout.success {
-    border: 1px solid rgba(74,222,128,.34);
-    background: rgba(34,197,94,.09);
-    color: #dcfce7;
-  }
-
-  .branch-box {
-    margin-top: 14px;
-    overflow: hidden;
-    border: 1px solid rgba(251,191,36,.38);
-    border-radius: 16px;
-    background: rgba(120,53,15,.16);
-  }
-
-  .branch-head {
-    padding: 12px 14px;
-    border-bottom: 1px solid rgba(251,191,36,.18);
-    color: #fde68a;
-    font-size: 14px;
-    font-weight: 900;
-  }
-
-  .branch-body { padding: 14px; }
-
-  .branch-steps {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-    margin-top: 12px;
-  }
-
-  .branch-mini {
-    padding: 10px 8px;
-    border: 1px solid rgba(251,191,36,.18);
-    border-radius: 12px;
-    background: rgba(2,6,23,.35);
-    text-align: center;
-  }
-
-  .branch-mini strong {
-    display: block;
-    margin-bottom: 4px;
-    color: #fde68a;
-    font-size: 12px;
-  }
-
-  .branch-mini span {
-    color: #fef3c7;
-    font-size: 11px;
-    line-height: 1.5;
-  }
-
+  .handoff strong { display: block; margin-bottom: 6px; color: #bae6fd; font-size: 15px; }
   details.trouble {
-    margin-top: 12px;
-    border: 1px solid rgba(148,163,184,.16);
-    border-radius: 15px;
-    background: rgba(2,6,23,.38);
+    margin-top: 12px; border: 1px solid rgba(148,163,184,.16); border-radius: 15px; background: rgba(2,6,23,.38);
   }
-
-  details.trouble summary {
-    padding: 13px 14px;
-    cursor: pointer;
-    color: #e2e8f0;
-    font-size: 13px;
-    font-weight: 800;
-  }
-
-  details.trouble div {
-    padding: 0 14px 14px;
-    color: #cbd5e1;
-    font-size: 13px;
-    line-height: 1.75;
-  }
-
-  .complete {
-    border-color: rgba(74,222,128,.3);
-    background: rgba(20,83,45,.12);
-  }
-
-  .footer-note {
-    margin: 18px 2px 0;
-    color: #64748b;
-    font-size: 11px;
-    line-height: 1.65;
-    text-align: center;
-  }
-
-  @media (max-width: 640px) {
-    .page { width: min(100% - 20px, 860px); }
-    .panel { padding: 14px; }
-    .device-grid { gap: 8px; }
-    .device-card { min-height: 96px; padding: 12px 6px; }
-    .device-card strong { font-size: 13px; }
-    .branch-steps { grid-template-columns: 1fr; }
-  }
+  details.trouble summary { padding: 13px 14px; cursor: pointer; color: #e2e8f0; font-size: 13px; font-weight: 800; }
+  details.trouble div { padding: 0 14px 14px; color: #cbd5e1; font-size: 13px; line-height: 1.75; }
+  .complete { border-color: rgba(74,222,128,.3); background: rgba(20,83,45,.12); }
+  .footer-note { margin: 18px 2px 0; color: #64748b; font-size: 11px; text-align: center; }
+  .copy-status { margin-top: 8px; min-height: 18px; color: #86efac; font-size: 11px; text-align: center; }
 </style>
 </head>
 <body>
@@ -349,103 +127,36 @@
     <div class="eyebrow">🧭 Campsite Design Tool</div>
     <h1>スクリプト導入</h1>
     <p class="lead">使っている端末を選ぶと、その端末に必要な手順だけを表示します。上から順番に進めてください。</p>
-    <div class="single-script">
-      <strong>現在は Wayfarer Map Mods 1本だけ導入すればOKです。</strong><br>
-      旧手順の「Base」「S2 Cells」を別々にインストールする必要はありません。
-    </div>
+    <div class="single-script"><strong>現在は Wayfarer Map Mods 1本だけ導入すればOKです。</strong><br>旧手順の「Base」「S2 Cells」を別々にインストールする必要はありません。</div>
   </header>
 
-  <section class="panel" aria-labelledby="deviceTitle">
-    <h2 id="deviceTitle" class="panel-title">使っている端末を選択</h2>
+  <section class="panel">
+    <h2 class="panel-title">使っている端末を選択</h2>
     <p class="panel-sub">端末を選ぶと、下に導入手順が表示されます。</p>
-
     <div class="device-grid">
-      <button type="button" class="device-card" data-device="pc" onclick="showFlow('pc', this)">
-        <span class="device-icon">💻</span>
-        <strong>PC</strong>
-        <small>Chrome</small>
-      </button>
-      <button type="button" class="device-card" data-device="iphone" onclick="showFlow('iphone', this)">
-        <span class="device-icon">🍎</span>
-        <strong>iPhone</strong>
-        <small>Safari</small>
-      </button>
-      <button type="button" class="device-card" data-device="android" onclick="showFlow('android', this)">
-        <span class="device-icon">🤖</span>
-        <strong>Android</strong>
-        <small>Firefox</small>
-      </button>
+      <button type="button" class="device-card" onclick="showFlow('pc', this)"><span class="device-icon">💻</span><strong>PC</strong><small>Chrome</small></button>
+      <button type="button" class="device-card" onclick="showFlow('iphone', this)"><span class="device-icon">🍎</span><strong>iPhone</strong><small>Safari</small></button>
+      <button type="button" class="device-card" onclick="showFlow('android', this)"><span class="device-icon">🤖</span><strong>Android</strong><small>Firefox</small></button>
     </div>
 
     <div id="flowPc" class="flow">
-      <div class="step">
-        <div class="step-no">PC STEP 1</div>
-        <h3>Tampermonkeyをインストール</h3>
-        <p class="note">Chromeにユーザースクリプト管理用の拡張機能を追加します。</p>
-        <a class="link-btn" href="https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo?hl=ja" target="_blank" rel="noopener">Tampermonkeyをインストール</a>
-      </div>
+      <div class="step"><div class="step-no">PC STEP 1</div><h3>Tampermonkeyをインストール</h3><p class="note">Chromeにユーザースクリプト管理用の拡張機能を追加します。</p><a class="link-btn" href="https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo?hl=ja" target="_blank" rel="noopener">Tampermonkeyをインストール</a></div>
       <div class="arrow">↓</div>
-      <div class="step">
-        <div class="step-no">PC STEP 2</div>
-        <h3>Chromeの拡張機能設定を確認</h3>
-        <p class="note">Tampermonkeyがユーザースクリプトを実行できるように設定します。</p>
-        <ol class="note">
-          <li>Chrome右上の「︙」を押す</li>
-          <li>「拡張機能」→「拡張機能を管理」</li>
-          <li>「デベロッパーモード」をON</li>
-          <li>Tampermonkeyの「詳細」を開く</li>
-          <li>「ユーザースクリプトを許可する」をON</li>
-        </ol>
-      </div>
+      <div class="step"><div class="step-no">PC STEP 2</div><h3>Chromeの拡張機能設定を確認</h3><ol class="note"><li>Chrome右上の「︙」を押す</li><li>「拡張機能」→「拡張機能を管理」</li><li>「デベロッパーモード」をON</li><li>Tampermonkeyの「詳細」を開く</li><li>「ユーザースクリプトを許可する」をON</li></ol></div>
       <div class="arrow">↓</div>
-      <div class="step">
-        <div class="step-no">PC STEP 3</div>
-        <h3>Wayfarer Map Modsをインストール</h3>
-        <p class="note">下のボタンを押し、Tampermonkeyのインストール画面で「インストール」を押してください。</p>
-        <a class="link-btn primary" href="https://gitlab.com/Tntnnbltn/wayfarer-map-mods/-/raw/main/dist/wayfarer-map-mods.user.js" target="_blank" rel="noopener">Wayfarer Map Modsをインストール</a>
-      </div>
+      <div class="step"><div class="step-no">PC STEP 3</div><h3>Wayfarer Map Modsをインストール</h3><p class="note">下のボタンを押し、表示されたインストール画面で「インストール」を押してください。</p><a class="link-btn" href="https://gitlab.com/Tntnnbltn/wayfarer-map-mods/-/raw/main/dist/wayfarer-map-mods.user.js" target="_blank" rel="noopener">Wayfarer Map Modsをインストール</a></div>
       <div class="arrow">↓</div>
-      <div class="step complete">
-        <div class="step-no">PC STEP 4</div>
-        <h3>Wayfarer Mapで確認</h3>
-        <p class="note">ChromeでWayfarer Mapを開き、Wayfarer Map Modsの機能が表示されれば導入完了です。</p>
-        <a class="link-btn" href="https://wayfarer.nianticlabs.com/new/" target="_blank" rel="noopener">ChromeでWayfarer Mapを開く</a>
-      </div>
+      <div class="step complete"><div class="step-no">PC STEP 4</div><h3>Wayfarer Mapで確認</h3><p class="note">ChromeでWayfarer Mapを開き、Wayfarer Map Modsの機能が表示されれば導入完了です。</p><a class="link-btn" href="https://wayfarer.nianticlabs.com/new/" target="_blank" rel="noopener">ChromeでWayfarer Mapを開く</a></div>
     </div>
 
     <div id="flowIphone" class="flow">
-      <div class="step">
-        <div class="step-no">iPhone STEP 1</div>
-        <h3>Userscriptsをインストール</h3>
-        <p class="note">App StoreからUserscriptsアプリを追加します。</p>
-        <a class="link-btn" href="https://apps.apple.com/jp/app/userscripts/id1463298887" target="_blank" rel="noopener">Userscriptsをインストール</a>
-      </div>
+      <div class="step"><div class="step-no">iPhone STEP 1</div><h3>Userscriptsをインストール</h3><p class="note">App StoreからUserscriptsアプリを追加します。</p><a class="link-btn" href="https://apps.apple.com/jp/app/userscripts/id1463298887" target="_blank" rel="noopener">Userscriptsをインストール</a></div>
       <div class="arrow">↓</div>
-      <div class="step">
-        <div class="step-no">iPhone STEP 2</div>
-        <h3>Safariの機能拡張をON</h3>
-        <p class="note">Safari側でUserscriptsを有効にしてください。</p>
-        <ol class="note">
-          <li>Safariを開く</li>
-          <li>Safariのメニューを開く</li>
-          <li>「機能拡張を管理」を押す</li>
-          <li>「Userscripts」をON</li>
-        </ol>
-      </div>
+      <div class="step"><div class="step-no">iPhone STEP 2</div><h3>Safariの機能拡張をON</h3><ol class="note"><li>Safariを開く</li><li>Safariのメニューを開く</li><li>「機能拡張を管理」を押す</li><li>「Userscripts」をON</li></ol></div>
       <div class="arrow">↓</div>
-      <div class="step">
-        <div class="step-no">iPhone STEP 3</div>
-        <h3>Wayfarer Map Modsをインストール</h3>
-        <p class="note">下のボタンをSafariで開き、Safariのメニューから「Userscripts」→「Tap to Install」の順に押してください。</p>
-        <a class="link-btn primary" href="https://gitlab.com/Tntnnbltn/wayfarer-map-mods/-/raw/main/dist/wayfarer-map-mods.user.js" target="_blank" rel="noopener">Wayfarer Map Modsをインストール</a>
-      </div>
+      <div class="step"><div class="step-no">iPhone STEP 3</div><h3>Wayfarer Map Modsをインストール</h3><p class="note">下のボタンをSafariで開き、Safariのメニューから「Userscripts」→「Tap to Install」の順に押してください。</p><a class="link-btn" href="https://gitlab.com/Tntnnbltn/wayfarer-map-mods/-/raw/main/dist/wayfarer-map-mods.user.js" target="_blank" rel="noopener">Wayfarer Map Modsをインストール</a></div>
       <div class="arrow">↓</div>
-      <div class="step complete">
-        <div class="step-no">iPhone STEP 4</div>
-        <h3>Wayfarer Mapで確認</h3>
-        <p class="note">SafariでWayfarer Mapを開き、Wayfarer Map Modsの機能が表示されれば導入完了です。</p>
-        <a class="link-btn" href="https://wayfarer.nianticlabs.com/new/" target="_blank" rel="noopener">SafariでWayfarer Mapを開く</a>
-      </div>
+      <div class="step complete"><div class="step-no">iPhone STEP 4</div><h3>Wayfarer Mapで確認</h3><p class="note">SafariでWayfarer Mapを開き、Wayfarer Map Modsの機能が表示されれば導入完了です。</p><a class="link-btn" href="https://wayfarer.nianticlabs.com/new/" target="_blank" rel="noopener">SafariでWayfarer Mapを開く</a></div>
     </div>
 
     <div id="flowAndroid" class="flow">
@@ -455,44 +166,48 @@
         <p class="note">Android版ではFirefoxを使用します。</p>
         <a class="link-btn" href="https://play.google.com/store/apps/details?id=org.mozilla.firefox" target="_blank" rel="noopener">Firefoxをインストール</a>
       </div>
+
       <div class="arrow">↓</div>
+      <div class="handoff">
+        <strong>📱 ここから先はFirefoxで操作します</strong>
+        STEP 2以降は、Firefoxアプリ側で操作してください。<br>
+        このマニュアルを参照しながら、マニュアルとFirefoxを行き来して進めてください。
+      </div>
+      <div class="arrow">↓</div>
+
       <div class="step">
         <div class="step-no">Android STEP 2</div>
         <h3>TampermonkeyをFirefoxに追加</h3>
-        <p class="note">下のボタンをFirefoxで開き、「Firefoxへ追加」→「追加」の順に押してください。</p>
-        <a class="link-btn" href="https://addons.mozilla.org/ja/firefox/addon/tampermonkey/" target="_blank" rel="noopener">TampermonkeyをFirefoxに追加</a>
-        <div class="callout info">ℹ️ Tampermonkey追加後に案内ページが開いても、そのページでは操作不要です。この導入ページへ戻って次へ進んでください。</div>
+        <p class="note">Firefoxアプリを開き、アドレス欄に以下のURLをコピーして貼り付けて開いてください。ページが開いたら「Firefoxへ追加」→「追加」の順に押してください。</p>
+        <div class="url-box" id="tamperUrl">https://addons.mozilla.org/ja/firefox/addon/tampermonkey/</div>
+        <button type="button" class="copy-btn" onclick="copyUrl('tamperUrl','tamperStatus')">URLをコピー</button>
+        <div id="tamperStatus" class="copy-status" aria-live="polite"></div>
+        <div class="callout info">ℹ️ Tampermonkey追加後に案内ページが開いても、そのページでは操作不要です。このマニュアルへ戻って次のSTEPへ進んでください。</div>
         <details class="trouble">
           <summary>「追加」が表示されない場合</summary>
-          <div>Firefoxを一度終了して開き直してください。それでも表示されない場合は、スマートフォンを再起動してから、もう一度このSTEPを試してください。</div>
+          <div>Firefoxを一度終了して開き直し、同じURLをもう一度開いてください。</div>
         </details>
       </div>
+
       <div class="arrow">↓</div>
       <div class="step">
         <div class="step-no">Android STEP 3</div>
         <h3>Wayfarer Map Modsを開く</h3>
-        <p class="note">下のボタンを押してください。Firefoxで開いた場合は、そのままTampermonkeyのインストール画面へ進みます。</p>
-        <a class="link-btn primary" href="https://gitlab.com/Tntnnbltn/wayfarer-map-mods/-/raw/main/dist/wayfarer-map-mods.user.js" target="_blank" rel="noopener">Wayfarer Map Modsをインストール</a>
-
-        <div class="branch-box">
-          <div class="branch-head">📱 もし空白ページが出たら</div>
-          <div class="branch-body">
-            <p class="note">Discordなどの外部アプリから直接開いてる可能性があります。次の操作をしてください。</p>
-            <div class="branch-steps">
-              <div class="branch-mini"><strong>1</strong><span>画面右上の<br>「︙」を押す</span></div>
-              <div class="branch-mini"><strong>2</strong><span>「Firefoxで開く」<br>を押す</span></div>
-              <div class="branch-mini"><strong>3</strong><span>Tampermonkeyの<br>画面へ進む</span></div>
-            </div>
-          </div>
-        </div>
+        <p class="note">Firefoxアプリのアドレス欄に、以下のURLをコピーして貼り付けて開いてください。</p>
+        <div class="url-box" id="modsUrl">https://gitlab.com/Tntnnbltn/wayfarer-map-mods/-/raw/main/dist/wayfarer-map-mods.user.js</div>
+        <button type="button" class="copy-btn" onclick="copyUrl('modsUrl','modsStatus')">URLをコピー</button>
+        <div id="modsStatus" class="copy-status" aria-live="polite"></div>
+        <div class="callout warn"><strong>もし空白ページが出たら</strong><br>Discordなどの外部アプリから直接開いている可能性があります。Firefoxアプリを開き、上のURLをコピーしてアドレス欄に貼り付けてください。</div>
       </div>
+
       <div class="arrow">↓</div>
       <div class="step">
         <div class="step-no">Android STEP 4</div>
-        <h3>Tampermonkeyでインストール</h3>
-        <p class="note">Tampermonkeyのインストール画面が表示されたら、画面内の「インストール」を押してください。</p>
-        <div class="callout warn">⚠️ インストール画面に注意文が表示される場合があります。今回案内しているリンクから開いた場合は、内容を確認して「インストール」へ進んでください。</div>
+        <h3>表示された画面でインストール</h3>
+        <p class="note">前のSTEPでインストール画面が表示されたら、画面内の「インストール」を押してください。</p>
+        <div class="callout warn">⚠️ 注意文が表示される場合があります。今回案内しているURLから開いた場合は、内容を確認して「インストール」を押して進んでください。</div>
       </div>
+
       <div class="arrow">↓</div>
       <div class="step complete">
         <div class="step-no">Android STEP 5</div>
@@ -509,27 +224,30 @@
     <p class="panel-sub">スクリプト導入が完了したら、Wayfarer MapからPOIを抽出します。</p>
     <a class="link-btn" href="docs/poi-export-guide.pdf" target="_blank" rel="noopener">📍 POI一括抽出マニュアルを開く</a>
   </section>
-
   <p class="footer-note">Campsite Design Tool / Script Installation Guide</p>
 </main>
 <script>
   function showFlow(device, button) {
     document.querySelectorAll('.flow').forEach(flow => flow.classList.remove('active'));
     document.querySelectorAll('.device-card').forEach(card => card.classList.remove('selected'));
-
-    const idMap = {
-      pc: 'flowPc',
-      iphone: 'flowIphone',
-      android: 'flowAndroid'
-    };
-
-    const target = document.getElementById(idMap[device]);
+    const map = { pc: 'flowPc', iphone: 'flowIphone', android: 'flowAndroid' };
+    const target = document.getElementById(map[device]);
     if (target) target.classList.add('active');
     if (button) button.classList.add('selected');
+    requestAnimationFrame(() => target && target.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  }
 
-    requestAnimationFrame(() => {
-      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
+  async function copyUrl(sourceId, statusId) {
+    const source = document.getElementById(sourceId);
+    const status = document.getElementById(statusId);
+    if (!source) return;
+    const value = source.textContent.trim();
+    try {
+      await navigator.clipboard.writeText(value);
+      if (status) status.textContent = 'コピーしました。Firefoxのアドレス欄に貼り付けてください。';
+    } catch (error) {
+      if (status) status.textContent = 'URLを長押ししてコピーしてください。';
+    }
   }
 </script>
 </body>
