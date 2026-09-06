@@ -1,0 +1,363 @@
+{
+  "name": "Campsite Design Tool Chatbot FAQ",
+  "version": "0.1",
+  "created_at": "2026-09-06",
+  "policy": {
+    "deploy_only_status": "deployable",
+    "do_not_guess_unconfirmed_specs": true,
+    "fallback_to_escalation": true
+  },
+  "records": [
+    {
+      "id": "FAQ-001",
+      "category": "POI数・上限",
+      "question": "POIの設置数に上限はありますか？",
+      "similar": [
+        "POIは何個まで置けますか？",
+        "追加POIの最大数は？",
+        "POI数の制限はありますか？"
+      ],
+      "answer": "",
+      "fallback": "上限値は現在の仕様を確認してください。",
+      "status": "needs_confirmation",
+      "note": "問い合わせ自体は確認済み。上限値を断定できる根拠が不足。"
+    },
+    {
+      "id": "FAQ-002",
+      "category": "POI数・上限",
+      "question": "追加したPOIの数が合いません。",
+      "similar": [
+        "追加POIの件数がおかしい",
+        "距離チェックの件数と合わない",
+        "出力したPOI数が違う"
+      ],
+      "answer": "画面上の追加POI数と、距離チェックや出力結果の件数に差がある場合は、重複POIや判定対象外のポイントが含まれていないか確認してください。",
+      "fallback": "件数差が解消しない場合は、使用したCSV/KMZと表示件数を添えて問い合わせてください。",
+      "status": "needs_confirmation",
+      "note": "件数不一致の問い合わせは確認済み。一般化した原因説明は仕様確定後に要調整。"
+    },
+    {
+      "id": "FAQ-003",
+      "category": "POI数・上限",
+      "question": "既存POIと追加POIを合わせた件数が想定と違います。",
+      "similar": [
+        "全部のPOI数が合わない",
+        "既存と追加の内訳を知りたい",
+        "読み込んだPOI数が違う"
+      ],
+      "answer": "",
+      "fallback": "既存POI・追加POI・判定対象外POIの内訳を確認してください。",
+      "status": "needs_confirmation",
+      "note": "内訳表示・集計仕様の確認が必要。"
+    },
+    {
+      "id": "FAQ-004",
+      "category": "CSV・POI抽出",
+      "question": "Wayfarer Mapから抽出したCSVは、表示している範囲だけが対象ですか？",
+      "similar": [
+        "CSVは画面に見えている場所だけ？",
+        "どこまでPOIが抽出されますか？",
+        "表示範囲外も入りますか？"
+      ],
+      "answer": "",
+      "fallback": "抽出範囲の正確な仕様は確認が必要です。POIが多すぎる場合は地図を拡大してから再抽出してください。",
+      "status": "needs_confirmation",
+      "note": "『拡大して抽出数を減らす』運用は確認済み。抽出範囲の厳密な仕様は未確定。"
+    },
+    {
+      "id": "FAQ-005",
+      "category": "CSV・POI抽出",
+      "question": "CSVを読み込むとPOIが多すぎます。",
+      "similar": [
+        "POIが大量に出る",
+        "対象外のPOIまで入っている",
+        "CSVの件数が多すぎる"
+      ],
+      "answer": "必要なエリアまで地図を拡大してからPOIを抽出すると、抽出されるPOI数を減らせます。",
+      "fallback": "それでも多い場合は、対象範囲をさらに絞って再抽出してください。",
+      "status": "deployable",
+      "note": "チャット内で『拡大して抽出減』の対応方針を確認。"
+    },
+    {
+      "id": "FAQ-006",
+      "category": "CSV・POI抽出",
+      "question": "POIを必要な範囲だけ抽出するにはどうすればよいですか？",
+      "similar": [
+        "必要な場所だけ取りたい",
+        "POIの抽出範囲を狭くしたい",
+        "広い範囲を取らない方法は？"
+      ],
+      "answer": "対象エリアが地図上で分かりやすくなるまで拡大してからPOIを抽出してください。",
+      "fallback": "抽出対象がまだ広すぎる場合は、さらに表示範囲を絞ってください。",
+      "status": "deployable",
+      "note": "チャット内の運用方針に基づく。"
+    },
+    {
+      "id": "FAQ-007",
+      "category": "KMZ・編集内容",
+      "question": "編集した追加POIが、最初に作ったKMZへ反映されません。",
+      "similar": [
+        "追加したPOIがKMZに入らない",
+        "My Mapsで編集した内容が反映されない",
+        "編集後のKMZが古い"
+      ],
+      "answer": "",
+      "fallback": "編集後のデータをどの手順で再出力・再読込するか、現在の仕様を確認してください。",
+      "status": "needs_confirmation",
+      "note": "不具合・問い合わせは確認済み。確定した復旧手順が不足。"
+    },
+    {
+      "id": "FAQ-008",
+      "category": "KMZ・距離円",
+      "question": "一度作ったKMZを再度読み込んだ場合、距離円はどうなりますか？",
+      "similar": [
+        "KMZを読み直すと円が増えますか？",
+        "50m円は重複しますか？",
+        "既存KMZに距離円を追加できますか？"
+      ],
+      "answer": "既存KMZを再読み込みした場合は、50m円を追加して再生成できます。すでに存在する円はそのまま使い、不足している円だけを追加する方針です。距離円のレイヤー順は50m、40m、30mです。",
+      "fallback": "円が重複して見える場合は、元KMZに含まれている距離円の状態を確認してください。",
+      "status": "deployable",
+      "note": "既存KMZ再読込時の50m円追加、不足分のみ追加、レイヤー順50→40→30を確認済み。"
+    },
+    {
+      "id": "FAQ-009",
+      "category": "KMZ・出力",
+      "question": "完成したデータはKMLとKMZのどちらで書き出せばよいですか？",
+      "similar": [
+        "KMLとKMZどっち？",
+        "再読込するファイル形式は？",
+        "保存形式を教えて"
+      ],
+      "answer": "",
+      "fallback": "現在の推奨出力形式を確認してください。",
+      "status": "needs_confirmation",
+      "note": "問い合わせは確認済み。推奨形式を断定できる根拠が不足。"
+    },
+    {
+      "id": "FAQ-010",
+      "category": "重複POI",
+      "question": "重複している可能性があるPOIはどう確認すればよいですか？",
+      "similar": [
+        "同じPOIが2つある",
+        "重複候補が出た",
+        "近いPOIはどう判断する？"
+      ],
+      "answer": "重複POI候補が表示された場合は、候補同士を確認し、同じPOIか別のPOIかを判断してください。",
+      "fallback": "判断できない場合は、POI名や位置情報を確認して問い合わせてください。",
+      "status": "deployable",
+      "note": "重複POI候補について同一判定を依頼する方針を確認済み。"
+    },
+    {
+      "id": "FAQ-011",
+      "category": "重複POI",
+      "question": "重複POI候補を一覧で確認できますか？",
+      "similar": [
+        "重複一覧を見たい",
+        "重複候補をまとめて確認したい",
+        "同じPOI候補はどこに出ますか？"
+      ],
+      "answer": "",
+      "fallback": "重複POI候補の一覧表示は、現在の実装状況を確認してください。",
+      "status": "needs_confirmation",
+      "note": "一覧表示の要望は確認済み。実装済みかは確定できない。"
+    },
+    {
+      "id": "FAQ-012",
+      "category": "重複POI",
+      "question": "複数回CSVを抽出した場合、同じPOIが重複しませんか？",
+      "similar": [
+        "CSVを複数入れると重複する？",
+        "同じ場所を2回抽出した",
+        "重複データは自動で消える？"
+      ],
+      "answer": "",
+      "fallback": "複数CSV取込時の重複処理仕様を確認してください。",
+      "status": "needs_confirmation",
+      "note": "問い合わせは確認済み。自動重複排除の仕様は未確認。"
+    },
+    {
+      "id": "FAQ-013",
+      "category": "活動範囲",
+      "question": "活動範囲ポリゴンが作成されていない、または認識されません。",
+      "similar": [
+        "活動範囲がない",
+        "ポリゴンが認識されない",
+        "活動エリアが読み込まれない"
+      ],
+      "answer": "",
+      "fallback": "完成データに活動範囲ポリゴンが含まれているか確認してください。",
+      "status": "needs_confirmation",
+      "note": "問い合わせは確認済み。具体的な復旧手順は要確認。"
+    },
+    {
+      "id": "FAQ-014",
+      "category": "距離チェック",
+      "question": "距離チェックの対象件数がおかしいです。",
+      "similar": [
+        "距離判定の数が多い",
+        "ダミーポイントまで判定される",
+        "距離チェック件数が合わない"
+      ],
+      "answer": "距離チェックでは、判定対象ではないダミーポイントを除外する対応が入っています。件数が合わない場合は、ダミーポイントや重複候補が含まれていないか確認してください。",
+      "fallback": "差が残る場合は、使用ファイルと表示件数を添えて問い合わせてください。",
+      "status": "deployable",
+      "note": "座標一致するダミーポイント3件を判定除外した対応を確認済み。"
+    },
+    {
+      "id": "FAQ-015",
+      "category": "距離チェック",
+      "question": "POI同士の距離は何mを基準に確認すればよいですか？",
+      "similar": [
+        "POI間隔は何m？",
+        "50mと40mどっちを見る？",
+        "距離の基準を教えて"
+      ],
+      "answer": "基本基準は50mです。40mと30mは参考用の距離として扱います。",
+      "fallback": "判断に迷う場合は50mを基準に確認してください。",
+      "status": "deployable",
+      "note": "2026-08-14方針変更で原則50mを確認。"
+    },
+    {
+      "id": "FAQ-016",
+      "category": "距離チェック",
+      "question": "50m未満のPOIはすべてNGになりますか？",
+      "similar": [
+        "49mはダメ？",
+        "40mなら通りますか？",
+        "50m未満でも申請できますか？"
+      ],
+      "answer": "原則は50mを基準にします。40mや30mは参考表示で、基本的には承認前提の基準ではありません。最終判断が必要なケースは個別確認してください。",
+      "fallback": "50m未満で判断が必要な場合は、個別に確認してください。",
+      "status": "deployable",
+      "note": "50m原則、40/30mは参考、基本承認不可という運用方針を確認済み。"
+    },
+    {
+      "id": "FAQ-017",
+      "category": "Google My Maps",
+      "question": "My MapsのPOI一覧がスクロールしづらいです。",
+      "similar": [
+        "POI一覧が見づらい",
+        "My Mapsで目的のPOIを探せない",
+        "リストが多すぎる"
+      ],
+      "answer": "",
+      "fallback": "カテゴリを使った確認方法など、現在の案内手順を確認してください。",
+      "status": "needs_confirmation",
+      "note": "カテゴリ活用・フローチャート化の改善要望は確認済み。現行手順は要確認。"
+    },
+    {
+      "id": "FAQ-018",
+      "category": "Google My Maps",
+      "question": "My Mapsで編集した後、どのようにCampsite Design Toolへ戻せばよいですか？",
+      "similar": [
+        "My Mapsの次は何をする？",
+        "編集後の戻し方が分からない",
+        "My Mapsから再読込したい"
+      ],
+      "answer": "",
+      "fallback": "編集後の書き出し形式と再読込手順を現在の仕様で確認してください。",
+      "status": "needs_confirmation",
+      "note": "問い合わせは確認済み。確定手順が不足。"
+    },
+    {
+      "id": "FAQ-019",
+      "category": "iPhone・Safari",
+      "question": "iPhone／SafariからMy Mapsを開く場合はどうすればよいですか？",
+      "similar": [
+        "iPhoneでMy Mapsを開けない",
+        "Safariではどう開く？",
+        "スマホからMy Mapsを使いたい"
+      ],
+      "answer": "iPhoneのSafariでは、Campsite Design Toolに用意された「My Mapsを開く」リンクから開いてください。",
+      "fallback": "リンクから開けない場合は、使用端末とブラウザを添えて問い合わせてください。",
+      "status": "deployable",
+      "note": "iPhone Safari向け『My Mapsを開くリンク』方針を確認済み。"
+    },
+    {
+      "id": "FAQ-020",
+      "category": "起動・再開",
+      "question": "アプリを途中で終了したあと、前回の続きから再開できますか？",
+      "similar": [
+        "途中保存されますか？",
+        "タスクキル後に続きからできますか？",
+        "前回の状態は残りますか？"
+      ],
+      "answer": "",
+      "fallback": "この問い合わせは別アプリ由来の可能性があるため、Campsite Design ToolのFAQには現時点で投入しません。",
+      "status": "exclude_from_bot",
+      "note": "履歴上、MACHITAN!側の起動・再開問題と混在している可能性が高い。"
+    },
+    {
+      "id": "FAQ-021",
+      "category": "起動・再開",
+      "question": "タスクキル後に起動すると、途中の距離チェックから始まってしまいます。",
+      "similar": [
+        "アプリ再起動で途中画面になる",
+        "最初の画面から始めたい",
+        "距離チェックから勝手に再開する"
+      ],
+      "answer": "",
+      "fallback": "この問い合わせは別アプリ由来の可能性があるため、Campsite Design ToolのFAQには現時点で投入しません。",
+      "status": "exclude_from_bot",
+      "note": "履歴上、MACHITAN!側の事前準備画面の修正と一致。"
+    },
+    {
+      "id": "FAQ-022",
+      "category": "問い合わせ・通知",
+      "question": "Discordへ通知が届きません。",
+      "similar": [
+        "問い合わせ通知が来ない",
+        "Discordに送信されない",
+        "エラー報告が届いていない"
+      ],
+      "answer": "",
+      "fallback": "通知経路は運用側の確認事項です。一般利用者向けFAQでは、問い合わせ送信後に反応がない場合の案内へ置き換えるのが適切です。",
+      "status": "needs_confirmation",
+      "note": "Discord通知未達の事象は確認済み。ユーザー向け回答文は要設計。"
+    },
+    {
+      "id": "FAQ-023",
+      "category": "問い合わせ・サポート",
+      "question": "チャットbotで解決しなかった場合はどうすればよいですか？",
+      "similar": [
+        "解決しませんでした",
+        "botで分からない",
+        "人に問い合わせたい",
+        "会長に聞きたい"
+      ],
+      "answer": "案内で解決しなかった場合は、「解決しなかった」を選び、最終的な問い合わせ送信へ進んでください。",
+      "fallback": "送信できない場合は、問い合わせ内容と発生画面が分かる情報を残してください。",
+      "status": "deployable",
+      "note": "『解決しなかった』後の分岐と最終的に会長へ送付する導線を確認済み。"
+    },
+    {
+      "id": "FAQ-024",
+      "category": "POI Master連携",
+      "question": "POI MasterのデータはCampsite AIと本当に連携されていますか？",
+      "similar": [
+        "POI Masterは使われている？",
+        "辞書データは連携済み？",
+        "AIにPOI Masterが反映されてる？"
+      ],
+      "answer": "",
+      "fallback": "これは内部実装・運用確認のため、一般利用者向けチャットbotからは除外します。",
+      "status": "exclude_from_bot",
+      "note": "連携方針はあるが、一般利用者向けFAQではない。"
+    },
+    {
+      "id": "FAQ-025",
+      "category": "POI Master連携",
+      "question": "POI Masterで蓄積した名称・別名データはCampsite Design Toolの判定に反映されていますか？",
+      "similar": [
+        "alias_masterは反映されてる？",
+        "dictionary_masterは使われてる？",
+        "POI名称辞書は反映済み？"
+      ],
+      "answer": "",
+      "fallback": "これは内部実装・運用確認のため、一般利用者向けチャットbotからは除外します。",
+      "status": "exclude_from_bot",
+      "note": "dictionary_master / alias_master強化の方針は確認済みだが、利用者向けFAQではない。"
+    }
+  ]
+}
