@@ -22,6 +22,10 @@
   if(remoteResponses.some(r=>!r.ok)){document.body.textContent='Creative Modeの読み込みに失敗しました。';return;}
 
   let src=await remoteResponses[0].text();
+
+  // runtime-vnext.html内の ./base-v7.html はJP側ではなく、固定したNext Labスナップショットから読む。
+  src=src.replace("fetch('./base-v7.html',{cache:'no-store'})",`fetch('${ROOT}base-v7.html',{cache:'no-store'})`);
+
   for(let i=1;i<remoteResponses.length;i++) Function(await remoteResponses[i].text())();
   if(typeof window.applyCreativePatches!=='function'){
     document.body.textContent='Creative Modeの拡張機能を読み込めませんでした。';return;
