@@ -11,12 +11,27 @@
     } catch (_) {}
   }
 
+  function loadAndroidScriptGuideV3() {
+    if (document.querySelector('script[data-script-guide-android-v3]')) return;
+
+    const script = document.createElement('script');
+    script.src = 'js/script-guide-android-v3.js?v=20260907-1';
+    script.setAttribute('data-script-guide-android-v3', '1');
+    document.head.appendChild(script);
+  }
+
   function loadScriptGuideV2() {
-    if (document.querySelector('script[data-script-guide-v2]')) return;
+    const existing = document.querySelector('script[data-script-guide-v2]');
+
+    if (existing) {
+      loadAndroidScriptGuideV3();
+      return;
+    }
 
     const script = document.createElement('script');
     script.src = 'js/script-guide-v2.js?v=20260906-1';
     script.setAttribute('data-script-guide-v2', '1');
+    script.addEventListener('load', loadAndroidScriptGuideV3, { once: true });
     document.head.appendChild(script);
   }
 
