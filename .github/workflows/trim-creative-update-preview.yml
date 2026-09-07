@@ -1,0 +1,39 @@
+name: Trim Creative Mode Update Preview
+
+on:
+  push:
+    branches:
+      - feature/creative-mode-next-lab-integration
+
+permissions:
+  contents: write
+
+jobs:
+  trim:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/creative-mode-next-lab-integration
+      - name: Trim LAB UPDATE list
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p = Path('creative/vendor/runtime-vnext.html')
+          s = p.read_text(encoding='utf-8')
+          new = '<strong>LAB UPDATE</strong><ul><li>CSV / KMZ読込対応</li><li>CSV複数選択対応</li><li>iPhoneファイル選択対応</li><li>POI・ポリゴン操作改善</li><li>50m未満の距離・申請コメント対応</li><li>「前回の続き」データ保持</li></ul>'
+          s2, n = re.subn(r'<strong>LAB UPDATE</strong><ul>.*?</ul>', new, s, count=1, flags=re.S)
+          if n != 1:
+              raise SystemExit('LAB UPDATE block not found')
+          p.write_text(s2, encoding='utf-8')
+          PY
+      - name: Commit preview cleanup
+        run: |
+          if git diff --quiet; then exit 0; fi
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add creative/vendor/runtime-vnext.html
+          git commit -m "Trim Creative Mode LAB UPDATE list"
+          git push origin HEAD:feature/creative-mode-next-lab-integration
