@@ -117,9 +117,10 @@
       <div class="step script-step-complete">
         <div class="step-no">Android STEP 7</div>
         <h3>インストール完了を確認する</h3>
-        <p class="note">「操作が正常に完了しました」と表示されたらインストール成功です。Tampermonkey上部の「インストール済みユーザースクリプト」にWayfarer Map Modsが表示されることも確認してください。</p>
-        <p class="note">最後にFirefoxでWayfarer Mapを開き、Wayfarer Map Modsの機能が表示されれば導入完了です。</p>
-        <a class="link-btn" href="https://wayfarer.nianticlabs.com/new/" target="_blank" rel="noopener">FirefoxでWayfarer Mapを開く</a>
+        <p class="note">「操作が正常に完了しました」と表示されたらインストール成功です。Tampermonkey上部の「インストール済みユーザースクリプト」を開き、<strong>Wayfarer Map Mods</strong> が一覧に表示され、有効がONになっていることを確認してください。</p>
+        <div class="script-guide-callout info">ℹ️ 「Tam・サービスボット」が表示されても操作は不要です。普段は触りません。吹き出しは閉じても、そのままでも大丈夫です。</div>
+        <p class="note">確認できたら、FirefoxでWayfarer Mapを開いてログインしてください。Wayfarer Map Modsの機能が表示されれば導入完了です。</p>
+        <a class="link-btn" href="https://wayfarer.scopely.com/new/mapview?z=16" target="_blank" rel="noopener">FirefoxでWayfarer Mapを開く</a>
       </div>
 
       <div class="flow-arrow">↓</div>
