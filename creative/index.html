@@ -16,7 +16,7 @@
 
   // 起動切り分け中：Next Lab本体 + 検証済みパッチのみ。tracking/backfillは一時停止。
   const SNAPSHOT='da245de4294226ea0bbe0b65cfc9341530793af6';
-  const ROOT=`https://raw.githubusercontent.com/Kaityo1221/Campsite-Design-Tool-Next-Lab/${SNAPSHOT}/creative/`;
+  const ROOT=`https://raw.githack.com/Kaityo1221/Campsite-Design-Tool-Next-Lab/${SNAPSHOT}/creative/`;
   const remoteNames=['runtime-vnext.html','creative-patches-v2.js','creative-patches-v3.js','creative-patches-v4.js','creative-patches-v5-design-check.js'];
   const remoteResponses=await Promise.all(remoteNames.map(name=>fetch(ROOT+name,{cache:'no-store'})));
   if(remoteResponses.some(r=>!r.ok)){document.body.textContent='Creative Modeの読み込みに失敗しました。';return;}
