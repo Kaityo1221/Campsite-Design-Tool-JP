@@ -15,7 +15,7 @@
     if (document.querySelector('script[data-script-guide-android-v3]')) return;
 
     const script = document.createElement('script');
-    script.src = 'js/script-guide-android-v3.js?v=20260907-2';
+    script.src = 'js/script-guide-android-v3.js?v=20260907-3';
     script.setAttribute('data-script-guide-android-v3', '1');
     document.head.appendChild(script);
   }
