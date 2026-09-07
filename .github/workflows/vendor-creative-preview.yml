@@ -1,0 +1,48 @@
+name: Vendor Creative Mode Preview
+
+on:
+  push:
+    branches:
+      - feature/creative-mode-next-lab-integration
+    paths:
+      - .github/workflows/vendor-creative-preview.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  vendor:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: feature/creative-mode-next-lab-integration
+
+      - name: Vendor fixed Next Lab snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          SNAPSHOT='da245de4294226ea0bbe0b65cfc9341530793af6'
+          ROOT="https://raw.githubusercontent.com/Kaityo1221/Campsite-Design-Tool-Next-Lab/${SNAPSHOT}/creative"
+          mkdir -p creative/vendor
+          for file in base-v7.html runtime-vnext.html creative-patches-v2.js creative-patches-v3.js creative-patches-v4.js creative-patches-v5-design-check.js; do
+            curl --fail --silent --show-error --location "${ROOT}/${file}" --output "creative/vendor/${file}"
+          done
+          printf '%s\n' "$SNAPSHOT" > creative/vendor/NEXT_LAB_SNAPSHOT.txt
+
+      - name: Commit vendored files
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- creative/vendor && git status --porcelain creative/vendor | grep -q '^$'; then
+            echo 'No vendor changes.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add creative/vendor
+          git commit -m 'Vendor fixed Next Lab Creative Mode snapshot'
+          git push origin HEAD:feature/creative-mode-next-lab-integration
