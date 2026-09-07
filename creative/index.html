@@ -5,16 +5,14 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover,user-scalable=no">
 <meta name="robots" content="noindex,nofollow,noarchive">
 <title>CREATIVE MODE | Campsite Lab</title>
-<script src="../js/ca-access-bootstrap.js?v=1"></script>
 </head>
 <body>
 <script>
 (async()=>{
   'use strict';
 
-  // 本体では日本CA承認が通るまでCREATIVE MODEを読み込まない。
-  while(!window.CampsiteCaAccess){await new Promise(r=>setTimeout(r,80));}
-  while(document.getElementById('caAccessGate')){await new Promise(r=>setTimeout(r,120));}
+  // CREATIVE MODE単体ではCA認証を持たない。
+  // 将来Campsite Design Tool内のSTEPとして組み込み、入口側で認証済みであることを前提にする。
 
   // Next Labの検証済みスナップショットを固定参照する。main追従はしない。
   const SNAPSHOT='da245de4294226ea0bbe0b65cfc9341530793af6';
