@@ -5,56 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover,user-scalable=no">
 <meta name="robots" content="noindex,nofollow,noarchive">
 <title>CREATIVE MODE | Campsite Lab</title>
+<meta http-equiv="refresh" content="0; url=./vendor/runtime-vnext.html">
+<script>location.replace('./vendor/runtime-vnext.html');</script>
 </head>
 <body>
-<script>
-(async()=>{
-  'use strict';
-
-  // CREATIVE MODE単体ではCA認証を持たない。
-  // 将来Campsite Design Tool内のSTEPとして組み込み、入口側で認証済みであることを前提にする。
-
-  // 起動切り分け中：Next Lab本体 + 検証済みパッチのみ。tracking/backfillは一時停止。
-  const SNAPSHOT='da245de4294226ea0bbe0b65cfc9341530793af6';
-  const ROOT=`https://raw.githack.com/Kaityo1221/Campsite-Design-Tool-Next-Lab/${SNAPSHOT}/creative/`;
-  const remoteNames=['runtime-vnext.html','creative-patches-v2.js','creative-patches-v3.js','creative-patches-v4.js','creative-patches-v5-design-check.js'];
-  const remoteResponses=await Promise.all(remoteNames.map(name=>fetch(ROOT+name,{cache:'no-store'})));
-  if(remoteResponses.some(r=>!r.ok)){document.body.textContent='Creative Modeの読み込みに失敗しました。';return;}
-
-  let src=await remoteResponses[0].text();
-
-  // runtime-vnext.html内の ./base-v7.html はJP側ではなく、固定したNext Labスナップショットから読む。
-  src=src.replace("fetch('./base-v7.html',{cache:'no-store'})",`fetch('${ROOT}base-v7.html',{cache:'no-store'})`);
-
-  for(let i=1;i<remoteResponses.length;i++) Function(await remoteResponses[i].text())();
-  if(typeof window.applyCreativePatches!=='function'){
-    document.body.textContent='Creative Modeの拡張機能を読み込めませんでした。';return;
-  }
-  src=window.applyCreativePatches(src);
-
-  // 削除済み旧Adv Lab mainのオープニング画像参照を固定コミットへ差し替える。
-  const oldBg='https://raw.githubusercontent.com/Kaityo1221/campsite-design-tool-adv-lab/main/creative/runtime/assets/creative-mode-opening.png';
-  const fixedBg='https://raw.githubusercontent.com/Kaityo1221/campsite-design-tool-adv-lab/1c27ca3ef14f423688f755d350ecc602bee1c573/creative/runtime/assets/creative-mode-opening.png';
-  const baseLoadNeedle='let html=await res.text();';
-  if(src.includes(baseLoadNeedle))src=src.replace(baseLoadNeedle,baseLoadNeedle+`\n  html=html.replace(${JSON.stringify(oldBg)},${JSON.stringify(fixedBg)});`);
-
-  // 旧My Maps KMZ：ExtendedData.gameEntityを優先して正式6レイヤーへ自動分類する。
-  const runtimeWriteNeedle='document.open();document.write(html);document.close();';
-  const legacyLayerPatch=`const legacyInferNeedle="function inferLayer(pm,f,n){const explicit=explicitLayer(pm);if(explicit)return explicit;const exact=layerByLabel.get(String(f||'').trim());if(exact)return exact;const style=(child(pm,'styleUrl')||'').replace(/^#/,'');if(style.startsWith('creative-')){const styled=style.slice('creative-'.length);if(layerKeys.has(styled))return styled}const h=(f+' '+n).toLowerCase(),fresh=/追加|新規|候補|add|new|planned/.test(h);if(/gym|ジム/.test(h))return fresh?'new-gym':'existing-gym';if(/power|パワー/.test(h))return fresh?'new-power':'existing-power';return fresh?'new-pokestop':'existing-pokestop'}";
-const legacyInferReplacement="function legacyGameEntity(pm){for(const data of pm.getElementsByTagNameNS('*','Data')){const key=String(data.getAttribute('name')||'').replace(/^\\uFEFF/,'').trim().toLowerCase();if(key!=='gameentity')continue;const value=[...data.children].find(x=>x.localName==='value')?.textContent?.trim()||data.textContent?.trim()||'';return String(value).trim().toUpperCase()}return''}function inferLayer(pm,f,n){const explicit=explicitLayer(pm);if(explicit)return explicit;const exact=layerByLabel.get(String(f||'').trim());if(exact)return exact;const style=(child(pm,'styleUrl')||'').replace(/^#/,'');if(style.startsWith('creative-')){const styled=style.slice('creative-'.length);if(layerKeys.has(styled))return styled}const h=(f+' '+n).toLowerCase(),fresh=/追加|新規|候補|add|new|planned/.test(h),entity=legacyGameEntity(pm);if(entity==='GYM')return fresh?'new-gym':'existing-gym';if(entity==='POWERSPOT'||entity==='POWER_SPOT'||entity==='POWER SPOT')return fresh?'new-power':'existing-power';if(entity==='POKESTOP'||entity==='POKÉSTOP'||entity==='POKE_STOP')return fresh?'new-pokestop':'existing-pokestop';if(/gym|ジム/.test(h))return fresh?'new-gym':'existing-gym';if(/power|パワー/.test(h))return fresh?'new-power':'existing-power';return fresh?'new-pokestop':'existing-pokestop'}";
-if(html.includes(legacyInferNeedle))html=html.replace(legacyInferNeedle,legacyInferReplacement);`;
-  if(src.includes(runtimeWriteNeedle))src=src.replace(runtimeWriteNeedle,legacyLayerPatch+runtimeWriteNeedle);
-
-  // 本体固有仕様：日本CA向けガイドへ表示を拡張する。
-  src=src.replace('設計の目安','日本CA向け設計ガイド');
-  src=src.replace('50mを基本とします。50m未満は自動NGではなく、配置理由を確認します。30m / 40mは参考表示です。','50mを基本とし、50m未満は自動NGにせず要確認として扱います。<br>ゲームスポットを一箇所へ集中させず、公園内を自然に移動できる配置を考えます。<br>入口や狭い通路、本来の利用者と衝突しやすい場所への集中を避けます。<br>活動範囲はミートアップで想定される移動範囲として確認します。<br>30m / 40mは例外確認の参考表示です。');
-
-  // 本体固有仕様：戻る先はCampsite Lab。雨雲チェック入口は組み込まない。
-  src=src.replace("$('back').onclick=()=>history.back();","$('back').onclick=()=>location.href='../lab.html';");
-  src=src.replace(/<title>CREATIVE MODE \\| Next Lab<\\/title>/g,'<title>CREATIVE MODE | Campsite Lab</title>');
-
-  document.open();document.write(src);document.close();
-})().catch(err=>{console.error(err);document.body.textContent='Creative Modeの読み込みに失敗しました。';});
-</script>
+<p>CREATIVE MODEを読み込んでいます。</p>
 </body>
 </html>
