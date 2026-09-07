@@ -14,25 +14,19 @@
   // CREATIVE MODE単体ではCA認証を持たない。
   // 将来Campsite Design Tool内のSTEPとして組み込み、入口側で認証済みであることを前提にする。
 
-  // Next Labの検証済みスナップショットを固定参照する。main追従はしない。
+  // 起動切り分け中：Next Lab本体 + 検証済みパッチのみ。tracking/backfillは一時停止。
   const SNAPSHOT='da245de4294226ea0bbe0b65cfc9341530793af6';
   const ROOT=`https://raw.githubusercontent.com/Kaityo1221/Campsite-Design-Tool-Next-Lab/${SNAPSHOT}/creative/`;
   const remoteNames=['runtime-vnext.html','creative-patches-v2.js','creative-patches-v3.js','creative-patches-v4.js','creative-patches-v5-design-check.js'];
   const remoteResponses=await Promise.all(remoteNames.map(name=>fetch(ROOT+name,{cache:'no-store'})));
-  const trackingResponse=await fetch('./creative-tracking-patch.js?v=20260907-01',{cache:'no-store'});
-  const backfillResponse=await fetch('./creative-design-backfill-patch.js?v=20260907-01',{cache:'no-store'});
-  if(remoteResponses.some(r=>!r.ok)||!trackingResponse.ok||!backfillResponse.ok){document.body.textContent='Creative Modeの読み込みに失敗しました。';return;}
+  if(remoteResponses.some(r=>!r.ok)){document.body.textContent='Creative Modeの読み込みに失敗しました。';return;}
 
   let src=await remoteResponses[0].text();
   for(let i=1;i<remoteResponses.length;i++) Function(await remoteResponses[i].text())();
-  Function(await trackingResponse.text())();
-  Function(await backfillResponse.text())();
-  if(typeof window.applyCreativePatches!=='function'||typeof window.applyCreativeTrackingPatch!=='function'||typeof window.applyCreativeDesignBackfillPatch!=='function'){
+  if(typeof window.applyCreativePatches!=='function'){
     document.body.textContent='Creative Modeの拡張機能を読み込めませんでした。';return;
   }
   src=window.applyCreativePatches(src);
-  src=window.applyCreativeTrackingPatch(src);
-  src=window.applyCreativeDesignBackfillPatch(src);
 
   // 削除済み旧Adv Lab mainのオープニング画像参照を固定コミットへ差し替える。
   const oldBg='https://raw.githubusercontent.com/Kaityo1221/campsite-design-tool-adv-lab/main/creative/runtime/assets/creative-mode-opening.png';
