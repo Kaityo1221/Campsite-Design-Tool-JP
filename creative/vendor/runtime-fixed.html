@@ -14,14 +14,20 @@
     if(!res.ok)throw new Error('runtime-vnext.html の読み込みに失敗しました');
     let src=await res.text();
 
-    // iPhone Safari/Chromeではaccept属性がKMZをグレーアウトさせる場合があるため、
-    // OS側では絞り込まず、選択後にCreative Mode自身でCSV/KMZを検証する。
-    src=src.replace(/<input id="entryFile" type="file" multiple accept="[^"]*">/,'<input id="entryFile" type="file" multiple>');
+    // 「＋追加」から新規POI種別を上方向に展開して、そのまま配置モードへ入る。
+    src=src.replace("let html=await res.text();",`let html=await res.text();
+  html=html.replace('<div id="toolMenu" class="toolmenu"><button data-tool="add">＋ 追加</button><button data-tool="polygon">ポリゴン</button><button data-tool="ruler">物差し</button></div>','<div id="toolMenu" class="toolmenu"><div id="addKinds" class="add-kinds"><button type="button" data-add-layer="new-pokestop">🔵 PokéStop</button><button type="button" data-add-layer="new-gym">🟡 Gym</button><button type="button" data-add-layer="new-power">🟣 PowerSpot</button></div><button type="button" id="addToggle">＋ 追加</button><button data-tool="polygon">ポリゴン</button><button data-tool="ruler">物差し</button></div>');
+  html=html.replace('</style>', '.add-kinds{display:none;gap:6px}.add-kinds.open{display:grid}.add-kinds button{min-height:42px;text-align:left;padding-left:14px}.toolmenu #addToggle.active{background:var(--gold)} </style>');
+  html=html.replace("function renderTools(){toolMenu.querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.tool===activeTool))}toolMenu.querySelectorAll('button').forEach(b=>b.onclick=()=>selectTool(b.dataset.tool));$('toolbox').onclick=()=>{const opening=!toolMenu.classList.contains('open');closeMenus();if(opening)toolMenu.classList.add('open')};", "function renderTools(){toolMenu.querySelectorAll('[data-tool]').forEach(b=>b.classList.toggle('active',b.dataset.tool===activeTool));const at=$('addToggle');if(at)at.classList.toggle('active',activeTool==='add')}toolMenu.querySelectorAll('[data-tool]').forEach(b=>b.onclick=()=>selectTool(b.dataset.tool));const addKinds=$('addKinds'),addToggle=$('addToggle');if(addToggle)addToggle.onclick=()=>{const opening=!addKinds.classList.contains('open');addKinds.classList.toggle('open',opening)};toolMenu.querySelectorAll('[data-add-layer]').forEach(b=>b.onclick=()=>{activeLayer=b.dataset.addLayer;renderLayerPanel();addKinds.classList.remove('open');selectTool('add');msg('追加：'+(layerDefs.find(x=>x[0]===activeLayer)?.[1]||activeLayer),1200)});$('toolbox').onclick=()=>{const opening=!toolMenu.classList.contains('open');closeMenus();if(opening)toolMenu.classList.add('open')};");`);
 
     // CSVはKML Placemark用inferLayer()へ渡さず、CSV列/ファイル名から直接6レイヤーへ分類する。
     const old="const layer=inferLayer(file.name,title);";
     const replacement="const explicit=String(csvPick(o,['nextlab-layer','nextlab_layer','layer','Layer'])||'').trim(),type=String(csvPick(o,['gameEntity','GameEntity','game_entity','Game Entity','type','Type','category','Category','種類'])||''),state=String(csvPick(o,['gameStatus','GameStatus','game_status','Game Status','status','Status'])||''),hint=(file.name+' '+title+' '+type+' '+state).toLowerCase(),fresh=/追加|新規|候補|add|new|planned/.test(hint);const layer=layerKeys.has(explicit)?explicit:(layerByLabel.get(explicit)||(/gym|ジム/.test(hint)?(fresh?'new-gym':'existing-gym'):/power|パワー/.test(hint)?(fresh?'new-power':'existing-power'):(fresh?'new-pokestop':'existing-pokestop')));";
     if(src.includes(old))src=src.replace(old,replacement);
+
+    // iPhoneのファイルピッカーではaccept指定によりKMZがグレーアウトする場合があるため、選択後にアプリ側で判定する。
+    src=src.replace(/<input id="entryFile" type="file" multiple accept="[^"]*">/g,'<input id="entryFile" type="file" multiple>');
+    src=src.replace(/<input id="entryFile" type="file"[^>]*>/g,'<input id="entryFile" type="file" multiple>');
 
     // Safariのページ拡大をUI上だけ止める。#map上のマルチタッチはLeafletへ渡す。
     src=src.replace(/<meta name="viewport"[^>]*>/i,'<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0,viewport-fit=cover,user-scalable=no">');
