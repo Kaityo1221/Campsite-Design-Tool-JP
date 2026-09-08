@@ -19,8 +19,8 @@
     src=src.replace("setInterval(snapshot,2500);window.addEventListener('pagehide',snapshot);", "setInterval(snapshot,2500);map.on('moveend zoomend',snapshot);window.addEventListener('pagehide',snapshot);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')snapshot()});window.addEventListener('freeze',snapshot);");
     // iOSが編集画面DOMを復元しても、再表示時はいったん起動画面へ戻し、ユーザーが『前回の続きから』を押して復帰する。
     src=src.replace("if(localStorage.getItem(STORE))resume.classList.add('show');resume.onclick=()=>{if(restore()){beginEditor();msg('前回作業を復元しました')}};", "if(localStorage.getItem(STORE))resume.classList.add('show');const showResumeEntry=()=>{if(localStorage.getItem(STORE)){resume.classList.add('show');entry.classList.remove('hidden');closeMenus();setTimeout(()=>map.invalidateSize(),0)}};window.addEventListener('pageshow',e=>{if(e.persisted)showResumeEntry()});document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&performance.getEntriesByType('navigation')[0]?.type==='back_forward')showResumeEntry()});resume.onclick=()=>{if(restore()){beginEditor();msg('前回作業を復元しました')}};");
-    // 実際の追加/移動バーはJSでinline styleが付くので、そのbottom値を直接下端へ変更する。
-    src=src.replace(/bottom:'calc\\(132px \\+ env\\(safe-area-inset-bottom\\)\\)'/g,"bottom:'calc(72px + env(safe-area-inset-bottom))'");
+    // 追加/移動バーのinline styleを文字列で直接置換。保存/工具箱と同じ下端ラインへ。
+    src=src.split("bottom:'calc(132px + env(safe-area-inset-bottom))'").join("bottom:'calc(72px + env(safe-area-inset-bottom))'");
     document.open();document.write(src);document.close();`;
     if(!page.includes(needle))throw new Error('復帰パッチの適用位置が見つかりません');
     page=page.replace(needle,patch);
