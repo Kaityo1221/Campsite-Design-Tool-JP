@@ -14,6 +14,10 @@
     if(!res.ok)throw new Error('runtime-vnext.html の読み込みに失敗しました');
     let src=await res.text();
 
+    // iPhone Safari/Chromeではaccept属性がKMZをグレーアウトさせる場合があるため、
+    // OS側では絞り込まず、選択後にCreative Mode自身でCSV/KMZを検証する。
+    src=src.replace(/<input id="entryFile" type="file" multiple accept="[^"]*">/,'<input id="entryFile" type="file" multiple>');
+
     // CSVはKML Placemark用inferLayer()へ渡さず、CSV列/ファイル名から直接6レイヤーへ分類する。
     const old="const layer=inferLayer(file.name,title);";
     const replacement="const explicit=String(csvPick(o,['nextlab-layer','nextlab_layer','layer','Layer'])||'').trim(),type=String(csvPick(o,['gameEntity','GameEntity','game_entity','Game Entity','type','Type','category','Category','種類'])||''),state=String(csvPick(o,['gameStatus','GameStatus','game_status','Game Status','status','Status'])||''),hint=(file.name+' '+title+' '+type+' '+state).toLowerCase(),fresh=/追加|新規|候補|add|new|planned/.test(hint);const layer=layerKeys.has(explicit)?explicit:(layerByLabel.get(explicit)||(/gym|ジム/.test(hint)?(fresh?'new-gym':'existing-gym'):/power|パワー/.test(hint)?(fresh?'new-power':'existing-power'):(fresh?'new-pokestop':'existing-pokestop')));";
