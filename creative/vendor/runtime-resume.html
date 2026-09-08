@@ -19,6 +19,8 @@
     src=src.replace("setInterval(snapshot,2500);window.addEventListener('pagehide',snapshot);", "setInterval(snapshot,2500);map.on('moveend zoomend',snapshot);window.addEventListener('pagehide',snapshot);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')snapshot()});window.addEventListener('freeze',snapshot);");
     // iOSが編集画面DOMを復元しても、再表示時はいったん起動画面へ戻し、ユーザーが『前回の続きから』を押して復帰する。
     src=src.replace("if(localStorage.getItem(STORE))resume.classList.add('show');resume.onclick=()=>{if(restore()){beginEditor();msg('前回作業を復元しました')}};", "if(localStorage.getItem(STORE))resume.classList.add('show');const showResumeEntry=()=>{if(localStorage.getItem(STORE)){resume.classList.add('show');entry.classList.remove('hidden');closeMenus();setTimeout(()=>map.invalidateSize(),0)}};window.addEventListener('pageshow',e=>{if(e.persisted)showResumeEntry()});document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&performance.getEntriesByType('navigation')[0]?.type==='back_forward')showResumeEntry()});resume.onclick=()=>{if(restore()){beginEditor();msg('前回作業を復元しました')}};");
+    // 追加確定ボタンと×は、右のツールメニューと重ならないよう地図の下端へ固定する。
+    src=src.replace('</style>', '.addconfirm,.add-confirm,.draft-actions,.crosshair-actions{bottom:8px!important;top:auto!important;transform:none!important;z-index:1900!important}.addconfirm,.add-confirm,.draft-actions,.crosshair-actions{max-width:calc(100vw - 190px)!important} </style>');
     document.open();document.write(src);document.close();`;
     if(!page.includes(needle))throw new Error('復帰パッチの適用位置が見つかりません');
     page=page.replace(needle,patch);
