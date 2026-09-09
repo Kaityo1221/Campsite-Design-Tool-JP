@@ -89,6 +89,14 @@
       .campsite-csv-choice-button.campsite-update-choice{border-color:rgba(167,139,250,.45);background:rgba(124,58,237,.11)}
       .kmz-android-drive-note{margin:14px 0 16px;padding:13px 14px;border:1px solid rgba(245,158,11,.46);border-radius:12px;background:rgba(245,158,11,.10);color:#fde68a;font-size:13px;line-height:1.75;text-align:left}
       .kmz-android-drive-note strong{color:#fff7d6}
+      #tool #fileInput.campsite-native-file-input{position:absolute!important;width:1px!important;height:1px!important;margin:-1px!important;padding:0!important;overflow:hidden!important;clip:rect(0 0 0 0)!important;white-space:nowrap!important;border:0!important;opacity:0!important;pointer-events:none!important}
+      #tool .campsite-file-picker{display:grid;grid-template-columns:minmax(150px,auto) minmax(0,1fr);gap:10px;align-items:stretch;margin:14px 0 0}
+      #tool .campsite-file-picker-button{display:flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:11px 16px;border:1px solid rgba(56,189,248,.52);border-radius:12px;background:linear-gradient(180deg,rgba(14,165,233,.20),rgba(2,132,199,.13));color:#e0f2fe;font:inherit;font-size:14px;font-weight:800;cursor:pointer;-webkit-tap-highlight-color:transparent}
+      #tool .campsite-file-picker-button:hover{border-color:rgba(56,189,248,.78);background:linear-gradient(180deg,rgba(14,165,233,.28),rgba(2,132,199,.18))}
+      #tool .campsite-file-picker-button:focus-visible{outline:2px solid #7dd3fc;outline-offset:2px}
+      #tool .campsite-file-picker-status{display:flex;align-items:center;min-width:0;min-height:48px;padding:11px 14px;border:1px solid rgba(148,163,184,.22);border-radius:12px;background:rgba(15,23,42,.58);color:#cbd5e1;font-size:13px;line-height:1.5;overflow-wrap:anywhere}
+      #tool .campsite-file-picker-status.has-files{border-color:rgba(34,197,94,.36);background:rgba(34,197,94,.07);color:#dcfce7}
+      @media (max-width:640px){#tool .campsite-file-picker{grid-template-columns:1fr}#tool .campsite-file-picker-button,#tool .campsite-file-picker-status{width:100%}}
     `;
     document.head.appendChild(style);
   }
@@ -127,7 +135,6 @@
       scheduleSponsorOptionSync();
       return;
     }
-
     const script = document.createElement('script');
     script.id = SPONSOR_SCRIPT_ID;
     script.src = 'js/sponsor-poi.js?v=1';
@@ -249,6 +256,65 @@
     });
   }
 
+  function getFilePickerStatus(files) {
+    const selected = Array.from(files || []);
+    if (selected.length === 0) return '未選択';
+    if (selected.length === 1) {
+      const name = String(selected[0]?.name || '').trim();
+      return name ? `1ファイル選択済み：${name}` : '1ファイル選択済み';
+    }
+    return `${selected.length}ファイル選択済み`;
+  }
+
+  function setupCustomFilePicker(input, step) {
+    input.classList.add('campsite-native-file-input');
+    input.setAttribute('aria-hidden', 'true');
+    input.tabIndex = -1;
+
+    let picker = step.querySelector(':scope > .campsite-file-picker');
+    if (!picker) {
+      picker = document.createElement('div');
+      picker.className = 'campsite-file-picker';
+      picker.innerHTML = `
+        <button type="button" class="campsite-file-picker-button">
+          <span aria-hidden="true">📁</span>
+          <span>ファイルを選択</span>
+        </button>
+        <div class="campsite-file-picker-status" role="status" aria-live="polite">未選択</div>
+      `;
+
+      const warning = step.querySelector(':scope > .campsite-file-guide-warning');
+      if (warning) {
+        warning.insertAdjacentElement('beforebegin', picker);
+      } else {
+        input.insertAdjacentElement('afterend', picker);
+      }
+    }
+
+    const button = picker.querySelector('.campsite-file-picker-button');
+    const status = picker.querySelector('.campsite-file-picker-status');
+
+    const sync = () => {
+      const files = input.files || [];
+      if (status) {
+        status.textContent = getFilePickerStatus(files);
+        status.classList.toggle('has-files', files.length > 0);
+      }
+    };
+
+    if (button && button.dataset.filePickerBound !== '1') {
+      button.dataset.filePickerBound = '1';
+      button.addEventListener('click', () => input.click());
+    }
+
+    if (input.dataset.customFilePickerBound !== '1') {
+      input.dataset.customFilePickerBound = '1';
+      input.addEventListener('change', sync);
+    }
+
+    sync();
+  }
+
   function setupFileGuide() {
     const input = document.getElementById('fileInput');
     const step = input?.closest('.step');
@@ -259,7 +325,7 @@
     Array.from(step.children).forEach(el => {
       if (
         el === input ||
-        el.matches?.(`h3,.step-no,.campsite-file-guide,.campsite-file-guide-warning,.${POWERSPOT_STATUS_NOTICE_CLASS}`)
+        el.matches?.(`h3,.step-no,.campsite-file-guide,.campsite-file-guide-warning,.campsite-file-picker,.${POWERSPOT_STATUS_NOTICE_CLASS}`)
       ) return;
 
       const text = String(el.textContent || '').replace(/\s+/g, ' ').trim();
@@ -309,6 +375,7 @@
     }
 
     warning.innerHTML = '⚠️ Google My Mapsから<strong>書き出したCSVは使用しないでください。</strong><br>更新するときは、地図全体のKMZを使用してください。';
+    setupCustomFilePicker(input, step);
     setupPowerSpotCsvCheck(input, step);
   }
 
