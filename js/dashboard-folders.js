@@ -237,14 +237,14 @@
     manualButton.onclick = null;
     manualButton.removeAttribute("onclick");
     manualButton.addEventListener("click", () => {
-      window.open("docs/campsite-guide.pdf", "_blank", "noopener,noreferrer");
+      window.open("docs/campsite-guide.pdf?v=20260909-1", "_blank", "noopener,noreferrer");
     });
 
     const title = manualButton.querySelector(".dashboard-copy strong");
     const subtitle = manualButton.querySelector(".dashboard-copy small");
 
     if (title) title.textContent = "マニュアルを読む";
-    if (subtitle) subtitle.textContent = "キャンプサイトの作り方 Ver3.5 をPDFで確認";
+    if (subtitle) subtitle.textContent = "キャンプサイトの作り方 Ver2.1 をPDFで確認";
   }
 
   function foldSection(selector, options) {
