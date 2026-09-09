@@ -42,8 +42,9 @@
 (() => {
   'use strict';
 
-  const VERSION = '0.8.8';
+  const VERSION = '0.8.9.3';
   const DEV_PARAM = 'campsiteBridgeDev';
+  const HANDSHAKE_PARAM = 'handshake';
   const STORAGE_KEY = 'campsiteBridgePoC.v0.3';
   const ADAPTER_STORAGE_KEY = 'campsiteBridgeAdapter.v0.3';
   const ALLOWED_ENTITIES = new Set(['POKESTOP','GYM','POWERSPOT']);
@@ -56,6 +57,7 @@
 
   const params = new URLSearchParams(location.search);
   if (params.get(DEV_PARAM) !== '1') return;
+  const pageHandshakeId = String(params.get(HANDSHAKE_PARAM) || '').trim();
   document.body.classList.add('bridge-dev');
 
   const $ = id => document.getElementById(id);
@@ -248,6 +250,7 @@
       schemaVersion: String(data.schemaVersion || '1.2'),
       receivedAt: new Date().toISOString(),
       selectedBounds: data.selectedBounds || null,
+      handshakeId: String(data.handshakeId || ''),
       pois: deduped.pois
     };
     const adapter = savePayload(payload);
@@ -262,26 +265,42 @@
 
   function scheduleAutoContinue() {
     clearTimeout(autoContinueTimer);
-    autoContinueTimer = setTimeout(goToCampsite, 650);
+    autoContinueTimer = setTimeout(goToCampsite, 1300);
+  }
+
+  function postAckRepeated(target, targetOrigin, result, handshakeId) {
+    if (!target) return;
+    const ack = {
+      type: 'CAMPSITE_BRIDGE_ACK_V1',
+      handshakeId,
+      accepted: result.accepted,
+      count: result.count,
+      sourceCount: result.sourceCount,
+      duplicateCount: result.duplicateCount || 0,
+      receiverVersion: VERSION
+    };
+    const send = () => {
+      try { target.postMessage(ack, targetOrigin); }
+      catch (_) {}
+    };
+    send();
+    setTimeout(send, 120);
+    setTimeout(send, 350);
   }
 
   window.addEventListener('message', event => {
     if (!ALLOWED_ORIGINS.has(event.origin)) return;
-    const result = receiveBridgePayload(event.data);
-    if (event.data?.type !== 'CAMPSITE_BRIDGE_POI_V1') return;
+    const data = event.data || {};
+    if (data.type !== 'CAMPSITE_BRIDGE_POI_V1') return;
 
-    if (event.source) {
-      event.source.postMessage({
-        type: 'CAMPSITE_BRIDGE_ACK_V1',
-        accepted: result.accepted,
-        count: result.count,
-        sourceCount: result.sourceCount,
-        duplicateCount: result.duplicateCount || 0,
-        receiverVersion: VERSION
-      }, event.origin);
-    }
+    const incomingHandshakeId = String(data.handshakeId || '').trim();
+    if (pageHandshakeId && incomingHandshakeId !== pageHandshakeId) return;
 
-    if (result.accepted && event.data.autoContinue !== false) {
+    const result = receiveBridgePayload(data);
+    const ackTarget = event.source || window.opener;
+    postAckRepeated(ackTarget, event.origin, result, incomingHandshakeId || pageHandshakeId);
+
+    if (result.accepted && data.autoContinue !== false) {
       scheduleAutoContinue();
     }
   });
@@ -293,7 +312,11 @@
       const refOrigin = new URL(document.referrer).origin;
       if (ALLOWED_ORIGINS.has(refOrigin)) targetOrigin = refOrigin;
     } catch (_) {}
-    window.opener.postMessage({ type:'CAMPSITE_BRIDGE_READY_V1', receiverVersion:VERSION }, targetOrigin);
+    window.opener.postMessage({
+      type:'CAMPSITE_BRIDGE_READY_V1',
+      handshakeId: pageHandshakeId,
+      receiverVersion:VERSION
+    }, targetOrigin);
   }
 
   $('continueBtn').addEventListener('click', goToCampsite);
