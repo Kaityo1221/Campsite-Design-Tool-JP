@@ -87,6 +87,8 @@
       #tool .${POWERSPOT_STATUS_NOTICE_CLASS}.is-ok{display:block;border:1px solid rgba(34,197,94,.42);background:rgba(34,197,94,.09);color:#bbf7d0}
       #tool.csv-mode-update .campsite-file-guide-card.update{border-color:rgba(167,139,250,.72);box-shadow:0 0 0 1px rgba(167,139,250,.16) inset}
       .campsite-csv-choice-button.campsite-update-choice{border-color:rgba(167,139,250,.45);background:rgba(124,58,237,.11)}
+      .kmz-android-drive-note{margin:14px 0 16px;padding:13px 14px;border:1px solid rgba(245,158,11,.46);border-radius:12px;background:rgba(245,158,11,.10);color:#fde68a;font-size:13px;line-height:1.75;text-align:left}
+      .kmz-android-drive-note strong{color:#fff7d6}
     `;
     document.head.appendChild(style);
   }
@@ -340,6 +342,98 @@
     closeButton.insertAdjacentElement('beforebegin', button);
   }
 
+  function isAndroidDevice() {
+    return /Android/i.test(navigator.userAgent || '');
+  }
+
+  function openGoogleDriveForKmz() {
+    window.setWorkflowStep?.('mymaps');
+    window.open(
+      'https://drive.google.com/drive/u/0/my-drive',
+      '_blank',
+      'noopener,noreferrer'
+    );
+  }
+
+  window.openGoogleDriveForKmz = openGoogleDriveForKmz;
+
+  function patchAndroidKmzCompleteFlow() {
+    if (!isAndroidDevice()) return;
+
+    const card = document.querySelector(
+      '#kmzCompleteModal .kmz-complete-modal-card'
+    );
+    if (!card) return;
+
+    const message = card.querySelector('.kmz-complete-message');
+    if (message) {
+      message.innerHTML =
+        'KMZは端末の<strong>Downloadフォルダ</strong>に保存されています。<br>' +
+        'Google My Mapsで使う前に、<strong>Google Driveへ移動</strong>してください。';
+    }
+
+    const steps = card.querySelector('.kmz-complete-next-steps');
+    if (steps) {
+      steps.innerHTML = `
+        <li>DownloadフォルダのKMZをGoogle Driveへ移動する</li>
+        <li>Google My Mapsを開き、Google DriveのKMZをインポートする</li>
+        <li>追加POIと活動範囲を作成し、完成KMZを書き出す</li>
+        <li>Campsite Design Toolへ戻り、距離チェックへ進む</li>
+      `;
+    }
+
+    const iphoneDetails = card.querySelector('.kmz-iphone-details');
+    if (iphoneDetails) {
+      iphoneDetails.hidden = true;
+    }
+
+    const actions = card.querySelector('.kmz-complete-actions');
+    if (!actions) return;
+
+    let note = card.querySelector('.kmz-android-drive-note');
+    if (!note) {
+      note = document.createElement('div');
+      note.className = 'kmz-android-drive-note';
+      actions.insertAdjacentElement('beforebegin', note);
+    }
+
+    note.innerHTML =
+      '⚠️ Androidでは、<strong>DownloadフォルダのKMZをMy Mapsが直接選べない場合があります。</strong><br>' +
+      '端末にダウンロードした場合も、Google Driveへ移動してからMy Mapsでインポートしてください。';
+
+    actions.innerHTML = `
+      <button
+        type="button"
+        class="kmz-complete-action-button maps"
+        onclick="openGoogleDriveForKmz()"
+      >
+        <span>☁️</span>
+        <strong>Google Driveを開く</strong>
+        <small>DownloadのKMZをDriveへ移動します</small>
+      </button>
+
+      <button
+        type="button"
+        class="kmz-complete-action-button maps"
+        onclick="openGoogleMyMaps(); closeKmzCompleteModal();"
+      >
+        <span>🗺️</span>
+        <strong>Google My Mapsを開く</strong>
+        <small>Driveへ移動したKMZをインポートします</small>
+      </button>
+
+      <button
+        type="button"
+        class="kmz-complete-action-button later"
+        onclick="closeKmzCompleteModal()"
+      >
+        <span>🐏</span>
+        <strong>あとで作業する</strong>
+        <small>案内を閉じて元の画面へ戻ります</small>
+      </button>
+    `;
+  }
+
   const originalApply = window.applyCampsiteCsvMode;
   if (typeof originalApply === 'function') {
     window.applyCampsiteCsvMode = function(mode) {
@@ -382,6 +476,7 @@
     setupFileGuide();
     ensureSponsorPoiScript();
     scheduleSponsorOptionSync();
+    patchAndroidKmzCompleteFlow();
   }
 
   if (document.readyState === 'loading') {
@@ -392,4 +487,5 @@
 
   setTimeout(setup, 0);
   setTimeout(setupFileGuide, 500);
+  setTimeout(patchAndroidKmzCompleteFlow, 500);
 })();
