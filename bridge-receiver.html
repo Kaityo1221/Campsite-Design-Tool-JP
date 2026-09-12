@@ -16,7 +16,7 @@
 <div class="wrap"><div class="card">
   <h1>🌉 Campsite Bridge Receiver</h1>
   <div class="muted">Bridge専用の受け入れ口です。受信後はCampsite Design Toolへ自動で引き渡します。</div>
-  <div id="status" class="status warn">Bridgeからのデータを待っています…</div>
+  <div id="status" class="status warn">🌉 Wayfarerから受信しています…</div>
   <div class="grid">
     <span>受信POI</span><strong id="total">0</strong>
     <span>PokéStop</span><strong id="pokestop">0</strong>
@@ -27,7 +27,7 @@
   </div>
   <div class="adapter">
     <h2>🔩 Campsite変換層</h2>
-    <div id="adapterStatus" class="status warn">受信後に自動変換します</div>
+    <div id="adapterStatus" class="status warn">POI受信後に自動変換します</div>
     <div class="grid">
       <span>変換前</span><strong id="beforeCount">0</strong>
       <span>変換後</span><strong id="afterCount">0</strong>
@@ -42,7 +42,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '0.8.9.3';
+  const VERSION = '0.8.9.4';
   const DEV_PARAM = 'campsiteBridgeDev';
   const HANDSHAKE_PARAM = 'handshake';
   const STORAGE_KEY = 'campsiteBridgePoC.v0.3';
@@ -184,7 +184,8 @@
 
     const status = $('status');
     status.className = `status ${c.total ? 'ok' : 'warn'}`;
-    status.textContent = c.total ? `✅ ${c.total}件のPOIを受信しました` : 'Bridgeからのデータを待っています…';
+    status.textContent = c.total ? `✅ ${c.total}件のPOIを受信しました` : '🌉 Wayfarerから受信しています…';
+    document.title = c.total ? `✅ ${c.total}件受信 | Campsite Bridge` : '受信中… | Campsite Bridge';
 
     const adapter = adaptForCampsite(pois);
     $('beforeCount').textContent = adapter.beforeCount;
@@ -204,7 +205,7 @@
       continueBtn.style.display = 'none';
     } else {
       adapterStatus.className = 'status warn';
-      adapterStatus.textContent = '受信後に自動変換します';
+      adapterStatus.textContent = 'POI受信後に自動変換します';
       continueBtn.style.display = 'none';
     }
 
@@ -296,6 +297,8 @@
     const incomingHandshakeId = String(data.handshakeId || '').trim();
     if (pageHandshakeId && incomingHandshakeId !== pageHandshakeId) return;
 
+    try { window.focus(); } catch (_) {}
+
     const result = receiveBridgePayload(data);
     const ackTarget = event.source || window.opener;
     postAckRepeated(ackTarget, event.origin, result, incomingHandshakeId || pageHandshakeId);
@@ -312,6 +315,7 @@
       const refOrigin = new URL(document.referrer).origin;
       if (ALLOWED_ORIGINS.has(refOrigin)) targetOrigin = refOrigin;
     } catch (_) {}
+    try { window.focus(); } catch (_) {}
     window.opener.postMessage({
       type:'CAMPSITE_BRIDGE_READY_V1',
       handshakeId: pageHandshakeId,
