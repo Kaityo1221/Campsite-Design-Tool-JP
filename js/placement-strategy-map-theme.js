@@ -44,10 +44,17 @@
     });
   }
 
+  function announceMode() {
+    window.dispatchEvent(new CustomEvent('placementstrategy:mapmode', {
+      detail: { mode }
+    }));
+  }
+
   function applyMode() {
     applyModeToContainer('capacityMap');
     applyModeToContainer('capacityPreviewMap');
     updateControls();
+    announceMode();
   }
 
   function setMode(nextMode) {
