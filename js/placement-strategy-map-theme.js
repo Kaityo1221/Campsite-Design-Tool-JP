@@ -67,36 +67,33 @@
     if (!map || typeof L === 'undefined') return;
 
     const container = document.getElementById(containerId);
-    if (!container || container.querySelector('.placement-map-mode-control')) {
+    if (!container) return;
+
+    if (container.querySelector('.placement-map-mode-control')) {
       applyModeToContainer(containerId);
       return;
     }
 
-    const control = L.control({ position: 'topright' });
-    control.onAdd = () => {
-      const root = L.DomUtil.create('div', 'placement-map-mode-control leaflet-bar');
-      root.setAttribute('role', 'group');
-      root.setAttribute('aria-label', '地図表示切替');
-      root.innerHTML = `
-        <button type="button" data-placement-map-mode="normal" aria-pressed="true">🗺 通常地図</button>
-        <button type="button" data-placement-map-mode="tactical" aria-pressed="false">🏯 布陣図</button>
-      `;
+    const root = L.DomUtil.create('div', 'placement-map-mode-control');
+    root.setAttribute('role', 'group');
+    root.setAttribute('aria-label', '地図表示切替');
+    root.innerHTML = `
+      <button type="button" data-placement-map-mode="normal" aria-pressed="true">🗺 通常地図</button>
+      <button type="button" data-placement-map-mode="tactical" aria-pressed="false">🏯 布陣図</button>
+    `;
 
-      L.DomEvent.disableClickPropagation(root);
-      L.DomEvent.disableScrollPropagation(root);
+    L.DomEvent.disableClickPropagation(root);
+    L.DomEvent.disableScrollPropagation(root);
 
-      root.querySelectorAll('[data-placement-map-mode]').forEach(button => {
-        button.addEventListener('click', event => {
-          event.preventDefault();
-          event.stopPropagation();
-          setMode(button.dataset.placementMapMode);
-        });
+    root.querySelectorAll('[data-placement-map-mode]').forEach(button => {
+      button.addEventListener('click', event => {
+        event.preventDefault();
+        event.stopPropagation();
+        setMode(button.dataset.placementMapMode);
       });
+    });
 
-      return root;
-    };
-
-    control.addTo(map);
+    container.appendChild(root);
     applyMode();
   }
 
