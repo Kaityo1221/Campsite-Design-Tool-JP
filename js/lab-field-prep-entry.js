@@ -31,7 +31,7 @@
   function loadPlacementStrategyAssets() {
     ensureScript(
       'placementStrategyEntryUiScript',
-      'js/placement-strategy-entry-ui.js?v=20260914-v1'
+      'js/placement-strategy-entry-ui.js?v=20260914-v2'
     );
 
     ensureStylesheet(
@@ -53,7 +53,7 @@
 
     ensureScript(
       'placementStrategyScript',
-      'js/placement-strategy.js?v=20260914-v3',
+      'js/placement-strategy.js?v=20260914-v4',
       () => {
         ensureScript(
           'placementStrategyZonesScript',
