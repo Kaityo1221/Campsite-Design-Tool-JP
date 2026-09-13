@@ -23,6 +23,10 @@
 }
 
 .placement-map-mode-control {
+  position: absolute;
+  top: 12px;
+  right: 74px;
+  z-index: 1100;
   display: inline-flex;
   overflow: hidden;
   border: 1px solid rgba(15, 23, 42, .18);
@@ -65,6 +69,11 @@
 }
 
 @media (max-width: 640px) {
+  .placement-map-mode-control {
+    top: 10px;
+    right: 70px;
+  }
+
   .placement-map-mode-control button {
     padding: 8px 9px;
     font-size: 10px;
