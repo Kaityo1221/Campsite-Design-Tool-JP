@@ -38,6 +38,10 @@
       'placementStrategyMapThemeStylesheet',
       'css/placement-strategy-map-theme.css?v=20260914-v1'
     );
+    ensureStylesheet(
+      'placementStrategySymbolsStylesheet',
+      'css/placement-strategy-symbols.css?v=20260914-v1'
+    );
 
     ensureScript(
       'placementStrategyScript',
@@ -49,7 +53,13 @@
           () => {
             ensureScript(
               'placementStrategyMapThemeScript',
-              'js/placement-strategy-map-theme.js?v=20260914-v1'
+              'js/placement-strategy-map-theme.js?v=20260914-v2',
+              () => {
+                ensureScript(
+                  'placementStrategySymbolsScript',
+                  'js/placement-strategy-symbols.js?v=20260914-v1'
+                );
+              }
             );
           }
         );
@@ -85,7 +95,6 @@
     const fieldEntry = header.querySelector('a[href="field-mode.html"]');
     if (!fieldEntry) return;
 
-    // FIELDは右側のPOIレビュー群から切り離し、左側の独立した段に置く。
     fieldEntry.style.display = 'flex';
     fieldEntry.style.width = 'fit-content';
     fieldEntry.style.margin = '74px 0 0';
