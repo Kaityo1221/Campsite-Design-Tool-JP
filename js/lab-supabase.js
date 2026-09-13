@@ -46,7 +46,7 @@ window.loadCampsiteEngineDecisions = loadCampsiteEngineDecisions;
   if (!currentPath.endsWith('/lab.html')) return;
 
   const script = document.createElement('script');
-  script.src = 'js/lab-field-prep-entry.js?v=5';
+  script.src = 'js/lab-field-prep-entry.js?v=6';
   script.async = false;
   document.head.appendChild(script);
 })();
