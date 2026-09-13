@@ -4,12 +4,15 @@
   const currentPath = window.location.pathname.replace(/\/+$/, '');
   if (!currentPath.endsWith('/lab.html')) return;
 
+  const LAB_BUILD = Date.now();
+  const fresh = (url) => `${url}${url.includes('?') ? '&' : '?'}build=${LAB_BUILD}`;
+
   function ensureStylesheet(id, href) {
     if (document.getElementById(id)) return;
     const link = document.createElement('link');
     link.id = id;
     link.rel = 'stylesheet';
-    link.href = href;
+    link.href = fresh(href);
     document.head.appendChild(link);
   }
 
@@ -22,7 +25,7 @@
 
     const script = document.createElement('script');
     script.id = id;
-    script.src = src;
+    script.src = fresh(src);
     script.async = false;
     if (onload) script.addEventListener('load', onload, { once: true });
     document.head.appendChild(script);
