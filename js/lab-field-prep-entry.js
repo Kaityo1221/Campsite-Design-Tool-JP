@@ -1,6 +1,24 @@
 (() => {
   'use strict';
 
+  function loadPlacementStrategyAssets() {
+    if (!document.getElementById('placementStrategyStylesheet')) {
+      const link = document.createElement('link');
+      link.id = 'placementStrategyStylesheet';
+      link.rel = 'stylesheet';
+      link.href = 'css/placement-strategy.css?v=20260914-v1';
+      document.head.appendChild(link);
+    }
+
+    if (!document.getElementById('placementStrategyScript')) {
+      const script = document.createElement('script');
+      script.id = 'placementStrategyScript';
+      script.src = 'js/placement-strategy.js?v=20260914-v1';
+      script.async = false;
+      document.head.appendChild(script);
+    }
+  }
+
   function makeHeaderLink({ id, href, text, ariaLabel, border, background, color }) {
     const entry = document.createElement('a');
     entry.id = id;
@@ -60,6 +78,8 @@
 
     placeFieldEntry(header);
   }
+
+  loadPlacementStrategyAssets();
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', addLabHeaderEntries, { once: true });
   else addLabHeaderEntries();
