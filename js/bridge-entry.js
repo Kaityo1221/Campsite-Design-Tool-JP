@@ -10,7 +10,15 @@
   } catch (_) {}
   if (!Array.isArray(adapter?.pois) || adapter.pois.length === 0) return;
 
+  let bridgeEntered = false;
+
   function enterBridgeTool() {
+    const splash = document.getElementById('splashScreen');
+    if (splash) {
+      splash.classList.remove('show');
+      splash.style.display = 'none';
+    }
+
     const opening = document.getElementById('openingScreen');
     if (opening) {
       opening.classList.remove('show');
@@ -21,6 +29,31 @@
     try { window.openTab?.('tool'); } catch (_) {}
     try { window.setWorkflowStep?.('csv'); } catch (_) {}
     window.scrollTo({ top:0, behavior:'auto' });
+    bridgeEntered = true;
+  }
+
+  function installBridgeSplashBypass() {
+    if (document.getElementById('campsiteBridgeSplashBypassStyles')) return;
+
+    const style = document.createElement('style');
+    style.id = 'campsiteBridgeSplashBypassStyles';
+    style.textContent = '#splashScreen{display:none!important;opacity:0!important;animation:none!important;pointer-events:none!important}';
+    document.head.appendChild(style);
+
+    const splash = document.getElementById('splashScreen');
+    if (!splash) return;
+
+    const bypass = () => {
+      if (!splash.classList.contains('show')) return;
+      splash.classList.remove('show');
+      splash.style.display = 'none';
+      if (!bridgeEntered) enterBridgeTool();
+    };
+
+    const observer = new MutationObserver(bypass);
+    observer.observe(splash, { attributes:true, attributeFilter:['class'] });
+    bypass();
+    setTimeout(() => observer.disconnect(), 15000);
   }
 
   function receivedCounts() {
@@ -105,6 +138,8 @@
     observer.observe(document.documentElement, { childList:true, subtree:true });
     setTimeout(() => observer.disconnect(), 10000);
   }
+
+  installBridgeSplashBypass();
 
   const originalShowOpeningScreen = window.showOpeningScreen;
   if (typeof originalShowOpeningScreen === 'function') {
