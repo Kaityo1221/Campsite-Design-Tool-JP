@@ -25,6 +25,26 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Stamp Lab asset version
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import os
+
+          path = Path('lab.html')
+          text = path.read_text(encoding='utf-8')
+          old = 'js/lab-supabase.js?v=20260705-v17'
+          new = f"js/lab-supabase.js?build={os.environ['GITHUB_SHA']}"
+          if old in text:
+              text = text.replace(old, new)
+          else:
+              import re
+              text = re.sub(r'js/lab-supabase\.js\?[^"\']*', new, text)
+          path.write_text(text, encoding='utf-8')
+          print(f'Stamped Lab shell: {new}')
+          PY
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
