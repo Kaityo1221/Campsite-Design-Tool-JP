@@ -37,6 +37,10 @@
       'jyunpokoScrollScript',
       'js/jyunpoko-scroll.js?v=20260914-v1'
     );
+    ensureScript(
+      'placementStrategyEntryUiScript',
+      'js/placement-strategy-entry-ui.js?v=20260914-v1'
+    );
 
     ensureStylesheet(
       'placementStrategyStylesheet',
@@ -65,7 +69,7 @@
           () => {
             ensureScript(
               'placementStrategyMapThemeScript',
-              'js/placement-strategy-map-theme.js?v=20260914-v2',
+              'js/placement-strategy-map-theme.js?v=20260914-v3',
               () => {
                 ensureScript(
                   'placementStrategySymbolsScript',
