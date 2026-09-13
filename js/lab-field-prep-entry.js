@@ -32,7 +32,7 @@
     );
     ensureStylesheet(
       'placementStrategyZonesStylesheet',
-      'css/placement-strategy-zones.css?v=20260914-v1'
+      'css/placement-strategy-zones.css?v=20260914-v2'
     );
 
     ensureScript(
@@ -41,7 +41,7 @@
       () => {
         ensureScript(
           'placementStrategyZonesScript',
-          'js/placement-strategy-zones.js?v=20260914-v1'
+          'js/placement-strategy-zones.js?v=20260914-v2'
         );
       }
     );
