@@ -37,6 +37,11 @@
       'js/placement-strategy-entry-ui.js?v=20260914-v2'
     );
 
+    ensureScript(
+      'placementStrategyLayoutScript',
+      'js/placement-strategy-layout.js?v=20260914-v1'
+    );
+
     ensureStylesheet(
       'placementStrategyStylesheet',
       'css/placement-strategy.css?v=20260914-v2'
