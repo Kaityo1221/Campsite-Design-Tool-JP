@@ -1,0 +1,72 @@
+/* Placement Strategy map theme / Lab only */
+
+#capacityMap .leaflet-tile-pane,
+#capacityPreviewMap .leaflet-tile-pane {
+  transition: filter .22s ease, opacity .22s ease;
+}
+
+#capacityMap.placement-strategy-map--tactical,
+#capacityPreviewMap.placement-strategy-map--tactical {
+  background: #cfc3a8;
+}
+
+#capacityMap.placement-strategy-map--tactical .leaflet-tile-pane,
+#capacityPreviewMap.placement-strategy-map--tactical .leaflet-tile-pane {
+  filter: grayscale(.58) sepia(.34) saturate(.72) brightness(.82) contrast(1.05);
+}
+
+#capacityMap.placement-strategy-map--tactical .leaflet-overlay-pane,
+#capacityPreviewMap.placement-strategy-map--tactical .leaflet-overlay-pane,
+#capacityMap.placement-strategy-map--tactical .leaflet-marker-pane,
+#capacityPreviewMap.placement-strategy-map--tactical .leaflet-marker-pane {
+  filter: none;
+}
+
+.placement-map-mode-control {
+  display: inline-flex;
+  overflow: hidden;
+  border: 1px solid rgba(15, 23, 42, .18);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .96);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, .14);
+  backdrop-filter: blur(8px);
+}
+
+.placement-map-mode-control button {
+  appearance: none;
+  border: 0;
+  border-right: 1px solid rgba(15, 23, 42, .10);
+  padding: 8px 10px;
+  background: transparent;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.placement-map-mode-control button:last-child {
+  border-right: 0;
+}
+
+.placement-map-mode-control button:hover {
+  background: rgba(148, 163, 184, .12);
+}
+
+.placement-map-mode-control button.active[data-placement-map-mode="normal"] {
+  background: #e0f2fe;
+  color: #075985;
+}
+
+.placement-map-mode-control button.active[data-placement-map-mode="tactical"] {
+  background: linear-gradient(180deg, #6b5138, #4a3728);
+  color: #fff7ed;
+}
+
+@media (max-width: 640px) {
+  .placement-map-mode-control button {
+    padding: 8px 9px;
+    font-size: 10px;
+  }
+}
