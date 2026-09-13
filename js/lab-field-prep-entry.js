@@ -1,22 +1,50 @@
 (() => {
   'use strict';
 
-  function loadPlacementStrategyAssets() {
-    if (!document.getElementById('placementStrategyStylesheet')) {
-      const link = document.createElement('link');
-      link.id = 'placementStrategyStylesheet';
-      link.rel = 'stylesheet';
-      link.href = 'css/placement-strategy.css?v=20260914-v2';
-      document.head.appendChild(link);
+  function ensureStylesheet(id, href) {
+    if (document.getElementById(id)) return;
+    const link = document.createElement('link');
+    link.id = id;
+    link.rel = 'stylesheet';
+    link.href = href;
+    document.head.appendChild(link);
+  }
+
+  function ensureScript(id, src, onload = null) {
+    const existing = document.getElementById(id);
+    if (existing) {
+      if (onload) onload();
+      return;
     }
 
-    if (!document.getElementById('placementStrategyScript')) {
-      const script = document.createElement('script');
-      script.id = 'placementStrategyScript';
-      script.src = 'js/placement-strategy.js?v=20260914-v2';
-      script.async = false;
-      document.head.appendChild(script);
-    }
+    const script = document.createElement('script');
+    script.id = id;
+    script.src = src;
+    script.async = false;
+    if (onload) script.addEventListener('load', onload, { once: true });
+    document.head.appendChild(script);
+  }
+
+  function loadPlacementStrategyAssets() {
+    ensureStylesheet(
+      'placementStrategyStylesheet',
+      'css/placement-strategy.css?v=20260914-v2'
+    );
+    ensureStylesheet(
+      'placementStrategyZonesStylesheet',
+      'css/placement-strategy-zones.css?v=20260914-v1'
+    );
+
+    ensureScript(
+      'placementStrategyScript',
+      'js/placement-strategy.js?v=20260914-v2',
+      () => {
+        ensureScript(
+          'placementStrategyZonesScript',
+          'js/placement-strategy-zones.js?v=20260914-v1'
+        );
+      }
+    );
   }
 
   function makeHeaderLink({ id, href, text, ariaLabel, border, background, color }) {
