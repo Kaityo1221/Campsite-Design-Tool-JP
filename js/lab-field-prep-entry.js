@@ -6,14 +6,14 @@
       const link = document.createElement('link');
       link.id = 'placementStrategyStylesheet';
       link.rel = 'stylesheet';
-      link.href = 'css/placement-strategy.css?v=20260914-v1';
+      link.href = 'css/placement-strategy.css?v=20260914-v2';
       document.head.appendChild(link);
     }
 
     if (!document.getElementById('placementStrategyScript')) {
       const script = document.createElement('script');
       script.id = 'placementStrategyScript';
-      script.src = 'js/placement-strategy.js?v=20260914-v1';
+      script.src = 'js/placement-strategy.js?v=20260914-v2';
       script.async = false;
       document.head.appendChild(script);
     }
