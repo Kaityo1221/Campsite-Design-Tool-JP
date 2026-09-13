@@ -8,67 +8,7 @@
     boundaryMarginMeters: 15
   });
 
-  const originals = {
-    estimateCapacityRandom: window.estimateCapacityRandom,
-    estimateEffectiveFreeAreaGrid: window.estimateEffectiveFreeAreaGrid,
-    renderPlacementSummaryCard: window.renderPlacementSummaryCard
-  };
-
-  if (typeof originals.estimateCapacityRandom !== 'function') {
-    console.warn('[Placement Strategy] capacity.js is not ready. Strategy patch skipped.');
-    return;
-  }
-
-  window.CampsitePlacementStrategy = Object.freeze({
-    policy: POLICY,
-    mode: 'lab-overlay',
-    base: 'capacity.js'
-  });
-
-  // Labの配置戦略モードだけ、候補生成の最低間隔を50mへ統一する。
-  window.estimateCapacityRandom = function placementStrategyEstimateCapacityRandom(
-    polygon,
-    blockingPoints,
-    _legacyMinDistance,
-    trialCount = 30000
-  ) {
-    return originals.estimateCapacityRandom(
-      polygon,
-      blockingPoints,
-      POLICY.preferredSpacingMeters,
-      trialCount
-    );
-  };
-
-  // 配置余地の面積評価も50m基準へ統一する。
-  if (typeof originals.estimateEffectiveFreeAreaGrid === 'function') {
-    window.estimateEffectiveFreeAreaGrid = function placementStrategyEstimateEffectiveFreeAreaGrid(
-      polygon,
-      existingPoi,
-      _legacyRadiusMeters,
-      gridMeters = 10
-    ) {
-      return originals.estimateEffectiveFreeAreaGrid(
-        polygon,
-        existingPoi,
-        POLICY.preferredSpacingMeters,
-        gridMeters
-      );
-    };
-  }
-
-  // 旧カードの計算ロジックを活かしつつ、Lab上の表示だけ現行ポリシーへ合わせる。
-  if (typeof originals.renderPlacementSummaryCard === 'function') {
-    window.renderPlacementSummaryCard = function placementStrategyRenderSummary(data) {
-      originals.renderPlacementSummaryCard(data);
-      const container = document.getElementById('placementResult');
-      if (!container) return;
-
-      container.innerHTML = container.innerHTML
-        .replace(/既存POI40m円除外後/g, '既存POI50m円除外後')
-        .replace(/40m条件後/g, '50m条件後');
-    };
-  }
+  let installed = false;
 
   function findCapacitySection() {
     const fileInput = document.getElementById('capacityFile');
@@ -96,7 +36,7 @@
     step.insertAdjacentElement('afterbegin', banner);
   }
 
-  function refreshCapacityCopy() {
+  function normalizePlacementCopy() {
     const section = findCapacitySection();
     if (!section) return;
 
@@ -110,33 +50,106 @@
       }
     });
 
+    const placement = document.getElementById('placementResult');
+    if (placement) {
+      placement.innerHTML = placement.innerHTML
+        .replace(/既存POI40m円除外後/g, '既存POI50m円除外後')
+        .replace(/40m条件後/g, '50m条件後');
+    }
+
     ensurePolicyBanner();
   }
 
-  function setup() {
-    refreshCapacityCopy();
+  function setupUiObserver() {
+    normalizePlacementCopy();
 
     const target = document.getElementById('capacityResult');
-    if (target && target.dataset.placementStrategyObserverReady !== 'true') {
-      target.dataset.placementStrategyObserverReady = 'true';
-      new MutationObserver(() => {
-        requestAnimationFrame(() => {
-          const placement = document.getElementById('placementResult');
-          if (placement) {
-            placement.innerHTML = placement.innerHTML
-              .replace(/既存POI40m円除外後/g, '既存POI50m円除外後')
-              .replace(/40m条件後/g, '50m条件後');
-          }
-        });
-      }).observe(target, { childList: true, subtree: true });
+    if (!target || target.dataset.placementStrategyObserverReady === 'true') return;
+
+    target.dataset.placementStrategyObserverReady = 'true';
+    new MutationObserver(() => {
+      requestAnimationFrame(normalizePlacementCopy);
+    }).observe(target, { childList: true, subtree: true });
+  }
+
+  function installStrategyPatch() {
+    if (installed) return true;
+
+    const originalEstimateCapacityRandom = window.estimateCapacityRandom;
+    const originalEstimateEffectiveFreeAreaGrid = window.estimateEffectiveFreeAreaGrid;
+    const originalRenderPlacementSummaryCard = window.renderPlacementSummaryCard;
+
+    if (typeof originalEstimateCapacityRandom !== 'function') {
+      return false;
     }
 
+    installed = true;
+
+    window.CampsitePlacementStrategy = Object.freeze({
+      policy: POLICY,
+      mode: 'lab-overlay',
+      base: 'capacity.js'
+    });
+
+    // Labの配置戦略モードだけ、候補生成の最低間隔を50mへ統一する。
+    window.estimateCapacityRandom = function placementStrategyEstimateCapacityRandom(
+      polygon,
+      blockingPoints,
+      _legacyMinDistance,
+      trialCount = 30000
+    ) {
+      return originalEstimateCapacityRandom(
+        polygon,
+        blockingPoints,
+        POLICY.preferredSpacingMeters,
+        trialCount
+      );
+    };
+
+    // 配置余地の面積評価も50m基準へ統一する。
+    if (typeof originalEstimateEffectiveFreeAreaGrid === 'function') {
+      window.estimateEffectiveFreeAreaGrid = function placementStrategyEstimateEffectiveFreeAreaGrid(
+        polygon,
+        existingPoi,
+        _legacyRadiusMeters,
+        gridMeters = 10
+      ) {
+        return originalEstimateEffectiveFreeAreaGrid(
+          polygon,
+          existingPoi,
+          POLICY.preferredSpacingMeters,
+          gridMeters
+        );
+      };
+    }
+
+    // 旧カードのロジックを活かしつつ、Lab上の表示だけ現行ポリシーへ合わせる。
+    if (typeof originalRenderPlacementSummaryCard === 'function') {
+      window.renderPlacementSummaryCard = function placementStrategyRenderSummary(data) {
+        originalRenderPlacementSummaryCard(data);
+        normalizePlacementCopy();
+      };
+    }
+
+    setupUiObserver();
     console.info('[Placement Strategy] active', POLICY);
+    return true;
+  }
+
+  function waitForCapacityBase(attempt = 0) {
+    if (installStrategyPatch()) return;
+
+    if (attempt >= 100) {
+      console.warn('[Placement Strategy] capacity.js did not become ready.');
+      return;
+    }
+
+    window.setTimeout(() => waitForCapacityBase(attempt + 1), 50);
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', setup, { once: true });
+    document.addEventListener('DOMContentLoaded', () => waitForCapacityBase(), { once: true });
   } else {
-    setup();
+    waitForCapacityBase();
   }
 })();
