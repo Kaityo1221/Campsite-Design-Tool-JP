@@ -3,6 +3,7 @@
 
   const ZONE_POLICY = Object.freeze({
     preferredSpacingMeters: 50,
+    referenceSpacingMeters: 40,
     boundaryMarginMeters: 15,
     corePoiClearanceMeters: 75,
     coreBoundaryMarginMeters: 30,
@@ -10,10 +11,38 @@
     maxCells: 6500
   });
 
+  const LEVELS = Object.freeze({
+    core: Object.freeze({
+      label: '本命候補地',
+      color: '#16a34a',
+      fillOpacity: 0.30,
+      summary: '50m条件に加えて、既存POIと境界の両方に余裕があります。'
+    }),
+    available: Object.freeze({
+      label: '配置可能地',
+      color: '#22c55e',
+      fillOpacity: 0.20,
+      summary: '50m条件を満たしています。現地状況を確認して候補にできます。'
+    }),
+    reference: Object.freeze({
+      label: '40〜50m参考帯',
+      color: '#f59e0b',
+      fillOpacity: 0.22,
+      summary: '40m以上50m未満です。現行方針では候補外ですが、比較用に表示します。'
+    }),
+    blocked: Object.freeze({
+      label: '要注意・対象外',
+      color: '#ef4444',
+      fillOpacity: 0.16,
+      summary: '50m条件または境界余白を満たしていません。'
+    })
+  });
+
   let installed = false;
   let visible = true;
   let zoneLayer = null;
   let lastSummary = null;
+  let mapClickHandler = null;
 
   function getCapacityData() {
     try {
@@ -91,7 +120,70 @@
     return Math.max(base, Math.ceil(adaptive / 2) * 2);
   }
 
-  function buildZoneCells(data) {
+  function classifyPoint({ edgeDistance, nearestPoiDistance }) {
+    if (
+      nearestPoiDistance >= ZONE_POLICY.corePoiClearanceMeters &&
+      edgeDistance >= ZONE_POLICY.coreBoundaryMarginMeters
+    ) {
+      return 'core';
+    }
+
+    if (
+      nearestPoiDistance >= ZONE_POLICY.preferredSpacingMeters &&
+      edgeDistance >= ZONE_POLICY.boundaryMarginMeters
+    ) {
+      return 'available';
+    }
+
+    if (
+      nearestPoiDistance >= ZONE_POLICY.referenceSpacingMeters &&
+      nearestPoiDistance < ZONE_POLICY.preferredSpacingMeters &&
+      edgeDistance >= ZONE_POLICY.boundaryMarginMeters
+    ) {
+      return 'reference';
+    }
+
+    return 'blocked';
+  }
+
+  function buildReason(level, nearestPoiDistance, edgeDistance, nearestPoiName) {
+    const reasons = [];
+    const poiName = nearestPoiName ? `「${nearestPoiName}」` : '既存POI';
+
+    if (level === 'core') {
+      reasons.push(`${poiName}まで約${Math.round(nearestPoiDistance)}m`);
+      reasons.push(`活動範囲の端まで約${Math.round(edgeDistance)}m`);
+      reasons.push('距離と境界の両方に余裕があります');
+      return reasons;
+    }
+
+    if (level === 'available') {
+      reasons.push(`${poiName}まで約${Math.round(nearestPoiDistance)}mで50m条件を満たします`);
+      reasons.push(`活動範囲の端まで約${Math.round(edgeDistance)}m`);
+      return reasons;
+    }
+
+    if (level === 'reference') {
+      reasons.push(`${poiName}まで約${Math.round(nearestPoiDistance)}m`);
+      reasons.push('40m以上50m未満のため参考帯です');
+      return reasons;
+    }
+
+    if (nearestPoiDistance < ZONE_POLICY.referenceSpacingMeters) {
+      reasons.push(`${poiName}まで約${Math.round(nearestPoiDistance)}mで40m未満です`);
+    } else if (nearestPoiDistance < ZONE_POLICY.preferredSpacingMeters) {
+      reasons.push(`${poiName}まで約${Math.round(nearestPoiDistance)}mで50m未満です`);
+    }
+
+    if (edgeDistance < ZONE_POLICY.boundaryMarginMeters) {
+      reasons.push(`活動範囲の端まで約${Math.round(edgeDistance)}mで境界余白が不足しています`);
+    }
+
+    if (!reasons.length) reasons.push('現行の配置条件を満たしていません');
+    return reasons;
+  }
+
+  function buildProjection(data) {
     const polygon = data?.polygon || [];
     const poi = data?.poi || [];
     if (polygon.length < 3) return null;
@@ -107,9 +199,48 @@
 
     const blocking = poi.map(p => ({
       x: p.lng * metersPerLng,
-      y: p.lat * metersPerLat
+      y: p.lat * metersPerLat,
+      name: p.name || 'POI',
+      type: p.type || 'existing',
+      kind: p.kind || ''
     }));
 
+    return {
+      metersPerLat,
+      metersPerLng,
+      projectedPolygon,
+      blocking
+    };
+  }
+
+  function inspectProjectedPoint(point, projection) {
+    const edgeDistance = distanceToPolygonEdge(point, projection.projectedPolygon);
+
+    let nearestPoiDistance = Infinity;
+    let nearestPoi = null;
+    projection.blocking.forEach(existing => {
+      const d = distance(point, existing);
+      if (d < nearestPoiDistance) {
+        nearestPoiDistance = d;
+        nearestPoi = existing;
+      }
+    });
+
+    const level = classifyPoint({ edgeDistance, nearestPoiDistance });
+    return {
+      level,
+      edgeDistance,
+      nearestPoiDistance,
+      nearestPoi,
+      reasons: buildReason(level, nearestPoiDistance, edgeDistance, nearestPoi?.name)
+    };
+  }
+
+  function buildZoneCells(data) {
+    const projection = buildProjection(data);
+    if (!projection) return null;
+
+    const { projectedPolygon, metersPerLat, metersPerLng } = projection;
     const xs = projectedPolygon.map(p => p.x);
     const ys = projectedPolygon.map(p => p.y);
     const minX = Math.min(...xs);
@@ -119,51 +250,32 @@
     const gridMeters = getAdaptiveGridMeters(maxX - minX, maxY - minY);
 
     const cells = [];
-    let reference40to50 = 0;
-    let rejectedBoundary = 0;
+    const counts = { core: 0, available: 0, reference: 0, blocked: 0 };
 
     for (let x = minX; x <= maxX; x += gridMeters) {
       for (let y = minY; y <= maxY; y += gridMeters) {
         const point = { x, y };
         if (!pointInPolygon(point, projectedPolygon)) continue;
 
-        const edgeDistance = distanceToPolygonEdge(point, projectedPolygon);
-        if (edgeDistance < ZONE_POLICY.boundaryMarginMeters) {
-          rejectedBoundary += 1;
-          continue;
-        }
+        const inspected = inspectProjectedPoint(point, projection);
+        counts[inspected.level] += 1;
 
-        const nearestPoiDistance = blocking.length
-          ? Math.min(...blocking.map(existing => distance(point, existing)))
-          : Infinity;
-
-        if (nearestPoiDistance >= ZONE_POLICY.preferredSpacingMeters) {
-          const level =
-            nearestPoiDistance >= ZONE_POLICY.corePoiClearanceMeters &&
-            edgeDistance >= ZONE_POLICY.coreBoundaryMarginMeters
-              ? 'core'
-              : 'available';
-
-          cells.push({
-            lat: y / metersPerLat,
-            lng: x / metersPerLng,
-            level,
-            nearestPoiDistance,
-            edgeDistance
-          });
-        } else if (nearestPoiDistance >= 40) {
-          reference40to50 += 1;
-        }
+        cells.push({
+          lat: y / metersPerLat,
+          lng: x / metersPerLng,
+          level: inspected.level,
+          nearestPoiDistance: inspected.nearestPoiDistance,
+          nearestPoiName: inspected.nearestPoi?.name || '',
+          edgeDistance: inspected.edgeDistance
+        });
       }
     }
 
     return {
       cells,
+      counts,
       gridMeters,
-      reference40to50,
-      rejectedBoundary,
-      coreCount: cells.filter(cell => cell.level === 'core').length,
-      availableCount: cells.filter(cell => cell.level === 'available').length
+      projection
     };
   }
 
@@ -185,13 +297,13 @@
     zoneLayer = L.layerGroup().addTo(map);
 
     summary.cells.forEach(cell => {
-      const isCore = cell.level === 'core';
+      const style = LEVELS[cell.level] || LEVELS.blocked;
       L.circleMarker([cell.lat, cell.lng], {
         renderer,
         radius: Math.max(3.5, Math.min(6, summary.gridMeters * 0.32)),
         stroke: false,
-        fillColor: isCore ? '#22c55e' : '#38bdf8',
-        fillOpacity: isCore ? 0.24 : 0.15,
+        fillColor: style.color,
+        fillOpacity: style.fillOpacity,
         interactive: false
       }).addTo(zoneLayer);
     });
@@ -209,20 +321,22 @@
     panel.innerHTML = `
       <div class="placement-strategy-zone-panel__head">
         <div>
-          <strong>🗺️ 候補エリア</strong>
-          <small>50m条件を満たす「余白」を点ではなく面として読みます。</small>
+          <strong>🏯 理由付き布陣図</strong>
+          <small>色で余白を読み、地図をタップするとその地点の判定理由を確認できます。</small>
         </div>
         <button type="button" id="placementStrategyZoneToggle">表示中</button>
       </div>
       <div class="placement-strategy-zone-legend">
-        <span><i class="core"></i>余裕あり</span>
-        <span><i class="available"></i>配置可能</span>
+        <span><i class="core"></i>本命候補地</span>
+        <span><i class="available"></i>配置可能地</span>
+        <span><i class="reference"></i>40〜50m参考帯</span>
+        <span><i class="blocked"></i>要注意・対象外</span>
       </div>
       <div id="placementStrategyZoneStats" class="placement-strategy-zone-stats">
-        KMZを解析すると候補エリアを表示します。
+        KMZを解析すると布陣図を表示します。
       </div>
       <div class="placement-strategy-zone-note">
-        40〜50mは参考帯として内部集計しますが、候補エリアには含めません。
+        判定はAIではなく、既存POI距離・50m方針・活動範囲境界の固定ルールで計算します。色は配置を確定するものではありません。
       </div>
     `;
 
@@ -239,14 +353,67 @@
     const target = document.getElementById('placementStrategyZoneStats');
     if (!target || !summary) return;
 
-    const total = summary.cells.length;
-    const approxArea = Math.round(total * summary.gridMeters * summary.gridMeters);
+    const counts = summary.counts;
     target.innerHTML = `
-      <div><span>余裕あり</span><strong>${summary.coreCount}</strong><small>セル</small></div>
-      <div><span>配置可能</span><strong>${summary.availableCount}</strong><small>セル</small></div>
-      <div><span>概算余白</span><strong>${approxArea.toLocaleString()}</strong><small>㎡相当</small></div>
-      <div><span>解析メッシュ</span><strong>${summary.gridMeters}</strong><small>m</small></div>
+      <div><span>本命候補地</span><strong>${counts.core}</strong><small>セル</small></div>
+      <div><span>配置可能地</span><strong>${counts.available}</strong><small>セル</small></div>
+      <div><span>40〜50m参考</span><strong>${counts.reference}</strong><small>セル</small></div>
+      <div><span>要注意・対象外</span><strong>${counts.blocked}</strong><small>セル</small></div>
     `;
+  }
+
+  function installMapInspection(summary) {
+    const map = getPreviewMap();
+    if (!map || typeof L === 'undefined') return;
+
+    if (mapClickHandler) map.off('click', mapClickHandler);
+
+    mapClickHandler = event => {
+      const projection = summary?.projection;
+      if (!projection) return;
+
+      const point = {
+        x: event.latlng.lng * projection.metersPerLng,
+        y: event.latlng.lat * projection.metersPerLat
+      };
+
+      if (!pointInPolygon(point, projection.projectedPolygon)) {
+        L.popup()
+          .setLatLng(event.latlng)
+          .setContent(`
+            <div class="placement-strategy-zone-popup">
+              <strong>活動範囲外</strong><br>
+              <span>この地点は活動範囲ポリゴンの外です。</span>
+            </div>
+          `)
+          .openOn(map);
+        return;
+      }
+
+      const inspected = inspectProjectedPoint(point, projection);
+      const style = LEVELS[inspected.level] || LEVELS.blocked;
+      const poiDistance = Number.isFinite(inspected.nearestPoiDistance)
+        ? `${Math.round(inspected.nearestPoiDistance)}m`
+        : 'なし';
+      const poiName = inspected.nearestPoi?.name || 'なし';
+
+      L.popup()
+        .setLatLng(event.latlng)
+        .setContent(`
+          <div class="placement-strategy-zone-popup">
+            <strong style="color:${style.color};">${style.label}</strong>
+            <div>${style.summary}</div>
+            <hr>
+            <div>最寄りPOI：${escapeCapacityHtml(poiName)}</div>
+            <div>POIまで：約${poiDistance}</div>
+            <div>境界まで：約${Math.round(inspected.edgeDistance)}m</div>
+            <ul>${inspected.reasons.map(reason => `<li>${escapeCapacityHtml(reason)}</li>`).join('')}</ul>
+          </div>
+        `)
+        .openOn(map);
+    };
+
+    map.on('click', mapClickHandler);
   }
 
   function refreshZones() {
@@ -260,14 +427,14 @@
     lastSummary = summary;
     renderZoneLayer(summary);
     renderStats(summary);
+    installMapInspection(summary);
 
     window.CampsitePlacementZones = Object.freeze({
       policy: ZONE_POLICY,
+      levels: LEVELS,
       summary: {
         gridMeters: summary.gridMeters,
-        coreCount: summary.coreCount,
-        availableCount: summary.availableCount,
-        reference40to50: summary.reference40to50
+        counts: { ...summary.counts }
       },
       refresh: refreshZones,
       isVisible: () => visible
