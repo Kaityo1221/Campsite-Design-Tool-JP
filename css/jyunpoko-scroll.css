@@ -1,0 +1,155 @@
+/* Jyunpoko welcome scroll / Lab only */
+
+.jyunpoko-scroll-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(20, 14, 8, .72);
+  backdrop-filter: blur(4px);
+}
+
+.jyunpoko-scroll-overlay[hidden] {
+  display: none;
+}
+
+.jyunpoko-scroll {
+  position: relative;
+  width: min(860px, 94vw);
+  max-height: min(88vh, 900px);
+  overflow: auto;
+  padding: 42px 56px 36px;
+  border: 1px solid rgba(92, 55, 24, .45);
+  border-radius: 18px;
+  color: #2e2116;
+  background:
+    radial-gradient(circle at 12% 18%, rgba(132, 79, 33, .10), transparent 24%),
+    radial-gradient(circle at 82% 74%, rgba(109, 70, 28, .09), transparent 26%),
+    linear-gradient(180deg, #f5e8bf 0%, #ead7a5 55%, #dfc78d 100%);
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, .42),
+    inset 0 0 70px rgba(104, 62, 25, .12);
+}
+
+.jyunpoko-scroll::before,
+.jyunpoko-scroll::after {
+  content: '';
+  position: absolute;
+  top: 18px;
+  bottom: 18px;
+  width: 22px;
+  border-radius: 12px;
+  background:
+    linear-gradient(90deg, #2b211a, #8a6a3a 35%, #c7a05e 50%, #684a2c 68%, #231a14);
+  box-shadow: 0 0 0 5px rgba(53, 38, 26, .12);
+}
+
+.jyunpoko-scroll::before { left: 10px; }
+.jyunpoko-scroll::after { right: 10px; }
+
+.jyunpoko-scroll__inner {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+}
+
+.jyunpoko-scroll__title {
+  margin: 0 0 22px;
+  font-family: 'Yu Mincho', 'Hiragino Mincho ProN', serif;
+  font-size: clamp(26px, 4vw, 42px);
+  font-weight: 900;
+  letter-spacing: .08em;
+}
+
+.jyunpoko-scroll__title::after {
+  content: '';
+  display: block;
+  width: min(360px, 70%);
+  height: 5px;
+  margin: 12px auto 0;
+  border-radius: 50%;
+  background: linear-gradient(90deg, transparent, #7b5a2c 20%, #9f7741 78%, transparent);
+  transform: rotate(-1deg);
+}
+
+.jyunpoko-scroll__body {
+  margin: 0 auto;
+  max-width: 640px;
+  font-family: 'Yu Mincho', 'Hiragino Mincho ProN', serif;
+  font-size: clamp(16px, 2vw, 21px);
+  font-weight: 700;
+  line-height: 1.9;
+}
+
+.jyunpoko-scroll__body p {
+  margin: 0 0 20px;
+}
+
+.jyunpoko-scroll__formation {
+  display: inline-block;
+  margin: 3px 0 4px;
+  padding: 4px 16px 6px;
+  border: 1px solid rgba(82, 50, 24, .34);
+  border-radius: 999px;
+  background: rgba(255, 248, 222, .42);
+  font-size: 1.08em;
+  font-weight: 900;
+}
+
+.jyunpoko-scroll__sign {
+  margin-top: 26px;
+  font-family: 'Yu Mincho', 'Hiragino Mincho ProN', serif;
+  font-weight: 900;
+  line-height: 1.55;
+}
+
+.jyunpoko-scroll__seal {
+  display: inline-grid;
+  place-items: center;
+  width: 62px;
+  height: 62px;
+  margin-top: 12px;
+  border: 3px double #8e2f24;
+  color: #8e2f24;
+  font-family: 'Yu Mincho', serif;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: .08em;
+  transform: rotate(-4deg);
+  opacity: .86;
+}
+
+.jyunpoko-scroll__close {
+  margin-top: 28px;
+  padding: 11px 20px;
+  border: 1px solid #563b22;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #6b5138, #493323);
+  color: #fff8e8;
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 5px 12px rgba(68, 44, 25, .22);
+}
+
+.jyunpoko-scroll__close:hover {
+  filter: brightness(1.06);
+}
+
+@media (max-width: 640px) {
+  .jyunpoko-scroll-overlay { padding: 12px; }
+  .jyunpoko-scroll {
+    width: 96vw;
+    padding: 34px 34px 28px;
+    border-radius: 14px;
+  }
+  .jyunpoko-scroll::before,
+  .jyunpoko-scroll::after {
+    width: 14px;
+  }
+  .jyunpoko-scroll::before { left: 7px; }
+  .jyunpoko-scroll::after { right: 7px; }
+  .jyunpoko-scroll__body { line-height: 1.75; }
+}
