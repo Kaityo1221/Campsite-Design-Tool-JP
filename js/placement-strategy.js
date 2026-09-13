@@ -76,17 +76,21 @@
 
     const result = document.getElementById('capacityResult');
     if (result) {
-      result.innerHTML = result.innerHTML
+      const currentHtml = result.innerHTML;
+      const nextHtml = currentHtml
         .replace(/配置余地チェック結果/g, '配置戦略解析結果')
         .replace(/2\. 候補POIの生成設定/g, '2. 配置戦略を選ぶ');
+      if (nextHtml !== currentHtml) result.innerHTML = nextHtml;
     }
 
     const placement = document.getElementById('placementResult');
     if (placement) {
-      placement.innerHTML = placement.innerHTML
+      const currentHtml = placement.innerHTML;
+      const nextHtml = currentHtml
         .replace(/既存POI40m円除外後/g, '既存POI50m円除外後')
         .replace(/40m条件後/g, '50m条件後')
         .replace(/<div class="placement-title">🌿 配置余地<\/div>/g, '<div class="placement-title">🧠 配置戦略評価</div>');
+      if (nextHtml !== currentHtml) placement.innerHTML = nextHtml;
     }
 
     ensurePolicyBanner();
