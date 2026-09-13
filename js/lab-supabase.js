@@ -40,13 +40,13 @@ async function loadCampsiteEngineDecisions(testBatchId = "kasai-rinkai-20260625-
 
 window.loadCampsiteEngineDecisions = loadCampsiteEngineDecisions;
 
-/* Lab shell extension: load only on lab.html. */
+/* Lab shell extension: load only on lab.html and always bypass stale browser cache. */
 (() => {
   const currentPath = window.location.pathname.replace(/\/+$/, '');
   if (!currentPath.endsWith('/lab.html')) return;
 
   const script = document.createElement('script');
-  script.src = 'js/lab-field-prep-entry.js?v=6';
+  script.src = `js/lab-field-prep-entry.js?build=${Date.now()}`;
   script.async = false;
   document.head.appendChild(script);
 })();
