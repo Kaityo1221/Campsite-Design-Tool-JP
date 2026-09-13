@@ -2,7 +2,7 @@
   'use strict';
 
   const POLICY = Object.freeze({
-    version: '2026-09-strategy-v2',
+    version: '2026-09-strategy-v3',
     preferredSpacingMeters: 50,
     referenceSpacingMeters: Object.freeze([40, 30]),
     boundaryMarginMeters: 15
@@ -10,22 +10,22 @@
 
   const STRATEGIES = Object.freeze({
     balanced: Object.freeze({
-      label: '均等分散',
-      icon: '⚖️',
-      description: '候補同士の間隔を広く取り、全体へ散らします。',
-      reason: '候補同士の距離を優先し、偏りを抑える戦略です。'
+      label: '鶴翼の陣',
+      icon: '🪽',
+      description: '',
+      reason: '現代語：全体に広く散らして、偏りと混雑を抑える配置です。'
     }),
     interior: Object.freeze({
-      label: '内側安定',
+      label: '方円の陣',
       icon: '🛡️',
-      description: '活動範囲の端を避け、内側の余裕を重視します。',
-      reason: '境界からの余白を優先し、範囲内の安定した候補を選ぶ戦略です。'
+      description: '',
+      reason: '現代語：外周に寄せすぎず、内側の安定した場所を優先する配置です。'
     }),
     gap: Object.freeze({
-      label: '空白補完',
-      icon: '🧭',
-      description: '既存POIから離れた空白側を優先して探します。',
-      reason: '既存POIが薄い場所を優先し、配置の偏りを補う戦略です。'
+      label: '雁行の陣',
+      icon: '🪶',
+      description: '',
+      reason: '現代語：既存POIの薄い場所を拾いながら、ずらして展開する配置です。'
     })
   });
 
@@ -112,8 +112,8 @@
     return `
       <div class="placement-strategy-selector">
         <div class="placement-strategy-selector__lead">
-          <strong>戦略を選択</strong>
-          <span>正解を自動決定するのではなく、設計思想を切り替えて比較します。</span>
+          <strong>布陣を選択</strong>
+          <span>布陣名をタップすると、現代風の意味を一言で表示します。</span>
         </div>
         <div class="placement-strategy-grid">
           ${Object.entries(STRATEGIES).map(([id, strategy]) => `
@@ -126,7 +126,6 @@
               <span class="placement-strategy-card__icon">${strategy.icon}</span>
               <span class="placement-strategy-card__text">
                 <strong>${strategy.label}</strong>
-                <small>${strategy.description}</small>
               </span>
               <span class="placement-strategy-card__check">${strategyMode === id ? '●' : '○'}</span>
             </button>
@@ -161,7 +160,7 @@
     if (output && output.textContent.trim()) {
       output.innerHTML = `
         <div class="placement-strategy-notice">
-          戦略を「${STRATEGIES[mode].label}」へ変更しました。<br>
+          布陣を「${STRATEGIES[mode].label}」へ変更しました。<br>
           もう一度「候補配置をプレビュー」を押して比較してください。
         </div>
       `;
@@ -317,7 +316,7 @@
       })
         .bindPopup(`
           <strong>${escapeCapacityHtml(point.name)}</strong><br>
-          戦略：${escapeCapacityHtml(STRATEGIES[strategyMode].label)}<br>
+          布陣：${escapeCapacityHtml(STRATEGIES[strategyMode].label)}<br>
           種別：${escapeCapacityHtml(CAPACITY_LABELS[point.kind] || point.kind)}<br>
           最寄り既存POI：約${Math.round(existingDistance)}m<br>
           活動範囲の端から：約${Math.round(edgeDistance)}m<br>
@@ -341,7 +340,7 @@
         <div class="placement-strategy-result__head">
           <span class="placement-strategy-result__icon">${strategy.icon}</span>
           <div>
-            <strong>${strategy.label}プラン</strong>
+            <strong>${strategy.label}</strong>
             <small>${strategy.reason}</small>
           </div>
         </div>
@@ -359,7 +358,7 @@
 
         <div class="placement-strategy-result__note">
           紫の円は各候補を中心とした50mの確認範囲です。候補は「置くべき場所」の確定ではなく、現地確認へ持ち出す比較案です。<br>
-          同じ戦略でも再プレビューすると別案を試せます。
+          同じ布陣でも再プレビューすると別案を試せます。
         </div>
       </div>
     `;
