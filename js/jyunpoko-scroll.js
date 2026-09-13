@@ -1,6 +1,9 @@
 (() => {
   'use strict';
 
+  const currentPath = window.location.pathname.replace(/\/+$/, '');
+  if (!currentPath.endsWith('/lab.html')) return;
+
   function closeScroll() {
     const overlay = document.getElementById('jyunpokoScrollOverlay');
     if (!overlay) return;
