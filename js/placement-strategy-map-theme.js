@@ -72,7 +72,7 @@
       return;
     }
 
-    const control = L.control({ position: 'bottomleft' });
+    const control = L.control({ position: 'topright' });
     control.onAdd = () => {
       const root = L.DomUtil.create('div', 'placement-map-mode-control leaflet-bar');
       root.setAttribute('role', 'group');
