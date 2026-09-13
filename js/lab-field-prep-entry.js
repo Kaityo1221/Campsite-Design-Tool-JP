@@ -1,6 +1,9 @@
 (() => {
   'use strict';
 
+  const currentPath = window.location.pathname.replace(/\/+$/, '');
+  if (!currentPath.endsWith('/lab.html')) return;
+
   function ensureStylesheet(id, href) {
     if (document.getElementById(id)) return;
     const link = document.createElement('link');
