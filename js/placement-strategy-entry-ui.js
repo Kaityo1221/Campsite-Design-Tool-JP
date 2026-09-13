@@ -72,6 +72,10 @@
     document.head.appendChild(style);
   }
 
+  function findCapacityHost(input) {
+    return input?.closest('.capacity-control-top') || input?.closest('.step') || input?.parentElement || null;
+  }
+
   function updateStatus(input, status) {
     const hasFile = Boolean(input?.files?.length);
     if (!status) return;
@@ -85,8 +89,8 @@
     const input = document.getElementById('capacityFile');
     if (!input) return false;
 
-    const step = input.closest('.step');
-    if (!step) return false;
+    const host = findCapacityHost(input);
+    if (!host) return false;
 
     injectStyles();
 
@@ -106,7 +110,7 @@
         </div>
         <div id="placementStrategyEntryStatus" class="placement-strategy-entry__status">○ KMZ待機中</div>
       `;
-      step.insertAdjacentElement('afterbegin', entry);
+      host.insertAdjacentElement('afterbegin', entry);
     }
 
     const status = document.getElementById('placementStrategyEntryStatus');
@@ -117,7 +121,7 @@
       input.addEventListener('change', () => updateStatus(input, status));
     }
 
-    const button = step.querySelector('button[onclick*="analyzePlacementCapacity"]') ||
+    const button = host.querySelector('button[onclick*="analyzePlacementCapacity"]') ||
       document.querySelector('button[onclick*="analyzePlacementCapacity"]');
     if (button) {
       button.id = 'placementStrategyLaunchButton';
