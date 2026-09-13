@@ -181,7 +181,7 @@
     setButtons({ login: true, busy: true });
     setStatus("Discordを開いています…");
 
-    const redirectTo = `${window.location.origin}${window.location.pathname}`;
+    const redirectTo = `${window.location.origin}${window.location.pathname}${window.location.search}`;
     const { error } = await window.campsiteSupabase.auth.signInWithOAuth({
       provider: "discord",
       options: { redirectTo }
