@@ -55,6 +55,11 @@
     );
 
     ensureScript(
+      'placementStrategyKmzCompatScript',
+      'js/placement-strategy-kmz-compat.js?v=20260914-v1'
+    );
+
+    ensureScript(
       'placementStrategyScript',
       'js/placement-strategy.js?v=20260914-v4',
       () => {
