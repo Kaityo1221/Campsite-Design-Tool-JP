@@ -27,6 +27,15 @@
 
   function loadPlacementStrategyAssets() {
     ensureStylesheet(
+      'jyunpokoScrollStylesheet',
+      'css/jyunpoko-scroll.css?v=20260914-v1'
+    );
+    ensureScript(
+      'jyunpokoScrollScript',
+      'js/jyunpoko-scroll.js?v=20260914-v1'
+    );
+
+    ensureStylesheet(
       'placementStrategyStylesheet',
       'css/placement-strategy.css?v=20260914-v2'
     );
