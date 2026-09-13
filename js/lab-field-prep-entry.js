@@ -37,7 +37,7 @@
 
     ensureScript(
       'placementStrategyScript',
-      'js/placement-strategy.js?v=20260914-v2',
+      'js/placement-strategy.js?v=20260914-v3',
       () => {
         ensureScript(
           'placementStrategyZonesScript',
