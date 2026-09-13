@@ -36,7 +36,7 @@
     const base = currentSrc ? new URL('.', currentSrc) : new URL('./js/', window.location.href);
 
     if (!window.CampsiteCaAccess) {
-      await loadScript(new URL('ca-access.js?v=3', base).href);
+      await loadScript(new URL('ca-access.js?v=4', base).href);
     }
 
     if (!window.CampsiteCaGeoGuard) {
