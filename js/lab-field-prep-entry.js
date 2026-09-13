@@ -34,6 +34,10 @@
       'placementStrategyZonesStylesheet',
       'css/placement-strategy-zones.css?v=20260914-v2'
     );
+    ensureStylesheet(
+      'placementStrategyMapThemeStylesheet',
+      'css/placement-strategy-map-theme.css?v=20260914-v1'
+    );
 
     ensureScript(
       'placementStrategyScript',
@@ -41,7 +45,13 @@
       () => {
         ensureScript(
           'placementStrategyZonesScript',
-          'js/placement-strategy-zones.js?v=20260914-v2'
+          'js/placement-strategy-zones.js?v=20260914-v2',
+          () => {
+            ensureScript(
+              'placementStrategyMapThemeScript',
+              'js/placement-strategy-map-theme.js?v=20260914-v1'
+            );
+          }
         );
       }
     );
