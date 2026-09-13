@@ -2,7 +2,7 @@
   'use strict';
 
   const POLICY = Object.freeze({
-    version: '2026-09-strategy-v3',
+    version: '2026-09-strategy-v4',
     preferredSpacingMeters: 50,
     referenceSpacingMeters: Object.freeze([40, 30]),
     boundaryMarginMeters: 15
@@ -39,25 +39,66 @@
     return fileInput.closest('.step')?.parentElement || fileInput.closest('.panel') || null;
   }
 
-  function ensurePolicyBanner() {
-    if (document.getElementById('placementStrategyPolicyBanner')) return;
+  function updateEntryStatus() {
+    const fileInput = document.getElementById('capacityFile');
+    const status = document.getElementById('placementStrategyEntryStatus');
+    if (!fileInput || !status) return;
+    const ready = Boolean(fileInput.files?.length);
+    status.textContent = ready
+      ? '● KMZ準備完了：下のボタンから布陣解析へ'
+      : '○ KMZを選択してください';
+    status.style.color = ready ? '#bbf7d0' : '#cbd5e1';
+  }
 
+  function ensurePolicyBanner() {
     const fileInput = document.getElementById('capacityFile');
     const step = fileInput?.closest('.step');
     if (!step) return;
 
-    const banner = document.createElement('div');
-    banner.id = 'placementStrategyPolicyBanner';
-    banner.className = 'placement-strategy-policy';
+    let banner = document.getElementById('placementStrategyPolicyBanner');
+    if (!banner) {
+      banner = document.createElement('div');
+      banner.id = 'placementStrategyPolicyBanner';
+      banner.className = 'placement-strategy-policy';
+      step.insertAdjacentElement('afterbegin', banner);
+    }
+
     banner.innerHTML = `
       <div class="placement-strategy-policy__eyebrow">PLACEMENT STRATEGY / LAB</div>
-      <div class="placement-strategy-policy__title">🧬 配置戦略モード</div>
+      <div class="placement-strategy-policy__title">🏯 配置戦略・布陣図</div>
       <div class="placement-strategy-policy__main">原則 <strong>50m</strong> 間隔で候補余地を評価します。</div>
       <div class="placement-strategy-policy__sub">40m / 30m は参考距離です。候補生成の合格条件には使用しません。</div>
+      <div style="margin-top:10px;padding:9px 11px;border-radius:10px;background:rgba(15,23,42,.42);font-size:12px;line-height:1.7;color:#dbeafe;font-weight:800;">
+        KMZを選択 → 下の「🏯 配置戦略・布陣図を開く」 → 地図右上で「🗺 通常地図 / 🏯 布陣図」を切替
+      </div>
+      <div id="placementStrategyEntryStatus" style="margin-top:8px;font-size:11px;font-weight:900;color:#cbd5e1;">○ KMZを選択してください</div>
       <div class="placement-strategy-policy__version">${POLICY.version}</div>
     `;
 
-    step.insertAdjacentElement('afterbegin', banner);
+    if (fileInput.dataset.placementStrategyStatusBound !== 'true') {
+      fileInput.dataset.placementStrategyStatusBound = 'true';
+      fileInput.addEventListener('change', updateEntryStatus);
+    }
+    updateEntryStatus();
+  }
+
+  function ensureLaunchButtonCopy() {
+    const fileInput = document.getElementById('capacityFile');
+    const step = fileInput?.closest('.step');
+    if (!step) return;
+
+    const button = step.querySelector('button[onclick*="analyzePlacementCapacity"]') ||
+      document.querySelector('button[onclick*="analyzePlacementCapacity"]');
+    if (button) {
+      button.id = 'placementStrategyLaunchButton';
+      button.textContent = '🏯 配置戦略・布陣図を開く';
+      button.setAttribute('aria-label', '配置戦略と布陣図を解析して開く');
+    }
+
+    const empty = document.getElementById('placementResult');
+    if (empty && empty.classList.contains('placement-empty')) {
+      empty.textContent = 'KMZを読み込むと、配置戦略と布陣図を表示します。';
+    }
   }
 
   function normalizePlacementCopy() {
@@ -94,6 +135,7 @@
     }
 
     ensurePolicyBanner();
+    ensureLaunchButtonCopy();
   }
 
   function setupUiObserver() {
