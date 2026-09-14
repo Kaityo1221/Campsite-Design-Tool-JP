@@ -25,6 +25,30 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Stamp shared UI asset version
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import os
+          import re
+
+          build = os.environ['GITHUB_SHA']
+          pattern = re.compile(r'css/style\.css\?[^"\']*')
+          replacement = f'css/style.css?build={build}'
+
+          changed = []
+          for path in Path('.').rglob('*.html'):
+              text = path.read_text(encoding='utf-8')
+              updated = pattern.sub(replacement, text)
+              if updated != text:
+                  path.write_text(updated, encoding='utf-8')
+                  changed.append(str(path))
+
+          print(f'Stamped shared UI stylesheet: {replacement}')
+          print('Updated HTML:', ', '.join(changed) if changed else 'none')
+          PY
+
       - name: Stamp Lab asset version
         shell: bash
         run: |
