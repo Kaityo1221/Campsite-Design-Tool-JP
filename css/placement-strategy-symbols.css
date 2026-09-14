@@ -10,12 +10,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
+  width: 24px;
+  height: 24px;
   border: 2px solid rgba(255,255,255,.92);
-  border-radius: 10px;
+  border-radius: 8px;
   background: linear-gradient(180deg, #3f3a33, #211f1b);
-  box-shadow: 0 4px 10px rgba(15, 23, 42, .35), 0 0 0 1px rgba(15,23,42,.28);
+  box-shadow: 0 3px 8px rgba(15, 23, 42, .32), 0 0 0 1px rgba(15,23,42,.24);
   color: #fff7ed;
   font-weight: 900;
   line-height: 1;
@@ -24,25 +24,25 @@
 
 .placement-tactical-symbol__glyph {
   display: block;
-  font-size: 13px;
+  font-size: 11px;
   letter-spacing: -.04em;
   text-shadow: 0 1px 2px rgba(0,0,0,.35);
 }
 
 .placement-tactical-symbol.castle {
-  width: 34px;
-  height: 34px;
-  border-radius: 7px 7px 11px 11px;
+  width: 27px;
+  height: 27px;
+  border-radius: 6px 6px 9px 9px;
   background: linear-gradient(180deg, #5f4330, #2f241c);
 }
 
 .placement-tactical-symbol.castle::before {
   content: '';
   position: absolute;
-  top: -6px;
-  left: 5px;
-  right: 5px;
-  height: 8px;
+  top: -5px;
+  left: 4px;
+  right: 4px;
+  height: 7px;
   border: 2px solid rgba(255,255,255,.85);
   border-bottom: 0;
   background: #5f4330;
@@ -50,20 +50,20 @@
 }
 
 .placement-tactical-symbol.fort {
-  border-radius: 6px;
+  border-radius: 5px;
   background: linear-gradient(180deg, #556046, #2f3628);
 }
 
 .placement-tactical-symbol.tower {
-  border-radius: 15px 15px 6px 6px;
+  border-radius: 12px 12px 5px 5px;
   background: linear-gradient(180deg, #475569, #1e293b);
 }
 
 .placement-tactical-symbol.add,
 .placement-tactical-symbol.candidate {
-  width: 28px;
-  height: 34px;
-  border-radius: 4px 12px 4px 4px;
+  width: 23px;
+  height: 28px;
+  border-radius: 4px 10px 4px 4px;
   transform: rotate(-2deg);
 }
 
@@ -80,9 +80,9 @@
   content: '';
   position: absolute;
   left: 2px;
-  bottom: -8px;
+  bottom: -6px;
   width: 3px;
-  height: 11px;
+  height: 9px;
   border-radius: 3px;
   background: #3f2d21;
 }
