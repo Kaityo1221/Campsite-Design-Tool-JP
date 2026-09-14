@@ -51,6 +51,7 @@
     const role = roleFor(kind);
     const stateClass = state === 'candidate' ? 'candidate' : state === 'add' ? 'add' : 'existing';
     const short = state === 'candidate' ? '候' : state === 'add' ? '旗' : role.role;
+    const isFlagStyle = state === 'candidate' || state === 'add';
 
     return L.divIcon({
       className: 'placement-tactical-icon-shell',
@@ -59,9 +60,9 @@
           <span class="placement-tactical-symbol__glyph">${short}</span>
         </div>
       `,
-      iconSize: state === 'candidate' || state === 'add' ? [30, 38] : [32, 32],
-      iconAnchor: state === 'candidate' || state === 'add' ? [15, 36] : [16, 16],
-      popupAnchor: [0, state === 'candidate' || state === 'add' ? -34 : -18]
+      iconSize: isFlagStyle ? [25, 32] : [27, 27],
+      iconAnchor: isFlagStyle ? [12, 30] : [13, 13],
+      popupAnchor: [0, isFlagStyle ? -28 : -15]
     });
   }
 
