@@ -39,12 +39,49 @@
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
+      .replace(/\"/g, '&quot;')
       .replace(/'/g, '&#039;');
   }
 
   function roleFor(kind) {
     return SYMBOLS[kind] || SYMBOLS.pokestop;
+  }
+
+  function ensureLegend() {
+    let legend = document.getElementById('placementTacticalLegend');
+    if (legend) return legend;
+
+    const compare = document.getElementById('capacityMapCompare');
+    if (!compare?.parentElement) return null;
+
+    legend = document.createElement('div');
+    legend.id = 'placementTacticalLegend';
+    legend.className = 'placement-tactical-legend';
+    legend.setAttribute('aria-label', '布陣図の記号凡例');
+    legend.innerHTML = `
+      <div class="placement-tactical-legend__row">
+        <strong>既存</strong>
+        <span class="placement-tactical-legend__item"><b class="existing-flag">旗</b>ポケストップ</span>
+        <span class="placement-tactical-legend__item"><b class="existing-castle">城</b>ジム</span>
+        <span class="placement-tactical-legend__item"><b class="existing-tower">櫓</b>パワースポット</span>
+      </div>
+      <div class="placement-tactical-legend__row">
+        <strong>新規</strong>
+        <span class="placement-tactical-legend__item"><b class="new-mark">印</b>ポケストップ</span>
+        <span class="placement-tactical-legend__item"><b class="new-mark">標</b>ジム</span>
+        <span class="placement-tactical-legend__item"><b class="new-mark">望</b>パワースポット</span>
+        <span class="placement-tactical-legend__item candidate-note"><i></i>紫丸＝自動候補</span>
+      </div>
+    `;
+
+    compare.insertAdjacentElement('beforebegin', legend);
+    return legend;
+  }
+
+  function syncLegend() {
+    const legend = ensureLegend();
+    if (!legend) return;
+    legend.hidden = getMode() !== 'tactical';
   }
 
   function makeIcon({ kind, state = 'existing', label }) {
@@ -160,6 +197,7 @@
   }
 
   function refresh() {
+    syncLegend();
     renderFor('capacityMap');
     renderFor('capacityPreviewMap');
   }
