@@ -1,7 +1,11 @@
 (() => {
   'use strict';
 
+  const GSI_STD_URL = 'https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png';
+  const GSI_ATTRIBUTION = '<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener noreferrer">地理院タイル</a>';
+
   let installed = false;
+  let tileLayerPatched = false;
   let readyToken = 0;
   let resizeTimer = null;
   let resizeObserver = null;
@@ -23,6 +27,32 @@
     }
   }
 
+  function patchBaseTileProvider() {
+    if (tileLayerPatched || typeof L === 'undefined' || typeof L.tileLayer !== 'function') return;
+
+    const originalTileLayer = L.tileLayer.bind(L);
+
+    L.tileLayer = function placementStrategyTileLayer(url, options = {}) {
+      const source = String(url || '');
+
+      if (source.includes('tile.openstreetmap.org')) {
+        return originalTileLayer(GSI_STD_URL, {
+          ...options,
+          attribution: GSI_ATTRIBUTION,
+          maxZoom: Math.min(Number(options.maxZoom || 18), 18),
+          updateWhenIdle: true,
+          updateWhenZooming: false,
+          keepBuffer: 3
+        });
+      }
+
+      return originalTileLayer(url, options);
+    };
+
+    tileLayerPatched = true;
+    console.info('[Placement Strategy Map Ready] default base map switched to GSI std');
+  }
+
   function ensureShield() {
     const host = document.getElementById('capacityPreviewMap');
     if (!host) return null;
@@ -37,7 +67,7 @@
         <div class="placement-map-ready-shield__inner">
           <div class="placement-map-ready-shield__spinner" aria-hidden="true"></div>
           <strong>地図を読み込み中…</strong>
-          <small>表示サイズと地図タイルを整えています。</small>
+          <small>地図タイルを整えています。</small>
         </div>
       `;
       host.appendChild(shield);
@@ -92,14 +122,6 @@
     return layers;
   }
 
-  function redrawTileLayers(map) {
-    activeTileLayers(map).forEach(layer => {
-      try {
-        layer.redraw();
-      } catch (_error) {}
-    });
-  }
-
   function currentTilesLoaded(layer) {
     try {
       const tiles = Object.values(layer?._tiles || {}).filter(tile => tile && tile.current !== false);
@@ -107,44 +129,43 @@
 
       return tiles.every(tile => {
         const image = tile.el;
-        const loaded = Boolean(tile.loaded);
-        const imageReady = !image || (image.complete && Number(image.naturalWidth || 0) > 0);
-        return loaded && imageReady;
+        return Boolean(tile.loaded) && Boolean(image?.complete) && Number(image?.naturalWidth || 0) > 0;
       });
     } catch (_error) {
       return false;
     }
   }
 
-  function tileLayersSettled(map) {
+  function mapTilesSettled(map) {
     const layers = activeTileLayers(map);
     if (!layers.length) return true;
 
     return layers.every(layer => {
       try {
-        const notLoading = typeof layer.isLoading === 'function' ? !layer.isLoading() : true;
-        return notLoading && currentTilesLoaded(layer);
+        const idle = typeof layer.isLoading === 'function' ? !layer.isLoading() : true;
+        return idle && currentTilesLoaded(layer);
       } catch (_error) {
         return false;
       }
     });
   }
 
-  function hardRepair(map, { refitBounds = true, redraw = true } = {}) {
-    if (!map) return;
-
-    invalidate(map);
-    if (refitBounds) refit(map);
-    invalidate(map);
-    if (redraw) redrawTileLayers(map);
-
-    requestAnimationFrame(() => {
-      invalidate(map);
-      if (refitBounds) refit(map);
+  function renameBaseLayerLabel() {
+    document.querySelectorAll('#capacityPreviewMap .leaflet-control-layers-base label span').forEach(span => {
+      if (String(span.textContent || '').includes('OpenStreetMap')) {
+        span.textContent = ' 地理院標準地図';
+      }
     });
   }
 
-  function preparePreviewMap() {
+  function settleLayout(map, { refitBounds = false } = {}) {
+    if (!map) return;
+    invalidate(map);
+    if (refitBounds) refit(map);
+    requestAnimationFrame(() => invalidate(map));
+  }
+
+  function preparePreviewMap({ refitBounds = true } = {}) {
     const map = getPreviewMap();
     if (!map) return;
 
@@ -152,57 +173,35 @@
     const shield = ensureShield();
     const started = performance.now();
     let stablePasses = 0;
-    let redrawRounds = 0;
 
-    // Wait for iOS Safari to finish layout, then rebuild Leaflet's tile grid.
-    [0, 80, 220, 480, 900, 1500].forEach((delay, index) => {
-      window.setTimeout(() => {
-        if (token !== readyToken) return;
-        hardRepair(map, {
-          refitBounds: index === 1 || index === 3 || index === 5,
-          redraw: index === 1 || index === 3 || index === 5
-        });
-      }, delay);
-    });
+    // Only settle layout. Do not repeatedly redraw tile layers while they are loading.
+    window.setTimeout(() => settleLayout(map), 40);
+    window.setTimeout(() => settleLayout(map, { refitBounds }), 180);
+    window.setTimeout(() => settleLayout(map), 420);
 
     const check = () => {
       if (token !== readyToken) return;
 
-      invalidate(map);
       const elapsed = performance.now() - started;
-      const settled = tileLayersSettled(map);
+      const settled = mapTilesSettled(map);
+      stablePasses = settled ? stablePasses + 1 : 0;
 
-      if (settled) stablePasses += 1;
-      else stablePasses = 0;
-
-      // Require several consecutive settled checks. This avoids revealing the
-      // map after an old, too-small tile grid has merely finished loading.
-      if (stablePasses >= 4 && elapsed >= 700) {
-        hardRepair(map, { refitBounds: true, redraw: false });
+      if (stablePasses >= 3 && elapsed >= 500) {
+        settleLayout(map);
+        renameBaseLayerLabel();
         window.setTimeout(() => {
           if (token !== readyToken) return;
-          invalidate(map);
           revealShield(shield);
-        }, 180);
+        }, 120);
         return;
       }
 
-      // If Safari reports loading complete but the current tile set is still
-      // incomplete, force a fresh tile grid rather than waiting on stale tiles.
-      if (!settled && elapsed > 1200 && redrawRounds < 3) {
-        redrawRounds += 1;
-        hardRepair(map, { refitBounds: redrawRounds === 1, redraw: true });
-      }
-
-      // Do not show a visibly fragmented map. After a longer wait, do one last
-      // rebuild and keep the shield briefly before revealing.
-      if (elapsed >= 9000) {
-        hardRepair(map, { refitBounds: true, redraw: true });
-        window.setTimeout(() => {
-          if (token !== readyToken) return;
-          invalidate(map);
-          revealShield(shield);
-        }, 900);
+      // If a tile request genuinely fails, keep the shield briefly, then reveal
+      // the map rather than entering an endless redraw loop.
+      if (elapsed >= 7000) {
+        settleLayout(map, { refitBounds: false });
+        renameBaseLayerLabel();
+        revealShield(shield);
         return;
       }
 
@@ -212,24 +211,44 @@
     window.setTimeout(check, 180);
   }
 
-  function repairVisibleMap({ refitBounds = false, hard = false } = {}) {
+  function repairVisibleMap({ refitBounds = false } = {}) {
     const map = getPreviewMap();
     if (!map) return;
 
-    if (hard) {
-      const shield = ensureShield();
-      hardRepair(map, { refitBounds, redraw: true });
-      window.setTimeout(() => {
-        hardRepair(map, { refitBounds, redraw: true });
-      }, 180);
-      window.setTimeout(() => revealShield(shield), 650);
+    const shield = ensureShield();
+    settleLayout(map, { refitBounds });
+
+    const layers = activeTileLayers(map);
+    let waiting = layers.length;
+
+    const done = () => {
+      waiting -= 1;
+      if (waiting <= 0) {
+        settleLayout(map);
+        revealShield(shield);
+      }
+    };
+
+    if (!layers.length) {
+      window.setTimeout(() => revealShield(shield), 160);
       return;
     }
 
-    invalidate(map);
-    if (refitBounds) refit(map);
-    window.setTimeout(() => invalidate(map), 120);
-    window.setTimeout(() => invalidate(map), 420);
+    layers.forEach(layer => {
+      if (typeof layer.isLoading === 'function' && !layer.isLoading()) {
+        done();
+        return;
+      }
+      layer.once('load', done);
+      layer.once('tileerror', () => {
+        // A later successful load may still arrive. Timeout below is the fallback.
+      });
+    });
+
+    window.setTimeout(() => {
+      settleLayout(map);
+      revealShield(shield);
+    }, 2600);
   }
 
   function observeContainer() {
@@ -248,8 +267,8 @@
 
       window.clearTimeout(resizeTimer);
       resizeTimer = window.setTimeout(() => {
-        repairVisibleMap({ refitBounds: true, hard: true });
-      }, 90);
+        settleLayout(getPreviewMap(), { refitBounds: true });
+      }, 120);
     });
 
     resizeObserver.observe(host);
@@ -257,6 +276,10 @@
 
   function install() {
     if (installed) return true;
+    if (typeof L === 'undefined') return false;
+
+    patchBaseTileProvider();
+
     const original = window.renderCapacityPreviewBaseMap;
     if (typeof original !== 'function') return false;
 
@@ -264,44 +287,41 @@
       const result = original.apply(this, args);
       window.setTimeout(() => {
         observeContainer();
-        preparePreviewMap();
+        renameBaseLayerLabel();
+        preparePreviewMap({ refitBounds: true });
       }, 0);
       return result;
     };
 
     window.addEventListener('placementstrategy:mapmode', () => {
-      repairVisibleMap({ hard: true });
+      settleLayout(getPreviewMap());
     });
 
     window.addEventListener('orientationchange', () => {
-      window.setTimeout(() => repairVisibleMap({ refitBounds: true, hard: true }), 220);
+      window.setTimeout(() => repairVisibleMap({ refitBounds: true }), 220);
     });
 
     window.addEventListener('resize', () => {
       window.clearTimeout(resizeTimer);
-      resizeTimer = window.setTimeout(() => repairVisibleMap({ hard: true }), 180);
+      resizeTimer = window.setTimeout(() => settleLayout(getPreviewMap()), 180);
     });
 
     window.addEventListener('pageshow', event => {
-      if (event.persisted) window.setTimeout(() => repairVisibleMap({ hard: true }), 80);
+      if (event.persisted) window.setTimeout(() => repairVisibleMap(), 100);
     });
 
     document.addEventListener('visibilitychange', () => {
-      if (!document.hidden) window.setTimeout(() => repairVisibleMap({ hard: true }), 80);
+      if (!document.hidden) window.setTimeout(() => repairVisibleMap(), 100);
     });
 
     window.CampsitePlacementMapReady = Object.freeze({
       prepare: preparePreviewMap,
-      repair: repairVisibleMap,
-      redraw: () => {
-        const map = getPreviewMap();
-        if (map) hardRepair(map, { refitBounds: true, redraw: true });
-      }
+      repair: repairVisibleMap
     });
 
     installed = true;
     observeContainer();
-    if (getPreviewMap()) preparePreviewMap();
+    if (getPreviewMap()) preparePreviewMap({ refitBounds: false });
     console.info('[Placement Strategy Map Ready] active');
     return true;
   }
