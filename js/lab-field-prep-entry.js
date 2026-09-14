@@ -47,6 +47,10 @@
       'css/placement-strategy.css?v=20260914-v2'
     );
     ensureStylesheet(
+      'placementStrategySpacingCompareStylesheet',
+      'css/placement-strategy-spacing-compare.css?v=20260914-v1'
+    );
+    ensureStylesheet(
       'placementStrategyZonesStylesheet',
       'css/placement-strategy-zones.css?v=20260914-v2'
     );
@@ -69,16 +73,22 @@
       'js/placement-strategy.js?v=20260914-v4',
       () => {
         ensureScript(
-          'placementStrategyZonesScript',
-          'js/placement-strategy-zones.js?v=20260914-v2',
+          'placementStrategySpacingCompareScript',
+          'js/placement-strategy-spacing-compare.js?v=20260914-v1',
           () => {
             ensureScript(
-              'placementStrategyMapThemeScript',
-              'js/placement-strategy-map-theme.js?v=20260914-v3',
+              'placementStrategyZonesScript',
+              'js/placement-strategy-zones.js?v=20260914-v2',
               () => {
                 ensureScript(
-                  'placementStrategySymbolsScript',
-                  'js/placement-strategy-symbols.js?v=20260914-v1'
+                  'placementStrategyMapThemeScript',
+                  'js/placement-strategy-map-theme.js?v=20260914-v3',
+                  () => {
+                    ensureScript(
+                      'placementStrategySymbolsScript',
+                      'js/placement-strategy-symbols.js?v=20260914-v1'
+                    );
+                  }
                 );
               }
             );
