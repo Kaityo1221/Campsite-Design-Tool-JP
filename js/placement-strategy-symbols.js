@@ -2,9 +2,9 @@
   'use strict';
 
   const SYMBOLS = Object.freeze({
-    pokestop: Object.freeze({ role: '砦', className: 'fort', modern: 'PokéStop' }),
-    gym: Object.freeze({ role: '城', className: 'castle', modern: 'Gym' }),
-    power: Object.freeze({ role: '櫓', className: 'tower', modern: 'Power Spot' })
+    pokestop: Object.freeze({ role: '旗', className: 'flag', modern: 'PokéStop', newMark: '印' }),
+    gym: Object.freeze({ role: '城', className: 'castle', modern: 'Gym', newMark: '標' }),
+    power: Object.freeze({ role: '櫓', className: 'tower', modern: 'Power Spot', newMark: '望' })
   });
 
   let installed = false;
@@ -50,19 +50,20 @@
   function makeIcon({ kind, state = 'existing', label }) {
     const role = roleFor(kind);
     const stateClass = state === 'candidate' ? 'candidate' : state === 'add' ? 'add' : 'existing';
-    const short = state === 'candidate' ? '候' : state === 'add' ? '旗' : role.role;
-    const isFlagStyle = state === 'candidate' || state === 'add';
+    const short = state === 'existing' ? role.role : role.newMark;
+    const hasCandidateRing = state === 'candidate';
 
     return L.divIcon({
       className: 'placement-tactical-icon-shell',
       html: `
         <div class="placement-tactical-symbol ${role.className} ${stateClass}" title="${safe(label)}">
           <span class="placement-tactical-symbol__glyph">${short}</span>
+          ${hasCandidateRing ? '<span class="placement-tactical-symbol__candidate-ring" aria-hidden="true"></span>' : ''}
         </div>
       `,
-      iconSize: isFlagStyle ? [22, 27] : [23, 23],
-      iconAnchor: isFlagStyle ? [11, 25] : [11, 11],
-      popupAnchor: [0, isFlagStyle ? -24 : -13]
+      iconSize: state === 'existing' && kind === 'gym' ? [23, 23] : state === 'existing' && kind === 'pokestop' ? [20, 24] : [22, 22],
+      iconAnchor: state === 'existing' && kind === 'pokestop' ? [10, 22] : [11, 11],
+      popupAnchor: [0, state === 'existing' && kind === 'pokestop' ? -22 : -15]
     });
   }
 
@@ -72,8 +73,8 @@
     return `
       <div class="placement-tactical-popup">
         <strong>${safe(point.name || 'POI')}</strong><br>
-        <span>布陣図：${isAdd ? '追加希望の軍旗' : role.role}</span><br>
-        <span>現代語：${isAdd ? '追加希望POI' : `既存${role.modern}`}</span><br>
+        <span>布陣図：${isAdd ? role.newMark : role.role}</span><br>
+        <span>現代語：${isAdd ? `新規${role.modern}` : `既存${role.modern}`}</span><br>
         <span>レイヤー：${safe(point.layer || '未設定')}</span>
       </div>
     `;
@@ -105,8 +106,8 @@
     return `
       <div class="placement-tactical-popup candidate">
         <strong>${safe(point.name)}</strong><br>
-        <span>布陣図：候補の軍旗</span><br>
-        <span>現代語：候補${safe(role.modern)}</span><br>
+        <span>布陣図：○${role.newMark}</span><br>
+        <span>現代語：自動候補${safe(role.modern)}</span><br>
         ${formation ? `<span>布陣：${safe(formation.label)}</span><br><span>${safe(formation.reason)}</span>` : ''}
       </div>
     `;
