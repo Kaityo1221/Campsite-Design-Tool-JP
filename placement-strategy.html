@@ -45,7 +45,8 @@ body{margin:0;min-height:100vh;background:radial-gradient(circle at 50% -10%,rgb
 
   <section class="ps-card ps-upload step">
     <label for="capacityFile">キャンプサイトKMZ / KML</label>
-    <input type="file" id="capacityFile" accept=".kmz,.kml,.zip">
+    <input type="file" id="capacityFile">
+    <p class="ps-lead">iPhoneでもKMZを選べるよう、ファイル選択時の種類制限は行いません。KMZ / KML / ZIPを選択してください。</p>
     <p class="ps-lead">50mを原則に解析し、40m / 30mは比較資料として表示します。候補生成は50m条件のままです。</p>
     <button class="generate" type="button" onclick="analyzePlacementCapacity()">🏯 KMZを解析して布陣を開く</button>
     <div id="placementResult" class="placement-empty">KMZを選択して解析してください。</div>
@@ -80,6 +81,21 @@ body{margin:0;min-height:100vh;background:radial-gradient(circle at 50% -10%,rgb
 <script src="js/placement-strategy-symbols.js?v=20260914-v2"></script>
 <script>
 (() => {
+  const fileInput = document.getElementById('capacityFile');
+  fileInput?.addEventListener('change', () => {
+    const file = fileInput.files?.[0];
+    if (!file) return;
+    const name = String(file.name || '').toLowerCase();
+    if (!/\.(kmz|kml|zip)$/.test(name)) {
+      fileInput.value = '';
+      const result = document.getElementById('placementResult');
+      if (result) {
+        result.className = 'placement-empty';
+        result.textContent = 'KMZ / KML / ZIPファイルを選択してください。';
+      }
+    }
+  });
+
   const moveComparison = () => {
     const panel = document.getElementById('placementSpacingComparison');
     const mount = document.getElementById('spacingComparisonMount');
