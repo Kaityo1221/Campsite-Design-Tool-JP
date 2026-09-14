@@ -159,6 +159,10 @@
       manual.insertAdjacentElement('beforebegin', panel);
     }
 
+    const signature = `${comparison[50]}:${comparison[40]}:${comparison[30]}`;
+    if (panel.dataset.comparisonSignature === signature) return;
+    panel.dataset.comparisonSignature = signature;
+
     panel.innerHTML = `
       <div class="placement-spacing-comparison__head">
         <strong>距離別の配置可能数</strong>
@@ -185,6 +189,8 @@
       panel.className = 'placement-spacing-comparison';
       manual.insertAdjacentElement('beforebegin', panel);
     }
+    if (panel.dataset.comparisonSignature === 'loading') return;
+    panel.dataset.comparisonSignature = 'loading';
     panel.innerHTML = `
       <div class="placement-spacing-comparison__head">
         <strong>距離別の配置可能数</strong>
