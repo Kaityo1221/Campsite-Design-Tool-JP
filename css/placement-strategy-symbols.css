@@ -1,8 +1,9 @@
-/* Placement Strategy tactical POI symbols / Lab only */
+/* Placement Strategy tactical POI symbols */
 
 .placement-tactical-icon-shell {
   background: transparent;
   border: 0;
+  overflow: visible;
 }
 
 .placement-tactical-symbol {
@@ -23,20 +24,23 @@
 }
 
 .placement-tactical-symbol__glyph {
+  position: relative;
+  z-index: 2;
   display: block;
   font-size: 9px;
   letter-spacing: -.04em;
   text-shadow: 0 1px 2px rgba(0,0,0,.35);
 }
 
-.placement-tactical-symbol.castle {
+/* Existing POI */
+.placement-tactical-symbol.castle.existing {
   width: 23px;
   height: 23px;
   border-radius: 5px 5px 8px 8px;
   background: linear-gradient(180deg, #5f4330, #2f241c);
 }
 
-.placement-tactical-symbol.castle::before {
+.placement-tactical-symbol.castle.existing::before {
   content: '';
   position: absolute;
   top: -4px;
@@ -49,34 +53,20 @@
   clip-path: polygon(0 100%, 18% 0, 50% 55%, 82% 0, 100% 100%);
 }
 
-.placement-tactical-symbol.fort {
-  border-radius: 5px;
-  background: linear-gradient(180deg, #556046, #2f3628);
-}
-
-.placement-tactical-symbol.tower {
+.placement-tactical-symbol.tower.existing {
   border-radius: 11px 11px 5px 5px;
   background: linear-gradient(180deg, #475569, #1e293b);
 }
 
-.placement-tactical-symbol.add,
-.placement-tactical-symbol.candidate {
+.placement-tactical-symbol.flag.existing {
   width: 20px;
   height: 24px;
   border-radius: 3px 8px 3px 3px;
-  transform: rotate(-2deg);
-}
-
-.placement-tactical-symbol.add {
   background: linear-gradient(180deg, #2563eb, #1d4ed8);
+  transform: rotate(-1.5deg);
 }
 
-.placement-tactical-symbol.candidate {
-  background: linear-gradient(180deg, #9333ea, #6d28d9);
-}
-
-.placement-tactical-symbol.add::after,
-.placement-tactical-symbol.candidate::after {
+.placement-tactical-symbol.flag.existing::after {
   content: '';
   position: absolute;
   left: 2px;
@@ -85,6 +75,61 @@
   height: 7px;
   border-radius: 2px;
   background: #3f2d21;
+}
+
+/* Manually added new POI: type is shown by the kanji only. No candidate ring. */
+.placement-tactical-symbol.add,
+.placement-tactical-symbol.candidate {
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  transform: none;
+}
+
+.placement-tactical-symbol.add {
+  border-color: rgba(191,219,254,.96);
+  background: linear-gradient(180deg, #2563eb, #1e40af);
+  box-shadow: 0 2px 7px rgba(30,64,175,.32), 0 0 0 1px rgba(15,23,42,.18);
+}
+
+.placement-tactical-symbol.add .placement-tactical-symbol__glyph {
+  color: #eff6ff;
+  font-size: 10px;
+}
+
+/* Automatically generated candidate: same type mark, with a purple circular ring. */
+.placement-tactical-symbol.candidate {
+  border-color: rgba(221,214,254,.98);
+  background: linear-gradient(180deg, #4f46e5, #3730a3);
+  box-shadow: 0 2px 7px rgba(79,70,229,.30), 0 0 0 1px rgba(15,23,42,.18);
+}
+
+.placement-tactical-symbol.candidate .placement-tactical-symbol__glyph {
+  color: #f5f3ff;
+  font-size: 10px;
+}
+
+.placement-tactical-symbol__candidate-ring {
+  position: absolute;
+  z-index: 1;
+  left: 50%;
+  top: 50%;
+  width: 31px;
+  height: 31px;
+  transform: translate(-50%, -50%);
+  border: 2px solid rgba(192,132,252,.96);
+  border-radius: 999px;
+  background: rgba(126,34,206,.05);
+  box-shadow: 0 0 0 2px rgba(76,29,149,.18), 0 0 10px rgba(168,85,247,.42);
+  pointer-events: none;
+}
+
+/* Do not inherit the existing castle/flag decorations on new/candidate marks. */
+.placement-tactical-symbol.castle.add::before,
+.placement-tactical-symbol.castle.candidate::before,
+.placement-tactical-symbol.flag.add::after,
+.placement-tactical-symbol.flag.candidate::after {
+  content: none;
 }
 
 .placement-tactical-popup {
