@@ -2,7 +2,8 @@
   'use strict';
 
   const currentPath = window.location.pathname.replace(/\/+$/, '');
-  if (!currentPath.endsWith('/lab.html')) return;
+  const supportedPage = currentPath.endsWith('/lab.html') || currentPath.endsWith('/placement-strategy.html');
+  if (!supportedPage) return;
 
   const CIRCLE_LABEL = /(?:^|\s)(?:30|40|50)\s*m(?:\s|$)|サークル|circle/i;
   const ACTIVITY_LABEL = /活動範囲|活動エリア|活動区域|ポリゴン/i;
@@ -171,7 +172,7 @@
 
     window.CampsitePlacementStrategyKmzCompat = Object.freeze({
       installed: true,
-      version: '2026-09-creative-kmz-v1',
+      version: '2026-09-creative-kmz-v2',
       chooseActivityPolygon,
       inspectKmlText,
       legacyExtractPolygon
