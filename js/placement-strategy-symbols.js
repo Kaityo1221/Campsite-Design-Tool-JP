@@ -60,9 +60,9 @@
           <span class="placement-tactical-symbol__glyph">${short}</span>
         </div>
       `,
-      iconSize: isFlagStyle ? [25, 32] : [27, 27],
-      iconAnchor: isFlagStyle ? [12, 30] : [13, 13],
-      popupAnchor: [0, isFlagStyle ? -28 : -15]
+      iconSize: isFlagStyle ? [22, 27] : [23, 23],
+      iconAnchor: isFlagStyle ? [11, 25] : [11, 11],
+      popupAnchor: [0, isFlagStyle ? -24 : -13]
     });
   }
 
