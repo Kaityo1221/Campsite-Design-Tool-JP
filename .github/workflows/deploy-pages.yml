@@ -38,6 +38,8 @@ jobs:
               (re.compile(r'css/style\.css\?[^"\']*'), f'css/style.css?build={build}'),
               (re.compile(r'css/placement-strategy-symbols\.css\?[^"\']*'), f'css/placement-strategy-symbols.css?build={build}'),
               (re.compile(r'js/placement-strategy-symbols\.js\?[^"\']*'), f'js/placement-strategy-symbols.js?build={build}'),
+              (re.compile(r'css/placement-strategy-break\.css\?[^"\']*'), f'css/placement-strategy-break.css?build={build}'),
+              (re.compile(r'js/placement-strategy-break\.js\?[^"\']*'), f'js/placement-strategy-break.js?build={build}'),
           ]
 
           changed = []
