@@ -44,6 +44,8 @@ jobs:
               (re.compile(r'js/placement-strategy-break-effect\.js\?[^"\']*'), f'js/placement-strategy-break-effect.js?build={build}'),
               (re.compile(r'css/placement-strategy-map-ready\.css\?[^"\']*'), f'css/placement-strategy-map-ready.css?build={build}'),
               (re.compile(r'js/placement-strategy-map-ready\.js\?[^"\']*'), f'js/placement-strategy-map-ready.js?build={build}'),
+              (re.compile(r'css/placement-strategy-map-theme\.css\?[^"\']*'), f'css/placement-strategy-map-theme.css?build={build}'),
+              (re.compile(r'js/placement-strategy-map-theme\.js\?[^"\']*'), f'js/placement-strategy-map-theme.js?build={build}'),
           ]
 
           changed = []
