@@ -1,0 +1,208 @@
+/* Placement Strategy / Break and reorganization */
+
+.placement-break-panel {
+  margin: 14px 0 16px;
+  padding: 14px;
+  border: 1px solid rgba(248, 113, 113, .34);
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(249, 115, 22, .14), transparent 38%),
+    linear-gradient(180deg, rgba(69, 10, 10, .34), rgba(23, 12, 18, .62));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+}
+
+.placement-break-panel__eyebrow {
+  margin-bottom: 5px;
+  color: #fb923c;
+  font-size: 9px;
+  font-weight: 950;
+  letter-spacing: .12em;
+}
+
+.placement-break-panel__head strong {
+  display: block;
+  color: #fff7ed;
+  font-size: 18px;
+  font-weight: 950;
+}
+
+.placement-break-panel__head small {
+  display: block;
+  margin-top: 5px;
+  color: #fed7aa;
+  font-size: 11px;
+  line-height: 1.55;
+  font-weight: 700;
+}
+
+.placement-break-panel__status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: 12px 0 9px;
+}
+
+.placement-break-panel__status span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(251, 146, 60, .35);
+  background: rgba(124, 45, 18, .28);
+  color: #ffedd5;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.placement-break-panel__status span.over {
+  border-color: rgba(248, 113, 113, .55);
+  background: rgba(127, 29, 29, .42);
+  color: #fecaca;
+}
+
+.placement-break-panel p {
+  margin: 8px 0 12px;
+  color: #cbd5e1;
+  font-size: 11px;
+  line-height: 1.65;
+}
+
+.placement-break-button {
+  width: 100%;
+  min-height: 54px;
+  border: 1px solid #fb923c;
+  border-radius: 15px;
+  background: linear-gradient(180deg, #b91c1c, #7f1d1d);
+  color: #fff7ed;
+  font-size: 16px;
+  font-weight: 950;
+  letter-spacing: .02em;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.14),
+    0 10px 26px rgba(127,29,29,.28),
+    0 0 0 1px rgba(251,146,60,.10);
+  cursor: pointer;
+}
+
+.placement-break-button:active {
+  transform: translateY(1px) scale(.995);
+}
+
+.placement-break-panel__message {
+  margin-top: 9px;
+  color: #fdba74;
+  font-size: 10px;
+  line-height: 1.55;
+  font-weight: 800;
+}
+
+.placement-break-result-shell {
+  display: block !important;
+}
+
+.placement-break-result {
+  margin-bottom: 16px;
+  padding: 14px;
+  border: 1px solid rgba(251, 146, 60, .28);
+  border-radius: 16px;
+  background: rgba(30, 16, 18, .54);
+}
+
+.placement-break-result__title {
+  margin-bottom: 10px;
+  color: #ffedd5;
+  font-size: 17px;
+  font-weight: 950;
+}
+
+.placement-break-result__counts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.placement-break-result__counts > div {
+  min-width: 0;
+  padding: 9px;
+  border: 1px solid rgba(148, 163, 184, .16);
+  border-radius: 12px;
+  background: rgba(15, 23, 42, .56);
+}
+
+.placement-break-result__counts span,
+.placement-break-result__counts strong,
+.placement-break-result__counts small {
+  display: block;
+}
+
+.placement-break-result__counts span {
+  color: #cbd5e1;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.placement-break-result__counts strong {
+  margin-top: 4px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 950;
+}
+
+.placement-break-result__counts small {
+  margin-top: 3px;
+  color: #94a3b8;
+  font-size: 8px;
+  line-height: 1.4;
+}
+
+.placement-break-result__changes {
+  margin-top: 12px;
+  padding: 10px 11px;
+  border-radius: 12px;
+  background: rgba(2, 6, 23, .36);
+  color: #e2e8f0;
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.placement-break-result__changes strong {
+  color: #fdba74;
+}
+
+.placement-break-result__changes ul {
+  margin: 6px 0 0 1.1em;
+  padding: 0;
+}
+
+.placement-break-result__changes li + li {
+  margin-top: 3px;
+}
+
+.placement-break-result__note {
+  margin: 10px 0 0;
+  color: #94a3b8;
+  font-size: 9px;
+  line-height: 1.55;
+}
+
+@media (max-width: 560px) {
+  .placement-break-panel {
+    padding: 12px;
+  }
+
+  .placement-break-result__counts {
+    grid-template-columns: 1fr;
+  }
+
+  .placement-break-result__counts > div {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    column-gap: 10px;
+  }
+
+  .placement-break-result__counts small {
+    grid-column: 1 / -1;
+  }
+}
