@@ -49,6 +49,38 @@ jobs:
           print('Updated HTML:', ', '.join(changed) if changed else 'none')
           PY
 
+      - name: Inject Campsite flow compact UI
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import os
+          import re
+
+          path = Path('index.html')
+          text = path.read_text(encoding='utf-8')
+          build = os.environ['GITHUB_SHA']
+
+          text = re.sub(
+              r'\s*<script[^>]+data-campsite-flow-compact[^>]*></script>\s*',
+              '\n',
+              text,
+              flags=re.IGNORECASE,
+          )
+
+          tag = (
+              f'<script src="js/campsite-flow-compact.js?build={build}" '
+              'data-campsite-flow-compact="1"></script>'
+          )
+
+          if '</body>' not in text:
+              raise SystemExit('index.html does not contain </body>')
+
+          text = text.replace('</body>', f'{tag}\n</body>', 1)
+          path.write_text(text, encoding='utf-8')
+          print(f'Injected Campsite flow compact UI: {tag}')
+          PY
+
       - name: Stamp Lab asset version
         shell: bash
         run: |
