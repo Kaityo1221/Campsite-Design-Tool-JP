@@ -107,11 +107,20 @@
   function popupForPoi(point) {
     const isAdd = point.type === 'add';
     const role = roleFor(point.kind);
+    const preferredKind = point.placementStrategyPreferredKind;
+    const preferredRole = preferredKind ? roleFor(preferredKind) : null;
+    const reorganized = Boolean(
+      isAdd &&
+      preferredRole &&
+      preferredKind !== point.kind
+    );
+
     return `
       <div class="placement-tactical-popup">
         <strong>${safe(point.name || 'POI')}</strong><br>
         <span>布陣図：${isAdd ? role.newMark : role.role}</span><br>
         <span>現代語：${isAdd ? `新規${role.modern}` : `既存${role.modern}`}</span><br>
+        ${reorganized ? `<span>破戒前：${safe(preferredRole.newMark)} ${safe(preferredRole.modern)} → 再編成：${safe(role.newMark)} ${safe(role.modern)}</span><br>` : ''}
         <span>レイヤー：${safe(point.layer || '未設定')}</span>
       </div>
     `;
@@ -236,6 +245,7 @@
 
     window.addEventListener('placementstrategy:mapmode', refresh);
     window.addEventListener('placementstrategy:formation', refresh);
+    window.addEventListener('placementstrategy:break', refresh);
 
     window.CampsitePlacementSymbols = Object.freeze({
       symbols: SYMBOLS,
