@@ -16,7 +16,7 @@
   --cdt-surface: #0f172a;
   --cdt-surface-raised: #111c31;
   --cdt-border: rgba(148, 163, 184, .34);
-  --cdt-border-strong: rgba(147, 197, 253, .62);
+  --cdt-border-strong: rgba(147, 197, 253, .72);
   --cdt-text: #f8fafc;
   --cdt-text-soft: #cbd5e1;
   --cdt-primary: #2563eb;
@@ -101,24 +101,32 @@ textarea:focus {
   box-shadow: 0 0 0 3px rgba(96, 165, 250, .16);
 }
 
-/* Primary actions: clear blue, strong frame, large readable type */
+/* Primary actions: clear modern button, strong frame, large readable type */
 button.generate,
 .link-btn {
-  min-height: 54px;
+  min-height: 56px;
   border: 1.5px solid var(--cdt-border-strong) !important;
   border-radius: 16px !important;
   background: linear-gradient(180deg, var(--cdt-primary), var(--cdt-primary-deep)) !important;
   color: #fff !important;
-  font-size: 16px;
+  font-size: 17px !important;
   font-weight: 900 !important;
   line-height: 1.25;
   letter-spacing: .01em;
-  text-shadow: 0 1px 2px rgba(0,0,0,.24);
+  text-shadow: 0 1px 2px rgba(0,0,0,.24) !important;
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,.18),
     0 8px 20px rgba(29, 78, 216, .24) !important;
   -webkit-tap-highlight-color: transparent;
   transition: transform .12s ease, filter .12s ease, box-shadow .12s ease;
+}
+
+/* Remove the legacy wooden grain/light overlays from the old shared button. */
+button.generate::before,
+button.generate::after {
+  content: none !important;
+  display: none !important;
+  background: none !important;
 }
 
 button.generate:active,
@@ -154,8 +162,8 @@ button.secondary,
 @media (max-width: 720px) {
   button.generate,
   .link-btn {
-    min-height: 56px;
-    font-size: 16px;
+    min-height: 58px;
+    font-size: 17px !important;
   }
 
   .panel h2 {
