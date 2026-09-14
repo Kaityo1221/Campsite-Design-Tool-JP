@@ -1,0 +1,253 @@
+/* Placement Strategy / Break cavalry + fire effect */
+
+.placement-break-effect {
+  position: fixed;
+  inset: 0;
+  z-index: 30000;
+  pointer-events: none;
+  overflow: hidden;
+  opacity: 0;
+  visibility: hidden;
+}
+
+.placement-break-effect.is-running {
+  visibility: visible;
+  animation: placementBreakOverlay 1.85s ease both;
+}
+
+.placement-break-effect__shade {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 65%, rgba(127,29,29,.10), transparent 42%),
+    rgba(2,6,23,.22);
+  opacity: 0;
+}
+
+.placement-break-effect.is-running .placement-break-effect__shade {
+  animation: placementBreakShade 1.85s ease both;
+}
+
+.placement-break-effect__caption {
+  position: absolute;
+  left: 50%;
+  bottom: calc(118px + env(safe-area-inset-bottom));
+  z-index: 5;
+  width: min(78vw, 420px);
+  transform: translate(-50%, 18px) scale(.96);
+  text-align: center;
+  opacity: 0;
+  color: #fff7ed;
+  text-shadow: 0 3px 12px rgba(0,0,0,.65);
+}
+
+.placement-break-effect.is-running .placement-break-effect__caption {
+  animation: placementBreakCaption 1.85s ease both;
+}
+
+.placement-break-effect__caption small,
+.placement-break-effect__caption strong,
+.placement-break-effect__caption span {
+  display: block;
+}
+
+.placement-break-effect__caption small {
+  color: #fdba74;
+  font-size: 10px;
+  font-weight: 950;
+  letter-spacing: .18em;
+}
+
+.placement-break-effect__caption strong {
+  margin-top: 2px;
+  font-size: clamp(30px, 9vw, 54px);
+  font-weight: 1000;
+  letter-spacing: .08em;
+}
+
+.placement-break-effect__caption span {
+  margin-top: 1px;
+  color: #ffedd5;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.placement-break-effect[data-outcome="success"] .placement-break-effect__caption strong {
+  color: #fef3c7;
+}
+
+.placement-break-effect[data-outcome="blocked"] .placement-break-effect__caption strong {
+  color: #fecaca;
+}
+
+.placement-break-effect[data-outcome="blocked"] .placement-break-effect__caption span {
+  color: #fee2e2;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.placement-break-effect__cavalry {
+  position: absolute;
+  z-index: 4;
+  left: -72vw;
+  bottom: calc(60px + env(safe-area-inset-bottom));
+  display: flex;
+  align-items: flex-end;
+  gap: clamp(2px, 1.8vw, 11px);
+  width: max-content;
+  filter: drop-shadow(0 6px 8px rgba(0,0,0,.58));
+  transform: translateX(0) skewX(-7deg);
+}
+
+.placement-break-effect__cavalry span {
+  display: block;
+  font-size: clamp(42px, 12vw, 74px);
+  transform-origin: 50% 100%;
+}
+
+.placement-break-effect__cavalry span:nth-child(2),
+.placement-break-effect__cavalry span:nth-child(4) {
+  transform: translateY(7px) scale(.92);
+}
+
+.placement-break-effect__cavalry span:nth-child(3) {
+  transform: translateY(-4px) scale(1.05);
+}
+
+.placement-break-effect.is-running .placement-break-effect__cavalry {
+  animation: placementBreakCavalry 1.2s cubic-bezier(.18,.82,.28,1) both;
+}
+
+.placement-break-effect__dust {
+  position: absolute;
+  z-index: 3;
+  left: -25vw;
+  bottom: calc(52px + env(safe-area-inset-bottom));
+  width: 52vw;
+  height: 60px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(251,191,36,.28), rgba(180,83,9,.13) 42%, transparent 72%);
+  filter: blur(7px);
+  opacity: 0;
+}
+
+.placement-break-effect.is-running .placement-break-effect__dust {
+  animation: placementBreakDust 1.28s ease-out both;
+}
+
+.placement-break-effect__fire {
+  position: absolute;
+  z-index: 6;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: calc(78px + env(safe-area-inset-bottom));
+  overflow: hidden;
+  opacity: 0;
+  background:
+    linear-gradient(180deg, transparent 0 20%, rgba(251,146,60,.10) 55%, rgba(127,29,29,.42) 100%);
+  box-shadow: 0 -12px 30px rgba(249,115,22,.20);
+}
+
+.placement-break-effect.is-running .placement-break-effect__fire {
+  animation: placementBreakFireReveal 1.85s ease both;
+}
+
+.placement-break-effect__fire-track {
+  position: absolute;
+  left: -22%;
+  bottom: calc(-11px + env(safe-area-inset-bottom));
+  display: flex;
+  width: 145%;
+  justify-content: space-around;
+  align-items: flex-end;
+  white-space: nowrap;
+}
+
+.placement-break-effect__fire-track span {
+  display: block;
+  font-size: clamp(42px, 12vw, 72px);
+  filter: drop-shadow(0 -2px 9px rgba(251,146,60,.82));
+  transform-origin: 50% 100%;
+}
+
+.placement-break-effect.is-running .placement-break-effect__fire-track {
+  animation: placementBreakFireFlow 1.25s linear .34s both;
+}
+
+.placement-break-effect.is-running .placement-break-effect__fire-track span:nth-child(odd) {
+  animation: placementBreakFlameA .32s ease-in-out infinite alternate;
+}
+
+.placement-break-effect.is-running .placement-break-effect__fire-track span:nth-child(even) {
+  animation: placementBreakFlameB .27s ease-in-out infinite alternate;
+}
+
+.placement-break-button:disabled {
+  opacity: .72;
+  cursor: wait;
+}
+
+@keyframes placementBreakOverlay {
+  0% { opacity: 0; }
+  8%, 78% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes placementBreakShade {
+  0% { opacity: 0; }
+  18%, 70% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes placementBreakCavalry {
+  0% { transform: translateX(0) skewX(-7deg); }
+  100% { transform: translateX(190vw) skewX(-7deg); }
+}
+
+@keyframes placementBreakDust {
+  0% { transform: translateX(0) scale(.7); opacity: 0; }
+  18% { opacity: .7; }
+  100% { transform: translateX(160vw) scale(1.8); opacity: 0; }
+}
+
+@keyframes placementBreakFireReveal {
+  0%, 18% { opacity: 0; transform: translateY(28px); }
+  34%, 78% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(10px); }
+}
+
+@keyframes placementBreakFireFlow {
+  0% { transform: translateX(-11%); }
+  100% { transform: translateX(9%); }
+}
+
+@keyframes placementBreakFlameA {
+  from { transform: scale(.88) translateY(5px) rotate(-3deg); }
+  to { transform: scale(1.08) translateY(-3px) rotate(3deg); }
+}
+
+@keyframes placementBreakFlameB {
+  from { transform: scale(1.02) translateY(1px) rotate(4deg); }
+  to { transform: scale(.86) translateY(7px) rotate(-4deg); }
+}
+
+@keyframes placementBreakCaption {
+  0%, 10% { opacity: 0; transform: translate(-50%, 18px) scale(.96); }
+  24%, 72% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -8px) scale(1.02); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .placement-break-effect.is-running,
+  .placement-break-effect.is-running .placement-break-effect__shade,
+  .placement-break-effect.is-running .placement-break-effect__caption,
+  .placement-break-effect.is-running .placement-break-effect__cavalry,
+  .placement-break-effect.is-running .placement-break-effect__dust,
+  .placement-break-effect.is-running .placement-break-effect__fire,
+  .placement-break-effect.is-running .placement-break-effect__fire-track,
+  .placement-break-effect.is-running .placement-break-effect__fire-track span {
+    animation-duration: .36s !important;
+    animation-iteration-count: 1 !important;
+  }
+}
