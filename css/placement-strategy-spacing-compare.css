@@ -1,0 +1,120 @@
+/* 50m / 40m / 30m comparison for Placement Strategy / Lab only */
+
+.placement-spacing-comparison {
+  margin: 16px 0 18px;
+  padding: 14px;
+  border: 1px solid rgba(148, 163, 184, .24);
+  border-radius: 16px;
+  background: rgba(15, 23, 42, .48);
+}
+
+.placement-spacing-comparison__head {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 11px;
+}
+
+.placement-spacing-comparison__head strong {
+  color: #f8fafc;
+  font-size: 14px;
+}
+
+.placement-spacing-comparison__head span {
+  color: #94a3b8;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.placement-spacing-comparison__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.placement-spacing-card {
+  min-width: 0;
+  padding: 11px 10px;
+  border: 1px solid rgba(148, 163, 184, .18);
+  border-radius: 12px;
+  background: rgba(2, 6, 23, .34);
+  text-align: center;
+}
+
+.placement-spacing-card--preferred {
+  border-color: rgba(34, 197, 94, .5);
+  background: linear-gradient(180deg, rgba(22, 163, 74, .16), rgba(2, 6, 23, .42));
+  box-shadow: inset 0 0 0 1px rgba(134, 239, 172, .05);
+}
+
+.placement-spacing-card__distance {
+  color: #cbd5e1;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.placement-spacing-card__distance span {
+  display: inline-block;
+  margin-left: 3px;
+  padding: 2px 5px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, .11);
+  color: #94a3b8;
+  font-size: 8px;
+  vertical-align: 1px;
+}
+
+.placement-spacing-card--preferred .placement-spacing-card__distance {
+  color: #86efac;
+}
+
+.placement-spacing-card--preferred .placement-spacing-card__distance span {
+  background: rgba(34, 197, 94, .16);
+  color: #bbf7d0;
+}
+
+.placement-spacing-card strong {
+  display: block;
+  margin-top: 5px;
+  color: #f8fafc;
+  font-size: 22px;
+  line-height: 1.1;
+}
+
+.placement-spacing-card strong small {
+  margin-left: 2px;
+  color: #94a3b8;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.placement-spacing-comparison__note {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(148, 163, 184, .14);
+  color: #94a3b8;
+  font-size: 10px;
+  line-height: 1.65;
+}
+
+.placement-spacing-comparison__note strong {
+  color: #86efac;
+}
+
+@media (max-width: 480px) {
+  .placement-spacing-comparison {
+    padding: 12px;
+  }
+
+  .placement-spacing-comparison__grid {
+    gap: 6px;
+  }
+
+  .placement-spacing-card {
+    padding: 10px 5px;
+  }
+
+  .placement-spacing-card strong {
+    font-size: 19px;
+  }
+}
