@@ -5,3 +5,160 @@
 #loginScreen.login-screen {
   display: none !important;
 }
+
+/* =========================================================
+   Campsite Design Tool / High-contrast UI foundation
+   Placement Strategyで確認した「枠・文字・押しやすさ」を本体へ展開。
+   戦国モチーフや固有色は持ち込まず、共通UIの骨格だけを統一する。
+========================================================= */
+:root {
+  --cdt-bg-deep: #020617;
+  --cdt-surface: #0f172a;
+  --cdt-surface-raised: #111c31;
+  --cdt-border: rgba(148, 163, 184, .34);
+  --cdt-border-strong: rgba(147, 197, 253, .62);
+  --cdt-text: #f8fafc;
+  --cdt-text-soft: #cbd5e1;
+  --cdt-primary: #2563eb;
+  --cdt-primary-deep: #1d4ed8;
+  --cdt-focus: #60a5fa;
+  --cdt-radius-card: 18px;
+  --cdt-radius-control: 14px;
+}
+
+body {
+  color: var(--cdt-text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Yu Gothic UI", "Yu Gothic", Meiryo, sans-serif;
+  font-weight: 500;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+/* Main cards: darker surface + visible frame */
+.panel,
+.step {
+  border-color: var(--cdt-border);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.035),
+    0 12px 34px rgba(0,0,0,.20);
+}
+
+.step {
+  border-radius: var(--cdt-radius-card);
+}
+
+/* Main section typography */
+.panel h2,
+.step h3,
+.capacity-section-title {
+  font-weight: 900;
+  letter-spacing: .01em;
+}
+
+.step h3 {
+  line-height: 1.45;
+}
+
+.note,
+.lead {
+  color: var(--cdt-text-soft);
+  font-weight: 550;
+}
+
+/* File / text controls: make the hit area and frame obvious */
+input[type="file"],
+input[type="text"],
+input[type="number"],
+input[type="search"],
+input[type="email"],
+select,
+textarea {
+  border: 1px solid rgba(148, 163, 184, .48);
+  border-radius: var(--cdt-radius-control);
+  background: rgba(15, 23, 42, .92);
+  color: var(--cdt-text);
+  font-weight: 700;
+  outline: none;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.035);
+}
+
+input[type="file"] {
+  border-style: dashed;
+  border-color: rgba(147, 197, 253, .62);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--cdt-focus);
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, .16);
+}
+
+/* Primary actions: clear blue, strong frame, large readable type */
+button.generate,
+.link-btn {
+  min-height: 54px;
+  border: 1.5px solid var(--cdt-border-strong) !important;
+  border-radius: 16px !important;
+  background: linear-gradient(180deg, var(--cdt-primary), var(--cdt-primary-deep)) !important;
+  color: #fff !important;
+  font-size: 16px;
+  font-weight: 900 !important;
+  line-height: 1.25;
+  letter-spacing: .01em;
+  text-shadow: 0 1px 2px rgba(0,0,0,.24);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.18),
+    0 8px 20px rgba(29, 78, 216, .24) !important;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform .12s ease, filter .12s ease, box-shadow .12s ease;
+}
+
+button.generate:active,
+.link-btn:active {
+  transform: translateY(1px) scale(.995);
+  filter: brightness(.96);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.12),
+    0 4px 12px rgba(29, 78, 216, .20) !important;
+}
+
+button.generate:focus-visible,
+.link-btn:focus-visible {
+  outline: 3px solid rgba(96, 165, 250, .42);
+  outline-offset: 2px;
+}
+
+button.generate:disabled {
+  opacity: .48;
+  filter: saturate(.5);
+  cursor: not-allowed;
+  box-shadow: none !important;
+}
+
+/* Smaller utility buttons keep their role but inherit the same crisp typography. */
+.guide-btn,
+button.secondary,
+.generate.secondary {
+  font-weight: 850;
+  border-width: 1px;
+}
+
+@media (max-width: 720px) {
+  button.generate,
+  .link-btn {
+    min-height: 56px;
+    font-size: 16px;
+  }
+
+  .panel h2 {
+    line-height: 1.35;
+  }
+}
