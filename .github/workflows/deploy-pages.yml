@@ -34,18 +34,23 @@ jobs:
           import re
 
           build = os.environ['GITHUB_SHA']
-          pattern = re.compile(r'css/style\.css\?[^"\']*')
-          replacement = f'css/style.css?build={build}'
+          replacements = [
+              (re.compile(r'css/style\.css\?[^"\']*'), f'css/style.css?build={build}'),
+              (re.compile(r'css/placement-strategy-symbols\.css\?[^"\']*'), f'css/placement-strategy-symbols.css?build={build}'),
+              (re.compile(r'js/placement-strategy-symbols\.js\?[^"\']*'), f'js/placement-strategy-symbols.js?build={build}'),
+          ]
 
           changed = []
           for path in Path('.').rglob('*.html'):
               text = path.read_text(encoding='utf-8')
-              updated = pattern.sub(replacement, text)
+              updated = text
+              for pattern, replacement in replacements:
+                  updated = pattern.sub(replacement, updated)
               if updated != text:
                   path.write_text(updated, encoding='utf-8')
                   changed.append(str(path))
 
-          print(f'Stamped shared UI stylesheet: {replacement}')
+          print(f'Stamped shared UI assets for build {build}')
           print('Updated HTML:', ', '.join(changed) if changed else 'none')
           PY
 
