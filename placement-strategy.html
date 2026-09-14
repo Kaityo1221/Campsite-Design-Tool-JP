@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta name="robots" content="noindex, nofollow">
+<meta name="googlebot" content="noindex, nofollow">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>配置戦略・布陣図 | Campsite Lab</title>
+<link rel="stylesheet" href="css/style.css?v=90">
+<link rel="stylesheet" href="css/capacity.css?v=6">
+<link rel="stylesheet" href="css/placement-strategy.css?v=20260914-v2">
+<link rel="stylesheet" href="css/placement-strategy-spacing-compare.css?v=20260914-v1">
+<link rel="stylesheet" href="css/placement-strategy-zones.css?v=20260914-v2">
+<link rel="stylesheet" href="css/placement-strategy-map-theme.css?v=20260914-v1">
+<link rel="stylesheet" href="css/placement-strategy-symbols.css?v=20260914-v2">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<style>
+:root{color-scheme:dark;--ps-bg:#071021;--ps-panel:#0c1629;--ps-line:rgba(148,163,184,.18);--ps-text:#f8fafc;--ps-muted:#94a3b8;--ps-purple:#8b5cf6;--ps-bronze:#8b5a2b}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:radial-gradient(circle at 50% -10%,rgba(99,102,241,.18),transparent 32%),linear-gradient(180deg,#060b16,#091426 58%,#07101e);color:var(--ps-text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif}
+.ps-page{width:min(100%,760px);margin:0 auto;padding:env(safe-area-inset-top) 14px calc(32px + env(safe-area-inset-bottom))}
+.ps-topbar{position:sticky;top:0;z-index:900;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 2px 12px;background:linear-gradient(180deg,rgba(7,16,33,.96),rgba(7,16,33,.80),transparent);backdrop-filter:blur(14px)}
+.ps-back{color:#c4b5fd;text-decoration:none;font-size:13px;font-weight:900}.ps-title{display:flex;align-items:center;gap:9px;font-size:19px;font-weight:950}.ps-title span{font-size:23px}.ps-badge{font-size:9px;letter-spacing:.12em;color:#a78bfa;font-weight:900}
+.ps-card{margin:10px 0 14px;padding:15px;border:1px solid var(--ps-line);border-radius:18px;background:linear-gradient(180deg,rgba(15,23,42,.92),rgba(8,15,29,.94));box-shadow:0 14px 40px rgba(0,0,0,.22)}
+.ps-lead{margin:4px 0 0;color:#cbd5e1;font-size:12px;line-height:1.7}.ps-upload label{display:block;margin-bottom:8px;color:#ddd6fe;font-size:12px;font-weight:900}.ps-upload input[type=file]{width:100%;padding:12px;border:1px dashed rgba(167,139,250,.42);border-radius:14px;background:rgba(15,23,42,.65);color:#e2e8f0}.ps-upload .generate{margin-top:10px;width:100%;min-height:48px;border-radius:14px;background:linear-gradient(180deg,#805326,#563214)!important;border:1px solid #b87a3f!important;color:#fff7ed!important;font-weight:950!important}
+#placementStrategyPolicyBanner,#placementStrategyZonePanel{display:none!important}
+#placementResult{margin-top:10px}.placement-card{margin-bottom:0!important}
+#spacingComparisonMount:empty{display:none}.placement-spacing-comparison{margin:0!important}
+.ps-map-shell{overflow:hidden;padding:0}.ps-map-head{display:flex;align-items:center;justify-content:space-between;padding:14px 14px 4px}.ps-map-head strong{font-size:15px}.ps-map-head span{color:var(--ps-muted);font-size:10px}
+#capacityMapCompare{margin:0!important;display:none;grid-template-columns:1fr!important;gap:0!important}.capacity-map-card:first-child{display:none!important}.capacity-map-card{padding:0!important;border:0!important;background:transparent!important}.capacity-map-card>.capacity-section-title,.capacity-map-card>p.note{display:none!important}#capacityPreviewMap{height:min(64vh,590px)!important;margin:8px 0 0!important;border:0!important;border-radius:0 0 18px 18px!important;background:#0f172a!important}
+#capacityResult{margin:0}.ps-settings #capacityResult>.distance-warning{margin:0!important;padding:0!important;border:0!important;background:transparent!important}.ps-settings #capacityResult>.distance-warning>strong:first-child,.ps-settings #capacityResult>.distance-warning>br{display:none}.ps-settings .capacity-manual-settings{margin-top:12px;padding:15px;border:1px solid var(--ps-line);border-radius:16px;background:rgba(2,6,23,.35)}.ps-settings .generate{width:100%;min-height:54px;border-radius:15px!important;background:linear-gradient(180deg,#8b5a2b,#5b3416)!important;border:1px solid #c28a49!important;color:#fff7ed!important;font-size:16px!important;font-weight:950!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 8px 22px rgba(88,52,22,.3)!important}.ps-settings #generateCandidatePoiButton{background:linear-gradient(180deg,#6d28d9,#4c1d95)!important;border-color:#8b5cf6!important}.ps-settings #capacitySupabaseStatus{display:none!important}
+.ps-note{margin:12px 2px 0;color:#64748b;font-size:10px;line-height:1.6;text-align:center}
+@media(max-width:560px){.ps-page{padding-left:10px;padding-right:10px}.ps-card{border-radius:16px;padding:12px}.ps-title{font-size:17px}#capacityPreviewMap{height:54vh!important;min-height:420px}}
+</style>
+</head>
+<body>
+<div class="ps-page">
+  <header class="ps-topbar">
+    <a class="ps-back" href="lab.html">← Labへ戻る</a>
+    <div>
+      <div class="ps-badge">PLACEMENT STRATEGY</div>
+      <div class="ps-title"><span>🏯</span>配置戦略・布陣図</div>
+    </div>
+  </header>
+
+  <section class="ps-card ps-upload step">
+    <label for="capacityFile">キャンプサイトKMZ / KML</label>
+    <input type="file" id="capacityFile" accept=".kmz,.kml,.zip">
+    <p class="ps-lead">50mを原則に解析し、40m / 30mは比較資料として表示します。候補生成は50m条件のままです。</p>
+    <button class="generate" type="button" onclick="analyzePlacementCapacity()">🏯 KMZを解析して布陣を開く</button>
+    <div id="placementResult" class="placement-empty">KMZを選択して解析してください。</div>
+  </section>
+
+  <section id="spacingComparisonMount" class="ps-card"></section>
+
+  <section class="ps-card ps-map-shell">
+    <div class="ps-map-head"><strong>戦略マップ</strong><span>通常地図 / 布陣図を切替</span></div>
+    <div id="capacityMapCompare" class="capacity-map-compare" style="display:none;">
+      <div class="capacity-map-card"><div class="capacity-section-title">互換マップ</div><div id="capacityMap" style="height:1px;"></div></div>
+      <div class="capacity-map-card"><div class="capacity-section-title">候補地図</div><div id="capacityPreviewMap"></div></div>
+    </div>
+  </section>
+
+  <section class="ps-card ps-settings">
+    <div id="capacityResult"><div class="placement-empty">解析すると、候補数と布陣設定がここに表示されます。</div></div>
+  </section>
+
+  <p class="ps-note">配置戦略は判断材料を増やすための機能です。最終判断は現地の安全性・導線・遊びやすさを優先してください。</p>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="js/capacity.js?v=5"></script>
+<script>window.pingCapacitySupabase=async function(){};</script>
+<script src="js/placement-strategy-kmz-compat.js?v=20260914-v2"></script>
+<script src="js/placement-strategy.js?v=20260914-v4"></script>
+<script src="js/placement-strategy-spacing-compare.js?v=20260914-v1"></script>
+<script src="js/placement-strategy-zones.js?v=20260914-v2"></script>
+<script src="js/placement-strategy-map-theme.js?v=20260914-v3"></script>
+<script src="js/placement-strategy-symbols.js?v=20260914-v2"></script>
+<script>
+(() => {
+  const moveComparison = () => {
+    const panel = document.getElementById('placementSpacingComparison');
+    const mount = document.getElementById('spacingComparisonMount');
+    if (panel && mount && panel.parentElement !== mount) mount.appendChild(panel);
+  };
+  const keepAnalyzeCopy = () => {
+    const button = document.querySelector('.ps-upload button[onclick*="analyzePlacementCapacity"]');
+    if (button) button.textContent = '🏯 KMZを解析して布陣を開く';
+  };
+  const refresh = () => { moveComparison(); keepAnalyzeCopy(); };
+  new MutationObserver(() => requestAnimationFrame(refresh)).observe(document.body,{childList:true,subtree:true});
+  window.addEventListener('load', () => { refresh(); setTimeout(refresh,250); });
+})();
+</script>
+</body>
+</html>
