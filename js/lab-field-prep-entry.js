@@ -4,100 +4,6 @@
   const currentPath = window.location.pathname.replace(/\/+$/, '');
   if (!currentPath.endsWith('/lab.html')) return;
 
-  const LAB_BUILD = Date.now();
-  const fresh = (url) => `${url}${url.includes('?') ? '&' : '?'}build=${LAB_BUILD}`;
-
-  function ensureStylesheet(id, href) {
-    if (document.getElementById(id)) return;
-    const link = document.createElement('link');
-    link.id = id;
-    link.rel = 'stylesheet';
-    link.href = fresh(href);
-    document.head.appendChild(link);
-  }
-
-  function ensureScript(id, src, onload = null) {
-    const existing = document.getElementById(id);
-    if (existing) {
-      if (onload) onload();
-      return;
-    }
-
-    const script = document.createElement('script');
-    script.id = id;
-    script.src = fresh(src);
-    script.async = false;
-    if (onload) script.addEventListener('load', onload, { once: true });
-    document.head.appendChild(script);
-  }
-
-  function loadPlacementStrategyAssets() {
-    ensureScript(
-      'placementStrategyEntryUiScript',
-      'js/placement-strategy-entry-ui.js?v=20260914-v2'
-    );
-
-    ensureScript(
-      'placementStrategyLayoutScript',
-      'js/placement-strategy-layout.js?v=20260914-v1'
-    );
-
-    ensureStylesheet(
-      'placementStrategyStylesheet',
-      'css/placement-strategy.css?v=20260914-v2'
-    );
-    ensureStylesheet(
-      'placementStrategySpacingCompareStylesheet',
-      'css/placement-strategy-spacing-compare.css?v=20260914-v1'
-    );
-    ensureStylesheet(
-      'placementStrategyZonesStylesheet',
-      'css/placement-strategy-zones.css?v=20260914-v2'
-    );
-    ensureStylesheet(
-      'placementStrategyMapThemeStylesheet',
-      'css/placement-strategy-map-theme.css?v=20260914-v1'
-    );
-    ensureStylesheet(
-      'placementStrategySymbolsStylesheet',
-      'css/placement-strategy-symbols.css?v=20260914-v1'
-    );
-
-    ensureScript(
-      'placementStrategyKmzCompatScript',
-      'js/placement-strategy-kmz-compat.js?v=20260914-v1'
-    );
-
-    ensureScript(
-      'placementStrategyScript',
-      'js/placement-strategy.js?v=20260914-v4',
-      () => {
-        ensureScript(
-          'placementStrategySpacingCompareScript',
-          'js/placement-strategy-spacing-compare.js?v=20260914-v1',
-          () => {
-            ensureScript(
-              'placementStrategyZonesScript',
-              'js/placement-strategy-zones.js?v=20260914-v2',
-              () => {
-                ensureScript(
-                  'placementStrategyMapThemeScript',
-                  'js/placement-strategy-map-theme.js?v=20260914-v3',
-                  () => {
-                    ensureScript(
-                      'placementStrategySymbolsScript',
-                      'js/placement-strategy-symbols.js?v=20260914-v1'
-                    );
-                  }
-                );
-              }
-            );
-          }
-        );
-      }
-    );
-  }
-
   function makeHeaderLink({ id, href, text, ariaLabel, border, background, color }) {
     const entry = document.createElement('a');
     entry.id = id;
@@ -157,8 +63,87 @@
     placeFieldEntry(header);
   }
 
-  loadPlacementStrategyAssets();
+  function injectPlacementStrategyPortal() {
+    if (document.getElementById('labPlacementStrategyPortal')) return;
+    const panel = document.querySelector('.lab-main-panel');
+    const guide = document.querySelector('.lab-user-guide');
+    if (!panel) return;
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', addLabHeaderEntries, { once: true });
-  else addLabHeaderEntries();
+    const portal = document.createElement('a');
+    portal.id = 'labPlacementStrategyPortal';
+    portal.href = 'placement-strategy.html';
+    portal.setAttribute('aria-label', '配置戦略・布陣図を開く');
+    portal.innerHTML = `
+      <span class="lab-placement-portal__icon">🏯</span>
+      <span class="lab-placement-portal__body">
+        <small>PLACEMENT STRATEGY</small>
+        <strong>配置戦略・布陣図</strong>
+        <em>50m原則・距離比較・候補配置を専用画面で検討</em>
+      </span>
+      <span class="lab-placement-portal__arrow">›</span>
+    `;
+
+    const style = document.createElement('style');
+    style.id = 'labPlacementStrategyPortalStyle';
+    style.textContent = `
+      #labPlacementStrategyPortal {
+        display:grid;
+        grid-template-columns:auto minmax(0,1fr) auto;
+        gap:12px;
+        align-items:center;
+        margin:16px 0 18px;
+        padding:15px 16px;
+        border:1px solid rgba(167,139,250,.46);
+        border-radius:18px;
+        background:radial-gradient(circle at 92% 8%,rgba(168,85,247,.16),transparent 34%),linear-gradient(135deg,rgba(76,29,149,.24),rgba(15,23,42,.92));
+        color:#f8fafc;
+        text-decoration:none;
+        box-shadow:0 12px 30px rgba(15,23,42,.24),inset 0 1px 0 rgba(255,255,255,.05);
+        -webkit-tap-highlight-color:transparent;
+      }
+      #labPlacementStrategyPortal:active { transform:translateY(1px); }
+      .lab-placement-portal__icon { display:grid;place-items:center;width:46px;height:46px;border-radius:14px;background:rgba(124,58,237,.18);font-size:25px; }
+      .lab-placement-portal__body { min-width:0;display:flex;flex-direction:column;gap:2px; }
+      .lab-placement-portal__body small { color:#a78bfa;font-size:9px;font-weight:900;letter-spacing:.14em; }
+      .lab-placement-portal__body strong { color:#f5f3ff;font-size:17px;font-weight:950; }
+      .lab-placement-portal__body em { color:#cbd5e1;font-size:11px;line-height:1.5;font-style:normal; }
+      .lab-placement-portal__arrow { color:#c4b5fd;font-size:30px;font-weight:300; }
+    `;
+    document.head.appendChild(style);
+
+    if (guide) guide.insertAdjacentElement('beforebegin', portal);
+    else panel.querySelector('.lab-secret-tag')?.insertAdjacentElement('afterend', portal);
+  }
+
+  function hideLegacyPlacementSection() {
+    const heading = Array.from(document.querySelectorAll('.lab-main-panel h3')).find(node =>
+      (node.textContent || '').includes('配置余地チェック')
+    );
+    if (!heading) return;
+
+    let node = heading;
+    let guard = 0;
+    while (node && guard < 20) {
+      const next = node.nextElementSibling;
+      node.style.display = 'none';
+      if (node.id === 'capacityResult') break;
+      node = next;
+      guard += 1;
+    }
+
+    const migratedPreview = document.getElementById('placementStrategyFinalPreview');
+    if (migratedPreview) migratedPreview.style.display = 'none';
+  }
+
+  function initializeLabEntries() {
+    addLabHeaderEntries();
+    injectPlacementStrategyPortal();
+    hideLegacyPlacementSection();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeLabEntries, { once: true });
+  } else {
+    initializeLabEntries();
+  }
 })();
