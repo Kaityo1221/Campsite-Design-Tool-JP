@@ -1,8 +1,15 @@
 /* Placement Strategy map theme / Lab only */
 
+/*
+ * iOS Safari can fragment Leaflet tile panes when a filter transition is
+ * attached to the pane even while the normal map is selected. Keep the
+ * normal tile pane completely untouched and only apply the tactical filter
+ * while tactical mode is actually active.
+ */
 #capacityMap .leaflet-tile-pane,
 #capacityPreviewMap .leaflet-tile-pane {
-  transition: filter .22s ease, opacity .22s ease;
+  filter: none;
+  transition: none;
 }
 
 #capacityMap.placement-strategy-map--tactical,
