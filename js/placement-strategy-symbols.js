@@ -67,9 +67,9 @@
       </div>
       <div class="placement-tactical-legend__row">
         <strong>新規</strong>
-        <span class="placement-tactical-legend__item"><b class="new-mark">印</b>ポケストップ</span>
-        <span class="placement-tactical-legend__item"><b class="new-mark">標</b>ジム</span>
-        <span class="placement-tactical-legend__item"><b class="new-mark">望</b>パワースポット</span>
+        <span class="placement-tactical-legend__item"><b class="new-mark-pokestop">印</b>ポケストップ</span>
+        <span class="placement-tactical-legend__item"><b class="new-mark-gym">標</b>ジム</span>
+        <span class="placement-tactical-legend__item"><b class="new-mark-power">望</b>パワースポット</span>
         <span class="placement-tactical-legend__item candidate-note"><i></i>紫丸＝自動候補</span>
       </div>
     `;
