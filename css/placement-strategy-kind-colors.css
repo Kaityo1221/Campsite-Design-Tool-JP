@@ -1,0 +1,71 @@
+/* Placement Strategy / new POI type colors
+   Color = POI type, purple ring = automatically generated candidate. */
+
+:root {
+  --ps-new-pokestop: #3b82f6;
+  --ps-new-pokestop-deep: #1d4ed8;
+  --ps-new-gym: #facc15;
+  --ps-new-gym-deep: #eab308;
+  --ps-new-power: #ec4899;
+  --ps-new-power-deep: #be185d;
+}
+
+/* 印 = PokéStop = blue */
+.placement-tactical-symbol.flag.add,
+.placement-tactical-symbol.flag.candidate {
+  border-color: rgba(191, 219, 254, .98);
+  background: linear-gradient(180deg, var(--ps-new-pokestop), var(--ps-new-pokestop-deep));
+  box-shadow: 0 2px 7px rgba(37, 99, 235, .34), 0 0 0 1px rgba(15, 23, 42, .18);
+}
+
+.placement-tactical-symbol.flag.add .placement-tactical-symbol__glyph,
+.placement-tactical-symbol.flag.candidate .placement-tactical-symbol__glyph {
+  color: #eff6ff;
+  text-shadow: 0 1px 2px rgba(15, 23, 42, .45);
+}
+
+/* 標 = Gym = yellow */
+.placement-tactical-symbol.castle.add,
+.placement-tactical-symbol.castle.candidate {
+  border-color: rgba(254, 240, 138, .98);
+  background: linear-gradient(180deg, var(--ps-new-gym), var(--ps-new-gym-deep));
+  box-shadow: 0 2px 7px rgba(202, 138, 4, .32), 0 0 0 1px rgba(15, 23, 42, .18);
+}
+
+.placement-tactical-symbol.castle.add .placement-tactical-symbol__glyph,
+.placement-tactical-symbol.castle.candidate .placement-tactical-symbol__glyph {
+  color: #422006;
+  text-shadow: 0 1px 0 rgba(255,255,255,.30);
+}
+
+/* 望 = Power Spot = pink */
+.placement-tactical-symbol.tower.add,
+.placement-tactical-symbol.tower.candidate {
+  border-color: rgba(251, 207, 232, .98);
+  background: linear-gradient(180deg, var(--ps-new-power), var(--ps-new-power-deep));
+  box-shadow: 0 2px 7px rgba(190, 24, 93, .34), 0 0 0 1px rgba(15, 23, 42, .18);
+}
+
+.placement-tactical-symbol.tower.add .placement-tactical-symbol__glyph,
+.placement-tactical-symbol.tower.candidate .placement-tactical-symbol__glyph {
+  color: #fff1f2;
+  text-shadow: 0 1px 2px rgba(80, 7, 36, .42);
+}
+
+/* Legend: row 2 is new POI. Color must match the map icon. */
+.placement-tactical-legend__row:nth-child(2) .placement-tactical-legend__item:nth-child(2) b {
+  background: var(--ps-new-pokestop);
+  color: #fff;
+}
+
+.placement-tactical-legend__row:nth-child(2) .placement-tactical-legend__item:nth-child(3) b {
+  background: var(--ps-new-gym);
+  color: #422006;
+  border-color: rgba(254, 240, 138, .98);
+}
+
+.placement-tactical-legend__row:nth-child(2) .placement-tactical-legend__item:nth-child(4) b {
+  background: var(--ps-new-power);
+  color: #fff;
+  border-color: rgba(251, 207, 232, .98);
+}
