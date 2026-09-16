@@ -4,11 +4,19 @@
 
   if (window.CampsitePoiSpacingPolicy) return;
 
-  const targetMeters = 50;
+  const FALLBACK_TARGET_METERS = 50;
   const referenceMeters = Object.freeze([30, 40]);
+
+  function getTargetMeters() {
+    const policyValue = Number(window.CampsitePolicy?.getSpacingMeters?.());
+    return Number.isFinite(policyValue) && policyValue > 0
+      ? policyValue
+      : FALLBACK_TARGET_METERS;
+  }
 
   function distanceBand(meters) {
     const distance = Number(meters);
+    const targetMeters = getTargetMeters();
     if (!Number.isFinite(distance)) return 'waiting';
     if (distance < referenceMeters[0]) return 'danger';
     if (distance < referenceMeters[1]) return 'caution';
@@ -16,18 +24,26 @@
     return 'ok';
   }
 
-  window.CampsitePoiSpacingPolicy = Object.freeze({
-    targetMeters,
+  const policy = {
+    get targetMeters() {
+      return getTargetMeters();
+    },
     referenceMeters,
     distanceBand,
-    publicLead: 'POI間隔は50mを目安に設計してください。',
+    get publicLead() {
+      return `POI間隔は${getTargetMeters()}mを目安に設計してください。`;
+    },
     referenceNote: '30m・40mは参考距離です。',
-    targetCircleFolder: '50m円（目安）',
+    get targetCircleFolder() {
+      return `${getTargetMeters()}m円（目安）`;
+    },
     referenceCircleFolders: Object.freeze({
       30: '30m円（参考距離）',
       40: '40m円（参考距離）'
     })
-  });
+  };
+
+  window.CampsitePoiSpacingPolicy = Object.freeze(policy);
 
   if (
     typeof document !== 'undefined' &&
