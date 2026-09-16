@@ -117,6 +117,27 @@
     font-size: 9px !important;
   }
 
+  /* While drawing/editing a scope, POIs are visual background only.
+     Pointer events pass through POI paths/warning markers to the map,
+     while numbered scope vertex handles remain draggable. */
+  .arw-main:has(#adminReviewScopeControl [data-ars-save]) .leaflet-overlay-pane path.leaflet-interactive,
+  .arw-main:has(#adminReviewScopeControl [data-ars-save]) .aar-warning-icon {
+    pointer-events: none !important;
+  }
+  .arw-main:has(#adminReviewScopeControl [data-ars-save]) .arw-inspector {
+    display: none !important;
+  }
+  .arw-main:has(#adminReviewScopeControl [data-ars-save]) .ars-control {
+    left: 96px !important;
+    padding: 6px 7px !important;
+  }
+  .arw-main:has(#adminReviewScopeControl [data-ars-save]) .ars-head {
+    min-height: 24px;
+  }
+  .arw-main:has(#adminReviewScopeControl [data-ars-save]) .ars-actions {
+    margin-top: 4px !important;
+  }
+
   /* Default inspector disappears. AUTO CHECK stays as one small status chip. */
   .arw-inspector {
     position: absolute;
@@ -186,6 +207,25 @@
   .arw-inspector:has(.arw-poi-name) .arw-panel {
     padding: 10px;
   }
+  .arw-inspector.arw-poi-dismissed:has(.arw-poi-name) {
+    display: none !important;
+  }
+  .arw-poi-close {
+    position: sticky;
+    top: 0;
+    float: right;
+    z-index: 2;
+    width: 34px;
+    height: 34px;
+    margin: -2px -2px 4px 8px;
+    border: 1px solid rgba(148,163,184,.24);
+    border-radius: 50%;
+    background: rgba(15,23,42,.94);
+    color: #e2e8f0;
+    font-size: 17px;
+    font-weight: 900;
+    line-height: 1;
+  }
 
   /* Final review stays below the map but loses the nested card-within-card look. */
   .admin-review-workspace > .arr-panel {
@@ -233,5 +273,8 @@
   }
   .ars-control {
     left: 54px !important;
+  }
+  .arw-main:has(#adminReviewScopeControl [data-ars-save]) .ars-control {
+    left: 94px !important;
   }
 }
