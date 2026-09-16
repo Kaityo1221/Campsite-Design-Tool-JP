@@ -1,8 +1,8 @@
-/* Phase 6 save guard: never persist a stale AUTO CHECK while a history snapshot is still loading. */
+/* Phase 6 save guard: never persist stale AUTO CHECK or fallback policy. */
 (function () {
   "use strict";
 
-  document.addEventListener("click", event => {
+  document.addEventListener("click", async event => {
     const button = event.target?.closest?.("#adminReviewWorkspace [data-arr-save]");
     if (!button) return;
 
@@ -13,6 +13,28 @@
       event.stopPropagation();
       event.stopImmediatePropagation();
       alert("KMZの読み込みが完了してから審査結果を保存してください。");
+      return;
+    }
+
+    if (window.CampsitePolicy?.isUsingFallback?.() === true) {
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      button.disabled = true;
+      try {
+        await window.CampsitePolicy.refresh();
+        if (window.CampsitePolicy?.isUsingFallback?.() === true) {
+          alert("審査ルールをサーバーから確認できませんでした。通信状態を確認してから再度保存してください。");
+          return;
+        }
+        button.disabled = false;
+        button.click();
+      } catch (error) {
+        console.warn("Policy refresh before review save failed", error);
+        alert("審査ルールをサーバーから確認できませんでした。通信状態を確認してから再度保存してください。");
+      } finally {
+        button.disabled = false;
+      }
       return;
     }
 
