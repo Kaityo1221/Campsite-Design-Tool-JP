@@ -166,11 +166,28 @@
       </article>`;
   }
 
+  function renderResults() {
+    const host = body()?.querySelector("[data-asr-results]");
+    if (!host || !payload) return;
+    const sites = filteredSites();
+    const visible = sites.slice(0, visibleCount);
+
+    host.innerHTML = `
+      ${visible.length ? `<div class="asr-list">${visible.map(card).join("")}</div>` : `<div class="asr-state">該当する審査サイトはありません。</div>`}
+      ${visible.length < sites.length ? `<button type="button" class="asr-more" data-asr-more>さらに表示（${visible.length}/${sites.length}）</button>` : ""}`;
+
+    host.querySelectorAll("[data-asr-open]").forEach(button => {
+      button.addEventListener("click", () => window.AdminReviewWorkspace?.open?.(button.dataset.asrOpen));
+    });
+    host.querySelector("[data-asr-more]")?.addEventListener("click", () => {
+      visibleCount += PAGE_SIZE;
+      renderResults();
+    });
+  }
+
   function render() {
     const el = body();
     if (!el || !payload) return;
-    const sites = filteredSites();
-    const visible = sites.slice(0, visibleCount);
     const grouped = groupedSites();
     const stable = grouped.filter(site => site.siteId).length;
     const legacy = grouped.length - stable;
@@ -183,27 +200,32 @@
         <span class="asr-pill"><strong>${stable}</strong> site_id確定</span>
         ${legacy ? `<span class="asr-pill"><strong>${legacy}</strong> 旧履歴</span>` : ""}
       </div>
-      <div class="asr-search-wrap"><input type="search" class="asr-search" data-asr-search placeholder="サイト名・作成者・site_idで検索" value="${esc(searchText)}"></div>
-      ${visible.length ? `<div class="asr-list">${visible.map(card).join("")}</div>` : `<div class="asr-state">該当する審査サイトはありません。</div>`}
-      ${visible.length < sites.length ? `<button type="button" class="asr-more" data-asr-more>さらに表示（${visible.length}/${sites.length}）</button>` : ""}`;
+      <div class="asr-search-wrap"><input type="search" class="asr-search" data-asr-search placeholder="サイト名・作成者・site_idで検索" value="${esc(searchText)}" autocomplete="off" autocorrect="off" spellcheck="false"></div>
+      <div data-asr-results></div>`;
 
-    el.querySelector("[data-asr-search]")?.addEventListener("input", event => {
-      searchText = event.target.value || "";
-      visibleCount = PAGE_SIZE;
-      render();
-      requestAnimationFrame(() => {
-        const input = body()?.querySelector("[data-asr-search]");
-        input?.focus();
-        input?.setSelectionRange(searchText.length, searchText.length);
+    const input = el.querySelector("[data-asr-search]");
+    if (input) {
+      let composing = false;
+      const applySearch = () => {
+        searchText = input.value || "";
+        visibleCount = PAGE_SIZE;
+        renderResults();
+      };
+
+      input.addEventListener("compositionstart", () => {
+        composing = true;
       });
-    });
-    el.querySelectorAll("[data-asr-open]").forEach(button => {
-      button.addEventListener("click", () => window.AdminReviewWorkspace?.open?.(button.dataset.asrOpen));
-    });
-    el.querySelector("[data-asr-more]")?.addEventListener("click", () => {
-      visibleCount += PAGE_SIZE;
-      render();
-    });
+      input.addEventListener("compositionend", () => {
+        composing = false;
+        applySearch();
+      });
+      input.addEventListener("input", event => {
+        if (composing || event.isComposing) return;
+        applySearch();
+      });
+    }
+
+    renderResults();
   }
 
   function renderState(message, error = false) {
