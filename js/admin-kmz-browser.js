@@ -80,7 +80,7 @@
 
       await loadScript("js/admin-review-workspace.js?v=1", "campsiteAdminReviewWorkspaceScript");
       await loadScript("js/admin-review-workspace-bridge.js?v=1", "campsiteAdminReviewWorkspaceBridgeScript");
-      await loadScript("js/admin-site-review-list.js?v=1", "campsiteAdminSiteReviewListScript");
+      await loadScript("js/admin-site-review-list.js?v=2", "campsiteAdminSiteReviewListScript");
 
       // Phase 6: 人間が確定した4段階レビューをサーバーへrevision保存する。
       await loadStyle("css/admin-review-records.css?v=1", "campsiteAdminReviewRecordsStyle");
