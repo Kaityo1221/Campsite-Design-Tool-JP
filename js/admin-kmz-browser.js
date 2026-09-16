@@ -65,16 +65,14 @@
       await loadScript("js/admin-map-deps.js?v=1", "campsiteAdminMapDepsScript");
       await window.CampsiteAdminMapDeps?.ready?.();
 
-      // Phase 3: 履歴比較を独立モーダルではなく審査ワークスペースへ統合する。
+      // Site-centered review workspace.
       await loadStyle("css/admin-review-workspace.css?v=1", "campsiteAdminReviewWorkspaceStyle");
 
-      // Phase 4: 管理者専用の審査範囲を site_id 単位で保存・再利用する。
-      // Map init hook を先に登録するため、ワークスペース本体より先に読み込む。
+      // Admin-only review scope.
       await loadStyle("css/admin-review-scope.css?v=1", "campsiteAdminReviewScopeStyle");
       await loadScript("js/admin-review-scope.js?v=1", "campsiteAdminReviewScopeScript");
 
-      // Phase 5: 保存済み審査範囲の内側だけを共有ポリシーで自動チェックする。
-      // Scope と同様に地図生成前に hook を登録する。
+      // Scoped automatic checks.
       await loadStyle("css/admin-auto-review.css?v=1", "campsiteAdminAutoReviewStyle");
       await loadScript("js/admin-auto-review.js?v=1", "campsiteAdminAutoReviewScript");
 
@@ -82,13 +80,13 @@
       await loadScript("js/admin-review-workspace-bridge.js?v=1", "campsiteAdminReviewWorkspaceBridgeScript");
       await loadScript("js/admin-site-review-list.js?v=2", "campsiteAdminSiteReviewListScript");
 
-      // Phase 6: 人間が確定した4段階レビューをサーバーへrevision保存する。
-      await loadStyle("css/admin-review-records.css?v=1", "campsiteAdminReviewRecordsStyle");
-      // Mobile QA: load last so the map-first overrides win over desktop card chrome.
+      // Mobile QA / map-first interaction.
       await loadStyle("css/admin-review-mobile-layout.css?v=3", "campsiteAdminReviewMobileLayoutStyle");
-      await loadScript("js/admin-review-records.js?v=1", "campsiteAdminReviewRecordsScript");
-      await loadScript("js/admin-review-save-guard.js?v=1", "campsiteAdminReviewSaveGuardScript");
       await loadScript("js/admin-review-mobile-ux.js?v=2", "campsiteAdminReviewMobileUxScript");
+
+      // PRE-CHECK is the primary result shown immediately when a site opens.
+      // The formal FINAL REVIEW UI is intentionally parked; its server-side history remains available for future reuse.
+      await loadScript("js/admin-precheck-summary.js?v=1", "campsiteAdminPrecheckSummaryScript");
 
       // Phase 7 removed the standalone past-state modal, POI freshness check and Campsite-side AI review queue.
     } catch (error) {
