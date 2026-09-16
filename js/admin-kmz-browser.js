@@ -66,6 +66,11 @@
       await loadStyle("css/admin-review-scope.css?v=1", "campsiteAdminReviewScopeStyle");
       await loadScript("js/admin-review-scope.js?v=1", "campsiteAdminReviewScopeScript");
 
+      // Phase 5: 保存済み審査範囲の内側だけを共有ポリシーで自動チェックする。
+      // Scope と同様に地図生成前に hook を登録する。
+      await loadStyle("css/admin-auto-review.css?v=1", "campsiteAdminAutoReviewStyle");
+      await loadScript("js/admin-auto-review.js?v=1", "campsiteAdminAutoReviewScript");
+
       await loadScript("js/admin-review-workspace.js?v=1", "campsiteAdminReviewWorkspaceScript");
       await loadScript("js/admin-review-workspace-bridge.js?v=1", "campsiteAdminReviewWorkspaceBridgeScript");
       await loadScript("js/admin-site-review-list.js?v=1", "campsiteAdminSiteReviewListScript");
