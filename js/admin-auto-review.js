@@ -69,14 +69,7 @@
     else if (/power|パワースポット|パワスポ/.test(text)) poiType = "powerSpot";
     else if (/pok[eé]?stop|poke\s*stop|ポケスト/.test(text)) poiType = "pokestop";
 
-    return {
-      marker,
-      name,
-      lat: ll.lat,
-      lng: ll.lng,
-      added,
-      poiType
-    };
+    return { marker, name, lat: ll.lat, lng: ll.lng, added, poiType };
   }
 
   function allPoiMarkers() {
@@ -356,15 +349,19 @@
   window.addEventListener("adminreviewscopechange", queueRun);
   window.addEventListener("campsitepolicychange", queueRun);
 
-  const workspaceObserver = new MutationObserver(() => {
-    if (document.querySelector("#adminReviewWorkspace.open")) {
-      observeInspector();
-      queueRun();
-    } else if (state.warningLayer) {
-      state.warningLayer.clearLayers();
+  const workspaceObserver = new MutationObserver(records => {
+    for (const record of records) {
+      const target = record.target;
+      if (!(target instanceof Element) || target.id !== "adminReviewWorkspace") continue;
+      if (target.classList.contains("open")) {
+        observeInspector();
+        queueRun();
+      } else if (state.warningLayer) {
+        state.warningLayer.clearLayers();
+      }
     }
   });
-  workspaceObserver.observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ["class"] });
+  workspaceObserver.observe(document.documentElement, { subtree: true, attributes: true, attributeFilter: ["class"] });
 
   window.AdminAutoReview = Object.freeze({
     run,
