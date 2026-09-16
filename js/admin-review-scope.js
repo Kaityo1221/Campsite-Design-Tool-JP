@@ -394,9 +394,12 @@
       host.appendChild(stat);
     }
     const c = scopeCounts();
-    if (!state.siteId) stat.innerHTML = `<span>審査範囲</span><strong>保存不可</strong>`;
-    else if (c.inside === null) stat.innerHTML = `<span>審査範囲</span><strong>未指定</strong>`;
-    else stat.innerHTML = `<span>審査対象 / 対象外</span><strong>${c.inside} / ${c.outside}</strong>`;
+    const html = !state.siteId
+      ? `<span>審査範囲</span><strong>保存不可</strong>`
+      : c.inside === null
+        ? `<span>審査範囲</span><strong>未指定</strong>`
+        : `<span>審査対象 / 対象外</span><strong>${c.inside} / ${c.outside}</strong>`;
+    if (stat.innerHTML !== html) stat.innerHTML = html;
   }
 
   function refreshVisuals() {
@@ -515,9 +518,7 @@
 
   const bootTimer = window.setInterval(() => {
     installMapHook();
-    if (patchWorkspace()) {
-      window.clearInterval(bootTimer);
-    }
+    if (patchWorkspace()) window.clearInterval(bootTimer);
   }, 50);
 
   const domObserver = new MutationObserver(() => {
