@@ -62,6 +62,7 @@
       await loadStyle("css/admin-review-workspace.css?v=1", "campsiteAdminReviewWorkspaceStyle");
       await loadScript("js/admin-review-workspace.js?v=1", "campsiteAdminReviewWorkspaceScript");
       await loadScript("js/admin-review-workspace-bridge.js?v=1", "campsiteAdminReviewWorkspaceBridgeScript");
+      await loadScript("js/admin-site-review-list.js?v=1", "campsiteAdminSiteReviewListScript");
 
       // 旧 admin-past-site-state.js はロールバック用にリポジトリへ残すが、Phase 3では読み込まない。
       await loadScript("js/admin-poi-freshness.js?v=1", "campsiteAdminPoiFreshnessScript");
