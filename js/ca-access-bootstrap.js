@@ -35,6 +35,11 @@
     const currentSrc = current?.src || '';
     const base = currentSrc ? new URL('.', currentSrc) : new URL('./js/', window.location.href);
 
+    if (!window.CampsitePolicy) {
+      await loadScript(new URL('campsite-policy.js?v=1', base).href);
+      await window.CampsitePolicy?.ready;
+    }
+
     if (!window.CampsiteCaAccess) {
       await loadScript(new URL('ca-access.js?v=4', base).href);
     }
