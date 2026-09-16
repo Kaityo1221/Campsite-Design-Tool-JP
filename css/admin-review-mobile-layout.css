@@ -1,0 +1,52 @@
+/* Mobile layout guard for the admin review workspace.
+   Keeps the Leaflet map usable even when the final-review panel is present. */
+@media (max-width: 860px) {
+  .admin-review-workspace.open {
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .arw-topbar,
+  .arw-timeline,
+  .arw-summary {
+    flex: 0 0 auto;
+  }
+
+  .arw-main {
+    display: block;
+    position: relative;
+    flex: 0 0 auto;
+    height: 58vh;
+    height: 58svh;
+    min-height: 420px;
+    max-height: 620px;
+  }
+
+  .arw-map-wrap {
+    position: absolute;
+    inset: 0;
+    min-height: 420px;
+  }
+
+  .arw-map {
+    min-height: 420px;
+  }
+
+  .admin-review-workspace > .arr-panel {
+    flex: 0 0 auto;
+  }
+}
+
+@media (max-width: 520px) {
+  .arw-main,
+  .arw-map-wrap,
+  .arw-map {
+    min-height: 440px;
+  }
+
+  .arw-main {
+    height: 60vh;
+    height: 60svh;
+  }
+}
