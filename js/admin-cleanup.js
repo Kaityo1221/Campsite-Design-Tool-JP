@@ -1,10 +1,9 @@
 /* ======================================================
    Phase 7: Admin cleanup / information architecture
 
-   - Remove retired Campsite-side research review UI
-   - Remove the legacy MAP VIEWER launch surface
-   - Keep backfill as a maintenance-only tool, not a primary review action
-   - Creator inference remains available for legacy records
+   - Campsite-side Research Review Room is retired; POI classification belongs to POI Master
+   - Backfill stays available only as a maintenance / recovery tool
+   - Creator inference remains available only for legacy records
 ====================================================== */
 (function () {
   "use strict";
@@ -19,7 +18,6 @@
     const style = document.createElement("style");
     style.id = STYLE_ID;
     style.textContent = `
-      .admin-kmz-map-launch{display:none!important}
       #${MAINTENANCE_ID}{margin:18px 0 0;border:1px solid rgba(148,163,184,.18);border-radius:14px;background:rgba(15,23,42,.42);overflow:hidden}
       #${MAINTENANCE_ID}>summary{padding:13px 15px;cursor:pointer;list-style:none;color:#cbd5e1;font-size:13px;font-weight:900;user-select:none}
       #${MAINTENANCE_ID}>summary::-webkit-details-marker{display:none}
@@ -31,13 +29,9 @@
     document.head.appendChild(style);
   }
 
-  function removeRetiredUi() {
-    // Research Review Room / dictionary-candidate review now belongs to POI Master.
+  function removeRetiredResearchUi() {
+    // Dictionary / classification review is owned by POI Master from Phase 7 onward.
     document.getElementById("aliasReviewAdminBox")?.remove();
-
-    // Phase 3 workspace replaced the standalone MAP VIEWER.
-    document.querySelectorAll("[data-admin-kmz-map-launch], .admin-kmz-map-launch")
-      .forEach(node => node.remove());
   }
 
   function ensureMaintenanceTools() {
@@ -62,7 +56,7 @@
 
   function clean() {
     ensureStyles();
-    removeRetiredUi();
+    removeRetiredResearchUi();
     ensureMaintenanceTools();
   }
 
