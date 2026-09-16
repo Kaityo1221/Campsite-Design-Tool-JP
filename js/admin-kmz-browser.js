@@ -78,6 +78,7 @@
       // Phase 6: 人間が確定した4段階レビューをサーバーへrevision保存する。
       await loadStyle("css/admin-review-records.css?v=1", "campsiteAdminReviewRecordsStyle");
       await loadScript("js/admin-review-records.js?v=1", "campsiteAdminReviewRecordsScript");
+      await loadScript("js/admin-review-save-guard.js?v=1", "campsiteAdminReviewSaveGuardScript");
 
       // 旧 admin-past-site-state.js はロールバック用にリポジトリへ残すが、Phase 3以降は読み込まない。
       await loadScript("js/admin-poi-freshness.js?v=1", "campsiteAdminPoiFreshnessScript");
