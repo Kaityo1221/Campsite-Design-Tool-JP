@@ -9,11 +9,7 @@ const corsHeaders = {
 function jsonResponse(body: Record<string, unknown>, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,
-    headers: {
-      ...corsHeaders,
-      "Content-Type": "application/json; charset=utf-8",
-      "Cache-Control": "no-store",
-    },
+    headers: { ...corsHeaders, "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" },
   });
 }
 
@@ -47,25 +43,26 @@ async function requireAdminSession(supabase: any, token: string) {
 }
 
 function norm(value: unknown): string {
-  return String(value || "").normalize("NFKC").toLowerCase().replace(/\s+/g, "").trim();
+  return String(value || "").normalize("NFKC").toLowerCase().replace(/[\s　_＿\-－ー]+/g, "").trim();
 }
 
 function centroid(rows: any[]) {
   const pts = rows.filter((r) => Number.isFinite(Number(r.lat)) && Number.isFinite(Number(r.lng)) && Number(r.lat) !== 0 && Number(r.lng) !== 0);
   if (!pts.length) return null;
-  const lat = pts.reduce((s, r) => s + Number(r.lat), 0) / pts.length;
-  const lng = pts.reduce((s, r) => s + Number(r.lng), 0) / pts.length;
-  return { lat, lng };
+  return {
+    lat: pts.reduce((s, r) => s + Number(r.lat), 0) / pts.length,
+    lng: pts.reduce((s, r) => s + Number(r.lng), 0) / pts.length,
+  };
 }
 
-function distanceMeters(a: {lat:number;lng:number}, b: {lat:number;lng:number}) {
+function distanceMeters(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
   const R = 6371000;
   const p1 = a.lat * Math.PI / 180;
   const p2 = b.lat * Math.PI / 180;
   const dp = (b.lat - a.lat) * Math.PI / 180;
   const dl = (b.lng - a.lng) * Math.PI / 180;
-  const x = Math.sin(dp/2) ** 2 + Math.cos(p1) * Math.cos(p2) * Math.sin(dl/2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1-x));
+  const x = Math.sin(dp / 2) ** 2 + Math.cos(p1) * Math.cos(p2) * Math.sin(dl / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
 }
 
 function publicPoi(row: any) {
@@ -79,14 +76,75 @@ function publicPoi(row: any) {
   };
 }
 
-function publicHistory(item: any) {
+function publicHistory(upload: any, rows: any[]) {
   return {
-    id: item.upload.id,
-    createdAt: item.upload.created_at,
-    parkName: item.upload.park_name || "",
-    fileName: item.upload.display_file_name || item.upload.original_file_name || "",
-    pois: item.rows.map(publicPoi),
+    id: upload.id,
+    siteId: upload.site_id || null,
+    createdAt: upload.created_at,
+    parkName: upload.park_name || "",
+    fileName: upload.display_file_name || upload.original_file_name || "",
+    pois: rows.map(publicPoi),
   };
+}
+
+async function loadRowsForUpload(sb: any, uploadId: string) {
+  const { data, error } = await sb
+    .from("campsite_poi_observations")
+    .select("master_poi_id, raw_name, normalized_name, poi_type, lat, lng")
+    .eq("upload_id", uploadId)
+    .limit(5000);
+  if (error) throw error;
+  return (data || []).filter((r: any) => Number.isFinite(Number(r.lat)) && Number.isFinite(Number(r.lng)) && Number(r.lat) !== 0 && Number(r.lng) !== 0);
+}
+
+async function loadSiteHistory(sb: any, currentUpload: any, currentRows: any[]) {
+  const { data: site } = await sb
+    .from("campsite_sites")
+    .select("id, canonical_name, first_seen_at, last_seen_at, assignment_count")
+    .eq("id", currentUpload.site_id)
+    .maybeSingle();
+
+  const { data: uploads, error } = await sb
+    .from("campsite_kmz_uploads")
+    .select("id, site_id, park_name, created_at, display_file_name, original_file_name, upload_status")
+    .eq("site_id", currentUpload.site_id)
+    .neq("id", currentUpload.id)
+    .lt("created_at", currentUpload.created_at)
+    .is("deleted_at", null)
+    .neq("upload_status", "duplicate")
+    .order("created_at", { ascending: false })
+    .limit(8);
+  if (error) throw error;
+
+  const history: any[] = [];
+  for (const upload of uploads || []) {
+    const rows = await loadRowsForUpload(sb, upload.id);
+    if (rows.length < 3) continue;
+    history.push(publicHistory(upload, rows));
+  }
+
+  return jsonResponse({
+    success: true,
+    hasPast: history.length > 0,
+    current: {
+      id: currentUpload.id,
+      siteId: currentUpload.site_id,
+      createdAt: currentUpload.created_at,
+      parkName: currentUpload.park_name || "",
+      pois: currentRows.map(publicPoi),
+    },
+    previous: history[0] || null,
+    history,
+    hasMoreHistory: history.length > 1,
+    site: site ? {
+      id: site.id,
+      name: site.canonical_name || currentUpload.park_name || "",
+      firstSeenAt: site.first_seen_at,
+      lastSeenAt: site.last_seen_at,
+      assignmentCount: site.assignment_count,
+    } : { id: currentUpload.site_id, name: currentUpload.park_name || "" },
+    match: { source: "site_id", confident: true },
+  });
 }
 
 Deno.serve(async (request: Request): Promise<Response> => {
@@ -96,7 +154,6 @@ Deno.serve(async (request: Request): Promise<Response> => {
   const url = Deno.env.get("SUPABASE_URL");
   const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   if (!url || !key) return jsonResponse({ success: false, error: "server_config" }, 500);
-
   const sb = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
 
   try {
@@ -111,25 +168,23 @@ Deno.serve(async (request: Request): Promise<Response> => {
 
     const { data: currentUpload, error: uploadErr } = await sb
       .from("campsite_kmz_uploads")
-      .select("id, park_name, created_at, deleted_at")
+      .select("id, site_id, park_name, created_at, deleted_at")
       .eq("id", recordId)
       .maybeSingle();
     if (uploadErr || !currentUpload || currentUpload.deleted_at) {
       return jsonResponse({ success: false, error: "対象データが見つかりません。" }, 404);
     }
 
-    const { data: currentObs, error: currentErr } = await sb
-      .from("campsite_poi_observations")
-      .select("master_poi_id, raw_name, normalized_name, poi_type, lat, lng")
-      .eq("upload_id", recordId)
-      .limit(5000);
-    if (currentErr) throw currentErr;
-
-    const currentRows = (currentObs || []).filter((r: any) => Number.isFinite(Number(r.lat)) && Number.isFinite(Number(r.lng)) && Number(r.lat) !== 0 && Number(r.lng) !== 0);
+    const currentRows = await loadRowsForUpload(sb, recordId);
     if (currentRows.length < 3) {
-      return jsonResponse({ success: true, hasPast: false, reason: "not_enough_current_pois" });
+      return jsonResponse({ success: true, hasPast: false, reason: "not_enough_current_pois", match: { source: currentUpload.site_id ? "site_id" : "none", confident: Boolean(currentUpload.site_id) } });
     }
 
+    if (currentUpload.site_id) {
+      return await loadSiteHistory(sb, currentUpload, currentRows);
+    }
+
+    // Legacy fallback for old/unassigned records.
     const center = centroid(currentRows)!;
     const lats = currentRows.map((r: any) => Number(r.lat));
     const lngs = currentRows.map((r: any) => Number(r.lng));
@@ -162,59 +217,42 @@ Deno.serve(async (request: Request): Promise<Response> => {
     const currentIds = new Set(currentRows.map((r: any) => r.master_poi_id).filter(Boolean));
     const currentPark = norm(currentUpload.park_name);
     const candidateIds = [...grouped.keys()].slice(0, 80);
-    if (!candidateIds.length) return jsonResponse({ success: true, hasPast: false, reason: "no_nearby_history" });
+    if (!candidateIds.length) return jsonResponse({ success: true, hasPast: false, reason: "no_nearby_history", match: { source: "poi_footprint", confident: false } });
 
     const { data: candidateUploads } = await sb
       .from("campsite_kmz_uploads")
-      .select("id, park_name, created_at, display_file_name, original_file_name, deleted_at")
+      .select("id, site_id, park_name, created_at, display_file_name, original_file_name, deleted_at, upload_status")
       .in("id", candidateIds)
       .is("deleted_at", null);
 
     const uploadMap = new Map((candidateUploads || []).map((u: any) => [u.id, u]));
     const accepted: any[] = [];
-
     for (const [uploadId, rows] of grouped.entries()) {
       const upload = uploadMap.get(uploadId);
-      if (!upload || rows.length < 3) continue;
+      if (!upload || upload.upload_status === "duplicate" || rows.length < 3) continue;
       const c = centroid(rows);
       if (!c) continue;
       const centerDistance = distanceMeters(center, c);
       const shared = [...new Set(rows.map((r: any) => r.master_poi_id).filter(Boolean))].filter((id: any) => currentIds.has(id)).length;
       const candidatePark = norm(upload.park_name);
       const parkMatch = Boolean(currentPark && candidatePark && currentPark === candidatePark);
-
-      let isAccepted = false;
-      if (shared >= 3 && centerDistance <= 1200) isAccepted = true;
-      else if (shared >= 1 && centerDistance <= 350 && parkMatch) isAccepted = true;
-      else if (shared === 0 && centerDistance <= 180 && parkMatch) isAccepted = true;
-      if (!isAccepted) continue;
-
+      if (!((shared >= 3 && centerDistance <= 1200) || (shared >= 1 && centerDistance <= 350 && parkMatch) || (shared === 0 && centerDistance <= 180 && parkMatch))) continue;
       const score = shared * 1000 + (parkMatch ? 250 : 0) + Math.max(0, 500 - Math.round(centerDistance));
-      accepted.push({ upload, rows, shared, centerDistance, score });
+      accepted.push({ upload, rows, score });
     }
 
-    if (!accepted.length) return jsonResponse({ success: true, hasPast: false, reason: "no_confident_match" });
-
+    if (!accepted.length) return jsonResponse({ success: true, hasPast: false, reason: "no_confident_match", match: { source: "poi_footprint", confident: false } });
     accepted.sort((a, b) => new Date(b.upload.created_at).getTime() - new Date(a.upload.created_at).getTime());
-    const history = accepted.slice(0, 8);
-    const best = history[0];
+    const history = accepted.slice(0, 8).map((item) => publicHistory(item.upload, item.rows));
 
     return jsonResponse({
       success: true,
       hasPast: true,
-      current: {
-        id: currentUpload.id,
-        createdAt: currentUpload.created_at,
-        parkName: currentUpload.park_name || "",
-        pois: currentRows.map(publicPoi),
-      },
-      previous: publicHistory(best),
-      history: history.map(publicHistory),
+      current: { id: currentUpload.id, siteId: null, createdAt: currentUpload.created_at, parkName: currentUpload.park_name || "", pois: currentRows.map(publicPoi) },
+      previous: history[0],
+      history,
       hasMoreHistory: history.length > 1,
-      match: {
-        source: "poi_footprint",
-        confident: true,
-      },
+      match: { source: "poi_footprint", confident: true },
     });
   } catch (error) {
     console.error("admin-past-site-state", error);
