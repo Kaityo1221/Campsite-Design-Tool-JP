@@ -60,11 +60,17 @@
 
       // Phase 3: 履歴比較を独立モーダルではなく審査ワークスペースへ統合する。
       await loadStyle("css/admin-review-workspace.css?v=1", "campsiteAdminReviewWorkspaceStyle");
+
+      // Phase 4: 管理者専用の審査範囲を site_id 単位で保存・再利用する。
+      // Map init hook を先に登録するため、ワークスペース本体より先に読み込む。
+      await loadStyle("css/admin-review-scope.css?v=1", "campsiteAdminReviewScopeStyle");
+      await loadScript("js/admin-review-scope.js?v=1", "campsiteAdminReviewScopeScript");
+
       await loadScript("js/admin-review-workspace.js?v=1", "campsiteAdminReviewWorkspaceScript");
       await loadScript("js/admin-review-workspace-bridge.js?v=1", "campsiteAdminReviewWorkspaceBridgeScript");
       await loadScript("js/admin-site-review-list.js?v=1", "campsiteAdminSiteReviewListScript");
 
-      // 旧 admin-past-site-state.js はロールバック用にリポジトリへ残すが、Phase 3では読み込まない。
+      // 旧 admin-past-site-state.js はロールバック用にリポジトリへ残すが、Phase 3以降は読み込まない。
       await loadScript("js/admin-poi-freshness.js?v=1", "campsiteAdminPoiFreshnessScript");
       await loadScript("js/ai-review-queue.js?v=1", "campsiteAiReviewQueueScript");
     } catch (error) {
