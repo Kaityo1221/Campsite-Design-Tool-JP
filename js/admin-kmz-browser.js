@@ -50,11 +50,18 @@
         await loadScript("js/admin-policy-api.js?v=1", "campsiteAdminPolicyApiScript");
       }
 
+      // Maintenance / archive helpers. Backfill stays available, but Phase 7 moves it under maintenance UI.
       await loadScript("js/admin-backfill-control.js?v=3", "campsiteAdminBackfillControlScript");
       await loadScript("js/admin-kmz-browser-v2.js?v=2", "campsiteAdminKmzBrowserV2Script");
       await loadScript("js/admin-kmz-card-collapse.js?v=3", "campsiteAdminKmzCardCollapseScript");
       await loadScript("js/admin-mobile-folders.js?v=3", "campsiteAdminMobileFoldersScript");
+
+      // Legacy creator inference is intentionally kept only for old records without direct Discord identity.
       await loadScript("js/admin-kmz-creator-inference.js?v=1", "campsiteAdminKmzCreatorInferenceScript");
+
+      // Phase 7 runtime cleanup removes retired Research Review / MAP VIEWER surfaces and groups maintenance tools.
+      await loadScript("js/admin-cleanup.js?v=1", "campsiteAdminCleanupScript");
+
       await loadScript("js/admin-map-deps.js?v=1", "campsiteAdminMapDepsScript");
       await window.CampsiteAdminMapDeps?.ready?.();
 
@@ -80,9 +87,7 @@
       await loadScript("js/admin-review-records.js?v=1", "campsiteAdminReviewRecordsScript");
       await loadScript("js/admin-review-save-guard.js?v=1", "campsiteAdminReviewSaveGuardScript");
 
-      // 旧 admin-past-site-state.js はロールバック用にリポジトリへ残すが、Phase 3以降は読み込まない。
-      await loadScript("js/admin-poi-freshness.js?v=1", "campsiteAdminPoiFreshnessScript");
-      await loadScript("js/ai-review-queue.js?v=1", "campsiteAiReviewQueueScript");
+      // Phase 7 removed the standalone past-state modal, POI freshness check and Campsite-side AI review queue.
     } catch (error) {
       console.error("管理者機能初期化エラー", error);
     }
