@@ -88,7 +88,7 @@
       await loadStyle("css/admin-review-mobile-layout.css?v=3", "campsiteAdminReviewMobileLayoutStyle");
       await loadScript("js/admin-review-records.js?v=1", "campsiteAdminReviewRecordsScript");
       await loadScript("js/admin-review-save-guard.js?v=1", "campsiteAdminReviewSaveGuardScript");
-      await loadScript("js/admin-review-mobile-ux.js?v=1", "campsiteAdminReviewMobileUxScript");
+      await loadScript("js/admin-review-mobile-ux.js?v=2", "campsiteAdminReviewMobileUxScript");
 
       // Phase 7 removed the standalone past-state modal, POI freshness check and Campsite-side AI review queue.
     } catch (error) {
