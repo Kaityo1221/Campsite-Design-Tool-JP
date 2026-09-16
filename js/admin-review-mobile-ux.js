@@ -1,5 +1,5 @@
 /* Mobile interaction guard for the admin review workspace.
-   - POI details can be dismissed explicitly or by tapping blank map.
+   - POI details and Leaflet popup share one dismiss state.
    - Starting scope edit dismisses any open POI detail.
    - Scope-edit hit testing itself is handled by mobile layout CSS. */
 (function () {
@@ -8,6 +8,7 @@
   if (window.AdminReviewMobileUx) return;
 
   let queued = false;
+  let syncingPopupClose = false;
 
   function workspace() {
     return document.getElementById("adminReviewWorkspace");
@@ -21,8 +22,21 @@
     return Boolean(document.querySelector("#adminReviewWorkspace #adminReviewScopeControl [data-ars-save]"));
   }
 
-  function dismissPoi() {
+  function closeLeafletPopup() {
+    if (syncingPopupClose) return;
+    const closeButton = workspace()?.querySelector(".leaflet-popup-close-button");
+    if (!closeButton) return;
+    syncingPopupClose = true;
+    try {
+      closeButton.click();
+    } finally {
+      queueMicrotask(() => { syncingPopupClose = false; });
+    }
+  }
+
+  function dismissPoi(options = {}) {
     inspector()?.classList.add("arw-poi-dismissed");
+    if (options.closePopup !== false) closeLeafletPopup();
   }
 
   function revealPoi() {
@@ -65,6 +79,11 @@
   document.addEventListener("click", event => {
     const target = event.target;
     if (!(target instanceof Element)) return;
+
+    if (target.closest(".leaflet-popup-close-button")) {
+      dismissPoi({ closePopup: false });
+      return;
+    }
 
     if (target.closest("#adminReviewScopeControl [data-ars-edit]")) {
       dismissPoi();
