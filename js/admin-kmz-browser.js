@@ -19,6 +19,23 @@
     });
   }
 
+  function loadStyle(href, id) {
+    return new Promise((resolve, reject) => {
+      if (document.getElementById(id)) {
+        resolve();
+        return;
+      }
+
+      const link = document.createElement("link");
+      link.id = id;
+      link.rel = "stylesheet";
+      link.href = href;
+      link.onload = () => resolve();
+      link.onerror = () => reject(new Error(`${href} を読み込めませんでした。`));
+      document.head.appendChild(link);
+    });
+  }
+
   async function boot() {
     try {
       if (!window.CampsiteAdminAuth) {
@@ -40,7 +57,14 @@
       await loadScript("js/admin-kmz-creator-inference.js?v=1", "campsiteAdminKmzCreatorInferenceScript");
       await loadScript("js/admin-map-deps.js?v=1", "campsiteAdminMapDepsScript");
       await window.CampsiteAdminMapDeps?.ready?.();
-      await loadScript("js/admin-past-site-state.js?v=1", "campsiteAdminPastSiteStateScript");
+
+      // Phase 3: 履歴比較を独立モーダルではなく審査ワークスペースへ統合する。
+      await loadStyle("css/admin-review-workspace.css?v=1", "campsiteAdminReviewWorkspaceStyle");
+      await loadScript("js/admin-review-workspace.js?v=1", "campsiteAdminReviewWorkspaceScript");
+      await loadScript("js/admin-review-workspace-bridge.js?v=1", "campsiteAdminReviewWorkspaceBridgeScript");
+      await loadScript("js/admin-site-review-list.js?v=1", "campsiteAdminSiteReviewListScript");
+
+      // 旧 admin-past-site-state.js はロールバック用にリポジトリへ残すが、Phase 3では読み込まない。
       await loadScript("js/admin-poi-freshness.js?v=1", "campsiteAdminPoiFreshnessScript");
       await loadScript("js/ai-review-queue.js?v=1", "campsiteAiReviewQueueScript");
     } catch (error) {

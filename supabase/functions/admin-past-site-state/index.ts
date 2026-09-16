@@ -76,13 +76,17 @@ function publicPoi(row: any) {
   };
 }
 
-function publicHistory(upload: any, rows: any[]) {
+function fileNameFor(upload: any): string {
+  return upload?.display_file_name || upload?.original_file_name || "";
+}
+
+function publicSnapshot(upload: any, rows: any[]) {
   return {
     id: upload.id,
     siteId: upload.site_id || null,
     createdAt: upload.created_at,
     parkName: upload.park_name || "",
-    fileName: upload.display_file_name || upload.original_file_name || "",
+    fileName: fileNameFor(upload),
     pois: rows.map(publicPoi),
   };
 }
@@ -119,20 +123,13 @@ async function loadSiteHistory(sb: any, currentUpload: any, currentRows: any[]) 
   const history: any[] = [];
   for (const upload of uploads || []) {
     const rows = await loadRowsForUpload(sb, upload.id);
-    if (rows.length < 3) continue;
-    history.push(publicHistory(upload, rows));
+    history.push(publicSnapshot(upload, rows));
   }
 
   return jsonResponse({
     success: true,
     hasPast: history.length > 0,
-    current: {
-      id: currentUpload.id,
-      siteId: currentUpload.site_id,
-      createdAt: currentUpload.created_at,
-      parkName: currentUpload.park_name || "",
-      pois: currentRows.map(publicPoi),
-    },
+    current: publicSnapshot(currentUpload, currentRows),
     previous: history[0] || null,
     history,
     hasMoreHistory: history.length > 1,
@@ -144,6 +141,20 @@ async function loadSiteHistory(sb: any, currentUpload: any, currentRows: any[]) 
       assignmentCount: site.assignment_count,
     } : { id: currentUpload.site_id, name: currentUpload.park_name || "" },
     match: { source: "site_id", confident: true },
+  });
+}
+
+function currentOnly(currentUpload: any, currentRows: any[], reason: string) {
+  return jsonResponse({
+    success: true,
+    hasPast: false,
+    reason,
+    current: publicSnapshot(currentUpload, currentRows),
+    previous: null,
+    history: [],
+    hasMoreHistory: false,
+    site: currentUpload.site_id ? { id: currentUpload.site_id, name: currentUpload.park_name || "" } : null,
+    match: { source: currentUpload.site_id ? "site_id" : "none", confident: Boolean(currentUpload.site_id) },
   });
 }
 
@@ -168,7 +179,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
 
     const { data: currentUpload, error: uploadErr } = await sb
       .from("campsite_kmz_uploads")
-      .select("id, site_id, park_name, created_at, deleted_at")
+      .select("id, site_id, park_name, created_at, display_file_name, original_file_name, deleted_at")
       .eq("id", recordId)
       .maybeSingle();
     if (uploadErr || !currentUpload || currentUpload.deleted_at) {
@@ -176,12 +187,15 @@ Deno.serve(async (request: Request): Promise<Response> => {
     }
 
     const currentRows = await loadRowsForUpload(sb, recordId);
-    if (currentRows.length < 3) {
-      return jsonResponse({ success: true, hasPast: false, reason: "not_enough_current_pois", match: { source: currentUpload.site_id ? "site_id" : "none", confident: Boolean(currentUpload.site_id) } });
-    }
 
+    // site_id があればPOI観測件数に関係なく、サイト履歴を直接使う。
     if (currentUpload.site_id) {
       return await loadSiteHistory(sb, currentUpload, currentRows);
+    }
+
+    // 古い記録でPOI観測が少ない場合も、ワークスペースでは現在KMZを直接描画できる。
+    if (currentRows.length < 3) {
+      return currentOnly(currentUpload, currentRows, "not_enough_current_pois");
     }
 
     // Legacy fallback for old/unassigned records.
@@ -217,7 +231,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
     const currentIds = new Set(currentRows.map((r: any) => r.master_poi_id).filter(Boolean));
     const currentPark = norm(currentUpload.park_name);
     const candidateIds = [...grouped.keys()].slice(0, 80);
-    if (!candidateIds.length) return jsonResponse({ success: true, hasPast: false, reason: "no_nearby_history", match: { source: "poi_footprint", confident: false } });
+    if (!candidateIds.length) return currentOnly(currentUpload, currentRows, "no_nearby_history");
 
     const { data: candidateUploads } = await sb
       .from("campsite_kmz_uploads")
@@ -241,17 +255,18 @@ Deno.serve(async (request: Request): Promise<Response> => {
       accepted.push({ upload, rows, score });
     }
 
-    if (!accepted.length) return jsonResponse({ success: true, hasPast: false, reason: "no_confident_match", match: { source: "poi_footprint", confident: false } });
+    if (!accepted.length) return currentOnly(currentUpload, currentRows, "no_confident_match");
     accepted.sort((a, b) => new Date(b.upload.created_at).getTime() - new Date(a.upload.created_at).getTime());
-    const history = accepted.slice(0, 8).map((item) => publicHistory(item.upload, item.rows));
+    const history = accepted.slice(0, 8).map((item) => publicSnapshot(item.upload, item.rows));
 
     return jsonResponse({
       success: true,
       hasPast: true,
-      current: { id: currentUpload.id, siteId: null, createdAt: currentUpload.created_at, parkName: currentUpload.park_name || "", pois: currentRows.map(publicPoi) },
+      current: publicSnapshot(currentUpload, currentRows),
       previous: history[0],
       history,
       hasMoreHistory: history.length > 1,
+      site: null,
       match: { source: "poi_footprint", confident: true },
     });
   } catch (error) {
