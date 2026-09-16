@@ -1,5 +1,5 @@
-/* Mobile layout guard for the admin review workspace.
-   Keeps the Leaflet map usable even when the final-review panel is present. */
+/* Mobile map-first layout for the admin review workspace.
+   Keep the map as the primary surface and reduce stacked card chrome. */
 @media (max-width: 860px) {
   .admin-review-workspace.open {
     overflow-x: hidden;
@@ -13,28 +13,204 @@
     flex: 0 0 auto;
   }
 
+  /* Timeline becomes a light tab row instead of a row of cards. */
+  .arw-timeline {
+    gap: 2px;
+    padding: 4px 8px 2px;
+    background: #07101e;
+  }
+  .arw-time-btn {
+    min-width: 72px;
+    padding: 7px 9px 6px;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    background: transparent;
+  }
+  .arw-time-btn.active {
+    border-color: #38bdf8;
+    background: rgba(14,165,233,.06);
+  }
+
+  /* Summary becomes a compact text strip. */
+  .arw-summary {
+    display: flex;
+    gap: 14px;
+    overflow-x: auto;
+    padding: 8px 12px;
+    background: #020617;
+    -webkit-overflow-scrolling: touch;
+  }
+  .arw-stat,
+  .arw-summary .ars-summary-stat {
+    flex: 0 0 auto;
+    min-width: 0;
+    padding: 0;
+    border: 0 !important;
+    border-radius: 0;
+    background: transparent;
+  }
+  .arw-stat span {
+    display: inline;
+    margin-right: 5px;
+    font-size: 9px;
+  }
+  .arw-stat strong {
+    display: inline;
+    margin: 0;
+    font-size: 13px;
+  }
+  .arw-summary .arw-stat:nth-child(4),
+  .arw-summary .arw-stat:nth-child(5) {
+    display: none;
+  }
+
+  /* Give the map the stage. */
   .arw-main {
     display: block;
     position: relative;
     flex: 0 0 auto;
-    height: 58vh;
-    height: 58svh;
-    min-height: 420px;
-    max-height: 620px;
+    height: 68vh;
+    height: 68svh;
+    min-height: 500px;
+    max-height: 720px;
   }
-
   .arw-map-wrap {
     position: absolute;
     inset: 0;
-    min-height: 420px;
+    min-height: 500px;
   }
-
   .arw-map {
-    min-height: 420px;
+    min-height: 500px;
+  }
+  .arw-map-note {
+    display: none;
   }
 
+  /* Scope editor becomes a slim toolbar. */
+  .ars-control {
+    top: 8px !important;
+    left: 58px !important;
+    right: 8px !important;
+    width: auto !important;
+    padding: 7px 8px !important;
+    border: 1px solid rgba(148,163,184,.25) !important;
+    border-radius: 11px !important;
+    background: rgba(2,6,23,.88) !important;
+    box-shadow: 0 6px 18px rgba(0,0,0,.22) !important;
+  }
+  .ars-head strong { font-size: 10px; }
+  .ars-head span { font-size: 10px; }
+  .ars-counts,
+  .ars-help {
+    display: none !important;
+  }
+  .ars-actions {
+    margin-top: 6px !important;
+    gap: 5px !important;
+    flex-wrap: nowrap !important;
+  }
+  .ars-actions button {
+    min-height: 31px !important;
+    padding: 5px 8px !important;
+    border-radius: 8px !important;
+    font-size: 9px !important;
+  }
+
+  /* Default inspector disappears. AUTO CHECK stays as one small status chip. */
+  .arw-inspector {
+    position: absolute;
+    z-index: 700;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    max-height: none;
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+    pointer-events: none;
+  }
+  .arw-inspector:not(:has(.arw-poi-name)) > .arw-panel:not(.aar-panel) {
+    display: none !important;
+  }
+  .arw-inspector:not(:has(.arw-poi-name)) .aar-panel {
+    display: block;
+    width: max-content;
+    max-width: calc(100% - 70px);
+    margin: 0 0 0 auto !important;
+    padding: 7px 10px !important;
+    border: 1px solid rgba(148,163,184,.24) !important;
+    border-radius: 999px !important;
+    background: rgba(2,6,23,.9) !important;
+    box-shadow: 0 5px 18px rgba(0,0,0,.24);
+    pointer-events: auto;
+  }
+  .arw-inspector:not(:has(.arw-poi-name)) .aar-head {
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+  }
+  .arw-inspector:not(:has(.arw-poi-name)) .aar-head > div > span,
+  .arw-inspector:not(:has(.arw-poi-name)) .aar-note,
+  .arw-inspector:not(:has(.arw-poi-name)) .aar-check,
+  .arw-inspector:not(:has(.arw-poi-name)) .aar-foot {
+    display: none !important;
+  }
+  .arw-inspector:not(:has(.arw-poi-name)) .aar-head h3 {
+    margin: 0;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+  .arw-inspector:not(:has(.arw-poi-name)) .aar-head > strong {
+    padding: 3px 7px;
+    font-size: 10px;
+  }
+
+  /* POI tap opens the inspector only when it is actually needed. */
+  .arw-inspector:has(.arw-poi-name) {
+    max-height: 38%;
+    overflow: auto;
+    border: 1px solid rgba(148,163,184,.2);
+    border-radius: 13px;
+    background: rgba(11,18,32,.96);
+    box-shadow: 0 12px 34px rgba(0,0,0,.32);
+    backdrop-filter: blur(10px);
+    pointer-events: auto;
+  }
+  .arw-inspector:has(.arw-poi-name) .aar-panel {
+    display: none !important;
+  }
+  .arw-inspector:has(.arw-poi-name) .arw-panel {
+    padding: 10px;
+  }
+
+  /* Final review stays below the map but loses the nested card-within-card look. */
   .admin-review-workspace > .arr-panel {
     flex: 0 0 auto;
+    margin: 0 !important;
+    padding: 18px 12px 28px !important;
+    border: 0 !important;
+    border-top: 1px solid rgba(56,189,248,.22) !important;
+    border-radius: 0 !important;
+    background: #020617 !important;
+  }
+  .arr-head {
+    margin-bottom: 12px;
+  }
+  .arr-form,
+  .arr-history-wrap {
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+  }
+  .arr-history-wrap {
+    margin-top: 18px;
+    padding-top: 14px !important;
+    border-top: 1px solid rgba(148,163,184,.14) !important;
   }
 }
 
@@ -42,11 +218,20 @@
   .arw-main,
   .arw-map-wrap,
   .arw-map {
-    min-height: 440px;
+    min-height: 520px;
   }
-
   .arw-main {
-    height: 60vh;
-    height: 60svh;
+    height: 70vh;
+    height: 70svh;
+  }
+  .arw-summary {
+    gap: 12px;
+    padding: 7px 10px;
+  }
+  .arw-time-btn {
+    min-width: 68px;
+  }
+  .ars-control {
+    left: 54px !important;
   }
 }
