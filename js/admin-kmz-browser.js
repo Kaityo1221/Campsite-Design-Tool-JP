@@ -29,6 +29,10 @@
         await loadScript("js/admin-secure-api.js?v=1", "campsiteAdminSecureApiScript");
       }
 
+      if (!window.CampsiteAdminPolicyApi) {
+        await loadScript("js/admin-policy-api.js?v=1", "campsiteAdminPolicyApiScript");
+      }
+
       await loadScript("js/admin-backfill-control.js?v=3", "campsiteAdminBackfillControlScript");
       await loadScript("js/admin-kmz-browser-v2.js?v=2", "campsiteAdminKmzBrowserV2Script");
       await loadScript("js/admin-kmz-card-collapse.js?v=3", "campsiteAdminKmzCardCollapseScript");
