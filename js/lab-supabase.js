@@ -17,6 +17,16 @@ if (window.supabase && typeof window.supabase.createClient === "function") {
   console.warn("Supabase SDKを読み込めませんでした。送信機能は無効です。");
 }
 
+/* Shared policy source of truth. Safe fallback values live inside this client. */
+(() => {
+  if (window.CampsitePolicy || document.getElementById("campsitePolicyScript")) return;
+  const script = document.createElement("script");
+  script.id = "campsitePolicyScript";
+  script.src = "js/campsite-policy.js?v=1";
+  script.async = false;
+  document.head.appendChild(script);
+})();
+
 async function loadCampsiteEngineDecisions(testBatchId = "kasai-rinkai-20260625-v1") {
   if (!window.campsiteSupabase) {
     console.warn("Supabase client is not ready.");

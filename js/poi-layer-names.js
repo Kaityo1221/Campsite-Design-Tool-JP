@@ -56,6 +56,14 @@
     return /(pok[eé]?stop|gym|powerspot|power|ポケスト|ジム|パワー)/i.test(String(name || ''));
   };
 
+  const getConfiguredTotalPoiLimit = () => {
+    if (!window.CampsitePolicy?.getLimit) return 25;
+    const limit = window.CampsitePolicy.getLimit('total');
+    if (limit === null) return null;
+    const parsed = Number(limit);
+    return Number.isInteger(parsed) && parsed >= 0 ? parsed : 25;
+  };
+
   window.getPreSubmitAddedPoiCount = function getPreSubmitAddedPoiCount() {
     const points = window._layerPoints || {};
     return Object.entries(points).reduce((sum, [name, list]) => {
@@ -82,12 +90,20 @@
     const names = layerNames();
     const hasData = names.length > 0;
     const newPoiCount = window.getPreSubmitAddedPoiCount();
+    const totalPoiLimit = getConfiguredTotalPoiLimit();
+    const hasPoiLimit = totalPoiLimit !== null;
     return [
       {
         id: 'addedLimit',
-        label: '新規POIは25個以内に収まっている',
-        state: !hasData ? 'warn' : (newPoiCount <= 25 ? 'ok' : 'ng'),
-        detail: !hasData ? '完成KMZを読み込むと自動確認します。' : `新規POI：${newPoiCount}件 / 最大25件`
+        label: hasPoiLimit
+          ? `新規POIは${totalPoiLimit}個以内に収まっている`
+          : '新規POI数を確認している（上限なし）',
+        state: !hasData ? 'warn' : (!hasPoiLimit || newPoiCount <= totalPoiLimit ? 'ok' : 'ng'),
+        detail: !hasData
+          ? '完成KMZを読み込むと自動確認します。'
+          : (hasPoiLimit
+            ? `新規POI：${newPoiCount}件 / 最大${totalPoiLimit}件`
+            : `新規POI：${newPoiCount}件 / 上限なし`)
       },
       {
         id: 'layers',
