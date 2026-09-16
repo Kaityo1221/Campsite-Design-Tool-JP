@@ -83,16 +83,22 @@
     return rows;
   }
 
+  function policyLimit(value, fallback) {
+    if (value === null) return null;
+    const n = Number(value);
+    return Number.isFinite(n) && n >= 0 ? n : fallback;
+  }
+
   function currentPolicy() {
     const snapshot = window.CampsitePolicy?.getSnapshot?.() || {};
     return {
       versionNo: Number(snapshot.versionNo) || 0,
       spacingMeters: Number(snapshot.spacingMeters) || 50,
       limits: {
-        total: snapshot?.limits?.total ?? 25,
-        pokestop: snapshot?.limits?.pokestop ?? 12,
-        gym: snapshot?.limits?.gym ?? 8,
-        powerSpot: snapshot?.limits?.powerSpot ?? 5
+        total: policyLimit(snapshot?.limits?.total, 25),
+        pokestop: policyLimit(snapshot?.limits?.pokestop, 12),
+        gym: policyLimit(snapshot?.limits?.gym, 8),
+        powerSpot: policyLimit(snapshot?.limits?.powerSpot, 5)
       },
       fallback: window.CampsitePolicy?.isUsingFallback?.() === true
     };
@@ -264,6 +270,12 @@
     const p = result.policy;
     const c = result.counts;
     const issues = result.spacingPairs.length + result.duplicatePairs.length + result.limitWarnings.length;
+    const hasHold = c.unknown > 0;
+    const headerBadge = issues
+      ? `<strong class="aar-warn">⚠️ ${issues}</strong>`
+      : hasHold
+        ? `<strong class="aar-wait">○ 保留</strong>`
+        : `<strong class="aar-good">✅ 0</strong>`;
     const limits = [
       `合計 ${c.totalAdded}/${limitText(p.limits.total)}`,
       `PokéStop ${c.pokestop}/${limitText(p.limits.pokestop)}`,
@@ -274,7 +286,7 @@
     panel.innerHTML = `
       <div class="aar-head">
         <div><span>AUTO CHECK</span><h3>自動チェック</h3></div>
-        <strong class="${issues ? "aar-warn" : "aar-good"}">${issues ? `⚠️ ${issues}` : "✅ 0"}</strong>
+        ${headerBadge}
       </div>
       <p class="aar-note">審査対象 ${result.scoped.length}件。現在ポリシー v${p.versionNo || "-"} / 距離 ${p.spacingMeters}m${p.fallback ? "（fallback）" : ""}</p>
       <div class="aar-check ${result.spacingPairs.length ? "warn" : "ok"}">
