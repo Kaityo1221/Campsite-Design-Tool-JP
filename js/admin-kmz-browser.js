@@ -85,9 +85,10 @@
       // Phase 6: 人間が確定した4段階レビューをサーバーへrevision保存する。
       await loadStyle("css/admin-review-records.css?v=1", "campsiteAdminReviewRecordsStyle");
       // Mobile QA: load last so the map-first overrides win over desktop card chrome.
-      await loadStyle("css/admin-review-mobile-layout.css?v=2", "campsiteAdminReviewMobileLayoutStyle");
+      await loadStyle("css/admin-review-mobile-layout.css?v=3", "campsiteAdminReviewMobileLayoutStyle");
       await loadScript("js/admin-review-records.js?v=1", "campsiteAdminReviewRecordsScript");
       await loadScript("js/admin-review-save-guard.js?v=1", "campsiteAdminReviewSaveGuardScript");
+      await loadScript("js/admin-review-mobile-ux.js?v=1", "campsiteAdminReviewMobileUxScript");
 
       // Phase 7 removed the standalone past-state modal, POI freshness check and Campsite-side AI review queue.
     } catch (error) {
