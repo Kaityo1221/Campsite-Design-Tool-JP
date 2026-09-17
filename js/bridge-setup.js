@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '1.0.0';
+  const VERSION = '1.0.1';
   const MANUAL_DEVICE_KEY = 'campsiteBridgeSetup.manualDevice.v1';
   const VALID_DEVICES = new Set(['apple', 'android', 'pc']);
 
@@ -104,10 +104,29 @@
     }
   }
 
+  function configureAndroidExtensionLink() {
+    const element = document.getElementById('androidExtensionLink');
+    if (!element) return;
+    element.classList.remove('is-disabled');
+    element.setAttribute('aria-disabled', 'false');
+    element.removeAttribute('data-unavailable');
+    if (CONFIG.androidExtensionUrl) {
+      element.href = CONFIG.androidExtensionUrl;
+      element.target = '_blank';
+      element.rel = 'noopener';
+      element.textContent = 'Campsite Bridgeを導入';
+    } else {
+      element.href = '#androidXpiSteps';
+      element.removeAttribute('target');
+      element.removeAttribute('rel');
+      element.textContent = '導入手順を見る';
+    }
+  }
+
   function configureLinks() {
     setHref('appleShortcutLink', CONFIG.appleShortcutUrl, 'ショートカットの公開準備中です');
     setHref('androidFirefoxLink', CONFIG.firefoxAndroidUrl, 'Firefoxの案内を準備中です');
-    setHref('androidExtensionLink', CONFIG.androidExtensionUrl, 'Campsite Bridge Firefox拡張機能の公開準備中です');
+    configureAndroidExtensionLink();
     setHref('appleWayfarerLink', CONFIG.wayfarerUrl, 'Wayfarerを開けません');
     setHref('androidWayfarerLink', CONFIG.wayfarerUrl, 'Wayfarerを開けません');
   }
