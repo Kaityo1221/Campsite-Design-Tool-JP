@@ -8,6 +8,8 @@ on:
       - 'js/bridge-setup.js'
       - 'js/bridge-setup-config.js'
       - 'js/bridge-shortcut/shortcut-launcher.js'
+      - 'dist/android-bridge-0.3.4/**'
+      - 'scripts/build-android-bridge-xpi.mjs'
       - 'scripts/check-bridge-setup.mjs'
       - '.github/workflows/bridge-setup-check.yml'
   workflow_dispatch:
