@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover,user-scalable=no">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>CREATIVE MODE | Bridge</title>
+<style>html,body{margin:0;min-height:100%;background:#17130f;color:#fff8e8;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.boot{min-height:100vh;display:grid;place-items:center;padding:24px;text-align:center}.boot strong{font-size:20px}.boot small{display:block;margin-top:10px;color:#d8c9a8;line-height:1.7}</style>
+</head>
+<body>
+<div class="boot"><div><strong>🌉 → 🎨 CREATIVE MODE</strong><small>選択したPOIと活動範囲を読み込んでいます…</small></div></div>
+<script>
+(async()=>{
+  'use strict';
+  try{
+    const response=await fetch('./index.html',{cache:'no-store',credentials:'same-origin'});
+    if(!response.ok)throw new Error(`creative/index.html ${response.status}`);
+    let html=await response.text();
+    const needle='src=window.applyCreativePatches(src);';
+    if(!html.includes(needle))throw new Error('Creative patch hook not found');
+    html=html.replace('</head>','<script src="./bridge-project-patch.js?v=1"></'+'script></head>');
+    html=html.replace(needle,needle+"if(typeof window.applyCreativeBridgeProjectPatch==='function')src=window.applyCreativeBridgeProjectPatch(src);");
+    document.open();
+    document.write(html);
+    document.close();
+  }catch(error){
+    console.error('[CREATIVE MODE Bridge] boot failed',error);
+    document.body.innerHTML='<div class="boot"><div><strong>⚠️ CREATIVE MODEを読み込めませんでした</strong><small>ページを再読み込みしてください。</small></div></div>';
+  }
+})();
+</script>
+</body>
+</html>
