@@ -8,6 +8,7 @@ const creativePatch = fs.readFileSync('creative/bridge-project-patch.js', 'utf8'
 const creativeBridge = fs.readFileSync('creative/bridge.html', 'utf8');
 const distanceBridge = fs.readFileSync('bridge-distance.html', 'utf8');
 const distanceProject = fs.readFileSync('js/bridge-distance-project.js', 'utf8');
+const previewPage = fs.readFileSync('bridge-next-preview.html', 'utf8');
 const gateway = fs.readFileSync('bridge-gateway.html', 'utf8');
 
 function storage() {
@@ -22,10 +23,13 @@ function storage() {
 }
 
 const sessionStorage = storage();
+const localStorage = storage();
+localStorage.setItem('campsiteBridgeNextPreview.v1', '1');
 const nextContext = {
   window: {},
   location: { search: '?campsiteBridgeImport=1', href: '' },
   sessionStorage,
+  localStorage,
   document: { addEventListener() {}, getElementById() { return null; } },
   URLSearchParams,
   console,
@@ -46,6 +50,7 @@ vm.runInContext(nextFlow, nextContext);
 const api = nextContext.window.CampsiteBridgeNextFlow;
 assert.ok(api, 'Bridge Next API missing');
 assert.equal(api.projectKey, 'campsiteProject.v1');
+assert.equal(api.previewKey, 'campsiteBridgeNextPreview.v1');
 
 const project = api.buildProject({
   version: '0.8.5',
@@ -71,12 +76,36 @@ assert.equal(project.sourcePois.length, 3);
 assert.equal(project.selectedPois.length, 2);
 assert.equal(project.currentPois.length, 2);
 assert.equal(project.polygon.length, 3);
+assert.equal(project.meta.preview, true);
 assert.deepEqual([...project.selectedPois[0].provenance], ['WAYFARER_PASSIVE']);
 assert.equal(project.selectedPois[1].sponsored, true);
 assert.deepEqual([...project.edits], []);
 assert.deepEqual([...project.addedPois], []);
 assert.deepEqual([...project.deletedPois], []);
 assert.equal(project.distanceResult, null);
+
+const offContext = {
+  window: {},
+  location: { search: '?campsiteBridgeImport=1', href: '' },
+  sessionStorage: storage(),
+  localStorage: storage(),
+  document: { addEventListener() {}, getElementById() { return null; } },
+  URLSearchParams,
+  console,
+  setTimeout() {},
+  crypto: crypto.webcrypto,
+  Math,
+  Date,
+  JSON,
+  Map,
+  Object,
+  Number,
+  String,
+  Array
+};
+vm.createContext(offContext);
+vm.runInContext(nextFlow, offContext);
+assert.equal(offContext.window.CampsiteBridgeNextFlow, undefined, 'Preview OFF must keep legacy flow');
 
 const patchContext = { window: {}, console, JSON, String };
 vm.createContext(patchContext);
@@ -115,8 +144,14 @@ assert.ok(distanceProject.includes("latest.phase = 'distance'"));
 assert.ok(distanceProject.includes("latest.phase = 'pre-submit'"));
 assert.ok(distanceProject.includes("'[data-go-pre-submit]'"));
 
+assert.ok(previewPage.includes("const KEY='campsiteBridgeNextPreview.v1'"));
+assert.ok(previewPage.includes("localStorage.setItem(KEY,'1')"));
+assert.ok(previewPage.includes("localStorage.removeItem(KEY)"));
+assert.ok(previewPage.includes('新フローをON'));
+assert.ok(previewPage.includes('新フローをOFF'));
+
 const selectionPos = gateway.indexOf('js/bridge-selection.js?v=3');
 const nextPos = gateway.indexOf('js/bridge-next-flow.js?v=1');
 assert.ok(selectionPos >= 0 && nextPos > selectionPos, 'Next flow must load after polygon selection');
 
-console.log('Bridge -> Project -> Creative -> Distance -> Pre-submit contract: OK');
+console.log('Bridge -> Project -> Creative -> Distance -> Pre-submit preview contract: OK');
