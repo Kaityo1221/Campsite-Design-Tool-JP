@@ -16,7 +16,11 @@ has(html, 'data-device-panel="android"');
 has(html, 'data-device-panel="pc"');
 has(html, '正式版 1.0.0');
 has(html, '現在のテスト版を利用できます');
+has(html, 'id="androidVersion"');
+has(html, 'M3.4 / 0.3.4');
+has(html, 'id="androidXpiChecksum"');
 has(html, 'id="androidXpiSteps"');
+has(html, 'Campsite Bridge <strong>0.3.4</strong>');
 
 has(js, "/iPad/i.test(ua)");
 has(js, "platform === 'MacIntel' && touchPoints > 1");
@@ -25,10 +29,16 @@ has(js, "/Android/i.test(ua)");
 has(js, 'campsiteBridgeSetup.manualDevice.v1');
 has(js, "CONFIG.appleManualSetupUrl");
 has(js, 'isValidAppleShortcutUrl');
+has(js, "document.getElementById('androidVersion')");
+has(js, "document.getElementById('androidXpiChecksum')");
 
 has(config, "appleManualSetupUrl: './bridge-shortcut-install.html'");
 has(config, "appleRuntimeVersion: '1.0.0'");
 has(config, "appleShortcutUrl: 'https://www.icloud.com/shortcuts/3ddc90767d114bfba66de3a5d1a12d01'");
+has(config, "androidRuntimeVersion: '0.3.4'");
+has(config, "androidReleaseLabel: 'M3.4'");
+has(config, "androidXpiSha256: '13e57ace3468832c171df06bb92c983d66a22bc0f390c0ff15d0df3deff741b6'");
+has(config, "androidExtensionUrl: ''");
 
 has(install, 'ランチャーコードをコピー');
 has(install, 'Safariの共有メニュー');
