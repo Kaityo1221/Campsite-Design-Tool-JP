@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '1.0.1';
+  const VERSION = '1.0.2';
   const MANUAL_DEVICE_KEY = 'campsiteBridgeSetup.manualDevice.v1';
   const VALID_DEVICES = new Set(['apple', 'android', 'pc']);
 
@@ -104,6 +104,33 @@
     }
   }
 
+  function isValidAppleShortcutUrl(value) {
+    const candidate = text(value).trim();
+    if (!candidate) return false;
+
+    try {
+      const url = new URL(candidate);
+      const isICloud = /(^|\.)icloud\.com$/i.test(url.hostname);
+      const isShortcutPath = /^\/shortcuts\/[^/?#]+\/?$/i.test(url.pathname);
+      return url.protocol === 'https:' && isICloud && isShortcutPath;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function configureAppleShortcutLink() {
+    const url = isValidAppleShortcutUrl(CONFIG.appleShortcutUrl)
+      ? text(CONFIG.appleShortcutUrl).trim()
+      : '';
+    setHref(
+      'appleShortcutLink',
+      url,
+      CONFIG.appleShortcutUrl
+        ? 'ショートカット共有URLを確認してください'
+        : 'ショートカットの公開準備中です'
+    );
+  }
+
   function configureAndroidExtensionLink() {
     const element = document.getElementById('androidExtensionLink');
     if (!element) return;
@@ -124,7 +151,7 @@
   }
 
   function configureLinks() {
-    setHref('appleShortcutLink', CONFIG.appleShortcutUrl, 'ショートカットの公開準備中です');
+    configureAppleShortcutLink();
     setHref('androidFirefoxLink', CONFIG.firefoxAndroidUrl, 'Firefoxの案内を準備中です');
     configureAndroidExtensionLink();
     setHref('appleWayfarerLink', CONFIG.wayfarerUrl, 'Wayfarerを開けません');
@@ -227,6 +254,7 @@
     version: VERSION,
     detectDevice,
     detectBrowser,
+    isValidAppleShortcutUrl,
     clearManualDevice() {
       writeManualDevice(null);
       render(detectDevice(), 'auto');
