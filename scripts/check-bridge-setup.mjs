@@ -1,6 +1,9 @@
 import fs from 'node:fs';
 import crypto from 'node:crypto';
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
+
+execFileSync(process.execPath, ['scripts/build-android-bridge-xpi.mjs'], { stdio: 'inherit' });
 
 const html = fs.readFileSync('bridge-setup.html', 'utf8');
 const install = fs.readFileSync('bridge-shortcut-install.html', 'utf8');
@@ -44,6 +47,7 @@ has(config, "androidRuntimeVersion: '0.3.4'");
 has(config, "androidReleaseLabel: 'M3.4'");
 has(config, "androidXpiSha256: '13e57ace3468832c171df06bb92c983d66a22bc0f390c0ff15d0df3deff741b6'");
 has(config, "androidExtensionUrl: './downloads/campsite-bridge-android-0.3.4.xpi'");
+assert.equal(androidXpi.length, 34607, 'Android 0.3.4 XPI size mismatch');
 assert.equal(androidXpiSha256, '13e57ace3468832c171df06bb92c983d66a22bc0f390c0ff15d0df3deff741b6', 'Android 0.3.4 XPI SHA-256 mismatch');
 
 has(install, 'ランチャーコードをコピー');
