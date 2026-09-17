@@ -6,6 +6,8 @@ import crypto from 'node:crypto';
 const nextFlow = fs.readFileSync('js/bridge-next-flow.js', 'utf8');
 const creativePatch = fs.readFileSync('creative/bridge-project-patch.js', 'utf8');
 const creativeBridge = fs.readFileSync('creative/bridge.html', 'utf8');
+const distanceBridge = fs.readFileSync('bridge-distance.html', 'utf8');
+const distanceProject = fs.readFileSync('js/bridge-distance-project.js', 'utf8');
 const gateway = fs.readFileSync('bridge-gateway.html', 'utf8');
 
 function storage() {
@@ -82,6 +84,10 @@ vm.runInContext(creativePatch, patchContext);
 assert.equal(typeof patchContext.window.applyCreativeBridgeProjectPatch, 'function');
 const transformed = patchContext.window.applyCreativeBridgeProjectPatch(`before\n  document.open();document.write(html);document.close();\nafter`);
 assert.ok(transformed.includes('loadCampsiteBridgeProject'));
+assert.ok(transformed.includes('syncCampsiteProjectFromCreative'));
+assert.ok(transformed.includes('installCampsiteProjectNext'));
+assert.ok(transformed.includes("role:campsProjectRole(r.layer)"));
+assert.ok(transformed.includes("location.href='../bridge-distance.html?campsiteProject=bridge'"));
 assert.ok(transformed.includes("type==='GYM'"));
 assert.ok(transformed.includes("type==='POWERSPOT'"));
 assert.ok(transformed.includes("return'existing-pokestop'"));
@@ -91,8 +97,26 @@ assert.ok(creativeBridge.includes('./bridge-project-patch.js?v=1'));
 assert.ok(creativeBridge.includes('applyCreativeBridgeProjectPatch'));
 assert.ok(creativeBridge.includes("campsiteProject=bridge") === false, 'Bridge entry should not hard-code a second redirect');
 
+assert.ok(distanceBridge.includes('js/bridge-distance-project.js?v=1'));
+assert.ok(distanceBridge.includes("fetch('./index.html'"));
+assert.ok(distanceBridge.includes("params.get('campsiteProject')!=='bridge'"));
+assert.ok(distanceProject.includes("const PROJECT_KEY = 'campsiteProject.v1'"));
+assert.ok(distanceProject.includes("'既存 PokéStop'"));
+assert.ok(distanceProject.includes("'既存 Gym'"));
+assert.ok(distanceProject.includes("'既存 PowerSpot'"));
+assert.ok(distanceProject.includes("'新規 PokéStop'"));
+assert.ok(distanceProject.includes("'新規 Gym'"));
+assert.ok(distanceProject.includes("'新規 PowerSpot'"));
+assert.ok(distanceProject.includes('window._layerPoints = groups'));
+assert.ok(distanceProject.includes('window._activityPolygons'));
+assert.ok(distanceProject.includes("window._inputType = 'project'"));
+assert.ok(distanceProject.includes('buildDistanceSnapshot'));
+assert.ok(distanceProject.includes("latest.phase = 'distance'"));
+assert.ok(distanceProject.includes("latest.phase = 'pre-submit'"));
+assert.ok(distanceProject.includes("'[data-go-pre-submit]'"));
+
 const selectionPos = gateway.indexOf('js/bridge-selection.js?v=3');
 const nextPos = gateway.indexOf('js/bridge-next-flow.js?v=1');
 assert.ok(selectionPos >= 0 && nextPos > selectionPos, 'Next flow must load after polygon selection');
 
-console.log('Bridge -> Campsite Project -> Creative Mode contract: OK');
+console.log('Bridge -> Project -> Creative -> Distance -> Pre-submit contract: OK');
