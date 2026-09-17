@@ -1,0 +1,32 @@
+name: Bridge Next Flow Check
+
+on:
+  pull_request:
+    paths:
+      - 'bridge-gateway.html'
+      - 'js/bridge-next-flow.js'
+      - 'creative/bridge.html'
+      - 'creative/bridge-project-patch.js'
+      - 'scripts/check-bridge-next-flow.mjs'
+      - '.github/workflows/bridge-next-flow-check.yml'
+  workflow_dispatch:
+
+jobs:
+  bridge-next-flow:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Contract check
+        run: node scripts/check-bridge-next-flow.mjs
+
+      - name: Syntax check
+        run: |
+          node --check js/bridge-next-flow.js
+          node --check creative/bridge-project-patch.js
