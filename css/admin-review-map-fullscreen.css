@@ -1,0 +1,74 @@
+/* Mobile PRE-CHECK map: balanced preview + in-workspace fullscreen mode. */
+@media (max-width: 860px) {
+  /* Normal mode keeps the map useful without forcing it to consume the whole screen. */
+  .admin-review-workspace.open:not(.arw-map-fullscreen) .arw-main {
+    flex: 0 0 auto !important;
+    height: clamp(320px, 58svh, 560px) !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    margin-bottom: calc(12px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .arw-map-fullscreen {
+    overflow: hidden !important;
+  }
+
+  .arw-map-fullscreen .arw-topbar,
+  .arw-map-fullscreen #adminPrecheckSummary,
+  .arw-map-fullscreen .arw-timeline,
+  .arw-map-fullscreen .arw-summary,
+  .arw-map-fullscreen > .arr-panel {
+    display: none !important;
+  }
+
+  .arw-map-fullscreen .arw-main {
+    position: absolute !important;
+    inset: 0 !important;
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .arw-map-fullscreen .arw-map-wrap,
+  .arw-map-fullscreen .arw-map {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+  }
+
+  .arw-map-fullscreen-toggle {
+    position: absolute;
+    z-index: 1250;
+    left: 10px;
+    bottom: calc(42px + env(safe-area-inset-bottom));
+    min-height: 38px;
+    padding: 0 12px;
+    border: 1px solid rgba(226,232,240,.34);
+    border-radius: 11px;
+    background: rgba(2,6,23,.9);
+    color: #f8fafc;
+    box-shadow: 0 6px 18px rgba(0,0,0,.28);
+    backdrop-filter: blur(10px);
+    font-size: 10px;
+    font-weight: 950;
+    line-height: 1;
+    touch-action: manipulation;
+  }
+
+  .arw-map-fullscreen .arw-map-fullscreen-toggle {
+    bottom: calc(42px + env(safe-area-inset-bottom));
+    background: rgba(15,23,42,.94);
+  }
+}
+
+@media (max-width: 520px) {
+  .admin-review-workspace.open:not(.arw-map-fullscreen) .arw-main {
+    height: clamp(320px, 58svh, 500px) !important;
+  }
+}
