@@ -4,12 +4,13 @@
   "type": "module",
   "scripts": {
     "check:spacing": "node scripts/check-poi-spacing-consistency.mjs",
+    "check:bridge-setup": "node scripts/check-bridge-setup.mjs",
     "check:field-mode": "npm run check:spacing && node scripts/check-field-mode.mjs && node scripts/check-field-layer-step4.mjs && node scripts/check-field-complete-step5.mjs",
     "check:field-prep": "node scripts/check-field-prep.mjs && node scripts/check-field-prep-step2.mjs && node scripts/check-field-prep-step3.mjs",
     "test:field-mode": "playwright test tests/field-mode*.spec.mjs",
     "test:field-prep": "playwright test tests/field-prep*.spec.mjs",
     "test:field-e2e": "playwright test tests/field-e2e.spec.mjs",
-    "test": "npm run check:field-mode && npm run check:field-prep && npm run test:field-mode && npm run test:field-prep && npm run test:field-e2e"
+    "test": "npm run check:bridge-setup && npm run check:field-mode && npm run check:field-prep && npm run test:field-mode && npm run test:field-prep && npm run test:field-e2e"
   },
   "devDependencies": {
     "@playwright/test": "^1.55.0",
