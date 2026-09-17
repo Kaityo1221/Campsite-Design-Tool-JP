@@ -1,0 +1,27 @@
+name: Campsite Bridge Setup Check
+
+on:
+  pull_request:
+    paths:
+      - 'bridge-setup.html'
+      - 'js/bridge-setup.js'
+      - 'js/bridge-setup-config.js'
+      - 'scripts/check-bridge-setup.mjs'
+      - 'package.json'
+      - '.github/workflows/bridge-setup-check.yml'
+  workflow_dispatch:
+
+jobs:
+  bridge-setup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Bridge setup contract check
+        run: npm run check:bridge-setup
