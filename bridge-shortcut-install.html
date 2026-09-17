@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>Campsite Bridge iPhoneセットアップ</title>
+<style>
+:root{color-scheme:dark;--bg:#020617;--panel:#0f172a;--line:rgba(148,163,184,.2);--text:#f8fafc;--muted:#cbd5e1;--blue:#38bdf8;--green:#4ade80}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif;background:radial-gradient(circle at 10% 0%,rgba(56,189,248,.14),transparent 34%),var(--bg);color:var(--text)}
+main{width:min(100% - 20px,720px);margin:0 auto;padding:26px 0 56px}.hero{text-align:center;padding:8px 8px 16px}.mark{font-size:46px}.eyebrow{margin-top:8px;color:#bae6fd;font-size:11px;font-weight:900;letter-spacing:.08em}.hero h1{margin:8px 0 6px;font-size:clamp(28px,8vw,42px)}.hero p{margin:0;color:var(--muted);font-size:13px;line-height:1.7}.badge{display:inline-flex;margin-top:12px;padding:6px 10px;border:1px solid rgba(74,222,128,.3);border-radius:999px;background:rgba(34,197,94,.09);color:#bbf7d0;font-size:11px;font-weight:900}.card{margin-top:14px;padding:18px;border:1px solid var(--line);border-radius:20px;background:rgba(15,23,42,.9);box-shadow:0 20px 50px rgba(0,0,0,.18)}.step-no{display:inline-flex;padding:4px 8px;border-radius:999px;background:rgba(56,189,248,.1);color:#bae6fd;font-size:10px;font-weight:900}.card h2{margin:10px 0 7px;font-size:18px}.card p,.card li{color:var(--muted);font-size:13px;line-height:1.75}.card ol{margin:8px 0 0;padding-left:20px}.btn{display:flex;align-items:center;justify-content:center;width:100%;min-height:50px;margin-top:14px;border:1px solid rgba(56,189,248,.38);border-radius:14px;background:rgba(14,165,233,.14);color:#e0f2fe;text-decoration:none;font-size:14px;font-weight:950;cursor:pointer}.btn.secondary{border-color:rgba(148,163,184,.22);background:rgba(51,65,85,.35);color:#e2e8f0}.codebox{margin-top:12px;padding:12px;border:1px solid rgba(148,163,184,.16);border-radius:12px;background:#020617;color:#cbd5e1;font:11px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;word-break:break-all;max-height:180px;overflow:auto}.status{margin-top:10px;color:#bbf7d0;font-size:12px;min-height:18px}.note{margin-top:10px;padding:10px 12px;border-left:3px solid #38bdf8;background:rgba(14,165,233,.08);color:#dbeafe;font-size:12px;line-height:1.7}.footer{margin-top:18px;text-align:center;color:#64748b;font-size:10px;line-height:1.7}
+</style>
+</head>
+<body>
+<main>
+  <header class="hero">
+    <div class="mark">🌉</div>
+    <div class="eyebrow">CAMPSITE BRIDGE</div>
+    <h1>iPhone / iPad セットアップ</h1>
+    <p>SafariのショートカットからCampsite Bridgeを起動します。</p>
+    <span id="versionBadge" class="badge">正式版 1.0.0</span>
+  </header>
+
+  <section class="card">
+    <span class="step-no">STEP 1</span>
+    <h2>ショートカットを作成</h2>
+    <ol>
+      <li>「ショートカット」アプリで新しいショートカットを作ります。</li>
+      <li>SafariのWebページでJavaScriptを実行するアクションを追加します。</li>
+      <li>ショートカット名を「Campsite Bridge」にします。</li>
+    </ol>
+  </section>
+
+  <section class="card">
+    <span class="step-no">STEP 2</span>
+    <h2>Bridgeランチャーを貼り付け</h2>
+    <p>下のボタンで起動コードをコピーし、JavaScript欄へ貼り付けます。本体はGitHub Pages上の最新版を読み込むため、今後の更新でショートカットを作り直す必要はありません。</p>
+    <button id="copyLauncher" type="button" class="btn">ランチャーコードをコピー</button>
+    <div id="copyStatus" class="status" aria-live="polite"></div>
+    <pre id="launcherPreview" class="codebox">読み込み中...</pre>
+  </section>
+
+  <section class="card">
+    <span class="step-no">STEP 3</span>
+    <h2>Safariから実行できるようにする</h2>
+    <p>ショートカットをSafariの共有メニューから実行できる設定にします。入力はSafariのWebページを受け取る構成にしてください。</p>
+    <div class="note">Wayfarer以外のページで実行した場合は、Bridgeを起動せず案内を表示します。</div>
+  </section>
+
+  <section class="card">
+    <span class="step-no">STEP 4</span>
+    <h2>Wayfarerで確認</h2>
+    <p>SafariでWayfarerを開き、作成した「Campsite Bridge」を実行します。画面にBridgeパネルが表示されればセットアップ完了です。</p>
+    <a class="btn" href="https://wayfarer.nianticlabs.com/new/" target="_blank" rel="noopener">SafariでWayfarerを開く</a>
+    <a class="btn secondary" href="./bridge-setup.html">端末判定ページへ戻る</a>
+  </section>
+
+  <p class="footer">Campsite Bridge Shortcutは、軽量ランチャーから公開済みランタイムを読み込む方式です。</p>
+</main>
+<script>
+(() => {
+  'use strict';
+  const launcherUrl = './js/bridge-shortcut/shortcut-launcher.js';
+  const latestUrl = './js/bridge-shortcut/latest.json';
+  const preview = document.getElementById('launcherPreview');
+  const status = document.getElementById('copyStatus');
+  let launcherCode = '';
+
+  async function load() {
+    try {
+      const [launcherResponse, latestResponse] = await Promise.all([
+        fetch(`${launcherUrl}?t=${Date.now()}`, { cache: 'no-store' }),
+        fetch(`${latestUrl}?t=${Date.now()}`, { cache: 'no-store' })
+      ]);
+      if (!launcherResponse.ok) throw new Error(`launcher HTTP ${launcherResponse.status}`);
+      launcherCode = await launcherResponse.text();
+      preview.textContent = launcherCode;
+      if (latestResponse.ok) {
+        const latest = await latestResponse.json();
+        if (latest?.version) document.getElementById('versionBadge').textContent = `正式版 ${latest.version}`;
+      }
+    } catch (error) {
+      preview.textContent = 'ランチャーを読み込めませんでした。';
+      status.textContent = String(error?.message || error);
+    }
+  }
+
+  document.getElementById('copyLauncher').addEventListener('click', async () => {
+    if (!launcherCode) return;
+    try {
+      await navigator.clipboard.writeText(launcherCode);
+      status.textContent = '✓ コピーしました';
+    } catch (_) {
+      preview.focus?.();
+      status.textContent = 'コピーできない場合は、下のコードを長押ししてコピーしてください。';
+    }
+  });
+
+  load();
+})();
+</script>
+</body>
+</html>
