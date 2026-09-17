@@ -107,7 +107,7 @@
   function configureLinks() {
     setHref('appleShortcutLink', CONFIG.appleShortcutUrl, 'ショートカットの公開準備中です');
     setHref('androidFirefoxLink', CONFIG.firefoxAndroidUrl, 'Firefoxの案内を準備中です');
-    setHref('androidExtensionLink', CONFIG.androidExtensionUrl, 'Firefox版Campsite Bridgeの公開準備中です');
+    setHref('androidExtensionLink', CONFIG.androidExtensionUrl, 'Campsite Bridge Firefox拡張機能の公開準備中です');
     setHref('appleWayfarerLink', CONFIG.wayfarerUrl, 'Wayfarerを開けません');
     setHref('androidWayfarerLink', CONFIG.wayfarerUrl, 'Wayfarerを開けません');
   }
