@@ -1,0 +1,18 @@
+{
+  "product": "Campsite Bridge",
+  "platform": "iPhone / iPad Shortcut",
+  "version": "1.0.0",
+  "source": "0.2.7 NOFLICKER",
+  "sha256": "2de1ccb8ee057335a2dd31ccafbc48862c5fc3221bd2b232e05696a20380bb7e",
+  "output": "js/bridge-shortcut/campsite-bridge-shortcut-runtime-1.0.0.js",
+  "parts": [
+    "runtime.part-00.js",
+    "runtime.part-01.js",
+    "runtime.part-02.js",
+    "runtime.part-03.js",
+    "runtime.part-04.js",
+    "runtime.part-05.js",
+    "runtime.part-06.js",
+    "runtime.part-07.js"
+  ]
+}
