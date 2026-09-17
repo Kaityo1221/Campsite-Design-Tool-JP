@@ -37,7 +37,7 @@
       })
       .then(html => {
         const leafletCss = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">';
-        const bridgeColorCss = '<style>#campsiteBridgeSelection .bridge-dot.gym{background:#facc15!important}#campsiteBridgeSelection .bridge-dot.power{background:#f472b6!important}</style>';
+        const bridgeColorCss = '<style>#campsiteBridgeSelection .bridge-dot.gym{background:#facc15!important}#campsiteBridgeSelection .bridge-dot.power{background:#f472b6!important}#loginScreen,#splashScreen,#openingScreen{display:none!important}</style>';
         const bridgeScripts = [
           '<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></' + 'script>',
           '<script>(()=>{const original=L.circleMarker;L.circleMarker=function(latlng,options){if(options?.className==="bridge-poi-marker"){const next={...options};if(next.fillColor==="#f472b6")next.fillColor="#facc15";else if(next.fillColor==="#facc15")next.fillColor="#f472b6";return original.call(this,latlng,next);}return original.call(this,latlng,options);};})();</' + 'script>',
