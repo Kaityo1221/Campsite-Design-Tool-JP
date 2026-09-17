@@ -5,9 +5,12 @@
   const PROJECT_KEY = 'campsiteProject.v1';
   const ADAPTER_KEY = 'campsiteBridgeAdapter.v0.3';
   const SELECTION_PREFIX = 'campsiteBridgeSelection.';
+  const PREVIEW_KEY = 'campsiteBridgeNextPreview.v1';
   const params = new URLSearchParams(location.search);
 
   if (params.get('campsiteBridgeImport') !== '1') return;
+  const previewEnabled = params.get('campsiteBridgeNext') === '1' || localStorage.getItem(PREVIEW_KEY) === '1';
+  if (!previewEnabled) return;
   if (window.__campsiteBridgeNextFlowInstalled) return;
   window.__campsiteBridgeNextFlowInstalled = true;
 
@@ -72,7 +75,8 @@
         selectedCount: selectedPois.length,
         bridgeSelectionVersion: String(selection.version || ''),
         bridgeAdapterVersion: String(adapter?.version || ''),
-        nextFlowVersion: VERSION
+        nextFlowVersion: VERSION,
+        preview: true
       }
     };
   }
@@ -118,6 +122,7 @@
   window.CampsiteBridgeNextFlow = Object.freeze({
     version: VERSION,
     projectKey: PROJECT_KEY,
+    previewKey: PREVIEW_KEY,
     buildProject
   });
 })();
