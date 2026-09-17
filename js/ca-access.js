@@ -261,6 +261,19 @@
     if (legacyLogin) legacyLogin.remove();
 
     const splash = document.getElementById("splashScreen");
+
+    if (AUTO_APPROVED_HANDOFF) {
+      splash?.remove();
+      document.getElementById("openingScreen")?.remove();
+      document.body.classList.remove("opening-mode");
+      try {
+        window.dispatchEvent(new CustomEvent("campsite:ca-access-ready", {
+          detail: { handoff: true }
+        }));
+      } catch (_) {}
+      return;
+    }
+
     if (!splash) return;
 
     document.body.classList.add("opening-mode");
@@ -278,6 +291,7 @@
     ensureGate();
 
     if (!window.campsiteSupabase?.auth) {
+      revealGate();
       setStatus("認証システムを読み込めませんでした。", "error");
       return;
     }
@@ -288,6 +302,7 @@
     const session = await waitForSession();
 
     if (!session) {
+      revealGate();
       setButtons({ login: true });
       setStatus("");
       return;
@@ -297,32 +312,39 @@
       const result = await invokeAccess();
 
       if (result?.isApproved === true || result?.status === "approved") {
+        if (AUTO_APPROVED_HANDOFF) {
+          unlockMainPage({ silent: true });
+          return;
+        }
+        revealGate();
         setButtons({ login: false, enter: true, status: false, logout: true });
         setStatus("承認済みです。ボタンを押して開始してください。", "ok");
         return;
       }
 
       if (result?.status === "pending") {
-        setButtons({ login: false, enter: false, status: true, logout: true });
+        revealGate();\n        setButtons({ login: false, enter: false, status: true, logout: true });
         setStatus(`承認申請を送信しました。会長の承認待ちです。${result.discordGlobalName || result.discordName ? ` (${result.discordGlobalName || result.discordName})` : ""}`, "pending");
         return;
       }
 
       if (result?.status === "rejected") {
-        setButtons({ login: false, enter: false, status: true, logout: true });
+        revealGate();\n        setButtons({ login: false, enter: false, status: true, logout: true });
         setStatus("このアカウントの申請は現在承認されていません。", "error");
         return;
       }
 
       if (result?.status === "revoked") {
-        setButtons({ login: false, enter: false, status: true, logout: true });
+        revealGate();\n        setButtons({ login: false, enter: false, status: true, logout: true });
         setStatus("このアカウントの利用許可は停止されています。", "error");
         return;
       }
 
+      revealGate();
       setButtons({ login: false, enter: false, status: true, logout: true });
       setStatus("承認状態を確認できませんでした。", "error");
     } catch (_) {
+      revealGate();
       setButtons({ login: false, enter: false, status: true, logout: true });
       setStatus("承認状態の確認に失敗しました。時間をおいて再度お試しください。", "error");
     }
@@ -338,7 +360,7 @@
 
   function disableLegacyPasscode() {
     window.checkAccessCode = function () {
-      ensureGate();
+      revealGate();
       setStatus("現在はDiscord認証を使用しています。", "pending");
     };
   }
