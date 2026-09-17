@@ -176,4 +176,10 @@ assert.ok(receiver.includes("setTimeout(showReceiverDetail, 2500)"), 'Receiver d
 assert.ok(receiver.includes('bridge-receiver-detail'), 'Receiver must support diagnostic detail mode');
 assert.ok(gateway.includes('#loginScreen,#splashScreen,#openingScreen{display:none!important}'), 'Gateway must suppress legacy login/splash flash');
 
+
+const creativeBase = fs.readFileSync('creative/base-v7.html', 'utf8');
+assert.ok(creativeBase.includes('<title>CREATIVE MODE | Next Lab</title>'), 'Pinned base-v7 snapshot missing');
+assert.ok(creativeBase.includes("const map=L.map('map'"), 'Pinned base-v7 map runtime missing');
+assert.ok(creativeIndex.includes('id="creativeBootStatus"'), 'Creative loading status must stay visible during bootstrap');
+assert.ok(creativeIndex.includes('CREATIVE MODE本体を準備しています'), 'Creative loading status must advance after auth');
 console.log('Bridge -> Project -> Creative -> Distance -> Pre-submit preview contract: OK');
