@@ -59,7 +59,7 @@
     }
 
     if (!window.CampsiteCaAccess) {
-      await loadScript(new URL('ca-access.js?v=4', base).href);
+      await loadScript(new URL('ca-access.js?v=5', base).href);
     }
 
     if (!window.CampsiteCaGeoGuard) {
