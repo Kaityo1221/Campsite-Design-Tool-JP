@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '1.1.0';
+  const VERSION = '1.1.1';
   const MANUAL_DEVICE_KEY = 'campsiteBridgeSetup.manualDevice.v1';
   const VALID_DEVICES = new Set(['apple', 'android', 'pc']);
   const CONFIG = Object.freeze({
@@ -9,6 +9,9 @@
     appleManualSetupUrl: './bridge-shortcut-install.html',
     appleRuntimeVersion: '1.0.0',
     androidExtensionUrl: '',
+    androidRuntimeVersion: '0.3.4',
+    androidReleaseLabel: 'M3.4',
+    androidXpiSha256: '',
     firefoxAndroidUrl: 'https://play.google.com/store/apps/details?id=org.mozilla.firefox',
     wayfarerUrl: 'https://wayfarer.nianticlabs.com/new/',
     ...(window.CampsiteBridgeSetupConfig || {})
@@ -88,6 +91,20 @@
 
     const appleVersion = document.getElementById('appleVersion');
     if (appleVersion) appleVersion.textContent = `正式版 ${CONFIG.appleRuntimeVersion}`;
+
+    const androidVersion = document.getElementById('androidVersion');
+    if (androidVersion) {
+      const label = text(CONFIG.androidReleaseLabel).trim();
+      const version = text(CONFIG.androidRuntimeVersion).trim();
+      androidVersion.textContent = [label, version].filter(Boolean).join(' / ');
+    }
+
+    const androidChecksum = document.getElementById('androidXpiChecksum');
+    if (androidChecksum) {
+      const checksum = text(CONFIG.androidXpiSha256).trim();
+      androidChecksum.textContent = checksum ? `SHA-256: ${checksum}` : '';
+      androidChecksum.hidden = !checksum;
+    }
 
     setLink('androidFirefoxLink', CONFIG.firefoxAndroidUrl, { disabledText: 'Firefoxの案内を準備中です' });
 
