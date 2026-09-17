@@ -47,6 +47,13 @@ includes(html, 'js/bridge-setup-config.js?v=1');
 includes(config, "appleShortcutUrl: ''");
 includes(config, "androidExtensionUrl: ''");
 
+// Android current test build remains usable even before a public XPI URL exists.
+includes(html, '現在のテスト版を利用できます');
+includes(html, 'Install Extension from File / ファイルから拡張機能をインストール');
+includes(html, 'Firefoxロゴを素早く5回タップ');
+includes(html, 'WayfarerのMap画面で「🌉 Bridge」が表示されれば導入完了です。');
+includes(js, "element.href = '#androidXpiSteps';", 'Android setup must fall back to the signed XPI instructions');
+
 // New flow must not contain retired installation methods.
 assert.equal(/Userscripts/i.test(all), false, 'Userscripts must not appear in the new Bridge setup flow');
 assert.equal(/Tampermonkey/i.test(all), false, 'Tampermonkey must not appear in the new Bridge setup flow');
