@@ -14,6 +14,10 @@
   const GATE_ID = "caAccessGate";
   const LOGIN_SOUND_URL = "assets/login.mp3";
   const LOGIN_SOUND_GAIN = 0.08;
+  const HANDOFF_PARAMS = new URLSearchParams(window.location.search);
+  const AUTO_APPROVED_HANDOFF =
+    HANDOFF_PARAMS.get("campsiteBridgeImport") === "1" ||
+    HANDOFF_PARAMS.get("campsiteProject") === "bridge";
 
   let loginSoundBufferPromise = null;
 
@@ -23,6 +27,7 @@
     style.id = "caAccessGateStyles";
     style.textContent = `
       #${GATE_ID}{position:fixed;inset:0;z-index:2147483000;background:radial-gradient(circle at 50% 18%,#162238 0,#08111f 46%,#020617 100%);display:flex;align-items:center;justify-content:center;padding:22px;color:#fff;font-family:inherit}
+      #${GATE_ID}.ca-gate-handoff-pending{visibility:hidden;pointer-events:none}
       #${GATE_ID} .ca-gate-card{width:min(420px,100%);background:rgba(15,23,42,.94);border:1px solid rgba(148,163,184,.28);border-radius:22px;padding:28px 24px;box-shadow:0 24px 80px rgba(0,0,0,.45);text-align:center}
       #${GATE_ID} .ca-gate-lock{font-size:34px;margin-bottom:8px}
       #${GATE_ID} h2{margin:0 0 8px;font-size:24px}
@@ -67,11 +72,20 @@
         <p class="ca-gate-note">第三者・海外CAへのアカウント共有はできません。</p>
       </div>`;
 
+    if (AUTO_APPROVED_HANDOFF) {
+      gate.classList.add("ca-gate-handoff-pending");
+    }
     document.body.appendChild(gate);
     gate.querySelector("#caDiscordLoginButton")?.addEventListener("click", signInWithDiscord);
     gate.querySelector("#caEnterButton")?.addEventListener("click", unlockMainPage);
     gate.querySelector("#caStatusButton")?.addEventListener("click", checkAccess);
     gate.querySelector("#caLogoutButton")?.addEventListener("click", signOut);
+    return gate;
+  }
+
+  function revealGate() {
+    const gate = ensureGate();
+    gate.classList.remove("ca-gate-handoff-pending");
     return gate;
   }
 
@@ -252,8 +266,11 @@
     });
   }
 
-  function unlockMainPage() {
-    playLoginSoundRespectingSilentMode();
+  function unlockMainPage(options = {}) {
+    const silent = options?.silent === true;
+    if (!silent && !AUTO_APPROVED_HANDOFF) {
+      playLoginSoundRespectingSilentMode();
+    }
 
     document.getElementById(GATE_ID)?.remove();
 
@@ -323,19 +340,22 @@
       }
 
       if (result?.status === "pending") {
-        revealGate();\n        setButtons({ login: false, enter: false, status: true, logout: true });
+        revealGate();
+        setButtons({ login: false, enter: false, status: true, logout: true });
         setStatus(`承認申請を送信しました。会長の承認待ちです。${result.discordGlobalName || result.discordName ? ` (${result.discordGlobalName || result.discordName})` : ""}`, "pending");
         return;
       }
 
       if (result?.status === "rejected") {
-        revealGate();\n        setButtons({ login: false, enter: false, status: true, logout: true });
+        revealGate();
+        setButtons({ login: false, enter: false, status: true, logout: true });
         setStatus("このアカウントの申請は現在承認されていません。", "error");
         return;
       }
 
       if (result?.status === "revoked") {
-        revealGate();\n        setButtons({ login: false, enter: false, status: true, logout: true });
+        revealGate();
+        setButtons({ login: false, enter: false, status: true, logout: true });
         setStatus("このアカウントの利用許可は停止されています。", "error");
         return;
       }
@@ -354,6 +374,7 @@
     if (window.campsiteSupabase?.auth) {
       try { await window.campsiteSupabase.auth.signOut(); } catch (_) {}
     }
+    revealGate();
     setButtons({ login: true, enter: false });
     setStatus("ログアウトしました。");
   }
