@@ -87,7 +87,7 @@ window.loadCampsiteEngineDecisions = loadCampsiteEngineDecisions;
 /* Japan CA access gate: Discord OAuth + approval status */
 (() => {
   const access = document.createElement('script');
-  access.src = 'js/ca-access.js?v=4';
+  access.src = 'js/ca-access.js?v=5';
   access.async = false;
   access.onload = () => {
     const link = document.createElement('script');

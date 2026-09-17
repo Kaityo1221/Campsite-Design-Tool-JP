@@ -4,11 +4,20 @@ on:
   pull_request:
     paths:
       - 'bridge-gateway.html'
+      - 'bridge-receiver.html'
+      - 'bridge-next-preview.html'
+      - 'index.html'
+      - 'js/ca-access.js'
+      - 'js/ca-access-bootstrap.js'
+      - 'js/lab-supabase.js'
+      - 'js/poi-spacing-config.js'
       - 'bridge-distance.html'
       - 'bridge-next-preview.html'
       - 'js/bridge-next-flow.js'
       - 'js/bridge-distance-project.js'
       - 'creative/bridge.html'
+      - 'creative/index.html'
+      - 'creative/rain-dev.html'
       - 'creative/bridge-project-patch.js'
       - 'scripts/check-bridge-next-flow.mjs'
       - '.github/workflows/bridge-next-flow-check.yml'
@@ -33,4 +42,6 @@ jobs:
         run: |
           node --check js/bridge-next-flow.js
           node --check creative/bridge-project-patch.js
+          node --check js/ca-access.js
+          node --check js/ca-access-bootstrap.js
           node --check js/bridge-distance-project.js

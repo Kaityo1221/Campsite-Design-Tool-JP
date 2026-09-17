@@ -5,6 +5,11 @@
   if (window.__campsiteCaAccessBootstrapStarted) return;
   window.__campsiteCaAccessBootstrapStarted = true;
 
+  // document.currentScript is only reliable while this script is executing.
+  // Capture it before the first await so standalone pages can resolve sibling JS
+  // from /js/ even after asynchronous Supabase loading.
+  const BOOTSTRAP_SCRIPT_SRC = document.currentScript?.src || '';
+
   const SUPABASE_URL = 'https://azkshxjgsbtjgwbapcfw.supabase.co';
   const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_rWbeIqdWJJHHBtphER8bdg__CaS_xGK';
 
@@ -19,7 +24,24 @@
     });
   }
 
+  function getBootstrapBase() {
+    if (BOOTSTRAP_SCRIPT_SRC) {
+      return new URL('.', BOOTSTRAP_SCRIPT_SRC);
+    }
+
+    const loaded = Array.from(document.scripts || []).find(script =>
+      /\/ca-access-bootstrap\.js(?:\?|$)/.test(String(script.src || ''))
+    );
+    if (loaded?.src) {
+      return new URL('.', loaded.src);
+    }
+
+    return new URL('/Campsite-Design-Tool-JP/js/', window.location.origin);
+  }
+
   async function boot() {
+    const base = getBootstrapBase();
+
     if (!window.supabase?.createClient) {
       await loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2');
     }
@@ -31,17 +53,13 @@
       );
     }
 
-    const current = document.currentScript;
-    const currentSrc = current?.src || '';
-    const base = currentSrc ? new URL('.', currentSrc) : new URL('./js/', window.location.href);
-
     if (!window.CampsitePolicy) {
       await loadScript(new URL('campsite-policy.js?v=1', base).href);
       await window.CampsitePolicy?.ready;
     }
 
     if (!window.CampsiteCaAccess) {
-      await loadScript(new URL('ca-access.js?v=4', base).href);
+      await loadScript(new URL('ca-access.js?v=5', base).href);
     }
 
     if (!window.CampsiteCaGeoGuard) {

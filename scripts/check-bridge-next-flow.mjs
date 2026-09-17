@@ -154,4 +154,26 @@ const selectionPos = gateway.indexOf('js/bridge-selection.js?v=3');
 const nextPos = gateway.indexOf('js/bridge-next-flow.js?v=1');
 assert.ok(selectionPos >= 0 && nextPos > selectionPos, 'Next flow must load after polygon selection');
 
+
+const caAccess = fs.readFileSync('js/ca-access.js', 'utf8');
+const caBootstrap = fs.readFileSync('js/ca-access-bootstrap.js', 'utf8');
+const labSupabase = fs.readFileSync('js/lab-supabase.js', 'utf8');
+const receiver = fs.readFileSync('bridge-receiver.html', 'utf8');
+const mainIndex = fs.readFileSync('index.html', 'utf8');
+const creativeIndex = fs.readFileSync('creative/index.html', 'utf8');
+
+assert.ok(caBootstrap.indexOf('const BOOTSTRAP_SCRIPT_SRC') < caBootstrap.indexOf('async function boot()'), 'Bootstrap base must be captured before first await');
+assert.ok(caBootstrap.includes("ca-access.js?v=5"), 'Standalone bootstrap must load CA access v5');
+assert.ok(creativeIndex.includes('ca-access-bootstrap.js?v=2'), 'Creative must bust stale auth bootstrap cache');
+assert.ok(caAccess.includes('HANDOFF_PARAMS.get("campsiteBridgeImport") === "1"'), 'Gateway handoff must be recognized');
+assert.ok(caAccess.includes('HANDOFF_PARAMS.get("campsiteProject") === "bridge"'), 'Creative/distance handoff must be recognized');
+assert.ok(caAccess.includes('ca-gate-handoff-pending'), 'Handoff auth gate must stay hidden while session is checked');
+assert.ok(caAccess.includes('unlockMainPage({ silent: true })'), 'Approved handoff must auto-enter');
+assert.ok(labSupabase.includes("js/ca-access.js?v=5"), 'Main tool must load seamless CA access v5');
+assert.ok(mainIndex.includes('js/lab-supabase.js?v=20260918-bridge1'), 'Main index must bust stale auth loader cache');
+assert.ok(receiver.includes("setTimeout(goToCampsite, 450)"), 'Receiver must preserve ACK window before handoff');
+assert.ok(receiver.includes("setTimeout(showReceiverDetail, 2500)"), 'Receiver detail should be fallback-only');
+assert.ok(receiver.includes('bridge-receiver-detail'), 'Receiver must support diagnostic detail mode');
+assert.ok(gateway.includes('#loginScreen,#splashScreen,#openingScreen{display:none!important}'), 'Gateway must suppress legacy login/splash flash');
+
 console.log('Bridge -> Project -> Creative -> Distance -> Pre-submit preview contract: OK');
