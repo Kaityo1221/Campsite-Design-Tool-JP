@@ -6,6 +6,9 @@
     appleManualSetupUrl: './bridge-shortcut-install.html',
     appleRuntimeVersion: '1.0.0',
     androidExtensionUrl: '',
+    androidRuntimeVersion: '0.3.4',
+    androidReleaseLabel: 'M3.4',
+    androidXpiSha256: '13e57ace3468832c171df06bb92c983d66a22bc0f390c0ff15d0df3deff741b6',
     firefoxAndroidUrl: 'https://play.google.com/store/apps/details?id=org.mozilla.firefox',
     wayfarerUrl: 'https://wayfarer.nianticlabs.com/new/'
   });
