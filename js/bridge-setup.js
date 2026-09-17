@@ -9,7 +9,8 @@
     appleShortcutUrl: '',
     androidExtensionUrl: '',
     firefoxAndroidUrl: 'https://play.google.com/store/apps/details?id=org.mozilla.firefox',
-    wayfarerUrl: 'https://wayfarer.nianticlabs.com/new/'
+    wayfarerUrl: 'https://wayfarer.nianticlabs.com/new/',
+    ...(window.CampsiteBridgeSetupConfig || {})
   });
 
   function text(value) {
