@@ -114,6 +114,46 @@ jobs:
           print(f'Stamped Lab shell: {new}')
           PY
 
+      - name: Build Campsite Bridge Shortcut 1.0.0
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          src='dist/bridge-shortcut/1.0.0'
+          out_dir='js/bridge-shortcut'
+          versioned="$out_dir/campsite-bridge-shortcut-runtime-1.0.0.js"
+          latest="$out_dir/campsite-bridge-shortcut-runtime.js"
+          expected='2de1ccb8ee057335a2dd31ccafbc48862c5fc3221bd2b232e05696a20380bb7e'
+
+          mkdir -p "$out_dir"
+          cat "$src"/runtime.part-*.js > "$versioned"
+
+          actual="$(sha256sum "$versioned" | awk '{print $1}')"
+          if [ "$actual" != "$expected" ]; then
+            echo "Campsite Bridge Shortcut SHA-256 mismatch"
+            echo "expected: $expected"
+            echo "actual:   $actual"
+            exit 1
+          fi
+
+          node --check "$versioned"
+          cp "$versioned" "$latest"
+
+          cat > "$out_dir/latest.json" <<EOF
+          {
+            "product": "Campsite Bridge",
+            "platform": "iPhone / iPad Shortcut",
+            "version": "1.0.0",
+            "source": "0.2.7 NOFLICKER",
+            "sha256": "$expected",
+            "runtime": "campsite-bridge-shortcut-runtime-1.0.0.js",
+            "latest": "campsite-bridge-shortcut-runtime.js"
+          }
+          EOF
+
+          echo "Built Campsite Bridge Shortcut 1.0.0"
+          echo "SHA-256: $actual"
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
