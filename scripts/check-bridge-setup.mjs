@@ -49,6 +49,7 @@ includes(config, "androidExtensionUrl: ''");
 
 // Android current test build remains usable even before a public XPI URL exists.
 includes(html, '現在のテスト版を利用できます');
+includes(html, 'id="androidXpiSteps"');
 includes(html, 'Install Extension from File / ファイルから拡張機能をインストール');
 includes(html, 'Firefoxロゴを素早く5回タップ');
 includes(html, 'WayfarerのMap画面で「🌉 Bridge」が表示されれば導入完了です。');
