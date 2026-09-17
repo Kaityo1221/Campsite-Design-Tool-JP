@@ -47,6 +47,16 @@ includes(html, 'js/bridge-setup-config.js?v=1');
 includes(config, "appleShortcutUrl: ''");
 includes(config, "androidExtensionUrl: ''");
 
+// Apple Shortcut link must only activate for a real iCloud Shortcut share URL.
+includes(js, 'function isValidAppleShortcutUrl(value)');
+includes(js, "/(^|\\.)icloud\\.com$/i.test(url.hostname)");
+includes(js, "/^\\/shortcuts\\/[^/?#]+\\/?$/i.test(url.pathname)");
+includes(js, "url.protocol === 'https:' && isICloud && isShortcutPath");
+includes(js, 'function configureAppleShortcutLink()');
+includes(js, 'isValidAppleShortcutUrl(CONFIG.appleShortcutUrl)');
+includes(js, 'ショートカット共有URLを確認してください');
+includes(js, 'isValidAppleShortcutUrl,');
+
 // Android current test build remains usable even before a public XPI URL exists.
 includes(html, '現在のテスト版を利用できます');
 includes(html, 'id="androidXpiSteps"');
