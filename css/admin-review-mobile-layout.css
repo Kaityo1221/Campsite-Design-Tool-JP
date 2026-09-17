@@ -2,9 +2,7 @@
    Keep the map as the primary surface and reduce stacked card chrome. */
 @media (max-width: 860px) {
   .admin-review-workspace.open {
-    overflow-x: hidden;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    overflow: hidden;
   }
 
   .arw-topbar,
@@ -65,23 +63,23 @@
     display: none;
   }
 
-  /* Give the map the stage. */
+  /* Fill exactly the viewport space left below header / PRE-CHECK / history. */
   .arw-main {
     display: block;
     position: relative;
-    flex: 0 0 auto;
-    height: 68vh;
-    height: 68svh;
-    min-height: 500px;
-    max-height: 720px;
+    flex: 1 1 auto;
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    overflow: hidden;
   }
   .arw-map-wrap {
     position: absolute;
     inset: 0;
-    min-height: 500px;
+    min-height: 0;
   }
   .arw-map {
-    min-height: 500px;
+    min-height: 0;
   }
   .arw-map-note {
     display: none;
@@ -258,11 +256,7 @@
   .arw-main,
   .arw-map-wrap,
   .arw-map {
-    min-height: 520px;
-  }
-  .arw-main {
-    height: 70vh;
-    height: 70svh;
+    min-height: 0;
   }
   .arw-summary {
     gap: 12px;
