@@ -5,6 +5,7 @@ on:
     paths:
       - 'bridge-gateway.html'
       - 'bridge-distance.html'
+      - 'bridge-next-preview.html'
       - 'js/bridge-next-flow.js'
       - 'js/bridge-distance-project.js'
       - 'creative/bridge.html'
