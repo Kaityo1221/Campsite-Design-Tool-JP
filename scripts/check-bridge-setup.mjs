@@ -28,7 +28,7 @@ has(js, 'isValidAppleShortcutUrl');
 
 has(config, "appleManualSetupUrl: './bridge-shortcut-install.html'");
 has(config, "appleRuntimeVersion: '1.0.0'");
-has(config, "appleShortcutUrl: ''");
+has(config, "appleShortcutUrl: 'https://www.icloud.com/shortcuts/3ddc90767d114bfba66de3a5d1a12d01'");
 
 has(install, 'ランチャーコードをコピー');
 has(install, 'Safariの共有メニュー');
