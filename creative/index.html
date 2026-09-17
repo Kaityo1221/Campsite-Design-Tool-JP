@@ -5,9 +5,16 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover,user-scalable=no">
 <meta name="robots" content="noindex,nofollow,noarchive">
 <title>CREATIVE MODE | Campsite Lab</title>
+<style>
+html,body{margin:0;min-height:100%;background:#17130f;color:#fff8e8;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+#creativeBootStatus{min-height:100vh;display:grid;place-items:center;padding:24px;text-align:center}
+#creativeBootStatus strong{display:block;font-size:20px}
+#creativeBootStatus small{display:block;margin-top:10px;color:#d8c9a8;line-height:1.7}
+</style>
 <script src="../js/ca-access-bootstrap.js?v=2"></script>
 </head>
 <body>
+<div id="creativeBootStatus"><div><strong>🎨 CREATIVE MODE</strong><small>POIと活動範囲を読み込んでいます…</small></div></div>
 <script>
 (async()=>{
   'use strict';
@@ -20,7 +27,12 @@
   const ROOT=`https://raw.githubusercontent.com/Kaityo1221/Campsite-Design-Tool-Next-Lab/${SNAPSHOT}/creative/`;
   const urls=['runtime-vnext.html','creative-patches-v2.js','creative-patches-v3.js','creative-patches-v4.js'];
   const responses=await Promise.all(urls.map(name=>fetch(ROOT+name,{cache:'no-store'})));
-  if(responses.some(r=>!r.ok)){document.body.textContent='Creative Modeの読み込みに失敗しました。';return;}
+  const bootStatus=document.getElementById('creativeBootStatus');
+  if(bootStatus)bootStatus.querySelector('small').textContent='CREATIVE MODE本体を準備しています…';
+  if(responses.some(r=>!r.ok)){
+    document.body.innerHTML='<div id="creativeBootStatus"><div><strong>⚠️ CREATIVE MODE</strong><small>本体ファイルの読み込みに失敗しました。再読み込みしてください。</small></div></div>';
+    return;
+  }
   let src=await responses[0].text();
   for(let i=1;i<responses.length;i++) Function(await responses[i].text())();
   if(typeof window.applyCreativePatches!=='function'){document.body.textContent='Creative Modeの拡張機能を読み込めませんでした。';return;}
