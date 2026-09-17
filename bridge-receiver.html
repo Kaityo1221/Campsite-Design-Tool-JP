@@ -59,9 +59,18 @@
   if (params.get(DEV_PARAM) !== '1') return;
   const pageHandshakeId = String(params.get(HANDSHAKE_PARAM) || '').trim();
   document.body.classList.add('bridge-dev');
+  const receiverDebug = params.get('debug') === '1' || params.get('diagnostics') === '1';
 
   const $ = id => document.getElementById(id);
   let autoContinueTimer = null;
+  let receiverDetailTimer = null;
+
+  function showReceiverDetail() {
+    document.body.classList.add('bridge-receiver-detail');
+  }
+
+  if (receiverDebug) showReceiverDetail();
+  else receiverDetailTimer = setTimeout(showReceiverDetail, 2500);
 
   function boolOrNull(value) {
     if (value === true || String(value).toLowerCase() === 'true') return true;
@@ -200,6 +209,7 @@
       adapterStatus.textContent = `✅ ${adapter.afterCount}件をCampsite内部形式へ変換しました`;
       continueBtn.style.display = 'block';
     } else if (adapter.beforeCount > 0) {
+      showReceiverDetail();
       adapterStatus.className = 'status error';
       adapterStatus.textContent = '⚠ 変換できないPOIがあります';
       continueBtn.style.display = 'none';
@@ -261,12 +271,13 @@
 
   function goToCampsite() {
     if (!window.CampsiteBridgeAdapter?.pois?.length) return;
-    location.href = './bridge-gateway.html?campsiteBridgeImport=1';
+    clearTimeout(receiverDetailTimer);
+    location.replace('./bridge-gateway.html?campsiteBridgeImport=1');
   }
 
   function scheduleAutoContinue() {
     clearTimeout(autoContinueTimer);
-    autoContinueTimer = setTimeout(goToCampsite, 1300);
+    autoContinueTimer = setTimeout(goToCampsite, 450);
   }
 
   function postAckRepeated(target, targetOrigin, result, handshakeId) {
