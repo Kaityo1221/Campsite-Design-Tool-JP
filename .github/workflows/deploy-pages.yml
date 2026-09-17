@@ -154,6 +154,9 @@ jobs:
           echo "Built Campsite Bridge Shortcut 1.0.0"
           echo "SHA-256: $actual"
 
+      - name: Build Campsite Bridge Android 0.3.4
+        run: node scripts/build-android-bridge-xpi.mjs
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
