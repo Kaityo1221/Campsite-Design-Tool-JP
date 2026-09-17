@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import crypto from 'node:crypto';
 import assert from 'node:assert/strict';
 
 const html = fs.readFileSync('bridge-setup.html', 'utf8');
@@ -6,6 +7,9 @@ const install = fs.readFileSync('bridge-shortcut-install.html', 'utf8');
 const js = fs.readFileSync('js/bridge-setup.js', 'utf8');
 const config = fs.readFileSync('js/bridge-setup-config.js', 'utf8');
 const launcher = fs.readFileSync('js/bridge-shortcut/shortcut-launcher.js', 'utf8');
+const androidXpiPath = 'downloads/campsite-bridge-android-0.3.4.xpi';
+const androidXpi = fs.readFileSync(androidXpiPath);
+const androidXpiSha256 = crypto.createHash('sha256').update(androidXpi).digest('hex');
 const all = `${html}\n${install}\n${js}\n${config}\n${launcher}`;
 
 const has = (source, value, message) => assert.ok(source.includes(value), message || `Missing: ${value}`);
@@ -15,12 +19,13 @@ has(html, 'data-device-panel="apple"');
 has(html, 'data-device-panel="android"');
 has(html, 'data-device-panel="pc"');
 has(html, '正式版 1.0.0');
-has(html, '現在のテスト版を利用できます');
+has(html, 'Android実機確認済み');
 has(html, 'id="androidVersion"');
 has(html, 'M3.4 / 0.3.4');
 has(html, 'id="androidXpiChecksum"');
 has(html, 'id="androidXpiSteps"');
 has(html, 'Campsite Bridge <strong>0.3.4</strong>');
+has(html, 'bridge-setup-config.js?v=2');
 
 has(js, "/iPad/i.test(ua)");
 has(js, "platform === 'MacIntel' && touchPoints > 1");
@@ -38,7 +43,8 @@ has(config, "appleShortcutUrl: 'https://www.icloud.com/shortcuts/3ddc90767d114bf
 has(config, "androidRuntimeVersion: '0.3.4'");
 has(config, "androidReleaseLabel: 'M3.4'");
 has(config, "androidXpiSha256: '13e57ace3468832c171df06bb92c983d66a22bc0f390c0ff15d0df3deff741b6'");
-has(config, "androidExtensionUrl: ''");
+has(config, "androidExtensionUrl: './downloads/campsite-bridge-android-0.3.4.xpi'");
+assert.equal(androidXpiSha256, '13e57ace3468832c171df06bb92c983d66a22bc0f390c0ff15d0df3deff741b6', 'Android 0.3.4 XPI SHA-256 mismatch');
 
 has(install, 'ランチャーコードをコピー');
 has(install, 'Safariの共有メニュー');
