@@ -20,6 +20,8 @@ includes(html, 'data-device-choice="apple"');
 includes(html, 'data-device-choice="android"');
 includes(html, 'data-device-choice="pc"');
 includes(html, 'PC版は準備中です');
+assert.equal(/iPhone版\s*Campsite Bridge/i.test(all), false, 'Do not present iPhone as a separate Campsite Bridge product');
+assert.equal(/Android版\s*Campsite Bridge/i.test(all), false, 'Do not present Android as a separate Campsite Bridge product');
 
 // Apple / iPad detection contract.
 includes(js, "/iPad/i.test(ua)", 'Explicit iPad UA detection is required');
