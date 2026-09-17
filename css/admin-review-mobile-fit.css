@@ -1,0 +1,29 @@
+/* Mobile viewport fit refinement for the PRE-CHECK workspace.
+   Keep the opening map as one bounded panel instead of consuming the full remainder. */
+@media (max-width: 860px) {
+  .admin-review-workspace.open {
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .arw-main {
+    flex: 0 0 auto !important;
+    height: clamp(280px, 52svh, 480px) !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    margin-bottom: calc(12px + env(safe-area-inset-bottom));
+    overflow: hidden;
+  }
+
+  .arw-map-wrap,
+  .arw-map {
+    min-height: 0 !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .arw-main {
+    height: clamp(270px, 50svh, 430px) !important;
+  }
+}
