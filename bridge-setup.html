@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>Campsite Bridge セットアップ</title>
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#020617;
+  --panel:rgba(15,23,42,.84);
+  --panel2:rgba(2,6,23,.62);
+  --line:rgba(148,163,184,.18);
+  --text:#f8fafc;
+  --muted:#cbd5e1;
+  --blue:#38bdf8;
+  --green:#4ade80;
+  --purple:#a78bfa;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  min-height:100vh;
+  min-height:100dvh;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif;
+  color:var(--text);
+  background:
+    radial-gradient(circle at 10% 0%,rgba(56,189,248,.15),transparent 34%),
+    radial-gradient(circle at 92% 12%,rgba(167,139,250,.12),transparent 32%),
+    var(--bg);
+}
+button,a{-webkit-tap-highlight-color:transparent}
+.page{width:min(100% - 22px,760px);margin:0 auto;padding:max(24px,env(safe-area-inset-top)) 0 calc(56px + env(safe-area-inset-bottom))}
+.hero{text-align:center;padding:22px 8px 18px}
+.bridge-mark{font-size:44px;filter:drop-shadow(0 0 18px rgba(56,189,248,.25))}
+.eyebrow{margin-top:8px;color:#bae6fd;font-size:12px;font-weight:900;letter-spacing:.08em}
+h1{margin:8px 0 8px;font-size:clamp(30px,8vw,46px);line-height:1.08}
+.lead{margin:0;color:var(--muted);font-size:14px;line-height:1.8}
+.card{margin-top:14px;padding:20px;border:1px solid var(--line);border-radius:22px;background:linear-gradient(180deg,rgba(15,23,42,.92),rgba(15,23,42,.72));box-shadow:0 20px 60px rgba(0,0,0,.22)}
+.detected{position:relative;text-align:center;overflow:hidden}
+.detected::before{content:"";position:absolute;inset:-1px;pointer-events:none;background:linear-gradient(135deg,rgba(56,189,248,.08),transparent 45%,rgba(167,139,250,.06))}
+.source-badge{position:relative;display:inline-flex;padding:5px 9px;border:1px solid rgba(56,189,248,.28);border-radius:999px;background:rgba(14,165,233,.08);color:#bae6fd;font-size:10px;font-weight:900}
+.detected-icon{position:relative;display:block;margin:12px 0 4px;font-size:42px}
+.detected h2{position:relative;margin:0;font-size:22px}
+.detected p{position:relative;margin:7px 0 0;color:var(--muted);font-size:13px;line-height:1.7}
+.browser-row{position:relative;display:flex;justify-content:center;gap:8px;align-items:center;margin-top:14px;color:#94a3b8;font-size:12px}
+.browser-row strong{color:#e0f2fe}
+.browser-notice{position:relative;margin:14px 0 0;padding:11px 12px;border:1px solid rgba(251,191,36,.28);border-radius:13px;background:rgba(245,158,11,.08);color:#fef3c7;font-size:12px;line-height:1.7}
+.primary{position:relative;width:100%;min-height:52px;margin-top:16px;border:1px solid rgba(56,189,248,.42);border-radius:15px;background:linear-gradient(180deg,rgba(14,165,233,.28),rgba(2,132,199,.17));color:#f0f9ff;font-size:15px;font-weight:950;cursor:pointer}
+.status{margin-top:12px;padding:10px 12px;border:1px solid rgba(96,165,250,.25);border-radius:12px;background:rgba(59,130,246,.08);color:#dbeafe;font-size:12px;line-height:1.7}
+.flow{display:block}
+.flow[hidden]{display:none!important}
+.flow .flow-inner{display:none}
+.flow.started .flow-inner{display:block}
+.flow-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px}
+.flow-head .icon{font-size:28px}
+.flow-head h2{margin:0;font-size:20px}
+.flow-head p{margin:4px 0 0;color:var(--muted);font-size:12px;line-height:1.7}
+.step{padding:17px;border:1px solid rgba(148,163,184,.16);border-radius:17px;background:var(--panel2)}
+.step+.arrow{margin:7px 0;text-align:center;color:#64748b;font-size:22px}
+.step-no{display:inline-flex;margin-bottom:9px;padding:5px 8px;border:1px solid rgba(167,139,250,.28);border-radius:999px;background:rgba(139,92,246,.09);color:#ddd6fe;font-size:10px;font-weight:950;letter-spacing:.05em}
+.step h3{margin:0 0 7px;font-size:17px;line-height:1.45}
+.step p,.step ol{margin:0;color:var(--muted);font-size:13px;line-height:1.75}
+.step ol{padding-left:20px}
+.link-btn{display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;margin-top:13px;padding:11px 13px;border:1px solid rgba(56,189,248,.34);border-radius:13px;background:rgba(14,165,233,.12);color:#e0f2fe;text-align:center;text-decoration:none;font-size:13px;font-weight:950}
+.link-btn.is-disabled{border-color:rgba(148,163,184,.16);background:rgba(51,65,85,.3);color:#94a3b8;cursor:not-allowed}
+.complete{border-color:rgba(74,222,128,.25);background:rgba(20,83,45,.12)}
+.manual-title{margin:0 0 5px;font-size:17px}
+.manual-sub{margin:0 0 13px;color:#94a3b8;font-size:12px;line-height:1.65}
+.device-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.device-choice{min-height:88px;padding:10px 5px;border:1px solid rgba(148,163,184,.18);border-radius:15px;background:rgba(2,6,23,.48);color:var(--text);cursor:pointer}
+.device-choice.selected{border-color:rgba(56,189,248,.66);background:rgba(14,165,233,.12);box-shadow:inset 0 0 0 1px rgba(56,189,248,.08)}
+.device-choice span{display:block;font-size:25px}
+.device-choice strong{display:block;margin-top:5px;font-size:11px;line-height:1.35}
+.reset{width:100%;margin-top:10px;padding:10px;border:0;background:transparent;color:#7dd3fc;font-size:11px;font-weight:800;cursor:pointer}
+.footer{margin-top:18px;text-align:center;color:#64748b;font-size:10px;line-height:1.7}
+@media(max-width:460px){.card{padding:16px}.device-choice strong{font-size:10px}.page{width:min(100% - 16px,760px)}}
+</style>
+</head>
+<body>
+<main class="page">
+  <header class="hero">
+    <div class="bridge-mark">🌉</div>
+    <div class="eyebrow">CAMPSITE BRIDGE</div>
+    <h1>Campsite Bridge</h1>
+    <p class="lead">あなたの端末に合わせてセットアップします。</p>
+  </header>
+
+  <section class="card detected" aria-live="polite">
+    <span id="deviceSourceBadge" class="source-badge">自動判定</span>
+    <span id="detectedIcon" class="detected-icon">🌉</span>
+    <h2 id="detectedTitle">端末を確認しています</h2>
+    <p id="detectedDescription">Campsite Bridgeを設定します。</p>
+    <div class="browser-row">使用ブラウザ：<strong id="recommendedBrowser">確認中</strong></div>
+    <p id="browserNotice" class="browser-notice" hidden></p>
+    <button id="setupStartButton" type="button" class="primary">セットアップを開始</button>
+    <div id="bridgeSetupStatus" class="status" hidden></div>
+  </section>
+
+  <section class="card flow" data-device-panel="apple" hidden>
+    <div class="flow-head">
+      <span class="icon">🍎</span>
+      <div><h2>iPhone / iPad</h2><p>ショートカットを設定し、SafariでWayfarerを利用します。</p></div>
+    </div>
+    <div class="flow-inner">
+      <div class="step">
+        <span class="step-no">STEP 1</span>
+        <h3>Campsite Bridgeショートカットを追加</h3>
+        <p>Campsite Bridgeのショートカットを端末へ追加します。iPhoneとiPadは同じ手順です。</p>
+        <a id="appleShortcutLink" class="link-btn" target="_blank" rel="noopener">ショートカットを追加</a>
+      </div>
+      <div class="arrow">↓</div>
+      <div class="step complete">
+        <span class="step-no">STEP 2</span>
+        <h3>SafariでWayfarerを開く</h3>
+        <p>セットアップ後はSafariからWayfarerを開き、Campsite Bridgeを使用します。</p>
+        <a id="appleWayfarerLink" class="link-btn" target="_blank" rel="noopener">SafariでWayfarerを開く</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="card flow" data-device-panel="android" hidden>
+    <div class="flow-head">
+      <span class="icon">🤖</span>
+      <div><h2>Android</h2><p>FirefoxへCampsite Bridge拡張機能を導入します。</p></div>
+    </div>
+    <div class="flow-inner">
+      <div class="step">
+        <span class="step-no">STEP 1</span>
+        <h3>Firefoxを確認</h3>
+        <p>Android版Campsite BridgeはFirefoxで利用します。未導入の場合は先にFirefoxを追加してください。</p>
+        <a id="androidFirefoxLink" class="link-btn" target="_blank" rel="noopener">Firefoxを確認する</a>
+      </div>
+      <div class="arrow">↓</div>
+      <div class="step">
+        <span class="step-no">STEP 2</span>
+        <h3>Campsite Bridge拡張機能を導入</h3>
+        <p>FirefoxへCampsite Bridge拡張機能を追加します。</p>
+        <a id="androidExtensionLink" class="link-btn" target="_blank" rel="noopener">Campsite Bridgeを導入</a>
+      </div>
+      <div class="arrow">↓</div>
+      <div class="step complete">
+        <span class="step-no">STEP 3</span>
+        <h3>FirefoxでWayfarerを開く</h3>
+        <p>導入後はFirefoxからWayfarerを開きます。BridgeはWayfarer側で利用します。</p>
+        <a id="androidWayfarerLink" class="link-btn" target="_blank" rel="noopener">FirefoxでWayfarerを開く</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="card flow" data-device-panel="pc" hidden>
+    <div class="flow-head">
+      <span class="icon">💻</span>
+      <div><h2>PC</h2><p>Windows / macOSなどのデスクトップ環境です。</p></div>
+    </div>
+    <div class="flow-inner">
+      <div class="step complete">
+        <span class="step-no">PC</span>
+        <h3>PC版は準備中です</h3>
+        <p>将来のChrome版Campsite Bridgeへ接続できる構造として準備しています。</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2 class="manual-title">端末が正しく判定されない場合</h2>
+    <p class="manual-sub">手動で選択した端末は、自動判定より優先されます。</p>
+    <div class="device-grid">
+      <button type="button" class="device-choice" data-device-choice="apple" aria-pressed="false"><span>🍎</span><strong>iPhone / iPad</strong></button>
+      <button type="button" class="device-choice" data-device-choice="android" aria-pressed="false"><span>🤖</span><strong>Android</strong></button>
+      <button type="button" class="device-choice" data-device-choice="pc" aria-pressed="false"><span>💻</span><strong>PC</strong></button>
+    </div>
+    <button id="resetDeviceDetection" type="button" class="reset">自動判定に戻す</button>
+  </section>
+
+  <p class="footer">Campsite Bridgeは1つのサービスです。端末によってセットアップ方法だけが切り替わります。</p>
+</main>
+<script src="js/bridge-setup.js?v=1"></script>
+</body>
+</html>
