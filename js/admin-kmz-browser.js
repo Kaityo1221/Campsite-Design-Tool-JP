@@ -88,6 +88,7 @@
       // The formal FINAL REVIEW UI is intentionally parked; its server-side history remains available for future reuse.
       await loadScript("js/admin-precheck-summary.js?v=1", "campsiteAdminPrecheckSummaryScript");
       await loadScript("js/admin-precheck-polish.js?v=1", "campsiteAdminPrecheckPolishScript");
+      await loadScript("js/admin-precheck-tap-fix.js?v=1", "campsiteAdminPrecheckTapFixScript");
 
       // Phase 7 removed the standalone past-state modal, POI freshness check and Campsite-side AI review queue.
     } catch (error) {
