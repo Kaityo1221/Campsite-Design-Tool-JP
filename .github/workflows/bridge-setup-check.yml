@@ -1,0 +1,31 @@
+name: Campsite Bridge Setup Check
+
+on:
+  pull_request:
+    paths:
+      - 'bridge-setup.html'
+      - 'bridge-shortcut-install.html'
+      - 'js/bridge-setup.js'
+      - 'js/bridge-setup-config.js'
+      - 'js/bridge-shortcut/shortcut-launcher.js'
+      - 'scripts/check-bridge-setup.mjs'
+      - '.github/workflows/bridge-setup-check.yml'
+  workflow_dispatch:
+
+jobs:
+  bridge-setup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Contract check
+        run: node scripts/check-bridge-setup.mjs
+
+      - name: Launcher syntax
+        run: node --check js/bridge-shortcut/shortcut-launcher.js
