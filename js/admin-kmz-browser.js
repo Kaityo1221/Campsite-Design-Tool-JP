@@ -81,7 +81,7 @@
       await loadScript("js/admin-site-review-list.js?v=2", "campsiteAdminSiteReviewListScript");
 
       // Mobile QA / map-first interaction.
-      await loadStyle("css/admin-review-mobile-layout.css?v=3", "campsiteAdminReviewMobileLayoutStyle");
+      await loadStyle("css/admin-review-mobile-layout.css?v=4", "campsiteAdminReviewMobileLayoutStyle");
       await loadScript("js/admin-review-mobile-ux.js?v=2", "campsiteAdminReviewMobileUxScript");
 
       // PRE-CHECK is the primary result shown immediately when a site opens.
