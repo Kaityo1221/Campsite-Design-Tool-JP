@@ -68,7 +68,7 @@ h1{margin:8px 0 8px;font-size:clamp(30px,8vw,46px);line-height:1.08}
 .link-btn{display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;margin-top:13px;padding:11px 13px;border:1px solid rgba(56,189,248,.34);border-radius:13px;background:rgba(14,165,233,.12);color:#e0f2fe;text-align:center;text-decoration:none;font-size:13px;font-weight:950}
 .link-btn.is-disabled{border-color:rgba(148,163,184,.16);background:rgba(51,65,85,.3);color:#94a3b8;cursor:not-allowed}
 .complete{border-color:rgba(74,222,128,.25);background:rgba(20,83,45,.12)}
-.xpi-guide{margin-top:13px;padding:13px;border:1px solid rgba(167,139,250,.2);border-radius:13px;background:rgba(76,29,149,.08)}
+.xpi-guide{margin-top:13px;padding:13px;border:1px solid rgba(167,139,250,.2);border-radius:13px;background:rgba(76,29,149,.08);scroll-margin-top:18px}
 .xpi-guide strong{display:block;margin-bottom:7px;color:#e9d5ff;font-size:12px}
 .xpi-guide ol{margin:0;padding-left:20px;color:#d8b4fe;font-size:12px;line-height:1.75}
 .manual-title{margin:0 0 5px;font-size:17px}
@@ -139,12 +139,12 @@ h1{margin:8px 0 8px;font-size:clamp(30px,8vw,46px);line-height:1.08}
         <a id="androidFirefoxLink" class="link-btn" target="_blank" rel="noopener">Firefoxを確認する</a>
       </div>
       <div class="arrow">↓</div>
-      <div class="step" id="androidXpiSteps">
+      <div class="step">
         <span class="step-no">STEP 2</span>
         <h3>Campsite Bridge拡張機能を導入</h3>
         <p>配布されたMozilla署名済みの <strong>.xpi</strong> ファイルをAndroid端末へ保存してから、Firefoxで導入します。</p>
         <a id="androidExtensionLink" class="link-btn">導入手順を見る</a>
-        <div class="xpi-guide">
+        <div class="xpi-guide" id="androidXpiSteps">
           <strong>署名済みXPIをFirefoxへ追加</strong>
           <ol>
             <li>配布されたCampsite Bridgeの <strong>.xpi</strong> を端末に保存します。</li>
