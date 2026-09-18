@@ -11,7 +11,7 @@ html,body{margin:0;min-height:100%;background:#17130f;color:#fff8e8;font-family:
 #creativeBootStatus strong{display:block;font-size:20px}
 #creativeBootStatus small{display:block;margin-top:10px;color:#d8c9a8;line-height:1.7}
 </style>
-<script src="../js/ca-access-bootstrap.js?v=2"></script>
+<script src="../js/ca-access-bootstrap.js?v=3"></script>
 </head>
 <body>
 <div id="creativeBootStatus"><div><strong>🎨 CREATIVE MODE</strong><small>POIと活動範囲を読み込んでいます…</small></div></div>
@@ -20,8 +20,35 @@ html,body{margin:0;min-height:100%;background:#17130f;color:#fff8e8;font-family:
   'use strict';
 
   // Creative Mode本体は、日本CA承認が通るまで一切読み込まない。
-  while(!window.CampsiteCaAccess){await new Promise(r=>setTimeout(r,80));}
-  while(document.getElementById('caAccessGate')){await new Promise(r=>setTimeout(r,120));}
+  const setBootStatus=text=>{const el=document.querySelector('#creativeBootStatus small');if(el)el.textContent=text};
+  const waitFor=async(test,timeoutMs,intervalMs=80)=>{
+    const started=Date.now();
+    while(!test()){
+      if(Date.now()-started>=timeoutMs)return false;
+      await new Promise(r=>setTimeout(r,intervalMs));
+    }
+    return true;
+  };
+
+  setBootStatus('認証システムを準備しています…');
+  if(!await waitFor(()=>!!window.CampsiteCaAccess,10000)){
+    document.body.innerHTML='<div id="creativeBootStatus"><div><strong>⚠️ CREATIVE MODE</strong><small>認証システムの起動に時間がかかっています。再読み込みしてください。</small></div></div>';
+    return;
+  }
+
+  setBootStatus('日本CA認証を確認しています…');
+  let hiddenGateWaitStarted=Date.now();
+  while(document.getElementById('caAccessGate')){
+    const gate=document.getElementById('caAccessGate');
+    if(gate?.classList.contains('ca-gate-handoff-pending')&&Date.now()-hiddenGateWaitStarted>12000){
+      gate.classList.remove('ca-gate-handoff-pending');
+      const status=document.getElementById('caGateStatus');
+      if(status&&!status.textContent)status.textContent='認証確認に時間がかかっています。';
+    }
+    await new Promise(r=>setTimeout(r,120));
+  }
+
+  setBootStatus('CREATIVE MODE本体を準備しています…');
 
   const SNAPSHOT='c3a23287cd49a6d6b8689d7dd4122687ff483856';
   const ROOT=`https://raw.githubusercontent.com/Kaityo1221/Campsite-Design-Tool-Next-Lab/${SNAPSHOT}/creative/`;
