@@ -118,7 +118,7 @@ function renderJpGuide(){jpRefreshReviews();const box=ensureJpGuide(),adds=jpAdd
   if(src.includes(drawNeedle))src=src.replace(drawNeedle,drawNeedle.slice(0,-1)+";renderJpGuide()}");
 
   src=src.replace("$('back').onclick=()=>history.back();","$('back').onclick=()=>location.href='../lab.html';");
-  src=src.replace(/<title>CREATIVE MODE \\| Next Lab<\\/title>/g,'<title>CREATIVE MODE | Campsite Lab</title>');
+  src=src.replace('<title>CREATIVE MODE | Next Lab</title>','<title>CREATIVE MODE | Campsite Lab</title>');
 
   document.open();document.write(src);document.close();
 })().catch(err=>{console.error(err);document.body.textContent='Creative Modeの読み込みに失敗しました。';});
