@@ -120,16 +120,13 @@ const patchContext = { window: {}, console, JSON, String };
 vm.createContext(patchContext);
 vm.runInContext(creativePatch, patchContext);
 assert.equal(typeof patchContext.window.applyCreativeBridgeProjectPatch, 'function');
-const transformed = patchContext.window.applyCreativeBridgeProjectPatch(`before\n  document.open();document.write(html);document.close();\nafter`);
+const transformed = patchContext.window.applyCreativeBridgeProjectPatch(`before\nfunction beginEditor(){return true}\nfunction restore(){return true}\nafter`);
 assert.ok(transformed.includes('loadCampsiteBridgeProject'));
 assert.ok(transformed.includes('syncCampsiteProjectFromCreative'));
 assert.ok(transformed.includes('installCampsiteProjectNext'));
-assert.ok(transformed.includes('installCampsiteProjectMobileUi'), 'Bridge Creative mobile UI installer missing');
-assert.ok(transformed.includes("body.campsite-bridge-project #locate{display:none!important}"), 'Bridge Creative must hide current-location button');
-assert.ok(transformed.includes("grid-template-columns:repeat(2,minmax(0,1fr))"), 'Bridge Creative bottom bar must collapse to two actions');
-assert.ok(transformed.includes("#campsiteProjectNext{left:10px!important;right:10px!important"), 'Bridge Creative next button must use a full-width mobile row');
-assert.ok(transformed.includes("layerBtn.textContent='▱ 層'"), 'Bridge Creative layer button must use compact mobile label');
-assert.ok(transformed.includes("circleBtn.textContent='◎ 円'"), 'Bridge Creative circle button must use compact mobile label');
+assert.ok(!transformed.includes('installCampsiteProjectMobileUi'), 'Bridge must not override the canonical Next-Lab Creative UI');
+assert.ok(transformed.includes("btn.textContent='次へ →'"), 'Bridge-only next action should stay compact');
+assert.ok(transformed.includes("aria-label','次へ：距離チェック'"), 'Bridge-only next action must keep an accessible distance-check label');
 assert.ok(transformed.includes("role:campsProjectRole(r.layer)"));
 assert.ok(transformed.includes("location.href='../bridge-distance.html?campsiteProject=bridge'"));
 assert.ok(transformed.includes("type==='GYM'"));
@@ -137,9 +134,9 @@ assert.ok(transformed.includes("type==='POWERSPOT'"));
 assert.ok(transformed.includes("return'existing-pokestop'"));
 assert.ok(transformed.includes("sessionStorage.getItem(CAMPSITE_PROJECT_KEY)"));
 
-assert.ok(creativeIndex.includes('./bridge-project-patch.js?v=2'), 'Creative index must own the Bridge project patch');
-assert.ok(creativeIndex.includes("creativeParams.get('campsiteProject')==='bridge'"), 'Creative index must apply the Bridge patch for Bridge projects');
-assert.ok(creativeIndex.includes('applyCreativeBridgeProjectPatch'), 'Creative index must call the Bridge patch');
+assert.ok(creativeIndex.includes("fetch('./bridge-project-patch.js'"), 'Creative runtime must load the Bridge project patch');
+assert.ok(creativeIndex.includes("new URLSearchParams(location.search).get('campsiteProject')==='bridge'"), 'Creative runtime must detect Bridge projects');
+assert.ok(creativeIndex.includes('html=window.applyCreativeBridgeProjectPatch(html)'), 'Creative runtime must apply the Bridge patch to final HTML');
 assert.ok(creativeBridge.includes("location.replace(target.href)"), 'Legacy Bridge entry must redirect instead of document.write');
 assert.ok(!creativeBridge.includes("document.write("), 'Legacy Bridge entry must not rehydrate Creative with document.write');
 assert.ok(nextFlow.includes("./creative/index.html?campsiteProject=bridge"), 'Next flow must enter Creative index directly');
@@ -194,10 +191,9 @@ assert.ok(caBootstrap.includes("ca-access.js?v=5"), 'Standalone bootstrap must l
 assert.ok(creativeIndex.includes('ca-access-bootstrap.js?v=3'), 'Creative must bust stale auth bootstrap cache');
 assert.ok(caBootstrap.indexOf("ca-access.js?v=5") < caBootstrap.indexOf("CampsitePolicy?.ready"), 'Authentication must start before policy readiness is observed');
 assert.ok(creativeIndex.includes("isBridgeProject?'CREATIVE MODEを開いています…':'認証システムを準備しています…'"), 'Bridge handoff must hide repeated auth copy');
-assert.ok(creativeIndex.includes("isBridgeProject?'CREATIVE MODEを開いています…':'日本CA認証を確認しています…'"), 'Bridge handoff must keep auth verification in the background');
-assert.ok(creativeIndex.includes("isBridgeProject?'POIと活動範囲を配置しています…':'CREATIVE MODE本体を準備しています…'"), 'Bridge handoff must show project preparation instead of auth details');
-assert.ok(creativeIndex.includes('const runtimeResponsesPromise=Promise.all'), 'Creative runtime must prefetch while auth is checked');
-assert.ok(creativeIndex.indexOf('const runtimeResponsesPromise=Promise.all') < creativeIndex.indexOf('await waitFor(()=>!!window.CampsiteCaAccess'), 'Creative runtime prefetch must start before auth wait');
+assert.ok(creativeIndex.includes("while(document.getElementById('caAccessGate'))"), 'Creative must keep authentication enforcement in the background');
+assert.ok(creativeIndex.includes("setBootStatus('CREATIVE MODE本体を準備しています…')"), 'Creative must move directly from hidden auth to runtime preparation');
+assert.ok(creativeIndex.includes("fetch('./runtime/runtime-vnext.html',{cache:'no-store'})"), 'Creative must load the vendored runtime after auth');
 assert.ok(creativeIndex.includes("10000"), 'Creative auth bootstrap must have a bounded startup wait');
 assert.ok(caAccess.includes('HANDOFF_PARAMS.get("campsiteBridgeImport") === "1"'), 'Gateway handoff must be recognized');
 assert.ok(caAccess.includes('HANDOFF_PARAMS.get("campsiteProject") === "bridge"'), 'Creative/distance handoff must be recognized');
@@ -211,61 +207,44 @@ assert.ok(receiver.includes('bridge-receiver-detail'), 'Receiver must support di
 assert.ok(gateway.includes('#loginScreen,#splashScreen,#openingScreen{display:none!important}'), 'Gateway must suppress legacy login/splash flash');
 
 
-const creativeRuntime = fs.readFileSync('creative/runtime/runtime-vnext.html', 'utf8');
-const creativePatchV2 = fs.readFileSync('creative/runtime/creative-patches-v2.js', 'utf8');
-const creativePatchV3 = fs.readFileSync('creative/runtime/creative-patches-v3.js', 'utf8');
-const creativePatchV4 = fs.readFileSync('creative/runtime/creative-patches-v4.js', 'utf8');
+const creativeManifest = JSON.parse(fs.readFileSync('creative/runtime/next-lab-manifest.json', 'utf8'));
+assert.equal(creativeManifest.sourceRepo, 'Kaityo1221/Campsite-Design-Tool-Next-Lab');
+assert.equal(creativeManifest.sourceCommit, 'c10b910344952ade36b2791a122f9f38e6c54d0b');
+assert.equal(creativeManifest.order.length, 35, 'Next-Lab runtime + 34 patch files must be pinned');
 
 function gitBlobSha(text){
   const body=Buffer.from(text,'utf8');
   return crypto.createHash('sha1').update(`blob ${body.length}\0`).update(body).digest('hex');
 }
-assert.equal(gitBlobSha(creativeRuntime),'dde771a80cf0d937a2ddffc49a1d3a10b0271006','Pinned runtime-vnext snapshot changed');
-assert.equal(gitBlobSha(creativePatchV2),'5f59b3accbf6981ff41fe3024e189c1d02b60259','Pinned Creative patch v2 changed');
-assert.equal(gitBlobSha(creativePatchV3),'5c039bd3db4ed8a32b36e384622acbb80ff15f42','Pinned Creative patch v3 changed');
-assert.equal(gitBlobSha(creativePatchV4),'c30c4894da6ae31b03cba588c8181f890f081890','Pinned Creative patch v4 changed');
 
+for(const name of creativeManifest.order){
+  const source=fs.readFileSync('creative/runtime/'+name,'utf8');
+  assert.equal(gitBlobSha(source),creativeManifest.sha1[name],`Pinned Next-Lab file changed: ${name}`);
+  if(name.endsWith('.js'))new vm.Script(source,{filename:'creative/runtime/'+name});
+  assert.ok(creativeIndex.includes(name),`Creative loader missing Next-Lab file: ${name}`);
+}
+
+const creativeRuntime = fs.readFileSync('creative/runtime/runtime-vnext.html', 'utf8');
 const runtimeStart=creativeRuntime.indexOf('<script>');
 const runtimeEnd=creativeRuntime.lastIndexOf('</script>');
 assert.ok(runtimeStart>=0&&runtimeEnd>runtimeStart,'Pinned runtime inline script missing');
 new vm.Script(creativeRuntime.slice(runtimeStart+'<script>'.length,runtimeEnd),{filename:'creative/runtime/runtime-vnext.html:inline'});
-new vm.Script(creativePatchV2,{filename:'creative/runtime/creative-patches-v2.js'});
-new vm.Script(creativePatchV3,{filename:'creative/runtime/creative-patches-v3.js'});
-new vm.Script(creativePatchV4,{filename:'creative/runtime/creative-patches-v4.js'});
+assert.ok(creativeIndex.includes("const NEXT_LAB_SOURCE='c10b910344952ade36b2791a122f9f38e6c54d0b'"),'Creative loader must identify the synced Next-Lab source commit');
 
-assert.ok(creativeIndex.includes("const ROOT='./runtime/'"),'Creative must load the vendored runtime locally');
-assert.ok(!creativeIndex.includes('raw.githubusercontent.com/Kaityo1221/Campsite-Design-Tool-Next-Lab'),'Creative must not depend on raw GitHub at runtime');
-assert.ok(creativeIndex.includes("const runtimeScripts=[]"), 'Creative must extract every runtime script separately');
-assert.ok(creativeIndex.includes("const runtimeClose='</'+'script>'"), 'Creative runtime closing marker must be HTML-parser safe');
-assert.ok(creativeIndex.includes("for(const runtimeCode of runtimeScripts)"), 'Creative must execute runtime scripts in source order');
-function extractRuntimeScripts(html){
-  const scripts=[];
-  let cursor=0;
-  const close='</script>';
-  while(true){
-    const open=html.indexOf('<script',cursor);
-    if(open<0)break;
-    const bodyStart=html.indexOf('>',open);
-    if(bodyStart<0)break;
-    const end=html.indexOf(close,bodyStart+1);
-    if(end<0)break;
-    scripts.push(html.slice(bodyStart+1,end));
-    cursor=end+close.length;
-  }
-  return scripts;
-}
-const vendoredRuntimeScripts=extractRuntimeScripts(creativeRuntime);
-assert.ok(vendoredRuntimeScripts.length>=1,'Vendored runtime script missing');
-vendoredRuntimeScripts.forEach((code,index)=>new vm.Script(code,{filename:'creative/runtime/runtime-vnext.html:script-'+index}));
-assert.ok(creativeIndex.includes('const runRuntime=new Function(runtimeCode)'), 'Creative must execute the runtime bootstrap directly');
-assert.ok(creativeIndex.includes("new URL('./base-v7.html',location.href).href"), 'Creative runtime must resolve base-v7 against the JP Creative URL');
-assert.ok(creativeIndex.includes("setTimeout(()=>__ctl.abort(),8000)"), 'Creative base-v7 fetch must have an 8 second timeout');
-assert.ok(creativeIndex.includes("CREATIVE本体を読み込んでいます"), 'Creative runtime must expose base-v7 loading stage');
-assert.ok(creativeIndex.includes("CREATIVE画面を組み立てています"), 'Creative runtime must expose build stage');
-assert.ok(creativeIndex.includes("CREATIVE画面を表示しています"), 'Creative runtime must expose final display stage');
-assert.ok(!creativeIndex.includes("new DOMParser().parseFromString(src,'text/html')"), 'Creative must not launch the intermediate runtime through DOMParser');
-assert.ok(!creativeIndex.includes('document.open();document.write(src);document.close();'),'Creative bootstrap must not replace itself with runtime HTML');
-
+assert.ok(creativeIndex.includes("const NEXT_LAB_SOURCE='c10b910344952ade36b2791a122f9f38e6c54d0b'"),'Creative loader must identify the synced Next-Lab source commit');
+assert.ok(creativeIndex.includes("fetch('./runtime/runtime-vnext.html'"),'Creative must load the vendored runtime locally');
+assert.ok(creativeIndex.includes("const PATCH_FILES="),'Creative must declare the canonical Next-Lab patch chain');
+assert.ok(creativeIndex.includes("html=window.applyCreativePatches(html)"),'Creative must apply Next-Lab patches to base-v7 HTML');
+assert.ok(creativeIndex.includes("fetch('./jp-creative-patch.js'"),'Creative must load the JP final-HTML patch');
+assert.ok(creativeIndex.includes("fetch('./bridge-project-patch.js'"),'Creative must load the Bridge final-HTML patch');
+assert.ok(creativeIndex.indexOf("html=window.applyCreativePatches(html)") < creativeIndex.indexOf("window.applyCreativeJpPatch"),'JP patch must run after canonical Next-Lab patches');
+assert.ok(creativeIndex.indexOf("window.applyCreativeJpPatch") < creativeIndex.indexOf("window.applyCreativeBridgeProjectPatch"),'Bridge patch must run after JP patch');
+assert.ok(creativeIndex.includes('"creative-patches-v37-bottom-dock.js"'),'Canonical Next-Lab bottom dock patch missing');
+assert.ok(creativeIndex.includes('"creative-patches-v39-layer-panel-top.js"'),'Canonical Next-Lab layer-panel patch missing');
+assert.ok(creativeIndex.includes('"creative-patches-v43-save-standalone.js"'),'Canonical Next-Lab save UI patch missing');
+assert.ok(creativeIndex.includes('"creative-patches-v44-lab-update-3-lines.js"'),'Canonical Next-Lab latest UI patch missing');
+assert.ok(!creativeIndex.includes('raw.githubusercontent.com/Kaityo1221/Campsite-Design-Tool-Next-Lab'),'Creative must not depend on raw Next-Lab at runtime');
+assert.ok(creativeIndex.includes("document.open();document.write(runtime);document.close();"),'Creative must boot the vendored runtime using the current Next-Lab architecture');
 const creativeBase = fs.readFileSync('creative/base-v7.html', 'utf8');
 assert.ok(creativeBase.includes('<title>CREATIVE MODE | Next Lab</title>'), 'Pinned base-v7 snapshot missing');
 assert.ok(creativeBase.includes("const map=L.map('map'"), 'Pinned base-v7 map runtime missing');

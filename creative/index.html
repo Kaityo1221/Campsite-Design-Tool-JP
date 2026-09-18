@@ -7,24 +7,30 @@
 <title>CREATIVE MODE | Campsite Lab</title>
 <style>
 html,body{margin:0;min-height:100%;background:#17130f;color:#fff8e8;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-#creativeBootStatus{min-height:100vh;display:grid;place-items:center;padding:24px;text-align:center}
-#creativeBootStatus strong{display:block;font-size:20px}
-#creativeBootStatus small{display:block;margin-top:10px;color:#d8c9a8;line-height:1.7}
+#creativeBootStatus{min-height:100vh;display:grid;place-items:center;padding:24px;text-align:center;box-sizing:border-box}
+#creativeBootStatus strong{display:block;font-size:22px;letter-spacing:.06em}
+#creativeBootStatus small{display:block;margin-top:8px;color:#d8c9a8;line-height:1.7}
+#creativeBootStatus .spin{width:28px;height:28px;margin:18px auto 0;border:3px solid rgba(255,248,232,.22);border-top-color:#f3d77f;border-radius:50%;animation:bootSpin .85s linear infinite}
+@keyframes bootSpin{to{transform:rotate(360deg)}}
 </style>
 <script src="../js/ca-access-bootstrap.js?v=3"></script>
-<script src="./bridge-project-patch.js?v=2"></script>
 </head>
 <body>
-<div id="creativeBootStatus"><div><strong>🎨 CREATIVE MODE</strong><small>CREATIVE MODEを開いています…</small></div></div>
+<div id="creativeBootStatus"><div><strong>🎨 CREATIVE MODE</strong><small>CREATIVE MODEを開いています…</small><div class="spin"></div></div></div>
 <script>
 (async()=>{
   'use strict';
 
-  // Bridge handoffでは、すでに確認済みの認証を利用者へ再表示しない。
-  // 認証確認は裏で続け、CREATIVE本体の取得も並行して待ち時間を減らす。
-  const creativeParams=new URLSearchParams(location.search);
-  const isBridgeProject=creativeParams.get('campsiteProject')==='bridge';
+  const NEXT_LAB_SOURCE='c10b910344952ade36b2791a122f9f38e6c54d0b';
+  const PATCH_FILES=["creative-patches-v2.js","creative-patches-v3.js","creative-patches-v4.js","creative-patches-v5-design-check.js","creative-patches-v6-intuitive.js","creative-patches-v9-return-main.js","creative-patches-v10-save-labels.js","creative-patches-v13-draggable-fab.js","creative-patches-v14-layer-tap-layout.js","creative-patches-v18-preview-crosshair.js","creative-patches-v19-persistent-crosshair.js","creative-patches-v20-radius-gauge-save-return.js","creative-patches-v21-radius-swipe.js","creative-patches-v23-add-mode-close.js","creative-patches-v24-confirm-vertical-radius.js","creative-patches-v25-radius-handle-no-preview.js","creative-patches-v26-compact-radius-bar.js","creative-patches-v27-dot-handle-bar.js","creative-patches-v28-lever-handle.js","creative-patches-v29-lever-notches.js","creative-patches-v30-lever-gesture-lock.js","creative-patches-v32-poi-move-isolated.js","creative-patches-v33-action-wiring.js","creative-patches-v34-placement-core.js","creative-patches-v35-nearest-poi-warning.js","creative-patches-v36-compact-move-bar.js","creative-patches-v37-bottom-dock.js","creative-patches-v38-circle-layer-import.js","creative-patches-v39-layer-panel-top.js","creative-patches-v40-recent-filename.js","creative-patches-v41-save-output-wiring.js","creative-patches-v42-save-button-hardbind.js","creative-patches-v43-save-standalone.js","creative-patches-v44-lab-update-3-lines.js"];
+  const params=new URLSearchParams(location.search);
+  const isBridgeProject=params.get('campsiteProject')==='bridge';
   const setBootStatus=text=>{const el=document.querySelector('#creativeBootStatus small');if(el)el.textContent=text};
+  const showError=(stage,error)=>{
+    console.error('[CREATIVE MODE]',stage,error);
+    const message=String(error&&error.message||error||'不明なエラー');
+    document.body.innerHTML='<div id="creativeBootStatus"><div><strong>⚠️ CREATIVE MODE</strong><small>'+stage+'<br>'+message+'</small></div></div>';
+  };
   const waitFor=async(test,timeoutMs,intervalMs=80)=>{
     const started=Date.now();
     while(!test()){
@@ -34,145 +40,79 @@ html,body{margin:0;min-height:100%;background:#17130f;color:#fff8e8;font-family:
     return true;
   };
 
-  const SNAPSHOT='c3a23287cd49a6d6b8689d7dd4122687ff483856';
-  const ROOT='./runtime/';
-  const urls=['runtime-vnext.html','creative-patches-v2.js','creative-patches-v3.js','creative-patches-v4.js'];
-  const runtimeResponsesPromise=Promise.all(urls.map(name=>fetch(ROOT+name,{cache:'no-store'})));
+  try{
+    setBootStatus(isBridgeProject?'CREATIVE MODEを開いています…':'認証システムを準備しています…');
+    if(!await waitFor(()=>!!window.CampsiteCaAccess,10000))throw new Error('認証システムの起動に時間がかかっています');
 
-  setBootStatus(isBridgeProject?'CREATIVE MODEを開いています…':'認証システムを準備しています…');
-  if(!await waitFor(()=>!!window.CampsiteCaAccess,10000)){
-    document.body.innerHTML='<div id="creativeBootStatus"><div><strong>⚠️ CREATIVE MODE</strong><small>認証システムの起動に時間がかかっています。再読み込みしてください。</small></div></div>';
+    while(document.getElementById('caAccessGate')){
+      await new Promise(r=>setTimeout(r,120));
+    }
+
+    setBootStatus('CREATIVE MODE本体を準備しています…');
+    const runtimeRes=await fetch('./runtime/runtime-vnext.html',{cache:'no-store'});
+    if(!runtimeRes.ok)throw new Error('runtime HTTP '+runtimeRes.status);
+    let runtime=await runtimeRes.text();
+
+    const writeNeedle='document.open();document.write(html);document.close();';
+    if(!runtime.includes(writeNeedle))throw new Error('runtime write target not found');
+
+    const directPatch=`
+  try{
+    const bootText=document.getElementById('creativeRuntimeBootText');
+    if(bootText)bootText.textContent='機能を準備中…';
+    const patchFiles=${JSON.stringify(PATCH_FILES)};
+    const patchTexts=await Promise.all(patchFiles.map(async name=>{
+      const response=await fetch('./runtime/'+name,{cache:'force-cache'});
+      if(!response.ok)throw new Error(name+' HTTP '+response.status);
+      return response.text();
+    }));
+
+    window.applyCreativePatches=s=>s;
+    for(let i=0;i<patchTexts.length;i++){
+      Function(await patchTexts[i])();
+      if(typeof window.applyCreativePatches!=='function')throw new Error(patchFiles[i]+' registration failed');
+    }
+    html=window.applyCreativePatches(html);
+
+    const extras=await Promise.all([
+      fetch('./jp-creative-patch.js',{cache:'no-store'}),
+      fetch('./bridge-project-patch.js',{cache:'no-store'})
+    ]);
+    if(extras.some(r=>!r.ok))throw new Error('JP/Bridge patch HTTP error');
+    Function(await extras[0].text())();
+    Function(await extras[1].text())();
+
+    if(typeof window.applyCreativeJpPatch==='function')html=window.applyCreativeJpPatch(html);
+    const bridgeProject=new URLSearchParams(location.search).get('campsiteProject')==='bridge';
+    if(bridgeProject){
+      if(typeof window.applyCreativeBridgeProjectPatch!=='function')throw new Error('Bridge project patch unavailable');
+      html=window.applyCreativeBridgeProjectPatch(html);
+    }
+
+    const bgOldMain='https://raw.githubusercontent.com/Kaityo1221/campsite-design-tool-adv-lab/main/creative/runtime/assets/creative-mode-opening.png';
+    const bgOldPinned='https://raw.githubusercontent.com/Kaityo1221/campsite-design-tool-adv-lab/1c27ca3ef14f423688f755d350ecc602bee1c573/creative/runtime/assets/creative-mode-opening.png';
+    const bgStable='https://media.githubusercontent.com/media/Kaityo1221/campsite-design-tool-adv-lab/1c27ca3ef14f423688f755d350ecc602bee1c573/creative/runtime/assets/creative-mode-opening.png';
+    html=html.split(bgOldMain).join(bgStable).split(bgOldPinned).join(bgStable);
+    html=html.replace(/<input\\b[^>]*\\bid=["']entryFile["'][^>]*>/i,m=>m.replace(/\\saccept\\s*=\\s*(?:"[^"]*"|'[^']*'|[^\\s>]+)/i,''));
+    html=html.replace('entryFile.onchange=()=>{',"entryFile.removeAttribute('accept');entryFile.accept='';entryFile.onchange=()=>{");
+  }catch(e){
+    document.body.style.cssText='margin:0;padding:24px;background:#17130f;color:#ffd0c8;font-family:-apple-system,BlinkMacSystemFont,sans-serif;white-space:pre-wrap';
+    document.body.textContent='CREATIVE MODE 読み込みエラー'+String.fromCharCode(10,10)+(e&&e.stack?e.stack:(e&&e.message?e.message:String(e||'')));
     return;
   }
+  ${writeNeedle}`;
 
-  setBootStatus(isBridgeProject?'CREATIVE MODEを開いています…':'日本CA認証を確認しています…');
-  let hiddenGateWaitStarted=Date.now();
-  while(document.getElementById('caAccessGate')){
-    const gate=document.getElementById('caAccessGate');
-    if(gate?.classList.contains('ca-gate-handoff-pending')&&Date.now()-hiddenGateWaitStarted>12000){
-      gate.classList.remove('ca-gate-handoff-pending');
-      const status=document.getElementById('caGateStatus');
-      if(status&&!status.textContent)status.textContent='認証確認に時間がかかっています。';
-    }
-    await new Promise(r=>setTimeout(r,120));
+    runtime=runtime.replace(writeNeedle,directPatch);
+
+    // Same runtime boot shell used by current Next-Lab.
+    const runtimeBoot='<body style="margin:0;background:#17130f;color:#fff8e8;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif"><div id="creativeRuntimeBoot" style="position:fixed;inset:0;z-index:99999;display:grid;place-items:center;background:#17130f;text-align:center"><div><strong style="font-size:22px;letter-spacing:.06em">CREATIVE MODE</strong><small id="creativeRuntimeBootText" style="display:block;margin-top:8px;opacity:.7">地図を準備中…</small><span style="display:block;width:28px;height:28px;margin:18px auto 0;border:3px solid rgba(255,248,232,.22);border-top-color:#f3d77f;border-radius:50%;animation:cmBootSpin .85s linear infinite"></span></div></div><style>@keyframes cmBootSpin{to{transform:rotate(360deg)}}</style><script>';
+    runtime=runtime.replace('<body><script>',runtimeBoot);
+
+    document.open();document.write(runtime);document.close();
+  }catch(error){
+    showError('CREATIVE MODEの起動に失敗しました',error);
   }
-
-  setBootStatus(isBridgeProject?'POIと活動範囲を配置しています…':'CREATIVE MODE本体を準備しています…');
-
-  const responses=await runtimeResponsesPromise;
-  const bootStatus=document.getElementById('creativeBootStatus');
-  if(bootStatus)bootStatus.querySelector('small').textContent='CREATIVE MODE本体を準備しています…';
-  if(responses.some(r=>!r.ok)){
-    document.body.innerHTML='<div id="creativeBootStatus"><div><strong>⚠️ CREATIVE MODE</strong><small>本体ファイルの読み込みに失敗しました。再読み込みしてください。</small></div></div>';
-    return;
-  }
-  let src=await responses[0].text();
-  for(let i=1;i<responses.length;i++) Function(await responses[i].text())();
-  if(typeof window.applyCreativePatches!=='function'){document.body.textContent='Creative Modeの拡張機能を読み込めませんでした。';return;}
-  src=window.applyCreativePatches(src);
-  if(isBridgeProject){
-    if(typeof window.applyCreativeBridgeProjectPatch!=='function'){
-      document.body.innerHTML='<div id="creativeBootStatus"><div><strong>⚠️ CREATIVE MODE</strong><small>Bridgeプロジェクト読込機能を準備できませんでした。再読み込みしてください。</small></div></div>';
-      return;
-    }
-    src=window.applyCreativeBridgeProjectPatch(src);
-  }
-
-  // 開発中の雨雲チェック。Creative Modeのオープニングだけに小さな入口を出す。
-  // Client IDはrain-dev.html側のlocalStorageだけに保存し、リポジトリには持たない。
-  const rainDevNeedle="  let html=await res.text();";
-  const rainDevReplacement=`  let html=await res.text();
-  html=html.replace('</style>', '.rain-dev-entry{position:absolute;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:3;padding:7px 10px;border:1px solid rgba(158,207,255,.45);border-radius:999px;background:rgba(20,31,43,.55);color:rgba(220,239,255,.84);font-size:10px;font-weight:950;letter-spacing:.06em;text-decoration:none;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}.rain-dev-entry:active{transform:scale(.97)}</style>');
-  html=html.replace('<div id="entry" class="entry">','<div id="entry" class="entry"><a class="rain-dev-entry" href="./rain-dev.html" aria-label="開発中の雨雲チェック">☔ 開発中</a>');`;
-  if(src.includes(rainDevNeedle))src=src.replace(rainDevNeedle,rainDevReplacement);
-
-  // 日本CA向け設計支援。
-  // 25件上限 / 50m未満は自動NGにしない / 日本CA向け設計ガイド / 理由の再確認。
-  const helperNeedle='function snapshot(){';
-  const helpers=`const JP_MAX_ADDITIONAL=25;
-function jpAdditionalRecords(){return records.filter(r=>r&&!r.deleted&&isNew(r.layer))}
-function jpIssueSignature(r){if(!r||r.deleted||!isNew(r.layer))return'';const near=nearestRecord(r.latlng,r.id);if(!near||!Number.isFinite(near.distance)||near.distance>=50)return'';return String(near.record?.id||'')+'|'+near.distance.toFixed(1)}
-function jpRefreshReviews(){jpAdditionalRecords().forEach(r=>{const sig=jpIssueSignature(r),reason=String(r.applicationComment||'').trim();if(!sig){r.applicationCommentNeedsReview=false;return}r.applicationCommentNeedsReview=!reason||String(r.applicationCommentSignature||'')!==sig})}
-function ensureJpGuide(){let box=document.getElementById('jpCreativeGuide');if(box)return box;box=document.createElement('div');box.id='jpCreativeGuide';box.style.cssText='margin-top:10px;padding:9px;border:1px solid rgba(240,204,123,.55);border-radius:12px;background:rgba(255,248,230,.10);color:#fff8e8;font-size:10px;line-height:1.55';box.innerHTML='<div style="display:flex;justify-content:space-between;gap:8px;font-weight:900"><span>設計チェック</span><span id="jpCreativeCount">0 / 25</span></div><div style="display:flex;justify-content:space-between;gap:8px;margin-top:4px"><span>50m未満</span><span id="jpCreativeUnder50">0</span></div><div style="display:flex;justify-content:space-between;gap:8px"><span>理由の再確認</span><span id="jpCreativeReview">0</span></div><details style="margin-top:7px"><summary style="cursor:pointer;font-weight:900">日本CA向け設計ガイド</summary><div style="margin-top:6px">・50mを基本とし、50m未満は自動NGにせず要確認として扱います。<br>・ゲームスポットを一箇所へ集中させず、公園内を自然に移動できる配置を考えます。<br>・入口や狭い通路への滞留、本来の利用者と衝突しやすい場所への集中を避けます。<br>・活動範囲はミートアップで想定される移動範囲として確認します。<br>・30m / 40mは例外確認の参考表示です。</div></details>';circlePanel.appendChild(box);return box}
-function renderJpGuide(){jpRefreshReviews();const box=ensureJpGuide(),adds=jpAdditionalRecords(),under=adds.filter(r=>!!jpIssueSignature(r)),review=under.filter(r=>r.applicationCommentNeedsReview);const c=box.querySelector('#jpCreativeCount'),u=box.querySelector('#jpCreativeUnder50'),v=box.querySelector('#jpCreativeReview');if(c){c.textContent=adds.length+' / '+JP_MAX_ADDITIONAL;c.style.color=adds.length>JP_MAX_ADDITIONAL?'#ffb4a8':'#fff8e8'}if(u)u.textContent=String(under.length);if(v){v.textContent=String(review.length);v.style.color=review.length?'#ffd27d':'#bde3b9'}}
-`;
-  // Inject JP helper functions into the final Creative HTML, not into the
-  // runtime source itself. JSON.stringify keeps line breaks safely escaped.
-  const jpHelperInjection='html=html.replace('+JSON.stringify(helperNeedle)+','+JSON.stringify(helpers+helperNeedle)+');';
-  const jpWriteNeedle='document.open();document.write(html);document.close();';
-  if(src.includes(jpWriteNeedle))src=src.replace(jpWriteNeedle,jpHelperInjection+jpWriteNeedle);
-
-  const addNeedle="if(helperRadius!==50)r.customRadius=helperRadius;records.push(r);drawRecord(r);";
-  const addReplacement="if(helperRadius!==50)r.customRadius=helperRadius;if(isNew(r.layer)&&jpAdditionalRecords().length>=JP_MAX_ADDITIONAL){msg('追加ゲームスポットは最大25個です',1800);renderJpGuide();return}records.push(r);drawRecord(r);";
-  if(src.includes(addNeedle))src=src.replace(addNeedle,addReplacement);
-
-  const legacyAddNeedle="const r={id:crypto.randomUUID?.()||String(Date.now()),layer:activeLayer,latlng:[ll.lat,ll.lng],title:layerDefs.find(x=>x[0]===activeLayer)?.[1]||'新規スポット',memo:'',deleted:false};records.push(r);drawRecord(r);";
-  const legacyAddReplacement="const r={id:crypto.randomUUID?.()||String(Date.now()),layer:activeLayer,latlng:[ll.lat,ll.lng],title:layerDefs.find(x=>x[0]===activeLayer)?.[1]||'新規スポット',memo:'',deleted:false};if(isNew(r.layer)&&jpAdditionalRecords().length>=JP_MAX_ADDITIONAL){msg('追加ゲームスポットは最大25個です',1800);renderJpGuide();return}records.push(r);drawRecord(r);";
-  src=src.split(legacyAddNeedle).join(legacyAddReplacement);
-
-  const commentNeedle="ft.oninput=()=>{r.applicationComment=ft.value.slice(0,300);if(ct)ct.textContent=r.applicationComment.length+' / 300';snapshot()}";
-  const commentReplacement="ft.oninput=()=>{r.applicationComment=ft.value.slice(0,300);r.applicationCommentSignature=jpIssueSignature(r);r.applicationCommentNeedsReview=false;if(ct)ct.textContent=r.applicationComment.length+' / 300';snapshot();renderJpGuide()}";
-  if(src.includes(commentNeedle))src=src.replace(commentNeedle,commentReplacement);
-
-  const moveNeedle="clearDraft();r.latlng=to;pushHistory({type:'move',id:r.id,from:old,to});drawAll();snapshot();msg('位置を調整しました')";
-  const moveReplacement="const oldSig=jpIssueSignature(r);clearDraft();r.latlng=to;const newSig=jpIssueSignature(r);if(isNew(r.layer)&&String(r.applicationComment||'').trim()&&oldSig!==newSig)r.applicationCommentNeedsReview=true;pushHistory({type:'move',id:r.id,from:old,to});drawAll();snapshot();renderJpGuide();msg(r.applicationCommentNeedsReview?'位置を調整しました。50m未満の理由を再確認してください':'位置を調整しました',1800)";
-  if(src.includes(moveNeedle))src=src.replace(moveNeedle,moveReplacement);
-
-  const beginNeedle="function beginEditor(){entry.classList.add('hidden');setTimeout(()=>map.invalidateSize(),50)}";
-  const beginReplacement="function beginEditor(){entry.classList.add('hidden');ensureJpGuide();renderJpGuide();setTimeout(()=>map.invalidateSize(),50)}";
-  if(src.includes(beginNeedle))src=src.replace(beginNeedle,beginReplacement);
-
-  const drawNeedle="function drawAll(){layerDefs.forEach(([k])=>groups[k].clearLayers());polygonGroup.clearLayers();records.forEach(drawRecord);polygons.forEach(p=>{if(!p.deleted)p.layerObj=L.polygon(p.points,{pane:'polygon',color:'#5a8b5f',weight:3,fillColor:'#6ea979',fillOpacity:.09,interactive:false}).addTo(polygonGroup)});if(polygonVisible){if(!map.hasLayer(polygonGroup))polygonGroup.addTo(map)}else if(map.hasLayer(polygonGroup))map.removeLayer(polygonGroup);renderRecordCircles()}";
-  if(src.includes(drawNeedle))src=src.replace(drawNeedle,drawNeedle.slice(0,-1)+";renderJpGuide()}");
-
-  src=src.replace("$('back').onclick=()=>history.back();","$('back').onclick=()=>location.href='../lab.html';");
-  src=src.replace('<title>CREATIVE MODE | Next Lab</title>','<title>CREATIVE MODE | Campsite Lab</title>');
-
-  // runtime-vnext is an HTML wrapper around one inline bootstrap script.
-  // Execute that script directly instead of inserting a second HTML document.
-  src=src.replace(
-    '(async()=>{',
-    "(async()=>{const __campsiteCreativeStatus=t=>{const e=document.querySelector('#creativeBootStatus small');if(e)e.textContent=t};__campsiteCreativeStatus('CREATIVE runtimeを起動しています…');"
-  );
-  src=src.replace(
-    "const res=await fetch('./base-v7.html',{cache:'no-store'});",
-    "const __baseUrl=new URL('./base-v7.html',location.href).href;__campsiteCreativeStatus('CREATIVE本体を読み込んでいます…');const __ctl=new AbortController();const __timer=setTimeout(()=>__ctl.abort(),8000);let res;try{res=await fetch(__baseUrl,{cache:'no-store',signal:__ctl.signal})}finally{clearTimeout(__timer)}"
-  );
-  src=src.replace(
-    'let html=await res.text();',
-    "let html=await res.text();__campsiteCreativeStatus('CREATIVE画面を組み立てています…');"
-  );
-  src=src.replace(
-    'document.open();document.write(html);document.close();',
-    "__campsiteCreativeStatus('CREATIVE画面を表示しています…');document.open();document.write(html);document.close();"
-  );
-  src=src.replace(
-    "})().catch(e=>{document.body.textContent='Creative Modeの読み込みに失敗しました。'});",
-    "})().catch(e=>{console.error('[CREATIVE runtime]',e);document.body.innerHTML='<div id=\"creativeBootStatus\"><div><strong>⚠️ CREATIVE MODE</strong><small>CREATIVE本体の起動に失敗しました。'+String(e&&e.message||e)+'</small></div></div>';});"
-  );
-
-  const runtimeScripts=[];
-  let runtimeCursor=0;
-  const runtimeClose='</'+'script>';
-  while(true){
-    const open=src.indexOf('<script',runtimeCursor);
-    if(open<0)break;
-    const bodyStart=src.indexOf('>',open);
-    if(bodyStart<0)break;
-    const close=src.indexOf(runtimeClose,bodyStart+1);
-    if(close<0)break;
-    runtimeScripts.push(src.slice(bodyStart+1,close));
-    runtimeCursor=close+runtimeClose.length;
-  }
-  if(!runtimeScripts.length){
-    throw new Error('Creative runtime script not found');
-  }
-  setBootStatus(isBridgeProject?'POIと活動範囲を配置しています…':'CREATIVE MODE本体を起動しています…');
-  for(const runtimeCode of runtimeScripts){
-    const runRuntime=new Function(runtimeCode);
-    runRuntime();
-  }
-})().catch(err=>{console.error(err);document.body.textContent='Creative Modeの読み込みに失敗しました。';});
+})();
 </script>
 </body>
 </html>

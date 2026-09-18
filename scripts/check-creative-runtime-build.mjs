@@ -1,96 +1,62 @@
 import fs from 'node:fs';
-import assert from 'node:assert/strict';
 import vm from 'node:vm';
+import assert from 'node:assert/strict';
 
-const indexHtml = fs.readFileSync('creative/index.html', 'utf8');
-const runtimeFiles = new Map([
-  ['./runtime/runtime-vnext.html', fs.readFileSync('creative/runtime/runtime-vnext.html', 'utf8')],
-  ['./runtime/creative-patches-v2.js', fs.readFileSync('creative/runtime/creative-patches-v2.js', 'utf8')],
-  ['./runtime/creative-patches-v3.js', fs.readFileSync('creative/runtime/creative-patches-v3.js', 'utf8')],
-  ['./runtime/creative-patches-v4.js', fs.readFileSync('creative/runtime/creative-patches-v4.js', 'utf8')],
-]);
-const bridgePatch = fs.readFileSync('creative/bridge-project-patch.js', 'utf8');
+const manifest=JSON.parse(fs.readFileSync('creative/runtime/next-lab-manifest.json','utf8'));
+const baseHtml=fs.readFileSync('creative/base-v7.html','utf8');
+const jpPatch=fs.readFileSync('creative/jp-creative-patch.js','utf8');
+const bridgePatch=fs.readFileSync('creative/bridge-project-patch.js','utf8');
 
-function extractCreativeBootstrap(html) {
-  const marker = '<script>\n(async()=>{';
-  const start = html.indexOf(marker);
-  assert.ok(start >= 0, 'Creative bootstrap tag missing');
-  const codeStart = start + '<script>\n'.length;
-  const end = html.indexOf('</script>', codeStart);
-  assert.ok(end > codeStart, 'Creative bootstrap closing tag missing');
-  return html.slice(codeStart, end);
+const context={window:{},console,JSON,String,URLSearchParams};
+vm.createContext(context);
+context.window.applyCreativePatches=s=>s;
+
+for(const name of manifest.order.slice(1)){
+  const source=fs.readFileSync('creative/runtime/'+name,'utf8');
+  new vm.Script(source,{filename:'creative/runtime/'+name}).runInContext(context);
+  assert.equal(typeof context.window.applyCreativePatches,'function',name+' registration failed');
 }
 
-const statusNode = { textContent: '' };
-const context = {
-  console: { log() {}, warn() {}, error() {} },
-  window: { CampsiteCaAccess: {} },
-  location: {
-    search: '?campsiteProject=bridge',
-    href: 'https://example.test/Campsite-Design-Tool-JP/creative/index.html?campsiteProject=bridge'
-  },
-  URLSearchParams,
-  URL,
-  AbortController,
-  setTimeout,
-  clearTimeout,
-  document: {
-    querySelector(selector) {
-      return selector === '#creativeBootStatus small' ? statusNode : null;
-    },
-    getElementById() {
-      return null;
-    },
-    body: { textContent: '', innerHTML: '' }
-  },
-  sessionStorage: {
-    getItem() { return null; },
-    setItem() {},
-    get length() { return 0; },
-    key() { return null; }
-  },
-  localStorage: {
-    getItem() { return '1'; },
-    setItem() {}
-  },
-  async fetch(input) {
-    const key = String(input);
-    return {
-      ok: runtimeFiles.has(key),
-      async text() {
-        return runtimeFiles.get(key) || '';
-      }
-    };
+let html=context.window.applyCreativePatches(baseHtml);
+
+new vm.Script(jpPatch,{filename:'creative/jp-creative-patch.js'}).runInContext(context);
+assert.equal(typeof context.window.applyCreativeJpPatch,'function','JP Creative patch registration failed');
+html=context.window.applyCreativeJpPatch(html);
+
+new vm.Script(bridgePatch,{filename:'creative/bridge-project-patch.js'}).runInContext(context);
+assert.equal(typeof context.window.applyCreativeBridgeProjectPatch,'function','Bridge Creative patch registration failed');
+html=context.window.applyCreativeBridgeProjectPatch(html);
+
+assert.ok(html.includes('id="locate"'),'Canonical Next-Lab current-location control missing');
+assert.ok(html.includes('cmStandaloneSaveButton'),'Canonical Next-Lab standalone save UI missing');
+assert.ok(html.includes('cmV37BottomDockStyle'),'Canonical Next-Lab bottom dock missing');
+assert.ok(html.includes('cmLayerPanelTopStyle'),'Canonical Next-Lab layer panel position patch missing');
+assert.ok(html.includes('campsiteProjectNext'),'Bridge next action missing from final Creative HTML');
+assert.ok(!html.includes('installCampsiteProjectMobileUi'),'Legacy JP mobile UI override must stay removed');
+assert.ok(html.includes('JP_MAX_ADDITIONAL=25'),'JP design policy helper missing');
+
+function extractScripts(source){
+  const scripts=[];
+  let cursor=0;
+  const close='</script>';
+  while(true){
+    const open=source.indexOf('<script',cursor);
+    if(open<0)break;
+    const bodyStart=source.indexOf('>',open);
+    if(bodyStart<0)break;
+    const end=source.indexOf(close,bodyStart+1);
+    if(end<0)break;
+    scripts.push(source.slice(bodyStart+1,end));
+    cursor=end+close.length;
   }
-};
+  return scripts;
+}
 
-vm.createContext(context);
-new vm.Script(bridgePatch, { filename: 'creative/bridge-project-patch.js' }).runInContext(context);
-
-let bootstrap = extractCreativeBootstrap(indexHtml);
-const executeLoop = `  for(const runtimeCode of runtimeScripts){
-    const runRuntime=new Function(runtimeCode);
-    runRuntime();
-  }`;
-assert.ok(bootstrap.includes(executeLoop), 'Creative runtime execution loop changed');
-bootstrap = bootstrap.replace(
-  executeLoop,
-  `  globalThis.__runtimeScripts=runtimeScripts;
-  return;`
-);
-bootstrap = bootstrap.replace(
-  '(async()=>{',
-  'globalThis.__creativeBootPromise=(async()=>{'
-);
-
-new vm.Script(bootstrap, { filename: 'creative/index.html:inline-bootstrap' }).runInContext(context);
-await context.__creativeBootPromise;
-
-const scripts = context.__runtimeScripts;
-assert.ok(Array.isArray(scripts) && scripts.length >= 1, 'Generated Creative runtime scripts missing');
-
-scripts.forEach((code, index) => {
-  new vm.Script(code, { filename: `generated-creative-runtime-${index}.js` });
+const scripts=extractScripts(html);
+assert.ok(scripts.length>=1,'Generated Creative HTML scripts missing');
+scripts.forEach((code,index)=>{
+  if(!code.trim())return;
+  new vm.Script(code,{filename:`generated-creative-final-${index}.js`});
 });
 
-console.log(`Generated Creative runtime syntax: OK (${scripts.length} scripts)`);
+console.log(`Generated Creative final HTML syntax: OK (${scripts.length} scripts)`);
