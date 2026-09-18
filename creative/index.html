@@ -34,9 +34,9 @@ html,body{margin:0;min-height:100%;background:#17130f;color:#fff8e8;font-family:
     return true;
   };
 
-  const SNAPSHOT='c3a23287cd49a6d6b8689d7dd4122687ff483856';
+  const NEXT_LAB_SOURCE='c10b910344952ade36b2791a122f9f38e6c54d0b';
   const ROOT='./runtime/';
-  const urls=['runtime-vnext.html','creative-patches-v2.js','creative-patches-v3.js','creative-patches-v4.js'];
+  const urls=["runtime-vnext.html","creative-patches-v2.js","creative-patches-v3.js","creative-patches-v4.js","creative-patches-v5-design-check.js","creative-patches-v6-intuitive.js","creative-patches-v9-return-main.js","creative-patches-v10-save-labels.js","creative-patches-v13-draggable-fab.js","creative-patches-v14-layer-tap-layout.js","creative-patches-v18-preview-crosshair.js","creative-patches-v19-persistent-crosshair.js","creative-patches-v20-radius-gauge-save-return.js","creative-patches-v21-radius-swipe.js","creative-patches-v23-add-mode-close.js","creative-patches-v24-confirm-vertical-radius.js","creative-patches-v25-radius-handle-no-preview.js","creative-patches-v26-compact-radius-bar.js","creative-patches-v27-dot-handle-bar.js","creative-patches-v28-lever-handle.js","creative-patches-v29-lever-notches.js","creative-patches-v30-lever-gesture-lock.js","creative-patches-v32-poi-move-isolated.js","creative-patches-v33-action-wiring.js","creative-patches-v34-placement-core.js","creative-patches-v35-nearest-poi-warning.js","creative-patches-v36-compact-move-bar.js","creative-patches-v37-bottom-dock.js","creative-patches-v38-circle-layer-import.js","creative-patches-v39-layer-panel-top.js","creative-patches-v40-recent-filename.js","creative-patches-v41-save-output-wiring.js","creative-patches-v42-save-button-hardbind.js","creative-patches-v43-save-standalone.js","creative-patches-v44-lab-update-3-lines.js"];
   const runtimeResponsesPromise=Promise.all(urls.map(name=>fetch(ROOT+name,{cache:'no-store'})));
 
   setBootStatus(isBridgeProject?'CREATIVE MODEを開いています…':'認証システムを準備しています…');
@@ -70,6 +70,14 @@ html,body{margin:0;min-height:100%;background:#17130f;color:#fff8e8;font-family:
   for(let i=1;i<responses.length;i++) Function(await responses[i].text())();
   if(typeof window.applyCreativePatches!=='function'){document.body.textContent='Creative Modeの拡張機能を読み込めませんでした。';return;}
   src=window.applyCreativePatches(src);
+
+  // Keep the same final normalizations as the current Next-Lab entry point.
+  const bgOldMain='https://raw.githubusercontent.com/Kaityo1221/campsite-design-tool-adv-lab/main/creative/runtime/assets/creative-mode-opening.png';
+  const bgOldPinned='https://raw.githubusercontent.com/Kaityo1221/campsite-design-tool-adv-lab/1c27ca3ef14f423688f755d350ecc602bee1c573/creative/runtime/assets/creative-mode-opening.png';
+  const bgStable='https://media.githubusercontent.com/media/Kaityo1221/campsite-design-tool-adv-lab/1c27ca3ef14f423688f755d350ecc602bee1c573/creative/runtime/assets/creative-mode-opening.png';
+  src=src.split(bgOldMain).join(bgStable).split(bgOldPinned).join(bgStable);
+  src=src.replace(/<input\b[^>]*\bid=["']entryFile["'][^>]*>/i,m=>m.replace(/\saccept\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/i,''));
+  src=src.replace('entryFile.onchange=()=>{',"entryFile.removeAttribute('accept');entryFile.accept='';entryFile.onchange=()=>{");
   if(isBridgeProject){
     if(typeof window.applyCreativeBridgeProjectPatch!=='function'){
       document.body.innerHTML='<div id="creativeBootStatus"><div><strong>⚠️ CREATIVE MODE</strong><small>Bridgeプロジェクト読込機能を準備できませんでした。再読み込みしてください。</small></div></div>';
