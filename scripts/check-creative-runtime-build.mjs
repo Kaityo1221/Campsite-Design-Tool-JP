@@ -9,12 +9,12 @@ const jpPatch=fs.readFileSync('creative/jp-creative-patch.js','utf8');
 const bridgePatch=fs.readFileSync('creative/bridge-project-patch.js','utf8');
 
 function gitBlobShaBuffer(body){
-  return crypto.createHash('sha1').update(Buffer.from(\`blob \${body.length}\\0\`)).update(body).digest('hex');
+  return crypto.createHash('sha1').update(Buffer.from('blob '+body.length+'\0')).update(body).digest('hex');
 }
 
 for(const [name,expected] of Object.entries(manifest.assets||{})){
   const body=fs.readFileSync('creative/'+name);
-  assert.equal(gitBlobShaBuffer(body),expected,\`Pinned Next-Lab asset changed: \${name}\`);
+  assert.equal(gitBlobShaBuffer(body),expected,'Pinned Next-Lab asset changed: '+name);
 }
 
 const context={window:{},console,JSON,String,URLSearchParams};
