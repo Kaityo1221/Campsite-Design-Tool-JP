@@ -68,7 +68,7 @@
     if (!result.ready) {
       const el = setClass("hold");
       if (!el) return;
-      el.innerHTML = `<div class="apc-mark"><span class="apc-label">PRE-CHECK</span><strong class="apc-result">○ 範囲未指定</strong></div><div class="apc-meta"><span class="apc-note">審査範囲を保存すると自動チェックします</span></div>`;
+      el.innerHTML = `<div class="apc-mark"><span class="apc-label">PRE-CHECK</span><strong class="apc-result">○ 範囲未指定</strong></div><div class="apc-meta"><span class="apc-note">チェック範囲を保存すると自動チェックします</span></div>`;
       return;
     }
 
@@ -116,7 +116,7 @@
 
   window.addEventListener("adminautoreviewchange", event => scheduleRender(event.detail?.result));
   window.addEventListener("adminreviewscopechange", () => {
-    renderWaiting("再チェック中…", "審査範囲を反映しています");
+    renderWaiting("再チェック中…", "チェック範囲を反映しています");
     window.AdminAutoReview?.refresh?.();
   });
 
