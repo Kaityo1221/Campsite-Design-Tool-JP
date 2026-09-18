@@ -76,7 +76,8 @@
     const duplicates = Array.isArray(result.duplicatePairs) ? result.duplicatePairs.length : 0;
     const limits = Array.isArray(result.limitWarnings) ? result.limitWarnings.length : 0;
     const unknown = Number(result.counts?.unknown) || 0;
-    const issues = spacing + duplicates + limits;
+    const outsideAdded = Number(result.outsideAdded) || 0;
+    const issues = spacing + duplicates + limits + (outsideAdded > 0 ? 1 : 0);
     const scoped = Array.isArray(result.scoped) ? result.scoped.length : 0;
     const added = Number(result.counts?.totalAdded) || 0;
 
@@ -100,6 +101,7 @@
         ${chip("距離", spacing)}
         ${chip("上限", limits)}
         ${chip("重複", duplicates)}
+        ${outsideAdded ? chip("範囲外追加", outsideAdded) : ""}
         ${unknown ? chip("未分類", unknown) : ""}
       </div>`;
   }
