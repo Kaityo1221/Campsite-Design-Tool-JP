@@ -3,12 +3,13 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 
 const indexHtml = fs.readFileSync('creative/index.html', 'utf8');
-const runtimeFiles = new Map([
-  ['./runtime/runtime-vnext.html', fs.readFileSync('creative/runtime/runtime-vnext.html', 'utf8')],
-  ['./runtime/creative-patches-v2.js', fs.readFileSync('creative/runtime/creative-patches-v2.js', 'utf8')],
-  ['./runtime/creative-patches-v3.js', fs.readFileSync('creative/runtime/creative-patches-v3.js', 'utf8')],
-  ['./runtime/creative-patches-v4.js', fs.readFileSync('creative/runtime/creative-patches-v4.js', 'utf8')],
-]);
+const manifest = JSON.parse(fs.readFileSync('creative/runtime/next-lab-manifest.json', 'utf8'));
+const runtimeFiles = new Map(
+  manifest.order.map(name => [
+    './runtime/' + name,
+    fs.readFileSync('creative/runtime/' + name, 'utf8')
+  ])
+);
 const bridgePatch = fs.readFileSync('creative/bridge-project-patch.js', 'utf8');
 
 function extractCreativeBootstrap(html) {
