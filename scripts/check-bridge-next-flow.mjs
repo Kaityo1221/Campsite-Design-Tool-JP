@@ -134,9 +134,9 @@ assert.ok(transformed.includes("type==='POWERSPOT'"));
 assert.ok(transformed.includes("return'existing-pokestop'"));
 assert.ok(transformed.includes("sessionStorage.getItem(CAMPSITE_PROJECT_KEY)"));
 
-assert.ok(creativeIndex.includes('./bridge-project-patch.js?v=2'), 'Creative index must own the Bridge project patch');
-assert.ok(creativeIndex.includes("creativeParams.get('campsiteProject')==='bridge'"), 'Creative index must apply the Bridge patch for Bridge projects');
-assert.ok(creativeIndex.includes('applyCreativeBridgeProjectPatch'), 'Creative index must call the Bridge patch');
+assert.ok(creativeIndex.includes("fetch('./bridge-project-patch.js'"), 'Creative runtime must load the Bridge project patch');
+assert.ok(creativeIndex.includes("new URLSearchParams(location.search).get('campsiteProject')==='bridge'"), 'Creative runtime must detect Bridge projects');
+assert.ok(creativeIndex.includes('html=window.applyCreativeBridgeProjectPatch(html)'), 'Creative runtime must apply the Bridge patch to final HTML');
 assert.ok(creativeBridge.includes("location.replace(target.href)"), 'Legacy Bridge entry must redirect instead of document.write');
 assert.ok(!creativeBridge.includes("document.write("), 'Legacy Bridge entry must not rehydrate Creative with document.write');
 assert.ok(nextFlow.includes("./creative/index.html?campsiteProject=bridge"), 'Next flow must enter Creative index directly');
