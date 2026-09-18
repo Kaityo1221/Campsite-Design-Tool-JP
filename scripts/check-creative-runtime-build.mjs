@@ -44,6 +44,7 @@ assert.ok(html.includes('cmLayerPanelTopStyle'),'Canonical Next-Lab layer panel 
 assert.ok(html.includes('campsiteProjectNext'),'Bridge next action missing from final Creative HTML');
 assert.ok(!html.includes('installCampsiteProjectMobileUi'),'Legacy JP mobile UI override must stay removed');
 assert.ok(html.includes('JP_MAX_ADDITIONAL=25'),'JP design policy helper missing');
+assert.ok(html.includes('function cmOpenCoords(){if(cmCoordView?.isConnected)return;'),'Coordinate view singleton guard missing');
 assert.ok(html.includes("./assets/pokestop.png"),'Canonical Next-Lab PokéStop icon reference missing');
 assert.ok(html.includes("./assets/gym.png"),'Canonical Next-Lab Gym icon reference missing');
 assert.ok(html.includes("./assets/powerspot.png"),'Canonical Next-Lab PowerSpot icon reference missing');
