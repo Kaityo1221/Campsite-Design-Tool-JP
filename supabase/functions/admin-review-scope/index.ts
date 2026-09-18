@@ -171,11 +171,11 @@ Deno.serve(async (request: Request): Promise<Response> => {
     console.error("admin-review-scope", error);
     const message = error instanceof Error ? error.message : String(error);
     if (message === "vertices_invalid") {
-      return jsonResponse({ success: false, error: "審査範囲の頂点が正しくありません。" }, 400);
+      return jsonResponse({ success: false, error: "チェック範囲の頂点が正しくありません。" }, 400);
     }
     if (/site not found|source upload does not belong to site/.test(message)) {
       return jsonResponse({ success: false, error: "サイトと提出履歴の対応を確認できませんでした。" }, 400);
     }
-    return jsonResponse({ success: false, error: "審査範囲の処理でエラーが発生しました。" }, 500);
+    return jsonResponse({ success: false, error: "チェック範囲の処理でエラーが発生しました。" }, 500);
   }
 });
