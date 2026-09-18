@@ -79,6 +79,34 @@ function syncCampsiteProjectFromCreative(project){
   sessionStorage.setItem(CAMPSITE_PROJECT_KEY,JSON.stringify(project));
   return project;
 }
+function installCampsiteProjectMobileUi(){
+  document.body.classList.add('campsite-bridge-project');
+  if(!document.getElementById('campsiteBridgeMobileUi')){
+    const style=document.createElement('style');
+    style.id='campsiteBridgeMobileUi';
+    style.textContent=`
+body.campsite-bridge-project #locate{display:none!important}
+body.campsite-bridge-project .bottom-bar{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+@media(max-width:720px){
+  body.campsite-bridge-project #back{left:10px!important;right:auto!important;top:calc(10px + env(safe-area-inset-top))!important;min-width:92px!important;padding:0 12px!important}
+  body.campsite-bridge-project #mapToggle{right:10px!important;left:auto!important;top:calc(10px + env(safe-area-inset-top))!important;min-width:126px!important;padding:0 12px!important}
+  body.campsite-bridge-project #campsiteProjectNext{left:10px!important;right:10px!important;top:calc(62px + env(safe-area-inset-top))!important;transform:none!important;width:auto!important;min-height:48px!important;padding:0 14px!important;font-size:14px!important}
+  body.campsite-bridge-project #layerButton,body.campsite-bridge-project #circleButton{right:10px!important;left:auto!important;width:58px!important;min-width:58px!important;min-height:40px!important;padding:0!important;font-size:12px!important}
+  body.campsite-bridge-project #layerButton{top:calc(120px + env(safe-area-inset-top))!important}
+  body.campsite-bridge-project #circleButton{top:calc(166px + env(safe-area-inset-top))!important}
+  body.campsite-bridge-project .panel{top:calc(214px + env(safe-area-inset-top))!important;max-height:calc(100dvh - 300px)!important;overflow:auto!important}
+  body.campsite-bridge-project .status{top:calc(214px + env(safe-area-inset-top))!important}
+  body.campsite-bridge-project.left-hand #back{left:auto!important;right:10px!important}
+  body.campsite-bridge-project.left-hand #mapToggle{right:auto!important;left:10px!important}
+  body.campsite-bridge-project.left-hand #layerButton,body.campsite-bridge-project.left-hand #circleButton{right:auto!important;left:10px!important}
+}
+`;
+    document.head.appendChild(style);
+  }
+  const layerBtn=$('layerButton'),circleBtn=$('circleButton');
+  if(layerBtn){layerBtn.textContent='▱ 層';layerBtn.setAttribute('aria-label','レイヤー')}
+  if(circleBtn){circleBtn.textContent='◎ 円';circleBtn.setAttribute('aria-label','距離円')}
+}
 function installCampsiteProjectNext(project){
   if(document.getElementById('campsiteProjectNext'))return;
   const btn=document.createElement('button');
@@ -131,6 +159,7 @@ function loadCampsiteBridgeProject(project){
   if(bounds.length)map.fitBounds(bounds,{padding:[28,28],maxZoom:18});
   snapshot();
   beginEditor();
+  installCampsiteProjectMobileUi();
   const backBtn=$('back');
   if(backBtn)backBtn.onclick=()=>{syncCampsiteProjectFromCreative(project);snapshot();location.href='../bridge-gateway.html?campsiteBridgeImport=1'};
   installCampsiteProjectNext(project);
