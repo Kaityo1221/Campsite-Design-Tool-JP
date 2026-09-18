@@ -112,7 +112,10 @@
       #campsiteBridgeSelection .bridge-count span{display:block;color:#94a3b8;font-size:10px}
       #campsiteBridgeSelection .bridge-count b{display:block;margin-top:2px;color:#f8fafc;font-size:17px}
       #campsiteBridgeSelection .bridge-map-wrap{position:relative}
-      #campsiteBridgeMap{width:100%;height:520px;min-height:420px;background:#07111f;border-top:1px solid #1e293b;border-bottom:1px solid #1e293b}
+      #campsiteBridgeMap{width:100%;height:520px;min-height:420px;background:#07111f;border-top:1px solid #1e293b}
+      #campsiteBridgeSelection .bridge-scroll-handle{display:flex;width:100%;min-height:48px;align-items:center;justify-content:center;gap:9px;border:0;border-top:1px solid #1e293b;border-bottom:1px solid #1e293b;background:linear-gradient(180deg,#111827,#0b1220);color:#dbeafe;font-size:12px;font-weight:900;letter-spacing:.02em;cursor:pointer;touch-action:pan-y;-webkit-tap-highlight-color:transparent}
+      #campsiteBridgeSelection .bridge-scroll-handle .bridge-grip{width:34px;height:5px;border-radius:999px;background:#64748b;box-shadow:0 1px 0 rgba(255,255,255,.08) inset}
+      #campsiteBridgeSelection .bridge-scroll-handle:active{background:#172033}
       #campsiteBridgeMap.bridge-draw-mode{cursor:crosshair}
       #campsiteBridgeSelection .bridge-map-toolbar{position:absolute;z-index:700;top:10px;right:10px;display:flex;align-items:center;gap:7px;padding:6px;border-radius:14px;background:rgba(2,6,23,.78);border:1px solid rgba(148,163,184,.28);box-shadow:0 8px 24px rgba(2,6,23,.28);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
       #campsiteBridgeSelection .bridge-map-toolbar button{border:1px solid rgba(148,163,184,.24);background:#0f172a;color:#e2e8f0;border-radius:10px;height:42px;min-width:42px;padding:0 11px;font-size:18px;font-weight:900;line-height:1;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
@@ -129,7 +132,7 @@
       #campsiteBridgeSelection .bridge-status{margin:10px 0 0;color:#bae6fd;font-size:12px;line-height:1.6}
       #campsiteBridgeImportNotice{margin:14px 0;padding:13px 15px;border-radius:13px;border:1px solid rgba(34,197,94,.38);background:rgba(20,83,45,.24);color:#dcfce7;font-weight:800;line-height:1.65}
       #campsiteBridgeSelection .leaflet-container{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#0f172a;color:#e2e8f0}.leaflet-popup-content{margin:10px 12px;font-size:12px;line-height:1.45}
-      @media(max-width:600px){#campsiteBridgeSelection .bridge-summary{grid-template-columns:repeat(2,minmax(0,1fr))}#campsiteBridgeMap{height:480px;min-height:400px}#campsiteBridgeSelection .bridge-map-toolbar{top:8px;right:8px;gap:5px;padding:5px}#campsiteBridgeSelection .bridge-map-toolbar button{height:40px;min-width:40px;padding:0 9px}#campsiteBridgeSelection .bridge-map-toolbar .bridge-map-draw{font-size:12px;padding:0 10px}}
+      @media(max-width:600px){#campsiteBridgeSelection .bridge-summary{grid-template-columns:repeat(2,minmax(0,1fr))}#campsiteBridgeMap{height:52vh;height:52svh;min-height:350px;max-height:460px}#campsiteBridgeSelection .bridge-map-toolbar{top:8px;right:8px;gap:5px;padding:5px}#campsiteBridgeSelection .bridge-map-toolbar button{height:40px;min-width:40px;padding:0 9px}#campsiteBridgeSelection .bridge-map-toolbar .bridge-map-draw{font-size:12px;padding:0 10px}}
     `;
     document.head.appendChild(style);
   }
@@ -169,6 +172,11 @@
       </div>
       <div class="bridge-map-wrap">
         <div id="campsiteBridgeMap"></div>
+        <button id="bridgeScrollHandle" class="bridge-scroll-handle" type="button" aria-label="下の操作へスクロール">
+          <span class="bridge-grip" aria-hidden="true"></span>
+          <span>下の操作へ</span>
+          <span aria-hidden="true">⌄</span>
+        </button>
         <div class="bridge-map-toolbar" aria-label="ポリゴン操作">
           <button id="bridgeDrawBtn" class="bridge-map-draw" type="button" aria-pressed="false">✏️ 描く</button>
           <button id="bridgeUndoBtn" type="button" title="1点戻す" aria-label="1点戻す">↶</button>
@@ -446,6 +454,10 @@
       event.preventDefault();
       event.stopPropagation();
       setDrawMode(!drawMode);
+    });
+    $('bridgeScrollHandle')?.addEventListener('click', event => {
+      event.preventDefault();
+      box.querySelector('.bridge-tools')?.scrollIntoView({ behavior:'smooth', block:'start' });
     });
     $('bridgeFitBtn')?.addEventListener('click', event => {
       event.preventDefault();
