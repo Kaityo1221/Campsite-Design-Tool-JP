@@ -1,11 +1,11 @@
-/* Route existing KMZ review buttons to the Phase 3 workspace without deleting legacy review code. */
+/* Route existing KMZ buttons to the PRE-CHECK workspace. */
 (function () {
   "use strict";
 
   function relabel(scope = document) {
     scope.querySelectorAll?.("[data-ak-review]").forEach(button => {
-      button.textContent = "🗂️ 審査ワークスペース";
-      button.setAttribute("aria-label", "このサイトを審査ワークスペースで開く");
+      button.textContent = "🔍 提出前チェック";
+      button.setAttribute("aria-label", "このサイトの提出前チェックを開く");
     });
   }
 
