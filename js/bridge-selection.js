@@ -104,7 +104,7 @@
     const style = document.createElement('style');
     style.id = 'campsiteBridgeSelectionStyles';
     style.textContent = `
-      #campsiteBridgeSelection{margin:14px 0 20px;border:1px solid rgba(56,189,248,.38);border-radius:18px;overflow:hidden;background:rgba(2,6,23,.76)}
+      body.campsite-bridge-selection-active #tool .poi-spacing-radius-step{display:none!important}\n      body.campsite-bridge-selection-active #tool #customCsvStep + .step + .step{display:none!important}\n      #campsiteBridgeSelection{margin:14px 0 20px;border:1px solid rgba(56,189,248,.38);border-radius:18px;overflow:hidden;background:rgba(2,6,23,.76)}
       #campsiteBridgeSelection .bridge-head{padding:16px 16px 12px;background:linear-gradient(135deg,rgba(14,116,144,.22),rgba(15,23,42,.15))}
       #campsiteBridgeSelection .bridge-head h3{margin:0;color:#f8fafc;font-size:20px}
       #campsiteBridgeSelection .bridge-head p{margin:7px 0 0;color:#bae6fd;font-size:13px;line-height:1.7}
@@ -419,6 +419,7 @@
     try { window.openTab?.('tool'); } catch (_) {}
 
     const bridgePanel = $('campsiteBridgeSelection');
+    document.body.classList.remove('campsite-bridge-selection-active');
     if (bridgePanel) bridgePanel.remove();
     restoreNormalFlow(panel);
     input.dispatchEvent(new Event('change', { bubbles:true }));
@@ -470,7 +471,7 @@
     });
     $('bridgeScrollHandle')?.addEventListener('click', event => {
       event.preventDefault();
-      box.querySelector('.bridge-tools')?.scrollIntoView({ behavior:'smooth', block:'start' });
+      $('campsiteBridgeSelection')?.querySelector('.bridge-tools')?.scrollIntoView({ behavior:'smooth', block:'start' });
     });
     $('bridgeFitBtn')?.addEventListener('click', event => {
       event.preventDefault();
@@ -502,6 +503,7 @@
     try { window.setWorkflowStep?.('csv'); } catch (_) {}
     try { window.openTab?.('tool'); } catch (_) {}
 
+    document.body.classList.add('campsite-bridge-selection-active');
     hideNormalFlow(panel);
     buildPanel(panel);
     bindControls(panel);
