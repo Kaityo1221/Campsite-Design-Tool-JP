@@ -1,8 +1,6 @@
 (() => {
   'use strict';
 
-  const WRITE_NEEDLE = '  document.open();document.write(html);document.close();';
-
   const loader = String.raw`
 const CAMPSITE_PROJECT_KEY='campsiteProject.v1';
 function campsProjectLayer(entity){
@@ -160,14 +158,15 @@ setTimeout(()=>{
 `;
 
   function apply(src) {
-    if (typeof src !== 'string' || !src.includes(WRITE_NEEDLE)) return src;
-    const injected = [
-      `  const campsBridgeLoader=${JSON.stringify(loader)};`,
-      "  html=html.replace('function beginEditor(){',campsBridgeLoader+'function beginEditor(){');",
-      `  const campsBridgeAutostart=${JSON.stringify(autostart)};`,
-      "  html=html.replace('function restore(){',campsBridgeAutostart+'function restore(){');"
-    ].join('\n');
-    return src.replace(WRITE_NEEDLE, `${injected}\n${WRITE_NEEDLE}`);
+    if (typeof src !== 'string') return src;
+    let out=src;
+    if(!out.includes('CAMPSITE_PROJECT_KEY')&&out.includes('function beginEditor(){')){
+      out=out.replace('function beginEditor(){',loader+'function beginEditor(){');
+    }
+    if(!out.includes('Bridge project load failed')&&out.includes('function restore(){')){
+      out=out.replace('function restore(){',autostart+'function restore(){');
+    }
+    return out;
   }
 
   window.applyCreativeBridgeProjectPatch = apply;
