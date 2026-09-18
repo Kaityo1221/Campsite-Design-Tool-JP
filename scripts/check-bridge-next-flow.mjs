@@ -10,6 +10,7 @@ const distanceBridge = fs.readFileSync('bridge-distance.html', 'utf8');
 const distanceProject = fs.readFileSync('js/bridge-distance-project.js', 'utf8');
 const previewPage = fs.readFileSync('bridge-next-preview.html', 'utf8');
 const gateway = fs.readFileSync('bridge-gateway.html', 'utf8');
+const creativeIndex = fs.readFileSync('creative/index.html', 'utf8');
 const selection = fs.readFileSync('js/bridge-selection.js', 'utf8');
 
 function storage() {
@@ -123,9 +124,13 @@ assert.ok(transformed.includes("type==='POWERSPOT'"));
 assert.ok(transformed.includes("return'existing-pokestop'"));
 assert.ok(transformed.includes("sessionStorage.getItem(CAMPSITE_PROJECT_KEY)"));
 
-assert.ok(creativeBridge.includes('./bridge-project-patch.js?v=1'));
-assert.ok(creativeBridge.includes('applyCreativeBridgeProjectPatch'));
-assert.ok(creativeBridge.includes("campsiteProject=bridge") === false, 'Bridge entry should not hard-code a second redirect');
+assert.ok(creativeIndex.includes('./bridge-project-patch.js?v=2'), 'Creative index must own the Bridge project patch');
+assert.ok(creativeIndex.includes("creativeParams.get('campsiteProject')==='bridge'"), 'Creative index must apply the Bridge patch for Bridge projects');
+assert.ok(creativeIndex.includes('applyCreativeBridgeProjectPatch'), 'Creative index must call the Bridge patch');
+assert.ok(creativeBridge.includes("location.replace(target.href)"), 'Legacy Bridge entry must redirect instead of document.write');
+assert.ok(!creativeBridge.includes("document.write("), 'Legacy Bridge entry must not rehydrate Creative with document.write');
+assert.ok(nextFlow.includes("./creative/index.html?campsiteProject=bridge"), 'Next flow must enter Creative index directly');
+assert.ok(!nextFlow.includes("./creative/bridge.html?campsiteProject=bridge"), 'Next flow must not use the nested Bridge wrapper');
 
 assert.ok(distanceBridge.includes('js/bridge-distance-project.js?v=1'));
 assert.ok(distanceBridge.includes("fetch('./index.html'"));
@@ -170,7 +175,6 @@ const caBootstrap = fs.readFileSync('js/ca-access-bootstrap.js', 'utf8');
 const labSupabase = fs.readFileSync('js/lab-supabase.js', 'utf8');
 const receiver = fs.readFileSync('bridge-receiver.html', 'utf8');
 const mainIndex = fs.readFileSync('index.html', 'utf8');
-const creativeIndex = fs.readFileSync('creative/index.html', 'utf8');
 
 assert.ok(caBootstrap.indexOf('const BOOTSTRAP_SCRIPT_SRC') < caBootstrap.indexOf('async function boot()'), 'Bootstrap base must be captured before first await');
 assert.ok(caBootstrap.includes("ca-access.js?v=5"), 'Standalone bootstrap must load CA access v5');

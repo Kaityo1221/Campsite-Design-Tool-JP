@@ -110,7 +110,7 @@
     }
 
     window.CampsiteProject = Object.freeze(project);
-    location.href = './creative/bridge.html?campsiteProject=bridge';
+    location.href = './creative/index.html?campsiteProject=bridge';
   }
 
   document.addEventListener('click', event => {

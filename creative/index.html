@@ -12,6 +12,7 @@ html,body{margin:0;min-height:100%;background:#17130f;color:#fff8e8;font-family:
 #creativeBootStatus small{display:block;margin-top:10px;color:#d8c9a8;line-height:1.7}
 </style>
 <script src="../js/ca-access-bootstrap.js?v=3"></script>
+<script src="./bridge-project-patch.js?v=2"></script>
 </head>
 <body>
 <div id="creativeBootStatus"><div><strong>🎨 CREATIVE MODE</strong><small>POIと活動範囲を読み込んでいます…</small></div></div>
@@ -64,6 +65,14 @@ html,body{margin:0;min-height:100%;background:#17130f;color:#fff8e8;font-family:
   for(let i=1;i<responses.length;i++) Function(await responses[i].text())();
   if(typeof window.applyCreativePatches!=='function'){document.body.textContent='Creative Modeの拡張機能を読み込めませんでした。';return;}
   src=window.applyCreativePatches(src);
+  const creativeParams=new URLSearchParams(location.search);
+  if(creativeParams.get('campsiteProject')==='bridge'){
+    if(typeof window.applyCreativeBridgeProjectPatch!=='function'){
+      document.body.innerHTML='<div id="creativeBootStatus"><div><strong>⚠️ CREATIVE MODE</strong><small>Bridgeプロジェクト読込機能を準備できませんでした。再読み込みしてください。</small></div></div>';
+      return;
+    }
+    src=window.applyCreativeBridgeProjectPatch(src);
+  }
 
   // 開発中の雨雲チェック。Creative Modeのオープニングだけに小さな入口を出す。
   // Client IDはrain-dev.html側のlocalStorageだけに保存し、リポジトリには持たない。
