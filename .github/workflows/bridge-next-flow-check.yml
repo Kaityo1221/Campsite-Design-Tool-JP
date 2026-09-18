@@ -47,3 +47,4 @@ jobs:
           node --check js/ca-access.js
           node --check js/ca-access-bootstrap.js
           node --check js/bridge-distance-project.js
+          node --check creative/runtime/generated-runtime-debug.js
