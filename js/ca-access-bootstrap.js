@@ -53,14 +53,18 @@
       );
     }
 
-    if (!window.CampsitePolicy) {
-      await loadScript(new URL('campsite-policy.js?v=1', base).href);
-      await window.CampsitePolicy?.ready;
-    }
-
+    // Authentication must not wait for policy I/O. The policy client keeps a
+    // safe local fallback and may finish loading in the background.
     if (!window.CampsiteCaAccess) {
       await loadScript(new URL('ca-access.js?v=5', base).href);
     }
+
+    if (!window.CampsitePolicy) {
+      await loadScript(new URL('campsite-policy.js?v=1', base).href);
+    }
+    Promise.resolve(window.CampsitePolicy?.ready).catch((error) => {
+      console.warn('Campsite policy background load failed', error);
+    });
 
     if (!window.CampsiteCaGeoGuard) {
       await loadScript(new URL('ca-geo-guard.js?v=1', base).href);
