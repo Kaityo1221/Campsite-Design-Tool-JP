@@ -185,8 +185,11 @@ assert.ok(caBootstrap.indexOf('const BOOTSTRAP_SCRIPT_SRC') < caBootstrap.indexO
 assert.ok(caBootstrap.includes("ca-access.js?v=5"), 'Standalone bootstrap must load CA access v5');
 assert.ok(creativeIndex.includes('ca-access-bootstrap.js?v=3'), 'Creative must bust stale auth bootstrap cache');
 assert.ok(caBootstrap.indexOf("ca-access.js?v=5") < caBootstrap.indexOf("CampsitePolicy?.ready"), 'Authentication must start before policy readiness is observed');
-assert.ok(creativeIndex.includes("認証システムを準備しています"), 'Creative must expose auth bootstrap stage');
-assert.ok(creativeIndex.includes("CREATIVE MODE本体を準備しています"), 'Creative must expose runtime bootstrap stage');
+assert.ok(creativeIndex.includes("isBridgeProject?'CREATIVE MODEを開いています…':'認証システムを準備しています…'"), 'Bridge handoff must hide repeated auth copy');
+assert.ok(creativeIndex.includes("isBridgeProject?'CREATIVE MODEを開いています…':'日本CA認証を確認しています…'"), 'Bridge handoff must keep auth verification in the background');
+assert.ok(creativeIndex.includes("isBridgeProject?'POIと活動範囲を配置しています…':'CREATIVE MODE本体を準備しています…'"), 'Bridge handoff must show project preparation instead of auth details');
+assert.ok(creativeIndex.includes('const runtimeResponsesPromise=Promise.all'), 'Creative runtime must prefetch while auth is checked');
+assert.ok(creativeIndex.indexOf('const runtimeResponsesPromise=Promise.all') < creativeIndex.indexOf('await waitFor(()=>!!window.CampsiteCaAccess'), 'Creative runtime prefetch must start before auth wait');
 assert.ok(creativeIndex.includes("10000"), 'Creative auth bootstrap must have a bounded startup wait');
 assert.ok(caAccess.includes('HANDOFF_PARAMS.get("campsiteBridgeImport") === "1"'), 'Gateway handoff must be recognized');
 assert.ok(caAccess.includes('HANDOFF_PARAMS.get("campsiteProject") === "bridge"'), 'Creative/distance handoff must be recognized');
