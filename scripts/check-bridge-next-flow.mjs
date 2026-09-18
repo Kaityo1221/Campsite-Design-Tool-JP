@@ -150,8 +150,12 @@ assert.ok(previewPage.includes("localStorage.removeItem(KEY)"));
 assert.ok(previewPage.includes('新フローをON'));
 assert.ok(previewPage.includes('新フローをOFF'));
 
-const selectionPos = gateway.indexOf('js/bridge-selection.js?v=3');
-const nextPos = gateway.indexOf('js/bridge-next-flow.js?v=1');
+assert.ok(selection.includes('id="bridgeScrollHandle"'), 'Bridge map must expose a mobile scroll handle');
+assert.ok(selection.includes("touch-action:pan-y"), 'Bridge scroll handle must allow page panning');
+assert.ok(selection.includes("height:52svh"), 'Bridge map must use a viewport-aware mobile height');
+assert.ok(transformed.includes("event.stopImmediatePropagation()") || fs.readFileSync('js/bridge-next-flow.js','utf8').includes("event.stopImmediatePropagation()"), 'Next flow must suppress legacy CSV handoff');
+const selectionPos = gateway.indexOf('js/bridge-selection.js?v=4');
+const nextPos = gateway.indexOf('js/bridge-next-flow.js?v=2');
 assert.ok(selectionPos >= 0 && nextPos > selectionPos, 'Next flow must load after polygon selection');
 
 
@@ -164,7 +168,11 @@ const creativeIndex = fs.readFileSync('creative/index.html', 'utf8');
 
 assert.ok(caBootstrap.indexOf('const BOOTSTRAP_SCRIPT_SRC') < caBootstrap.indexOf('async function boot()'), 'Bootstrap base must be captured before first await');
 assert.ok(caBootstrap.includes("ca-access.js?v=5"), 'Standalone bootstrap must load CA access v5');
-assert.ok(creativeIndex.includes('ca-access-bootstrap.js?v=2'), 'Creative must bust stale auth bootstrap cache');
+assert.ok(creativeIndex.includes('ca-access-bootstrap.js?v=3'), 'Creative must bust stale auth bootstrap cache');
+assert.ok(caBootstrap.indexOf("ca-access.js?v=5") < caBootstrap.indexOf("CampsitePolicy?.ready"), 'Authentication must start before policy readiness is observed');
+assert.ok(creativeIndex.includes("認証システムを準備しています"), 'Creative must expose auth bootstrap stage');
+assert.ok(creativeIndex.includes("CREATIVE MODE本体を準備しています"), 'Creative must expose runtime bootstrap stage');
+assert.ok(creativeIndex.includes("10000"), 'Creative auth bootstrap must have a bounded startup wait');
 assert.ok(caAccess.includes('HANDOFF_PARAMS.get("campsiteBridgeImport") === "1"'), 'Gateway handoff must be recognized');
 assert.ok(caAccess.includes('HANDOFF_PARAMS.get("campsiteProject") === "bridge"'), 'Creative/distance handoff must be recognized');
 assert.ok(caAccess.includes('ca-gate-handoff-pending'), 'Handoff auth gate must stay hidden while session is checked');
