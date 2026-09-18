@@ -225,31 +225,6 @@
     line-height: 1;
   }
 
-  /* Final review stays below the map but loses the nested card-within-card look. */
-  .admin-review-workspace > .arr-panel {
-    flex: 0 0 auto;
-    margin: 0 !important;
-    padding: 18px 12px 28px !important;
-    border: 0 !important;
-    border-top: 1px solid rgba(56,189,248,.22) !important;
-    border-radius: 0 !important;
-    background: #020617 !important;
-  }
-  .arr-head {
-    margin-bottom: 12px;
-  }
-  .arr-form,
-  .arr-history-wrap {
-    padding: 0 !important;
-    border: 0 !important;
-    border-radius: 0 !important;
-    background: transparent !important;
-  }
-  .arr-history-wrap {
-    margin-top: 18px;
-    padding-top: 14px !important;
-    border-top: 1px solid rgba(148,163,184,.14) !important;
-  }
 }
 
 @media (max-width: 520px) {
