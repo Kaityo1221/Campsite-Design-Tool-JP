@@ -78,7 +78,7 @@
   ) {
     const script = document.createElement('script');
     script.id = 'caAccessBootstrapLoader';
-    script.src = './js/ca-access-bootstrap.js?v=2';
+    script.src = './js/ca-access-bootstrap.js?v=3';
     script.async = false;
     document.head.appendChild(script);
   }
