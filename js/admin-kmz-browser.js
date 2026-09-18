@@ -89,7 +89,7 @@
       await loadScript("js/admin-review-mobile-ux.js?v=2", "campsiteAdminReviewMobileUxScript");
 
       // PRE-CHECK is the primary result shown immediately when a site opens.
-      // The formal FINAL REVIEW UI is intentionally parked; its server-side history remains available for future reuse.
+      // Formal-review recording stays parked; its server-side history remains available for future reuse.
       await loadScript("js/admin-precheck-summary.js?v=3", "campsiteAdminPrecheckSummaryScript");
       await loadScript("js/admin-precheck-polish.js?v=2", "campsiteAdminPrecheckPolishScript");
       await loadScript("js/admin-precheck-tap-fix.js?v=1", "campsiteAdminPrecheckTapFixScript");
