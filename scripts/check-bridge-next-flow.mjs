@@ -229,7 +229,28 @@ new vm.Script(creativePatchV4,{filename:'creative/runtime/creative-patches-v4.js
 
 assert.ok(creativeIndex.includes("const ROOT='./runtime/'"),'Creative must load the vendored runtime locally');
 assert.ok(!creativeIndex.includes('raw.githubusercontent.com/Kaityo1221/Campsite-Design-Tool-Next-Lab'),'Creative must not depend on raw GitHub at runtime');
-assert.ok(creativeIndex.includes("const runtimeStart=src.indexOf('<script>')"),'Creative must extract the vendored runtime bootstrap directly');
+assert.ok(creativeIndex.includes("const runtimeScripts=[]"), 'Creative must extract every runtime script separately');
+assert.ok(creativeIndex.includes("const runtimeClose='</'+'script>'"), 'Creative runtime closing marker must be HTML-parser safe');
+assert.ok(creativeIndex.includes("for(const runtimeCode of runtimeScripts)"), 'Creative must execute runtime scripts in source order');
+function extractRuntimeScripts(html){
+  const scripts=[];
+  let cursor=0;
+  const close='</script>';
+  while(true){
+    const open=html.indexOf('<script',cursor);
+    if(open<0)break;
+    const bodyStart=html.indexOf('>',open);
+    if(bodyStart<0)break;
+    const end=html.indexOf(close,bodyStart+1);
+    if(end<0)break;
+    scripts.push(html.slice(bodyStart+1,end));
+    cursor=end+close.length;
+  }
+  return scripts;
+}
+const vendoredRuntimeScripts=extractRuntimeScripts(creativeRuntime);
+assert.ok(vendoredRuntimeScripts.length>=1,'Vendored runtime script missing');
+vendoredRuntimeScripts.forEach((code,index)=>new vm.Script(code,{filename:'creative/runtime/runtime-vnext.html:script-'+index}));
 assert.ok(creativeIndex.includes('const runRuntime=new Function(runtimeCode)'), 'Creative must execute the runtime bootstrap directly');
 assert.ok(creativeIndex.includes("new URL('./base-v7.html',location.href).href"), 'Creative runtime must resolve base-v7 against the JP Creative URL');
 assert.ok(creativeIndex.includes("setTimeout(()=>__ctl.abort(),8000)"), 'Creative base-v7 fetch must have an 8 second timeout');

@@ -96,7 +96,11 @@ function jpRefreshReviews(){jpAdditionalRecords().forEach(r=>{const sig=jpIssueS
 function ensureJpGuide(){let box=document.getElementById('jpCreativeGuide');if(box)return box;box=document.createElement('div');box.id='jpCreativeGuide';box.style.cssText='margin-top:10px;padding:9px;border:1px solid rgba(240,204,123,.55);border-radius:12px;background:rgba(255,248,230,.10);color:#fff8e8;font-size:10px;line-height:1.55';box.innerHTML='<div style="display:flex;justify-content:space-between;gap:8px;font-weight:900"><span>設計チェック</span><span id="jpCreativeCount">0 / 25</span></div><div style="display:flex;justify-content:space-between;gap:8px;margin-top:4px"><span>50m未満</span><span id="jpCreativeUnder50">0</span></div><div style="display:flex;justify-content:space-between;gap:8px"><span>理由の再確認</span><span id="jpCreativeReview">0</span></div><details style="margin-top:7px"><summary style="cursor:pointer;font-weight:900">日本CA向け設計ガイド</summary><div style="margin-top:6px">・50mを基本とし、50m未満は自動NGにせず要確認として扱います。<br>・ゲームスポットを一箇所へ集中させず、公園内を自然に移動できる配置を考えます。<br>・入口や狭い通路への滞留、本来の利用者と衝突しやすい場所への集中を避けます。<br>・活動範囲はミートアップで想定される移動範囲として確認します。<br>・30m / 40mは例外確認の参考表示です。</div></details>';circlePanel.appendChild(box);return box}
 function renderJpGuide(){jpRefreshReviews();const box=ensureJpGuide(),adds=jpAdditionalRecords(),under=adds.filter(r=>!!jpIssueSignature(r)),review=under.filter(r=>r.applicationCommentNeedsReview);const c=box.querySelector('#jpCreativeCount'),u=box.querySelector('#jpCreativeUnder50'),v=box.querySelector('#jpCreativeReview');if(c){c.textContent=adds.length+' / '+JP_MAX_ADDITIONAL;c.style.color=adds.length>JP_MAX_ADDITIONAL?'#ffb4a8':'#fff8e8'}if(u)u.textContent=String(under.length);if(v){v.textContent=String(review.length);v.style.color=review.length?'#ffd27d':'#bde3b9'}}
 `;
-  if(src.includes(helperNeedle))src=src.replace(helperNeedle,helpers+helperNeedle);
+  // Inject JP helper functions into the final Creative HTML, not into the
+  // runtime source itself. JSON.stringify keeps line breaks safely escaped.
+  const jpHelperInjection='html=html.replace('+JSON.stringify(helperNeedle)+','+JSON.stringify(helpers+helperNeedle)+');';
+  const jpWriteNeedle='document.open();document.write(html);document.close();';
+  if(src.includes(jpWriteNeedle))src=src.replace(jpWriteNeedle,jpHelperInjection+jpWriteNeedle);
 
   const addNeedle="if(helperRadius!==50)r.customRadius=helperRadius;records.push(r);drawRecord(r);";
   const addReplacement="if(helperRadius!==50)r.customRadius=helperRadius;if(isNew(r.layer)&&jpAdditionalRecords().length>=JP_MAX_ADDITIONAL){msg('追加ゲームスポットは最大25個です',1800);renderJpGuide();return}records.push(r);drawRecord(r);";
@@ -147,15 +151,27 @@ function renderJpGuide(){jpRefreshReviews();const box=ensureJpGuide(),adds=jpAdd
     "})().catch(e=>{console.error('[CREATIVE runtime]',e);document.body.innerHTML='<div id=\"creativeBootStatus\"><div><strong>⚠️ CREATIVE MODE</strong><small>CREATIVE本体の起動に失敗しました。'+String(e&&e.message||e)+'</small></div></div>';});"
   );
 
-  const runtimeStart=src.indexOf('<script>');
-  const runtimeEnd=src.lastIndexOf('<\\/script>');
-  if(runtimeStart<0||runtimeEnd<=runtimeStart){
+  const runtimeScripts=[];
+  let runtimeCursor=0;
+  const runtimeClose='</'+'script>';
+  while(true){
+    const open=src.indexOf('<script',runtimeCursor);
+    if(open<0)break;
+    const bodyStart=src.indexOf('>',open);
+    if(bodyStart<0)break;
+    const close=src.indexOf(runtimeClose,bodyStart+1);
+    if(close<0)break;
+    runtimeScripts.push(src.slice(bodyStart+1,close));
+    runtimeCursor=close+runtimeClose.length;
+  }
+  if(!runtimeScripts.length){
     throw new Error('Creative runtime script not found');
   }
-  const runtimeCode=src.slice(runtimeStart+'<script>'.length,runtimeEnd);
   setBootStatus(isBridgeProject?'POIと活動範囲を配置しています…':'CREATIVE MODE本体を起動しています…');
-  const runRuntime=new Function(runtimeCode);
-  runRuntime();
+  for(const runtimeCode of runtimeScripts){
+    const runRuntime=new Function(runtimeCode);
+    runRuntime();
+  }
 })().catch(err=>{console.error(err);document.body.textContent='Creative Modeの読み込みに失敗しました。';});
 </script>
 </body>
