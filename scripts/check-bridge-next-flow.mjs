@@ -10,6 +10,7 @@ const distanceBridge = fs.readFileSync('bridge-distance.html', 'utf8');
 const distanceProject = fs.readFileSync('js/bridge-distance-project.js', 'utf8');
 const previewPage = fs.readFileSync('bridge-next-preview.html', 'utf8');
 const gateway = fs.readFileSync('bridge-gateway.html', 'utf8');
+const selection = fs.readFileSync('js/bridge-selection.js', 'utf8');
 
 function storage() {
   const data = new Map();
@@ -153,7 +154,7 @@ assert.ok(previewPage.includes('新フローをOFF'));
 assert.ok(selection.includes('id="bridgeScrollHandle"'), 'Bridge map must expose a mobile scroll handle');
 assert.ok(selection.includes("touch-action:pan-y"), 'Bridge scroll handle must allow page panning');
 assert.ok(selection.includes("height:52svh"), 'Bridge map must use a viewport-aware mobile height');
-assert.ok(transformed.includes("event.stopImmediatePropagation()") || fs.readFileSync('js/bridge-next-flow.js','utf8').includes("event.stopImmediatePropagation()"), 'Next flow must suppress legacy CSV handoff');
+assert.ok(nextFlow.includes("event.stopImmediatePropagation()"), 'Next flow must suppress legacy CSV handoff');
 const selectionPos = gateway.indexOf('js/bridge-selection.js?v=4');
 const nextPos = gateway.indexOf('js/bridge-next-flow.js?v=2');
 assert.ok(selectionPos >= 0 && nextPos > selectionPos, 'Next flow must load after polygon selection');
