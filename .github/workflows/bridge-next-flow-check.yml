@@ -21,7 +21,9 @@ on:
       - 'creative/runtime/**'
       - 'creative/rain-dev.html'
       - 'creative/bridge-project-patch.js'
+      - 'creative/jp-creative-patch.js'
       - 'scripts/check-bridge-next-flow.mjs'
+      - 'scripts/check-creative-runtime-build.mjs'
       - '.github/workflows/bridge-next-flow-check.yml'
   workflow_dispatch:
 
