@@ -116,8 +116,10 @@
   document.addEventListener('click', event => {
     const button = event.target.closest?.('#bridgeConfirmBtn');
     if (!button || button.disabled) return;
-    setTimeout(continueToCreative, 0);
-  });
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    continueToCreative();
+  }, true);
 
   window.CampsiteBridgeNextFlow = Object.freeze({
     version: VERSION,
