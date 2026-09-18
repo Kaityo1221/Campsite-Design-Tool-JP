@@ -11,10 +11,12 @@ const distanceProject = fs.readFileSync('js/bridge-distance-project.js', 'utf8')
 const previewPage = fs.readFileSync('bridge-next-preview.html', 'utf8');
 const gateway = fs.readFileSync('bridge-gateway.html', 'utf8');
 const creativeIndex = fs.readFileSync('creative/index.html', 'utf8');
-const creativeScriptStart = creativeIndex.lastIndexOf('<script>');
-const creativeScriptEnd = creativeIndex.lastIndexOf('</script>');
-assert.ok(creativeScriptStart >= 0 && creativeScriptEnd > creativeScriptStart, 'Creative inline bootstrap script missing');
-const creativeInlineScript = creativeIndex.slice(creativeScriptStart + '<script>'.length, creativeScriptEnd);
+const creativeBootstrapMarker = '<script>\n(async()=>{';
+const creativeScriptStart = creativeIndex.indexOf(creativeBootstrapMarker);
+const creativeCodeStart = creativeScriptStart + '<script>\n'.length;
+const creativeScriptEnd = creativeIndex.indexOf('</script>', creativeCodeStart);
+assert.ok(creativeScriptStart >= 0 && creativeScriptEnd > creativeCodeStart, 'Creative inline bootstrap script missing');
+const creativeInlineScript = creativeIndex.slice(creativeCodeStart, creativeScriptEnd);
 new vm.Script(creativeInlineScript, { filename: 'creative/index.html:inline-bootstrap' });
 const selection = fs.readFileSync('js/bridge-selection.js', 'utf8');
 
