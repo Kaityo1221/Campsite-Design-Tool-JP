@@ -78,7 +78,7 @@
 
       await loadScript("js/admin-review-workspace.js?v=1", "campsiteAdminReviewWorkspaceScript");
       await loadScript("js/admin-review-workspace-bridge.js?v=1", "campsiteAdminReviewWorkspaceBridgeScript");
-      await loadScript("js/admin-site-review-list.js?v=2", "campsiteAdminSiteReviewListScript");
+      await loadScript("js/admin-site-review-list.js?v=3", "campsiteAdminSiteReviewListScript");
 
       // Mobile QA / map-first interaction.
       await loadStyle("css/admin-review-mobile-layout.css?v=4", "campsiteAdminReviewMobileLayoutStyle");
