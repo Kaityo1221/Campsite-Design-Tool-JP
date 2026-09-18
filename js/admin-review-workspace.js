@@ -1,5 +1,5 @@
 /* ======================================================
-   Phase 3: Admin review workspace
+   Admin PRE-CHECK workspace
    - One campsite = one review surface
    - Current / previous / older snapshots use site_id history
    - Snapshot switching keeps the map viewport
@@ -122,13 +122,12 @@
       <header class="arw-topbar">
         <button type="button" class="arw-icon-btn" data-arw-close aria-label="閉じる">←</button>
         <div class="arw-title">
-          <p class="arw-eyebrow">ADMIN · CAMPSITE REVIEW</p>
-          <h2 id="arwSiteTitle">審査ワークスペース</h2>
+          <p class="arw-eyebrow">ADMIN · PRE-CHECK</p>
+          <h2 id="arwSiteTitle">提出前チェック</h2>
           <p id="arwSiteMeta">サイト履歴を読み込んでいます…</p>
         </div>
         <div class="arw-top-actions">
           <button type="button" class="arw-action-btn" data-arw-download disabled>⬇ この版を取得</button>
-          <button type="button" class="arw-action-btn primary" data-arw-legacy disabled>詳細解析</button>
           <button type="button" class="arw-icon-btn" data-arw-close aria-label="閉じる">×</button>
         </div>
       </header>
@@ -138,7 +137,7 @@
         <div class="arw-map-wrap">
           <div class="arw-map" id="arwMap"></div>
           <div class="arw-map-state" id="arwMapState">地図を準備しています…</div>
-          <div class="arw-map-note">履歴は重ねず、版ごとに切り替えて確認します。30m・40m・50m円は管理者審査では表示しません。</div>
+          <div class="arw-map-note">履歴は重ねず、版ごとに切り替えて確認します。30m・40m・50m円は提出前チェックでは表示しません。</div>
         </div>
         <aside class="arw-inspector" id="arwInspector"></aside>
       </div>`;
@@ -147,7 +146,6 @@
 
     root.querySelectorAll("[data-arw-close]").forEach(btn => btn.addEventListener("click", close));
     root.querySelector("[data-arw-download]")?.addEventListener("click", downloadActive);
-    root.querySelector("[data-arw-legacy]")?.addEventListener("click", openLegacyReview);
     root.querySelector("#arwTimeline")?.addEventListener("click", event => {
       const button = event.target.closest("[data-arw-index]");
       if (!button) return;
@@ -418,9 +416,7 @@
             <div class="arw-detail"><span>ファイル</span><strong>${esc(active.fileName || state.lastFileName || "-")}</strong></div>
             <div class="arw-detail"><span>site_id</span><strong>${esc(state.data?.site?.id || "未割当")}</strong></div>
           </div>
-          <button type="button" class="arw-inline-btn" data-arw-inline-legacy>従来の詳細解析を開く</button>
         </div>`;
-      host.querySelector("[data-arw-inline-legacy]")?.addEventListener("click", openLegacyReview);
       return;
     }
 
@@ -499,7 +495,6 @@
     renderTimeline();
     setMapState("この版のKMZを読み込んでいます…");
     state.root.querySelector("[data-arw-download]").disabled = true;
-    state.root.querySelector("[data-arw-legacy]").disabled = true;
     renderInspector(null);
 
     try {
@@ -516,7 +511,6 @@
       renderSummary();
       renderInspector(null);
       state.root.querySelector("[data-arw-download]").disabled = false;
-      state.root.querySelector("[data-arw-legacy]").disabled = false;
       setMapState("");
     } catch (error) {
       console.error("review workspace snapshot error", error);
@@ -546,7 +540,7 @@
     const summary = root.querySelector("#arwSummary");
     if (timeline) timeline.innerHTML = "";
     if (summary) summary.innerHTML = "";
-    root.querySelector("#arwSiteTitle").textContent = "審査ワークスペース";
+    root.querySelector("#arwSiteTitle").textContent = "提出前チェック";
     root.querySelector("#arwSiteMeta").textContent = "サイト履歴を読み込んでいます…";
     setMapState("サイト履歴を読み込んでいます…");
 
@@ -560,7 +554,7 @@
       await showSnapshot(0, { preserveViewport: false });
     } catch (error) {
       console.error("review workspace open error", error);
-      setMapState(error?.message || "審査ワークスペースを開けませんでした。", true);
+      setMapState(error?.message || "提出前チェックを開けませんでした。", true);
       const meta = root.querySelector("#arwSiteMeta");
       if (meta) meta.textContent = "読み込みに失敗しました";
     }
@@ -585,28 +579,6 @@
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
-  async function openLegacyReview() {
-    const item = state.timeline[state.activeIndex];
-    if (!item) return;
-    try {
-      const { blob, fileName } = state.lastBlob && state.lastFileName
-        ? { blob: state.lastBlob, fileName: state.lastFileName }
-        : await fetchKmz(item.id);
-      const input = document.getElementById("adminReviewFile");
-      if (!input || typeof window.runAdminDashboardReview !== "function") {
-        throw new Error("従来の詳細解析を起動できません。");
-      }
-      const file = new File([blob], fileName, { type: blob.type || "application/vnd.google-earth.kmz" });
-      const dt = new DataTransfer();
-      dt.items.add(file);
-      input.files = dt.files;
-      close();
-      input.scrollIntoView({ behavior: "smooth", block: "center" });
-      await window.runAdminDashboardReview();
-    } catch (error) {
-      alert(error?.message || "詳細解析を開けませんでした。");
-    }
-  }
 
   window.AdminReviewWorkspace = Object.freeze({
     open,
