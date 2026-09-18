@@ -42,6 +42,12 @@ function renderJpGuide(){jpRefreshReviews();const box=ensureJpGuide(),adds=jpAdd
     const drawNeedle="function drawAll(){layerDefs.forEach(([k])=>groups[k].clearLayers());polygonGroup.clearLayers();records.forEach(drawRecord);polygons.forEach(p=>{if(!p.deleted)p.layerObj=L.polygon(p.points,{pane:'polygon',color:'#5a8b5f',weight:3,fillColor:'#6ea979',fillOpacity:.09,interactive:false}).addTo(polygonGroup)});if(polygonVisible){if(!map.hasLayer(polygonGroup))polygonGroup.addTo(map)}else if(map.hasLayer(polygonGroup))map.removeLayer(polygonGroup);renderRecordCircles()}";
     if(html.includes(drawNeedle))html=html.replace(drawNeedle,drawNeedle.slice(0,-1)+";renderJpGuide()}");
 
+
+    // iPhone Safari can emit pointerup/touchend/click for one tap. Keep the coordinate view singleton.
+    const coordsNeedle="function cmOpenCoords(){cmCloseSaveMenu();";
+    const coordsReplacement="function cmOpenCoords(){if(cmCoordView?.isConnected)return;cmCloseSaveMenu();";
+    if(html.includes(coordsNeedle))html=html.replace(coordsNeedle,coordsReplacement);
+
     html=html.replace("$('back').onclick=()=>history.back();","$('back').onclick=()=>location.href='../lab.html';");
     html=html.replace('<title>CREATIVE MODE | Next Lab</title>','<title>CREATIVE MODE | Campsite Lab</title>');
     return html;
