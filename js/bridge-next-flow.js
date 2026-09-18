@@ -48,6 +48,11 @@
       .filter(point => Array.isArray(point) && point.length >= 2)
       .map(point => [Number(point[0]), Number(point[1])])
       .filter(point => Number.isFinite(point[0]) && Number.isFinite(point[1]));
+    const circleRadii = [50, ...(Array.isArray(selection.radii) ? selection.radii : [])
+      .map(Number)
+      .filter(value => value === 30 || value === 40)]
+      .filter((value, index, array) => array.indexOf(value) === index)
+      .sort((a, b) => b - a);
 
     if (!selectedPois.length || polygon.length < 3) return null;
 
@@ -65,6 +70,7 @@
       sourcePois: clone(sourcePois),
       polygon,
       selectedPois: clone(selectedPois),
+      circleRadii,
       edits: [],
       currentPois: clone(selectedPois),
       addedPois: [],
