@@ -19,10 +19,7 @@ function campsProjectRole(layer){return String(layer||'').startsWith('new-')?'ad
 function campsProjectId(prefix){
   try{return crypto.randomUUID()}catch{return prefix+'-'+Date.now()+'-'+Math.random().toString(16).slice(2)}
 }
-function campsProjectNormalizeCircleRadii(value){
-  const requested=Array.isArray(value)?value.map(Number):[];
-  return [50,40,30].filter(radius=>radius===50||requested.includes(radius));
-}
+function campsProjectNormalizeCircleRadii(){return [50,40,30]}
 function campsProjectApplyCircleRadii(value){
   const radii=campsProjectNormalizeCircleRadii(value);
   circleExtras=radii.slice();
