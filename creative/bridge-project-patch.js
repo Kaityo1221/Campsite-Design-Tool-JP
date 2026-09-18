@@ -71,6 +71,7 @@ function syncCampsiteProjectFromCreative(project){
   project.deletedPois=deleted;
   project.edits=edits;
   project.polygon=polygon;
+  project.circleRadii=[50,...circleExtras.filter(radius=>radius===40||radius===30)].filter((value,index,array)=>array.indexOf(value)===index).sort((a,b)=>b-a);
   project.phase='design';
   project.updatedAt=new Date().toISOString();
   project.creative={recordCount:current.length,addedCount:added.length,deletedCount:deleted.length,editCount:edits.length,savedAt:project.updatedAt};
@@ -117,6 +118,7 @@ function loadCampsiteBridgeProject(project){
   const points=polygon.filter(p=>Array.isArray(p)&&p.length>=2).map(p=>[Number(p[0]),Number(p[1])]).filter(p=>Number.isFinite(p[0])&&Number.isFinite(p[1]));
   polygons=points.length>=3?[{id:campsProjectId('activity'),points,deleted:false,source:true}]:[];
   polygonVisible=polygons.length>0;
+  circleExtras=(Array.isArray(project.circleRadii)?project.circleRadii:[]).map(Number).filter(radius=>radius===40||radius===30);
   sourceZip=null;
   sourceKmlPath='doc.kml';
   sourceIsKmz=false;
@@ -125,6 +127,7 @@ function loadCampsiteBridgeProject(project){
   sourceName='Campsite_Bridge_'+date;
   drawAll();
   renderLayerPanel();
+  circlePanel.querySelectorAll('[data-extra]').forEach(b=>b.classList.toggle('active',circleExtras.includes(Number(b.dataset.extra))));
   const bounds=records.map(r=>r.latlng).concat(points);
   if(bounds.length)map.fitBounds(bounds,{padding:[28,28],maxZoom:18});
   snapshot();
