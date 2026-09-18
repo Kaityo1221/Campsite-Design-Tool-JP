@@ -74,5 +74,10 @@
     "creative-patches-v42-save-button-hardbind.js": "f7a580a0047a267f8f56f3c5872cd46e1d33c241",
     "creative-patches-v43-save-standalone.js": "041c064354a82f6bc6ca82338049e891b785443c",
     "creative-patches-v44-lab-update-3-lines.js": "d76d7b4bebd564a921c06213b47ddb124f5fa67a"
+  },
+  "assets": {
+    "assets/pokestop.png": "ec94a4aaf3ec6f7bb88c8e60d771585053ee59b4",
+    "assets/gym.png": "a9cf10a93fc2cb2c94b7760da66367b6e2283e0c",
+    "assets/powerspot.png": "4cdd41104f16ee14f3bf7a0f319518ff401184e0"
   }
 }
