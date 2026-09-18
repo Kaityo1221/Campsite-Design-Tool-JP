@@ -15,12 +15,15 @@ html,body{margin:0;min-height:100%;background:#17130f;color:#fff8e8;font-family:
 <script src="./bridge-project-patch.js?v=2"></script>
 </head>
 <body>
-<div id="creativeBootStatus"><div><strong>🎨 CREATIVE MODE</strong><small>POIと活動範囲を読み込んでいます…</small></div></div>
+<div id="creativeBootStatus"><div><strong>🎨 CREATIVE MODE</strong><small>CREATIVE MODEを開いています…</small></div></div>
 <script>
 (async()=>{
   'use strict';
 
-  // Creative Mode本体は、日本CA承認が通るまで一切読み込まない。
+  // Bridge handoffでは、すでに確認済みの認証を利用者へ再表示しない。
+  // 認証確認は裏で続け、CREATIVE本体の取得も並行して待ち時間を減らす。
+  const creativeParams=new URLSearchParams(location.search);
+  const isBridgeProject=creativeParams.get('campsiteProject')==='bridge';
   const setBootStatus=text=>{const el=document.querySelector('#creativeBootStatus small');if(el)el.textContent=text};
   const waitFor=async(test,timeoutMs,intervalMs=80)=>{
     const started=Date.now();
@@ -31,13 +34,18 @@ html,body{margin:0;min-height:100%;background:#17130f;color:#fff8e8;font-family:
     return true;
   };
 
-  setBootStatus('認証システムを準備しています…');
+  const SNAPSHOT='c3a23287cd49a6d6b8689d7dd4122687ff483856';
+  const ROOT=`https://raw.githubusercontent.com/Kaityo1221/Campsite-Design-Tool-Next-Lab/${SNAPSHOT}/creative/`;
+  const urls=['runtime-vnext.html','creative-patches-v2.js','creative-patches-v3.js','creative-patches-v4.js'];
+  const runtimeResponsesPromise=Promise.all(urls.map(name=>fetch(ROOT+name,{cache:'no-store'})));
+
+  setBootStatus(isBridgeProject?'CREATIVE MODEを開いています…':'認証システムを準備しています…');
   if(!await waitFor(()=>!!window.CampsiteCaAccess,10000)){
     document.body.innerHTML='<div id="creativeBootStatus"><div><strong>⚠️ CREATIVE MODE</strong><small>認証システムの起動に時間がかかっています。再読み込みしてください。</small></div></div>';
     return;
   }
 
-  setBootStatus('日本CA認証を確認しています…');
+  setBootStatus(isBridgeProject?'CREATIVE MODEを開いています…':'日本CA認証を確認しています…');
   let hiddenGateWaitStarted=Date.now();
   while(document.getElementById('caAccessGate')){
     const gate=document.getElementById('caAccessGate');
@@ -49,12 +57,9 @@ html,body{margin:0;min-height:100%;background:#17130f;color:#fff8e8;font-family:
     await new Promise(r=>setTimeout(r,120));
   }
 
-  setBootStatus('CREATIVE MODE本体を準備しています…');
+  setBootStatus(isBridgeProject?'POIと活動範囲を配置しています…':'CREATIVE MODE本体を準備しています…');
 
-  const SNAPSHOT='c3a23287cd49a6d6b8689d7dd4122687ff483856';
-  const ROOT=`https://raw.githubusercontent.com/Kaityo1221/Campsite-Design-Tool-Next-Lab/${SNAPSHOT}/creative/`;
-  const urls=['runtime-vnext.html','creative-patches-v2.js','creative-patches-v3.js','creative-patches-v4.js'];
-  const responses=await Promise.all(urls.map(name=>fetch(ROOT+name,{cache:'no-store'})));
+  const responses=await runtimeResponsesPromise;
   const bootStatus=document.getElementById('creativeBootStatus');
   if(bootStatus)bootStatus.querySelector('small').textContent='CREATIVE MODE本体を準備しています…';
   if(responses.some(r=>!r.ok)){
@@ -65,8 +70,7 @@ html,body{margin:0;min-height:100%;background:#17130f;color:#fff8e8;font-family:
   for(let i=1;i<responses.length;i++) Function(await responses[i].text())();
   if(typeof window.applyCreativePatches!=='function'){document.body.textContent='Creative Modeの拡張機能を読み込めませんでした。';return;}
   src=window.applyCreativePatches(src);
-  const creativeParams=new URLSearchParams(location.search);
-  if(creativeParams.get('campsiteProject')==='bridge'){
+  if(isBridgeProject){
     if(typeof window.applyCreativeBridgeProjectPatch!=='function'){
       document.body.innerHTML='<div id="creativeBootStatus"><div><strong>⚠️ CREATIVE MODE</strong><small>Bridgeプロジェクト読込機能を準備できませんでした。再読み込みしてください。</small></div></div>';
       return;
