@@ -100,6 +100,13 @@
     return pois.filter(poi => pointInPolygon(poi.lat, poi.lng, polygonPoints));
   }
 
+  function selectedRadii() {
+    const optional = Array.from(document.querySelectorAll('#tool input[name="radius"]:checked'))
+      .map(input => Number(input.value))
+      .filter(value => value === 30 || value === 40);
+    return [50, ...Array.from(new Set(optional)).sort((a, b) => b - a)];
+  }
+
   function injectStyles() {
     if ($('campsiteBridgeSelectionStyles')) return;
     const style = document.createElement('style');
@@ -396,6 +403,7 @@
       sourceCount: pois.length,
       selectedCount: selected.length,
       polygon: polygonPoints,
+      radii: selectedRadii(),
       pois: selected
     }));
 
@@ -405,6 +413,7 @@
       sourceCount: pois.length,
       selectedCount: selected.length,
       polygon: polygonPoints,
+      radii: selectedRadii(),
       pois: selected.map(poi => ({
         guid: poi.guid,
         title: poi.title,
