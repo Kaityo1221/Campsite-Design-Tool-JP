@@ -38,7 +38,9 @@ jobs:
           node-version: 22
 
       - name: Contract check
-        run: node scripts/check-bridge-next-flow.mjs
+        run: |
+          node scripts/check-bridge-next-flow.mjs
+          node scripts/check-creative-runtime-build.mjs
 
       - name: Syntax check
         run: |
@@ -47,4 +49,3 @@ jobs:
           node --check js/ca-access.js
           node --check js/ca-access-bootstrap.js
           node --check js/bridge-distance-project.js
-          node --check creative/runtime/generated-runtime-debug.js
