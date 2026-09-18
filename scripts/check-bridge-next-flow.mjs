@@ -131,7 +131,10 @@ assert.ok(transformed.includes("btn.textContent='次へ →'"), 'Bridge-only nex
 assert.ok(transformed.includes("aria-label','次へ：距離チェック'"), 'Bridge-only next action must keep an accessible distance-check label');
 assert.ok(transformed.includes("role:campsProjectRole(r.layer)"));
 assert.ok(transformed.includes('project.circleRadii='), 'Project must carry Bridge radius choices');
-assert.ok(transformed.includes('circleExtras=(Array.isArray(project.circleRadii)'), 'Creative must restore Bridge radius choices');
+assert.ok(transformed.includes('campsProjectApplyCircleRadii(project.circleRadii)'), 'Creative must restore Bridge radius choices');
+assert.ok(transformed.includes('circleExtras=radii.slice()'), 'Bridge must normalize the current circle state');
+assert.ok(transformed.includes("typeof circleVisible!=='undefined'"), 'Bridge must normalize both circle state models');
+assert.ok(transformed.includes('project.circleRadii=campsProjectCurrentCircleRadii()'), 'Project must save the canonical Creative circle state');
 assert.ok(transformed.includes("location.href='../bridge-distance.html?campsiteProject=bridge'"));
 assert.ok(transformed.includes("type==='GYM'"));
 assert.ok(transformed.includes("type==='POWERSPOT'"));
