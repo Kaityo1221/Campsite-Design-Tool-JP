@@ -116,10 +116,10 @@
   document.addEventListener('click', event => {
     const button = event.target.closest?.('#bridgeConfirmBtn');
     if (!button || button.disabled) return;
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    continueToCreative();
-  }, true);
+    // The button's own Bridge-selection listener runs first, saves the
+    // polygon snapshot, and skips only the legacy CSV handoff in preview mode.
+    setTimeout(continueToCreative, 0);
+  });
 
   window.CampsiteBridgeNextFlow = Object.freeze({
     version: VERSION,

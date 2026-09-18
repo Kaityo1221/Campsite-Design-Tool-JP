@@ -5,6 +5,7 @@
   const ADAPTER_STORAGE_KEY = 'campsiteBridgeAdapter.v0.3';
   const SELECTION_STORAGE_KEY = 'campsiteBridgeSelection.v0.8.5';
   const REVIEW_STORAGE_KEY = 'campsiteBridgeReviewMeta.v0.8.5';
+  const NEXT_PREVIEW_KEY = 'campsiteBridgeNextPreview.v1';
   const ALLOWED_ENTITIES = new Set(['POKESTOP', 'GYM', 'POWERSPOT']);
   const params = new URLSearchParams(location.search);
 
@@ -349,6 +350,10 @@
     notice.textContent = `🌉 Bridgeで受信した${sourceCount.toLocaleString('ja-JP')}件から、ポリゴン内${selectedCount.toLocaleString('ja-JP')}件をCampsiteへ読み込みました。`;
   }
 
+  function isNextPreviewEnabled() {
+    return params.get('campsiteBridgeNext') === '1' || localStorage.getItem(NEXT_PREVIEW_KEY) === '1';
+  }
+
   function handoffSelected(panel) {
     const selected = selectedPois();
     if (!selected.length || polygonPoints.length < 3) return;
@@ -383,6 +388,14 @@
         s2L17: poi.s2L17
       }))
     }));
+
+    // Next preview still needs the selection snapshot above, but must not
+    // continue into the legacy virtual-CSV handoff.
+    if (isNextPreviewEnabled()) {
+      const status = $('bridgeSelectionStatus');
+      if (status) status.textContent = `${selected.length.toLocaleString('ja-JP')}件を保存しました。CREATIVE MODEへ移動します…`;
+      return;
+    }
 
     const input = $('fileInput');
     const transfer = makeDataTransfer();
