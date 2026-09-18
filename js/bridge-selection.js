@@ -59,6 +59,7 @@
   let selectedGuids = new Set();
   let originalStepDisplays = new Map();
   let leafletPromise = null;
+  let radiusStepMount = null;
 
   const $ = id => document.getElementById(id);
 
@@ -133,7 +134,17 @@
       #campsiteBridgeSelection .bridge-status{margin:10px 0 0;color:#bae6fd;font-size:12px;line-height:1.6}
       #campsiteBridgeImportNotice{margin:14px 0;padding:13px 15px;border-radius:13px;border:1px solid rgba(34,197,94,.38);background:rgba(20,83,45,.24);color:#dcfce7;font-weight:800;line-height:1.65}
       #campsiteBridgeSelection .leaflet-container{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#0f172a;color:#e2e8f0}.leaflet-popup-content{margin:10px 12px;font-size:12px;line-height:1.45}
-      @media(max-width:600px){#campsiteBridgeSelection .bridge-summary{grid-template-columns:repeat(2,minmax(0,1fr))}#campsiteBridgeMap{height:52vh;height:52svh;min-height:350px;max-height:460px}#campsiteBridgeSelection .bridge-map-toolbar{top:8px;right:8px;gap:5px;padding:5px}#campsiteBridgeSelection .bridge-map-toolbar button{height:40px;min-width:40px;padding:0 9px}#campsiteBridgeSelection .bridge-map-toolbar .bridge-map-draw{font-size:12px;padding:0 10px}}
+      #campsiteBridgeSelection .bridge-radius-step{display:block!important;margin:0 0 12px!important;padding:14px 16px!important;border:1px solid rgba(56,189,248,.28)!important;border-radius:14px!important;background:rgba(14,165,233,.06)!important}
+      #campsiteBridgeSelection .bridge-radius-step>.step-no{display:none!important}
+      #campsiteBridgeSelection .bridge-radius-step>p:first-of-type{margin:0 0 10px;color:#e2e8f0;font-size:14px;line-height:1.7}
+      #campsiteBridgeSelection .bridge-radius-step .checks{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
+      #campsiteBridgeSelection .bridge-radius-step .checks br{display:none}
+      #campsiteBridgeSelection .bridge-radius-step .checks label{display:inline-flex;align-items:center;gap:6px;margin:0;padding:9px 12px;border:1px solid rgba(148,163,184,.24);border-radius:10px;background:rgba(15,23,42,.60);color:#e2e8f0;font-size:13px;font-weight:700}
+      #campsiteBridgeSelection .bridge-radius-step .checks label[data-poi-spacing-fixed50="true"]{border-color:rgba(34,197,94,.42);background:rgba(34,197,94,.10);color:#dcfce7}
+      #campsiteBridgeSelection .bridge-radius-step .checks input[type="checkbox"]{width:16px;height:16px;margin:0}
+      #campsiteBridgeSelection .bridge-radius-step .checks input[type="checkbox"]:disabled{opacity:1;cursor:default}
+      #campsiteBridgeSelection .bridge-radius-step .note{width:100%;margin:10px 0 0;color:#94a3b8;font-size:12px;line-height:1.65}
+      @media(max-width:600px){#campsiteBridgeSelection .bridge-summary{grid-template-columns:repeat(2,minmax(0,1fr))}#campsiteBridgeSelection .bridge-radius-step .checks{flex-direction:column;align-items:stretch}#campsiteBridgeSelection .bridge-radius-step .checks label{width:100%;box-sizing:border-box}#campsiteBridgeMap{height:52vh;height:52svh;min-height:350px;max-height:460px}#campsiteBridgeSelection .bridge-map-toolbar{top:8px;right:8px;gap:5px;padding:5px}#campsiteBridgeSelection .bridge-map-toolbar button{height:40px;min-width:40px;padding:0 9px}#campsiteBridgeSelection .bridge-map-toolbar .bridge-map-draw{font-size:12px;padding:0 10px}}
     `;
     document.head.appendChild(style);
   }
@@ -153,6 +164,27 @@
       if (!originalStepDisplays.has(child)) return;
       child.style.display = originalStepDisplays.get(child);
     });
+  }
+
+  function mountRadiusStep(box) {
+    const input = document.querySelector('#tool input[name="radius"]');
+    const step = input?.closest('.step');
+    const actions = box?.querySelector('.bridge-actions');
+    if (!step || !actions) return;
+    if (!radiusStepMount) {
+      radiusStepMount = { step, parent:step.parentElement, next:step.nextElementSibling };
+    }
+    step.classList.add('bridge-radius-step');
+    actions.insertAdjacentElement('beforebegin', step);
+  }
+
+  function restoreRadiusStep() {
+    const mount = radiusStepMount;
+    if (!mount?.step || !mount.parent) return;
+    mount.step.classList.remove('bridge-radius-step');
+    if (mount.next?.parentElement === mount.parent) mount.parent.insertBefore(mount.step, mount.next);
+    else mount.parent.appendChild(mount.step);
+    radiusStepMount = null;
   }
 
   function buildPanel(panel) {
@@ -419,6 +451,7 @@
     try { window.openTab?.('tool'); } catch (_) {}
 
     const bridgePanel = $('campsiteBridgeSelection');
+    restoreRadiusStep();
     if (bridgePanel) bridgePanel.remove();
     restoreNormalFlow(panel);
     input.dispatchEvent(new Event('change', { bubbles:true }));
@@ -503,7 +536,8 @@
     try { window.openTab?.('tool'); } catch (_) {}
 
     hideNormalFlow(panel);
-    buildPanel(panel);
+    const box = buildPanel(panel);
+    mountRadiusStep(box);
     bindControls(panel);
     void initializeMap();
     return true;

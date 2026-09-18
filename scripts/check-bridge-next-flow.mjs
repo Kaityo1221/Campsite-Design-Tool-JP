@@ -167,6 +167,9 @@ assert.ok(previewPage.includes('新フローをON'));
 assert.ok(previewPage.includes('新フローをOFF'));
 
 assert.ok(selection.includes('id="bridgeScrollHandle"'), 'Bridge map must expose a mobile scroll handle');
+assert.ok(selection.includes("actions.insertAdjacentElement('beforebegin', step)"), 'Bridge radius settings must mount before confirm');
+assert.ok(selection.includes("step.classList.add('bridge-radius-step')"), 'Bridge radius settings must receive Bridge layout styling');
+assert.ok(selection.includes('restoreRadiusStep();'), 'Legacy Bridge flow must restore the original radius step before leaving selection');
 assert.ok(selection.includes("touch-action:pan-y"), 'Bridge scroll handle must allow page panning');
 assert.ok(selection.includes("height:52svh"), 'Bridge map must use a viewport-aware mobile height');
 assert.ok(selection.includes("const NEXT_PREVIEW_KEY = 'campsiteBridgeNextPreview.v1'"), 'Selection must know the Next preview flag');
@@ -175,7 +178,7 @@ assert.ok(selection.indexOf('sessionStorage.setItem(SELECTION_STORAGE_KEY') < se
 assert.ok(selection.indexOf('if (isNextPreviewEnabled())') < selection.indexOf("const input = $('fileInput')"), 'Preview must skip only the legacy virtual CSV path');
 assert.ok(nextFlow.includes('setTimeout(continueToCreative, 0)'), 'Next flow must wait until selection snapshot is saved');
 assert.ok(!nextFlow.includes('stopImmediatePropagation'), 'Next flow must not block the selection save listener');
-const selectionPos = gateway.indexOf('js/bridge-selection.js?v=5');
+const selectionPos = gateway.indexOf('js/bridge-selection.js?v=6');
 const nextPos = gateway.indexOf('js/bridge-next-flow.js?v=3');
 assert.ok(selectionPos >= 0 && nextPos > selectionPos, 'Next flow must load after polygon selection');
 
