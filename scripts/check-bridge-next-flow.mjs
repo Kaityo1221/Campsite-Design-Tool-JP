@@ -124,6 +124,12 @@ const transformed = patchContext.window.applyCreativeBridgeProjectPatch(`before\
 assert.ok(transformed.includes('loadCampsiteBridgeProject'));
 assert.ok(transformed.includes('syncCampsiteProjectFromCreative'));
 assert.ok(transformed.includes('installCampsiteProjectNext'));
+assert.ok(transformed.includes('installCampsiteProjectMobileUi'), 'Bridge Creative mobile UI installer missing');
+assert.ok(transformed.includes("body.campsite-bridge-project #locate{display:none!important}"), 'Bridge Creative must hide current-location button');
+assert.ok(transformed.includes("grid-template-columns:repeat(2,minmax(0,1fr))"), 'Bridge Creative bottom bar must collapse to two actions');
+assert.ok(transformed.includes("#campsiteProjectNext{left:10px!important;right:10px!important"), 'Bridge Creative next button must use a full-width mobile row');
+assert.ok(transformed.includes("layerBtn.textContent='▱ 層'"), 'Bridge Creative layer button must use compact mobile label');
+assert.ok(transformed.includes("circleBtn.textContent='◎ 円'"), 'Bridge Creative circle button must use compact mobile label');
 assert.ok(transformed.includes("role:campsProjectRole(r.layer)"));
 assert.ok(transformed.includes("location.href='../bridge-distance.html?campsiteProject=bridge'"));
 assert.ok(transformed.includes("type==='GYM'"));
