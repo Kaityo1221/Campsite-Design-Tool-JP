@@ -18,6 +18,7 @@ on:
       - 'creative/bridge.html'
       - 'creative/index.html'
       - 'creative/base-v7.html'
+      - 'creative/runtime/**'
       - 'creative/rain-dev.html'
       - 'creative/bridge-project-patch.js'
       - 'scripts/check-bridge-next-flow.mjs'

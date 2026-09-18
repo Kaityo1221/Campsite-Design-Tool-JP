@@ -35,7 +35,7 @@ html,body{margin:0;min-height:100%;background:#17130f;color:#fff8e8;font-family:
   };
 
   const SNAPSHOT='c3a23287cd49a6d6b8689d7dd4122687ff483856';
-  const ROOT=`https://raw.githubusercontent.com/Kaityo1221/Campsite-Design-Tool-Next-Lab/${SNAPSHOT}/creative/`;
+  const ROOT='./runtime/';
   const urls=['runtime-vnext.html','creative-patches-v2.js','creative-patches-v3.js','creative-patches-v4.js'];
   const runtimeResponsesPromise=Promise.all(urls.map(name=>fetch(ROOT+name,{cache:'no-store'})));
 
@@ -124,7 +124,26 @@ function renderJpGuide(){jpRefreshReviews();const box=ensureJpGuide(),adds=jpAdd
   src=src.replace("$('back').onclick=()=>history.back();","$('back').onclick=()=>location.href='../lab.html';");
   src=src.replace('<title>CREATIVE MODE | Next Lab</title>','<title>CREATIVE MODE | Campsite Lab</title>');
 
-  document.open();document.write(src);document.close();
+  const runtimeDoc=new DOMParser().parseFromString(src,'text/html');
+  const runtimeScripts=Array.from(runtimeDoc.querySelectorAll('script'));
+  if(!runtimeScripts.length){
+    throw new Error('Creative runtime script not found');
+  }
+
+  runtimeDoc.querySelectorAll('style,link[rel="stylesheet"]').forEach(node=>{
+    document.head.appendChild(node.cloneNode(true));
+  });
+
+  setBootStatus(isBridgeProject?'POIと活動範囲を配置しています…':'CREATIVE MODE本体を起動しています…');
+
+  for(const source of runtimeScripts){
+    const script=document.createElement('script');
+    for(const attr of Array.from(source.attributes||[])){
+      script.setAttribute(attr.name,attr.value);
+    }
+    script.textContent=source.textContent||'';
+    document.body.appendChild(script);
+  }
 })().catch(err=>{console.error(err);document.body.textContent='Creative Modeの読み込みに失敗しました。';});
 </script>
 </body>
