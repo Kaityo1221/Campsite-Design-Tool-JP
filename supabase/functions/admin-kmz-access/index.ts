@@ -100,8 +100,78 @@ Deno.serve(async (request: Request): Promise<Response> => {
         .select("id, site_id, site_assignment_method, site_match_score, anonymous_device_id, action_type, original_file_name, display_file_name, park_name, storage_bucket, storage_path, file_hash, file_size_bytes, poi_count, existing_poi_count, added_poi_count, warning_count, campsite_score, campsite_rank, upload_status, duplicate_of, created_at, expires_at, created_by_auth_user_id, created_by_discord_user_id, created_by_discord_name, created_by_discord_global_name")
         .is("deleted_at", null).order("created_at", { ascending: false }).limit(MAX_ROWS);
       if (error) return jsonResponse({ success: false, error: "提出KMZ一覧を取得できませんでした。" }, 500);
-      const rows = data || []; const labels = buildDeviceLabels(rows, currentDeviceId); const currentRows = currentDeviceId ? rows.filter((r: any) => r.anonymous_device_id === currentDeviceId) : []; const otherRows = currentDeviceId ? rows.filter((r: any) => r.anonymous_device_id !== currentDeviceId) : rows; const all = summarize(rows); const other = summarize(otherRows);
-      return jsonResponse({ success: true, capped: rows.length >= MAX_ROWS, summary: { totalHistory: all.history, uniqueFiles: all.uniqueFiles, duplicateHistory: all.duplicateHistory, distinctDevices: all.distinctDevices, kmzGenerateCount: all.kmzGenerateCount, distanceCheckCount: all.distanceCheckCount, todayCount: all.todayCount, last7DaysCount: all.last7DaysCount, currentDeviceHistoryCount: currentRows.length, otherDeviceHistoryCount: other.history, otherUniqueFiles: other.uniqueFiles, otherDuplicateHistory: other.duplicateHistory, otherDistinctDevices: other.distinctDevices, otherKmzGenerateCount: other.kmzGenerateCount, otherDistanceCheckCount: other.distanceCheckCount, otherTodayCount: other.todayCount, otherLast7DaysCount: other.last7DaysCount }, historyRecords: rows.map((r: any) => toPublic(r, labels, currentDeviceId)), uniqueRecords: buildUnique(rows, labels, currentDeviceId) });
+      const rows = data || [];
+      const siteIds = [...new Set(rows.map((r: any) => r.site_id).filter(Boolean))] as string[];
+      let activeScopes: any[] = [];
+      if (siteIds.length) {
+        const { data: scopeRows, error: scopeError } = await supabase
+          .from("campsite_review_scopes")
+          .select("id, site_id, revision, polygon_geojson, vertex_count, source_upload_id, created_at")
+          .in("site_id", siteIds)
+          .eq("is_active", true)
+          .order("revision", { ascending: false });
+        if (scopeError) console.warn("admin-kmz-access scope list", scopeError);
+        const seen = new Set<string>();
+        activeScopes = (scopeRows || []).filter((scope: any) => {
+          if (!scope?.site_id || seen.has(scope.site_id)) return false;
+          seen.add(scope.site_id);
+          return true;
+        }).map((scope: any) => ({
+          id: scope.id,
+          siteId: scope.site_id,
+          revision: Number(scope.revision) || 0,
+          vertices: Array.isArray(scope.polygon_geojson?.coordinates?.[0])
+            ? scope.polygon_geojson.coordinates[0].map((pair: any) => ({ lat: Number(pair?.[1]), lng: Number(pair?.[0]) })).filter((v: any) => Number.isFinite(v.lat) && Number.isFinite(v.lng))
+            : [],
+          vertexCount: Number(scope.vertex_count) || 0,
+          sourceUploadId: scope.source_upload_id || null,
+          createdAt: scope.created_at
+        }));
+      }
+      const labels = buildDeviceLabels(rows, currentDeviceId); const currentRows = currentDeviceId ? rows.filter((r: any) => r.anonymous_device_id === currentDeviceId) : []; const otherRows = currentDeviceId ? rows.filter((r: any) => r.anonymous_device_id !== currentDeviceId) : rows; const all = summarize(rows); const other = summarize(otherRows);
+      return jsonResponse({ success: true, capped: rows.length >= MAX_ROWS, summary: { totalHistory: all.history, uniqueFiles: all.uniqueFiles, duplicateHistory: all.duplicateHistory, distinctDevices: all.distinctDevices, kmzGenerateCount: all.kmzGenerateCount, distanceCheckCount: all.distanceCheckCount, todayCount: all.todayCount, last7DaysCount: all.last7DaysCount, currentDeviceHistoryCount: currentRows.length, otherDeviceHistoryCount: other.history, otherUniqueFiles: other.uniqueFiles, otherDuplicateHistory: other.duplicateHistory, otherDistinctDevices: other.distinctDevices, otherKmzGenerateCount: other.kmzGenerateCount, otherDistanceCheckCount: other.distanceCheckCount, otherTodayCount: other.todayCount, otherLast7DaysCount: other.last7DaysCount }, historyRecords: rows.map((r: any) => toPublic(r, labels, currentDeviceId)), uniqueRecords: buildUnique(rows, labels, currentDeviceId), activeScopes });
+    }
+
+    if (action === "download_batch") {
+      const ids = Array.isArray(body?.recordIds)
+        ? [...new Set(body.recordIds.map((value: unknown) => sanitizeText(value, 80)).filter(Boolean))].slice(0, 24)
+        : [];
+      if (!ids.length) return jsonResponse({ success: false, error: "KMZレコードIDがありません。" }, 400);
+
+      const { data: requested, error: requestedError } = await supabase
+        .from("campsite_kmz_uploads")
+        .select("id, duplicate_of, storage_bucket, storage_path, original_file_name, display_file_name, deleted_at")
+        .in("id", ids);
+      if (requestedError) return jsonResponse({ success: false, error: "KMZ情報を取得できませんでした。" }, 500);
+
+      const originIds = [...new Set((requested || []).map((row: any) => row.duplicate_of).filter(Boolean))] as string[];
+      let origins: any[] = [];
+      if (originIds.length) {
+        const { data: originRows } = await supabase
+          .from("campsite_kmz_uploads")
+          .select("id, storage_bucket, storage_path, original_file_name, display_file_name, deleted_at")
+          .in("id", originIds);
+        origins = originRows || [];
+      }
+      const originMap = new Map(origins.map((row: any) => [row.id, row]));
+      const items = await Promise.all((requested || []).filter((row: any) => !row.deleted_at).map(async (row: any) => {
+        const source = (!row.storage_bucket || !row.storage_path) && row.duplicate_of ? originMap.get(row.duplicate_of) || row : row;
+        if (!source?.storage_bucket || !source?.storage_path || source?.deleted_at) {
+          return { recordId: row.id, error: "KMZ本体の保存先が見つかりません。" };
+        }
+        const { data: signed, error: signedError } = await supabase.storage
+          .from(source.storage_bucket)
+          .createSignedUrl(source.storage_path, SIGNED_URL_SECONDS);
+        if (signedError || !signed?.signedUrl) return { recordId: row.id, error: "KMZ取得URLを発行できませんでした。" };
+        return {
+          recordId: row.id,
+          sourceRecordId: source.id,
+          signedUrl: signed.signedUrl,
+          expiresIn: SIGNED_URL_SECONDS,
+          fileName: source.display_file_name || source.original_file_name || row.display_file_name || row.original_file_name || "campsite.kmz"
+        };
+      }));
+      return jsonResponse({ success: true, items });
     }
 
     if (action === "download") {
