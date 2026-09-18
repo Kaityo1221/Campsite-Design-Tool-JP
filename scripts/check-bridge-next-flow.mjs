@@ -227,8 +227,14 @@ new vm.Script(creativePatchV4,{filename:'creative/runtime/creative-patches-v4.js
 
 assert.ok(creativeIndex.includes("const ROOT='./runtime/'"),'Creative must load the vendored runtime locally');
 assert.ok(!creativeIndex.includes('raw.githubusercontent.com/Kaityo1221/Campsite-Design-Tool-Next-Lab'),'Creative must not depend on raw GitHub at runtime');
-assert.ok(creativeIndex.includes("new DOMParser().parseFromString(src,'text/html')"),'Creative must execute runtime scripts without first document.write');
-assert.ok(creativeIndex.includes("document.body.appendChild(script)"),'Creative runtime scripts must be attached through DOM');
+assert.ok(creativeIndex.includes("const runtimeStart=src.indexOf('<script>')"),'Creative must extract the vendored runtime bootstrap directly');
+assert.ok(creativeIndex.includes('const runRuntime=new Function(runtimeCode)'), 'Creative must execute the runtime bootstrap directly');
+assert.ok(creativeIndex.includes("new URL('./base-v7.html',location.href).href"), 'Creative runtime must resolve base-v7 against the JP Creative URL');
+assert.ok(creativeIndex.includes("setTimeout(()=>__ctl.abort(),8000)"), 'Creative base-v7 fetch must have an 8 second timeout');
+assert.ok(creativeIndex.includes("CREATIVE本体を読み込んでいます"), 'Creative runtime must expose base-v7 loading stage');
+assert.ok(creativeIndex.includes("CREATIVE画面を組み立てています"), 'Creative runtime must expose build stage');
+assert.ok(creativeIndex.includes("CREATIVE画面を表示しています"), 'Creative runtime must expose final display stage');
+assert.ok(!creativeIndex.includes("new DOMParser().parseFromString(src,'text/html')"), 'Creative must not launch the intermediate runtime through DOMParser');
 assert.ok(!creativeIndex.includes('document.open();document.write(src);document.close();'),'Creative bootstrap must not replace itself with runtime HTML');
 
 const creativeBase = fs.readFileSync('creative/base-v7.html', 'utf8');
