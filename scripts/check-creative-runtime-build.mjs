@@ -1,11 +1,21 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
 
 const manifest=JSON.parse(fs.readFileSync('creative/runtime/next-lab-manifest.json','utf8'));
 const baseHtml=fs.readFileSync('creative/base-v7.html','utf8');
 const jpPatch=fs.readFileSync('creative/jp-creative-patch.js','utf8');
 const bridgePatch=fs.readFileSync('creative/bridge-project-patch.js','utf8');
+
+function gitBlobShaBuffer(body){
+  return crypto.createHash('sha1').update(Buffer.from('blob '+body.length+'\0')).update(body).digest('hex');
+}
+
+for(const [name,expected] of Object.entries(manifest.assets||{})){
+  const body=fs.readFileSync('creative/'+name);
+  assert.equal(gitBlobShaBuffer(body),expected,'Pinned Next-Lab asset changed: '+name);
+}
 
 const context={window:{},console,JSON,String,URLSearchParams};
 vm.createContext(context);
@@ -34,6 +44,10 @@ assert.ok(html.includes('cmLayerPanelTopStyle'),'Canonical Next-Lab layer panel 
 assert.ok(html.includes('campsiteProjectNext'),'Bridge next action missing from final Creative HTML');
 assert.ok(!html.includes('installCampsiteProjectMobileUi'),'Legacy JP mobile UI override must stay removed');
 assert.ok(html.includes('JP_MAX_ADDITIONAL=25'),'JP design policy helper missing');
+assert.ok(html.includes("./assets/pokestop.png"),'Canonical Next-Lab PokéStop icon reference missing');
+assert.ok(html.includes("./assets/gym.png"),'Canonical Next-Lab Gym icon reference missing');
+assert.ok(html.includes("./assets/powerspot.png"),'Canonical Next-Lab PowerSpot icon reference missing');
+
 
 function extractScripts(source){
   const scripts=[];
