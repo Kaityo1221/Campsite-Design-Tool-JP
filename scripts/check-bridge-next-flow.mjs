@@ -176,8 +176,11 @@ assert.ok(previewPage.includes('新フローをOFF'));
 assert.ok(selection.includes('id="bridgeScrollHandle"'), 'Bridge map must expose a mobile scroll handle');
 assert.ok(!selection.includes('function selectedRadii()'), 'Bridge must not expose circle selection state');
 assert.ok(!selection.includes('bridge-radius-step'), 'Bridge must not mount the legacy circle options');
+assert.ok(selection.includes('campsite-bridge-selection-active #tool .poi-spacing-radius-step{display:none!important}'), 'Bridge must hard-hide the legacy radius step');
+assert.ok(selection.includes("document.body.classList.add('campsite-bridge-selection-active')"), 'Bridge must activate the radius-step suppression class');
 assert.ok(nextFlow.includes('const circleRadii = [50, 40, 30];'), 'Bridge project must start Creative with all circle layers');
 assert.ok(selection.includes("touch-action:pan-y"), 'Bridge scroll handle must allow page panning');
+assert.ok(selection.includes("$('campsiteBridgeSelection')?.querySelector('.bridge-tools')"), 'Bridge scroll handle must not depend on a removed local box');
 assert.ok(selection.includes("height:52svh"), 'Bridge map must use a viewport-aware mobile height');
 assert.ok(selection.includes("const NEXT_PREVIEW_KEY = 'campsiteBridgeNextPreview.v1'"), 'Selection must know the Next preview flag');
 assert.ok(selection.includes('if (isNextPreviewEnabled())'), 'Selection must save the snapshot before skipping legacy CSV handoff');
@@ -185,7 +188,7 @@ assert.ok(selection.indexOf('sessionStorage.setItem(SELECTION_STORAGE_KEY') < se
 assert.ok(selection.indexOf('if (isNextPreviewEnabled())') < selection.indexOf("const input = $('fileInput')"), 'Preview must skip only the legacy virtual CSV path');
 assert.ok(nextFlow.includes('setTimeout(continueToCreative, 0)'), 'Next flow must wait until selection snapshot is saved');
 assert.ok(!nextFlow.includes('stopImmediatePropagation'), 'Next flow must not block the selection save listener');
-const selectionPos = gateway.indexOf('js/bridge-selection.js?v=8');
+const selectionPos = gateway.indexOf('js/bridge-selection.js?v=9');
 const nextPos = gateway.indexOf('js/bridge-next-flow.js?v=5');
 assert.ok(selectionPos >= 0 && nextPos > selectionPos, 'Next flow must load after polygon selection');
 
