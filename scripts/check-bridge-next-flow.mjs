@@ -120,7 +120,7 @@ const patchContext = { window: {}, console, JSON, String };
 vm.createContext(patchContext);
 vm.runInContext(creativePatch, patchContext);
 assert.equal(typeof patchContext.window.applyCreativeBridgeProjectPatch, 'function');
-const transformed = patchContext.window.applyCreativeBridgeProjectPatch(`before\n  document.open();document.write(html);document.close();\nafter`);
+const transformed = patchContext.window.applyCreativeBridgeProjectPatch(`before\nfunction beginEditor(){return true}\nfunction restore(){return true}\nafter`);
 assert.ok(transformed.includes('loadCampsiteBridgeProject'));
 assert.ok(transformed.includes('syncCampsiteProjectFromCreative'));
 assert.ok(transformed.includes('installCampsiteProjectNext'));
