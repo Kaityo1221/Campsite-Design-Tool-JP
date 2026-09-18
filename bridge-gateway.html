@@ -43,7 +43,7 @@
           '<script>(()=>{const original=L.circleMarker;L.circleMarker=function(latlng,options){if(options?.className==="bridge-poi-marker"){const next={...options};if(next.fillColor==="#f472b6")next.fillColor="#facc15";else if(next.fillColor==="#facc15")next.fillColor="#f472b6";return original.call(this,latlng,next);}return original.call(this,latlng,options);};})();</' + 'script>',
           '<script>(()=>{let payload=null;try{payload=JSON.parse(sessionStorage.getItem("campsiteBridgePoC.v0.3")||"null");}catch(_){}const view=payload?.selectedBounds;const lat=Number(view?.center?.lat);const lng=Number(view?.center?.lng);if(!Number.isFinite(lat)||!Number.isFinite(lng)||!window.L?.Map?.prototype)return;const sourceZoom=Number(view?.zoom);const zoom=Number.isFinite(sourceZoom)?Math.max(16,Math.min(18,Math.round(sourceZoom))):17;const proto=L.Map.prototype;const original=proto.fitBounds;let used=false;const patched=function(bounds,options){try{if(!used&&this.getContainer?.()?.id==="campsiteBridgeMap"){used=true;if(proto.fitBounds===patched)proto.fitBounds=original;return this.setView([lat,lng],zoom,{animate:false});}}catch(_){}return original.call(this,bounds,options);};proto.fitBounds=patched;setTimeout(()=>{if(proto.fitBounds===patched)proto.fitBounds=original;},5000);})();</' + 'script>',
           '<script src="js/bridge-entry.js?v=3"></' + 'script>',
-          '<script src="js/bridge-selection.js?v=8"></' + 'script>',
+          '<script src="js/bridge-selection.js?v=9"></' + 'script>',
           '<script src="js/bridge-next-flow.js?v=5"></' + 'script>'
         ].join('');
 
