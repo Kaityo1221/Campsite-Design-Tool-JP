@@ -221,7 +221,7 @@ for(const name of creativeManifest.order){
   const source=fs.readFileSync('creative/runtime/'+name,'utf8');
   assert.equal(gitBlobSha(source),creativeManifest.sha1[name],`Pinned Next-Lab file changed: ${name}`);
   if(name.endsWith('.js'))new vm.Script(source,{filename:'creative/runtime/'+name});
-  assert.ok(creativeIndex.includes(`"${name}"`)||creativeIndex.includes(`'${name}'`),`Creative loader missing Next-Lab file: ${name}`);
+  assert.ok(creativeIndex.includes(name),`Creative loader missing Next-Lab file: ${name}`);
 }
 
 const creativeRuntime = fs.readFileSync('creative/runtime/runtime-vnext.html', 'utf8');
