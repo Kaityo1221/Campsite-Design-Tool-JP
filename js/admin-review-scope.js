@@ -243,7 +243,7 @@
     ui = document.createElement("div");
     ui.id = "adminReviewScopeControl";
     ui.className = "ars-control";
-    ui.innerHTML = `<div class="ars-head"><strong>審査範囲</strong><span data-ars-status>読込待ち</span></div><div class="ars-counts" data-ars-counts></div><div class="ars-help" data-ars-help>管理者だけに保存される内部範囲です。</div><div class="ars-actions" data-ars-actions></div>`;
+    ui.innerHTML = `<div class="ars-head"><strong>チェック範囲</strong><span data-ars-status>読込待ち</span></div><div class="ars-counts" data-ars-counts></div><div class="ars-help" data-ars-help>管理者だけに保存される内部範囲です。</div><div class="ars-actions" data-ars-actions></div>`;
     wrap.appendChild(ui);
     state.ui = ui;
     renderUi();
@@ -270,7 +270,7 @@
     if (counts) {
       counts.innerHTML = c.inside === null
         ? `<span>POI ${c.total}</span><span>範囲未指定</span>`
-        : `<span>審査対象 <b>${c.inside}</b></span><span>対象外 <b>${c.outside}</b></span>`;
+        : `<span>チェック対象 <b>${c.inside}</b></span><span>対象外 <b>${c.outside}</b></span>`;
     }
 
     if (help) {
@@ -343,7 +343,7 @@
   async function saveDraft() {
     if (!state.siteId || state.draft.length < 3) return;
     const vertices = state.draft.map(v => ({ lat: v.lat, lng: v.lng }));
-    renderUi("審査範囲を保存しています…");
+    renderUi("チェック範囲を保存しています…");
     try {
       const data = await invoke(SCOPE_FUNCTION, {
         action: "save",
@@ -360,14 +360,14 @@
       dispatchChange("save");
     } catch (error) {
       console.error("review scope save error", error);
-      renderUi(error?.message || "審査範囲を保存できませんでした。");
+      renderUi(error?.message || "チェック範囲を保存できませんでした。");
     }
   }
 
   async function clearScope() {
     if (!state.siteId || !state.scope) return;
-    if (!window.confirm("このサイトの現在の審査範囲を解除しますか？ 過去revisionは履歴として残ります。")) return;
-    renderUi("審査範囲を解除しています…");
+    if (!window.confirm("このサイトの現在のチェック範囲を解除しますか？ 過去revisionは履歴として残ります。")) return;
+    renderUi("チェック範囲を解除しています…");
     try {
       await invoke(SCOPE_FUNCTION, { action: "clear", siteId: state.siteId });
       state.scope = null;
@@ -375,11 +375,11 @@
       removeLayer(state.scopeLayer);
       state.scopeLayer = null;
       refreshVisuals();
-      renderUi("現在の審査範囲を解除しました。");
+      renderUi("現在のチェック範囲を解除しました。");
       dispatchChange("clear");
     } catch (error) {
       console.error("review scope clear error", error);
-      renderUi(error?.message || "審査範囲を解除できませんでした。");
+      renderUi(error?.message || "チェック範囲を解除できませんでした。");
     }
   }
 
@@ -395,10 +395,10 @@
     }
     const c = scopeCounts();
     const html = !state.siteId
-      ? `<span>審査範囲</span><strong>保存不可</strong>`
+      ? `<span>チェック範囲</span><strong>保存不可</strong>`
       : c.inside === null
-        ? `<span>審査範囲</span><strong>未指定</strong>`
-        : `<span>審査対象 / 対象外</span><strong>${c.inside} / ${c.outside}</strong>`;
+        ? `<span>チェック範囲</span><strong>未指定</strong>`
+        : `<span>チェック対象 / 対象外</span><strong>${c.inside} / ${c.outside}</strong>`;
     if (stat.innerHTML !== html) stat.innerHTML = html;
   }
 
@@ -460,7 +460,7 @@
     } catch (error) {
       if (seq !== state.loadSeq) return;
       console.error("review scope load error", error);
-      renderUi(error?.message || "審査範囲を読み込めませんでした。");
+      renderUi(error?.message || "チェック範囲を読み込めませんでした。");
     }
   }
 
