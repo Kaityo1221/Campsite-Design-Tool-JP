@@ -230,6 +230,11 @@ new vm.Script(creativePatchV4,{filename:'creative/runtime/creative-patches-v4.js
 assert.ok(creativeIndex.includes("const ROOT='./runtime/'"),'Creative must load the vendored runtime locally');
 assert.ok(!creativeIndex.includes('raw.githubusercontent.com/Kaityo1221/Campsite-Design-Tool-Next-Lab'),'Creative must not depend on raw GitHub at runtime');
 assert.ok(creativeIndex.includes("const runtimeStart=src.indexOf('<script>')"),'Creative must extract the vendored runtime bootstrap directly');
+assert.ok(creativeIndex.includes("const runtimeEnd=src.lastIndexOf('</'+'script>')"), 'Creative runtime end marker must avoid double escaping');
+const vendoredRuntimeStart = creativeRuntime.indexOf('<script>');
+const vendoredRuntimeEnd = creativeRuntime.lastIndexOf('</script>');
+assert.ok(vendoredRuntimeStart >= 0 && vendoredRuntimeEnd > vendoredRuntimeStart, 'Vendored runtime script markers must be detectable');
+new vm.Script(creativeRuntime.slice(vendoredRuntimeStart + '<script>'.length, vendoredRuntimeEnd), { filename: 'creative/runtime/runtime-vnext.html:extracted' });
 assert.ok(creativeIndex.includes('const runRuntime=new Function(runtimeCode)'), 'Creative must execute the runtime bootstrap directly');
 assert.ok(creativeIndex.includes("new URL('./base-v7.html',location.href).href"), 'Creative runtime must resolve base-v7 against the JP Creative URL');
 assert.ok(creativeIndex.includes("setTimeout(()=>__ctl.abort(),8000)"), 'Creative base-v7 fetch must have an 8 second timeout');
