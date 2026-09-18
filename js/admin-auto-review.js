@@ -266,7 +266,7 @@
     if (!result.ready) {
       panel.innerHTML = `
         <div class="aar-head"><div><span>AUTO CHECK</span><h3>自動チェック</h3></div><strong class="aar-wait">待機</strong></div>
-        <p class="aar-note">審査範囲を保存すると、その内側だけを自動チェックします。範囲外POIは判定しません。</p>`;
+        <p class="aar-note">チェック範囲を保存すると、その内側だけを自動チェックします。範囲外POIは判定しません。</p>`;
       return;
     }
 
@@ -291,7 +291,7 @@
         <div><span>AUTO CHECK</span><h3>自動チェック</h3></div>
         ${headerBadge}
       </div>
-      <p class="aar-note">審査対象 ${result.scoped.length}件。現在ポリシー v${p.versionNo || "-"} / 距離 ${p.spacingMeters}m${p.fallback ? "（fallback）" : ""}</p>
+      <p class="aar-note">チェック対象 ${result.scoped.length}件。現在ポリシー v${p.versionNo || "-"} / 距離 ${p.spacingMeters}m${p.fallback ? "（fallback）" : ""}</p>
       ${result.outsideAdded > 0 ? `<div class="aar-check warn"><div class="aar-check-title"><strong>チェック範囲</strong><span>⚠️ 追加予定 ${result.outsideAdded}件が範囲外</span></div><div class="aar-hold">追加予定POIがすべてチェック範囲内に入るよう、範囲を確認してください。</div></div>` : ""}
       <div class="aar-check ${result.spacingPairs.length ? "warn" : "ok"}">
         <div class="aar-check-title"><strong>距離</strong><span>${result.spacingPairs.length ? `⚠️ ${result.spacingPairs.length}組` : "✅ 問題なし"}</span></div>
@@ -307,7 +307,7 @@
         <div class="aar-check-title"><strong>重複候補</strong><span>${result.duplicatePairs.length ? `⚠️ ${result.duplicatePairs.length}組` : "✅ なし"}</span></div>
         ${pairRows(result.duplicatePairs, "1m未満の重複候補なし")}
       </div>
-      <p class="aar-foot">⚠️は確認ポイントです。自動判定だけで最終審査結果は確定しません。</p>`;
+      <p class="aar-foot">⚠️は確認ポイントです。自動判定だけで正式判断は確定しません。</p>`;
   }
 
   function run() {
