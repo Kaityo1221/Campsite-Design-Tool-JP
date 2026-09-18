@@ -19,6 +19,35 @@ function campsProjectRole(layer){return String(layer||'').startsWith('new-')?'ad
 function campsProjectId(prefix){
   try{return crypto.randomUUID()}catch{return prefix+'-'+Date.now()+'-'+Math.random().toString(16).slice(2)}
 }
+function campsProjectNormalizeCircleRadii(value){
+  const requested=Array.isArray(value)?value.map(Number):[];
+  return [50,40,30].filter(radius=>radius===50||requested.includes(radius));
+}
+function campsProjectApplyCircleRadii(value){
+  const radii=campsProjectNormalizeCircleRadii(value);
+  circleExtras=radii.slice();
+  try{if(typeof circleVisible!=='undefined')circleVisible=radii.slice()}catch(_){}
+  try{circlePanel.querySelectorAll('[data-extra]').forEach(b=>b.classList.toggle('active',radii.includes(Number(b.dataset.extra))))}catch(_){}
+  try{circlePanel.querySelectorAll('[data-circle-toggle]').forEach(b=>b.classList.toggle('active',radii.includes(Number(b.dataset.circleToggle))))}catch(_){}
+  try{renderRecordCircles()}catch(_){}
+  try{renderLayerPanel()}catch(_){}
+  return radii;
+}
+function campsProjectCurrentCircleRadii(){
+  const enabled=new Set([50]);
+  try{
+    if(typeof cmCircleLayerEnabled==='function'){
+      if(cmCircleLayerEnabled(40))enabled.add(40);
+      if(cmCircleLayerEnabled(30))enabled.add(30);
+    }else{
+      for(const radius of (Array.isArray(circleExtras)?circleExtras:[]))if(radius===40||radius===30)enabled.add(radius);
+      if(typeof circleVisible!=='undefined'&&Array.isArray(circleVisible)){
+        for(const radius of circleVisible)if(radius===40||radius===30)enabled.add(radius);
+      }
+    }
+  }catch(_){}
+  return [50,40,30].filter(radius=>enabled.has(radius));
+}
 function campsProjectRecordPoi(r){
   const lat=Number(r?.latlng?.[0]),lng=Number(r?.latlng?.[1]);
   if(!Number.isFinite(lat)||!Number.isFinite(lng))return null;
@@ -71,7 +100,7 @@ function syncCampsiteProjectFromCreative(project){
   project.deletedPois=deleted;
   project.edits=edits;
   project.polygon=polygon;
-  project.circleRadii=[50,...circleExtras.filter(radius=>radius===40||radius===30)].filter((value,index,array)=>array.indexOf(value)===index).sort((a,b)=>b-a);
+  project.circleRadii=campsProjectCurrentCircleRadii();
   project.phase='design';
   project.updatedAt=new Date().toISOString();
   project.creative={recordCount:current.length,addedCount:added.length,deletedCount:deleted.length,editCount:edits.length,savedAt:project.updatedAt};
@@ -118,7 +147,7 @@ function loadCampsiteBridgeProject(project){
   const points=polygon.filter(p=>Array.isArray(p)&&p.length>=2).map(p=>[Number(p[0]),Number(p[1])]).filter(p=>Number.isFinite(p[0])&&Number.isFinite(p[1]));
   polygons=points.length>=3?[{id:campsProjectId('activity'),points,deleted:false,source:true}]:[];
   polygonVisible=polygons.length>0;
-  circleExtras=(Array.isArray(project.circleRadii)?project.circleRadii:[]).map(Number).filter(radius=>radius===40||radius===30);
+  campsProjectApplyCircleRadii(project.circleRadii);
   sourceZip=null;
   sourceKmlPath='doc.kml';
   sourceIsKmz=false;
@@ -126,8 +155,7 @@ function loadCampsiteBridgeProject(project){
   const date=String(project.createdAt||new Date().toISOString()).slice(0,10).replace(/-/g,'');
   sourceName='Campsite_Bridge_'+date;
   drawAll();
-  renderLayerPanel();
-  circlePanel.querySelectorAll('[data-extra]').forEach(b=>b.classList.toggle('active',circleExtras.includes(Number(b.dataset.extra))));
+  campsProjectApplyCircleRadii(project.circleRadii);
   const bounds=records.map(r=>r.latlng).concat(points);
   if(bounds.length)map.fitBounds(bounds,{padding:[28,28],maxZoom:18});
   snapshot();
