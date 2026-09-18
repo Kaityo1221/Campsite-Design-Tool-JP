@@ -148,7 +148,7 @@ function renderJpGuide(){jpRefreshReviews();const box=ensureJpGuide(),adds=jpAdd
   );
 
   const runtimeStart=src.indexOf('<script>');
-  const runtimeEnd=src.lastIndexOf('</script>');
+  const runtimeEnd=src.lastIndexOf('<\\/script>');
   if(runtimeStart<0||runtimeEnd<=runtimeStart){
     throw new Error('Creative runtime script not found');
   }
