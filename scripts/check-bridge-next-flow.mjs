@@ -203,6 +203,34 @@ assert.ok(receiver.includes('bridge-receiver-detail'), 'Receiver must support di
 assert.ok(gateway.includes('#loginScreen,#splashScreen,#openingScreen{display:none!important}'), 'Gateway must suppress legacy login/splash flash');
 
 
+const creativeRuntime = fs.readFileSync('creative/runtime/runtime-vnext.html', 'utf8');
+const creativePatchV2 = fs.readFileSync('creative/runtime/creative-patches-v2.js', 'utf8');
+const creativePatchV3 = fs.readFileSync('creative/runtime/creative-patches-v3.js', 'utf8');
+const creativePatchV4 = fs.readFileSync('creative/runtime/creative-patches-v4.js', 'utf8');
+
+function gitBlobSha(text){
+  const body=Buffer.from(text,'utf8');
+  return crypto.createHash('sha1').update(`blob ${body.length}\0`).update(body).digest('hex');
+}
+assert.equal(gitBlobSha(creativeRuntime),'dde771a80cf0d937a2ddffc49a1d3a10b0271006','Pinned runtime-vnext snapshot changed');
+assert.equal(gitBlobSha(creativePatchV2),'5f59b3accbf6981ff41fe3024e189c1d02b60259','Pinned Creative patch v2 changed');
+assert.equal(gitBlobSha(creativePatchV3),'5c039bd3db4ed8a32b36e384622acbb80ff15f42','Pinned Creative patch v3 changed');
+assert.equal(gitBlobSha(creativePatchV4),'c30c4894da6ae31b03cba588c8181f890f081890','Pinned Creative patch v4 changed');
+
+const runtimeStart=creativeRuntime.indexOf('<script>');
+const runtimeEnd=creativeRuntime.lastIndexOf('</script>');
+assert.ok(runtimeStart>=0&&runtimeEnd>runtimeStart,'Pinned runtime inline script missing');
+new vm.Script(creativeRuntime.slice(runtimeStart+'<script>'.length,runtimeEnd),{filename:'creative/runtime/runtime-vnext.html:inline'});
+new vm.Script(creativePatchV2,{filename:'creative/runtime/creative-patches-v2.js'});
+new vm.Script(creativePatchV3,{filename:'creative/runtime/creative-patches-v3.js'});
+new vm.Script(creativePatchV4,{filename:'creative/runtime/creative-patches-v4.js'});
+
+assert.ok(creativeIndex.includes("const ROOT='./runtime/'"),'Creative must load the vendored runtime locally');
+assert.ok(!creativeIndex.includes('raw.githubusercontent.com/Kaityo1221/Campsite-Design-Tool-Next-Lab'),'Creative must not depend on raw GitHub at runtime');
+assert.ok(creativeIndex.includes("new DOMParser().parseFromString(src,'text/html')"),'Creative must execute runtime scripts without first document.write');
+assert.ok(creativeIndex.includes("document.body.appendChild(script)"),'Creative runtime scripts must be attached through DOM');
+assert.ok(!creativeIndex.includes('document.open();document.write(src);document.close();'),'Creative bootstrap must not replace itself with runtime HTML');
+
 const creativeBase = fs.readFileSync('creative/base-v7.html', 'utf8');
 assert.ok(creativeBase.includes('<title>CREATIVE MODE | Next Lab</title>'), 'Pinned base-v7 snapshot missing');
 assert.ok(creativeBase.includes("const map=L.map('map'"), 'Pinned base-v7 map runtime missing');
