@@ -124,12 +124,9 @@ const transformed = patchContext.window.applyCreativeBridgeProjectPatch(`before\
 assert.ok(transformed.includes('loadCampsiteBridgeProject'));
 assert.ok(transformed.includes('syncCampsiteProjectFromCreative'));
 assert.ok(transformed.includes('installCampsiteProjectNext'));
-assert.ok(transformed.includes('installCampsiteProjectMobileUi'), 'Bridge Creative mobile UI installer missing');
-assert.ok(transformed.includes("body.campsite-bridge-project #locate{display:none!important}"), 'Bridge Creative must hide current-location button');
-assert.ok(transformed.includes("grid-template-columns:repeat(2,minmax(0,1fr))"), 'Bridge Creative bottom bar must collapse to two actions');
-assert.ok(transformed.includes("#campsiteProjectNext{left:10px!important;right:10px!important"), 'Bridge Creative next button must use a full-width mobile row');
-assert.ok(transformed.includes("layerBtn.textContent='▱ 層'"), 'Bridge Creative layer button must use compact mobile label');
-assert.ok(transformed.includes("circleBtn.textContent='◎ 円'"), 'Bridge Creative circle button must use compact mobile label');
+assert.ok(!transformed.includes('installCampsiteProjectMobileUi'), 'Bridge must not override the canonical Next-Lab Creative UI');
+assert.ok(transformed.includes("btn.textContent='次へ →'"), 'Bridge-only next action should stay compact');
+assert.ok(transformed.includes("aria-label','次へ：距離チェック'"), 'Bridge-only next action must keep an accessible distance-check label');
 assert.ok(transformed.includes("role:campsProjectRole(r.layer)"));
 assert.ok(transformed.includes("location.href='../bridge-distance.html?campsiteProject=bridge'"));
 assert.ok(transformed.includes("type==='GYM'"));
@@ -211,29 +208,35 @@ assert.ok(receiver.includes('bridge-receiver-detail'), 'Receiver must support di
 assert.ok(gateway.includes('#loginScreen,#splashScreen,#openingScreen{display:none!important}'), 'Gateway must suppress legacy login/splash flash');
 
 
-const creativeRuntime = fs.readFileSync('creative/runtime/runtime-vnext.html', 'utf8');
-const creativePatchV2 = fs.readFileSync('creative/runtime/creative-patches-v2.js', 'utf8');
-const creativePatchV3 = fs.readFileSync('creative/runtime/creative-patches-v3.js', 'utf8');
-const creativePatchV4 = fs.readFileSync('creative/runtime/creative-patches-v4.js', 'utf8');
+const creativeManifest = JSON.parse(fs.readFileSync('creative/runtime/next-lab-manifest.json', 'utf8'));
+assert.equal(creativeManifest.sourceRepo, 'Kaityo1221/Campsite-Design-Tool-Next-Lab');
+assert.equal(creativeManifest.sourceCommit, 'c10b910344952ade36b2791a122f9f38e6c54d0b');
+assert.equal(creativeManifest.order.length, 35, 'Next-Lab runtime + 34 patch files must be pinned');
 
 function gitBlobSha(text){
   const body=Buffer.from(text,'utf8');
   return crypto.createHash('sha1').update(`blob ${body.length}\0`).update(body).digest('hex');
 }
-assert.equal(gitBlobSha(creativeRuntime),'dde771a80cf0d937a2ddffc49a1d3a10b0271006','Pinned runtime-vnext snapshot changed');
-assert.equal(gitBlobSha(creativePatchV2),'5f59b3accbf6981ff41fe3024e189c1d02b60259','Pinned Creative patch v2 changed');
-assert.equal(gitBlobSha(creativePatchV3),'5c039bd3db4ed8a32b36e384622acbb80ff15f42','Pinned Creative patch v3 changed');
-assert.equal(gitBlobSha(creativePatchV4),'c30c4894da6ae31b03cba588c8181f890f081890','Pinned Creative patch v4 changed');
 
+for(const name of creativeManifest.order){
+  const source=fs.readFileSync('creative/runtime/'+name,'utf8');
+  assert.equal(gitBlobSha(source),creativeManifest.sha1[name],`Pinned Next-Lab file changed: ${name}`);
+  if(name.endsWith('.js'))new vm.Script(source,{filename:'creative/runtime/'+name});
+  assert.ok(creativeIndex.includes(`"${name}"`)||creativeIndex.includes(`'${name}'`),`Creative loader missing Next-Lab file: ${name}`);
+}
+
+const creativeRuntime = fs.readFileSync('creative/runtime/runtime-vnext.html', 'utf8');
 const runtimeStart=creativeRuntime.indexOf('<script>');
 const runtimeEnd=creativeRuntime.lastIndexOf('</script>');
 assert.ok(runtimeStart>=0&&runtimeEnd>runtimeStart,'Pinned runtime inline script missing');
 new vm.Script(creativeRuntime.slice(runtimeStart+'<script>'.length,runtimeEnd),{filename:'creative/runtime/runtime-vnext.html:inline'});
-new vm.Script(creativePatchV2,{filename:'creative/runtime/creative-patches-v2.js'});
-new vm.Script(creativePatchV3,{filename:'creative/runtime/creative-patches-v3.js'});
-new vm.Script(creativePatchV4,{filename:'creative/runtime/creative-patches-v4.js'});
+assert.ok(creativeIndex.includes("const NEXT_LAB_SOURCE='c10b910344952ade36b2791a122f9f38e6c54d0b'"),'Creative loader must identify the synced Next-Lab source commit');
 
 assert.ok(creativeIndex.includes("const ROOT='./runtime/'"),'Creative must load the vendored runtime locally');
+assert.ok(creativeIndex.includes('"creative-patches-v37-bottom-dock.js"'),'Canonical Next-Lab bottom dock patch missing');
+assert.ok(creativeIndex.includes('"creative-patches-v39-layer-panel-top.js"'),'Canonical Next-Lab layer-panel patch missing');
+assert.ok(creativeIndex.includes('"creative-patches-v43-save-standalone.js"'),'Canonical Next-Lab save UI patch missing');
+assert.ok(creativeIndex.includes('"creative-patches-v44-lab-update-3-lines.js"'),'Canonical Next-Lab latest UI patch missing');
 assert.ok(!creativeIndex.includes('raw.githubusercontent.com/Kaityo1221/Campsite-Design-Tool-Next-Lab'),'Creative must not depend on raw GitHub at runtime');
 assert.ok(creativeIndex.includes("const runtimeScripts=[]"), 'Creative must extract every runtime script separately');
 assert.ok(creativeIndex.includes("const runtimeClose='</'+'script>'"), 'Creative runtime closing marker must be HTML-parser safe');
