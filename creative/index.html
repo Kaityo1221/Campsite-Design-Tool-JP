@@ -147,15 +147,27 @@ function renderJpGuide(){jpRefreshReviews();const box=ensureJpGuide(),adds=jpAdd
     "})().catch(e=>{console.error('[CREATIVE runtime]',e);document.body.innerHTML='<div id=\"creativeBootStatus\"><div><strong>⚠️ CREATIVE MODE</strong><small>CREATIVE本体の起動に失敗しました。'+String(e&&e.message||e)+'</small></div></div>';});"
   );
 
-  const runtimeStart=src.indexOf('<script>');
-  const runtimeEnd=src.lastIndexOf('</'+'script>');
-  if(runtimeStart<0||runtimeEnd<=runtimeStart){
+  const runtimeScripts=[];
+  let runtimeCursor=0;
+  const runtimeClose='</'+'script>';
+  while(true){
+    const open=src.indexOf('<script',runtimeCursor);
+    if(open<0)break;
+    const bodyStart=src.indexOf('>',open);
+    if(bodyStart<0)break;
+    const close=src.indexOf(runtimeClose,bodyStart+1);
+    if(close<0)break;
+    runtimeScripts.push(src.slice(bodyStart+1,close));
+    runtimeCursor=close+runtimeClose.length;
+  }
+  if(!runtimeScripts.length){
     throw new Error('Creative runtime script not found');
   }
-  const runtimeCode=src.slice(runtimeStart+'<script>'.length,runtimeEnd);
   setBootStatus(isBridgeProject?'POIと活動範囲を配置しています…':'CREATIVE MODE本体を起動しています…');
-  const runRuntime=new Function(runtimeCode);
-  runRuntime();
+  for(const runtimeCode of runtimeScripts){
+    const runRuntime=new Function(runtimeCode);
+    runRuntime();
+  }
 })().catch(err=>{console.error(err);document.body.textContent='Creative Modeの読み込みに失敗しました。';});
 </script>
 </body>
