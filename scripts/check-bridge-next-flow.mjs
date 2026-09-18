@@ -65,7 +65,6 @@ const project = api.buildProject({
   version: '0.8.5',
   sourceCount: 3,
   polygon: [[35.0, 139.0], [35.1, 139.0], [35.1, 139.1]],
-  radii: [50, 40],
   pois: [
     { guid: 'a', title: 'Stop', lat: 35.05, lng: 139.05, gameEntity: 'POKESTOP' },
     { guid: 'b', title: 'Gym', lat: 35.06, lng: 139.06, gameEntity: 'GYM' }
@@ -86,7 +85,7 @@ assert.equal(project.sourcePois.length, 3);
 assert.equal(project.selectedPois.length, 2);
 assert.equal(project.currentPois.length, 2);
 assert.equal(project.polygon.length, 3);
-assert.deepEqual([...project.circleRadii], [50, 40]);
+assert.deepEqual([...project.circleRadii], [50, 40, 30]);
 assert.equal(project.meta.preview, true);
 assert.deepEqual([...project.selectedPois[0].provenance], ['WAYFARER_PASSIVE']);
 assert.equal(project.selectedPois[1].sponsored, true);
@@ -130,9 +129,10 @@ assert.ok(!transformed.includes('installCampsiteProjectMobileUi'), 'Bridge must 
 assert.ok(transformed.includes("btn.textContent='次へ →'"), 'Bridge-only next action should stay compact');
 assert.ok(transformed.includes("aria-label','次へ：距離チェック'"), 'Bridge-only next action must keep an accessible distance-check label');
 assert.ok(transformed.includes("role:campsProjectRole(r.layer)"));
-assert.ok(transformed.includes('project.circleRadii='), 'Project must carry Bridge radius choices');
-assert.ok(transformed.includes('campsProjectApplyCircleRadii(project.circleRadii)'), 'Creative must restore Bridge radius choices');
+assert.ok(transformed.includes('project.circleRadii='), 'Project must carry Creative circle state');
+assert.ok(transformed.includes('campsProjectApplyCircleRadii(project.circleRadii)'), 'Creative must apply Bridge circle policy');
 assert.ok(transformed.includes('circleExtras=radii.slice()'), 'Bridge must normalize the current circle state');
+assert.ok(transformed.includes('function campsProjectNormalizeCircleRadii(){return [50,40,30]}'), 'Bridge circle policy must default to all three radii');
 assert.ok(transformed.includes("typeof circleVisible!=='undefined'"), 'Bridge must normalize both circle state models');
 assert.ok(transformed.includes('project.circleRadii=campsProjectCurrentCircleRadii()'), 'Project must save the canonical Creative circle state');
 assert.ok(transformed.includes("location.href='../bridge-distance.html?campsiteProject=bridge'"));
@@ -174,11 +174,9 @@ assert.ok(previewPage.includes('新フローをON'));
 assert.ok(previewPage.includes('新フローをOFF'));
 
 assert.ok(selection.includes('id="bridgeScrollHandle"'), 'Bridge map must expose a mobile scroll handle');
-assert.ok(selection.includes("actions.insertAdjacentElement('beforebegin', step)"), 'Bridge radius settings must mount before confirm');
-assert.ok(selection.includes('function selectedRadii()'), 'Bridge selection snapshot must persist radius choices');
-assert.ok(selection.includes('radii: selectedRadii()'), 'Bridge selection must store selected radii before handoff');
-assert.ok(selection.includes("step.classList.add('bridge-radius-step')"), 'Bridge radius settings must receive Bridge layout styling');
-assert.ok(selection.includes('restoreRadiusStep();'), 'Legacy Bridge flow must restore the original radius step before leaving selection');
+assert.ok(!selection.includes('function selectedRadii()'), 'Bridge must not expose circle selection state');
+assert.ok(!selection.includes('bridge-radius-step'), 'Bridge must not mount the legacy circle options');
+assert.ok(nextFlow.includes('const circleRadii = [50, 40, 30];'), 'Bridge project must start Creative with all circle layers');
 assert.ok(selection.includes("touch-action:pan-y"), 'Bridge scroll handle must allow page panning');
 assert.ok(selection.includes("height:52svh"), 'Bridge map must use a viewport-aware mobile height');
 assert.ok(selection.includes("const NEXT_PREVIEW_KEY = 'campsiteBridgeNextPreview.v1'"), 'Selection must know the Next preview flag');
@@ -187,8 +185,8 @@ assert.ok(selection.indexOf('sessionStorage.setItem(SELECTION_STORAGE_KEY') < se
 assert.ok(selection.indexOf('if (isNextPreviewEnabled())') < selection.indexOf("const input = $('fileInput')"), 'Preview must skip only the legacy virtual CSV path');
 assert.ok(nextFlow.includes('setTimeout(continueToCreative, 0)'), 'Next flow must wait until selection snapshot is saved');
 assert.ok(!nextFlow.includes('stopImmediatePropagation'), 'Next flow must not block the selection save listener');
-const selectionPos = gateway.indexOf('js/bridge-selection.js?v=7');
-const nextPos = gateway.indexOf('js/bridge-next-flow.js?v=4');
+const selectionPos = gateway.indexOf('js/bridge-selection.js?v=8');
+const nextPos = gateway.indexOf('js/bridge-next-flow.js?v=5');
 assert.ok(selectionPos >= 0 && nextPos > selectionPos, 'Next flow must load after polygon selection');
 
 
