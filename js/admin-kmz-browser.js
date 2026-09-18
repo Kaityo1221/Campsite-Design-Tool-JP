@@ -70,18 +70,18 @@
 
       // Admin-only review scope.
       await loadStyle("css/admin-review-scope.css?v=1", "campsiteAdminReviewScopeStyle");
-      await loadScript("js/admin-review-scope.js?v=1", "campsiteAdminReviewScopeScript");
+      await loadScript("js/admin-review-scope.js?v=2", "campsiteAdminReviewScopeScript");
 
       // Scoped automatic checks.
       await loadStyle("css/admin-auto-review.css?v=1", "campsiteAdminAutoReviewStyle");
-      await loadScript("js/admin-auto-review.js?v=2", "campsiteAdminAutoReviewScript");
+      await loadScript("js/admin-auto-review.js?v=3", "campsiteAdminAutoReviewScript");
 
-      await loadScript("js/admin-review-workspace.js?v=1", "campsiteAdminReviewWorkspaceScript");
-      await loadScript("js/admin-review-workspace-bridge.js?v=1", "campsiteAdminReviewWorkspaceBridgeScript");
+      await loadScript("js/admin-review-workspace.js?v=2", "campsiteAdminReviewWorkspaceScript");
+      await loadScript("js/admin-review-workspace-bridge.js?v=2", "campsiteAdminReviewWorkspaceBridgeScript");
       await loadScript("js/admin-site-review-list.js?v=3", "campsiteAdminSiteReviewListScript");
 
       // Mobile QA / map-first interaction.
-      await loadStyle("css/admin-review-mobile-layout.css?v=4", "campsiteAdminReviewMobileLayoutStyle");
+      await loadStyle("css/admin-review-mobile-layout.css?v=5", "campsiteAdminReviewMobileLayoutStyle");
       await loadStyle("css/admin-review-mobile-fit.css?v=1", "campsiteAdminReviewMobileFitStyle");
       await loadStyle("css/admin-review-map-fullscreen.css?v=1", "campsiteAdminReviewMapFullscreenStyle");
       await loadScript("js/admin-review-fit-fix.js?v=1", "campsiteAdminReviewFitFixScript");
@@ -90,8 +90,8 @@
 
       // PRE-CHECK is the primary result shown immediately when a site opens.
       // The formal FINAL REVIEW UI is intentionally parked; its server-side history remains available for future reuse.
-      await loadScript("js/admin-precheck-summary.js?v=2", "campsiteAdminPrecheckSummaryScript");
-      await loadScript("js/admin-precheck-polish.js?v=1", "campsiteAdminPrecheckPolishScript");
+      await loadScript("js/admin-precheck-summary.js?v=3", "campsiteAdminPrecheckSummaryScript");
+      await loadScript("js/admin-precheck-polish.js?v=2", "campsiteAdminPrecheckPolishScript");
       await loadScript("js/admin-precheck-tap-fix.js?v=1", "campsiteAdminPrecheckTapFixScript");
 
       // Phase 7 removed the standalone past-state modal, POI freshness check and Campsite-side AI review queue.
