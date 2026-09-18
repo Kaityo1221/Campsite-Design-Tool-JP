@@ -1,9 +1,5 @@
-/* ======================================================
-   Admin PRE-CHECK polish
-   - Renames review-oriented UI into pre-check language
-   - Keeps formal Scopely/Niantic review separate
-   - Lets PRE-CHECK issue chips open a compact detail sheet
-====================================================== */
+/* PRE-CHECK issue detail sheet.
+   Base labels are rendered natively by their owning components. */
 (function () {
   "use strict";
 
@@ -22,12 +18,6 @@
       .replace(/'/g, "&#039;");
   }
 
-  function setText(el, value) {
-    if (!el) return;
-    const next = String(value ?? "");
-    if ((el.textContent || "") !== next) el.textContent = next;
-  }
-
   function ensureStyles() {
     if (document.getElementById("adminPrecheckPolishStyles")) return;
     const style = document.createElement("style");
@@ -40,57 +30,6 @@
       @media(min-width:861px){.apd-backdrop{align-items:center;padding:24px}.apd-sheet{border-bottom:1px solid rgba(148,163,184,.22);border-radius:22px;max-height:min(70vh,700px)}}
     `;
     document.head.appendChild(style);
-  }
-
-  function replacePlainText(el, replacements) {
-    if (!el || el.children.length !== 0) return;
-    let next = el.textContent || "";
-    replacements.forEach(([from, to]) => { next = next.replace(from, to); });
-    setText(el, next);
-  }
-
-  function relabelUi() {
-    const queue = document.getElementById("adminSiteReviewList");
-    if (queue) {
-      setText(queue.querySelector(".asr-eyebrow"), "ADMIN · PRE-CHECK");
-      setText(queue.querySelector(".asr-head h3"), "🔍 提出前チェック");
-      setText(queue.querySelector(".asr-head p:not(.asr-eyebrow)"), "同じサイトの提出履歴をまとめて、提出前の確認ポイントをチェックします。正式な審査は運営側で行います。");
-      queue.querySelectorAll(".asr-open").forEach(button => {
-        setText(button, "チェックを開く");
-        if (button.getAttribute("aria-label") !== "このサイトの提出前チェックを開く") button.setAttribute("aria-label", "このサイトの提出前チェックを開く");
-      });
-      queue.querySelectorAll(".asr-pill,.asr-state").forEach(el => replacePlainText(el, [[/審査サイト/g, "サイト"], [/審査対象/g, "チェック対象"]]));
-    }
-
-    document.querySelectorAll("[data-ak-review]").forEach(button => {
-      setText(button, "🔍 提出前チェック");
-      if (button.getAttribute("aria-label") !== "このサイトの提出前チェックを開く") button.setAttribute("aria-label", "このサイトの提出前チェックを開く");
-    });
-
-    const workspace = document.getElementById("adminReviewWorkspace");
-    if (workspace) {
-      setText(workspace.querySelector(".arw-eyebrow"), "ADMIN · PRE-CHECK");
-      const title = workspace.querySelector("#arwSiteTitle");
-      if (title && /審査ワークスペース/.test(title.textContent || "")) setText(title, "提出前チェック");
-      workspace.querySelectorAll("[data-arw-legacy],[data-arw-inline-legacy]").forEach(button => { if (button.style.display !== "none") button.style.display = "none"; });
-      workspace.querySelectorAll(".arr-panel").forEach(panel => { if (panel.style.display !== "none") panel.style.display = "none"; });
-    }
-
-    const scope = document.getElementById("adminReviewScopeControl");
-    if (scope) {
-      setText(scope.querySelector(".ars-head strong"), "チェック範囲");
-      const counts = scope.querySelector("[data-ars-counts]");
-      if (counts && counts.innerHTML.includes("審査対象")) counts.innerHTML = counts.innerHTML.replace(/審査対象/g, "チェック対象");
-      replacePlainText(scope.querySelector("[data-ars-help]"), [[/審査範囲/g, "チェック範囲"]]);
-    }
-
-    document.querySelectorAll(".aar-note,.aar-foot,.apc-note").forEach(el => replacePlainText(el, [
-      [/審査範囲/g, "チェック範囲"],
-      [/審査対象/g, "チェック対象"],
-      [/最終審査結果/g, "正式判断"]
-    ]));
-
-    wirePrecheckChips();
   }
 
   function detailCount(chip) {
@@ -124,8 +63,7 @@
       chip.dataset.apcDetail = key;
       chip.setAttribute("role", "button");
       chip.setAttribute("tabindex", "0");
-      const label = `${chip.textContent.trim()}の詳細を表示`;
-      if (chip.getAttribute("aria-label") !== label) chip.setAttribute("aria-label", label);
+      chip.setAttribute("aria-label", `${chip.textContent.trim()}の詳細を表示`);
     });
   }
 
@@ -136,7 +74,7 @@
   }
 
   function pairRows(pairs) {
-    if (!Array.isArray(pairs) || !pairs.length) return `<div class="apd-empty">該当項目はありません。</div>`;
+    if (!Array.isArray(pairs) || !pairs.length) return '<div class="apd-empty">該当項目はありません。</div>';
     return [...pairs]
       .sort((a, b) => Number(a.distance || 0) - Number(b.distance || 0))
       .map(pair => `<div class="apd-row"><strong>${Number(pair.distance || 0).toFixed(1)}m</strong><span>${esc(pair.a?.name || "名称なし")} ↔ ${esc(pair.b?.name || "名称なし")}</span></div>`)
@@ -144,7 +82,7 @@
   }
 
   function detailPayload(key, result) {
-    if (!result?.ready) return { title: "チェック範囲未指定", body: `<div class="apd-empty">チェック範囲を保存すると詳細を確認できます。</div>` };
+    if (!result?.ready) return { title: "チェック範囲未指定", body: '<div class="apd-empty">チェック範囲を保存すると詳細を確認できます。</div>' };
     if (key === "spacing") {
       const count = result.spacingPairs?.length || 0;
       return { title: `距離の確認 ${count}組`, body: `<p class="apd-note">追加予定POIを含む、基準距離未満の組み合わせです。短い順に表示しています。</p>${pairRows(result.spacingPairs)}` };
@@ -159,19 +97,18 @@
         title: `上限の確認 ${warnings.length}件`,
         body: warnings.length
           ? warnings.map(item => `<div class="apd-limit">${esc(item.label)} ${Number(item.count) || 0} / 上限 ${item.limit === null ? "無制限" : esc(item.limit)}</div>`).join("")
-          : `<div class="apd-empty">上限超過はありません。</div>`
+          : '<div class="apd-empty">上限超過はありません。</div>'
       };
     }
     if (key === "unknown") {
       const count = Number(result.counts?.unknown) || 0;
       return { title: `未分類 ${count}件`, body: `<div class="apd-unknown">種類を判別できない追加POIが ${count}件あります。種類別上限の判定では、この件数分を保留しています。</div>` };
     }
-    return { title: "PRE-CHECK", body: `<div class="apd-empty">詳細はありません。</div>` };
+    return { title: "PRE-CHECK", body: '<div class="apd-empty">詳細はありません。</div>' };
   }
 
   function openSheet(key) {
-    const result = window.AdminAutoReview?.getResult?.();
-    const detail = detailPayload(key, result);
+    const detail = detailPayload(key, window.AdminAutoReview?.getResult?.());
     if (sheet?.isConnected) sheet.remove();
     ensureStyles();
     const backdrop = document.createElement("div");
@@ -207,12 +144,12 @@
     queued = true;
     requestAnimationFrame(() => {
       queued = false;
-      relabelUi();
+      wirePrecheckChips();
     });
   }
 
   const observer = new MutationObserver(schedule);
-  observer.observe(document.documentElement, { childList: true, subtree: true, characterData: true });
+  observer.observe(document.documentElement, { childList: true, subtree: true });
   window.addEventListener("adminautoreviewchange", () => {
     schedule();
     if (lastDetailKey && sheet) openSheet(lastDetailKey);
