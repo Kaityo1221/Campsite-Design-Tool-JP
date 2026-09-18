@@ -74,7 +74,7 @@
 
       // Scoped automatic checks.
       await loadStyle("css/admin-auto-review.css?v=1", "campsiteAdminAutoReviewStyle");
-      await loadScript("js/admin-auto-review.js?v=1", "campsiteAdminAutoReviewScript");
+      await loadScript("js/admin-auto-review.js?v=2", "campsiteAdminAutoReviewScript");
 
       await loadScript("js/admin-review-workspace.js?v=1", "campsiteAdminReviewWorkspaceScript");
       await loadScript("js/admin-review-workspace-bridge.js?v=1", "campsiteAdminReviewWorkspaceBridgeScript");
@@ -90,7 +90,7 @@
 
       // PRE-CHECK is the primary result shown immediately when a site opens.
       // The formal FINAL REVIEW UI is intentionally parked; its server-side history remains available for future reuse.
-      await loadScript("js/admin-precheck-summary.js?v=1", "campsiteAdminPrecheckSummaryScript");
+      await loadScript("js/admin-precheck-summary.js?v=2", "campsiteAdminPrecheckSummaryScript");
       await loadScript("js/admin-precheck-polish.js?v=1", "campsiteAdminPrecheckPolishScript");
       await loadScript("js/admin-precheck-tap-fix.js?v=1", "campsiteAdminPrecheckTapFixScript");
 
