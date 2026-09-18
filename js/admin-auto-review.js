@@ -140,7 +140,10 @@
     }
 
     const scoped = all.filter(p => inSavedScope({ lat: p.lat, lng: p.lng }));
+    const allAdded = all.filter(p => p.added);
     const added = scoped.filter(p => p.added);
+    const outsideAddedPoints = allAdded.filter(p => !inSavedScope({ lat: p.lat, lng: p.lng }));
+    const outsideAdded = outsideAddedPoints.length;
     const counts = { totalAdded: added.length, pokestop: 0, gym: 0, powerSpot: 0, unknown: 0 };
     added.forEach(p => {
       if (p.poiType === "pokestop") counts.pokestop++;
@@ -179,7 +182,7 @@
       limitWarnings.push({ key: "powerSpot", label: "Power Spot", count: counts.powerSpot, limit: policy.limits.powerSpot });
     }
 
-    return { ready: true, policy, totalVisible: all.length, scoped, added, spacingPairs, duplicatePairs, counts, limitWarnings };
+    return { ready: true, policy, totalVisible: all.length, scoped, added, outsideAdded, outsideAddedPoints, spacingPairs, duplicatePairs, counts, limitWarnings };
   }
 
   function warningPoints(result) {
@@ -269,7 +272,7 @@
 
     const p = result.policy;
     const c = result.counts;
-    const issues = result.spacingPairs.length + result.duplicatePairs.length + result.limitWarnings.length;
+    const issues = result.spacingPairs.length + result.duplicatePairs.length + result.limitWarnings.length + (result.outsideAdded > 0 ? 1 : 0);
     const hasHold = c.unknown > 0;
     const headerBadge = issues
       ? `<strong class="aar-warn">⚠️ ${issues}</strong>`
@@ -289,6 +292,7 @@
         ${headerBadge}
       </div>
       <p class="aar-note">審査対象 ${result.scoped.length}件。現在ポリシー v${p.versionNo || "-"} / 距離 ${p.spacingMeters}m${p.fallback ? "（fallback）" : ""}</p>
+      ${result.outsideAdded > 0 ? `<div class="aar-check warn"><div class="aar-check-title"><strong>チェック範囲</strong><span>⚠️ 追加予定 ${result.outsideAdded}件が範囲外</span></div><div class="aar-hold">追加予定POIがすべてチェック範囲内に入るよう、範囲を確認してください。</div></div>` : ""}
       <div class="aar-check ${result.spacingPairs.length ? "warn" : "ok"}">
         <div class="aar-check-title"><strong>距離</strong><span>${result.spacingPairs.length ? `⚠️ ${result.spacingPairs.length}組` : "✅ 問題なし"}</span></div>
         ${pairRows(result.spacingPairs, `${p.spacingMeters}m未満の追加POI関連ペアなし`)}
