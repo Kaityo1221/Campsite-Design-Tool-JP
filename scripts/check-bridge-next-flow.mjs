@@ -138,6 +138,8 @@ assert.ok(transformed.includes('circleExtras=radii.slice()'), 'Bridge must norma
 assert.ok(transformed.includes('function campsProjectNormalizeCircleRadii(){return [50,40,30]}'), 'Bridge circle policy must default to all three radii');
 assert.ok(transformed.includes("typeof circleVisible!=='undefined'"), 'Bridge must normalize both circle state models');
 assert.ok(transformed.includes('project.circleRadii=campsProjectCurrentCircleRadii()'), 'Project must save the canonical Creative circle state');
+assert.ok(transformed.includes('Array.isArray(project&&project.currentPois)?project.currentPois'), 'Bridge rework must restore currentPois instead of the original selection');
+assert.ok(transformed.includes('function campsProjectLoadLayer(poi)'), 'Bridge rework must preserve existing/new POI roles');
 assert.ok(transformed.includes("location.href='../bridge-distance.html?campsiteProject=bridge'"));
 assert.ok(transformed.includes("type==='GYM'"));
 assert.ok(transformed.includes("type==='POWERSPOT'"));
@@ -152,7 +154,7 @@ assert.ok(!creativeBridge.includes("document.write("), 'Legacy Bridge entry must
 assert.ok(nextFlow.includes("./creative/index.html?campsiteProject=bridge"), 'Next flow must enter Creative index directly');
 assert.ok(!nextFlow.includes("./creative/bridge.html?campsiteProject=bridge"), 'Next flow must not use the nested Bridge wrapper');
 
-assert.ok(distanceBridge.includes('js/bridge-distance-project.js?v=1'));
+assert.ok(distanceBridge.includes('js/bridge-distance-project.js?v=2'));
 assert.ok(distanceBridge.includes("fetch('./index.html'"));
 assert.ok(distanceBridge.includes("params.get('campsiteProject')!=='bridge'"));
 assert.ok(distanceProject.includes("const PROJECT_KEY = 'campsiteProject.v1'"));
@@ -169,9 +171,12 @@ assert.ok(distanceProject.includes('buildDistanceSnapshot'));
 assert.ok(distanceProject.includes("latest.phase = 'distance'"));
 assert.ok(distanceProject.includes("latest.phase = 'pre-submit'"));
 assert.ok(distanceProject.includes("'[data-go-pre-submit]'"));
+assert.ok(distanceProject.includes('💾 保存して作り直す'), 'Distance footer must offer save-and-rework');
+assert.ok(distanceProject.includes("location.href = './creative/index.html?campsiteProject=bridge'"), 'Save-and-rework must return to Bridge Creative');
+assert.ok(distanceProject.includes("guide.insertAdjacentElement('afterend', wrap)"), 'Save-and-rework must be placed at the bottom after the checklist guide');
 assert.ok(distanceBandClarity.includes('対象：既存×新規 / 新規×新規'), 'Distance result must state the target pair types');
 assert.ok(poiSpacingConfig.includes('distance-band-clarity-v2.js?v=3'), 'Distance clarity cache key must be bumped');
-assert.ok(distanceEntry.includes('distance-postcheck-mode .distance-precheck-compact{display:none!important}'), 'Distance UI must hide the precheck card after a run');
+assert.ok(distanceEntry.includes('distance-postcheck-mode .distance-file-step{display:none!important}'), 'Distance UI must hide the full precheck step after a run');
 assert.ok(distanceEntry.includes('enterDistancePostcheckMode();'), 'Distance run must switch into postcheck mode');
 assert.ok(fs.readFileSync('index.html','utf8').includes('js/distance-entry.js?v=6'), 'Distance entry cache key must be bumped');
 
