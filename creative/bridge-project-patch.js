@@ -125,7 +125,7 @@ function installCampsiteProjectNext(project){
   setInterval(sync,2500);
 }
 function loadCampsiteBridgeProject(project){
-  const selected=Array.isArray(project&&project.currentPois)&&project.currentPois.length?project.currentPois:(Array.isArray(project&&project.selectedPois)?project.selectedPois:[]);
+  const selected=Array.isArray(project&&project.currentPois)?project.currentPois:(Array.isArray(project&&project.selectedPois)?project.selectedPois:[]);
   const polygon=Array.isArray(project&&project.polygon)?project.polygon:[];
   if(!selected.length)return false;
   records=selected.map((poi,index)=>({
