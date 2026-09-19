@@ -189,10 +189,34 @@
       } catch (error) {
         console.warn('[Campsite Project] distance result persist failed', error);
       }
+      setTimeout(() => installReworkAction(readProject() || project), 0);
       return result;
     };
     wrapped.__campsiteProjectWrapped = true;
     window.runDistanceCheck = wrapped;
+  }
+
+  function installReworkAction(project) {
+    const result = document.getElementById('distanceResult');
+    if (!result || result.querySelector('[data-project-rework]')) return;
+
+    const wrap = document.createElement('div');
+    wrap.className = 'campsite-project-rework';
+    wrap.style.cssText = 'margin:18px 0 6px;padding:14px;border:1px solid rgba(245,158,11,.38);border-radius:14px;background:rgba(245,158,11,.08)';
+    wrap.innerHTML = '<button type="button" data-project-rework style="width:100%;min-height:48px;padding:12px 16px;border:1px solid rgba(245,158,11,.55);border-radius:12px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#1f1300;font-size:15px;font-weight:950;cursor:pointer">💾 保存して作り直す</button><div style="margin-top:8px;color:#fde68a;font-size:12px;line-height:1.6;text-align:center">現在の設計と距離チェック結果を保持してCREATIVE MODEへ戻ります。</div>';
+
+    wrap.querySelector('[data-project-rework]')?.addEventListener('click', () => {
+      const latest = readProject() || project;
+      latest.phase = 'design';
+      latest.rework = {
+        requestedAt: new Date().toISOString(),
+        source: 'distance'
+      };
+      writeProject(latest);
+      location.href = './creative/index.html?campsiteProject=bridge';
+    });
+
+    result.appendChild(wrap);
   }
 
   function installChecklistTracking(project) {
@@ -235,7 +259,7 @@
       installChecklistTracking(project);
       try { window.setWorkflowStep?.('distance'); } catch (_) {}
       try { window.openTab?.('distance'); } catch (_) { section.classList.add('active'); }
-      setTimeout(() => renderProjectSourceNotice(project, groups), 250);
+      setTimeout(() => { renderProjectSourceNotice(project, groups); installReworkAction(readProject() || project); }, 250);
       window.CampsiteDistanceProject = Object.freeze({
         projectId: String(project.projectId || ''),
         source: 'bridge',
