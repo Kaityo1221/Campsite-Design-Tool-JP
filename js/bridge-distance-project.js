@@ -189,7 +189,7 @@
       } catch (error) {
         console.warn('[Campsite Project] distance result persist failed', error);
       }
-      setTimeout(() => installReworkAction(readProject() || project), 0);
+      setTimeout(() => installReworkAction(readProject() || project), 80);
       return result;
     };
     wrapped.__campsiteProjectWrapped = true;
@@ -198,7 +198,7 @@
 
   function installReworkAction(project) {
     const result = document.getElementById('distanceResult');
-    if (!result || result.querySelector('[data-project-rework]')) return;
+    if (!result || !result.textContent.trim() || document.querySelector('[data-project-rework]')) return;
 
     const wrap = document.createElement('div');
     wrap.className = 'campsite-project-rework';
@@ -216,7 +216,9 @@
       location.href = './creative/index.html?campsiteProject=bridge';
     });
 
-    result.appendChild(wrap);
+    const guide = document.querySelector('#distance .distance-checklist-guide');
+    if (guide) guide.insertAdjacentElement('afterend', wrap);
+    else result.insertAdjacentElement('afterend', wrap);
   }
 
   function installChecklistTracking(project) {
@@ -259,7 +261,7 @@
       installChecklistTracking(project);
       try { window.setWorkflowStep?.('distance'); } catch (_) {}
       try { window.openTab?.('distance'); } catch (_) { section.classList.add('active'); }
-      setTimeout(() => { renderProjectSourceNotice(project, groups); installReworkAction(readProject() || project); }, 250);
+      setTimeout(() => renderProjectSourceNotice(project, groups), 250);
       window.CampsiteDistanceProject = Object.freeze({
         projectId: String(project.projectId || ''),
         source: 'bridge',
