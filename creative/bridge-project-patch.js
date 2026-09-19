@@ -9,6 +9,15 @@ function campsProjectLayer(entity){
   if(type==='POWERSPOT')return'existing-power';
   return'existing-pokestop';
 }
+function campsProjectLoadLayer(poi){
+  const existingLayer=String(poi?.layer||'').toLowerCase();
+  if(existingLayer.startsWith('new-')||existingLayer.startsWith('existing-'))return existingLayer;
+  const prefix=poi?.role==='added'?'new-':'existing-';
+  const type=String(poi?.gameEntity||poi?.type||'').toUpperCase();
+  if(type==='GYM')return prefix+'gym';
+  if(type==='POWERSPOT')return prefix+'power';
+  return prefix+'pokestop';
+}
 function campsProjectEntity(layer){
   const value=String(layer||'').toLowerCase();
   if(value.includes('gym'))return'GYM';
@@ -116,12 +125,12 @@ function installCampsiteProjectNext(project){
   setInterval(sync,2500);
 }
 function loadCampsiteBridgeProject(project){
-  const selected=Array.isArray(project&&project.selectedPois)?project.selectedPois:[];
+  const selected=Array.isArray(project&&project.currentPois)?project.currentPois:(Array.isArray(project&&project.selectedPois)?project.selectedPois:[]);
   const polygon=Array.isArray(project&&project.polygon)?project.polygon:[];
   if(!selected.length)return false;
   records=selected.map((poi,index)=>({
     id:String(poi.guid||poi.id||campsProjectId('poi-'+index)),
-    layer:campsProjectLayer(poi.gameEntity||poi.type),
+    layer:campsProjectLoadLayer(poi),
     latlng:[Number(poi.lat),Number(poi.lng)],
     title:String(poi.title||poi.name||'名称なし'),
     memo:String(poi.description||''),

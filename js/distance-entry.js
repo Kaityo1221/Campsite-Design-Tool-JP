@@ -57,6 +57,10 @@ function ensureDistanceEntryStyles() {
     #distanceResult .distance-result-details-body .distance-result-duplicate-title{display:none!important}
     #distanceResult .distance-classification-body>.distance-warning{margin-top:0;padding:10px 12px}
     #distanceResult .distance-classification-note{margin:8px 0 0;padding:7px 10px;border-radius:9px;background:rgba(148,163,184,.08);border:1px solid rgba(148,163,184,.16);color:#cbd5e1;font-size:12px;line-height:1.45}
+    #distance.distance-postcheck-mode .distance-file-step{display:none!important}
+    #distance.distance-postcheck-mode .distance-precheck-compact{display:none!important}
+    #distance.distance-postcheck-mode .distance-precheck-next{display:none!important}
+    #distance.distance-postcheck-mode .distance-run-step>h3{color:#bae6fd}
     #distance .distance-checklist-guide{margin-top:16px;padding:16px;border:1px solid rgba(34,197,94,.35);border-radius:14px;background:rgba(34,197,94,.08);text-align:center;color:#d1fae5}
     #distance .distance-checklist-guide p{margin:0 0 12px;font-size:13px;line-height:1.7}
     #distance .distance-checklist-guide button{width:100%;padding:11px 14px;border:1px solid rgba(34,197,94,.45);border-radius:10px;background:rgba(34,197,94,.16);color:#dcfce7;font-weight:800;cursor:pointer}
@@ -368,6 +372,16 @@ function ensureDistanceChecklistGuide() {
   distanceMap.insertAdjacentElement("afterend", guide);
 }
 
+function enterDistancePostcheckMode() {
+  const section = document.getElementById("distance");
+  if (!section) return;
+  section.classList.add("distance-postcheck-mode");
+
+  const executionStep = document.getElementById("distanceCheckStep");
+  const heading = executionStep?.querySelector(":scope > h3");
+  if (heading) heading.textContent = "距離チェック結果";
+}
+
 function wrapDistanceCheckForResultUi() {
   if (window.__distanceResultUiWrapped || typeof window.runDistanceCheck !== "function") return;
   const originalRunDistanceCheck = window.runDistanceCheck;
@@ -379,6 +393,7 @@ function wrapDistanceCheckForResultUi() {
     }
     const value = await originalRunDistanceCheck.apply(this, args);
     enhanceDistanceResultUi();
+    enterDistancePostcheckMode();
     ensureDistanceChecklistGuide();
     return value;
   };
