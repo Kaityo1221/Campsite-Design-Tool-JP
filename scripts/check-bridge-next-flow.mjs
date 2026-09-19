@@ -173,7 +173,7 @@ assert.ok(distanceBandClarity.includes('対象：既存×新規 / 新規×新規
 assert.ok(poiSpacingConfig.includes('distance-band-clarity-v2.js?v=3'), 'Distance clarity cache key must be bumped');
 assert.ok(distanceEntry.includes('distance-postcheck-mode .distance-precheck-compact{display:none!important}'), 'Distance UI must hide the precheck card after a run');
 assert.ok(distanceEntry.includes('enterDistancePostcheckMode();'), 'Distance run must switch into postcheck mode');
-assert.ok(mainIndex.includes('js/distance-entry.js?v=6'), 'Distance entry cache key must be bumped');
+assert.ok(fs.readFileSync('index.html','utf8').includes('js/distance-entry.js?v=6'), 'Distance entry cache key must be bumped');
 
 assert.ok(previewPage.includes("const KEY='campsiteBridgeNextPreview.v1'"));
 assert.ok(previewPage.includes("localStorage.setItem(KEY,'1')"));
