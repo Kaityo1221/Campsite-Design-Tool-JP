@@ -267,6 +267,7 @@
         ⚪ 40m以上50m未満（50m目安未満）：${counts.near50}組<br>
         既存POI同士の50m未満：${counts.reference}組<br>
         <strong>追加・変更POIを含む50m未満のペア：${totalPairs}組</strong><br>
+        <span style="font-size:13px;color:#cbd5e1;">対象：既存×新規 / 新規×新規</span><br>
         ${targetPoiLine}<br>
         ${totalPairs === 0 ? "追加・変更POIを含む50m未満のペアはありません。" : "50m未満のペアがあります。距離と地図を設計時の参考として確認できます。"}<br><br>
         <span style="font-size:12px;color:#cbd5e1;">※「組」はPOI同士の組み合わせ数です。同じPOIが複数のペアに含まれる場合があります。</span><br>
