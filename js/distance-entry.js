@@ -57,6 +57,7 @@ function ensureDistanceEntryStyles() {
     #distanceResult .distance-result-details-body .distance-result-duplicate-title{display:none!important}
     #distanceResult .distance-classification-body>.distance-warning{margin-top:0;padding:10px 12px}
     #distanceResult .distance-classification-note{margin:8px 0 0;padding:7px 10px;border-radius:9px;background:rgba(148,163,184,.08);border:1px solid rgba(148,163,184,.16);color:#cbd5e1;font-size:12px;line-height:1.45}
+    #distance.distance-postcheck-mode .distance-file-step{display:none!important}
     #distance.distance-postcheck-mode .distance-precheck-compact{display:none!important}
     #distance.distance-postcheck-mode .distance-precheck-next{display:none!important}
     #distance.distance-postcheck-mode .distance-run-step>h3{color:#bae6fd}
