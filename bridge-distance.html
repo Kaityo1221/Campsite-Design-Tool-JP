@@ -20,7 +20,7 @@
     fetch('./index.html',{cache:'no-store',credentials:'same-origin'})
       .then(response=>{if(!response.ok)throw new Error(`index.html ${response.status}`);return response.text()})
       .then(html=>{
-        const script='<script src="js/bridge-distance-project.js?v=1"></'+'script>';
+        const script='<script src="js/bridge-distance-project.js?v=2"></'+'script>';
         const injected=html.includes('</body>')?html.replace('</body>',script+'</body>'):html+script;
         document.open();document.write(injected);document.close();
       })
