@@ -19,6 +19,8 @@ assert.ok(creativeScriptStart >= 0 && creativeScriptEnd > creativeCodeStart, 'Cr
 const creativeInlineScript = creativeIndex.slice(creativeCodeStart, creativeScriptEnd);
 new vm.Script(creativeInlineScript, { filename: 'creative/index.html:inline-bootstrap' });
 const selection = fs.readFileSync('js/bridge-selection.js', 'utf8');
+const distanceBandClarity = fs.readFileSync('js/distance-band-clarity-v2.js', 'utf8');
+const poiSpacingConfig = fs.readFileSync('js/poi-spacing-config.js', 'utf8');
 
 function storage() {
   const data = new Map();
@@ -166,6 +168,8 @@ assert.ok(distanceProject.includes('buildDistanceSnapshot'));
 assert.ok(distanceProject.includes("latest.phase = 'distance'"));
 assert.ok(distanceProject.includes("latest.phase = 'pre-submit'"));
 assert.ok(distanceProject.includes("'[data-go-pre-submit]'"));
+assert.ok(distanceBandClarity.includes('対象：既存×新規 / 新規×新規'), 'Distance result must state the target pair types');
+assert.ok(poiSpacingConfig.includes('distance-band-clarity-v2.js?v=3'), 'Distance clarity cache key must be bumped');
 
 assert.ok(previewPage.includes("const KEY='campsiteBridgeNextPreview.v1'"));
 assert.ok(previewPage.includes("localStorage.setItem(KEY,'1')"));
