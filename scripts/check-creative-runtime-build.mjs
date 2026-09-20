@@ -42,6 +42,8 @@ assert.ok(html.includes('cmStandaloneSaveButton'),'Canonical Next-Lab standalone
 assert.ok(html.includes('cmV37BottomDockStyle'),'Canonical Next-Lab bottom dock missing');
 assert.ok(html.includes('cmLayerPanelTopStyle'),'Canonical Next-Lab layer panel position patch missing');
 assert.ok(html.includes('campsiteProjectNext'),'Bridge next action missing from final Creative HTML');
+assert.ok(html.includes('あと少し！ 50m未満のPOIがあります'),'Creative 50m next-gate copy missing');
+assert.ok(html.includes('Zen Maru Gothic'),'Creative 50m next-gate font missing');
 assert.ok(!html.includes('installCampsiteProjectMobileUi'),'Legacy JP mobile UI override must stay removed');
 assert.ok(html.includes('JP_MAX_ADDITIONAL=25'),'JP design policy helper missing');
 assert.ok(html.includes('function cmOpenCoords(){if(cmCoordView?.isConnected)return;'),'Coordinate view singleton guard missing');
