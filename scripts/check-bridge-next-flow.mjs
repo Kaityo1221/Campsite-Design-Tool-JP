@@ -37,6 +37,16 @@ function storage() {
 const sessionStorage = storage();
 const localStorage = storage();
 localStorage.setItem('campsiteBridgeNextPreview.v1', '1');
+sessionStorage.setItem('campsiteBridgeAdapter.v0.3', JSON.stringify({
+  version: '0.8.9.4',
+  adaptedAt: '2026-09-21T00:00:00.000Z',
+  handoffId: 'handshake:new-handoff',
+  pois: [{ guid:'a', title:'Stop', lat:35.05, lng:139.05, gameEntity:'POKESTOP' }]
+}));
+sessionStorage.setItem('campsiteProject.v1', JSON.stringify({
+  source: 'bridge',
+  meta: { bridgeHandoffId: 'handshake:old-handoff' }
+}));
 const nextContext = {
   window: {},
   location: { search: '?campsiteBridgeImport=1', href: '' },
@@ -62,7 +72,9 @@ vm.runInContext(nextFlow, nextContext);
 const api = nextContext.window.CampsiteBridgeNextFlow;
 assert.ok(api, 'Bridge Next API missing');
 assert.equal(api.projectKey, 'campsiteProject.v1');
+assert.equal(api.projectSchemaVersion, '1.0');
 assert.equal(api.previewKey, 'campsiteBridgeNextPreview.v1');
+assert.equal(sessionStorage.getItem('campsiteProject.v1'), null, 'A different Bridge handoff must clear the previous Bridge Project');
 
 const project = api.buildProject({
   version: '0.8.5',
@@ -75,6 +87,7 @@ const project = api.buildProject({
 }, {
   version: '0.8.9.4',
   adaptedAt: '2026-09-18T00:00:00.000Z',
+  handoffId: 'handshake:project-fixture',
   pois: [
     { guid: 'a', title: 'Stop', lat: 35.05, lng: 139.05, gameEntity: 'POKESTOP', provenance: ['WAYFARER_PASSIVE'] },
     { guid: 'b', title: 'Gym', lat: 35.06, lng: 139.06, gameEntity: 'GYM', sponsored: true },
@@ -90,6 +103,8 @@ assert.equal(project.currentPois.length, 2);
 assert.equal(project.polygon.length, 3);
 assert.deepEqual([...project.circleRadii], [50, 40, 30]);
 assert.equal(project.meta.preview, true);
+assert.equal(project.meta.bridgeHandoffId, 'handshake:project-fixture');
+assert.equal(project.meta.projectContract, 'campsiteProject.v1');
 assert.deepEqual([...project.selectedPois[0].provenance], ['WAYFARER_PASSIVE']);
 assert.equal(project.selectedPois[1].sponsored, true);
 assert.deepEqual([...project.edits], []);
@@ -97,10 +112,12 @@ assert.deepEqual([...project.addedPois], []);
 assert.deepEqual([...project.deletedPois], []);
 assert.equal(project.distanceResult, null);
 
+const offSessionStorage = storage();
+offSessionStorage.setItem('campsiteProject.v1', JSON.stringify({ source:'bridge', meta:{ bridgeHandoffId:'handshake:must-survive' } }));
 const offContext = {
   window: {},
   location: { search: '?campsiteBridgeImport=1', href: '' },
-  sessionStorage: storage(),
+  sessionStorage: offSessionStorage,
   localStorage: storage(),
   document: { addEventListener() {}, getElementById() { return null; } },
   URLSearchParams,
@@ -119,6 +136,22 @@ const offContext = {
 vm.createContext(offContext);
 vm.runInContext(nextFlow, offContext);
 assert.equal(offContext.window.CampsiteBridgeNextFlow, undefined, 'Preview OFF must keep legacy flow');
+assert.ok(offSessionStorage.getItem('campsiteProject.v1'), 'Preview OFF must not clear the existing project');
+
+const sameSessionStorage = storage();
+sameSessionStorage.setItem('campsiteBridgeAdapter.v0.3', JSON.stringify({ handoffId:'handshake:same', adaptedAt:'2026-09-21T01:00:00.000Z', pois:[{guid:'a'}] }));
+sameSessionStorage.setItem('campsiteProject.v1', JSON.stringify({ source:'bridge', meta:{ bridgeHandoffId:'handshake:same' } }));
+const sameContext = {
+  window: {},
+  location: { search:'?campsiteBridgeImport=1', href:'' },
+  sessionStorage: sameSessionStorage,
+  localStorage: (()=>{const s=storage();s.setItem('campsiteBridgeNextPreview.v1','1');return s;})(),
+  document: { addEventListener() {}, getElementById() { return null; } },
+  URLSearchParams, console, setTimeout() {}, crypto: crypto.webcrypto, Math, Date, JSON, Map, Object, Number, String, Array
+};
+vm.createContext(sameContext);
+vm.runInContext(nextFlow, sameContext);
+assert.ok(sameSessionStorage.getItem('campsiteProject.v1'), 'The same Bridge handoff must preserve the current project for rework/back navigation');
 
 const patchContext = { window: {}, console, JSON, String };
 vm.createContext(patchContext);
@@ -200,13 +233,14 @@ assert.ok(selection.includes("touch-action:pan-y"), 'Bridge scroll handle must a
 assert.ok(selection.includes("$('campsiteBridgeSelection')?.querySelector('.bridge-tools')"), 'Bridge scroll handle must not depend on a removed local box');
 assert.ok(selection.includes("height:52svh"), 'Bridge map must use a viewport-aware mobile height');
 assert.ok(selection.includes("const NEXT_PREVIEW_KEY = 'campsiteBridgeNextPreview.v1'"), 'Selection must know the Next preview flag');
+assert.ok(selection.includes('handoffId: adapterHandoffId'), 'Selection snapshot must be bound to the current Bridge handoff');
 assert.ok(selection.includes('if (isNextPreviewEnabled())'), 'Selection must save the snapshot before skipping legacy CSV handoff');
 assert.ok(selection.indexOf('sessionStorage.setItem(SELECTION_STORAGE_KEY') < selection.indexOf('if (isNextPreviewEnabled())'), 'Selection snapshot must be saved before preview skips CSV');
 assert.ok(selection.indexOf('if (isNextPreviewEnabled())') < selection.indexOf("const input = $('fileInput')"), 'Preview must skip only the legacy virtual CSV path');
 assert.ok(nextFlow.includes('setTimeout(continueToCreative, 0)'), 'Next flow must wait until selection snapshot is saved');
 assert.ok(!nextFlow.includes('stopImmediatePropagation'), 'Next flow must not block the selection save listener');
-const selectionPos = gateway.indexOf('js/bridge-selection.js?v=9');
-const nextPos = gateway.indexOf('js/bridge-next-flow.js?v=5');
+const selectionPos = gateway.indexOf('js/bridge-selection.js?v=10');
+const nextPos = gateway.indexOf('js/bridge-next-flow.js?v=6');
 assert.ok(selectionPos >= 0 && nextPos > selectionPos, 'Next flow must load after polygon selection');
 
 
@@ -231,6 +265,8 @@ assert.ok(caAccess.includes('ca-gate-handoff-pending'), 'Handoff auth gate must 
 assert.ok(caAccess.includes('unlockMainPage({ silent: true })'), 'Approved handoff must auto-enter');
 assert.ok(labSupabase.includes("js/ca-access.js?v=5"), 'Main tool must load seamless CA access v5');
 assert.ok(mainIndex.includes('js/lab-supabase.js?v=20260918-bridge1'), 'Main index must bust stale auth loader cache');
+assert.ok(receiver.includes('function resolveHandoffId(payload)'), 'Receiver must create a stable handoff id');
+assert.ok(receiver.includes('handoffId,'), 'Receiver Adapter must persist the handoff id');
 assert.ok(receiver.includes("setTimeout(goToCampsite, 450)"), 'Receiver must preserve ACK window before handoff');
 assert.ok(receiver.includes("setTimeout(showReceiverDetail, 2500)"), 'Receiver detail should be fallback-only');
 assert.ok(receiver.includes('bridge-receiver-detail'), 'Receiver must support diagnostic detail mode');
