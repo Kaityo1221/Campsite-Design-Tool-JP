@@ -1,0 +1,35 @@
+name: Campsite Bridge PC Check
+
+on:
+  pull_request:
+    paths:
+      - 'bridge-pc/**'
+      - 'bridge-receiver.html'
+      - 'docs/bridge-pc-minimum-spec-v1.md'
+      - 'scripts/build-pc-bridge.mjs'
+      - 'scripts/check-pc-bridge.mjs'
+      - 'package.json'
+      - '.github/workflows/bridge-pc-check.yml'
+  workflow_dispatch:
+
+jobs:
+  pc-bridge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Contract and collector check
+        run: node scripts/check-pc-bridge.mjs
+
+      - name: Syntax check
+        run: |
+          node --check bridge-pc/page-collector.js
+          node --check bridge-pc/content.js
+          node --check scripts/build-pc-bridge.mjs
+          node --check scripts/check-pc-bridge.mjs
