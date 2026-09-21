@@ -260,8 +260,8 @@ On accepted ACK:
 - Wayfarer stays open.
 - Receiver continues automatically to Gateway.
 - Gateway uses the existing polygon-selection screen.
-- PC 0.1.x is routed with `campsiteBridgeNext=1` so it continues to `campsiteProject.v1` and CREATIVE MODE without enabling the global Preview flag.
-- iPhone / Android keep their current routing until the final switchover task.
+- The standard Bridge flow continues to `campsiteProject.v1` and CREATIVE MODE on iPhone, Android, and PC.
+- The old virtual-CSV path is retained only as a hidden emergency fallback through `campsiteBridgeLegacyFlow.v1`.
 
 PC-specific code ends at a successful Receiver handoff.
 
