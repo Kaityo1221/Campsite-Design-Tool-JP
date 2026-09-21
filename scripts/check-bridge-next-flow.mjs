@@ -232,6 +232,13 @@ assert.ok(previewPage.includes('標準の新フローへ戻す'));
 assert.ok(previewPage.includes('緊急時のみ旧フローを使う'));
 
 assert.ok(selection.includes('id="bridgeScrollHandle"'), 'Bridge map must expose a mobile scroll handle');
+assert.ok(selection.includes('id="bridgeGuide" class="bridge-guide bridge-guide-top"'), 'Polygon guidance must appear above the map');
+assert.ok(selection.includes('時計回りまたは反時計回りに1点ずつタップしてください'), 'Polygon guidance must explain tap order');
+assert.ok(selection.includes('指で線をなぞる操作ではありません'), 'Polygon guidance must explain that drawing is point-by-point');
+assert.ok(selection.includes('<strong>範囲を確認</strong>'), 'Completed polygon guidance must switch to review');
+assert.ok(selection.includes('問題なければ下の「この範囲をCampsiteで使う」を押してください'), 'Completed polygon guidance must explain the confirm action');
+assert.ok(selection.indexOf('id="bridgeGuide" class="bridge-guide bridge-guide-top"') < selection.indexOf('id="campsiteBridgeMap"'), 'Polygon guidance must be above the map');
+assert.equal((selection.match(/class="bridge-guide"/g) || []).length, 0, 'Old lower-only guide markup must not remain');
 assert.ok(!selection.includes('function selectedRadii()'), 'Bridge must not expose circle selection state');
 assert.ok(!selection.includes('bridge-radius-step'), 'Bridge must not mount the legacy circle options');
 assert.ok(selection.includes('campsite-bridge-selection-active #tool .poi-spacing-radius-step{display:none!important}'), 'Bridge must hard-hide the legacy radius step');
@@ -250,7 +257,7 @@ assert.ok(selection.indexOf('sessionStorage.setItem(SELECTION_STORAGE_KEY') < se
 assert.ok(selection.indexOf('if (isNextFlowEnabled())') < selection.indexOf("const input = $('fileInput')"), 'Standard flow must skip only the legacy virtual CSV path');
 assert.ok(nextFlow.includes('setTimeout(continueToCreative, 0)'), 'Next flow must wait until selection snapshot is saved');
 assert.ok(!nextFlow.includes('stopImmediatePropagation'), 'Next flow must not block the selection save listener');
-const selectionPos = gateway.indexOf('js/bridge-selection.js?v=11');
+const selectionPos = gateway.indexOf('js/bridge-selection.js?v=12');
 const nextPos = gateway.indexOf('js/bridge-next-flow.js?v=8');
 assert.ok(selectionPos >= 0 && nextPos > selectionPos, 'Next flow must load after polygon selection');
 
