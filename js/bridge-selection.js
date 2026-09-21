@@ -46,7 +46,7 @@
   }
 
   const adapter = readJson(ADAPTER_STORAGE_KEY);
-  const adapterHandoffId = String(adapter?.handoffId || '').trim();
+  const adapterHandoffId = String(adapter?.handoffId || (adapter?.adaptedAt ? `adapted:${adapter.adaptedAt}` : '')).trim();
   const pois = Array.isArray(adapter?.pois) ? adapter.pois.map(normalizePoi).filter(Boolean) : [];
   if (!pois.length) return;
 
