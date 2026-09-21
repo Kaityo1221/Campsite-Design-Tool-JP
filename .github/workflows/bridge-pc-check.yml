@@ -8,6 +8,11 @@ on:
       - 'docs/bridge-pc-minimum-spec-v1.md'
       - 'scripts/build-pc-bridge.mjs'
       - 'scripts/check-pc-bridge.mjs'
+      - 'scripts/check-pc-next-route.mjs'
+      - 'js/bridge-next-flow.js'
+      - 'js/bridge-selection.js'
+      - 'bridge-gateway.html'
+      - 'creative/index.html'
       - 'package.json'
       - '.github/workflows/bridge-pc-check.yml'
   workflow_dispatch:
@@ -25,7 +30,9 @@ jobs:
           node-version: 22
 
       - name: Contract and collector check
-        run: node scripts/check-pc-bridge.mjs
+        run: |
+          node scripts/check-pc-bridge.mjs
+          node scripts/check-pc-next-route.mjs
 
       - name: Syntax check
         run: |
@@ -33,3 +40,5 @@ jobs:
           node --check bridge-pc/content.js
           node --check scripts/build-pc-bridge.mjs
           node --check scripts/check-pc-bridge.mjs
+          node --check scripts/check-pc-next-route.mjs
+          node --check js/bridge-next-flow.js
