@@ -11,14 +11,14 @@ Freeze the data contract used by all device entry points:
 ```
 Bridge Payload
   -> Receiver Adapter
-  -> campssiteProject.v1
+  -> campsiteProject.v1
   -> CREATIVE MODE
   -> Distance
   -> Pre-submit
 ```
 
 The canonical storage key is **`campsiteProject.v1`**.  
-`campssiteProject.v1` and other misspellings are invalid.
+`campsiteProject.v1` and other misspellings are invalid.
 
 This contract does not change the normal CSV / KML / KMZ flow.
 
@@ -203,5 +203,5 @@ Do not create a PC-specific Project schema.
 All three device paths must converge at:
 
 ```
-Bridge Payload -> Adapter -> campssiteProject.v1
+Bridge Payload -> Adapter -> campsiteProject.v1
 ```
