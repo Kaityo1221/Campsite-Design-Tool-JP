@@ -9,7 +9,9 @@ on:
       - 'js/bridge-setup-config.js'
       - 'js/bridge-shortcut/shortcut-launcher.js'
       - 'dist/android-bridge-0.3.4/**'
+      - 'bridge-pc/**'
       - 'scripts/build-android-bridge-xpi.mjs'
+      - 'scripts/build-pc-bridge.mjs'
       - 'scripts/check-bridge-setup.mjs'
       - '.github/workflows/bridge-setup-check.yml'
   workflow_dispatch:
@@ -30,4 +32,9 @@ jobs:
         run: node scripts/check-bridge-setup.mjs
 
       - name: Launcher syntax
-        run: node --check js/bridge-shortcut/shortcut-launcher.js
+        run: |
+          node --check js/bridge-shortcut/shortcut-launcher.js
+          node --check js/bridge-setup.js
+          node --check js/bridge-setup-config.js
+          node --check bridge-pc/page-collector.js
+          node --check bridge-pc/content.js
