@@ -32,6 +32,9 @@ has(receiver, "type: 'CAMPSITE_BRIDGE_ACK_V1'");
 has(receiver, "'https://wayfarer.scopely.com'");
 has(receiver, "'https://wayfarer.nianticlabs.com'");
 has(projectContract, 'Bridge Payload -> Adapter -> campsiteProject.v1');
-has(setup, 'PC版は準備中です', 'Task 5 must not silently publish the unfinished PC Bridge');
+has(setup, 'PC Chrome対応', 'PC Bridge setup must be published');
+has(setup, 'Campsite Bridge PCをダウンロード');
+has(setup, 'chrome://extensions');
+assert.equal(setup.includes('PC版は準備中です'), false, 'Published PC setup must not say preparation in progress');
 
 console.log('PC Bridge minimum spec contract: OK');
