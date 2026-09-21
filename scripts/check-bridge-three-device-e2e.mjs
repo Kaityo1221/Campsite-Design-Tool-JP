@@ -175,12 +175,12 @@ const profiles = [
     }
   },
   {
-    name: 'Android Firefox M3.4 / 0.3.4 compatibility',
+    name: 'Android Firefox M3.5 / 0.3.5',
     expectedPlatform: '',
     payload: {
       type: 'CAMPSITE_BRIDGE_POI_V1',
-      schemaVersion: '1.2',
-      bridgeVersion: '0.3.4',
+      schemaVersion: '1.4',
+      bridgeVersion: '0.3.5',
       handshakeId: 'e2e-android',
       autoContinue: true,
       pois: basePois('android')
