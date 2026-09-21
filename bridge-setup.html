@@ -56,8 +56,18 @@
   </section>
 
   <section class="card flow" data-device-panel="pc" hidden>
-    <div class="flow-head"><span class="icon">💻</span><div><h2>PC</h2><p>Windows / macOSなどのデスクトップ環境です。</p></div></div>
-    <div class="flow-inner"><div class="step complete"><span class="step-no">PC</span><h3>PC版は準備中です</h3><p>将来のPC向けCampsite Bridgeへ接続できる構造として準備しています。</p></div></div>
+    <div class="flow-head"><span class="icon">💻</span><div><h2>PC</h2><p>Google ChromeへCampsite Bridge拡張機能を導入します。</p></div></div>
+    <div class="flow-inner">
+      <span class="availability">PC Chrome対応</span>
+      <span id="pcVersion" class="version" style="margin-left:6px">正式版 0.1.0</span>
+      <div class="step" style="margin-top:12px"><span class="step-no">STEP 1</span><h3>Google Chromeを確認</h3><p>月末版の正式対象ブラウザはGoogle Chromeです。未導入の場合は先にChromeをインストールしてください。</p><a id="pcChromeLink" class="link-btn" target="_blank" rel="noopener">Google Chromeを確認する</a></div>
+      <div class="arrow">↓</div>
+      <div class="step"><span class="step-no">STEP 2</span><h3>Campsite Bridge PCをダウンロード</h3><p><strong>Campsite Bridge 0.1.0</strong> のZIPをダウンロードし、任意のフォルダへ展開してください。</p><a id="pcExtensionLink" class="link-btn">Campsite Bridge PCをダウンロード</a></div>
+      <div class="arrow">↓</div>
+      <div class="step"><span class="step-no">STEP 3</span><h3>Chromeへ読み込む</h3><p>Chromeで <strong>chrome://extensions</strong> を開き、「デベロッパーモード」をONにします。次に「パッケージ化されていない拡張機能を読み込む」を押し、STEP 2で展開したフォルダを選択してください。</p></div>
+      <div class="arrow">↓</div>
+      <div class="step complete"><span class="step-no">STEP 4</span><h3>Wayfarer Mapを開く</h3><p>Wayfarer Mapの右下に「🌉 Bridge」が表示されれば導入完了です。</p><a id="pcWayfarerLink" class="link-btn" target="_blank" rel="noopener">ChromeでWayfarer Mapを開く</a></div>
+    </div>
   </section>
 
   <section class="card manual">
@@ -72,7 +82,7 @@
 
   <p class="footer">Campsite Bridgeは1つのサービスです。端末によってセットアップ方法だけが切り替わります。</p>
 </main>
-<script src="js/bridge-setup-config.js?v=2"></script>
-<script src="js/bridge-setup.js?v=2"></script>
+<script src="js/bridge-setup-config.js?v=3"></script>
+<script src="js/bridge-setup.js?v=3"></script>
 </body>
 </html>
