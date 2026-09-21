@@ -245,7 +245,7 @@ assert.ok(selection.indexOf('if (isNextPreviewEnabled())') < selection.indexOf("
 assert.ok(nextFlow.includes('setTimeout(continueToCreative, 0)'), 'Next flow must wait until selection snapshot is saved');
 assert.ok(!nextFlow.includes('stopImmediatePropagation'), 'Next flow must not block the selection save listener');
 const selectionPos = gateway.indexOf('js/bridge-selection.js?v=10');
-const nextPos = gateway.indexOf('js/bridge-next-flow.js?v=6');
+const nextPos = gateway.indexOf('js/bridge-next-flow.js?v=7');
 assert.ok(selectionPos >= 0 && nextPos > selectionPos, 'Next flow must load after polygon selection');
 
 
