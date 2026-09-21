@@ -9,6 +9,7 @@ on:
       - 'js/bridge-setup-config.js'
       - 'js/bridge-shortcut/shortcut-launcher.js'
       - 'dist/android-bridge-0.3.4/**'
+      - 'downloads/campsite-bridge-android-0.3.5.xpi'
       - 'bridge-pc/**'
       - 'scripts/build-android-bridge-xpi.mjs'
       - 'scripts/build-android-bridge-0.3.5-unsigned.mjs'
