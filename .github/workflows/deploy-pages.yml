@@ -157,11 +157,23 @@ jobs:
       - name: Build Campsite Bridge Android 0.3.4
         run: node scripts/build-android-bridge-xpi.mjs
 
-      - name: Build Campsite Bridge Android 0.3.5 unsigned signing candidate
+      - name: Verify Campsite Bridge Android 0.3.5 signed
+        shell: bash
         run: |
-          node scripts/build-android-bridge-0.3.5-unsigned.mjs
-          echo "Unsigned signing candidate:"
-          cat downloads/campsite-bridge-android-0.3.5-unsigned.sha256
+          set -euo pipefail
+          xpi='downloads/campsite-bridge-android-0.3.5.xpi'
+          expected='f5c7d300c6cdd82758f88f651116c1b7af42863ef03e80f8ac89e39afa0fa7b7'
+          actual="$(sha256sum "$xpi" | awk '{print $1}')"
+          if [ "$actual" != "$expected" ]; then
+            echo "Campsite Bridge Android 0.3.5 SHA-256 mismatch"
+            echo "expected: $expected"
+            echo "actual:   $actual"
+            exit 1
+          fi
+          unzip -l "$xpi" | grep -q 'META-INF/mozilla.rsa'
+          unzip -l "$xpi" | grep -q 'META-INF/cose.sig'
+          unzip -p "$xpi" manifest.json | grep -q '"version": "0.3.5"'
+          echo "Verified signed Android 0.3.5: $actual"
 
       - name: Build Campsite Bridge PC 0.1.0
         run: node scripts/build-pc-bridge.mjs
