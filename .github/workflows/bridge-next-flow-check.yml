@@ -14,6 +14,8 @@ on:
       - 'bridge-distance.html'
       - 'bridge-next-preview.html'
       - 'js/bridge-next-flow.js'
+      - 'js/bridge-selection.js'
+      - 'docs/bridge-project-contract-v1.md'
       - 'js/bridge-distance-project.js'
       - 'creative/bridge.html'
       - 'creative/index.html'
@@ -23,6 +25,7 @@ on:
       - 'creative/bridge-project-patch.js'
       - 'creative/jp-creative-patch.js'
       - 'scripts/check-bridge-next-flow.mjs'
+      - 'scripts/check-creative-project-recovery.mjs'
       - 'scripts/check-creative-runtime-build.mjs'
       - '.github/workflows/bridge-next-flow-check.yml'
   workflow_dispatch:
@@ -42,11 +45,13 @@ jobs:
       - name: Contract check
         run: |
           node scripts/check-bridge-next-flow.mjs
+          node scripts/check-creative-project-recovery.mjs
           node scripts/check-creative-runtime-build.mjs
 
       - name: Syntax check
         run: |
           node --check js/bridge-next-flow.js
+          node --check js/bridge-selection.js
           node --check creative/bridge-project-patch.js
           node --check js/ca-access.js
           node --check js/ca-access-bootstrap.js
