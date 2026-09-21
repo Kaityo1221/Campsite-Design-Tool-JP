@@ -26,6 +26,7 @@ on:
       - 'creative/bridge-project-patch.js'
       - 'creative/jp-creative-patch.js'
       - 'scripts/check-bridge-next-flow.mjs'
+      - 'scripts/check-bridge-three-device-e2e.mjs'
       - 'scripts/check-creative-project-recovery.mjs'
       - 'scripts/check-pc-bridge-spec.mjs'
       - 'scripts/check-creative-runtime-build.mjs'
@@ -47,12 +48,14 @@ jobs:
       - name: Contract check
         run: |
           node scripts/check-bridge-next-flow.mjs
+          node scripts/check-bridge-three-device-e2e.mjs
           node scripts/check-creative-project-recovery.mjs
           node scripts/check-pc-bridge-spec.mjs
           node scripts/check-creative-runtime-build.mjs
 
       - name: Syntax check
         run: |
+          node --check scripts/check-bridge-three-device-e2e.mjs
           node --check js/bridge-next-flow.js
           node --check js/bridge-selection.js
           node --check creative/bridge-project-patch.js
