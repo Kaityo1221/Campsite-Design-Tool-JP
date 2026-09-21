@@ -127,6 +127,7 @@ assert.ok(collector.includes('/api/v1/vault/mapview/gcs'));
 assert.ok(collector.includes('credentials: \'include\''));
 assert.ok(collector.includes("document.querySelector('app-wf-base-map')"));
 assert.ok(collector.includes("type: 'CAMPSITE_BRIDGE_POI_V1'"));
+assert.ok(collector.includes("bridgePlatform: 'pc'"), 'PC payload must declare its source platform');
 assert.ok(collector.includes("data.type === 'CAMPSITE_BRIDGE_READY_V1'"));
 assert.ok(collector.includes("data.type === 'CAMPSITE_BRIDGE_ACK_V1'"));
 assert.ok(collector.includes("event.origin !== RECEIVER_ORIGIN"));
@@ -143,6 +144,8 @@ assert.equal(content.includes('popup.postMessage'), false, 'ISOLATED UI must not
 assert.equal(content.includes('RECEIVER_ORIGIN'), false, 'ISOLATED UI must not own Receiver origin checks');
 assert.ok(receiver.includes("'https://wayfarer.scopely.com'"));
 assert.ok(receiver.includes("'https://wayfarer.nianticlabs.com'"));
+assert.ok(receiver.includes("gatewayUrlForPlatform(platform)"), 'Receiver must route by Bridge platform');
+assert.ok(receiver.includes("(normalized === 'pc' ? '&campsiteBridgeNext=1' : '')"), 'PC alone must enter Next before global switchover');
 
 execFileSync(process.execPath, ['scripts/build-pc-bridge.mjs'], { stdio: 'inherit' });
 const zip = fs.readFileSync('downloads/campsite-bridge-pc-0.1.0.zip');
