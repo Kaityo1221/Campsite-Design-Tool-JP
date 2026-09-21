@@ -1,6 +1,6 @@
 # Campsite Bridge 3端末 E2E 実機チェック
 
-更新: 2026-09-21
+更新: 2026-09-22
 
 ## 目的
 
@@ -64,14 +64,14 @@ Wayfarer
 
 対象:
 
-- Campsite Bridge M3.4 / 0.3.4
+- Campsite Bridge M3.5 / 0.3.5
 - Firefox
 - Mozilla署名済みXPI
 
 確認:
 
 - Wayfarer MapにBridge UIが出る
-- 現行M3.4からReceiverへ送信できる
+- 現行M3.5からReceiverへ送信できる
 - platform項目がない旧互換Payloadでも標準Projectフローへ進む
 - Gateway以降でCSVへ戻らない
 
@@ -117,7 +117,7 @@ npm run check:bridge-3device-e2e
 自動テスト対象:
 
 - iPhone Shortcut 1.0.0 / schema 1.4互換
-- Android M3.4 / 0.3.4互換
+- Android M3.5 / 0.3.5 / schema 1.4
 - PC Chrome 0.1.0
 - Receiver -> Adapter
 - handoffId
