@@ -11,6 +11,8 @@ on:
       - 'dist/android-bridge-0.3.4/**'
       - 'bridge-pc/**'
       - 'scripts/build-android-bridge-xpi.mjs'
+      - 'scripts/build-android-bridge-0.3.5-unsigned.mjs'
+      - 'scripts/check-android-bridge-0.3.5.mjs'
       - 'scripts/build-pc-bridge.mjs'
       - 'scripts/check-bridge-setup.mjs'
       - '.github/workflows/bridge-setup-check.yml'
@@ -29,12 +31,16 @@ jobs:
           node-version: 22
 
       - name: Contract check
-        run: node scripts/check-bridge-setup.mjs
+        run: |
+          node scripts/check-bridge-setup.mjs
+          node scripts/check-android-bridge-0.3.5.mjs
 
       - name: Launcher syntax
         run: |
           node --check js/bridge-shortcut/shortcut-launcher.js
           node --check js/bridge-setup.js
           node --check js/bridge-setup-config.js
+          node --check scripts/build-android-bridge-0.3.5-unsigned.mjs
+          node --check scripts/check-android-bridge-0.3.5.mjs
           node --check bridge-pc/page-collector.js
           node --check bridge-pc/content.js
