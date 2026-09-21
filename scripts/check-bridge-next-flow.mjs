@@ -22,6 +22,7 @@ const selection = fs.readFileSync('js/bridge-selection.js', 'utf8');
 const distanceBandClarity = fs.readFileSync('js/distance-band-clarity-v2.js', 'utf8');
 const poiSpacingConfig = fs.readFileSync('js/poi-spacing-config.js', 'utf8');
 const distanceEntry = fs.readFileSync('js/distance-entry.js', 'utf8');
+const bridgeContract = fs.readFileSync('docs/bridge-project-contract-v1.md', 'utf8');
 
 function storage() {
   const data = new Map();
@@ -74,6 +75,8 @@ assert.ok(api, 'Bridge Next API missing');
 assert.equal(api.projectKey, 'campsiteProject.v1');
 assert.equal(api.projectSchemaVersion, '1.0');
 assert.equal(api.previewKey, 'campsiteBridgeNextPreview.v1');
+assert.ok(bridgeContract.includes('`campsiteProject.v1`'), 'Contract doc must name the canonical Project key');
+assert.ok(!bridgeContract.includes('campssiteProject.v1'), 'Contract doc must not contain the historical misspelling');
 assert.equal(sessionStorage.getItem('campsiteProject.v1'), null, 'A different Bridge handoff must clear the previous Bridge Project');
 
 const project = api.buildProject({
@@ -105,6 +108,8 @@ assert.deepEqual([...project.circleRadii], [50, 40, 30]);
 assert.equal(project.meta.preview, true);
 assert.equal(project.meta.bridgeHandoffId, 'handshake:project-fixture');
 assert.equal(project.meta.projectContract, 'campsiteProject.v1');
+assert.equal(project.selectedPois[0].role, 'existing');
+assert.equal(project.currentPois[0].role, 'existing');
 assert.deepEqual([...project.selectedPois[0].provenance], ['WAYFARER_PASSIVE']);
 assert.equal(project.selectedPois[1].sponsored, true);
 assert.deepEqual([...project.edits], []);
