@@ -16,7 +16,7 @@ Wayfarer
   -> CAMPSITE_BRIDGE_POI_V1
   -> bridge-receiver.html
   -> Receiver Adapter
-  -> campssiteProject.v1
+  -> campsiteProject.v1
   -> CREATIVE MODE
 ```
 
