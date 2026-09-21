@@ -98,13 +98,13 @@ try {
       if (logoutRect) top = Math.min(top, Math.round(logoutRect.top - toggleHeight - 10));
       top = Math.max(edge, top);
 
-      panel.style.left = \`${left}px\`;
-      panel.style.top = \`${top}px\`;
+      panel.style.left = \`\${left}px\`;
+      panel.style.top = \`\${top}px\`;
       panel.style.bottom = 'auto';
-      panel.style.width = \`${rootWidth}px\`;
+      panel.style.width = \`\${rootWidth}px\`;
       panel.style.visibility = 'visible';
       panel.dataset.anchor = 'sidebar-community';
-      lastAnchorSignature = \`${Math.round(rect.left)}:${Math.round(rect.top)}:${Math.round(rect.width)}:${Math.round(rect.height)}\`;
+      lastAnchorSignature = \`\${Math.round(rect.left)}:\${Math.round(rect.top)}:\${Math.round(rect.width)}:\${Math.round(rect.height)}\`;
       return;
     }
 
@@ -130,10 +130,10 @@ try {
       const rootWidth = Math.max(92, Math.min(124, sidebarRight - left));
       const top = Math.max(edge, Math.round(rect.top + (rect.height - toggleHeight) / 2));
 
-      panel.style.left = \`${left}px\`;
-      panel.style.top = \`${top}px\`;
+      panel.style.left = \`\${left}px\`;
+      panel.style.top = \`\${top}px\`;
       panel.style.bottom = 'auto';
-      panel.style.width = \`${rootWidth}px\`;
+      panel.style.width = \`\${rootWidth}px\`;
       panel.style.visibility = 'visible';
       panel.dataset.anchor = 'sidebar-collapse-right';
 
@@ -142,11 +142,11 @@ try {
         const bodyWidth = 286;
         const preferredBodyLeft = left + rootWidth + 10;
         const viewportBodyLeft = Math.max(edge, Math.min(preferredBodyLeft, innerWidth - bodyWidth - edge));
-        body.style.left = \`${Math.round(viewportBodyLeft - left)}px\`;
+        body.style.left = \`\${Math.round(viewportBodyLeft - left)}px\`;
         body.style.right = 'auto';
       }
 
-      lastAnchorSignature = \`collapse:${Math.round(rect.left)}:${Math.round(rect.top)}:${Math.round(rect.width)}:${Math.round(rect.height)}\`;
+      lastAnchorSignature = \`collapse:\${Math.round(rect.left)}:\${Math.round(rect.top)}:\${Math.round(rect.width)}:\${Math.round(rect.height)}\`;
       return;
     }
 
@@ -160,10 +160,10 @@ try {
       if (logoutRect) top = Math.min(top, Math.round(logoutRect.top - toggleHeight - 10));
       top = Math.max(edge, top);
 
-      panel.style.left = \`${left}px\`;
-      panel.style.top = \`${top}px\`;
+      panel.style.left = \`\${left}px\`;
+      panel.style.top = \`\${top}px\`;
       panel.style.bottom = 'auto';
-      panel.style.width = \`${rootWidth}px\`;
+      panel.style.width = \`\${rootWidth}px\`;
       panel.style.visibility = 'visible';
       panel.dataset.anchor = 'sidebar-community-fallback';
       const body = panel.querySelector('#cbam24-body');
@@ -171,7 +171,7 @@ try {
         body.style.left = 'calc(100% + 10px)';
         body.style.right = 'auto';
       }
-      lastAnchorSignature = \`community:${Math.round(rect.left)}:${Math.round(rect.top)}:${Math.round(rect.width)}:${Math.round(rect.height)}\`;
+      lastAnchorSignature = \`community:\${Math.round(rect.left)}:\${Math.round(rect.top)}:\${Math.round(rect.width)}:\${Math.round(rect.height)}\`;
       return;
     }
 
