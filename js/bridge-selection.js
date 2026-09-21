@@ -126,6 +126,7 @@
       #campsiteBridgeSelection.bridge-is-drawing .bridge-poi-marker{pointer-events:none!important}
       #campsiteBridgeSelection .bridge-tools{padding:14px}
       #campsiteBridgeSelection .bridge-guide{margin:0 0 11px;padding:11px 12px;border-radius:11px;background:rgba(20,83,45,.32);border:1px solid rgba(34,197,94,.35);color:#dcfce7;font-size:12px;line-height:1.65}
+      #campsiteBridgeSelection .bridge-guide-top{margin:0 14px 12px}
       #campsiteBridgeSelection .bridge-legend{display:flex;flex-wrap:wrap;gap:8px 14px;margin:0 0 11px;color:#94a3b8;font-size:11px}
       #campsiteBridgeSelection .bridge-legend span{display:inline-flex;align-items:center;gap:5px}.bridge-dot{width:9px;height:9px;border-radius:50%;display:inline-block}.bridge-dot.stop{background:#38bdf8}.bridge-dot.gym{background:#f472b6}.bridge-dot.power{background:#facc15}.bridge-dot.selected{background:#22c55e}
       #campsiteBridgeSelection .bridge-actions{display:grid;grid-template-columns:1fr;gap:8px}
@@ -165,6 +166,7 @@
         <h3>🌉 Bridgeから受信しました</h3>
         <p>${total.total.toLocaleString('ja-JP')}件のPOIを地図に表示しています。設計に使う公園・エリアをポリゴンで囲んでください。</p>
       </div>
+      <div id="bridgeGuide" class="bridge-guide bridge-guide-top"><strong>公園・エリアを囲む</strong><br>地図右上の「✏️ 描く」を押し、外周に沿って時計回りまたは反時計回りに1点ずつタップしてください。指で線をなぞる操作ではありません。</div>
       <div class="bridge-summary">
         <div class="bridge-count"><span>受信</span><b>${total.total}</b></div>
         <div class="bridge-count"><span>選択中</span><b id="bridgeSelectedTotal">0</b></div>
@@ -188,7 +190,6 @@
       </div>
       <div class="bridge-tools">
         <div class="bridge-legend"><span><i class="bridge-dot stop"></i>PokéStop</span><span><i class="bridge-dot gym"></i>Gym</span><span><i class="bridge-dot power"></i>Power Spot</span><span><i class="bridge-dot selected"></i>ポリゴン内</span></div>
-        <div class="bridge-guide"><strong>公園を囲む</strong><br>地図右上の「✏️ 描く」を押してから、外周を順番にタップしてください。描画中はPOIを触ってもポップアップは開きません。</div>
         <div class="bridge-actions">
           <button id="bridgeConfirmBtn" class="bridge-primary bridge-disabled" type="button" disabled>この範囲をCampsiteで使う</button>
         </div>
@@ -287,6 +288,12 @@
     if (confirm) {
       confirm.disabled = c.total === 0 || polygonPoints.length < 3;
       confirm.classList.toggle('bridge-disabled', confirm.disabled);
+    }
+    const guide = $('bridgeGuide');
+    if (guide) {
+      guide.innerHTML = polygonPoints.length < 3
+        ? '<strong>公園・エリアを囲む</strong><br>地図右上の「✏️ 描く」を押し、外周に沿って時計回りまたは反時計回りに1点ずつタップしてください。指で線をなぞる操作ではありません。'
+        : '<strong>範囲を確認</strong><br>緑のポリゴンの形と選択されたPOIを確認してください。問題なければ下の「この範囲をCampsiteで使う」を押してください。';
     }
     const status = $('bridgeSelectionStatus');
     if (status) {
