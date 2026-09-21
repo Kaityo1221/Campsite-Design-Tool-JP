@@ -28,7 +28,9 @@ jobs:
           unzip -q downloads/campsite-bridge-android-0.3.4.xpi -d "$tmp"
           echo '===== bridge-ui.css ====='
           cat "$tmp/bridge-ui.css"
-          echo '===== bridge-ui.js relevant lines ====='
-          grep -n -E -C 8 'bridgeButton|Bridge|logout|Logout|nav|menu|button|mount|sidebar|drawer|eject|collapse' "$tmp/bridge-ui.js" || true
+          echo '===== bridge-ui.js anchor logic lines 70-190 ====='
+          nl -ba "$tmp/bridge-ui.js" | sed -n '70,190p'
+          echo '===== bridge-ui.js panel mount lines 500-570 ====='
+          nl -ba "$tmp/bridge-ui.js" | sed -n '500,570p'
           echo '===== manifest.json ====='
           cat "$tmp/manifest.json"
