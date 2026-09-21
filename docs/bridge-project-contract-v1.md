@@ -18,7 +18,7 @@ Bridge Payload
 ```
 
 The canonical storage key is **`campsiteProject.v1`**.  
-`campsiteProject.v1` and other misspellings are invalid.
+Any other spelling is invalid.
 
 This contract does not change the normal CSV / KML / KMZ flow.
 
