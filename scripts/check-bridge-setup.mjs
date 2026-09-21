@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 
 execFileSync(process.execPath, ['scripts/build-android-bridge-xpi.mjs'], { stdio: 'inherit' });
+execFileSync(process.execPath, ['scripts/build-pc-bridge.mjs'], { stdio: 'inherit' });
 
 const html = fs.readFileSync('bridge-setup.html', 'utf8');
 const install = fs.readFileSync('bridge-shortcut-install.html', 'utf8');
@@ -13,6 +14,8 @@ const launcher = fs.readFileSync('js/bridge-shortcut/shortcut-launcher.js', 'utf
 const androidXpiPath = 'downloads/campsite-bridge-android-0.3.4.xpi';
 const androidXpi = fs.readFileSync(androidXpiPath);
 const androidXpiSha256 = crypto.createHash('sha256').update(androidXpi).digest('hex');
+const pcZipPath = 'downloads/campsite-bridge-pc-0.1.0.zip';
+const pcZip = fs.readFileSync(pcZipPath);
 const all = `${html}\n${install}\n${js}\n${config}\n${launcher}`;
 
 const has = (source, value, message) => assert.ok(source.includes(value), message || `Missing: ${value}`);
@@ -28,7 +31,17 @@ has(html, 'M3.4 / 0.3.4');
 has(html, 'id="androidXpiChecksum"');
 has(html, 'id="androidXpiSteps"');
 has(html, 'Campsite Bridge <strong>0.3.4</strong>');
-has(html, 'bridge-setup-config.js?v=2');
+has(html, 'PC Chrome対応');
+has(html, 'id="pcVersion"');
+has(html, '正式版 0.1.0');
+has(html, 'id="pcChromeLink"');
+has(html, 'id="pcExtensionLink"');
+has(html, 'id="pcWayfarerLink"');
+has(html, 'chrome://extensions');
+has(html, 'パッケージ化されていない拡張機能を読み込む');
+assert.equal(html.includes('PC版は準備中です'), false, 'PC setup must be published');
+has(html, 'bridge-setup-config.js?v=3');
+has(html, 'bridge-setup.js?v=3');
 
 has(js, "/iPad/i.test(ua)");
 has(js, "platform === 'MacIntel' && touchPoints > 1");
@@ -39,6 +52,12 @@ has(js, "CONFIG.appleManualSetupUrl");
 has(js, 'isValidAppleShortcutUrl');
 has(js, "document.getElementById('androidVersion')");
 has(js, "document.getElementById('androidXpiChecksum')");
+has(js, "document.getElementById('pcVersion')");
+has(js, "setLink('pcChromeLink'");
+has(js, "setLink('pcExtensionLink'");
+has(js, "setLink('pcWayfarerLink'");
+has(js, "return chrome ? 'chrome' : 'other'");
+has(js, "device === 'pc' && browser !== 'chrome'");
 
 has(config, "appleManualSetupUrl: './bridge-shortcut-install.html'");
 has(config, "appleRuntimeVersion: '1.0.0'");
@@ -47,6 +66,15 @@ has(config, "androidRuntimeVersion: '0.3.4'");
 has(config, "androidReleaseLabel: 'M3.4'");
 has(config, "androidXpiSha256: '13e57ace3468832c171df06bb92c983d66a22bc0f390c0ff15d0df3deff741b6'");
 has(config, "androidExtensionUrl: './downloads/campsite-bridge-android-0.3.4.xpi'");
+has(config, "pcExtensionUrl: './downloads/campsite-bridge-pc-0.1.0.zip'");
+has(config, "pcRuntimeVersion: '0.1.0'");
+has(config, "chromeDesktopUrl: 'https://www.google.com/chrome/'");
+has(config, "pcWayfarerUrl: 'https://wayfarer.scopely.com/new/mapview'");
+assert.ok(pcZip.length > 1000, 'PC Bridge 0.1.0 ZIP is unexpectedly small');
+assert.equal(pcZip.readUInt32LE(0), 0x04034b50, 'PC Bridge 0.1.0 output is not a ZIP');
+assert.ok(pcZip.includes(Buffer.from('manifest.json')), 'PC Bridge ZIP must contain manifest.json');
+assert.ok(pcZip.includes(Buffer.from('page-collector.js')), 'PC Bridge ZIP must contain page-collector.js');
+assert.ok(pcZip.includes(Buffer.from('content.js')), 'PC Bridge ZIP must contain content.js');
 assert.equal(androidXpi.length, 34607, 'Android 0.3.4 XPI size mismatch');
 assert.equal(androidXpiSha256, '13e57ace3468832c171df06bb92c983d66a22bc0f390c0ff15d0df3deff741b6', 'Android 0.3.4 XPI SHA-256 mismatch');
 
