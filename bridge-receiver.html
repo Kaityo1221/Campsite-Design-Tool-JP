@@ -282,6 +282,12 @@
     return { accepted, count: adapter.afterCount, sourceCount:data.pois.length, duplicateCount:deduped.duplicateCount };
   }
 
+  function gatewayUrlForPlatform(platform) {
+    const normalized = String(platform || '').trim().toLowerCase();
+    return './bridge-gateway.html?campsiteBridgeImport=1' +
+      (normalized === 'pc' ? '&campsiteBridgeNext=1' : '');
+  }
+
   function goToCampsite() {
     if (!window.CampsiteBridgeAdapter?.pois?.length) return;
     clearTimeout(receiverDetailTimer);
@@ -290,8 +296,7 @@
       window.CampsiteBridgeAdapter?.bridgePlatform ||
       ''
     ).trim().toLowerCase();
-    const nextParam = platform === 'pc' ? '&campsiteBridgeNext=1' : '';
-    location.replace('./bridge-gateway.html?campsiteBridgeImport=1' + nextParam);
+    location.replace(gatewayUrlForPlatform(platform));
   }
 
   function scheduleAutoContinue() {
@@ -373,6 +378,7 @@
   window.CampsiteBridgeDevReceive = receiveBridgePayload;
   window.CampsiteBridgeToInternalPoi = toCampsitePoi;
   window.CampsiteBridgeAdaptForCampsite = adaptForCampsite;
+  window.CampsiteBridgeGatewayUrlForPlatform = gatewayUrlForPlatform;
 
   announceReady();
 })();
