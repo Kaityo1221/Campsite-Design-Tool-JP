@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '1.1.1';
+  const VERSION = '1.2.0';
   const MANUAL_DEVICE_KEY = 'campsiteBridgeSetup.manualDevice.v1';
   const VALID_DEVICES = new Set(['apple', 'android', 'pc']);
   const CONFIG = Object.freeze({
@@ -13,6 +13,10 @@
     androidReleaseLabel: 'M3.4',
     androidXpiSha256: '',
     firefoxAndroidUrl: 'https://play.google.com/store/apps/details?id=org.mozilla.firefox',
+    pcExtensionUrl: './downloads/campsite-bridge-pc-0.1.0.zip',
+    pcRuntimeVersion: '0.1.0',
+    chromeDesktopUrl: 'https://www.google.com/chrome/',
+    pcWayfarerUrl: 'https://wayfarer.scopely.com/new/mapview',
     wayfarerUrl: 'https://wayfarer.nianticlabs.com/new/',
     ...(window.CampsiteBridgeSetupConfig || {})
   });
@@ -36,7 +40,8 @@
       return /Safari/i.test(ua) && !alternate ? 'safari' : 'other';
     }
     if (device === 'android') return /Firefox\//i.test(ua) ? 'firefox' : 'other';
-    return 'desktop';
+    const chrome = /Chrome\//i.test(ua) && !/Edg\//i.test(ua) && !/OPR\//i.test(ua);
+    return chrome ? 'chrome' : 'other';
   }
 
   function isValidAppleShortcutUrl(value) {
@@ -118,6 +123,13 @@
       }
     }
 
+    const pcVersion = document.getElementById('pcVersion');
+    if (pcVersion) pcVersion.textContent = `正式版 ${text(CONFIG.pcRuntimeVersion).trim() || '0.1.0'}`;
+
+    setLink('pcChromeLink', CONFIG.chromeDesktopUrl, { disabledText: 'Google Chromeの案内を準備中です' });
+    setLink('pcExtensionLink', CONFIG.pcExtensionUrl, { disabledText: 'Campsite Bridge PCの配布を準備中です' });
+    setLink('pcWayfarerLink', CONFIG.pcWayfarerUrl || CONFIG.wayfarerUrl);
+
     setLink('appleWayfarerLink', CONFIG.wayfarerUrl);
     setLink('androidWayfarerLink', CONFIG.wayfarerUrl);
   }
@@ -125,7 +137,7 @@
   const LABELS = {
     apple: ['🍎', 'iPhone / iPadを検出しました', 'Campsite Bridgeを設定します。', 'Safari', 'セットアップを開始'],
     android: ['🤖', 'Androidを検出しました', 'Campsite Bridgeを設定します。', 'Firefox', 'セットアップを開始'],
-    pc: ['💻', 'PCを検出しました', 'Campsite Bridge PC版', 'PC', '詳細を見る']
+    pc: ['💻', 'PCを検出しました', 'Campsite Bridgeを設定します。', 'Google Chrome', 'セットアップを開始']
   };
 
   function render(device, source = 'auto') {
@@ -156,6 +168,9 @@
       notice.hidden = false;
     } else if (device === 'android' && browser !== 'firefox') {
       notice.textContent = 'この端末はAndroidです。セットアップとWayfarerの利用はFirefoxで進めてください。';
+      notice.hidden = false;
+    } else if (device === 'pc' && browser !== 'chrome') {
+      notice.textContent = 'PC版Campsite Bridgeの月末正式対象はGoogle Chromeです。Chromeでセットアップしてください。';
       notice.hidden = false;
     }
 
