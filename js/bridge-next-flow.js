@@ -1,18 +1,21 @@
 (() => {
   'use strict';
 
-  const VERSION = '1.1.0';
+  const VERSION = '1.2.0';
   const PROJECT_SCHEMA_VERSION = '1.0';
   const PROJECT_SOURCE = 'bridge';
   const PROJECT_KEY = 'campsiteProject.v1';
   const ADAPTER_KEY = 'campsiteBridgeAdapter.v0.3';
   const SELECTION_PREFIX = 'campsiteBridgeSelection.';
-  const PREVIEW_KEY = 'campsiteBridgeNextPreview.v1';
+  const LEGACY_FALLBACK_KEY = 'campsiteBridgeLegacyFlow.v1';
   const params = new URLSearchParams(location.search);
 
   if (params.get('campsiteBridgeImport') !== '1') return;
-  const previewEnabled = params.get('campsiteBridgeNext') === '1' || localStorage.getItem(PREVIEW_KEY) === '1';
-  if (!previewEnabled) return;
+  const legacyFallback =
+    params.get('campsiteBridgeLegacy') === '1' ||
+    params.get('campsiteBridgeNext') === '0' ||
+    localStorage.getItem(LEGACY_FALLBACK_KEY) === '1';
+  if (legacyFallback) return;
   if (window.__campsiteBridgeNextFlowInstalled) return;
   window.__campsiteBridgeNextFlowInstalled = true;
 
@@ -105,7 +108,8 @@
         bridgePlatform: String(adapter?.bridgePlatform || '').trim().toLowerCase(),
         projectContract: PROJECT_KEY,
         nextFlowVersion: VERSION,
-        preview: true
+        flowMode: 'next',
+        preview: false
       }
     };
   }
@@ -149,7 +153,7 @@
     const button = event.target.closest?.('#bridgeConfirmBtn');
     if (!button || button.disabled) return;
     // The button's own Bridge-selection listener runs first, saves the
-    // polygon snapshot, and skips only the legacy CSV handoff in preview mode.
+    // polygon snapshot, and skips the legacy CSV handoff in the standard flow.
     setTimeout(continueToCreative, 0);
   });
 
@@ -157,7 +161,7 @@
     version: VERSION,
     projectKey: PROJECT_KEY,
     projectSchemaVersion: PROJECT_SCHEMA_VERSION,
-    previewKey: PREVIEW_KEY,
+    legacyFallbackKey: LEGACY_FALLBACK_KEY,
     adapterHandoffId,
     clearStaleBridgeProject,
     buildProject
