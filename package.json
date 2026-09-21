@@ -10,7 +10,8 @@
     "test:field-mode": "playwright test tests/field-mode*.spec.mjs",
     "test:field-prep": "playwright test tests/field-prep*.spec.mjs",
     "test:field-e2e": "playwright test tests/field-e2e.spec.mjs",
-    "test": "npm run check:field-mode && npm run check:field-prep && npm run test:field-mode && npm run test:field-prep && npm run test:field-e2e"
+    "test": "npm run check:field-mode && npm run check:field-prep && npm run test:field-mode && npm run test:field-prep && npm run test:field-e2e",
+    "check:bridge-pc-spec": "node scripts/check-pc-bridge-spec.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.55.0",
