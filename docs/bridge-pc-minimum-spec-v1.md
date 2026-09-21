@@ -198,6 +198,7 @@ Minimum top-level payload:
 {
   type: 'CAMPSITE_BRIDGE_POI_V1',
   bridgeVersion: '0.1.0',
+  bridgePlatform: 'pc',
   schemaVersion: '1.2',
   handshakeId,
   selectedBounds,
@@ -259,8 +260,8 @@ On accepted ACK:
 - Wayfarer stays open.
 - Receiver continues automatically to Gateway.
 - Gateway uses the existing polygon-selection screen.
-- Next Preview ON continues to `campsiteProject.v1` and CREATIVE MODE.
-- Preview OFF continues through the current legacy handoff until the final switchover task.
+- PC 0.1.x is routed with `campsiteBridgeNext=1` so it continues to `campsiteProject.v1` and CREATIVE MODE without enabling the global Preview flag.
+- iPhone / Android keep their current routing until the final switchover task.
 
 PC-specific code ends at a successful Receiver handoff.
 
