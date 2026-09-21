@@ -257,6 +257,7 @@
     return {
       type: 'CAMPSITE_BRIDGE_POI_V1',
       bridgeVersion: VERSION,
+      bridgePlatform: 'pc',
       schemaVersion: SCHEMA_VERSION,
       handshakeId,
       selectedBounds: snapshot?.selectedBounds || null,
