@@ -34,30 +34,30 @@ assert.ok(
   'Receiver Adapter must retain bridgePlatform'
 );
 assert.ok(
-  receiver.includes("(normalized === 'pc' ? '&campsiteBridgeNext=1' : '')"),
-  'Only PC routing must append the Next query flag'
+  receiver.includes("return './bridge-gateway.html?campsiteBridgeImport=1'"),
+  'All Bridge platforms must share the same Gateway URL'
 );
 assert.ok(
-  receiver.includes("location.replace(gatewayUrlForPlatform(platform))"),
-  'Receiver must use platform-aware Gateway routing'
+  receiver.includes("location.replace(gatewayUrl())"),
+  'Receiver must use the shared Gateway route'
 );
 
-const selectionPos = gateway.indexOf('js/bridge-selection.js?v=10');
-const nextPos = gateway.indexOf('js/bridge-next-flow.js?v=7');
+const selectionPos = gateway.indexOf('js/bridge-selection.js?v=11');
+const nextPos = gateway.indexOf('js/bridge-next-flow.js?v=8');
 assert.ok(selectionPos >= 0, 'Gateway must load Bridge selection');
 assert.ok(nextPos > selectionPos, 'Gateway must load Next flow after Bridge selection');
 
 assert.ok(
-  selection.includes("params.get('campsiteBridgeNext') === '1'"),
-  'Polygon selection must recognize the per-session Next query flag'
+  selection.includes("const LEGACY_FALLBACK_KEY = 'campsiteBridgeLegacyFlow.v1'"),
+  'Selection must keep the hidden legacy fallback'
 );
 assert.ok(
-  nextFlow.includes("params.get('campsiteBridgeNext') === '1'"),
-  'Next flow must recognize the per-session Next query flag'
+  nextFlow.includes("const LEGACY_FALLBACK_KEY = 'campsiteBridgeLegacyFlow.v1'"),
+  'Next flow must keep the hidden legacy fallback'
 );
 
 const sessionStorage = storage();
-const localStorage = storage(); // Intentionally no global Preview flag.
+const localStorage = storage(); // No Preview flag: Next is the default.
 sessionStorage.setItem('campsiteBridgeAdapter.v0.3', JSON.stringify({
   version: '0.8.9.4',
   adaptedAt: '2026-09-21T12:00:00.000Z',
@@ -74,7 +74,7 @@ sessionStorage.setItem('campsiteBridgeAdapter.v0.3', JSON.stringify({
 const context = {
   window: {},
   location: {
-    search: '?campsiteBridgeImport=1&campsiteBridgeNext=1',
+    search: '?campsiteBridgeImport=1',
     href: ''
   },
   sessionStorage,
@@ -103,7 +103,7 @@ vm.runInContext(nextFlow, context);
 const api = context.window.CampsiteBridgeNextFlow;
 assert.ok(
   api,
-  'PC query flag must start Next flow even when the global Preview flag is OFF'
+  'PC Bridge must start Next with only the standard Bridge import flag'
 );
 
 const project = api.buildProject({
@@ -128,6 +128,8 @@ assert.ok(project, 'PC Bridge selection must create a Project');
 assert.equal(project.source, 'bridge');
 assert.equal(project.meta.bridgePlatform, 'pc');
 assert.equal(project.meta.bridgeHandoffId, 'handshake:pc-route');
+assert.equal(project.meta.flowMode, 'next');
+assert.equal(project.meta.preview, false);
 assert.equal(project.currentPois.length, 3);
 assert.equal(project.polygon.length, 4);
 
