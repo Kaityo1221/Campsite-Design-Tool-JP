@@ -232,6 +232,7 @@
       version: VERSION,
       adaptedAt: new Date().toISOString(),
       handoffId,
+      bridgePlatform: String(payload?.bridgePlatform || '').trim().toLowerCase(),
       sourceCount: adapter.beforeCount,
       duplicateCount: adapter.duplicateCount,
       pois: adapter.pois
@@ -268,6 +269,7 @@
     const payload = {
       bridge: 'Campsite Bridge',
       bridgeVersion: String(data.bridgeVersion || ''),
+      bridgePlatform: String(data.bridgePlatform || '').trim().toLowerCase(),
       protocol: 'CAMPSITE_BRIDGE_POI_V1',
       schemaVersion: String(data.schemaVersion || '1.2'),
       receivedAt: new Date().toISOString(),
@@ -283,7 +285,13 @@
   function goToCampsite() {
     if (!window.CampsiteBridgeAdapter?.pois?.length) return;
     clearTimeout(receiverDetailTimer);
-    location.replace('./bridge-gateway.html?campsiteBridgeImport=1');
+    const platform = String(
+      window.CampsiteBridgeReceiver?.payload?.bridgePlatform ||
+      window.CampsiteBridgeAdapter?.bridgePlatform ||
+      ''
+    ).trim().toLowerCase();
+    const nextParam = platform === 'pc' ? '&campsiteBridgeNext=1' : '';
+    location.replace('./bridge-gateway.html?campsiteBridgeImport=1' + nextParam);
   }
 
   function scheduleAutoContinue() {
