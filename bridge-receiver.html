@@ -181,8 +181,17 @@
     };
   }
 
+  function resolveHandoffId(payload) {
+    const handshakeId = String(payload?.handshakeId || '').trim();
+    if (handshakeId) return `handshake:${handshakeId}`;
+    const receivedAt = String(payload?.receivedAt || '').trim();
+    if (receivedAt) return `received:${receivedAt}`;
+    return '';
+  }
+
   function render(payload) {
     const pois = Array.isArray(payload?.pois) ? payload.pois : [];
+    const handoffId = resolveHandoffId(payload);
     const c = counts(pois);
     $('total').textContent = c.total;
     $('pokestop').textContent = c.pokestop;
@@ -222,6 +231,7 @@
     sessionStorage.setItem(ADAPTER_STORAGE_KEY, JSON.stringify({
       version: VERSION,
       adaptedAt: new Date().toISOString(),
+      handoffId,
       sourceCount: adapter.beforeCount,
       duplicateCount: adapter.duplicateCount,
       pois: adapter.pois
@@ -229,6 +239,7 @@
 
     window.CampsiteBridgeAdapter = Object.freeze({
       version: VERSION,
+      handoffId,
       result: adapter,
       pois: adapter.pois
     });
