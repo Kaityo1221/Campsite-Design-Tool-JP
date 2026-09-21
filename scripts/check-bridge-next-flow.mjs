@@ -37,7 +37,6 @@ function storage() {
 
 const sessionStorage = storage();
 const localStorage = storage();
-localStorage.setItem('campsiteBridgeNextPreview.v1', '1');
 sessionStorage.setItem('campsiteBridgeAdapter.v0.3', JSON.stringify({
   version: '0.8.9.4',
   adaptedAt: '2026-09-21T00:00:00.000Z',
@@ -72,9 +71,10 @@ vm.runInContext(nextFlow, nextContext);
 
 const api = nextContext.window.CampsiteBridgeNextFlow;
 assert.ok(api, 'Bridge Next API missing');
+assert.equal(localStorage.getItem('campsiteBridgeNextPreview.v1'), null, 'Default Next must not require the old Preview flag');
 assert.equal(api.projectKey, 'campsiteProject.v1');
 assert.equal(api.projectSchemaVersion, '1.0');
-assert.equal(api.previewKey, 'campsiteBridgeNextPreview.v1');
+assert.equal(api.legacyFallbackKey, 'campsiteBridgeLegacyFlow.v1');
 assert.ok(bridgeContract.includes('`campsiteProject.v1`'), 'Contract doc must name the canonical Project key');
 assert.ok(!bridgeContract.includes('campssiteProject.v1'), 'Contract doc must not contain the historical misspelling');
 assert.equal(sessionStorage.getItem('campsiteProject.v1'), null, 'A different Bridge handoff must clear the previous Bridge Project');
@@ -105,7 +105,8 @@ assert.equal(project.selectedPois.length, 2);
 assert.equal(project.currentPois.length, 2);
 assert.equal(project.polygon.length, 3);
 assert.deepEqual([...project.circleRadii], [50, 40, 30]);
-assert.equal(project.meta.preview, true);
+assert.equal(project.meta.flowMode, 'next');
+assert.equal(project.meta.preview, false);
 assert.equal(project.meta.bridgeHandoffId, 'handshake:project-fixture');
 assert.equal(project.meta.projectContract, 'campsiteProject.v1');
 assert.equal(project.selectedPois[0].role, 'existing');
@@ -119,11 +120,13 @@ assert.equal(project.distanceResult, null);
 
 const offSessionStorage = storage();
 offSessionStorage.setItem('campsiteProject.v1', JSON.stringify({ source:'bridge', meta:{ bridgeHandoffId:'handshake:must-survive' } }));
+const legacyLocalStorage = storage();
+legacyLocalStorage.setItem('campsiteBridgeLegacyFlow.v1', '1');
 const offContext = {
   window: {},
   location: { search: '?campsiteBridgeImport=1', href: '' },
   sessionStorage: offSessionStorage,
-  localStorage: storage(),
+  localStorage: legacyLocalStorage,
   document: { addEventListener() {}, getElementById() { return null; } },
   URLSearchParams,
   console,
@@ -140,8 +143,8 @@ const offContext = {
 };
 vm.createContext(offContext);
 vm.runInContext(nextFlow, offContext);
-assert.equal(offContext.window.CampsiteBridgeNextFlow, undefined, 'Preview OFF must keep legacy flow');
-assert.ok(offSessionStorage.getItem('campsiteProject.v1'), 'Preview OFF must not clear the existing project');
+assert.equal(offContext.window.CampsiteBridgeNextFlow, undefined, 'Legacy fallback must keep the old flow');
+assert.ok(offSessionStorage.getItem('campsiteProject.v1'), 'Legacy fallback must not clear the existing project');
 
 const sameSessionStorage = storage();
 sameSessionStorage.setItem('campsiteBridgeAdapter.v0.3', JSON.stringify({ handoffId:'handshake:same', adaptedAt:'2026-09-21T01:00:00.000Z', pois:[{guid:'a'}] }));
@@ -150,7 +153,7 @@ const sameContext = {
   window: {},
   location: { search:'?campsiteBridgeImport=1', href:'' },
   sessionStorage: sameSessionStorage,
-  localStorage: (()=>{const s=storage();s.setItem('campsiteBridgeNextPreview.v1','1');return s;})(),
+  localStorage: storage(),
   document: { addEventListener() {}, getElementById() { return null; } },
   URLSearchParams, console, setTimeout() {}, crypto: crypto.webcrypto, Math, Date, JSON, Map, Object, Number, String, Array
 };
@@ -222,11 +225,11 @@ assert.ok(distanceEntry.includes('distance-postcheck-mode .distance-file-step{di
 assert.ok(distanceEntry.includes('enterDistancePostcheckMode();'), 'Distance run must switch into postcheck mode');
 assert.ok(fs.readFileSync('index.html','utf8').includes('js/distance-entry.js?v=6'), 'Distance entry cache key must be bumped');
 
-assert.ok(previewPage.includes("const KEY='campsiteBridgeNextPreview.v1'"));
-assert.ok(previewPage.includes("localStorage.setItem(KEY,'1')"));
-assert.ok(previewPage.includes("localStorage.removeItem(KEY)"));
-assert.ok(previewPage.includes('新フローをON'));
-assert.ok(previewPage.includes('新フローをOFF'));
+assert.ok(previewPage.includes("const LEGACY_KEY='campsiteBridgeLegacyFlow.v1'"));
+assert.ok(previewPage.includes("localStorage.setItem(LEGACY_KEY,'1')"));
+assert.ok(previewPage.includes("localStorage.removeItem(LEGACY_KEY)"));
+assert.ok(previewPage.includes('標準の新フローへ戻す'));
+assert.ok(previewPage.includes('緊急時のみ旧フローを使う'));
 
 assert.ok(selection.includes('id="bridgeScrollHandle"'), 'Bridge map must expose a mobile scroll handle');
 assert.ok(!selection.includes('function selectedRadii()'), 'Bridge must not expose circle selection state');
@@ -237,15 +240,18 @@ assert.ok(nextFlow.includes('const circleRadii = [50, 40, 30];'), 'Bridge projec
 assert.ok(selection.includes("touch-action:pan-y"), 'Bridge scroll handle must allow page panning');
 assert.ok(selection.includes("$('campsiteBridgeSelection')?.querySelector('.bridge-tools')"), 'Bridge scroll handle must not depend on a removed local box');
 assert.ok(selection.includes("height:52svh"), 'Bridge map must use a viewport-aware mobile height');
-assert.ok(selection.includes("const NEXT_PREVIEW_KEY = 'campsiteBridgeNextPreview.v1'"), 'Selection must know the Next preview flag');
+assert.ok(selection.includes("const LEGACY_FALLBACK_KEY = 'campsiteBridgeLegacyFlow.v1'"), 'Selection must know the legacy fallback key');
+assert.ok(selection.includes("params.get('campsiteBridgeLegacy') === '1'"), 'Selection must support hidden legacy query fallback');
+assert.ok(selection.includes("params.get('campsiteBridgeNext') === '0'"), 'Selection must support hidden next=0 fallback');
+assert.ok(nextFlow.includes("params.get('campsiteBridgeLegacy') === '1'"), 'Next flow must support hidden legacy query fallback');
 assert.ok(selection.includes('handoffId: adapterHandoffId'), 'Selection snapshot must be bound to the current Bridge handoff');
-assert.ok(selection.includes('if (isNextPreviewEnabled())'), 'Selection must save the snapshot before skipping legacy CSV handoff');
-assert.ok(selection.indexOf('sessionStorage.setItem(SELECTION_STORAGE_KEY') < selection.indexOf('if (isNextPreviewEnabled())'), 'Selection snapshot must be saved before preview skips CSV');
-assert.ok(selection.indexOf('if (isNextPreviewEnabled())') < selection.indexOf("const input = $('fileInput')"), 'Preview must skip only the legacy virtual CSV path');
+assert.ok(selection.includes('if (isNextFlowEnabled())'), 'Selection must use Project handoff by default');
+assert.ok(selection.indexOf('sessionStorage.setItem(SELECTION_STORAGE_KEY') < selection.indexOf('if (isNextFlowEnabled())'), 'Selection snapshot must be saved before standard Project handoff');
+assert.ok(selection.indexOf('if (isNextFlowEnabled())') < selection.indexOf("const input = $('fileInput')"), 'Standard flow must skip only the legacy virtual CSV path');
 assert.ok(nextFlow.includes('setTimeout(continueToCreative, 0)'), 'Next flow must wait until selection snapshot is saved');
 assert.ok(!nextFlow.includes('stopImmediatePropagation'), 'Next flow must not block the selection save listener');
-const selectionPos = gateway.indexOf('js/bridge-selection.js?v=10');
-const nextPos = gateway.indexOf('js/bridge-next-flow.js?v=7');
+const selectionPos = gateway.indexOf('js/bridge-selection.js?v=11');
+const nextPos = gateway.indexOf('js/bridge-next-flow.js?v=8');
 assert.ok(selectionPos >= 0 && nextPos > selectionPos, 'Next flow must load after polygon selection');
 
 
