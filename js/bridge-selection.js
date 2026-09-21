@@ -46,6 +46,7 @@
   }
 
   const adapter = readJson(ADAPTER_STORAGE_KEY);
+  const adapterHandoffId = String(adapter?.handoffId || '').trim();
   const pois = Array.isArray(adapter?.pois) ? adapter.pois.map(normalizePoi).filter(Boolean) : [];
   if (!pois.length) return;
 
@@ -360,6 +361,7 @@
 
     sessionStorage.setItem(SELECTION_STORAGE_KEY, JSON.stringify({
       version: VERSION,
+      handoffId: adapterHandoffId,
       selectedAt: new Date().toISOString(),
       sourceCount: pois.length,
       selectedCount: selected.length,
@@ -369,6 +371,7 @@
 
     sessionStorage.setItem(REVIEW_STORAGE_KEY, JSON.stringify({
       version: VERSION,
+      handoffId: adapterHandoffId,
       capturedAt: new Date().toISOString(),
       sourceCount: pois.length,
       selectedCount: selected.length,
