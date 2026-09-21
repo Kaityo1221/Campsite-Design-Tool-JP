@@ -40,6 +40,7 @@ Required top-level fields:
 
 Optional / contextual fields:
 
+- `bridgePlatform`
 - `selectedBounds`
 - `autoContinue`
 
@@ -78,6 +79,7 @@ Adapter fields:
 - `version`
 - `adaptedAt`
 - `handoffId`
+- `bridgePlatform`
 - `sourceCount`
 - `duplicateCount`
 - `pois[]`
@@ -158,6 +160,7 @@ Bridge metadata:
 - `meta.bridgeSelectionVersion`
 - `meta.bridgeAdapterVersion`
 - `meta.bridgeHandoffId`
+- `meta.bridgePlatform`
 - `meta.projectContract = "campsiteProject.v1"`
 - `meta.nextFlowVersion`
 
