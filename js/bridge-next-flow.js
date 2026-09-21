@@ -102,6 +102,7 @@
         bridgeSelectionVersion: String(selection.version || ''),
         bridgeAdapterVersion: String(adapter?.version || ''),
         bridgeHandoffId: adapterHandoffId(adapter),
+        bridgePlatform: String(adapter?.bridgePlatform || '').trim().toLowerCase(),
         projectContract: PROJECT_KEY,
         nextFlowVersion: VERSION,
         preview: true
