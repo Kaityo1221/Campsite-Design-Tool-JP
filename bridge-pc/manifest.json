@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "Campsite Bridge",
+  "version": "0.1.0",
+  "description": "Wayfarer MapのPOIをCampsite Design Toolへ安全に受け渡します。",
+  "permissions": [],
+  "host_permissions": [
+    "https://wayfarer.scopely.com/*",
+    "https://wayfarer.nianticlabs.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://wayfarer.scopely.com/*",
+        "https://wayfarer.nianticlabs.com/*"
+      ],
+      "js": ["page-collector.js"],
+      "run_at": "document_idle",
+      "world": "MAIN"
+    },
+    {
+      "matches": [
+        "https://wayfarer.scopely.com/*",
+        "https://wayfarer.nianticlabs.com/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle",
+      "world": "ISOLATED"
+    }
+  ]
+}
