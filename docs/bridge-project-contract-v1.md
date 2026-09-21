@@ -208,3 +208,26 @@ All three device paths must converge at:
 ```
 Bridge Payload -> Adapter -> campsiteProject.v1
 ```
+
+
+## 8. Standard flow and emergency fallback
+
+As of 2026-09-21, the Project flow is the default Bridge path on iPhone, Android, and PC.
+
+Standard:
+
+```
+Bridge -> Gateway -> Polygon -> campsiteProject.v1 -> CREATIVE MODE
+```
+
+The old virtual-CSV handoff remains available only for emergency recovery.
+
+Fallback storage key:
+
+```
+campsiteBridgeLegacyFlow.v1
+```
+
+When the key is `1`, or `campsiteBridgeLegacy=1` / `campsiteBridgeNext=0` is supplied to the Gateway, the Next Project handler stays inactive and the existing legacy handoff is used.
+
+Normal CSV / KML / KMZ entry remains outside this Bridge switch.
