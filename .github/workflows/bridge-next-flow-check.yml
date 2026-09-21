@@ -16,6 +16,7 @@ on:
       - 'js/bridge-next-flow.js'
       - 'js/bridge-selection.js'
       - 'docs/bridge-project-contract-v1.md'
+      - 'docs/bridge-pc-minimum-spec-v1.md'
       - 'js/bridge-distance-project.js'
       - 'creative/bridge.html'
       - 'creative/index.html'
@@ -26,6 +27,7 @@ on:
       - 'creative/jp-creative-patch.js'
       - 'scripts/check-bridge-next-flow.mjs'
       - 'scripts/check-creative-project-recovery.mjs'
+      - 'scripts/check-pc-bridge-spec.mjs'
       - 'scripts/check-creative-runtime-build.mjs'
       - '.github/workflows/bridge-next-flow-check.yml'
   workflow_dispatch:
@@ -46,6 +48,7 @@ jobs:
         run: |
           node scripts/check-bridge-next-flow.mjs
           node scripts/check-creative-project-recovery.mjs
+          node scripts/check-pc-bridge-spec.mjs
           node scripts/check-creative-runtime-build.mjs
 
       - name: Syntax check
