@@ -157,6 +157,9 @@ jobs:
       - name: Build Campsite Bridge Android 0.3.4
         run: node scripts/build-android-bridge-xpi.mjs
 
+      - name: Build Campsite Bridge PC 0.1.0
+        run: node scripts/build-pc-bridge.mjs
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
