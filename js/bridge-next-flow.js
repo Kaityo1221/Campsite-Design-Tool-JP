@@ -64,7 +64,9 @@
     const selectedPois = selection.pois.map(poi => {
       const guid = String(poi?.guid || '');
       const source = sourceByGuid.get(guid) || {};
-      return { ...clone(source), ...clone(poi) };
+      const merged = { ...clone(source), ...clone(poi) };
+      merged.role = merged.role === 'added' ? 'added' : 'existing';
+      return merged;
     });
     const polygon = selection.polygon
       .filter(point => Array.isArray(point) && point.length >= 2)
