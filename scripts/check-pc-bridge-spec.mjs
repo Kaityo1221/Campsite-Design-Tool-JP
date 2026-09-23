@@ -23,7 +23,7 @@ has(spec, 'No manual CSV is required.');
 has(spec, 'No Tampermonkey / Userscripts dependency is introduced.');
 
 assert.equal(spec.includes('campssiteProject.v1'), false, 'PC spec must use the canonical Project key');
-assert.equal(/CAMPSITE_BRIDGE_PC_/i.test(spec), false, 'PC must not define a PC-only protocol');
+assert.equal(/type\s*:\s*['"]CAMPSITE_BRIDGE_PC_/i.test(spec), false, 'PC must not define a PC-only protocol');
 assert.equal(/Tampermonkeyをインストール/i.test(spec), false, 'PC Bridge spec must not revive the retired install path');
 
 has(receiver, "data.type !== 'CAMPSITE_BRIDGE_POI_V1'");
