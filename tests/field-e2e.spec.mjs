@@ -189,13 +189,13 @@ test('調査ファイルから調査範囲・現地作業・完成KMZまで一�
 
   const kml = await downloadFinalKml(page);
 
-  expect(folderPointNames(kml, '既存のポケストップ')).toContain('公園入口');
-  expect(folderPointNames(kml, '既存のジム')).toContain('中央広場');
-  expect(folderPointNames(kml, '既存のパワースポット')).toContain('北側広場');
+  expect(folderPointNames(kml, '既存 PokéStop')).toContain('公園入口');
+  expect(folderPointNames(kml, '既存 Gym')).toContain('中央広場');
+  expect(folderPointNames(kml, '既存 PowerSpot')).toContain('北側広場');
 
-  expect(folderPointNames(kml, '追加希望ポケスト')).toContain('ポケストップ 1');
-  expect(folderPointNames(kml, '追加希望ジム')).toContain('ジム 1');
-  expect(folderPointNames(kml, '追加希望パワスポ')).toContain('パワースポット 1');
+  expect(folderPointNames(kml, '新規 PokéStop')).toContain('ポケストップ 1');
+  expect(folderPointNames(kml, '新規 Gym')).toContain('ジム 1');
+  expect(folderPointNames(kml, '新規 PowerSpot')).toContain('パワースポット 1');
 
   const circles50 = folderPlacemarkNames(kml, '50m円（目安）');
   expect(circles50).toEqual(expect.arrayContaining([
@@ -213,12 +213,12 @@ test('調査ファイルから調査範囲・現地作業・完成KMZまで一�
   expect(kml).toContain('<name>活動範囲 1</name>');
 
   expectLayerOrder(kml, [
-    '既存のポケストップ',
-    '既存のジム',
-    '既存のパワースポット',
-    '追加希望ポケスト',
-    '追加希望ジム',
-    '追加希望パワスポ',
+    '既存 PokéStop',
+    '既存 Gym',
+    '既存 PowerSpot',
+    '新規 PokéStop',
+    '新規 Gym',
+    '新規 PowerSpot',
     '50m円（目安）',
     '40m円（参考距離）',
     '30m円（参考距離）'
@@ -227,6 +227,12 @@ test('調査ファイルから調査範囲・現地作業・完成KMZまで一�
   for (const forbiddenLayer of [
     '調査範囲',
     '追加希望POI',
+    '既存のポケストップ',
+    '既存のジム',
+    '既存のパワースポット',
+    '追加希望ポケスト',
+    '追加希望ジム',
+    '追加希望パワスポ',
     '現地モード_30m円',
     '現地モード_40m円',
     '現地モード_50m円',
