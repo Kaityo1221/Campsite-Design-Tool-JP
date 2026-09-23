@@ -181,7 +181,7 @@
 
   syncVisibility();
   const observer = new MutationObserver(syncVisibility);
-  observer.observe(document.documentElement, { childList:true, subtree:true, attributes:true, attributeFilter:['class','style','aria-expanded'] });
+  observer.observe(document.documentElement, { childList:true, subtree:true });
   setInterval(syncVisibility, 1500);
 
   window.CampsiteBridgePcUi = Object.freeze({
