@@ -42,7 +42,7 @@ assert.ok(
   'Receiver must use the shared Gateway route'
 );
 
-const selectionPos = gateway.indexOf('js/bridge-selection.js?v=11');
+const selectionPos = gateway.indexOf('js/bridge-selection.js?v=12');
 const nextPos = gateway.indexOf('js/bridge-next-flow.js?v=8');
 assert.ok(selectionPos >= 0, 'Gateway must load Bridge selection');
 assert.ok(nextPos > selectionPos, 'Gateway must load Next flow after Bridge selection');
