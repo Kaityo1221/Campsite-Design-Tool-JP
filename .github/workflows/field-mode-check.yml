@@ -5,7 +5,7 @@ on:
     branches: [main]
     paths:
       - 'field-mode.html'
-      - 'css/field-mode.css'
+      - 'css/field-mode*.css'
       - 'js/field-mode-*.js'
       - 'scripts/check-field-*.mjs'
       - 'tests/field-mode*.spec.mjs'

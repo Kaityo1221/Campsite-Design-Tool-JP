@@ -49,7 +49,7 @@
 .field-mode-entry-started .field-mode-history-button{height:38px;border-radius:9px}
 .field-mode-entry-started .field-location-badge{pointer-events:auto;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent}
 .field-mode-entry-started .field-mode-new-poi{display:none!important}
-.field-mode-entry-started.field-creative-tool-poi .field-mode-new-poi{display:none!important}
+.field-mode-entry-started.field-creative-tool-poi .field-mode-new-poi{display:block!important}
 .field-mode-entry-started.field-creative-active .field-distance-badge{top:12px;right:10px;max-width:46%;padding:6px 8px;border-radius:11px;font-size:10px;line-height:1.25}
 .field-mode-entry-started.field-creative-active .field-mode-creative-close{top:12px;left:10px;transform:none;max-width:46%;padding:7px 10px;font-size:11px}
 .field-mode-entry-started.field-creative-active .field-mode-creative-launcher{left:10px;top:64px}

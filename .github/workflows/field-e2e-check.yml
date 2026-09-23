@@ -7,7 +7,7 @@ on:
       - 'field-prep.html'
       - 'field-mode.html'
       - 'css/field-prep.css'
-      - 'css/field-mode.css'
+      - 'css/field-mode*.css'
       - 'js/field-prep*.js'
       - 'js/field-mode*.js'
       - 'js/util.js'
