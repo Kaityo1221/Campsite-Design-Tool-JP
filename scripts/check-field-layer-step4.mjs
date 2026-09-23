@@ -14,6 +14,9 @@ for (const token of ['ADDITIONAL_FOLDER_BY_TYPE', 'additionalFolderName(type.val
 if (!area.includes('additionalFolderName(record)')) {
   throw new Error('activity-area exporter must route new POIs through formal folders');
 }
+if (!area.includes('function normalizePoiFolderNames(doc)') || !area.includes('normalizePoiFolderNames(doc);')) {
+  throw new Error('activity-area exporter must normalize source POI folders before appending new POIs');
+}
 
 if (/ensureTargetFolder\(doc,documentNode,'追加希望POI'\)/.test(exporter)) {
   throw new Error('normal exporter still targets generic 追加希望POI');
