@@ -13,22 +13,66 @@
   </style>
 </head>
 <body>
-  <div class="boot"><div><strong>🌉 Campsite Bridge</strong><small>受信したPOIをCampsite Design Toolへ渡しています…</small></div></div>
+  <div class="boot"><div><strong>🔐 Campsite Bridge</strong><small>認証状態を確認しています…</small></div></div>
   <script>
   (() => {
     'use strict';
 
+    const ADAPTER_KEY = 'campsiteBridgeAdapter.v0.3';
+    const PAYLOAD_KEY = 'campsiteBridgePoC.v0.3';
+    const PENDING_HANDOFF_KEY = 'campsiteBridgePendingHandoff.v1';
+    const PENDING_TTL_MS = 30 * 60 * 1000;
     const params = new URLSearchParams(location.search);
     const hasImportFlag = params.get('campsiteBridgeImport') === '1';
-    let adapter = null;
-    try {
-      adapter = JSON.parse(sessionStorage.getItem('campsiteBridgeAdapter.v0.3') || 'null');
-    } catch (_) {}
+
+    function readJson(storage, key) {
+      try { return JSON.parse(storage.getItem(key) || 'null'); }
+      catch (_) { return null; }
+    }
+
+    function restorePendingHandoff() {
+      const pending = readJson(localStorage, PENDING_HANDOFF_KEY);
+      if (!pending) return;
+      const savedAt = Number(pending.savedAt || 0);
+      if (!savedAt || Date.now() - savedAt > PENDING_TTL_MS) {
+        try { localStorage.removeItem(PENDING_HANDOFF_KEY); } catch (_) {}
+        return;
+      }
+      try {
+        if (!sessionStorage.getItem(ADAPTER_KEY) && pending.adapter?.pois?.length) {
+          sessionStorage.setItem(ADAPTER_KEY, JSON.stringify(pending.adapter));
+        }
+        if (!sessionStorage.getItem(PAYLOAD_KEY) && pending.payload?.pois?.length) {
+          sessionStorage.setItem(PAYLOAD_KEY, JSON.stringify(pending.payload));
+        }
+      } catch (_) {}
+    }
+
+    function preservePendingHandoff(adapter) {
+      if (!adapter?.pois?.length) return;
+      const payload = readJson(sessionStorage, PAYLOAD_KEY);
+      try {
+        localStorage.setItem(PENDING_HANDOFF_KEY, JSON.stringify({
+          version: 1,
+          savedAt: Date.now(),
+          handoffId: String(adapter.handoffId || ''),
+          adapter,
+          payload: payload?.pois?.length ? payload : null
+        }));
+      } catch (_) {}
+    }
+
+    restorePendingHandoff();
+    const adapter = readJson(sessionStorage, ADAPTER_KEY);
 
     if (!hasImportFlag || !Array.isArray(adapter?.pois) || adapter.pois.length === 0) {
       location.replace('./index.html');
       return;
     }
+
+    // OAuth may temporarily leave this origin. Keep the active Bridge handoff
+    // recoverable until polygon selection/project creation continues.
+    preservePendingHandoff(adapter);
 
     fetch('./index.html', { cache:'no-store', credentials:'same-origin' })
       .then(response => {
@@ -37,11 +81,12 @@
       })
       .then(html => {
         const leafletCss = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">';
-        const bridgeColorCss = '<style>#campsiteBridgeSelection .bridge-dot.gym{background:#facc15!important}#campsiteBridgeSelection .bridge-dot.power{background:#f472b6!important}#loginScreen,#splashScreen,#openingScreen{display:none!important}</style>';
+        const bridgeColorCss = '<style>#campsiteBridgeSelection .bridge-dot.gym{background:#facc15!important}#campsiteBridgeSelection .bridge-dot.power{background:#f472b6!important}#loginScreen,#splashScreen,#openingScreen{display:none!important}#caAccessGate.ca-gate-handoff-pending{visibility:visible!important;pointer-events:auto!important}</style>';
         const bridgeScripts = [
           '<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></' + 'script>',
           '<script>(()=>{const original=L.circleMarker;L.circleMarker=function(latlng,options){if(options?.className==="bridge-poi-marker"){const next={...options};if(next.fillColor==="#f472b6")next.fillColor="#facc15";else if(next.fillColor==="#facc15")next.fillColor="#f472b6";return original.call(this,latlng,next);}return original.call(this,latlng,options);};})();</' + 'script>',
           '<script>(()=>{let payload=null;try{payload=JSON.parse(sessionStorage.getItem("campsiteBridgePoC.v0.3")||"null");}catch(_){}const view=payload?.selectedBounds;const lat=Number(view?.center?.lat);const lng=Number(view?.center?.lng);if(!Number.isFinite(lat)||!Number.isFinite(lng)||!window.L?.Map?.prototype)return;const sourceZoom=Number(view?.zoom);const zoom=Number.isFinite(sourceZoom)?Math.max(16,Math.min(18,Math.round(sourceZoom))):17;const proto=L.Map.prototype;const original=proto.fitBounds;let used=false;const patched=function(bounds,options){try{if(!used&&this.getContainer?.()?.id==="campsiteBridgeMap"){used=true;if(proto.fitBounds===patched)proto.fitBounds=original;return this.setView([lat,lng],zoom,{animate:false});}}catch(_){}return original.call(this,bounds,options);};proto.fitBounds=patched;setTimeout(()=>{if(proto.fitBounds===patched)proto.fitBounds=original;},5000);})();</' + 'script>',
+          '<script src="js/bridge-selection-mobile.js?v=1"></' + 'script>',
           '<script src="js/bridge-entry.js?v=3"></' + 'script>',
           '<script src="js/bridge-selection.js?v=12"></' + 'script>',
           '<script src="js/bridge-next-flow.js?v=8"></' + 'script>'
