@@ -512,7 +512,7 @@
 }
 
 /* creative-poi-center-confirm-v3 */
-.field-creative-active.field-creative-tool-poi .field-mode-new-poi {
+.field-mode-entry-started.field-creative-active.field-creative-tool-poi .field-mode-new-poi {
   display: block !important;
   order: 2;
   margin: 0;
