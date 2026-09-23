@@ -75,8 +75,10 @@ if (!distanceTool.includes('return spacing.distanceBand(distance)')) {
 }
 
 const mainLoader = read('js/kmz-upload.js');
-const configLoad = mainLoader.indexOf('import("./poi-spacing-config.js?v=1")');
-const policyLoad = mainLoader.indexOf('import("./poi-spacing-policy.js?v=5")');
+const configMatch = mainLoader.match(/import\("\.\/poi-spacing-config\.js\?v=\d+"\)/);
+const policyMatch = mainLoader.match(/import\("\.\/poi-spacing-policy\.js\?v=\d+"\)/);
+const configLoad = configMatch ? mainLoader.indexOf(configMatch[0]) : -1;
+const policyLoad = policyMatch ? mainLoader.indexOf(policyMatch[0]) : -1;
 if (configLoad < 0 || policyLoad <= configLoad) {
   fail('main tool must load the shared config before the policy adapters');
 }

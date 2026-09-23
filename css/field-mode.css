@@ -511,15 +511,20 @@
   }
 }
 
-/* creative-poi-compact-controls-v2 */
-.field-creative-active.field-creative-tool-poi .field-mode-new-poi {
-  display: none !important;
+/* creative-poi-center-confirm-v3 */
+.field-mode-entry-started.field-creative-active.field-creative-tool-poi .field-mode-new-poi {
+  display: block !important;
+  order: 2;
+  margin: 0;
+  background: #d8b766;
+  color: #3b2d15;
+  border-color: #9b742b;
 }
 .field-creative-active.field-creative-tool-poi .field-mode-poi-controls {
   right: 6px;
   bottom: 14px;
-  width: min(142px, 44vw);
-  gap: 0;
+  width: min(150px, 46vw);
+  gap: 6px;
 }
 .field-creative-active.field-creative-tool-poi #fieldPoiTypeButton {
   order: 1;

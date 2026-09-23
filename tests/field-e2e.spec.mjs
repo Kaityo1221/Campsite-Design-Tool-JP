@@ -28,6 +28,18 @@ const surveyPolygon = [
 ];
 
 test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    const removeGate = () => document.getElementById('caAccessGate')?.remove();
+    const observe = () => {
+      removeGate();
+      new MutationObserver(removeGate).observe(document.documentElement, { childList: true, subtree: true });
+    };
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', observe, { once: true });
+    } else {
+      observe();
+    }
+  });
   await page.route('https://unpkg.com/leaflet@1.9.4/dist/leaflet.js', route => route.fulfill({ status: 200, contentType: 'application/javascript', body: leafletJs }));
   await page.route('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css', route => route.fulfill({ status: 200, contentType: 'text/css', body: leafletCss }));
   await page.route('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js', route => route.fulfill({ status: 200, contentType: 'application/javascript', body: jszipJs }));
@@ -97,6 +109,7 @@ async function addNewPoi(page, typeLabel) {
   await selectPoiType(page, typeLabel);
   const confirmButton = page.locator('#fieldModeNewPoiButton');
   await expect(confirmButton).toBeVisible();
+  await expect(page.locator('#fieldModeSelectionTitle')).toContainText(`新規${typeLabel}の位置を決めます`);
   await expect(confirmButton).toContainText('この位置に設置');
   await confirmButton.click();
   await expect(page.locator('#fieldModeSelectionTitle')).toContainText(`${typeLabel} 1`);

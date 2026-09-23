@@ -62,3 +62,5 @@ jobs:
           node --check js/ca-access.js
           node --check js/ca-access-bootstrap.js
           node --check js/bridge-distance-project.js
+
+# QA trigger: standard check 2026-09-23

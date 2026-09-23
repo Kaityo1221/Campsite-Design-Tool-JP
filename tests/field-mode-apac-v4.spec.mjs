@@ -174,4 +174,5 @@ test('閲覧中は種類操作を隠し、集中配置時だけ表示して主�
   await expect(page.locator('#fieldPoiTypeButton')).toBeVisible();
   await expect(page.locator('#fieldModeNewPoiButton')).toBeVisible();
   await expect(page.locator('#fieldModeNewPoiButton')).toContainText('この位置に設置');
+  await expect(page.locator('#fieldModeCrosshair')).toBeVisible();
 });

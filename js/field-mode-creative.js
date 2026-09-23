@@ -212,6 +212,10 @@
     if(tool==='poi'){
       hint.textContent='POI種類を選び、十字の位置で設置します。';
       if(collapse)setMenu(false);
+      const placementApi=window.FieldModeExport;
+      if(placementApi?.beginNewPoiPlacement&&!placementApi.isNewPoiPlacementActive?.()){
+        placementApi.beginNewPoiPlacement();
+      }
     }else if(tool==='adjust'){
       hint.textContent='現在地へ合わせるか、十字で位置を微調整します。';
       try{if(typeof map!=='undefined'&&selectedPoi)map.panTo(selectedPoi.latlng);}catch(_){}
