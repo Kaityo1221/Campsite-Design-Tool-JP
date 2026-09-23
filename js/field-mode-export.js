@@ -137,5 +137,6 @@
   updateSaveButton=function(){const n=changedRecords().length;saveButton.disabled=!n;saveButton.textContent=n?`変更したPOIをKMZ保存（${n}件）`:'変更したPOIをKMZ保存';saveNote.textContent=n?`${n}件の追加・移動・削除・メモ・写真をKMZへ反映します。`:'変更するとKMZ保存できるようになります。';};updateSaveButton();
   saveButton.addEventListener('click',async event=>{const activeAreaCount=window.FieldModeArea?.getRecords?.().filter(record=>!record.deleted).length||0;if(activeAreaCount)return;event.preventDefault();event.stopImmediatePropagation();saveButton.disabled=true;saveNote.textContent='写真・メモを含むKMZを作成中…';try{await exportPreservedKmz();}catch(error){console.error(error);saveNote.textContent=`⚠ ${error.message||'KMZを保存できませんでした。'}`;modeStatus.textContent='保存失敗';}finally{updateSaveButton();}},true);
   setupPoiTypeCycler();
-  window.FieldModeExport={setSourceFile,additionalFolderName,beginNewPoiPlacement,cancelNewPoiPlacement,isNewPoiPlacementActive:()=>newPoiPlacementMode};
+  window.FieldModeExport={setSourceFile,additionalFolderName};
+  Object.assign(window.FieldModeExport,{beginNewPoiPlacement,cancelNewPoiPlacement,isNewPoiPlacementActive:()=>newPoiPlacementMode});
 })();
