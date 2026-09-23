@@ -28,6 +28,21 @@ const surveyPolygon = [
 ];
 
 test.beforeEach(async ({ page }) => {
+  // Functional E2E runs behind the production CA authentication gate.
+  // Authentication itself is covered by the access/Bridge contract checks,
+  // so keep removing only the visual gate here to exercise the field workflow.
+  await page.addInitScript(() => {
+    const removeGate = () => document.getElementById('caAccessGate')?.remove();
+    const observe = () => {
+      removeGate();
+      new MutationObserver(removeGate).observe(document.documentElement, { childList: true, subtree: true });
+    };
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', observe, { once: true });
+    } else {
+      observe();
+    }
+  });
   await page.route('https://unpkg.com/leaflet@1.9.4/dist/leaflet.js', route => route.fulfill({ status: 200, contentType: 'application/javascript', body: leafletJs }));
   await page.route('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css', route => route.fulfill({ status: 200, contentType: 'text/css', body: leafletCss }));
   await page.route('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js', route => route.fulfill({ status: 200, contentType: 'application/javascript', body: jszipJs }));
