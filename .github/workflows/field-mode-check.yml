@@ -15,11 +15,10 @@ on:
   workflow_dispatch:
 
 jobs:
-  field-mode-safety:
-    name: field-mode-safety
+  field-mode-static:
+    name: field-mode-static
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-
+    timeout-minutes: 5
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -35,17 +34,45 @@ jobs:
       - name: Static regression check
         run: npm run check:field-mode
 
+  field-mode-webkit:
+    name: field-mode-webkit (${{ matrix.spec }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    strategy:
+      fail-fast: false
+      matrix:
+        spec:
+          - field-mode.spec.mjs
+          - field-mode-apac-v4.spec.mjs
+          - field-mode-distance.spec.mjs
+          - field-mode-eraser.spec.mjs
+          - field-mode-kmz-contract.spec.mjs
+          - field-mode-layer-routing.spec.mjs
+          - field-mode-map-first.spec.mjs
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
       - name: Install WebKit
         run: npx playwright install --with-deps webkit
 
-      - name: iPhone/WebKit smoke test
-        run: npm run test:field-mode
+      - name: Run isolated WebKit spec
+        run: npx playwright test "tests/${{ matrix.spec }}" --reporter=list
 
       - name: Upload Playwright trace on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: field-mode-playwright-report
+          name: field-mode-${{ matrix.spec }}-report
           path: |
             test-results
             playwright-report
