@@ -15,6 +15,7 @@ on:
       - 'bridge-next-preview.html'
       - 'js/bridge-next-flow.js'
       - 'js/bridge-selection.js'
+      - 'js/bridge-selection-mobile.js'
       - 'docs/bridge-project-contract-v1.md'
       - 'docs/bridge-pc-minimum-spec-v1.md'
       - 'js/bridge-distance-project.js'
@@ -58,6 +59,7 @@ jobs:
           node --check scripts/check-bridge-three-device-e2e.mjs
           node --check js/bridge-next-flow.js
           node --check js/bridge-selection.js
+          node --check js/bridge-selection-mobile.js
           node --check creative/bridge-project-patch.js
           node --check js/ca-access.js
           node --check js/ca-access-bootstrap.js
