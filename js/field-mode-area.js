@@ -238,6 +238,23 @@
   function directName(node){return Array.from(node.children||[]).find(el=>el.localName==='name')?.textContent?.trim()||'';}
   function findFolderByName(doc,name){return Array.from(doc.getElementsByTagNameNS('*','Folder')).find(folder=>directName(folder)===name)||null;}
   function ensureTargetFolder(doc,documentNode,name){let folder=findFolderByName(doc,name);if(folder)return folder;folder=createElement(doc,'Folder');folder.appendChild(createElement(doc,'name',name));documentNode.appendChild(folder);return folder;}
+  function normalizePoiFolderNames(doc){
+    const api=window.CampsitePoiLayerNames;if(!api)return;
+    const targets=new Map();
+    Array.from(doc.getElementsByTagNameNS('*','Folder')).forEach(folder=>{
+      const raw=directName(folder),canonical=api.canonicalize(raw);
+      if(!api.isFormal(canonical))return;
+      const nameNode=Array.from(folder.children||[]).find(el=>el.localName==='name');
+      if(nameNode)nameNode.textContent=canonical;
+      const target=targets.get(canonical);
+      if(target&&target!==folder){
+        Array.from(folder.children||[]).filter(el=>el.localName!=='name').forEach(el=>target.appendChild(el));
+        folder.remove();
+      }else{
+        targets.set(canonical,folder);
+      }
+    });
+  }
   function additionalFolderName(record){const helper=window.FieldModeExport?.additionalFolderName;if(typeof helper==='function')return helper(record?.poiType,record?.folder);const value=String(record?.poiType||'').toLowerCase();if(value==='gym')return'追加希望ジム';if(value==='power'||value==='power_spot')return'追加希望パワスポ';return'追加希望ポケスト';}
   function removeOldFieldCircleFolders(doc){Array.from(doc.getElementsByTagNameNS('*','Folder')).forEach(folder=>{const name=directName(folder);if(name==='現地モード_30m円'||name==='現地モード_40m円'||name==='現地モード_50m円'||name==='現地モード_距離円')folder.remove();});}
   function canonicalCircleFolder(doc,documentNode,canonical,aliases=[]){const names=new Set([canonical,...aliases]),matches=Array.from(doc.getElementsByTagNameNS('*','Folder')).filter(folder=>names.has(directName(folder)));let target=matches.find(folder=>directName(folder)===canonical)||matches[0];if(!target){target=ensureTargetFolder(doc,documentNode,canonical);}else{const nameNode=Array.from(target.children||[]).find(el=>el.localName==='name');if(nameNode)nameNode.textContent=canonical;}matches.filter(folder=>folder!==target).forEach(folder=>{Array.from(folder.children||[]).filter(el=>el.localName!=='name').forEach(el=>target.appendChild(el));folder.remove();});return target;}
@@ -273,7 +290,9 @@
     const changed=changedRecords(),areas=activeAreas();if(!changed.length&&!areas.length)return;
     const source=await sourcePromise;if(!source)throw new Error('元ファイルを再取得できませんでした。もう一度KMZを選択してください。');
     const doc=new DOMParser().parseFromString(source.kmlText,'application/xml');if(doc.querySelector('parsererror'))throw new Error('元KMLを解析できませんでした。');
-    const documentNode=doc.getElementsByTagNameNS('*','Document')[0]||doc.documentElement,outZip=source.zip||new JSZip(),recordMap=buildOriginalPlacemarkMap(doc);
+    const documentNode=doc.getElementsByTagNameNS('*','Document')[0]||doc.documentElement,outZip=source.zip||new JSZip();
+    normalizePoiFolderNames(doc);
+    const recordMap=buildOriginalPlacemarkMap(doc);
     const photoPaths=await attachPhotos(outZip,changed);replaceExistingRecords(changed,photoPaths,recordMap);deleteExistingRecords(recordMap);removeOldFieldCircleFolders(doc);
     const allRecords=poiRecords.filter(r=>!r.fieldDeleted),newRecords=allRecords.filter(r=>r.added&&r.isNew);appendNewPois(doc,documentNode,newRecords,photoPaths);appendGeneratedCircles(doc,documentNode,allRecords,newRecords);appendAreas(doc,documentNode);
     outZip.file(source.kmlPath||'doc.kml',new XMLSerializer().serializeToString(doc));
