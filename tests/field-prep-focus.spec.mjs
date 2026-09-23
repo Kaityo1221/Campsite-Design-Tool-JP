@@ -11,6 +11,15 @@ const points = [
 ];
 
 test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    const removeGate = () => document.getElementById('caAccessGate')?.remove();
+    const observe = () => {
+      removeGate();
+      new MutationObserver(removeGate).observe(document.documentElement, { childList: true, subtree: true });
+    };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', observe, { once: true });
+    else observe();
+  });
   await page.route('https://unpkg.com/leaflet@1.9.4/dist/leaflet.js', route => route.fulfill({ status: 200, contentType: 'application/javascript', body: leafletJs }));
   await page.route('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css', route => route.fulfill({ status: 200, contentType: 'text/css', body: leafletCss }));
   await page.route('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2', route => route.fulfill({ status: 200, contentType: 'application/javascript', body: '' }));
