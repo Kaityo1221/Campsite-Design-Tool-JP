@@ -41,7 +41,8 @@ test('初期表示はCREATIVE MODEトップで、読込後に明示開始する'
 
   await page.locator('#fieldModeFile').setInputFiles({name:'kasai-field.kml',mimeType:'application/vnd.google-earth.kml+xml',buffer:Buffer.from(sampleKml)});
   await expect(page.locator('#fieldModeFileStatus')).toContainText('件を読み込み');
-  await expect(page.locator('#fieldModeEntryFileState')).toContainText('読み込み完了：kasai-field.kml');
+  await expect(page.locator('#fieldModeEntryFileState')).toHaveText('');
+  await expect(page.locator('#fieldModeEntryFileName')).toHaveText('kasai-field.kml ✓');
   await expect(page.locator('#fieldModeEntryStart')).toBeEnabled();
 
   await page.locator('#fieldModeEntryStart').click();
