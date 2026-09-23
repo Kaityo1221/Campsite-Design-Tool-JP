@@ -56,6 +56,7 @@
   let vertexLayer = null;
   let markerByGuid = new Map();
   let polygonPoints = [];
+  let previewPoint = null;
   let drawMode = false;
   let selectedGuids = new Set();
   let originalStepDisplays = new Map();
@@ -105,7 +106,9 @@
     const style = document.createElement('style');
     style.id = 'campsiteBridgeSelectionStyles';
     style.textContent = `
-      body.campsite-bridge-selection-active #tool .poi-spacing-radius-step{display:none!important}\n      body.campsite-bridge-selection-active #tool #customCsvStep + .step + .step{display:none!important}\n      #campsiteBridgeSelection{margin:14px 0 20px;border:1px solid rgba(56,189,248,.38);border-radius:18px;overflow:hidden;background:rgba(2,6,23,.76)}
+      body.campsite-bridge-selection-active #tool .poi-spacing-radius-step{display:none!important}\
+      body.campsite-bridge-selection-active #tool #customCsvStep + .step + .step{display:none!important}\
+      #campsiteBridgeSelection{margin:14px 0 20px;border:1px solid rgba(56,189,248,.38);border-radius:18px;overflow:hidden;background:rgba(2,6,23,.76)}
       #campsiteBridgeSelection .bridge-head{padding:16px 16px 12px;background:linear-gradient(135deg,rgba(14,116,144,.22),rgba(15,23,42,.15))}
       #campsiteBridgeSelection .bridge-head h3{margin:0;color:#f8fafc;font-size:20px}
       #campsiteBridgeSelection .bridge-head p{margin:7px 0 0;color:#bae6fd;font-size:13px;line-height:1.7}
@@ -166,7 +169,7 @@
         <h3>🌉 Bridgeから受信しました</h3>
         <p>${total.total.toLocaleString('ja-JP')}件のPOIを地図に表示しています。設計に使う公園・エリアをポリゴンで囲んでください。</p>
       </div>
-      <div id="bridgeGuide" class="bridge-guide bridge-guide-top"><strong>公園・エリアを囲む</strong><br>地図右上の「✏️ 描く」を押し、外周に沿って時計回りまたは反時計回りに1点ずつタップしてください。指で線をなぞる操作ではありません。</div>
+      <div id="bridgeGuide" class="bridge-guide bridge-guide-top"><strong>公園・エリアを囲む</strong><br>地図右上の「✏️ 描く」を押し、外周に沿って1点目・2点目を置いてください。3点目からは緑の範囲がカーソルに追随します。</div>
       <div class="bridge-summary">
         <div class="bridge-count"><span>受信</span><b>${total.total}</b></div>
         <div class="bridge-count"><span>選択中</span><b id="bridgeSelectedTotal">0</b></div>
@@ -260,6 +263,28 @@
     if (bounds.isValid()) map.fitBounds(bounds, { padding:[24,24], maxZoom:17 });
   }
 
+  function drawPolygonGeometry() {
+    if (!map) return;
+    if (polygonLayer) {
+      map.removeLayer(polygonLayer);
+      polygonLayer = null;
+    }
+    const hasPreview = drawMode && Array.isArray(previewPoint) && polygonPoints.length >= 2;
+    const displayPoints = hasPreview ? [...polygonPoints, previewPoint] : polygonPoints;
+    if (displayPoints.length === 2) {
+      polygonLayer = L.polyline(displayPoints, { color:'#22c55e', weight:3, dashArray:'7 5', interactive:false }).addTo(map);
+    } else if (displayPoints.length >= 3) {
+      polygonLayer = L.polygon(displayPoints, {
+        color:'#22c55e',
+        weight:3,
+        dashArray:hasPreview ? '7 5' : null,
+        fillColor:'#22c55e',
+        fillOpacity:hasPreview ? .10 : .12,
+        interactive:false
+      }).addTo(map);
+    }
+  }
+
   function setDrawMode(enabled) {
     drawMode = Boolean(enabled);
     const btn = $('bridgeDrawBtn');
@@ -273,6 +298,10 @@
     panel?.classList.toggle('bridge-is-drawing', drawMode);
     mapEl?.classList.toggle('bridge-draw-mode', drawMode);
     if (drawMode) map?.closePopup();
+    if (!drawMode && previewPoint) {
+      previewPoint = null;
+      drawPolygonGeometry();
+    }
     renderMarkers();
   }
 
@@ -292,34 +321,40 @@
     const guide = $('bridgeGuide');
     if (guide) {
       guide.innerHTML = polygonPoints.length < 3
-        ? '<strong>公園・エリアを囲む</strong><br>地図右上の「✏️ 描く」を押し、外周に沿って時計回りまたは反時計回りに1点ずつタップしてください。指で線をなぞる操作ではありません。'
+        ? '<strong>公園・エリアを囲む</strong><br>地図右上の「✏️ 描く」を押し、外周に沿って1点目・2点目を置いてください。3点目からは緑の範囲がカーソルに追随します。'
         : '<strong>範囲を確認</strong><br>緑のポリゴンの形と選択されたPOIを確認してください。問題なければ下の「この範囲をCampsiteで使う」を押してください。';
     }
     const status = $('bridgeSelectionStatus');
     if (status) {
-      status.textContent = polygonPoints.length < 3
+      status.textContent = polygonPoints.length < 2
         ? `頂点 ${polygonPoints.length}点。あと${3 - polygonPoints.length}点以上で範囲になります。`
-        : `${c.total.toLocaleString('ja-JP')}件を選択中。スポンサー ${c.sponsored.toLocaleString('ja-JP')}件。`;
+        : polygonPoints.length === 2
+          ? '頂点 2点。マウスを動かすと緑の範囲が追随します。3点目をクリックして固定してください。'
+          : `${c.total.toLocaleString('ja-JP')}件を選択中。スポンサー ${c.sponsored.toLocaleString('ja-JP')}件。`;
     }
     renderMarkers();
   }
 
   function redrawPolygon() {
     if (!map) return;
-    if (polygonLayer) {
-      map.removeLayer(polygonLayer);
-      polygonLayer = null;
-    }
     vertexLayer.clearLayers();
     polygonPoints.forEach(point => {
       L.circleMarker(point, { radius:6, color:'#052e16', weight:2, fillColor:'#22c55e', fillOpacity:1, interactive:false }).addTo(vertexLayer);
     });
-    if (polygonPoints.length === 2) {
-      polygonLayer = L.polyline(polygonPoints, { color:'#22c55e', weight:3, dashArray:'7 5', interactive:false }).addTo(map);
-    } else if (polygonPoints.length >= 3) {
-      polygonLayer = L.polygon(polygonPoints, { color:'#22c55e', weight:3, fillColor:'#22c55e', fillOpacity:.12, interactive:false }).addTo(map);
-    }
+    drawPolygonGeometry();
     updateSelection();
+  }
+
+  function updatePolygonPreview(latlng) {
+    if (!map || !drawMode || polygonPoints.length < 2 || !latlng) return;
+    previewPoint = [latlng.lat, latlng.lng];
+    drawPolygonGeometry();
+  }
+
+  function clearPolygonPreview() {
+    if (!previewPoint) return;
+    previewPoint = null;
+    drawPolygonGeometry();
   }
 
   function csvCell(value) {
@@ -467,8 +502,15 @@
     vertexLayer = L.layerGroup().addTo(map);
     map.on('click', event => {
       if (!drawMode) return;
+      previewPoint = null;
       polygonPoints.push([event.latlng.lat, event.latlng.lng]);
       redrawPolygon();
+    });
+    map.on('mousemove', event => {
+      updatePolygonPreview(event.latlng);
+    });
+    map.on('mouseout', () => {
+      if (drawMode) clearPolygonPreview();
     });
     renderMarkers();
     requestAnimationFrame(() => {
@@ -495,12 +537,14 @@
     $('bridgeUndoBtn')?.addEventListener('click', event => {
       event.preventDefault();
       event.stopPropagation();
+      previewPoint = null;
       polygonPoints.pop();
       redrawPolygon();
     });
     $('bridgeClearBtn')?.addEventListener('click', event => {
       event.preventDefault();
       event.stopPropagation();
+      previewPoint = null;
       polygonPoints = [];
       selectedGuids.clear();
       redrawPolygon();
