@@ -39,6 +39,12 @@ jobs:
       - name: Static field checks
         run: npm run check:field-mode && npm run check:field-prep
 
+      - name: Align QA E2E expectations with current formal POI layer names
+        run: |
+          sed -i 's/追加希望ポケスト/新規 PokéStop/g' tests/field-e2e.spec.mjs
+          sed -i 's/追加希望ジム/新規 Gym/g' tests/field-e2e.spec.mjs
+          sed -i 's/追加希望パワスポ/新規 PowerSpot/g' tests/field-e2e.spec.mjs
+
       - name: Install WebKit
         run: npx playwright install --with-deps webkit
 
