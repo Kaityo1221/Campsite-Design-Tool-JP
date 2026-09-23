@@ -23,7 +23,7 @@ const htmlTokens = [
   'multiple',
   'id="fieldPrepAnalyzeButton"',
   'id="fieldPrepResults"',
-  'js/util.js?v=3',
+  'js/util.js?v=4',
   'js/field-prep.js?v='
 ];
 
