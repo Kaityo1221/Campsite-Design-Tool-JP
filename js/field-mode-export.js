@@ -63,15 +63,15 @@
     modeStatus.textContent='新規設置を取消';
   }
   function beginNewPoiPlacement(){
-    if(!currentPosition||!fileLoaded)return;
+    if(!fileLoaded||newPoiPlacementMode)return;
     if(selectedPoi||fineTuneMode)resetPoiSelection();
-    window.FieldCreative?.enter('poi',{collapse:true});
     newPoiPlacementMode=true;
     crosshair.style.display='block';
     newPoiButton.textContent='✓ この位置に設置';
     newPoiButton.setAttribute('aria-label','十字の位置にPOIを設置');
     modeStatus.textContent=`${currentPoiType().label}の位置決め`;
-    map.panTo(currentPosition);
+    window.FieldCreative?.enter('poi',{collapse:true});
+    if(currentPosition)map.panTo(currentPosition);
     updateNewPoiPlacementGuide();
   }
   function createPoiAtLatLng(latlng){
@@ -98,7 +98,7 @@
     window.FieldCreative?.exit({cancel:false});
   }
   newPoiButton?.addEventListener('click',event=>{
-    if(!currentPosition||!fileLoaded)return;
+    if(!fileLoaded)return;
     event.preventDefault();event.stopImmediatePropagation();
     if(newPoiPlacementMode)confirmNewPoiPlacement();else beginNewPoiPlacement();
   },true);
@@ -137,5 +137,5 @@
   updateSaveButton=function(){const n=changedRecords().length;saveButton.disabled=!n;saveButton.textContent=n?`変更したPOIをKMZ保存（${n}件）`:'変更したPOIをKMZ保存';saveNote.textContent=n?`${n}件の追加・移動・削除・メモ・写真をKMZへ反映します。`:'変更するとKMZ保存できるようになります。';};updateSaveButton();
   saveButton.addEventListener('click',async event=>{const activeAreaCount=window.FieldModeArea?.getRecords?.().filter(record=>!record.deleted).length||0;if(activeAreaCount)return;event.preventDefault();event.stopImmediatePropagation();saveButton.disabled=true;saveNote.textContent='写真・メモを含むKMZを作成中…';try{await exportPreservedKmz();}catch(error){console.error(error);saveNote.textContent=`⚠ ${error.message||'KMZを保存できませんでした。'}`;modeStatus.textContent='保存失敗';}finally{updateSaveButton();}},true);
   setupPoiTypeCycler();
-  window.FieldModeExport={setSourceFile,additionalFolderName};
+  window.FieldModeExport={setSourceFile,additionalFolderName,beginNewPoiPlacement,cancelNewPoiPlacement,isNewPoiPlacementActive:()=>newPoiPlacementMode};
 })();
