@@ -48,7 +48,7 @@ jobs:
           from pathlib import Path
           p = Path('js/poi-spacing-config.js')
           s = p.read_text()
-          needle = r"/\\/(field-mode|field-prep)\\.html$/i.test(window.location.pathname) &&"
+          needle = r"/\/(field-mode|field-prep)\.html$/i.test(window.location.pathname) &&"
           assert needle in s, 'CA access gate injection condition not found'
           p.write_text(s.replace(needle, 'false &&', 1))
           PY
