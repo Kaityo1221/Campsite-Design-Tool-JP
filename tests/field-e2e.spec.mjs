@@ -108,14 +108,10 @@ async function addNewPoi(page, typeLabel) {
 
   await selectPoiType(page, typeLabel);
   const confirmButton = page.locator('#fieldModeNewPoiButton');
-  await expect(confirmButton).toBeAttached();
-
-  // QA diagnostic only: production CSS currently hides the only two-step control
-  // wired to makeNewPoi(). First click enters placement mode, second click confirms.
-  await confirmButton.evaluate(button => button.click());
+  await expect(confirmButton).toBeVisible();
   await expect(page.locator('#fieldModeSelectionTitle')).toContainText(`新規${typeLabel}の位置を決めます`);
   await expect(confirmButton).toContainText('この位置に設置');
-  await confirmButton.evaluate(button => button.click());
+  await confirmButton.click();
   await expect(page.locator('#fieldModeSelectionTitle')).toContainText(`${typeLabel} 1`);
 }
 
