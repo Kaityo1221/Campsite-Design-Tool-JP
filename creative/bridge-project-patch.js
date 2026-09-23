@@ -122,6 +122,9 @@ function campsProjectDistanceMeters(a,b){
   const s=Math.sin(dLat/2)**2+Math.cos(lat1*rad)*Math.cos(lat2*rad)*Math.sin(dLng/2)**2;
   return 2*R*Math.asin(Math.min(1,Math.sqrt(s)));
 }
+function campsProjectHasSpacingReason(record){
+  return String(record?.memo||record?.description||'').trim().length>0;
+}
 function campsProjectWarningRecords(){
   const active=(records||[]).filter(r=>r&&!r.deleted&&Array.isArray(r.latlng));
   return active.filter(r=>campsProjectRole(r.layer)==='added').map(r=>{
@@ -132,7 +135,7 @@ function campsProjectWarningRecords(){
       if(d<nearest)nearest=d;
     }
     return{record:r,distance:nearest};
-  }).filter(item=>item.distance<50);
+  }).filter(item=>item.distance<50&&!campsProjectHasSpacingReason(item.record));
 }
 function campsProjectEnsureDistanceGate(){
   let overlay=document.getElementById('campsiteProjectDistanceGate');
