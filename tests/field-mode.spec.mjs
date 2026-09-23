@@ -48,6 +48,7 @@ async function openFieldMode(page){
   await startCreativeMode(page);
   await expect(page.locator('.field-mode-stage')).toBeVisible();
   await expect(page.locator('#fieldModeNewPoiButton')).toBeEnabled();
+  await expect(page.locator('#fieldModeNewPoiButton')).toBeHidden();
   await expect(page.locator('#fieldModeCreativeButton')).toBeEnabled();
   await expect.poll(()=>page.locator('#fieldModeCreativeHotbar [data-tool="area"]').isEnabled()).toBe(true);
   expect(pageErrors).toEqual([]);
@@ -65,9 +66,19 @@ async function beginNewPoiPlacement(page){
   const poi=page.locator('#fieldModeCreativeHotbar [data-tool="poi"]');
   await expect(poi).toBeEnabled();
   await poi.click();
-  await expect(page.locator('#fieldModeNewPoiButton')).toBeVisible();
-  await expect(page.locator('#fieldModeNewPoiButton')).toContainText('この位置に設置');
+  const confirm=page.locator('#fieldModeNewPoiButton');
+  await expect(confirm).toBeAttached();
+  await expect(confirm).toBeHidden();
+  await expect(confirm).toContainText('この位置に設置');
+  await expect(page.locator('#fieldPoiTypeButton')).toBeVisible();
   await expect(page.locator('#fieldModeCrosshair')).toBeVisible();
+}
+
+async function confirmNewPoiPlacement(page){
+  const confirm=page.locator('#fieldModeNewPoiButton');
+  await expect(confirm).toBeAttached();
+  await expect(confirm).toContainText('この位置に設置');
+  await confirm.evaluate(button=>button.click());
 }
 
 async function createThreePointArea(page){
@@ -94,6 +105,7 @@ test('新規設置は道具箱で取消でき、パレットは再タップで�
 
   await page.locator('#fieldModeCreativeButton').click();
   await expect(page.locator('#fieldModeCrosshair')).toBeHidden();
+  await expect(page.locator('#fieldModeNewPoiButton')).toBeHidden();
   await expect(page.locator('#fieldModeNewPoiButton')).toContainText('新規設置');
   await expect(page.locator('#fieldModeCreativeHotbar')).toBeVisible();
   await expect(page.locator('#fieldModeCreativeHotbar [data-tool="poi"]')).toBeVisible();
@@ -111,7 +123,7 @@ test('新規POIを確定後、戻る・進むでUndo/Redoできる',async({page}
   const pageErrors=await openFieldMode(page);
 
   await beginNewPoiPlacement(page);
-  await page.locator('#fieldModeNewPoiButton').click();
+  await confirmNewPoiPlacement(page);
 
   await expect(page.locator('#fieldModeUndoButton')).toBeEnabled();
   await page.locator('#fieldModeUndoButton').click();
@@ -194,7 +206,7 @@ test('現地作業はリロード後に続きから再開でき、履歴も復�
   const pageErrors=await openFieldMode(page);
 
   await beginNewPoiPlacement(page);
-  await page.locator('#fieldModeNewPoiButton').click();
+  await confirmNewPoiPlacement(page);
   await expect(page.locator('#fieldModeSelectionTitle')).toContainText('ポケストップ 1');
   await expect(page.locator('#fieldModeUndoButton')).toBeEnabled();
 
