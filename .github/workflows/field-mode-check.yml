@@ -61,3 +61,4 @@ jobs:
             test-results
             playwright-report
           if-no-files-found: ignore
+# QA trigger: full-check-20260923

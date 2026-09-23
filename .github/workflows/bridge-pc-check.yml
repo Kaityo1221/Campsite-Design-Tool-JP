@@ -42,3 +42,4 @@ jobs:
           node --check scripts/check-pc-bridge.mjs
           node --check scripts/check-pc-next-route.mjs
           node --check js/bridge-next-flow.js
+# QA trigger: full-check-20260923

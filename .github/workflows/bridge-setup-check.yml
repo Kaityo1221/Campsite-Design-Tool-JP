@@ -45,3 +45,4 @@ jobs:
           node --check scripts/check-android-bridge-0.3.5.mjs
           node --check bridge-pc/page-collector.js
           node --check bridge-pc/content.js
+# QA trigger: full-check-20260923
