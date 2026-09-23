@@ -5,9 +5,9 @@ const exportSource = fs.readFileSync('js/field-mode-export.js', 'utf8');
 
 test('完成KMZの正式レイヤー契約を固定する', async () => {
   for (const token of [
-    "pokestop:'追加希望ポケスト'",
-    "gym:'追加希望ジム'",
-    "power_spot:'追加希望パワスポ'",
+    "pokestop:'新規 PokéStop'",
+    "gym:'新規 Gym'",
+    "power_spot:'新規 PowerSpot'",
     "SPACING_POLICY.targetCircleFolder",
     "SPACING_POLICY.referenceCircleFolders[40]",
     "SPACING_POLICY.referenceCircleFolders[30]"
