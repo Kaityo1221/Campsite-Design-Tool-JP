@@ -67,8 +67,7 @@ async function beginNewPoiPlacement(page){
   await expect(poi).toBeEnabled();
   await poi.click();
   const confirm=page.locator('#fieldModeNewPoiButton');
-  await expect(confirm).toBeAttached();
-  await expect(confirm).toBeHidden();
+  await expect(confirm).toBeVisible();
   await expect(confirm).toContainText('この位置に設置');
   await expect(page.locator('#fieldPoiTypeButton')).toBeVisible();
   await expect(page.locator('#fieldModeCrosshair')).toBeVisible();
@@ -76,9 +75,9 @@ async function beginNewPoiPlacement(page){
 
 async function confirmNewPoiPlacement(page){
   const confirm=page.locator('#fieldModeNewPoiButton');
-  await expect(confirm).toBeAttached();
+  await expect(confirm).toBeVisible();
   await expect(confirm).toContainText('この位置に設置');
-  await confirm.evaluate(button=>button.click());
+  await confirm.click();
 }
 
 async function createThreePointArea(page){
