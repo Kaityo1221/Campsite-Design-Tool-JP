@@ -154,6 +154,12 @@ jobs:
           echo "Built Campsite Bridge Shortcut 1.0.0"
           echo "SHA-256: $actual"
 
+      - name: Check Bridge POI color overlay
+        run: |
+          node --check js/bridge-wayfarer-poi-colors.js
+          node --check js/bridge-shortcut/shortcut-launcher.js
+          node scripts/check-bridge-poi-colors.mjs
+
       - name: Build Campsite Bridge Android 0.3.4
         run: node scripts/build-android-bridge-xpi.mjs
 
@@ -174,6 +180,9 @@ jobs:
           unzip -l "$xpi" | grep -q 'META-INF/cose.sig'
           unzip -p "$xpi" manifest.json | grep -q '"version": "0.3.5"'
           echo "Verified signed Android 0.3.5: $actual"
+
+      - name: Build Campsite Bridge Android 0.3.6 unsigned candidate
+        run: node scripts/build-android-bridge-0.3.6-unsigned.mjs
 
       - name: Build Campsite Bridge PC 0.1.0
         run: node scripts/build-pc-bridge.mjs
