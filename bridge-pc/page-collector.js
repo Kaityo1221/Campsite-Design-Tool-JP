@@ -12,10 +12,17 @@
   const SCHEMA_VERSION = '1.2';
   const READY_TIMEOUT_MS = 12000;
   const ACK_TIMEOUT_MS = 6500;
-  const KNOWN_ENTITIES = new Set(['POKESTOP', 'GYM', 'POWERSPOT']);
 
   if (window.__campsiteBridgePcCollectorInstalled) return;
   window.__campsiteBridgePcCollectorInstalled = true;
+
+  function parserApi() {
+    const parser = window.CampsiteBridgePoiParser;
+    if (!parser?.parsePoi || !parser?.parsePayload || !parser?.bridgePoisFromParsed) {
+      throw new Error('Campsite Bridge POI Parserを読み込めませんでした。拡張機能を再読み込みしてください。');
+    }
+    return parser;
+  }
 
   function numberFrom(value) {
     const num = Number(value);
@@ -94,90 +101,21 @@
     };
   }
 
-  function activeGameObjects(poi) {
-    return (Array.isArray(poi?.gmo) ? poi.gmo : [])
-      .filter(item => item && String(item.status || '').toUpperCase() === 'ACTIVE')
-      .map(item => ({ ...item, entity: String(item.entity || '').toUpperCase() }))
-      .filter(item => KNOWN_ENTITIES.has(item.entity));
-  }
-
-  function primaryGameObject(poi) {
-    const active = activeGameObjects(poi);
-    if (!active.length) return null;
-    const priority = ['GYM', 'POKESTOP', 'POWERSPOT'];
-    for (const entity of priority) {
-      const match = active.find(item => item.entity === entity);
-      if (match) return match;
-    }
-    return active[0];
-  }
-
-  function optionalBoolean(...values) {
-    for (const value of values) {
-      if (value === true || String(value).toLowerCase() === 'true') return true;
-      if (value === false || String(value).toLowerCase() === 'false') return false;
-    }
-    return null;
-  }
-
   function normalizePoi(raw) {
-    if (!raw || typeof raw !== 'object') return null;
-    const gameObject = primaryGameObject(raw);
-    if (!gameObject) return null;
+    const parser = parserApi();
+    const result = parser.parsePoi(raw);
+    if (!result?.ok) return null;
+    return parser.toBridgePoi(result.poi);
+  }
 
-    const guid = String(raw.poiId || raw.guid || raw.id || '').trim();
-    const latE6 = numberFrom(raw.latE6);
-    const lngE6 = numberFrom(raw.lngE6);
-    const lat = Number.isFinite(latE6) ? latE6 / 1e6 : numberFrom(raw.lat);
-    const lng = Number.isFinite(lngE6) ? lngE6 / 1e6 : numberFrom(raw.lng);
-
-    if (!guid || !Number.isFinite(lat) || !Number.isFinite(lng)) return null;
-    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
-
-    const title = String(
-      raw.title || raw.name || raw.poiName ||
-      gameObject.title || gameObject.name || ''
-    ).trim();
-
-    return {
-      guid,
-      title,
-      lat,
-      lng,
-      gameEntity: gameObject.entity,
-      gameStatus: 'ACTIVE',
-      sponsored: optionalBoolean(
-        raw.sponsored,
-        raw.isSponsored,
-        gameObject.sponsored,
-        gameObject.isSponsored
-      ) === true,
-      smr: optionalBoolean(raw.smr, gameObject.smr),
-      imageUrl: String(raw.imageUrl || raw.imageURL || raw.image || gameObject.imageUrl || ''),
-      description: String(raw.description || raw.poiDescription || ''),
-      s2L14: String(raw.s2L14 || ''),
-      s2L17: String(raw.s2L17 || ''),
-      provenance: ['WAYFARER_PASSIVE']
-    };
+  function parseMapData(payload) {
+    return parserApi().parsePayload(payload);
   }
 
   function normalizeMapData(payload) {
-    const groups = Array.isArray(payload)
-      ? payload
-      : payload?.result?.data;
-
-    if (!Array.isArray(groups)) return [];
-
-    const byGuid = new Map();
-    for (const group of groups) {
-      const pois = Array.isArray(group?.pois) ? group.pois : [];
-      for (const raw of pois) {
-        const poi = normalizePoi(raw);
-        if (!poi) continue;
-        byGuid.set(poi.guid, poi);
-      }
-    }
-    return [...byGuid.values()];
+    const parser = parserApi();
+    const parsed = parser.parsePayload(payload);
+    return parser.bridgePoisFromParsed(parsed.pois);
   }
 
   function selectedBounds(bounds) {
@@ -214,8 +152,19 @@
     }
 
     const payload = await response.json();
+    const parsed = parseMapData(payload);
+    const pois = parserApi().bridgePoisFromParsed(parsed.pois);
+
     return {
-      pois: normalizeMapData(payload),
+      pois,
+      enginePois: parsed.pois,
+      diagnostics: parsed.diagnostics,
+      parserStats: {
+        sourceCount: parsed.sourceCount,
+        parsedCount: parsed.parsedCount,
+        duplicateCount: parsed.duplicateCount,
+        failedCount: parsed.failedCount
+      },
       selectedBounds: selectedBounds(bounds),
       sourcePath: MAP_DATA_PATH
     };
@@ -420,6 +369,7 @@
     serializeBounds,
     normalizePoi,
     normalizeMapData,
+    parseMapData,
     makePayload,
     collect,
     startBridge
