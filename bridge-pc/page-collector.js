@@ -18,10 +18,18 @@
 
   function parserApi() {
     const parser = window.CampsiteBridgePoiParser;
-    if (!parser?.parsePoi || !parser?.parsePayload || !parser?.bridgePoisFromParsed) {
+    if (!parser?.parsePoi || !parser?.parsePayload) {
       throw new Error('Campsite Bridge POI Parserを読み込めませんでした。拡張機能を再読み込みしてください。');
     }
     return parser;
+  }
+
+  function classifierApi() {
+    const classifier = window.CampsiteBridgePoiClassifier;
+    if (!classifier?.classifyPoi || !classifier?.run || !classifier?.bridgePoisFromClassified) {
+      throw new Error('Campsite Bridge POI分類Engineを読み込めませんでした。拡張機能を再読み込みしてください。');
+    }
+    return classifier;
   }
 
   function numberFrom(value) {
@@ -102,20 +110,22 @@
   }
 
   function normalizePoi(raw) {
-    const parser = parserApi();
-    const result = parser.parsePoi(raw);
-    if (!result?.ok) return null;
-    return parser.toBridgePoi(result.poi);
+    const parsed = parserApi().parsePoi(raw);
+    if (!parsed?.ok) return null;
+    const classified = classifierApi().classifyPoi(parsed.poi);
+    return classifierApi().toBridgePoi(classified);
   }
 
   function parseMapData(payload) {
     return parserApi().parsePayload(payload);
   }
 
+  function classifyMapData(payload) {
+    return classifierApi().run(parseMapData(payload));
+  }
+
   function normalizeMapData(payload) {
-    const parser = parserApi();
-    const parsed = parser.parsePayload(payload);
-    return parser.bridgePoisFromParsed(parsed.pois);
+    return classifyMapData(payload).bridgePois;
   }
 
   function selectedBounds(bounds) {
@@ -153,12 +163,14 @@
 
     const payload = await response.json();
     const parsed = parseMapData(payload);
-    const pois = parserApi().bridgePoisFromParsed(parsed.pois);
+    const classified = classifierApi().run(parsed);
 
     return {
-      pois,
-      enginePois: parsed.pois,
+      pois: classified.bridgePois,
+      enginePois: classified.pois,
       diagnostics: parsed.diagnostics,
+      classificationDiagnostics: classified.classificationDiagnostics,
+      engineStats: classified.diagnostics,
       parserStats: {
         sourceCount: parsed.sourceCount,
         parsedCount: parsed.parsedCount,
@@ -288,9 +300,6 @@
     const handshakeId = createId('pc');
     let popup = null;
 
-    // Open synchronously inside the Wayfarer MAIN-world event handler so the
-    // browser keeps the user's click activation and the Receiver sees Wayfarer
-    // as the postMessage source origin.
     try {
       popup = window.open('about:blank', 'CampsiteBridgeReceiver_' + handshakeId, 'popup,width=560,height=820');
     } catch (_) {}
@@ -370,6 +379,7 @@
     normalizePoi,
     normalizeMapData,
     parseMapData,
+    classifyMapData,
     makePayload,
     collect,
     startBridge
