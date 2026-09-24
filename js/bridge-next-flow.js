@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '1.2.1';
+  const VERSION = '1.2.2';
   const PROJECT_SCHEMA_VERSION = '1.0';
   const PROJECT_SOURCE = 'bridge';
   const PROJECT_KEY = 'campsiteProject.v1';
@@ -34,6 +34,15 @@
     return adaptedAt ? `adapted:${adaptedAt}` : '';
   }
 
+  function storageKeys() {
+    const keys = [];
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const key = sessionStorage.key(i);
+      if (key) keys.push(key);
+    }
+    return keys;
+  }
+
   function clearStaleBridgeProject(adapter) {
     const incomingHandoffId = adapterHandoffId(adapter);
     if (!incomingHandoffId) return false;
@@ -44,6 +53,19 @@
     sessionStorage.removeItem(PROJECT_KEY);
     try { delete window.CampsiteProject; } catch (_) {}
     return true;
+  }
+
+  function clearStaleBridgeArtifacts(adapter) {
+    const incomingHandoffId = adapterHandoffId(adapter);
+    if (!incomingHandoffId) return;
+
+    for (const key of storageKeys()) {
+      if (!key.startsWith(SELECTION_PREFIX) && !key.startsWith(REVIEW_PREFIX)) continue;
+      const value = readJson(key);
+      const handoffId = String(value?.handoffId || '').trim();
+      if (handoffId === incomingHandoffId) continue;
+      try { sessionStorage.removeItem(key); } catch (_) {}
+    }
   }
 
   function latestSelection(expectedHandoffId = '') {
@@ -64,9 +86,22 @@
     return JSON.parse(JSON.stringify(value));
   }
 
+  function compactSourcePoi(poi) {
+    return {
+      guid: String(poi?.guid || poi?.id || ''),
+      title: String(poi?.title || poi?.name || ''),
+      lat: Number(poi?.lat),
+      lng: Number(poi?.lng),
+      gameEntity: String(poi?.gameEntity || poi?.type || '').toUpperCase(),
+      gameStatus: String(poi?.gameStatus || 'UNKNOWN').toUpperCase(),
+      sponsored: poi?.sponsored === true,
+      smr: poi?.smr === true ? true : poi?.smr === false ? false : null
+    };
+  }
+
   function buildProject(selection, adapter) {
-    const sourcePois = Array.isArray(adapter?.pois) ? adapter.pois : [];
-    const sourceByGuid = new Map(sourcePois.map(poi => [String(poi?.guid || ''), poi]));
+    const rawSourcePois = Array.isArray(adapter?.pois) ? adapter.pois : [];
+    const sourceByGuid = new Map(rawSourcePois.map(poi => [String(poi?.guid || ''), poi]));
     const selectedPois = selection.pois.map(poi => {
       const guid = String(poi?.guid || '');
       const source = sourceByGuid.get(guid) || {};
@@ -74,6 +109,8 @@
       merged.role = merged.role === 'added' ? 'added' : 'existing';
       return merged;
     });
+    const sourcePois = rawSourcePois.map(compactSourcePoi)
+      .filter(poi => poi.guid && Number.isFinite(poi.lat) && Number.isFinite(poi.lng));
     const polygon = selection.polygon
       .filter(point => Array.isArray(point) && point.length >= 2)
       .map(point => [Number(point[0]), Number(point[1])])
@@ -93,7 +130,7 @@
       source: PROJECT_SOURCE,
       receivedAt: String(adapter?.adaptedAt || now),
       createdAt: now,
-      sourcePois: clone(sourcePois),
+      sourcePois,
       polygon,
       selectedPois: clone(selectedPois),
       circleRadii,
@@ -103,8 +140,9 @@
       deletedPois: [],
       distanceResult: null,
       meta: {
-        sourceCount: Number(selection.sourceCount || sourcePois.length || 0),
+        sourceCount: Number(selection.sourceCount || rawSourcePois.length || 0),
         selectedCount: selectedPois.length,
+        sourceStorage: 'compact-v1',
         bridgeSelectionVersion: String(selection.version || ''),
         bridgeAdapterVersion: String(adapter?.version || ''),
         bridgeHandoffId: adapterHandoffId(adapter),
@@ -123,19 +161,10 @@
     console.error('[Campsite Bridge Next]', message);
   }
 
-  function storageKeys() {
-    const keys = [];
-    for (let i = 0; i < sessionStorage.length; i++) {
-      const key = sessionStorage.key(i);
-      if (key) keys.push(key);
-    }
-    return keys;
-  }
-
   function releaseDisposableBridgeStorage(activeHandoffId = '') {
     // Receiver raw payload and review metadata duplicate data already held by
-    // the Adapter/selection snapshot. They are disposable once a Project is
-    // being created and can push iPhone Safari sessionStorage over its quota.
+    // the Adapter/selection snapshot. Release them before Project storage so
+    // iPhone Safari never needs quota headroom for duplicate copies.
     try { sessionStorage.removeItem(PAYLOAD_KEY); } catch (_) {}
 
     for (const key of storageKeys()) {
@@ -153,38 +182,25 @@
 
   function saveProject(project) {
     const serialized = JSON.stringify(project);
-    try {
-      sessionStorage.setItem(PROJECT_KEY, serialized);
-      return true;
-    } catch (firstError) {
-      console.warn('[Campsite Bridge Next] project save hit storage pressure; retrying after cleanup', firstError);
-    }
-
     const handoffId = String(project?.meta?.bridgeHandoffId || '').trim();
     const previousProject = sessionStorage.getItem(PROJECT_KEY);
-    releaseDisposableBridgeStorage(handoffId);
 
-    // Replacing an existing large Project can itself require temporary quota
-    // headroom in WebKit. Remove it only for the retry and restore on failure.
+    // Cleanup first, not after a failed write. WebKit can reject a replacement
+    // when the old data + raw handoff backup temporarily exceed the origin quota.
+    releaseDisposableBridgeStorage(handoffId);
+    try { localStorage.removeItem(PENDING_HANDOFF_KEY); } catch (_) {}
     try { sessionStorage.removeItem(PROJECT_KEY); } catch (_) {}
 
     try {
       sessionStorage.setItem(PROJECT_KEY, serialized);
       return true;
-    } catch (secondError) {
-      console.error('[Campsite Bridge Next] project save failed after cleanup', secondError);
+    } catch (error) {
+      console.error('[Campsite Bridge Next] project save failed after pre-cleanup', error);
       if (previousProject) {
         try { sessionStorage.setItem(PROJECT_KEY, previousProject); } catch (_) {}
       }
       return false;
     }
-  }
-
-  function finishProjectStorageCleanup() {
-    // Keep Adapter + current selection snapshot for Gateway/Creative rework.
-    // The raw payload/review copies are no longer needed after Project save.
-    releaseDisposableBridgeStorage('');
-    try { localStorage.removeItem(PENDING_HANDOFF_KEY); } catch (_) {}
   }
 
   function continueToCreative() {
@@ -207,20 +223,13 @@
       return;
     }
 
-    // At this point the canonical Project is safely stored. Clear only
-    // disposable duplicates; keep Adapter/current selection for rework.
-    try { sessionStorage.removeItem(PAYLOAD_KEY); } catch (_) {}
-    for (const key of storageKeys()) {
-      if (!key.startsWith(REVIEW_PREFIX)) continue;
-      try { sessionStorage.removeItem(key); } catch (_) {}
-    }
-    try { localStorage.removeItem(PENDING_HANDOFF_KEY); } catch (_) {}
-
     window.CampsiteProject = Object.freeze(project);
     location.href = './creative/index.html?campsiteProject=bridge';
   }
 
-  clearStaleBridgeProject(readJson(ADAPTER_KEY));
+  const activeAdapter = readJson(ADAPTER_KEY);
+  clearStaleBridgeProject(activeAdapter);
+  clearStaleBridgeArtifacts(activeAdapter);
 
   document.addEventListener('click', event => {
     const button = event.target.closest?.('#bridgeConfirmBtn');
@@ -237,6 +246,7 @@
     legacyFallbackKey: LEGACY_FALLBACK_KEY,
     adapterHandoffId,
     clearStaleBridgeProject,
+    clearStaleBridgeArtifacts,
     buildProject,
     saveProject
   });
