@@ -5,9 +5,9 @@
   const GCS_PATH = '/api/v1/vault/mapview/gcs';
   const ENTITIES = new Set(['POKESTOP', 'GYM', 'POWERSPOT']);
   const STYLE = Object.freeze({
-    POKESTOP: { fill: '#22b8f0', border: '#1738b8', size: 19 },
-    GYM: { fill: '#f04463', border: '#b91c3c', size: 19 },
-    POWERSPOT: { fill: '#de65d2', border: '#9b2aa7', size: 19 }
+    POKESTOP: { fill: '#22b8f0', border: '#1738b8', size: 24 },
+    GYM: { fill: '#f04463', border: '#b91c3c', size: 24 },
+    POWERSPOT: { fill: '#de65d2', border: '#9b2aa7', size: 24 }
   });
   const SYNC_MS = 900;
   const DRAW_IDLE_MS = 120;
@@ -210,15 +210,16 @@
       position: 'absolute',
       left: `${point.x}px`,
       top: `${point.y}px`,
-      transform: 'translate(-50%,-50%)',
+      transform: 'translate(-50%,-50%) translateZ(0)',
       width: `${style.size}px`,
       height: `${style.size}px`,
       borderRadius: '50%',
       boxSizing: 'border-box',
       background: style.fill,
       border: `3px solid ${style.border}`,
-      boxShadow: '0 0 0 1px rgba(255,255,255,.92),0 1px 4px rgba(0,0,0,.30)',
-      pointerEvents: 'none'
+      boxShadow: '0 0 0 1px rgba(255,255,255,.92),0 2px 5px rgba(0,0,0,.34)',
+      pointerEvents: 'none',
+      zIndex: '2147483646'
     });
     marker.setAttribute('aria-hidden', 'true');
     return marker;
@@ -285,7 +286,8 @@
       root.id = 'campsite-bridge-poi-colors';
       Object.assign(root.style, {
         position: 'absolute', left: '0', top: '0', width: '0', height: '0',
-        pointerEvents: 'none', zIndex: '2147482400'
+        overflow: 'visible', isolation: 'isolate',
+        pointerEvents: 'none', zIndex: '2147483646'
       });
       pane.appendChild(root);
       overlayRoot = root;
