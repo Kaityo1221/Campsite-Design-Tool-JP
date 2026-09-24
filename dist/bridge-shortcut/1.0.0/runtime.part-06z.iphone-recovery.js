@@ -6,6 +6,9 @@
       let visiblePoiRefreshTimer = null;
       let visiblePoiRefreshInFlight = false;
       let lastVisiblePoiBoundsKey = '';
+      let performanceReplayTimer = null;
+      let performanceReplayInFlight = false;
+      let lastPerformanceGcsUrl = '';
 
       function findMapFromAngular() {
         const host = document.querySelector('app-wf-base-map');
@@ -106,6 +109,46 @@
         }, delay);
       }
 
+      function latestPerformanceGcsUrl() {
+        try {
+          const entries = performance?.getEntriesByType?.('resource') || [];
+          for (let index = entries.length - 1; index >= 0; index -= 1) {
+            const name = String(entries[index]?.name || '');
+            if (name.includes(IPHONE_GCS_PATH)) return name;
+          }
+        } catch (_) {}
+        return '';
+      }
+
+      async function replayLatestPerformanceGcs(force = false) {
+        if (performanceReplayInFlight || !nativeFetch) return false;
+        const url = latestPerformanceGcsUrl();
+        if (!url) return false;
+        if (!force && url === lastPerformanceGcsUrl) return false;
+
+        performanceReplayInFlight = true;
+        try {
+          const response = await nativeFetch(url, {
+            credentials: 'include',
+            cache: 'no-store'
+          });
+          if (!response.ok) throw new Error('GCS replay HTTP ' + response.status);
+          const payload = await response.json();
+          stats.gcs += 1;
+          scanJson(payload);
+          lastPerformanceGcsUrl = url;
+          scheduleRender();
+          return true;
+        } catch (error) {
+          stats.parseErrors += 1;
+          console.warn('[Campsite Bridge Shortcut] performance GCS replay failed', error);
+          scheduleRender();
+          return false;
+        } finally {
+          performanceReplayInFlight = false;
+        }
+      }
+
       const baseCaptureBridgeMap = captureBridgeMap;
       captureBridgeMap = function(map) {
         const captured = baseCaptureBridgeMap(map);
@@ -159,11 +202,28 @@
       setTimeout(() => {
         try { discoverExistingGoogleMap(); } catch (_) {}
         scheduleVisiblePoiRefresh(true, 160);
+        void replayLatestPerformanceGcs(true);
       }, 0);
+
+      performanceReplayTimer = setInterval(() => {
+        void replayLatestPerformanceGcs(false);
+      }, 1200);
+
+      window.CampsiteBridgeIPhoneRecovery = Object.freeze({
+        replayLatestPerformanceGcs: () => replayLatestPerformanceGcs(true),
+        getState: () => ({
+          performanceUrlFound: Boolean(latestPerformanceGcsUrl()),
+          lastPerformanceGcsUrl,
+          mapCaptured: Boolean(bridgeMap),
+          poiCount: poiByGuid.size
+        })
+      });
 
       window.addEventListener('pagehide', () => {
         if (visiblePoiRefreshTimer) clearTimeout(visiblePoiRefreshTimer);
         visiblePoiRefreshTimer = null;
+        if (performanceReplayTimer) clearInterval(performanceReplayTimer);
+        performanceReplayTimer = null;
       }, { once: true });
 
       return {};
