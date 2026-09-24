@@ -1,0 +1,142 @@
+(() => {
+  'use strict';
+
+  const VERSION = '1.0.0';
+  const PROTOCOL = 'CAMPSITE_BRIDGE_POI_V1';
+  const SCHEMA_VERSION = '1.2';
+  const PLATFORM = 'pc';
+  const ACTIVE_ENTITIES = new Set(['POKESTOP', 'GYM', 'POWERSPOT']);
+  const ALLOWED_PROVENANCE = new Set(['WAYFARER_PASSIVE', 'WFMM_CACHE', 'BRIDGE_ENRICHMENT']);
+
+  function classifierApi() {
+    const classifier = window.CampsiteBridgePoiClassifier;
+    return classifier?.bridgePoisFromClassified ? classifier : null;
+  }
+
+  function text(value) {
+    return String(value ?? '');
+  }
+
+  function finite(value) {
+    const number = Number(value);
+    return Number.isFinite(number) ? number : null;
+  }
+
+  function booleanOrNull(value) {
+    if (value === true || String(value).toLowerCase() === 'true') return true;
+    if (value === false || String(value).toLowerCase() === 'false') return false;
+    return null;
+  }
+
+  function normalizeProvenance(value) {
+    const input = Array.isArray(value) ? value : value ? [value] : [];
+    const result = [];
+    for (const item of input) {
+      const normalized = String(item || '').trim().toUpperCase();
+      if (!ALLOWED_PROVENANCE.has(normalized) || result.includes(normalized)) continue;
+      result.push(normalized);
+    }
+    if (!result.length) result.push('WAYFARER_PASSIVE');
+    return result;
+  }
+
+  function normalizePoi(raw) {
+    if (!raw || typeof raw !== 'object') return null;
+    const guid = text(raw.guid).trim();
+    const lat = finite(raw.lat);
+    const lng = finite(raw.lng);
+    const gameEntity = text(raw.gameEntity || raw.poiKind).trim().toUpperCase();
+    const gameStatus = text(raw.gameStatus).trim().toUpperCase();
+
+    if (!guid) return null;
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+    if (!ACTIVE_ENTITIES.has(gameEntity)) return null;
+    if (gameStatus !== 'ACTIVE') return null;
+
+    return {
+      guid,
+      title: text(raw.title),
+      lat,
+      lng,
+      gameEntity,
+      gameStatus: 'ACTIVE',
+      sponsored: raw.sponsored === true,
+      smr: booleanOrNull(raw.smr),
+      imageUrl: text(raw.imageUrl),
+      description: text(raw.description),
+      s2L14: text(raw.s2L14),
+      s2L17: text(raw.s2L17),
+      provenance: normalizeProvenance(raw.provenance)
+    };
+  }
+
+  function exportPois(snapshot) {
+    const source = snapshot && typeof snapshot === 'object' ? snapshot : {};
+    let candidates = [];
+
+    if (Array.isArray(source.enginePois)) {
+      const classifier = classifierApi();
+      candidates = classifier ? classifier.bridgePoisFromClassified(source.enginePois) : [];
+    } else if (Array.isArray(source.pois)) {
+      candidates = source.pois;
+    }
+
+    const byGuid = new Map();
+    for (const raw of candidates) {
+      const poi = normalizePoi(raw);
+      if (!poi) continue;
+      byGuid.set(poi.guid, poi);
+    }
+    return [...byGuid.values()];
+  }
+
+  function normalizeBounds(raw) {
+    if (!raw || typeof raw !== 'object') return null;
+    const centerLat = finite(raw.center?.lat);
+    const centerLng = finite(raw.center?.lng);
+    const zoom = finite(raw.zoom);
+    if (!Number.isFinite(centerLat) || !Number.isFinite(centerLng)) return null;
+    if (centerLat < -90 || centerLat > 90 || centerLng < -180 || centerLng > 180) return null;
+
+    const result = {
+      center: { lat: centerLat, lng: centerLng },
+      zoom: Number.isFinite(zoom) ? zoom : null
+    };
+
+    const swLat = finite(raw.sw?.lat);
+    const swLng = finite(raw.sw?.lng);
+    const neLat = finite(raw.ne?.lat);
+    const neLng = finite(raw.ne?.lng);
+    if ([swLat, swLng, neLat, neLng].every(Number.isFinite)) {
+      result.sw = { lat: swLat, lng: swLng };
+      result.ne = { lat: neLat, lng: neLng };
+    }
+    return result;
+  }
+
+  function makePayload(snapshot, handshakeId, options = {}) {
+    const id = text(handshakeId).trim();
+    return {
+      type: PROTOCOL,
+      bridgeVersion: text(options.bridgeVersion || '0.1.0'),
+      bridgePlatform: PLATFORM,
+      schemaVersion: SCHEMA_VERSION,
+      handshakeId: id,
+      selectedBounds: normalizeBounds(snapshot?.selectedBounds),
+      autoContinue: options.autoContinue !== false,
+      pois: exportPois(snapshot)
+    };
+  }
+
+  window.CampsiteBridgeV1Exporter = Object.freeze({
+    version: VERSION,
+    protocol: PROTOCOL,
+    schemaVersion: SCHEMA_VERSION,
+    platform: PLATFORM,
+    normalizePoi,
+    normalizeBounds,
+    exportPois,
+    makePayload
+  });
+})();
