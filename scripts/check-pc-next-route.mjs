@@ -43,7 +43,7 @@ assert.ok(
 );
 
 const selectionPos = gateway.indexOf('js/bridge-selection.js?v=12');
-const nextPos = gateway.indexOf('js/bridge-next-flow.js?v=8');
+const nextPos = gateway.indexOf('js/bridge-next-flow.js?v=9');
 assert.ok(selectionPos >= 0, 'Gateway must load Bridge selection');
 assert.ok(nextPos > selectionPos, 'Gateway must load Next flow after Bridge selection');
 
@@ -132,6 +132,7 @@ assert.equal(project.meta.flowMode, 'next');
 assert.equal(project.meta.preview, false);
 assert.equal(project.currentPois.length, 3);
 assert.equal(project.polygon.length, 4);
+assert.equal(typeof api.saveProject, 'function', 'Next flow must expose storage recovery save');
 
 assert.ok(
   nextFlow.includes("location.href = './creative/index.html?campsiteProject=bridge'"),
