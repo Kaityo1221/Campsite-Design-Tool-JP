@@ -50,6 +50,14 @@ assert.ok(html.includes('function cmOpenCoords(){if(cmCoordView?.isConnected)ret
 assert.ok(html.includes("./assets/pokestop.png"),'Canonical Next-Lab PokéStop icon reference missing');
 assert.ok(html.includes("./assets/gym.png"),'Canonical Next-Lab Gym icon reference missing');
 assert.ok(html.includes("./assets/powerspot.png"),'Canonical Next-Lab PowerSpot icon reference missing');
+assert.ok(
+  html.includes("circleExtras.slice().filter(radius=>Number(radius)!==50).sort((a,b)=>b-a).forEach(radius=>appendDistanceFolder(xml,doc,radius))"),
+  'Creative KMZ export must exclude duplicate 50m circle from circleExtras'
+);
+assert.ok(
+  !html.includes("appendDistanceFolder(xml,doc,50);circleExtras.slice().sort((a,b)=>b-a).forEach(radius=>appendDistanceFolder(xml,doc,radius))"),
+  'Creative KMZ export must not write the canonical 50m circle twice'
+);
 
 
 function extractScripts(source){
