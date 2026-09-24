@@ -13,6 +13,7 @@ on:
       - 'scripts/check-bridge-poi-parser.mjs'
       - 'scripts/check-bridge-poi-classifier.mjs'
       - 'scripts/check-bridge-poi-colors.mjs'
+      - 'scripts/check-bridge-v1-export.mjs'
       - 'scripts/check-pc-bridge.mjs'
       - 'scripts/check-pc-next-route.mjs'
       - 'js/bridge-wayfarer-poi-colors.js'
@@ -32,6 +33,7 @@ on:
       - 'scripts/check-bridge-poi-parser.mjs'
       - 'scripts/check-bridge-poi-classifier.mjs'
       - 'scripts/check-bridge-poi-colors.mjs'
+      - 'scripts/check-bridge-v1-export.mjs'
       - 'scripts/check-pc-bridge.mjs'
       - 'scripts/check-pc-next-route.mjs'
       - 'js/bridge-wayfarer-poi-colors.js'
@@ -55,11 +57,12 @@ jobs:
         with:
           node-version: 22
 
-      - name: Contract, parser, classifier, display and collector check
+      - name: Contract, parser, classifier, display, export and collector check
         run: |
           node scripts/check-bridge-poi-parser.mjs
           node scripts/check-bridge-poi-classifier.mjs
           node scripts/check-bridge-poi-colors.mjs
+          node scripts/check-bridge-v1-export.mjs
           node scripts/check-pc-bridge.mjs
           node scripts/check-pc-next-route.mjs
 
@@ -67,6 +70,7 @@ jobs:
         run: |
           node --check bridge-pc/poi-parser.js
           node --check bridge-pc/poi-classifier.js
+          node --check bridge-pc/bridge-v1-exporter.js
           node --check bridge-pc/page-collector.js
           node --check bridge-pc/content.js
           node --check js/bridge-wayfarer-poi-colors.js
@@ -74,6 +78,7 @@ jobs:
           node --check scripts/check-bridge-poi-parser.mjs
           node --check scripts/check-bridge-poi-classifier.mjs
           node --check scripts/check-bridge-poi-colors.mjs
+          node --check scripts/check-bridge-v1-export.mjs
           node --check scripts/check-pc-bridge.mjs
           node --check scripts/check-pc-next-route.mjs
           node --check js/bridge-next-flow.js
