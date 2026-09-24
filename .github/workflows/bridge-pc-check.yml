@@ -1,6 +1,24 @@
 name: Campsite Bridge PC Check
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'bridge-pc/**'
+      - 'bridge-receiver.html'
+      - 'docs/bridge-pc-minimum-spec-v1.md'
+      - 'docs/bridge-poi-engine-spec-v1.md'
+      - 'scripts/build-pc-bridge.mjs'
+      - 'scripts/check-bridge-poi-parser.mjs'
+      - 'scripts/check-pc-bridge.mjs'
+      - 'scripts/check-pc-next-route.mjs'
+      - 'js/bridge-next-flow.js'
+      - 'js/bridge-selection.js'
+      - 'bridge-gateway.html'
+      - 'creative/index.html'
+      - 'package.json'
+      - '.github/workflows/bridge-pc-check.yml'
   pull_request:
     paths:
       - 'bridge-pc/**'
