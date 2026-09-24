@@ -5,6 +5,7 @@ import { execFileSync } from 'node:child_process';
 
 const manifest = JSON.parse(fs.readFileSync('bridge-pc/manifest.json', 'utf8'));
 const parserSource = fs.readFileSync('bridge-pc/poi-parser.js', 'utf8');
+const classifierSource = fs.readFileSync('bridge-pc/poi-classifier.js', 'utf8');
 const collector = fs.readFileSync('bridge-pc/page-collector.js', 'utf8');
 const content = fs.readFileSync('bridge-pc/content.js', 'utf8');
 const receiver = fs.readFileSync('bridge-receiver.html', 'utf8');
@@ -21,11 +22,14 @@ assert.equal(manifest.host_permissions.some(value => value.includes('<all_urls>'
 const mainWorld = manifest.content_scripts.find(item => item.world === 'MAIN');
 const isolatedWorld = manifest.content_scripts.find(item => item.world === 'ISOLATED');
 assert.ok(mainWorld?.js?.includes('poi-parser.js'), 'MAIN parser missing');
+assert.ok(mainWorld?.js?.includes('poi-classifier.js'), 'MAIN classifier missing');
 assert.ok(mainWorld?.js?.includes('page-collector.js'), 'MAIN collector missing');
-assert.ok(mainWorld.js.indexOf('poi-parser.js') < mainWorld.js.indexOf('page-collector.js'), 'Parser must load before collector');
+assert.ok(mainWorld.js.indexOf('poi-parser.js') < mainWorld.js.indexOf('poi-classifier.js'), 'Parser must load before classifier');
+assert.ok(mainWorld.js.indexOf('poi-classifier.js') < mainWorld.js.indexOf('page-collector.js'), 'Classifier must load before collector');
 assert.ok(isolatedWorld?.js?.includes('content.js'), 'ISOLATED UI missing');
 
 new vm.Script(parserSource, { filename: 'bridge-pc/poi-parser.js' });
+new vm.Script(classifierSource, { filename: 'bridge-pc/poi-classifier.js' });
 new vm.Script(collector, { filename: 'bridge-pc/page-collector.js' });
 new vm.Script(content, { filename: 'bridge-pc/content.js' });
 
@@ -62,6 +66,7 @@ const context = {
 };
 vm.createContext(context);
 vm.runInContext(parserSource, context);
+vm.runInContext(classifierSource, context);
 vm.runInContext(collector, context);
 
 const api = fakeWindow.CampsiteBridgePcCollector;
@@ -69,6 +74,8 @@ assert.ok(api, 'PC collector API missing');
 assert.equal(api.version, '0.1.0');
 assert.equal(api.mapDataPath, '/api/v1/vault/mapview/gcs');
 assert.ok(fakeWindow.CampsiteBridgePoiParser, 'POI parser API missing');
+assert.ok(fakeWindow.CampsiteBridgePoiClassifier, 'POI classifier API missing');
+assert.equal(typeof api.classifyMapData, 'function', 'Collector must expose classification stage');
 
 const sample = {
   result: {
@@ -133,11 +140,18 @@ assert.equal(parsed.sourceCount, 6);
 assert.equal(parsed.parsedCount, 5);
 assert.equal(parsed.duplicateCount, 1);
 assert.equal(parsed.failedCount, 0);
-assert.equal(parsed.pois.find(p => p.guid === 'portal-only-1')?.classification, 'NOT_IN_GAME');
-assert.equal(parsed.pois.find(p => p.guid === 'inactive-1')?.gameStatus, 'INACTIVE');
+
+const engine = api.classifyMapData(sample);
+assert.equal(engine.pois.find(p => p.guid === 'portal-only-1')?.poiKind, 'NOT_IN_GAME');
+assert.equal(engine.pois.find(p => p.guid === 'inactive-1')?.poiKind, 'NOT_IN_GAME');
+assert.equal(engine.pois.find(p => p.guid === 'inactive-1')?.gameStatus, 'INACTIVE');
+assert.equal(engine.diagnostics.sourceCount, 6);
+assert.equal(engine.diagnostics.validCount, 5);
+assert.equal(engine.diagnostics.duplicateCount, 1);
+assert.equal(engine.diagnostics.exportCount, 3);
 
 const pois = api.normalizeMapData(sample);
-assert.equal(pois.length, 3, 'Only active Pokémon GO entities should be exported');
+assert.equal(pois.length, 3, 'Only active supported Pokémon GO entities should be exported');
 assert.equal(pois.find(p => p.guid === 'stop-1')?.gameEntity, 'POKESTOP');
 assert.equal(pois.find(p => p.guid === 'gym-1')?.gameEntity, 'GYM');
 assert.equal(pois.find(p => p.guid === 'power-1')?.gameEntity, 'POWERSPOT');
@@ -173,13 +187,15 @@ assert.ok(receiver.includes("function gatewayUrl()"), 'Receiver must expose the 
 assert.ok(receiver.includes("location.replace(gatewayUrl())"), 'Receiver must send every Bridge platform to the shared Gateway');
 
 execFileSync(process.execPath, ['scripts/check-bridge-poi-parser.mjs'], { stdio: 'inherit' });
+execFileSync(process.execPath, ['scripts/check-bridge-poi-classifier.mjs'], { stdio: 'inherit' });
 execFileSync(process.execPath, ['scripts/build-pc-bridge.mjs'], { stdio: 'inherit' });
 const zip = fs.readFileSync('downloads/campsite-bridge-pc-0.1.0.zip');
 assert.ok(zip.length > 1000, 'PC Bridge ZIP is unexpectedly small');
 assert.equal(zip.readUInt32LE(0), 0x04034b50, 'PC Bridge output is not a ZIP');
 assert.ok(zip.includes(Buffer.from('manifest.json')), 'ZIP must contain manifest.json');
 assert.ok(zip.includes(Buffer.from('poi-parser.js')), 'ZIP must contain poi-parser.js');
+assert.ok(zip.includes(Buffer.from('poi-classifier.js')), 'ZIP must contain poi-classifier.js');
 assert.ok(zip.includes(Buffer.from('page-collector.js')), 'ZIP must contain page-collector.js');
 assert.ok(zip.includes(Buffer.from('content.js')), 'ZIP must contain content.js');
 
-console.log('Campsite Bridge PC 0.1.0 + POI Parser contract: OK');
+console.log('Campsite Bridge PC 0.1.0 + POI Engine contract: OK');
