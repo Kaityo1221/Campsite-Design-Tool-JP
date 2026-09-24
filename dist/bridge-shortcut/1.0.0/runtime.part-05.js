@@ -122,6 +122,120 @@
     return marker;
   }
 
+  // TEMP DIAGNOSTIC: native iPhone overlay draw state.
+  // Keep this block self-contained so it can be removed after the visibility bug is isolated.
+  const gameOverlayDiag = {
+    renderedAt: 0,
+    wfmmPresent: false,
+    createCalls: 0,
+    created: 0,
+    pokestop: 0,
+    gym: 0,
+    powerspot: 0,
+    projectionValid: 0,
+    projectionInvalid: 0,
+    rootConnected: false,
+    rootChildNodes: 0,
+    rootDisplay: '',
+    rootVisibility: '',
+    rootOpacity: '',
+    rootZIndex: '',
+    first: null
+  };
+
+  function resetGameOverlayDiagnostics(wfmmPresent) {
+    gameOverlayDiag.renderedAt = Date.now();
+    gameOverlayDiag.wfmmPresent = Boolean(wfmmPresent);
+    gameOverlayDiag.createCalls = 0;
+    gameOverlayDiag.created = 0;
+    gameOverlayDiag.pokestop = 0;
+    gameOverlayDiag.gym = 0;
+    gameOverlayDiag.powerspot = 0;
+    gameOverlayDiag.projectionValid = 0;
+    gameOverlayDiag.projectionInvalid = 0;
+    gameOverlayDiag.rootConnected = false;
+    gameOverlayDiag.rootChildNodes = 0;
+    gameOverlayDiag.rootDisplay = '';
+    gameOverlayDiag.rootVisibility = '';
+    gameOverlayDiag.rootOpacity = '';
+    gameOverlayDiag.rootZIndex = '';
+    gameOverlayDiag.first = null;
+  }
+
+  function describeOverlayHitElement(el) {
+    if (!el) return 'none';
+    const tag = String(el.tagName || '').toLowerCase() || 'node';
+    const id = el.id ? `#${el.id}` : '';
+    const cls = typeof el.className === 'string' && el.className.trim()
+      ? `.${el.className.trim().split(/\s+/).slice(0, 2).join('.')}`
+      : '';
+    const bridgeEntity = el.dataset?.cbsGameEntity ? `[Bridge:${el.dataset.cbsGameEntity}]` : '';
+    return `${tag}${id}${cls}${bridgeEntity}`.slice(0, 140);
+  }
+
+  function captureGameOverlayDiagnostics(firstMarker, firstPoint) {
+    const root = bridgeOverlayRoot;
+    if (root) {
+      gameOverlayDiag.rootConnected = root.isConnected === true;
+      gameOverlayDiag.rootChildNodes = root.childNodes?.length || 0;
+      try {
+        const rootStyle = getComputedStyle(root);
+        gameOverlayDiag.rootDisplay = rootStyle.display;
+        gameOverlayDiag.rootVisibility = rootStyle.visibility;
+        gameOverlayDiag.rootOpacity = rootStyle.opacity;
+        gameOverlayDiag.rootZIndex = rootStyle.zIndex;
+      } catch (_) {}
+    }
+
+    if (!firstMarker || !firstPoint) return;
+
+    let style = null;
+    let rect = null;
+    try { style = getComputedStyle(firstMarker); } catch (_) {}
+    try { rect = firstMarker.getBoundingClientRect(); } catch (_) {}
+    if (!rect) return;
+
+    const centerX = rect.left + (rect.width / 2);
+    const centerY = rect.top + (rect.height / 2);
+    const inViewport = centerX >= 0 && centerY >= 0 && centerX <= window.innerWidth && centerY <= window.innerHeight;
+    let hit = null;
+    let hitIsMarker = false;
+
+    if (inViewport && root) {
+      const rootPointerEvents = root.style.pointerEvents;
+      const markerPointerEvents = firstMarker.style.pointerEvents;
+      try {
+        // Markers normally use pointer-events:none, so temporarily enable hit-testing
+        // only for this synchronous probe. Styles are restored immediately.
+        root.style.pointerEvents = 'auto';
+        firstMarker.style.pointerEvents = 'auto';
+        hit = document.elementFromPoint(centerX, centerY);
+        hitIsMarker = hit === firstMarker || firstMarker.contains(hit);
+      } catch (_) {
+      } finally {
+        root.style.pointerEvents = rootPointerEvents;
+        firstMarker.style.pointerEvents = markerPointerEvents;
+      }
+    }
+
+    gameOverlayDiag.first = {
+      entity: firstMarker.dataset?.cbsGameEntity || '',
+      x: Number(firstPoint.x),
+      y: Number(firstPoint.y),
+      left: Number(rect.left),
+      top: Number(rect.top),
+      width: Number(rect.width),
+      height: Number(rect.height),
+      display: style?.display || '',
+      visibility: style?.visibility || '',
+      opacity: style?.opacity || '',
+      zIndex: style?.zIndex || '',
+      inViewport,
+      hit: describeOverlayHitElement(hit),
+      hitIsMarker
+    };
+  }
+
   function renderBridgeOverlaysNow() {
     if (!bridgeOverlayRoot || !bridgeOverlay) return;
     let projection = null;
@@ -133,21 +247,43 @@
     const wfmmVisibleSponsorIds = wfmmPresent ? getWfmmVisibleSponsoredIds() : new Set();
     const renderNow = Date.now();
     let nextSponsorStabilizeDelay = Infinity;
+    let firstGameMarker = null;
+    let firstGamePoint = null;
     stats.sponsorRingCandidates = 0;
     stats.sponsorRingDrawn = 0;
+    resetGameOverlayDiagnostics(wfmmPresent);
 
     for (const poi of poiByGuid.values()) {
       const lat = Number(poi.lat);
       const lng = Number(poi.lng);
-      if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+        gameOverlayDiag.projectionInvalid += 1;
+        continue;
+      }
       const point = makeOverlayPoint(projection, poi);
-      if (!point) continue;
+      if (!point) {
+        gameOverlayDiag.projectionInvalid += 1;
+        continue;
+      }
+      gameOverlayDiag.projectionValid += 1;
 
       // Bridge owns the colored game-entity markers only when WFMM is absent.
       // When WFMM is present, its renderer remains the single visual source.
       if (!wfmmPresent) {
+        gameOverlayDiag.createCalls += 1;
         const gameMarker = createGameEntityOverlay(poi, point);
-        if (gameMarker) bridgeOverlayRoot.appendChild(gameMarker);
+        if (gameMarker) {
+          bridgeOverlayRoot.appendChild(gameMarker);
+          gameOverlayDiag.created += 1;
+          const drawnEntity = gameMarker.dataset?.cbsGameEntity || '';
+          if (drawnEntity === 'POKESTOP') gameOverlayDiag.pokestop += 1;
+          else if (drawnEntity === 'GYM') gameOverlayDiag.gym += 1;
+          else if (drawnEntity === 'POWERSPOT') gameOverlayDiag.powerspot += 1;
+          if (!firstGameMarker) {
+            firstGameMarker = gameMarker;
+            firstGamePoint = point;
+          }
+        }
       }
 
       if (poi.sponsored === true) {
@@ -193,6 +329,10 @@
         }
       }
     }
+
+    captureGameOverlayDiagnostics(firstGameMarker, firstGamePoint);
+    const diagBox = document.getElementById('cbs-diagnostics');
+    if (diagBox && diagBox.style.display !== 'none') render();
 
     if (activeSponsorPopupGuid && !poiByGuid.has(activeSponsorPopupGuid)) {
       activeSponsorPopupGuid = '';
