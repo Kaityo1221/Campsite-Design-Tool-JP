@@ -9,7 +9,6 @@
   const STATUS_EVENT = 'campsite-bridge-pc:status';
   const RECEIVER_ORIGIN = 'https://kaityo1221.github.io';
   const RECEIVER_BASE = RECEIVER_ORIGIN + '/Campsite-Design-Tool-JP/bridge-receiver.html';
-  const SCHEMA_VERSION = '1.2';
   const READY_TIMEOUT_MS = 12000;
   const ACK_TIMEOUT_MS = 6500;
 
@@ -30,6 +29,14 @@
       throw new Error('Campsite Bridge POI分類Engineを読み込めませんでした。拡張機能を再読み込みしてください。');
     }
     return classifier;
+  }
+
+  function exporterApi() {
+    const exporter = window.CampsiteBridgeV1Exporter;
+    if (!exporter?.makePayload || !exporter?.exportPois) {
+      throw new Error('Campsite Bridge V1出力Adapterを読み込めませんでした。拡張機能を再読み込みしてください。');
+    }
+    return exporter;
   }
 
   function numberFrom(value) {
@@ -215,16 +222,10 @@
   }
 
   function makePayload(snapshot, handshakeId) {
-    return {
-      type: 'CAMPSITE_BRIDGE_POI_V1',
+    return exporterApi().makePayload(snapshot, handshakeId, {
       bridgeVersion: VERSION,
-      bridgePlatform: 'pc',
-      schemaVersion: SCHEMA_VERSION,
-      handshakeId,
-      selectedBounds: snapshot?.selectedBounds || null,
-      autoContinue: true,
-      pois: Array.isArray(snapshot?.pois) ? snapshot.pois : []
-    };
+      autoContinue: true
+    });
   }
 
   function handoffToReceiver(popup, payload, handshakeId) {
@@ -318,7 +319,8 @@
 
     try {
       const snapshot = await collect();
-      const pois = Array.isArray(snapshot?.pois) ? snapshot.pois : [];
+      const payload = makePayload(snapshot, handshakeId);
+      const pois = payload.pois;
       if (!pois.length) {
         try { popup.close(); } catch (_) {}
         throw new Error('POIを取得できませんでした。Wayfarer Mapを表示してからもう一度お試しください。');
@@ -330,7 +332,6 @@
         message: pois.length.toLocaleString('ja-JP') + '件をCampsiteへ送信しています…'
       });
 
-      const payload = makePayload(snapshot, handshakeId);
       const result = await handoffToReceiver(popup, payload, handshakeId);
 
       dispatchStatus({
