@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '1.0.0';
+  const VERSION = '1.1.0';
   const KNOWN_ENTITIES = new Set(['POKESTOP', 'GYM', 'POWERSPOT']);
   const ENTITY_PRIORITY = ['GYM', 'POKESTOP', 'POWERSPOT'];
 
@@ -44,27 +44,59 @@
 
   function normalizeGameObjects(raw) {
     const gmo = Array.isArray(raw?.gmo) ? raw.gmo : [];
-    return gmo
-      .filter(item => item && typeof item === 'object')
-      .map(item => ({
+    return gmo.map(item => {
+      if (!item || typeof item !== 'object') {
+        return {
+          entity: '',
+          rawEntity: '',
+          status: 'UNKNOWN',
+          gameBrand: '',
+          sponsored: null,
+          smr: null,
+          title: '',
+          malformed: true,
+          raw: null
+        };
+      }
+
+      const rawEntity = String(item.entity || '').trim();
+      return {
         entity: normalizeEntity(item.entity),
+        rawEntity,
         status: normalizeStatus(item.status),
         gameBrand: String(item.gameBrand || '').trim().toUpperCase(),
         sponsored: optionalBoolean(item.sponsored, item.isSponsored),
         smr: optionalBoolean(item.smr),
         title: String(item.title || item.name || '').trim(),
+        malformed: !rawEntity,
         raw: item
-      }))
-      .filter(item => KNOWN_ENTITIES.has(item.entity));
+      };
+    });
   }
 
   function classifyGameObject(gameObjects) {
-    const active = gameObjects.filter(item => item.status === 'ACTIVE');
+    const active = gameObjects.filter(item =>
+      item.status === 'ACTIVE' &&
+      KNOWN_ENTITIES.has(item.entity) &&
+      (item.gameBrand === '' || item.gameBrand === 'HOLOHOLO')
+    );
     for (const entity of ENTITY_PRIORITY) {
       const found = active.find(item => item.entity === entity);
       if (found) return found;
     }
     return null;
+  }
+
+  function sourceGameObjectMeta(raw, gameObjects) {
+    const hasGmoProperty = Object.prototype.hasOwnProperty.call(raw || {}, 'gmo');
+    const gmoIsArray = Array.isArray(raw?.gmo);
+    return {
+      gmoPresent: hasGmoProperty,
+      gmoIsArray,
+      itemCount: gmoIsArray ? raw.gmo.length : 0,
+      malformedCount: (hasGmoProperty && !gmoIsArray ? 1 : 0) + gameObjects.filter(item => item.malformed).length,
+      structureMalformed: hasGmoProperty && !gmoIsArray
+    };
   }
 
   function parsePoi(raw) {
@@ -80,12 +112,14 @@
 
     const gameObjects = normalizeGameObjects(raw);
     const primary = classifyGameObject(gameObjects);
+    const meta = sourceGameObjectMeta(raw, gameObjects);
     const title = String(
       raw.title || raw.name || raw.poiName || primary?.title || ''
     ).trim();
 
-    const classification = primary ? primary.entity : (gameObjects.length ? 'UNKNOWN' : 'NOT_IN_GAME');
-    const gameStatus = primary ? 'ACTIVE' : (gameObjects.some(item => item.status === 'INACTIVE') ? 'INACTIVE' : 'UNKNOWN');
+    const supportedGameObjects = gameObjects.filter(item => KNOWN_ENTITIES.has(item.entity));
+    const classification = primary ? primary.entity : (supportedGameObjects.length ? 'UNKNOWN' : 'NOT_IN_GAME');
+    const gameStatus = primary ? 'ACTIVE' : (supportedGameObjects.some(item => item.status === 'INACTIVE') ? 'INACTIVE' : 'UNKNOWN');
 
     return {
       ok: true,
@@ -109,10 +143,13 @@
         s2L14: String(raw.s2L14 || ''),
         s2L17: String(raw.s2L17 || ''),
         provenance: ['WAYFARER_PASSIVE'],
+        sourceGameObjectMeta: meta,
         sourceGameObjects: gameObjects.map(item => ({
           entity: item.entity,
+          rawEntity: item.rawEntity,
           status: item.status,
-          gameBrand: item.gameBrand
+          gameBrand: item.gameBrand,
+          malformed: item.malformed === true
         }))
       }
     };
