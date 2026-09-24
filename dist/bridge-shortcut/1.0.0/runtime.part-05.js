@@ -64,6 +64,64 @@
     return popup;
   }
 
+  function createGameEntityOverlay(poi, point) {
+    const entity = normalizeEntity(poi?.gameEntity);
+    const status = normalizeStatus(poi?.gameStatus);
+    if (!GAME_ENTITIES.has(entity)) return null;
+    if (entity !== 'POWERSPOT' && status !== 'ACTIVE') return null;
+    if (entity === 'POWERSPOT' && status !== 'ACTIVE' && !showInactivePowerSpots) return null;
+
+    const style = entity === 'POKESTOP'
+      ? { fill: '#22b8f0', border: '#1748b8' }
+      : entity === 'GYM'
+        ? { fill: '#f04463', border: '#b91c3c' }
+        : { fill: POWERSPOT_FILL, border: POWERSPOT_BORDER };
+
+    const marker = document.createElement('div');
+    marker.dataset.cbsGameEntity = entity;
+    const inactive = status === 'INACTIVE';
+    Object.assign(marker.style, {
+      position: 'absolute',
+      left: `${point.x}px`,
+      top: `${point.y}px`,
+      transform: 'translate(-50%,-50%)',
+      width: '19px',
+      height: '19px',
+      borderRadius: '50%',
+      boxSizing: 'border-box',
+      background: style.fill,
+      border: `3px solid ${style.border}`,
+      boxShadow: '0 0 0 1px rgba(255,255,255,.94),0 1px 4px rgba(0,0,0,.32)',
+      opacity: inactive ? '.38' : '1',
+      filter: inactive ? 'grayscale(1)' : 'none',
+      pointerEvents: 'none'
+    });
+    marker.setAttribute('aria-hidden', 'true');
+
+    if (inactive) {
+      const stop = document.createElement('span');
+      stop.textContent = '⏸';
+      Object.assign(stop.style, {
+        position: 'absolute',
+        right: '-7px',
+        top: '-7px',
+        fontSize: '8px',
+        lineHeight: '10px',
+        width: '11px',
+        height: '11px',
+        borderRadius: '999px',
+        textAlign: 'center',
+        background: 'rgba(15,23,42,.9)',
+        color: '#fff',
+        filter: 'none',
+        opacity: '1'
+      });
+      marker.appendChild(stop);
+    }
+
+    return marker;
+  }
+
   function renderBridgeOverlaysNow() {
     if (!bridgeOverlayRoot || !bridgeOverlay) return;
     let projection = null;
@@ -85,10 +143,11 @@
       const point = makeOverlayPoint(projection, poi);
       if (!point) continue;
 
-      if (!wfmmPresent && normalizeEntity(poi.gameEntity) === 'POWERSPOT') {
-        const status = normalizeStatus(poi.gameStatus);
-        const show = status === 'ACTIVE' || (status === 'INACTIVE' && showInactivePowerSpots);
-        if (show) bridgeOverlayRoot.appendChild(createPowerSpotOverlay(poi, point));
+      // Bridge owns the colored game-entity markers only when WFMM is absent.
+      // When WFMM is present, its renderer remains the single visual source.
+      if (!wfmmPresent) {
+        const gameMarker = createGameEntityOverlay(poi, point);
+        if (gameMarker) bridgeOverlayRoot.appendChild(gameMarker);
       }
 
       if (poi.sponsored === true) {
