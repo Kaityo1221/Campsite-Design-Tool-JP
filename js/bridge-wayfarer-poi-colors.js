@@ -1,13 +1,13 @@
 (() => {
   'use strict';
 
-  const VERSION = '1.0.0';
+  const VERSION = '1.1.0';
   const GCS_PATH = '/api/v1/vault/mapview/gcs';
   const ENTITIES = new Set(['POKESTOP', 'GYM', 'POWERSPOT']);
   const STYLE = Object.freeze({
-    POKESTOP: { fill: '#22b8f0', border: '#1738b8', size: 24 },
-    GYM: { fill: '#f04463', border: '#b91c3c', size: 24 },
-    POWERSPOT: { fill: '#de65d2', border: '#9b2aa7', size: 24 }
+    POKESTOP: { fill: '#22b8f0', border: '#1738b8', size: 24, glyph: '●', glyphSize: 8 },
+    GYM: { fill: '#f04463', border: '#b91c3c', size: 24, glyph: '▲', glyphSize: 10 },
+    POWERSPOT: { fill: '#de65d2', border: '#9b2aa7', size: 28, glyph: '◆', glyphSize: 10 }
   });
   const SYNC_MS = 900;
   const DRAW_IDLE_MS = 120;
@@ -54,7 +54,7 @@
 
   function normalizeBridgePoi(raw) {
     if (!raw || typeof raw !== 'object') return null;
-    const entity = normalizeEntity(raw.gameEntity || raw.entity || raw.type);
+    const entity = normalizeEntity(raw.poiKind || raw.gameEntity || raw.entity || raw.type);
     if (!ENTITIES.has(entity)) return null;
     const status = normalizeStatus(raw.gameStatus || raw.status);
     if (status === 'INACTIVE') return null;
@@ -96,7 +96,26 @@
     });
   }
 
+  function enginePoisFromGcsJson(root) {
+    const parser = window.CampsiteBridgePoiParser;
+    const classifier = window.CampsiteBridgePoiClassifier;
+    if (!parser?.parsePayload || !classifier?.run) return null;
+    try {
+      const parsed = parser.parsePayload(root);
+      if (!Number.isFinite(Number(parsed?.sourceCount)) || Number(parsed.sourceCount) <= 0) return null;
+      const result = classifier.run(parsed);
+      return (Array.isArray(result?.pois) ? result.pois : [])
+        .map(normalizeBridgePoi)
+        .filter(Boolean);
+    } catch (_) {
+      return null;
+    }
+  }
+
   function scanGcsJson(root) {
+    const enginePois = enginePoisFromGcsJson(root);
+    if (enginePois) return enginePois;
+
     const found = [];
     const stack = [root];
     const seen = new WeakSet();
@@ -206,6 +225,7 @@
     if (!style) return null;
     const marker = document.createElement('div');
     marker.dataset.campsiteBridgePoiColor = poi.gameEntity;
+    marker.dataset.campsiteBridgePoiKind = poi.gameEntity;
     Object.assign(marker.style, {
       position: 'absolute',
       left: `${point.x}px`,
@@ -219,8 +239,25 @@
       border: `3px solid ${style.border}`,
       boxShadow: '0 0 0 1px rgba(255,255,255,.92),0 2px 5px rgba(0,0,0,.34)',
       pointerEvents: 'none',
-      zIndex: '2147483646'
+      zIndex: '2147483646',
+      display: 'grid',
+      placeItems: 'center'
     });
+
+    const glyph = document.createElement('span');
+    glyph.textContent = style.glyph;
+    glyph.dataset.campsiteBridgePoiGlyph = poi.gameEntity;
+    Object.assign(glyph.style, {
+      display: 'block',
+      color: '#ffffff',
+      fontFamily: 'Arial,sans-serif',
+      fontSize: `${style.glyphSize}px`,
+      fontWeight: '900',
+      lineHeight: '1',
+      textShadow: '0 1px 2px rgba(0,0,0,.45)',
+      transform: poi.gameEntity === 'GYM' ? 'translateY(-1px)' : 'none'
+    });
+    marker.appendChild(glyph);
     marker.setAttribute('aria-hidden', 'true');
     return marker;
   }
@@ -384,7 +421,17 @@
     clear,
     refresh,
     isWfmmPresent,
-    getState: () => ({ count: pois.size, wfmmDetected: isWfmmPresent(), mapCaptured: Boolean(bridgeMap), overlayReady: Boolean(overlayRoot) })
+    getStyle(entity) {
+      const key = normalizeEntity(entity);
+      return STYLE[key] ? { ...STYLE[key] } : null;
+    },
+    getState: () => ({
+      count: pois.size,
+      wfmmDetected: isWfmmPresent(),
+      mapCaptured: Boolean(bridgeMap),
+      overlayReady: Boolean(overlayRoot),
+      visibleKinds: [...ENTITIES]
+    })
   });
 
   window.addEventListener('pagehide', () => {
