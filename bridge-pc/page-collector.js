@@ -31,6 +31,14 @@
     return classifier;
   }
 
+  function diagnosticsApi() {
+    const diagnostics = window.CampsiteBridgePoiDiagnostics;
+    if (!diagnostics?.build || !diagnostics?.summary) {
+      throw new Error('Campsite Bridge POI診断を読み込めませんでした。拡張機能を再読み込みしてください。');
+    }
+    return diagnostics;
+  }
+
   function exporterApi() {
     const exporter = window.CampsiteBridgeV1Exporter;
     if (!exporter?.makePayload || !exporter?.exportPois) {
@@ -135,6 +143,10 @@
     return classifyMapData(payload).bridgePois;
   }
 
+  function buildDiagnosticReport(parsed, classified) {
+    return diagnosticsApi().build(parsed, classified);
+  }
+
   function selectedBounds(bounds) {
     if (!bounds) return null;
     return {
@@ -171,12 +183,14 @@
     const payload = await response.json();
     const parsed = parseMapData(payload);
     const classified = classifierApi().run(parsed);
+    const diagnosticReport = buildDiagnosticReport(parsed, classified);
 
     return {
       pois: classified.bridgePois,
       enginePois: classified.pois,
       diagnostics: parsed.diagnostics,
       classificationDiagnostics: classified.classificationDiagnostics,
+      diagnosticReport,
       engineStats: classified.diagnostics,
       parserStats: {
         sourceCount: parsed.sourceCount,
@@ -300,6 +314,7 @@
   async function startBridge() {
     const handshakeId = createId('pc');
     let popup = null;
+    let diagnosticReport = null;
 
     try {
       popup = window.open('about:blank', 'CampsiteBridgeReceiver_' + handshakeId, 'popup,width=560,height=820');
@@ -315,10 +330,11 @@
     }
 
     writePreparingPage(popup);
-    dispatchStatus({ state: 'busy', message: 'Wayfarer MapからPOIを取得しています…' });
+    dispatchStatus({ state: 'busy', message: 'Wayfarer MapからPOIを取得しています…', diagnosticReport: null });
 
     try {
       const snapshot = await collect();
+      diagnosticReport = snapshot.diagnosticReport;
       const payload = makePayload(snapshot, handshakeId);
       const pois = payload.pois;
       if (!pois.length) {
@@ -329,6 +345,7 @@
       dispatchStatus({
         state: 'busy',
         count: pois.length,
+        diagnosticReport,
         message: pois.length.toLocaleString('ja-JP') + '件をCampsiteへ送信しています…'
       });
 
@@ -338,11 +355,13 @@
         state: 'success',
         count: result.count,
         sourceCount: result.sourceCount,
+        diagnosticReport,
         message: result.count.toLocaleString('ja-JP') + '件をCampsiteへ渡しました。Wayfarerはこのまま使えます。'
       });
     } catch (error) {
       dispatchStatus({
         state: 'error',
+        diagnosticReport,
         message: String(error?.message || error || 'Bridge送信に失敗しました。')
       });
     }
@@ -381,6 +400,7 @@
     normalizeMapData,
     parseMapData,
     classifyMapData,
+    buildDiagnosticReport,
     makePayload,
     collect,
     startBridge
