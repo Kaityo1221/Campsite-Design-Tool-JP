@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 
 const collector = fs.readFileSync('bridge-pc/page-collector.js', 'utf8');
+const exporter = fs.readFileSync('bridge-pc/bridge-v1-exporter.js', 'utf8');
 const receiver = fs.readFileSync('bridge-receiver.html', 'utf8');
 const gateway = fs.readFileSync('bridge-gateway.html', 'utf8');
 const selection = fs.readFileSync('js/bridge-selection.js', 'utf8');
@@ -22,8 +23,12 @@ function storage() {
 }
 
 assert.ok(
-  collector.includes("bridgePlatform: 'pc'"),
-  'PC Bridge payload must declare bridgePlatform=pc'
+  exporter.includes("const PLATFORM = 'pc'"),
+  'Bridge V1 exporter must declare bridgePlatform=pc'
+);
+assert.ok(
+  collector.includes('CampsiteBridgeV1Exporter'),
+  'PC Collector must route payload creation through the Bridge V1 exporter'
 );
 assert.ok(
   receiver.includes("bridgePlatform: String(data.bridgePlatform || '').trim().toLowerCase()"),
