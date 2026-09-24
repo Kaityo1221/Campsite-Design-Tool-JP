@@ -83,6 +83,19 @@
     return panel;
   }
 
+  function escapeDiagText(value) {
+    return String(value ?? '')
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;');
+  }
+
+  function formatDiagNumber(value) {
+    const n = Number(value);
+    return Number.isFinite(n) ? Math.round(n * 10) / 10 : '-';
+  }
+
   function render() {
     const counts = getCounts();
     const mini = document.getElementById('cbs-mini-count');
@@ -134,6 +147,7 @@
     }
 
     if (diag && diag.style.display !== 'none') {
+      const first = gameOverlayDiag.first;
       diag.innerHTML = `
         <div>XHR ${stats.xhr} / GCS ${stats.gcs}</div>
         <div>受信POI ${stats.receivedPoi} / ユニーク ${counts.total}</div>
@@ -141,6 +155,22 @@
         <div>Sponsor req ${stats.sponsorMapRequests} / detail ${stats.sponsorDetailRequests} / error ${stats.sponsorErrors}</div>
         <div>Map ${bridgeMap ? 'captured' : 'waiting'} / Overlay ${bridgeOverlayRoot ? 'ready' : 'waiting'} / WFMM ${isWfmmPresent() ? 'yes' : 'no'}</div>
         <div>Ring ${stats.sponsorRingDrawn}/${stats.sponsorRingCandidates} / WFMM Sponsor records ${stats.wfmmSponsoredRecords} / INACTIVE ${showInactivePowerSpots ? 'ON' : 'OFF'}</div>
+        <div style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.12);font-weight:800">POI color overlay TEMP DIAG</div>
+        <div>Create calls ${gameOverlayDiag.createCalls} / created ${gameOverlayDiag.created}</div>
+        <div>POKESTOP ${gameOverlayDiag.pokestop} / GYM ${gameOverlayDiag.gym} / POWERSPOT ${gameOverlayDiag.powerspot}</div>
+        <div>Projection valid ${gameOverlayDiag.projectionValid} / invalid ${gameOverlayDiag.projectionInvalid}</div>
+        <div>Root connected ${gameOverlayDiag.rootConnected ? 'yes' : 'no'} / childNodes ${gameOverlayDiag.rootChildNodes}</div>
+        <div>Root display ${escapeDiagText(gameOverlayDiag.rootDisplay || '-')} / visibility ${escapeDiagText(gameOverlayDiag.rootVisibility || '-')} / opacity ${escapeDiagText(gameOverlayDiag.rootOpacity || '-')}</div>
+        <div>Root z-index ${escapeDiagText(gameOverlayDiag.rootZIndex || '-')}</div>
+        ${first ? `
+          <div style="margin-top:4px;font-weight:800">First marker ${escapeDiagText(first.entity || '-')}</div>
+          <div>x ${formatDiagNumber(first.x)} / y ${formatDiagNumber(first.y)} / viewport ${first.inViewport ? 'yes' : 'no'}</div>
+          <div>rect ${formatDiagNumber(first.left)},${formatDiagNumber(first.top)} / ${formatDiagNumber(first.width)}×${formatDiagNumber(first.height)}</div>
+          <div>display ${escapeDiagText(first.display || '-')} / visibility ${escapeDiagText(first.visibility || '-')} / opacity ${escapeDiagText(first.opacity || '-')}</div>
+          <div>marker z-index ${escapeDiagText(first.zIndex || '-')}</div>
+          <div>elementFromPoint ${escapeDiagText(first.hit || 'none')}</div>
+          <div>Hit is Bridge marker ${first.hitIsMarker ? 'YES' : 'NO'}</div>
+        ` : '<div style="margin-top:4px">First marker none</div>'}
       `;
     }
   }
