@@ -42,6 +42,12 @@ function renderJpGuide(){jpRefreshReviews();const box=ensureJpGuide(),adds=jpAdd
     const drawNeedle="function drawAll(){layerDefs.forEach(([k])=>groups[k].clearLayers());polygonGroup.clearLayers();records.forEach(drawRecord);polygons.forEach(p=>{if(!p.deleted)p.layerObj=L.polygon(p.points,{pane:'polygon',color:'#5a8b5f',weight:3,fillColor:'#6ea979',fillOpacity:.09,interactive:false}).addTo(polygonGroup)});if(polygonVisible){if(!map.hasLayer(polygonGroup))polygonGroup.addTo(map)}else if(map.hasLayer(polygonGroup))map.removeLayer(polygonGroup);renderRecordCircles()}";
     if(html.includes(drawNeedle))html=html.replace(drawNeedle,drawNeedle.slice(0,-1)+";renderJpGuide()}");
 
+    // The legacy exporter always writes the canonical 50m folder once. The
+    // current circle-layer UI also keeps 50 in circleExtras, so exclude only
+    // that duplicate during export while preserving 50/40/30 map visibility.
+    const circleExportNeedle="appendDistanceFolder(xml,doc,50);circleExtras.slice().sort((a,b)=>b-a).forEach(radius=>appendDistanceFolder(xml,doc,radius));";
+    const circleExportReplacement="appendDistanceFolder(xml,doc,50);circleExtras.slice().filter(radius=>Number(radius)!==50).sort((a,b)=>b-a).forEach(radius=>appendDistanceFolder(xml,doc,radius));";
+    if(html.includes(circleExportNeedle))html=html.replace(circleExportNeedle,circleExportReplacement);
 
     // iPhone Safari can emit pointerup/touchend/click for one tap. Keep the coordinate view singleton.
     const coordsNeedle="function cmOpenCoords(){cmCloseSaveMenu();";
