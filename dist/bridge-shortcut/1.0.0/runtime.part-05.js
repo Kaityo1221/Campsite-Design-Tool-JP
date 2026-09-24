@@ -187,41 +187,69 @@
       } catch (_) {}
     }
 
-    if (!firstMarker || !firstPoint) return;
+    if (!firstMarker || !root) return;
 
-    let style = null;
-    let rect = null;
-    try { style = getComputedStyle(firstMarker); } catch (_) {}
-    try { rect = firstMarker.getBoundingClientRect(); } catch (_) {}
+    const getRect = marker => {
+      try { return marker.getBoundingClientRect(); } catch (_) { return null; }
+    };
+    const isRectInViewport = rect => {
+      if (!rect) return false;
+      const centerX = rect.left + (rect.width / 2);
+      const centerY = rect.top + (rect.height / 2);
+      return centerX >= 0 && centerY >= 0 && centerX <= window.innerWidth && centerY <= window.innerHeight;
+    };
+
+    let probeMarker = firstMarker;
+    let probePoint = firstPoint;
+    let rect = getRect(probeMarker);
+
+    // POIs are accumulated while panning, so insertion order can point at an old,
+    // off-screen marker. Prefer a currently visible marker so one screenshot is enough.
+    if (!isRectInViewport(rect)) {
+      for (const candidate of root.querySelectorAll('[data-cbs-game-entity]')) {
+        const candidateRect = getRect(candidate);
+        if (!isRectInViewport(candidateRect)) continue;
+        probeMarker = candidate;
+        probePoint = {
+          x: Number.parseFloat(candidate.style.left),
+          y: Number.parseFloat(candidate.style.top)
+        };
+        rect = candidateRect;
+        break;
+      }
+    }
+
     if (!rect) return;
 
+    let style = null;
+    try { style = getComputedStyle(probeMarker); } catch (_) {}
     const centerX = rect.left + (rect.width / 2);
     const centerY = rect.top + (rect.height / 2);
-    const inViewport = centerX >= 0 && centerY >= 0 && centerX <= window.innerWidth && centerY <= window.innerHeight;
+    const inViewport = isRectInViewport(rect);
     let hit = null;
     let hitIsMarker = false;
 
-    if (inViewport && root) {
+    if (inViewport) {
       const rootPointerEvents = root.style.pointerEvents;
-      const markerPointerEvents = firstMarker.style.pointerEvents;
+      const markerPointerEvents = probeMarker.style.pointerEvents;
       try {
         // Markers normally use pointer-events:none, so temporarily enable hit-testing
         // only for this synchronous probe. Styles are restored immediately.
         root.style.pointerEvents = 'auto';
-        firstMarker.style.pointerEvents = 'auto';
+        probeMarker.style.pointerEvents = 'auto';
         hit = document.elementFromPoint(centerX, centerY);
-        hitIsMarker = hit === firstMarker || firstMarker.contains(hit);
+        hitIsMarker = hit === probeMarker || probeMarker.contains(hit);
       } catch (_) {
       } finally {
         root.style.pointerEvents = rootPointerEvents;
-        firstMarker.style.pointerEvents = markerPointerEvents;
+        probeMarker.style.pointerEvents = markerPointerEvents;
       }
     }
 
     gameOverlayDiag.first = {
-      entity: firstMarker.dataset?.cbsGameEntity || '',
-      x: Number(firstPoint.x),
-      y: Number(firstPoint.y),
+      entity: probeMarker.dataset?.cbsGameEntity || '',
+      x: Number(probePoint?.x),
+      y: Number(probePoint?.y),
       left: Number(rect.left),
       top: Number(rect.top),
       width: Number(rect.width),
