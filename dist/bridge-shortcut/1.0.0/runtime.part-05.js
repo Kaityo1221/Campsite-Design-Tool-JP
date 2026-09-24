@@ -68,8 +68,7 @@
     const entity = normalizeEntity(poi?.gameEntity);
     const status = normalizeStatus(poi?.gameStatus);
     if (!GAME_ENTITIES.has(entity)) return null;
-    if (entity !== 'POWERSPOT' && status !== 'ACTIVE') return null;
-    if (entity === 'POWERSPOT' && status !== 'ACTIVE' && !showInactivePowerSpots) return null;
+    if (entity === 'POWERSPOT' && status === 'INACTIVE' && !showInactivePowerSpots) return null;
 
     const style = entity === 'POKESTOP'
       ? { fill: '#22b8f0', border: '#1748b8' }
@@ -79,7 +78,7 @@
 
     const marker = document.createElement('div');
     marker.dataset.cbsGameEntity = entity;
-    const inactive = status === 'INACTIVE';
+    const inactive = entity === 'POWERSPOT' && status === 'INACTIVE';
     Object.assign(marker.style, {
       position: 'absolute',
       left: `${point.x}px`,
