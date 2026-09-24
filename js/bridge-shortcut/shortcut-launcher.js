@@ -1,7 +1,7 @@
 (async () => {
   'use strict';
 
-  const LAUNCHER_VERSION = '1.1.0';
+  const LAUNCHER_VERSION = '1.2.0';
   const RUNTIME_URL = 'https://kaityo1221.github.io/Campsite-Design-Tool-JP/js/bridge-shortcut/campsite-bridge-shortcut-runtime.js';
   const WAYFARER_HOST = /(^|\.)wayfarer\.(nianticlabs\.com|scopely\.com)$/i;
   const PANEL_ID = 'campsite-bridge-shortcut-panel';
@@ -10,60 +10,133 @@
     try { completion(value); } catch (_) {}
   };
 
-  const bridgeStarted = () => Boolean(
-    document.getElementById(PANEL_ID) ||
-    window.CampsiteBridgeShortcut
-  );
+  const formatError = error => {
+    if (!error) return '';
+    const name = String(error.name || 'Error');
+    const message = String(error.message || error);
+    const stack = String(error.stack || '').trim();
+    return stack ? `${name}: ${message}\n${stack}` : `${name}: ${message}`;
+  };
 
-  async function runRuntime(code) {
-    let lastError = null;
+  const bridgeState = () => ({
+    panel: Boolean(document.getElementById(PANEL_ID)),
+    api: Boolean(window.CampsiteBridgeShortcut),
+    installedFlag: Boolean(window.__campsiteBridgeShortcutProdInstalled)
+  });
 
-    // Safari Shortcuts already executes this launcher as page JavaScript.
-    // Execute the downloaded runtime in that same context first. Creating an
-    // inline <script> can be silently rejected by Wayfarer's CSP on iPhone.
+  const bridgeStarted = () => {
+    const state = bridgeState();
+    return state.panel || state.api;
+  };
+
+  function runCapabilityTests(report) {
     try {
-      eval(`${code}\n//# sourceURL=campsite-bridge-shortcut-runtime.js`);
+      delete window.__bridgeEvalTest;
+      eval('window.__bridgeEvalTest = 123;');
+      report.eval = window.__bridgeEvalTest === 123 ? 'PASS' : `FAIL value=${String(window.__bridgeEvalTest)}`;
     } catch (error) {
-      lastError = error;
-      console.warn('[Campsite Bridge Shortcut Launcher] direct eval failed', error);
+      report.eval = `FAIL ${formatError(error)}`;
     }
-    await Promise.resolve();
-    if (bridgeStarted()) return 'eval';
 
-    // Compatibility fallback for browsers where direct eval is unavailable.
     try {
-      const runner = new Function(`${code}\n//# sourceURL=campsite-bridge-shortcut-runtime.js`);
-      runner.call(window);
+      delete window.__bridgeFunctionTest;
+      new Function('window.__bridgeFunctionTest = 456;')();
+      report.function = window.__bridgeFunctionTest === 456 ? 'PASS' : `FAIL value=${String(window.__bridgeFunctionTest)}`;
     } catch (error) {
-      lastError = error;
-      console.warn('[Campsite Bridge Shortcut Launcher] Function fallback failed', error);
+      report.function = `FAIL ${formatError(error)}`;
     }
-    await Promise.resolve();
-    if (bridgeStarted()) return 'function';
 
-    // Final legacy fallback. Verify the UI actually started because CSP may
-    // accept appendChild() while refusing to execute the inline script.
     try {
+      document.body.dataset.bridgeRuntimeTest = 'ok';
+      const div = document.createElement('div');
+      div.id = '__bridgeDomTest';
+      div.textContent = 'BRIDGE DOM TEST';
+      div.style.cssText = 'position:fixed;left:8px;top:8px;z-index:2147483647;padding:4px 7px;background:#111;color:#fff;font:11px sans-serif;border-radius:6px;';
+      document.body.appendChild(div);
+      const ok = document.body.dataset.bridgeRuntimeTest === 'ok' && document.getElementById('__bridgeDomTest') === div;
+      report.dom = ok ? 'PASS' : 'FAIL';
+      div.remove();
+      delete document.body.dataset.bridgeRuntimeTest;
+    } catch (error) {
+      report.dom = `FAIL ${formatError(error)}`;
+    }
+
+    try {
+      delete window.__bridgeInlineScriptTest;
       const script = document.createElement('script');
-      script.dataset.campsiteBridgeShortcutLauncher = '1';
-      script.textContent = `${code}\n//# sourceURL=campsite-bridge-shortcut-runtime.js`;
+      script.textContent = 'window.__bridgeInlineScriptTest = 789;';
       (document.head || document.documentElement).appendChild(script);
       script.remove();
+      report.inlineScript = window.__bridgeInlineScriptTest === 789 ? 'PASS' : 'BLOCKED/NO EXECUTION';
     } catch (error) {
-      lastError = error;
-      console.warn('[Campsite Bridge Shortcut Launcher] script fallback failed', error);
+      report.inlineScript = `FAIL ${formatError(error)}`;
     }
-    await new Promise(resolve => setTimeout(resolve, 60));
-    if (bridgeStarted()) return 'script';
 
-    const detail = String(lastError?.message || lastError || '').trim();
-    throw new Error(detail ? `runtime loaded but Bridge UI did not start: ${detail}` : 'runtime loaded but Bridge UI did not start');
+    try { delete window.__bridgeEvalTest; } catch (_) {}
+    try { delete window.__bridgeFunctionTest; } catch (_) {}
+    try { delete window.__bridgeInlineScriptTest; } catch (_) {}
   }
+
+  async function runRuntimeOnce(code, report) {
+    const evalOk = report.eval === 'PASS';
+    const functionOk = report.function === 'PASS';
+    const inlineOk = report.inlineScript === 'PASS';
+
+    let mode = '';
+    try {
+      if (evalOk) {
+        mode = 'eval';
+        eval(`${code}\n//# sourceURL=campsite-bridge-shortcut-runtime.js`);
+      } else if (functionOk) {
+        mode = 'function';
+        const runner = new Function(`${code}\n//# sourceURL=campsite-bridge-shortcut-runtime.js`);
+        runner.call(window);
+      } else if (inlineOk) {
+        mode = 'inline-script';
+        const script = document.createElement('script');
+        script.dataset.campsiteBridgeShortcutLauncher = '1';
+        script.textContent = `${code}\n//# sourceURL=campsite-bridge-shortcut-runtime.js`;
+        (document.head || document.documentElement).appendChild(script);
+        script.remove();
+      } else {
+        report.runtime = 'SKIP: no string-execution method passed';
+        return;
+      }
+
+      await Promise.resolve();
+      await new Promise(resolve => setTimeout(resolve, 120));
+
+      const state = bridgeState();
+      report.runtimeMode = mode;
+      report.runtime = bridgeStarted() ? 'PASS: Bridge UI/API started' : 'NO UI/API after execution';
+      report.runtimeState = `panel=${state.panel} api=${state.api} installedFlag=${state.installedFlag}`;
+    } catch (error) {
+      const state = bridgeState();
+      report.runtimeMode = mode || 'none';
+      report.runtime = `THREW ${formatError(error)}`;
+      report.runtimeState = `panel=${state.panel} api=${state.api} installedFlag=${state.installedFlag}`;
+    }
+  }
+
+  const reportText = report => [
+    `Campsite Bridge Launcher ${LAUNCHER_VERSION}`,
+    `host: ${location.hostname}`,
+    `fetch: ${report.fetch || '-'}`,
+    `eval: ${report.eval || '-'}`,
+    `Function: ${report.function || '-'}`,
+    `DOM: ${report.dom || '-'}`,
+    `inline script: ${report.inlineScript || '-'}`,
+    `runtime mode: ${report.runtimeMode || '-'}`,
+    `runtime: ${report.runtime || '-'}`,
+    `state: ${report.runtimeState || '-'}`
+  ].join('\n');
+
+  const report = {};
 
   try {
     if (!WAYFARER_HOST.test(location.hostname)) {
       alert('SafariでWayfarerを開いてからCampsite Bridgeを実行してください。');
-      finish({ ok: false, reason: 'not-wayfarer', launcherVersion: LAUNCHER_VERSION });
+      finish(`Campsite Bridge Launcher ${LAUNCHER_VERSION}\nnot-wayfarer: ${location.hostname}`);
       return;
     }
 
@@ -74,12 +147,13 @@
     if (!code.includes("const BRIDGE_VERSION = '")) {
       throw new Error('runtime validation failed');
     }
+    report.fetch = `PASS size=${code.length}`;
 
-    const mode = await runRuntime(code);
-    finish({ ok: true, launcherVersion: LAUNCHER_VERSION, mode });
+    runCapabilityTests(report);
+    await runRuntimeOnce(code, report);
+    finish(reportText(report));
   } catch (error) {
-    console.error('[Campsite Bridge Shortcut Launcher]', error);
-    alert(`Campsite Bridgeを起動できませんでした。\n${error?.message || error}`);
-    finish({ ok: false, launcherVersion: LAUNCHER_VERSION, reason: String(error?.message || error) });
+    report.runtime = `LAUNCHER ERROR ${formatError(error)}`;
+    finish(reportText(report));
   }
 })();
