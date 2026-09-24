@@ -83,17 +83,18 @@
       position: 'absolute',
       left: `${point.x}px`,
       top: `${point.y}px`,
-      transform: 'translate(-50%,-50%)',
-      width: '19px',
-      height: '19px',
+      transform: 'translate(-50%,-50%) translateZ(0)',
+      width: '24px',
+      height: '24px',
       borderRadius: '50%',
       boxSizing: 'border-box',
       background: style.fill,
       border: `3px solid ${style.border}`,
-      boxShadow: '0 0 0 1px rgba(255,255,255,.94),0 1px 4px rgba(0,0,0,.32)',
+      boxShadow: '0 0 0 1px rgba(255,255,255,.94),0 2px 5px rgba(0,0,0,.36)',
       opacity: inactive ? '.38' : '1',
       filter: inactive ? 'grayscale(1)' : 'none',
-      pointerEvents: 'none'
+      pointerEvents: 'none',
+      zIndex: '2147483646'
     });
     marker.setAttribute('aria-hidden', 'true');
 
@@ -250,8 +251,10 @@
         top: '0',
         width: '0',
         height: '0',
+        overflow: 'visible',
+        isolation: 'isolate',
         pointerEvents: 'none',
-        zIndex: '2147483000'
+        zIndex: '2147483646'
       });
       pane.appendChild(root);
       bridgeOverlayRoot = root;
