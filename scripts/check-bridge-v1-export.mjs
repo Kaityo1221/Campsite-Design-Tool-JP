@@ -75,7 +75,7 @@ assert.equal(payload.schemaVersion, '1.2');
 assert.equal(payload.handshakeId, 'pc-test-handshake');
 assert.equal(payload.autoContinue, true);
 assert.equal(payload.pois.length, 3);
-assert.deepEqual(payload.pois.map(p => p.gameEntity), ['POKESTOP', 'GYM', 'POWERSPOT']);
+assert.deepEqual([...payload.pois].map(p => p.gameEntity), ['POKESTOP', 'GYM', 'POWERSPOT']);
 assert.ok(payload.pois.every(p => p.gameStatus === 'ACTIVE'));
 assert.ok(payload.pois.every(p => p.guid));
 assert.equal(payload.pois.some(p => p.guid === 'out-1'), false);
@@ -96,7 +96,8 @@ for (const poi of payload.pois) {
   assert.deepEqual(Object.keys(poi), allowedPoiKeys);
 }
 
-assert.deepEqual(payload.selectedBounds, {
+const normalizedBounds = JSON.parse(JSON.stringify(payload.selectedBounds));
+assert.deepEqual(normalizedBounds, {
   center: { lat: 35, lng: 139 },
   zoom: 16,
   sw: { lat: 34.9, lng: 138.9 },
