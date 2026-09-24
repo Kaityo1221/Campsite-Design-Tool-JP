@@ -1,262 +1,368 @@
 # Campsite Bridge POI Engine Project
 
-## 目的
+## 0. 最上位要件
 
-WFMM本体を必須にせず、Campsite Bridge単体でWayfarerのPOIを取得・判定し、Pokémon GO上の種別に応じて地図上へ正確に色分け表示する。
+このプロジェクトは **Campsite Bridge単体で完結する**。
 
-対象表示:
+WFMMは必須依存にしない。WFMMのコード・API・内部状態が無くても、Bridgeだけで次を行えることを完成条件とする。
+
+- WayfarerからPOI情報を取得
+- Pokémon GO上の種別を判定
+- PokéStop / Gym / Power Spotを色分け表示
+- Not in Game / inactiveを非表示
+- 地図のpan / zoom / pinch / 慣性移動へ追従
+- POIを累積記録
+- Campsiteへ送信
+
+一方、既にWFMMを利用しているユーザーの環境は壊さない。
+
+**WFMMを検知した場合は、WFMMの表示を優先してBridge独自の色描画だけ停止する。Bridgeの記録・分類・送信はWayfarerから独立して継続する。**
+
+Bridge CoreはWFMM APIへ依存しない。
+
+---
+
+## 1. 目的
+
+WFMM全体を再現するのではなく、Campsiteに必要な次の技術だけをBridge側で独自実装する。
+
+1. Wayfarer POI取得
+2. Pokémon GO POI判定
+3. 地図座標への正確な色描画
+
+表示仕様:
 
 - PokéStop: 青
 - Gym: 赤
 - Power Spot: 紫
 - Not in Game / inactive: 非表示
 
-Bridgeの本来機能であるPOI自動記録・重複排除・Campsite送信は継続する。
+---
 
-## プロジェクト方針
+## 2. 設計原則
 
-WFMMのコードを直接コピーして依存するのではなく、必要な振る舞いをBridge側で独自実装する。
+### A. Bridge単体が本体
 
-特に重要なのは次の3層。
+`WFMMなし` を標準テストケースとする。
 
-1. Wayfarer GCS取得
-2. Pokémon GO entity判定
-3. Google Map座標系へのネイティブ描画
+WFMMが無い状態で全機能が成立しなければMVP完成とはしない。
 
-既存WFMMがある環境ではWFMMを優先し、Bridge独自描画は競合させない。
+### B. WFMMは「互換対象」であって「依存先」ではない
 
-## 現時点でできていること
+既存WFMMを検知したら:
 
-- iPhone SafariでWayfarer GCS URLをPerformance Resource Timingから取得できる
-- GCS replayでPOIを累積取得できる
-- GUIDによる重複排除ができる
-- PokéStop / Gym / Power Spotの分類ができる
-- BridgeからCampsiteへ送信する既存経路がある
-- PC/Android向けBridgeコードにもWFMM優先判定がある
+- WFMMのPOI表示をそのまま残す
+- Bridge独自の色丸だけ描画しない
+- BridgeはWayfarer通信から独自にPOIを記録する
+- Bridge classifierは通常通り動く
+- Campsite送信は通常通り動く
+- WFMM設定・DOM・キャッシュを書き換えない
+- WFMMをアンインストール・無効化させない
 
-## 今回やめるもの
+### C. 二重描画禁止
 
-iPhoneで使用中の、画面固定の擬似POI色丸レイヤーを最終方式にはしない。
+同じPOIにWFMMとBridgeの色表示が重なる状態を禁止する。
 
-理由:
+### D. WFMMコードをコピーしない
 
-- パンに対して後追いが出る
-- ピンチズーム時に縮尺同期が難しい
-- Wayfarerのsample表示切替で古い丸が残りやすい
-- 地図本体と別レイヤーなので慣性移動に弱い
+WFMMが実現している「結果」を参考にし、Bridge側で独立実装する。
 
-## 最終アーキテクチャ
+---
+
+## 3. モード
+
+### Standalone Mode
+
+条件: WFMMなし
 
 ```text
 Wayfarer
   ↓
 GCS Observer / Replay
   ↓
-POI Parser
+Bridge POI Parser
   ↓
 Pokémon GO Classifier
-  ├─ POKESTOP
-  ├─ GYM
-  ├─ POWERSPOT
-  └─ HIDDEN
   ↓
 Bridge POI Store
-  ├─ GUID dedupe
-  ├─ cumulative session store
-  └─ latest viewport store
   ↓
-Native Map Renderer
-  ├─ Google Maps OverlayView / native map pane
-  ├─ pan sync
-  ├─ zoom sync
-  └─ viewport clipping
+Bridge Native Map Renderer
   ↓
 Bridge UI / Campsite Sender
 ```
 
-## WFMM共存ルール
+Bridgeだけで完結する。
 
-### WFMMあり
+### WFMM Compatibility Mode
 
-- 既存WFMMを最優先
-- WFMMのMapインスタンスを利用できる場合は利用
-- Bridge独自POI色丸は描画しない
-- Bridgeは記録・送信を担当
-- WFMM設定には触らない
+条件: WFMM検知
 
-### WFMMなし
+```text
+Wayfarer
+  ├─ WFMM → WFMMの地図表示
+  └─ Bridge → 記録 / 分類 / Campsite送信
+```
 
-- Bridge POI Engineが分類と描画を担当
-- Userscripts/Tampermonkeyを必須にしない
+Bridge Native Map Rendererだけ停止する。
 
-### 二重起動防止
+Bridgeのデータ取得処理はWFMMに依存しない。
 
-検出対象:
+---
+
+## 4. WFMM検知
+
+複数シグナルで判定する。
+
+候補:
 
 - `window.WFMM`
 - WFMM固有DOM
-- WFMM map API
+- WFMM固有class / id
 
-## プラットフォーム
+検知は「描画抑止」のためだけに使用する。
+
+WFMMのMapインスタンスや内部APIをBridge Coreの必須経路にはしない。
+
+起動直後の読み込み競合対策として短時間監視を行い、途中でWFMMが現れた場合もBridge独自描画を停止する。
+
+---
+
+## 5. POI Engine内部構成
+
+```text
+bridge-poi-engine/
+├ classifier
+│  ├ POKESTOP
+│  ├ GYM
+│  ├ POWERSPOT
+│  └ HIDDEN
+├ gcs-parser
+├ store
+│  ├ cumulative
+│  └ latestViewport
+├ wfmm-detector
+├ map-adapter
+├ renderer
+└ diagnostics
+```
+
+### cumulative store
+
+Resetまで取得済みPOIを保持する。
+GUIDで重複排除する。
+Campsite送信はこちらを使用する。
+
+### latestViewport store
+
+現在表示範囲の描画専用。
+古いviewportのPOIを残さない。
+
+この2つを混ぜない。
+
+---
+
+## 6. 現在すでに解決している部分
+
+- iPhone SafariでWayfarer GCS URLをPerformance Resource Timingから検出
+- GCS replay
+- POI累積取得
+- GUID重複排除
+- PokéStop / Gym / Power Spot分類
+- Campsite送信経路
+- WFMM存在判定の基礎
+
+最大の未解決点は **iPhone SafariでMap本体 / projectionを安定取得し、画面固定ではない地図ネイティブ描画にすること**。
+
+---
+
+## 7. 廃止する最終方式
+
+現在のiPhone画面固定POIレイヤーは、検証用途を除き最終方式にはしない。
+
+理由:
+
+- pan後追い
+- pinch同期の難しさ
+- 慣性移動
+- sample表示切替
+- stale marker
+
+最終版は地図座標系へ直接載せる。
+
+---
+
+## 8. プラットフォーム
 
 ### iPhone
 
 入口: Campsite Bridge Shortcut
 
-- ShortcutからBridge runtime起動
-- GCS取得は既存のPerformance Resource Timing方式を継続
-- 最重要課題はGoogle Map本体またはOverlayView projectionの安定取得
-- ネイティブMap Rendererが取れない場合のみ記録専用へフォールバック
+必須:
+
+- Bridge単体起動
+- GCS取得
+- classifier
+- native map renderer
+- WFMM検知時は独自描画停止
 
 ### Android
 
 入口: 無料Bridge配布
 
-- Firefox系Bridge拡張または既存Android Bridge
-- 既存WFMMがあれば優先
-- WFMMなしでもBridge POI Engineで描画
+必須:
+
+- Bridge単体で分類・色描画
+- 既存WFMMが同じブラウザで動いていれば独自描画停止
+- 記録・送信は継続
 
 ### PC
 
 入口: Campsite Bridge拡張
 
-- Chrome/Edge/Firefox系
-- Google Map capture + OverlayViewで描画
-- 最も先にネイティブ描画の基準実装を完成させる
+必須:
 
-## 1週間MVP工程
+- Bridge単体で分類・色描画
+- Chrome / Edgeを基準実装
+- WFMMありでも二重描画なし
 
-### Day 1: Core整理
+---
 
-- classifierを共通モジュール化
-- POI Storeを `cumulative` と `latest viewport` に分離
-- WFMM detectionを共通化
-- 既存iPhone擬似描画を切り離せる構造にする
+## 9. 1週間MVP工程
 
-完成条件:
+### Day 1: Core分離
 
-- 同じGCS fixtureをiPhone/Android/PC共通classifierへ通して同じ結果になる
+- GCS parser共通化
+- classifier共通化
+- `cumulative` / `latestViewport` store分離
+- WFMM detector共通化
+- fixtureテスト
+
+完了条件:
+
+- 同じGCS fixtureを3平台で同じ分類結果へ変換
+- WFMM無しでもclassifierが完全動作
 
 ### Day 2: PC Native Renderer
 
 - Google Map instance取得
-- OverlayView projection接続
-- PokéStop/Gym/Power Spotを地図pane上へ描画
-- pan/zoom追従
+- OverlayView / projection接続
+- 青 / 赤 / 紫描画
+- viewport clipping
+- pan / zoom追従
 
-完成条件:
+完了条件:
 
-- 地図を動かしても色丸がWayspot位置からズレない
+- WFMMなしPCで色丸がWayspot位置からズレない
 
-### Day 3: Android移植
+### Day 3: Android
 
-- 共通classifier/rendererをAndroid Bridgeへ統合
-- WFMMあり/なし両方の分岐
-- Android実機でpan/zoom確認
+- 共通POI Engine統合
+- native renderer統合
+- WFMM detector統合
+- WFMMあり/なしテスト
 
-完成条件:
+完了条件:
 
-- WFMMなしでも正しい色付け
-- WFMMありでは二重描画なし
+- WFMMなしでBridge単体色表示
+- WFMMありで二重描画なし
 
-### Day 4: iPhone Map Capture集中
+### Day 4: iPhone Map Capture
 
-- Angular context / Google Maps internals / DOM referenceの再調査
-- native map capture成功経路を固定
-- OverlayView projection取得
+最重要日。
 
-完成条件:
+- Angular context
+- Google Maps internals
+- DOM reference
+- OverlayView projection
+- Shortcut実行コンテキスト
 
-- iPhoneで `mapCaptured=true` / `projectionReady=true`
+を再検証し、Bridge単体でMap captureする。
+
+完了条件:
+
+- `mapCaptured=true`
+- `projectionReady=true`
+- WFMMなしで成立
 
 ### Day 5: iPhone Native Renderer
 
 - 画面固定fallbackからnative rendererへ切替
-- pan/zoom/pinch/慣性移動
-- sample表示切替
-
-完成条件:
-
-- 色丸が地図に貼り付いたまま動く
-- 古いviewportの丸が残らない
-
-### Day 6: 統合テスト
-
-ケース:
-
-- WFMMあり
-- WFMMなし
-- 初回起動
-- Wayfarerリロード
-- 大きなパン
-- 小さなパン
-- ピンチズーム
-- 日本全体sample表示
+- pan
+- zoom
+- pinch
+- 慣性移動
+- sample表示
 - 通常表示復帰
+
+完了条件:
+
+- 色丸が地図座標へ固定
+- stale markerなし
+
+### Day 6: 共存・統合テスト
+
+全平台で:
+
+- WFMMなし
+- WFMMあり
+- WFMM遅延起動
+- 初回起動
+- Wayfarer reload
+- 大小pan
+- pinch zoom
+- sample表示
 - Reset
 - Campsite送信
 
-完成条件:
+完了条件:
 
+- WFMMなしでBridge単体完結
+- WFMMありでWFMM表示へ干渉しない
+- Bridge記録は継続
 - 二重描画なし
-- stale markerなし
-- 累積記録は保持
 
-### Day 7: 導入簡略化・MVPリリース
+### Day 7: MVPリリース
 
-- iPhone Shortcut導入導線
-- Android無料導入導線
-- PC無料導入導線
-- 診断表示を一般ユーザー向けに簡略化
-- CAテスター向け説明
+- iPhone無料導線
+- Android無料導線
+- PC無料導線
+- 一般向け診断簡略化
+- テスター説明
+- 回帰テスト
 
-MVP完成条件:
+---
 
-- WFMMなしで3プラットフォームすべてPOI分類・色表示・Bridge送信が可能
-- 既存WFMMユーザーは既存環境を壊さない
+## 10. MVP Definition of Done
 
-## 1週間での現実的な完成ライン
+以下をすべて満たしてMVP完成とする。
 
-1週間で狙うのは「実用MVP」。
-
-含む:
-
-- POI分類
-- 正しい色付け
-- pan/zoom追従
-- 自動記録
-- Campsite送信
-- WFMM共存
-- iPhone / Android / PCでの基本実機動作
-
-1週間に含めない可能性があるもの:
-
-- ストア配布
-- 完全自動アップデート
-- あらゆるWayfarer UI変更への耐性
-- 全端末・全OS版の長期互換性検証
-- 高度なWFMM機能の再現
-
-## 最大リスク
-
-最大リスクはiPhone SafariでGoogle Map / OverlayView projectionを安定して取得できるか。
-
-PCとAndroidは既存の拡張コンテキストから実装しやすい。
-iPhoneだけMap captureが取れない場合は、MVP時点で「記録は完全対応、ネイティブ色表示のみ実験機能」として切り分ける可能性がある。
-
-ただしGCS取得・POI分類・累積記録は既に解決しているため、プロジェクト全体が失敗するリスクは低い。
-
-## Definition of Done
-
-- WFMMなしでもPokéStop/Gym/Power Spotを正しく分類できる
-- Not in Gameを表示しない
-- 色丸が地図座標へ固定される
-- pan/zoom/pinchでズレない
-- viewport外の古い色丸を残さない
-- 累積POIはResetまで保持する
+- WFMMをインストールしていなくても動く
+- Bridge単体でPokéStop / Gym / Power Spotを判定
+- Not in Game / inactive非表示
+- Bridge単体で地図上へ正しく色付け
+- pan / zoom / pinch / 慣性移動でズレない
+- latest viewport以外の古い丸を残さない
+- POI累積記録はResetまで保持
 - Campsiteへ送信できる
-- WFMMありではBridge独自色丸を止める
-- iPhone / Android / PCで同じclassifierを使う
+- WFMMを検知できる
+- WFMM検知時はBridge独自色描画を停止
+- WFMM設定や表示に干渉しない
+- WFMMが途中から起動しても二重描画しない
+- iPhone / Android / PCが同じclassifierを使用
+
+---
+
+## 11. 1週間での見込み
+
+**実用MVPは1週間を目標にできる。**
+
+ただし最大リスクはiPhone Safariのnative map capture。
+
+Day 4終了時点でiPhoneのprojection取得が成立しない場合は、その場で方式を再評価する。
+
+PC / Androidだけ完成してiPhone問題を隠したまま「完成」とはしない。
+
+---
 
 ## プロジェクト名
 
@@ -264,4 +370,5 @@ iPhoneだけMap captureが取れない場合は、MVP時点で「記録は完全
 
 位置づけ:
 
-Campsite Bridgeの共通POI判定・描画エンジン。WFMMの代替そのものではなく、Campsiteに必要なPOI分類・色表示だけを独立実装する。
+WFMMの代替製品ではない。
+Campsite Bridgeが必要とするPOI判定と地図描画を、Bridge単体で実現するための独立エンジン。
