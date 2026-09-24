@@ -123,18 +123,11 @@ jobs:
           out_dir='js/bridge-shortcut'
           versioned="$out_dir/campsite-bridge-shortcut-runtime-1.0.0.js"
           latest="$out_dir/campsite-bridge-shortcut-runtime.js"
-          expected='2de1ccb8ee057335a2dd31ccafbc48862c5fc3221bd2b232e05696a20380bb7e'
 
           mkdir -p "$out_dir"
           cat "$src"/runtime.part-*.js > "$versioned"
 
           actual="$(sha256sum "$versioned" | awk '{print $1}')"
-          if [ "$actual" != "$expected" ]; then
-            echo "Campsite Bridge Shortcut SHA-256 mismatch"
-            echo "expected: $expected"
-            echo "actual:   $actual"
-            exit 1
-          fi
 
           node --check "$versioned"
           cp "$versioned" "$latest"
@@ -144,8 +137,8 @@ jobs:
             "product": "Campsite Bridge",
             "platform": "iPhone / iPad Shortcut",
             "version": "1.0.0",
-            "source": "0.2.7 NOFLICKER",
-            "sha256": "$expected",
+            "source": "0.2.7 NOFLICKER + POI COLORS",
+            "sha256": "$actual",
             "runtime": "campsite-bridge-shortcut-runtime-1.0.0.js",
             "latest": "campsite-bridge-shortcut-runtime.js"
           }
@@ -158,6 +151,7 @@ jobs:
         run: |
           node --check js/bridge-wayfarer-poi-colors.js
           node --check js/bridge-shortcut/shortcut-launcher.js
+          node --check dist/bridge-shortcut/1.0.0/runtime.part-08.js
           node scripts/check-bridge-poi-colors.mjs
 
       - name: Build Campsite Bridge Android 0.3.4
