@@ -43,7 +43,7 @@ assert.ok(
 );
 
 const selectionPos = gateway.indexOf('js/bridge-selection.js?v=12');
-const nextPos = gateway.indexOf('js/bridge-next-flow.js?v=9');
+const nextPos = gateway.indexOf('js/bridge-next-flow.js?v=10');
 assert.ok(selectionPos >= 0, 'Gateway must load Bridge selection');
 assert.ok(nextPos > selectionPos, 'Gateway must load Next flow after Bridge selection');
 
