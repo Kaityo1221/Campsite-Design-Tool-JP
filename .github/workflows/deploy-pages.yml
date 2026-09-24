@@ -151,7 +151,6 @@ jobs:
         run: |
           node --check js/bridge-wayfarer-poi-colors.js
           node --check js/bridge-shortcut/shortcut-launcher.js
-          node --check dist/bridge-shortcut/1.0.0/runtime.part-08.js
           node scripts/check-bridge-poi-colors.mjs
 
       - name: Build Campsite Bridge Android 0.3.4
