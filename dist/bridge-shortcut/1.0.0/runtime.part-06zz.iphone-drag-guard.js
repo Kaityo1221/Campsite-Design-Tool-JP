@@ -2,11 +2,14 @@
       // iPhone/Safari latest-range color overlay guard.
       // The fallback overlay is screen-fixed, so keeping it visible while the
       // Google map is being dragged makes markers appear to swim. Hide it for
-      // the gesture, then replay the latest GCS and repaint after the map settles.
+      // the gesture and only reveal it after Wayfarer has issued a fresh GCS
+      // request for the new viewport.
       const ROOT_ID = 'campsite-bridge-iphone-latest-colors';
+      const GCS_PATH = '/api/v1/vault/mapview/gcs';
       let mapGestureActive = false;
       let settleTimer = null;
-      let revealTimer = null;
+      let freshGcsPollTimer = null;
+      let gestureStartGcsUrl = '';
 
       function getRoot() {
         return document.getElementById(ROOT_ID);
@@ -28,6 +31,17 @@
         return false;
       }
 
+      function latestGcsUrl() {
+        try {
+          const entries = performance?.getEntriesByType?.('resource') || [];
+          for (let index = entries.length - 1; index >= 0; index -= 1) {
+            const name = String(entries[index]?.name || '');
+            if (name.includes(GCS_PATH)) return name;
+          }
+        } catch (_) {}
+        return '';
+      }
+
       function hideColors() {
         const root = getRoot();
         if (!root) return;
@@ -42,37 +56,59 @@
         root.style.removeProperty('opacity');
       }
 
+      function clearWaitTimers() {
+        if (settleTimer) clearTimeout(settleTimer);
+        if (freshGcsPollTimer) clearInterval(freshGcsPollTimer);
+        settleTimer = null;
+        freshGcsPollTimer = null;
+      }
+
       function beginMapGesture(event) {
         if (!isMapTarget(event?.target)) return;
         mapGestureActive = true;
-        if (settleTimer) clearTimeout(settleTimer);
-        if (revealTimer) clearTimeout(revealTimer);
-        settleTimer = null;
-        revealTimer = null;
+        clearWaitTimers();
+        gestureStartGcsUrl = latestGcsUrl();
         hideColors();
+      }
+
+      function revealAfterFreshGcs() {
+        const recovery = window.CampsiteBridgeIPhoneRecovery;
+        const currentUrl = latestGcsUrl();
+        if (!currentUrl || currentUrl === gestureStartGcsUrl) return false;
+
+        Promise.resolve()
+          .then(() => recovery?.replayLatestPerformanceGcs?.())
+          .catch(() => {})
+          .finally(() => {
+            try { recovery?.repaintLatestRange?.(); } catch (_) {}
+            if (!mapGestureActive) showColors();
+          });
+        return true;
       }
 
       function endMapGesture() {
         if (!mapGestureActive) return;
         mapGestureActive = false;
-        if (settleTimer) clearTimeout(settleTimer);
-        settleTimer = setTimeout(async () => {
-          settleTimer = null;
-          const recovery = window.CampsiteBridgeIPhoneRecovery;
-          try { await recovery?.replayLatestPerformanceGcs?.(); } catch (_) {}
-          try { recovery?.repaintLatestRange?.(); } catch (_) {}
-          showColors();
+        hideColors();
+        clearWaitTimers();
 
-          // Safari/Wayfarer can finish the final GCS a little later than the
-          // touchend. One quiet second-pass prevents a stale frame flashing.
-          revealTimer = setTimeout(async () => {
-            revealTimer = null;
-            if (mapGestureActive) return;
-            try { await recovery?.replayLatestPerformanceGcs?.(); } catch (_) {}
-            try { recovery?.repaintLatestRange?.(); } catch (_) {}
-            showColors();
-          }, 420);
-        }, 260);
+        // Give Wayfarer a brief moment to start its viewport request, then poll
+        // the Performance Resource Timing buffer. Never reveal stale markers.
+        settleTimer = setTimeout(() => {
+          settleTimer = null;
+
+          if (revealAfterFreshGcs()) return;
+
+          freshGcsPollTimer = setInterval(() => {
+            if (mapGestureActive) {
+              hideColors();
+              return;
+            }
+            if (!revealAfterFreshGcs()) return;
+            clearInterval(freshGcsPollTimer);
+            freshGcsPollTimer = null;
+          }, 90);
+        }, 90);
       }
 
       const startEvents = ['touchstart', 'pointerdown'];
@@ -94,8 +130,7 @@
       }
 
       window.addEventListener('pagehide', () => {
-        if (settleTimer) clearTimeout(settleTimer);
-        if (revealTimer) clearTimeout(revealTimer);
+        clearWaitTimers();
       }, { once: true });
 
       return {};
