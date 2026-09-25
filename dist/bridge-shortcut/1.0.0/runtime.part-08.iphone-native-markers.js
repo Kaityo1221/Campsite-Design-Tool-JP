@@ -1,7 +1,7 @@
 ;(() => {
   // iPhone/Safari native Google Maps POI renderer.
-  // Use Google Maps Marker objects so POIs are geographically anchored by
-  // the map engine itself. No screen-coordinate memory, no pan reprojection.
+  // Keep POIs geographically anchored by Google Maps, but stay out of the
+  // critical path while Wayfarer is loading/reloading the map.
   const ua = String(navigator?.userAgent || '');
   if (!/iPhone|iPad|iPod/i.test(ua)) return;
 
@@ -10,7 +10,8 @@
   const ENTITIES = new Set(['POKESTOP', 'GYM', 'POWERSPOT']);
   const markers = new Map();
   let map = null;
-  let timer = null;
+  let discoveryTimer = null;
+  let syncTimer = null;
   let listeners = [];
   let moving = false;
   let active = false;
@@ -73,7 +74,9 @@
   }
 
   function setActive(next) {
-    active = Boolean(next);
+    const value = Boolean(next);
+    if (active === value) return;
+    active = value;
     ensureAuthorityStyle();
     document.documentElement.classList.toggle(ACTIVE_CLASS, active);
   }
@@ -150,16 +153,16 @@
     return null;
   }
 
-  function shouldShow(poi) {
+  function shouldShow(poi, showInactivePowerSpots) {
     const inactivePower = poi.entity === 'POWERSPOT' && poi.status === 'INACTIVE';
     if (poi.status === 'INACTIVE' && !inactivePower) return false;
-    if (inactivePower && displayState().showInactivePowerSpots === false) return false;
+    if (inactivePower && showInactivePowerSpots === false) return false;
     return true;
   }
 
   function clearMarkers() {
-    for (const marker of markers.values()) {
-      try { marker.setMap?.(null); } catch (_) {}
+    for (const entry of markers.values()) {
+      try { entry.marker?.setMap?.(null); } catch (_) {}
     }
     markers.clear();
     lastVisible = 0;
@@ -169,14 +172,40 @@
     return window.google?.maps?.Marker || null;
   }
 
-  function syncMarkers() {
-    if (!map || moving) return;
+  function numericBounds() {
+    try {
+      const bounds = map?.getBounds?.();
+      const ne = bounds?.getNorthEast?.();
+      const sw = bounds?.getSouthWest?.();
+      if (!ne || !sw) return null;
+      const north = Number(ne.lat?.());
+      const east = Number(ne.lng?.());
+      const south = Number(sw.lat?.());
+      const west = Number(sw.lng?.());
+      if (![north, east, south, west].every(Number.isFinite)) return null;
+      return { north, east, south, west };
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function insideBounds(poi, bounds) {
+    if (!bounds) return true;
+    if (poi.lat < bounds.south || poi.lat > bounds.north) return false;
+    if (bounds.west <= bounds.east) return poi.lng >= bounds.west && poi.lng <= bounds.east;
+    return poi.lng >= bounds.west || poi.lng <= bounds.east;
+  }
+
+  function syncMarkersNow() {
+    syncTimer = null;
+    if (!map || moving || document.hidden) return;
+
     const Marker = markerCtor();
-    const LatLng = window.google?.maps?.LatLng;
-    if (!Marker || !LatLng) {
+    if (!Marker) {
       setActive(false);
       return;
     }
+
     const api = window.CampsiteBridgeShortcut;
     if (api?.isWfmmPresent?.()) {
       clearMarkers();
@@ -184,30 +213,31 @@
       return;
     }
 
-    let bounds = null;
-    try { bounds = map.getBounds?.() || null; } catch (_) {}
+    const bounds = numericBounds();
+    if (!bounds) return;
+
+    const showInactivePowerSpots = displayState().showInactivePowerSpots !== false;
     const wanted = new Map();
     for (const poi of currentPois()) {
-      if (!shouldShow(poi)) continue;
-      if (bounds?.contains) {
-        try { if (!bounds.contains(new LatLng(poi.lat, poi.lng))) continue; } catch (_) {}
-      }
+      if (!shouldShow(poi, showInactivePowerSpots)) continue;
+      if (!insideBounds(poi, bounds)) continue;
       wanted.set(poi.guid, poi);
     }
 
-    for (const [guid, marker] of markers) {
+    for (const [guid, entry] of markers) {
       if (wanted.has(guid)) continue;
-      try { marker.setMap?.(null); } catch (_) {}
+      try { entry.marker?.setMap?.(null); } catch (_) {}
       markers.delete(guid);
     }
 
     for (const [guid, poi] of wanted) {
       const icon = symbolFor(poi);
       if (!icon) continue;
-      let marker = markers.get(guid);
-      if (!marker) {
+
+      const existing = markers.get(guid);
+      if (!existing) {
         try {
-          marker = new Marker({
+          const marker = new Marker({
             map,
             position: { lat: poi.lat, lng: poi.lng },
             icon,
@@ -216,20 +246,38 @@
             optimized: true,
             zIndex: poi.entity === 'GYM' ? 30 : poi.entity === 'POWERSPOT' ? 20 : 10
           });
-          markers.set(guid, marker);
-        } catch (_) {
-          continue;
-        }
-      } else {
-        try {
-          marker.setPosition?.({ lat: poi.lat, lng: poi.lng });
-          marker.setIcon?.(icon);
-          marker.setMap?.(map);
+          markers.set(guid, {
+            marker,
+            lat: poi.lat,
+            lng: poi.lng,
+            entity: poi.entity,
+            status: poi.status
+          });
         } catch (_) {}
+        continue;
       }
+
+      const positionChanged = existing.lat !== poi.lat || existing.lng !== poi.lng;
+      const styleChanged = existing.entity !== poi.entity || existing.status !== poi.status;
+      try {
+        if (positionChanged) existing.marker?.setPosition?.({ lat: poi.lat, lng: poi.lng });
+        if (styleChanged) existing.marker?.setIcon?.(icon);
+        if (existing.marker?.getMap?.() !== map) existing.marker?.setMap?.(map);
+      } catch (_) {}
+      existing.lat = poi.lat;
+      existing.lng = poi.lng;
+      existing.entity = poi.entity;
+      existing.status = poi.status;
     }
+
     lastVisible = markers.size;
     setActive(true);
+  }
+
+  function scheduleSync(delay = 90) {
+    if (!map || moving) return;
+    if (syncTimer) clearTimeout(syncTimer);
+    syncTimer = setTimeout(syncMarkersNow, Math.max(0, delay));
   }
 
   function clearListeners() {
@@ -242,28 +290,67 @@
   function attachMap(nextMap) {
     clearListeners();
     clearMarkers();
+    if (syncTimer) clearTimeout(syncTimer);
+    syncTimer = null;
     map = nextMap;
+    moving = true;
     if (!window.__campsiteBridgeGoogleMap) window.__campsiteBridgeGoogleMap = nextMap;
+
     try {
-      listeners.push(nextMap.addListener('dragstart', () => { moving = true; }));
+      listeners.push(nextMap.addListener('dragstart', () => {
+        moving = true;
+        if (syncTimer) clearTimeout(syncTimer);
+        syncTimer = null;
+      }));
       listeners.push(nextMap.addListener('dragend', () => {}));
-      listeners.push(nextMap.addListener('zoom_changed', () => { moving = true; }));
+      listeners.push(nextMap.addListener('zoom_changed', () => {
+        moving = true;
+        if (syncTimer) clearTimeout(syncTimer);
+        syncTimer = null;
+      }));
       listeners.push(nextMap.addListener('idle', () => {
         moving = false;
-        syncMarkers();
+        // Give Wayfarer/Google Maps the first paint. Bridge follows just after it.
+        scheduleSync(80);
       }));
     } catch (_) {}
-    syncMarkers();
+
+    // Fallback for cases where the map was already idle before listeners attached.
+    setTimeout(() => {
+      if (map !== nextMap) return;
+      moving = false;
+      scheduleSync(120);
+    }, 700);
   }
 
   function refresh() {
-    discoverMap();
-    if (!moving) syncMarkers();
+    const found = discoverMap();
+    if (found && !moving) scheduleSync(0);
   }
 
   ensureAuthorityStyle();
-  timer = setInterval(refresh, 550);
-  for (const delay of [0, 100, 300, 800, 1600]) setTimeout(refresh, delay);
+
+  // Keep discovery cheap. Once the map is found, Google Maps events drive POI sync.
+  discoveryTimer = setInterval(() => {
+    const previous = map;
+    discoverMap();
+    if (!previous && map) return;
+  }, 2000);
+
+  for (const delay of [250, 700, 1400]) {
+    setTimeout(() => { if (!map) discoverMap(); }, delay);
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) return;
+    discoverMap();
+    if (map && !moving) scheduleSync(140);
+  });
+
+  window.addEventListener('pageshow', () => {
+    discoverMap();
+    if (map && !moving) scheduleSync(140);
+  });
 
   window.CampsiteBridgeIPhoneNativeMarkers = Object.freeze({
     refresh,
@@ -272,8 +359,10 @@
   });
 
   window.addEventListener('pagehide', () => {
-    if (timer) clearInterval(timer);
-    timer = null;
+    if (discoveryTimer) clearInterval(discoveryTimer);
+    discoveryTimer = null;
+    if (syncTimer) clearTimeout(syncTimer);
+    syncTimer = null;
     clearListeners();
     clearMarkers();
     map = null;
