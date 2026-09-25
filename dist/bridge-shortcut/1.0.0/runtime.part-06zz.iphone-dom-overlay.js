@@ -63,6 +63,42 @@
         return best;
       }
 
+      function isWayfarerDetailSheetOpen() {
+        const selectors = [
+          'mat-bottom-sheet-container',
+          '.mat-bottom-sheet-container',
+          '.mat-mdc-dialog-container',
+          '[role="dialog"]',
+          '[aria-modal="true"]',
+          '.cdk-overlay-pane'
+        ];
+        const seen = new Set();
+        for (const selector of selectors) {
+          let elements = [];
+          try { elements = [...document.querySelectorAll(selector)]; } catch (_) { continue; }
+          for (const element of elements) {
+            if (!element || seen.has(element)) continue;
+            seen.add(element);
+            if (element.id === FALLBACK_ROOT_ID || element.closest?.(`#${FALLBACK_ROOT_ID}`)) continue;
+            let rect = null;
+            let style = null;
+            try {
+              rect = element.getBoundingClientRect();
+              style = getComputedStyle(element);
+            } catch (_) {
+              continue;
+            }
+            if (!rect || !style) continue;
+            if (style.display === 'none' || style.visibility === 'hidden' || Number(style.opacity) === 0) continue;
+            if (rect.width < innerWidth * 0.84 || rect.height < innerHeight * 0.24) continue;
+            if (rect.bottom < innerHeight * 0.88) continue;
+            if (rect.top > innerHeight * 0.78) continue;
+            return true;
+          }
+        }
+        return false;
+      }
+
       function mercatorY(lat) {
         const limited = Math.max(-85.05112878, Math.min(85.05112878, Number(lat)));
         const radians = limited * Math.PI / 180;
@@ -114,7 +150,7 @@
           top: `${rect.top}px`,
           width: `${rect.width}px`,
           height: `${rect.height}px`,
-          display: touchActive ? 'none' : ''
+          display: touchActive || isWayfarerDetailSheetOpen() ? 'none' : ''
         });
         return root;
       }
@@ -169,6 +205,10 @@
           removeFallbackRoot();
           return 0;
         }
+
+        const detailSheetOpen = isWayfarerDetailSheetOpen();
+        if (fallbackRoot) fallbackRoot.style.display = touchActive || detailSheetOpen ? 'none' : '';
+        if (detailSheetOpen) return 0;
 
         const rect = mapInfo.rect;
         const key = [
@@ -258,7 +298,8 @@
           active: Boolean(fallbackRoot?.isConnected),
           drawn: fallbackRoot?.childNodes?.length || 0,
           boundsFound: Boolean(boundsFromGcsUrl(latestDomGcsUrl())),
-          mapRectFound: Boolean(visibleMapRect())
+          mapRectFound: Boolean(visibleMapRect()),
+          detailSheetOpen: isWayfarerDetailSheetOpen()
         })
       });
 
