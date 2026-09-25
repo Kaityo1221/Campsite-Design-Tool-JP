@@ -36,7 +36,7 @@
       let lastHidden = 0;
       let lastControls = 0;
 
-      function visibleRect(element) {
+      function rectOf(element, allowGuardHidden = false) {
         if (!element) return null;
         let rect = null;
         let style = null;
@@ -48,7 +48,8 @@
         }
         if (!rect || !style) return null;
         if (rect.width < 2 || rect.height < 2) return null;
-        if (style.display === 'none' || style.visibility === 'hidden' || Number(style.opacity) === 0) return null;
+        if (style.display === 'none' || Number(style.opacity) === 0) return null;
+        if (style.visibility === 'hidden' && !(allowGuardHidden && element.dataset?.cbsUiOccluded === '1')) return null;
         if (rect.bottom <= 0 || rect.right <= 0 || rect.top >= innerHeight || rect.left >= innerWidth) return null;
         return rect;
       }
@@ -61,7 +62,7 @@
         ].filter(Boolean);
         let best = null;
         for (const element of candidates) {
-          const rect = visibleRect(element);
+          const rect = rectOf(element);
           if (!rect || rect.width < 120 || rect.height < 120) continue;
           if (!best || rect.width * rect.height > best.width * best.height) best = rect;
         }
@@ -106,7 +107,7 @@
         let elements = [];
         try { elements = [...document.querySelectorAll(CONTROL_SELECTOR)]; } catch (_) { elements = []; }
         for (const element of elements) {
-          const rect = visibleRect(element);
+          const rect = rectOf(element);
           if (!isWayfarerControl(element, rect, map)) continue;
           rects.push(rect);
         }
@@ -123,7 +124,7 @@
         try { markers = [...document.querySelectorAll(MARKER_SELECTOR)]; } catch (_) { markers = []; }
 
         for (const marker of markers) {
-          const rect = visibleRect(marker);
+          const rect = rectOf(marker, true);
           if (!rect) continue;
           let blocked = false;
           for (const control of controls) {
@@ -157,15 +158,16 @@
         requestAnimationFrame(apply);
       }
 
-      // Forced POI colors redraw themselves periodically. Watch those child
-      // replacements and immediately re-apply the occlusion rule.
+      // Forced POI colors replace their marker children periodically. Watch the
+      // DOM replacement plus UI state changes, but do not observe our own style
+      // writes to avoid a self-triggering mutation loop.
       try {
         observer = new MutationObserver(() => schedule(0));
         observer.observe(document.body || document.documentElement, {
           childList: true,
           subtree: true,
           attributes: true,
-          attributeFilter: ['style', 'class', 'aria-expanded']
+          attributeFilter: ['class', 'aria-expanded', 'aria-haspopup']
         });
       } catch (_) {
         observer = null;
@@ -193,7 +195,7 @@
         try { observer?.disconnect?.(); } catch (_) {}
         observer = null;
         try {
-          for (const marker of document.querySelectorAll(`${MARKER_SELECTOR}[data-cbs-ui-occluded="1"]`)) {
+          for (const marker of document.querySelectorAll('[data-cbs-ui-occluded="1"]')) {
             marker.style.removeProperty('visibility');
             delete marker.dataset.cbsUiOccluded;
           }
