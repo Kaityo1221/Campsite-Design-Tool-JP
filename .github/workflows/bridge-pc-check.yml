@@ -15,16 +15,17 @@ on:
       - 'scripts/check-bridge-wayfarer-deck-compat.mjs'
       - 'scripts/check-bridge-poi-parser.mjs'
       - 'scripts/check-bridge-poi-classifier.mjs'
-      - 'scripts/check-bridge-poi-colors.mjs'
+      - 'scripts/check-bridge-display-ownership.mjs'
       - 'scripts/check-bridge-v1-export.mjs'
+      - 'scripts/check-bridge-poi-engine-regression.mjs'
       - 'scripts/check-bridge-poi-engine-e2e.mjs'
       - 'scripts/check-bridge-poi-diagnostics.mjs'
       - 'scripts/check-pc-bridge.mjs'
       - 'scripts/check-pc-next-route.mjs'
+      - 'scripts/fixtures/bridge-poi-engine-regression.json'
       - 'js/bridge-wayfarer-map-adapter.js'
       - 'js/bridge-wayfarer-display-owner.js'
       - 'js/bridge-wayfarer-deck-compat.js'
-      - 'js/bridge-wayfarer-poi-colors.js'
       - 'js/bridge-next-flow.js'
       - 'js/bridge-selection.js'
       - 'bridge-gateway.html'
@@ -43,16 +44,17 @@ on:
       - 'scripts/check-bridge-wayfarer-deck-compat.mjs'
       - 'scripts/check-bridge-poi-parser.mjs'
       - 'scripts/check-bridge-poi-classifier.mjs'
-      - 'scripts/check-bridge-poi-colors.mjs'
+      - 'scripts/check-bridge-display-ownership.mjs'
       - 'scripts/check-bridge-v1-export.mjs'
+      - 'scripts/check-bridge-poi-engine-regression.mjs'
       - 'scripts/check-bridge-poi-engine-e2e.mjs'
       - 'scripts/check-bridge-poi-diagnostics.mjs'
       - 'scripts/check-pc-bridge.mjs'
       - 'scripts/check-pc-next-route.mjs'
+      - 'scripts/fixtures/bridge-poi-engine-regression.json'
       - 'js/bridge-wayfarer-map-adapter.js'
       - 'js/bridge-wayfarer-display-owner.js'
       - 'js/bridge-wayfarer-deck-compat.js'
-      - 'js/bridge-wayfarer-poi-colors.js'
       - 'js/bridge-next-flow.js'
       - 'js/bridge-selection.js'
       - 'bridge-gateway.html'
@@ -73,19 +75,8 @@ jobs:
         with:
           node-version: 22
 
-      - name: Contract, map adapter, display owner, deck compatibility, parser, classifier, display, export, diagnostics, E2E and collector check
-        run: |
-          node scripts/check-bridge-wayfarer-map-adapter.mjs
-          node scripts/check-bridge-wayfarer-display-owner.mjs
-          node scripts/check-bridge-wayfarer-deck-compat.mjs
-          node scripts/check-bridge-poi-parser.mjs
-          node scripts/check-bridge-poi-classifier.mjs
-          node scripts/check-bridge-poi-colors.mjs
-          node scripts/check-bridge-v1-export.mjs
-          node scripts/check-bridge-poi-diagnostics.mjs
-          node scripts/check-bridge-poi-engine-e2e.mjs
-          node scripts/check-pc-bridge.mjs
-          node scripts/check-pc-next-route.mjs
+      - name: Final Bridge architecture check
+        run: npm run check:bridge-architecture
 
       - name: Syntax check
         run: |
@@ -98,17 +89,17 @@ jobs:
           node --check js/bridge-wayfarer-map-adapter.js
           node --check js/bridge-wayfarer-display-owner.js
           node --check js/bridge-wayfarer-deck-compat.js
-          node --check js/bridge-wayfarer-poi-colors.js
+          node --check js/bridge-next-flow.js
           node --check scripts/build-pc-bridge.mjs
           node --check scripts/check-bridge-wayfarer-map-adapter.mjs
           node --check scripts/check-bridge-wayfarer-display-owner.mjs
           node --check scripts/check-bridge-wayfarer-deck-compat.mjs
           node --check scripts/check-bridge-poi-parser.mjs
           node --check scripts/check-bridge-poi-classifier.mjs
-          node --check scripts/check-bridge-poi-colors.mjs
+          node --check scripts/check-bridge-display-ownership.mjs
           node --check scripts/check-bridge-v1-export.mjs
           node --check scripts/check-bridge-poi-diagnostics.mjs
+          node --check scripts/check-bridge-poi-engine-regression.mjs
           node --check scripts/check-bridge-poi-engine-e2e.mjs
           node --check scripts/check-pc-bridge.mjs
           node --check scripts/check-pc-next-route.mjs
-          node --check js/bridge-next-flow.js
