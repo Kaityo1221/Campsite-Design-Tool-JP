@@ -8,6 +8,8 @@ const sharedMapAdapter = 'js/bridge-wayfarer-map-adapter.js';
 const pcMapAdapter = path.join(sourceDir, 'wayfarer-map-adapter.js');
 const sharedDisplayOwner = 'js/bridge-wayfarer-display-owner.js';
 const pcDisplayOwner = path.join(sourceDir, 'wayfarer-display-owner.js');
+const sharedDeckCompat = 'js/bridge-wayfarer-deck-compat.js';
+const pcDeckCompat = path.join(sourceDir, 'wayfarer-deck-compat.js');
 const sharedPoiColors = 'js/bridge-wayfarer-poi-colors.js';
 const pcPoiColors = path.join(sourceDir, 'wayfarer-poi-colors.js');
 const FIXED_DOS_TIME = 0;
@@ -83,6 +85,8 @@ if (!fs.existsSync(sharedMapAdapter)) throw new Error(`Shared Wayfarer map adapt
 fs.copyFileSync(sharedMapAdapter, pcMapAdapter);
 if (!fs.existsSync(sharedDisplayOwner)) throw new Error(`Shared Wayfarer display owner missing: ${sharedDisplayOwner}`);
 fs.copyFileSync(sharedDisplayOwner, pcDisplayOwner);
+if (!fs.existsSync(sharedDeckCompat)) throw new Error(`Shared Wayfarer deck compatibility layer missing: ${sharedDeckCompat}`);
+fs.copyFileSync(sharedDeckCompat, pcDeckCompat);
 if (!fs.existsSync(sharedPoiColors)) throw new Error(`Shared POI color overlay missing: ${sharedPoiColors}`);
 fs.copyFileSync(sharedPoiColors, pcPoiColors);
 
@@ -92,12 +96,16 @@ if (manifest.version !== '0.1.0') throw new Error('PC Bridge manifest version mu
 const mainScripts = manifest.content_scripts?.find(entry => entry.world === 'MAIN')?.js || [];
 if (!mainScripts.includes('wayfarer-map-adapter.js')) throw new Error('PC Bridge manifest must load wayfarer-map-adapter.js in MAIN world');
 if (!mainScripts.includes('wayfarer-display-owner.js')) throw new Error('PC Bridge manifest must load wayfarer-display-owner.js in MAIN world');
+if (!mainScripts.includes('wayfarer-deck-compat.js')) throw new Error('PC Bridge manifest must load wayfarer-deck-compat.js in MAIN world');
 if (!mainScripts.includes('wayfarer-poi-colors.js')) throw new Error('PC Bridge manifest must load wayfarer-poi-colors.js in MAIN world');
 if (mainScripts.indexOf('wayfarer-map-adapter.js') > mainScripts.indexOf('wayfarer-display-owner.js')) {
   throw new Error('PC Bridge must load wayfarer-map-adapter.js before wayfarer-display-owner.js');
 }
-if (mainScripts.indexOf('wayfarer-display-owner.js') > mainScripts.indexOf('page-collector.js')) {
-  throw new Error('PC Bridge must load wayfarer-display-owner.js before page-collector.js');
+if (mainScripts.indexOf('wayfarer-display-owner.js') > mainScripts.indexOf('wayfarer-deck-compat.js')) {
+  throw new Error('PC Bridge must load wayfarer-display-owner.js before wayfarer-deck-compat.js');
+}
+if (mainScripts.indexOf('wayfarer-deck-compat.js') > mainScripts.indexOf('page-collector.js')) {
+  throw new Error('PC Bridge must load wayfarer-deck-compat.js before page-collector.js');
 }
 
 const files = listFiles(sourceDir);
