@@ -124,8 +124,24 @@ jobs:
           versioned="$out_dir/campsite-bridge-shortcut-runtime-1.0.0.js"
           latest="$out_dir/campsite-bridge-shortcut-runtime.js"
 
+          parts=(
+            'runtime.part-00.js'
+            'runtime.part-01.js'
+            'runtime.part-02.js'
+            'runtime.part-03.js'
+            'runtime.part-04.js'
+            'runtime.part-05.js'
+            'runtime.part-06.js'
+            'runtime.part-06z.iphone-recovery.js'
+            'runtime.part-07.js'
+            'runtime.part-09.iphone-wfmm-color-policy.js'
+          )
+
           mkdir -p "$out_dir"
-          cat "$src"/runtime.part-*.js > "$versioned"
+          : > "$versioned"
+          for part in "${parts[@]}"; do
+            cat "$src/$part" >> "$versioned"
+          done
 
           actual="$(sha256sum "$versioned" | awk '{print $1}')"
 
@@ -137,7 +153,7 @@ jobs:
             "product": "Campsite Bridge",
             "platform": "iPhone / iPad Shortcut",
             "version": "1.0.0",
-            "source": "0.2.7 NOFLICKER + POI COLORS",
+            "source": "0.2.7 NOFLICKER + WFMM COLOR POLICY",
             "sha256": "$actual",
             "runtime": "campsite-bridge-shortcut-runtime-1.0.0.js",
             "latest": "campsite-bridge-shortcut-runtime.js"
@@ -147,7 +163,7 @@ jobs:
           echo "Built Campsite Bridge Shortcut 1.0.0"
           echo "SHA-256: $actual"
 
-      - name: Check Bridge POI color overlay
+      - name: Check Bridge POI display policy
         run: |
           node --check js/bridge-wayfarer-poi-colors.js
           node --check js/bridge-shortcut/shortcut-launcher.js
