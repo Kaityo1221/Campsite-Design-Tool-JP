@@ -163,11 +163,10 @@ jobs:
           echo "Built Campsite Bridge Shortcut 1.0.0"
           echo "SHA-256: $actual"
 
-      - name: Check Bridge POI display policy
+      - name: Check final Campsite Bridge architecture
         run: |
-          node --check js/bridge-wayfarer-poi-colors.js
           node --check js/bridge-shortcut/shortcut-launcher.js
-          node scripts/check-bridge-poi-colors.mjs
+          npm run check:bridge-architecture
 
       - name: Build Campsite Bridge Android 0.3.4
         run: node scripts/build-android-bridge-xpi.mjs
