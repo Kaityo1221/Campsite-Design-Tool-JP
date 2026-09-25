@@ -1,0 +1,92 @@
+{
+  "rawWayfarer": {
+    "result": {
+      "data": [
+        {
+          "pois": [
+            {
+              "poiId": "e2e-stop",
+              "title": "公園入口",
+              "latE6": 35000000,
+              "lngE6": 139000000,
+              "gmo": [{ "gameBrand": "HOLOHOLO", "entity": "POKESTOP", "status": "ACTIVE" }]
+            },
+            {
+              "poiId": "e2e-gym",
+              "title": "時計塔",
+              "latE6": 35000100,
+              "lngE6": 139000100,
+              "sponsored": true,
+              "gmo": [{ "gameBrand": "HOLOHOLO", "entity": "GYM", "status": "ACTIVE" }]
+            },
+            {
+              "poiId": "e2e-power",
+              "title": "広場",
+              "latE6": 35000200,
+              "lngE6": 139000200,
+              "gmo": [{ "gameBrand": "HOLOHOLO", "entity": "POWERSPOT", "status": "ACTIVE" }]
+            },
+            {
+              "poiId": "e2e-not-in-game",
+              "title": "ゲーム外POI",
+              "latE6": 35000300,
+              "lngE6": 139000300,
+              "gmo": []
+            },
+            {
+              "poiId": "e2e-inactive",
+              "title": "旧ポケストップ",
+              "latE6": 35000400,
+              "lngE6": 139000400,
+              "gmo": [{ "gameBrand": "HOLOHOLO", "entity": "POKESTOP", "status": "INACTIVE" }]
+            },
+            {
+              "poiId": "e2e-unknown",
+              "title": "判定不能POI",
+              "latE6": 35000500,
+              "lngE6": 139000500,
+              "gmo": [{ "gameBrand": "HOLOHOLO", "entity": "", "status": "ACTIVE" }]
+            },
+            {
+              "poiId": "e2e-stop",
+              "title": "公園入口 更新",
+              "latE6": 35000000,
+              "lngE6": 139000000,
+              "gmo": [{ "gameBrand": "HOLOHOLO", "entity": "POKESTOP", "status": "ACTIVE" }]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "expected": {
+    "parser": {
+      "sourceCount": 7,
+      "parsedCount": 6,
+      "duplicateCount": 1,
+      "failedCount": 0,
+      "laterDuplicateTitle": "公園入口 更新"
+    },
+    "classifier": {
+      "pokestopCount": 1,
+      "gymCount": 1,
+      "powerspotCount": 1,
+      "notInGameCount": 2,
+      "unknownCount": 1,
+      "exportCount": 3
+    },
+    "kinds": {
+      "e2e-gym": "GYM",
+      "e2e-inactive": "NOT_IN_GAME",
+      "e2e-not-in-game": "NOT_IN_GAME",
+      "e2e-power": "POWERSPOT",
+      "e2e-stop": "POKESTOP",
+      "e2e-unknown": "UNKNOWN"
+    },
+    "inactiveStatus": "INACTIVE",
+    "export": {
+      "count": 3,
+      "guids": ["e2e-gym", "e2e-power", "e2e-stop"]
+    }
+  }
+}
