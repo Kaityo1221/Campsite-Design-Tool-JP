@@ -2,9 +2,11 @@
   "product": "Campsite Bridge",
   "platform": "iPhone / iPad Shortcut",
   "version": "1.0.0",
-  "source": "0.2.7 NOFLICKER",
-  "sha256": "2de1ccb8ee057335a2dd31ccafbc48862c5fc3221bd2b232e05696a20380bb7e",
+  "source": "Stage 5 data-only map display + GCS recovery",
+  "launcherVersion": "1.3.0",
+  "sha256": "generated-at-pages-build",
   "output": "js/bridge-shortcut/campsite-bridge-shortcut-runtime-1.0.0.js",
+  "displayPolicy": "Wayfarer/WFMM owns map visuals; Bridge collects, classifies and exports only",
   "parts": [
     "runtime.part-00.js",
     "runtime.part-01.js",
@@ -13,6 +15,8 @@
     "runtime.part-04.js",
     "runtime.part-05.js",
     "runtime.part-06.js",
-    "runtime.part-07.js"
+    "runtime.part-06z.iphone-recovery.js",
+    "runtime.part-07.js",
+    "runtime.part-09.iphone-wfmm-color-policy.js"
   ]
 }
