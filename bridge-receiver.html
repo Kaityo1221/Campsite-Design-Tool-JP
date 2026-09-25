@@ -254,8 +254,10 @@
     $('pokestop').textContent = c.pokestop;
     $('gym').textContent = c.gym;
     $('powerspot').textContent = c.powerspot;
-    $('notInGame').textContent = rc.notInGame;
-    $('inactivePowerSpot').textContent = rc.inactivePowerSpot;
+    const notInGameEl = $('notInGame');
+    const inactivePowerSpotEl = $('inactivePowerSpot');
+    if (notInGameEl) notInGameEl.textContent = rc.notInGame;
+    if (inactivePowerSpotEl) inactivePowerSpotEl.textContent = rc.inactivePowerSpot;
     $('sponsored').textContent = c.sponsored;
     $('smr').textContent = c.smr;
 
