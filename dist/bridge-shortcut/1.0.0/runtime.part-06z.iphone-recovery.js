@@ -4,6 +4,9 @@
       const IPHONE_GCS_PATH = '/api/v1/vault/mapview/gcs';
       let visiblePoiRefreshTimer = null;
       let visiblePoiRefreshInFlight = false;
+      let visiblePoiRefreshPending = false;
+      let viewportWatchTimer = null;
+      let lastObservedBoundsKey = '';
       let lastVisiblePoiBoundsKey = '';
       let performanceReplayInFlight = false;
       let lastPerformanceGcsUrl = '';
@@ -65,6 +68,16 @@
         return { swLat, swLng, neLat, neLng };
       }
 
+      function boundsKeyFromSnapshot(snapshot) {
+        if (!snapshot) return '';
+        return [
+          snapshot.swLat.toFixed(6),
+          snapshot.swLng.toFixed(6),
+          snapshot.neLat.toFixed(6),
+          snapshot.neLng.toFixed(6)
+        ].join(':');
+      }
+
       function parsePair(value) {
         const match = String(value || '').trim().match(/^\(\s*([-+0-9.eE]+)\s*,\s*([-+0-9.eE]+)\s*\)$/);
         if (!match) return null;
@@ -118,15 +131,14 @@
       }
 
       async function refreshVisibleWayfarerPois(force = false) {
-        if (visiblePoiRefreshInFlight || !nativeFetch) return false;
+        if (!nativeFetch) return false;
+        if (visiblePoiRefreshInFlight) {
+          visiblePoiRefreshPending = true;
+          return false;
+        }
         const snapshot = currentMapBoundsSnapshot(bridgeMap);
         if (!snapshot) return false;
-        const boundsKey = [
-          snapshot.swLat.toFixed(6),
-          snapshot.swLng.toFixed(6),
-          snapshot.neLat.toFixed(6),
-          snapshot.neLng.toFixed(6)
-        ].join(':');
+        const boundsKey = boundsKeyFromSnapshot(snapshot);
         if (!force && boundsKey === lastVisiblePoiBoundsKey) return false;
 
         visiblePoiRefreshInFlight = true;
@@ -152,6 +164,10 @@
           return false;
         } finally {
           visiblePoiRefreshInFlight = false;
+          if (visiblePoiRefreshPending) {
+            visiblePoiRefreshPending = false;
+            scheduleVisiblePoiRefresh(false, 80);
+          }
         }
       }
 
@@ -203,10 +219,42 @@
 
       function attachMapIdleRefresh(map) {
         if (!map || mapIdleListeners.has(map) || typeof map.addListener !== 'function') return;
-        try {
-          const listener = map.addListener('idle', () => scheduleVisiblePoiRefresh(false, 120));
-          mapIdleListeners.set(map, listener || null);
-        } catch (_) {}
+        const listeners = [];
+        const add = (eventName, delay) => {
+          try {
+            const listener = map.addListener(eventName, () => scheduleVisiblePoiRefresh(false, delay));
+            if (listener) listeners.push(listener);
+          } catch (_) {}
+        };
+        add('idle', 100);
+        add('dragend', 80);
+        add('zoom_changed', 140);
+        add('bounds_changed', 220);
+        mapIdleListeners.set(map, {
+          remove() {
+            for (const listener of listeners) {
+              try { listener?.remove?.(); } catch (_) {}
+            }
+          }
+        });
+      }
+
+      function startViewportWatch() {
+        if (viewportWatchTimer) return;
+        viewportWatchTimer = setInterval(() => {
+          let map = bridgeMap;
+          if (!looksLikeGoogleMap(map)) {
+            try { map = findMapFromAngular(); } catch (_) { map = null; }
+            if (map) {
+              try { captureBridgeMap(map); } catch (_) {}
+            }
+          }
+          if (!looksLikeGoogleMap(map)) return;
+          const key = boundsKeyFromSnapshot(currentMapBoundsSnapshot(map));
+          if (!key || key === lastObservedBoundsKey) return;
+          lastObservedBoundsKey = key;
+          scheduleVisiblePoiRefresh(false, 180);
+        }, 450);
       }
 
       const baseCaptureBridgeMap = captureBridgeMap;
@@ -306,7 +354,8 @@
           diag.insertAdjacentHTML('beforeend',
             `<div style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.12);font-weight:800">iPhone data recovery</div>` +
             `<div>Latest POI ${latestRangePois.size} / visual overlay retired</div>` +
-            `<div>GCS bounds ${latestRangeBounds ? 'ready' : 'waiting'} / performance URL ${latestPerformanceGcsUrl() ? 'yes' : 'no'}</div>`
+            `<div>GCS bounds ${latestRangeBounds ? 'ready' : 'waiting'} / performance URL ${latestPerformanceGcsUrl() ? 'yes' : 'no'}</div>` +
+            `<div>Viewport watch ${viewportWatchTimer ? 'on' : 'off'} / pending ${visiblePoiRefreshPending ? 'yes' : 'no'}</div>`
           );
         }
         clearBridgeMapVisuals();
@@ -319,12 +368,15 @@
         latestRangeUrl = '';
         latestRangePois.clear();
         lastPerformanceGcsUrl = '';
+        lastObservedBoundsKey = '';
         lastVisiblePoiBoundsKey = '';
+        visiblePoiRefreshPending = false;
         clearBridgeMapVisuals();
       };
 
       function resumeRecovery() {
         try { discoverExistingGoogleMap(); } catch (_) {}
+        startViewportWatch();
         scheduleVisiblePoiRefresh(true, 160);
         void replayLatestPerformanceGcs(true);
       }
@@ -349,7 +401,9 @@
           mapCaptured: Boolean(bridgeMap),
           poiCount: poiByGuid.size,
           visualFallback: false,
-          continuousPolling: false
+          continuousPolling: false,
+          viewportWatch: Boolean(viewportWatchTimer),
+          refreshPending: visiblePoiRefreshPending
         })
       });
 
@@ -365,6 +419,9 @@
       window.addEventListener('pagehide', () => {
         if (visiblePoiRefreshTimer) clearTimeout(visiblePoiRefreshTimer);
         visiblePoiRefreshTimer = null;
+        if (viewportWatchTimer) clearInterval(viewportWatchTimer);
+        viewportWatchTimer = null;
+        visiblePoiRefreshPending = false;
         for (const listener of mapIdleListeners.values()) {
           try { listener?.remove?.(); } catch (_) {}
         }
