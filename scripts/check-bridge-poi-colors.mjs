@@ -3,7 +3,21 @@ import assert from 'node:assert/strict';
 
 const shared = fs.readFileSync('js/bridge-wayfarer-poi-colors.js', 'utf8');
 const launcher = fs.readFileSync('js/bridge-shortcut/shortcut-launcher.js', 'utf8');
-const builtRuntime = fs.readFileSync('js/bridge-shortcut/campsite-bridge-shortcut-runtime.js', 'utf8');
+const iPhoneRuntimeParts = [
+  'runtime.part-00.js',
+  'runtime.part-01.js',
+  'runtime.part-02.js',
+  'runtime.part-03.js',
+  'runtime.part-04.js',
+  'runtime.part-05.js',
+  'runtime.part-06.js',
+  'runtime.part-06z.iphone-recovery.js',
+  'runtime.part-07.js',
+  'runtime.part-09.iphone-wfmm-color-policy.js'
+];
+const builtRuntime = iPhoneRuntimeParts
+  .map(name => fs.readFileSync(`dist/bridge-shortcut/1.0.0/${name}`, 'utf8'))
+  .join('');
 const policy = fs.readFileSync('dist/bridge-shortcut/1.0.0/runtime.part-09.iphone-wfmm-color-policy.js', 'utf8');
 const pcManifest = JSON.parse(fs.readFileSync('bridge-pc/manifest.json', 'utf8'));
 const androidBuilder = fs.readFileSync('scripts/build-android-bridge-0.3.6-unsigned.mjs', 'utf8');
@@ -42,9 +56,9 @@ assert.ok(builtRuntime.includes('window.CampsiteBridgeIPhonePoiColorPolicy'), 'i
 assert.ok(policy.includes("provider: 'WFMM'"), 'iPhone POI color provider must be WFMM');
 assert.ok(policy.includes('bridgeColors: false'), 'iPhone Bridge colors must stay disabled');
 assert.ok(policy.includes('[data-cbs-game-entity]'), 'policy must suppress the base Bridge entity markers');
-assert.ok(!builtRuntime.includes('iPhone/Safari native Google Maps POI renderer.'), 'native marker experiment must not ship in the iPhone runtime');
-assert.ok(!builtRuntime.includes('iPhone DOM fallback POI overlay'), 'DOM overlay experiment must not ship in the iPhone runtime');
-assert.ok(!builtRuntime.includes('iPhone forced POI colors'), 'forced color experiment must not ship in the iPhone runtime');
+assert.ok(!iPhoneRuntimeParts.includes('runtime.part-08.iphone-native-markers.js'), 'native marker experiment must not ship');
+assert.ok(!iPhoneRuntimeParts.includes('runtime.part-06zz.iphone-dom-overlay.js'), 'DOM overlay experiment must not ship');
+assert.ok(!iPhoneRuntimeParts.includes('runtime.part-06zzzzzz.iphone-forced-poi-colors.js'), 'forced color experiment must not ship');
 
 const mainEntry = pcManifest.content_scripts?.find(entry => entry.world === 'MAIN');
 assert.ok(mainEntry, 'PC manifest MAIN-world entry missing');
