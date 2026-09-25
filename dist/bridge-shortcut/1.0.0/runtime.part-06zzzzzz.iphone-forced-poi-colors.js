@@ -287,16 +287,19 @@
         touchTimer = setTimeout(() => {
           touchTimer = null;
           touchActive = false;
-          schedule(true, 180);
-        }, 100);
+          renderForced(true);
+          schedule(true, 60);
+          schedule(true, 160);
+          schedule(true, 360);
+        }, 24);
       };
       window.addEventListener('touchend', releaseTouch, { passive: true, capture: true });
       window.addEventListener('touchcancel', releaseTouch, { passive: true, capture: true });
-      window.addEventListener('resize', () => schedule(true, 60), { passive: true });
-      window.addEventListener('scroll', () => schedule(true, 60), { passive: true });
+      window.addEventListener('resize', () => schedule(true, 40), { passive: true });
+      window.addEventListener('scroll', () => schedule(true, 40), { passive: true });
 
-      timer = setInterval(() => renderForced(false), 350);
-      for (const delay of [0, 180, 500, 1000, 1800]) schedule(true, delay);
+      timer = setInterval(() => renderForced(false), 180);
+      for (const delay of [0, 120, 300, 700, 1400]) schedule(true, delay);
 
       window.CampsiteBridgeIPhoneForcedColors = Object.freeze({
         refresh: () => renderForced(true),
