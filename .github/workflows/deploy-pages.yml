@@ -133,6 +133,7 @@ jobs:
             'runtime.part-05.js'
             'runtime.part-06.js'
             'runtime.part-06z.iphone-recovery.js'
+            'runtime.part-06zz.iphone-network-recovery.js'
             'runtime.part-07.js'
             'runtime.part-09.iphone-wfmm-color-policy.js'
           )
