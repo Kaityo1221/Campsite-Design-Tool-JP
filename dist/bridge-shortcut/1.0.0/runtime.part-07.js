@@ -72,7 +72,9 @@
     window.CampsiteBridgeShortcut = {
       openPanel: () => setOpen(true),
       getPois: () => getSendPois(),
+      getReferencePois: () => getReferencePois(),
       getCounts,
+      getReferenceCounts,
       sendToCampsite,
       reset,
       isWfmmPresent,
@@ -98,6 +100,8 @@
 
   function render() {
     const counts = getCounts();
+    const referenceCounts = getReferenceCounts();
+    const capturedTotal = counts.total + referenceCounts.total;
     const mini = document.getElementById('cbs-mini-count');
     const ready = document.getElementById('cbs-ready');
     const status = document.getElementById('cbs-status');
@@ -107,14 +111,22 @@
     const sendButton = document.getElementById('cbs-send');
     const diag = document.getElementById('cbs-diagnostics');
 
-    if (mini) mini.textContent = String(counts.total);
-    if (ready) ready.textContent = counts.total > 0 ? '取得状況：送信できます' : '取得状況：地図を動かしてください';
+    if (mini) mini.textContent = String(capturedTotal);
+    if (ready) {
+      ready.textContent = counts.total > 0
+        ? `取得状況：${capturedTotal.toLocaleString('ja-JP')}件取得 / 送信できます`
+        : referenceCounts.total > 0
+          ? `取得状況：参照${referenceCounts.total.toLocaleString('ja-JP')}件 / 有効POI待ち`
+          : '取得状況：地図を動かしてください';
+    }
 
     if (status) {
       status.innerHTML = `
-        <div>POI <strong>${counts.total}</strong></div>
+        <div>取得合計 <strong>${capturedTotal}</strong><span style="margin-left:7px;color:#bbf7d0">有効 <strong>${counts.total}</strong></span></div>
         <div style="margin-top:3px">PokéStop <strong>${counts.pokestop}</strong><span style="margin-left:6px">Gym <strong>${counts.gym}</strong></span></div>
         <div style="margin-top:3px">Power Spot <strong>${counts.powerspot}</strong></div>
+        <div style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.12);color:#cbd5e1">参照 <strong>${referenceCounts.total}</strong></div>
+        <div style="margin-top:2px;color:#cbd5e1">Not in Game <strong>${referenceCounts.notInGame}</strong><span style="margin-left:6px">Inactive PS <strong>${referenceCounts.inactivePowerSpot}</strong></span></div>
       `;
     }
 
@@ -150,7 +162,8 @@
       const first = gameOverlayDiag.first;
       diag.innerHTML = `
         <div>XHR ${stats.xhr} / GCS ${stats.gcs}</div>
-        <div>受信POI ${stats.receivedPoi} / ユニーク ${counts.total}</div>
+        <div>受信POI ${stats.receivedPoi} / ユニーク ${capturedTotal}</div>
+        <div>有効 ${counts.total} / 参照 ${referenceCounts.total}（NIG ${referenceCounts.notInGame} / IPS ${referenceCounts.inactivePowerSpot}）</div>
         <div>重複 ${stats.duplicatePoi} / 解析エラー ${stats.parseErrors}</div>
         <div>Sponsor req ${stats.sponsorMapRequests} / detail ${stats.sponsorDetailRequests} / error ${stats.sponsorErrors}</div>
         <div>Map ${bridgeMap ? 'captured' : 'waiting'} / Overlay ${bridgeOverlayRoot ? 'ready' : 'waiting'} / WFMM ${isWfmmPresent() ? 'yes' : 'no'}</div>
