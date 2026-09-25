@@ -60,6 +60,13 @@ assert.ok(policy.includes("hideWayfarerHollowDots: true"), 'iPhone policy must e
 assert.ok(policy.includes("data-campsite-hidden-wayfarer-hollow"), 'hollow Wayfarer dots must be marked and hidden conservatively');
 assert.ok(policy.includes('isWayfarerOrange'), 'hollow-dot detector must require the Wayfarer orange outline');
 assert.ok(policy.includes('isWhiteOrClear'), 'hollow-dot detector must require a white or clear center');
+assert.ok(policy.includes("text === 'white'"), 'color parser must understand named white');
+assert.ok(policy.includes("/^#([0-9a-f]{3,8})$/i"), 'color parser must understand SVG hex colors');
+assert.ok(policy.includes('decodeSvgDataUrl'), 'detector must inspect SVG data-image markers');
+assert.ok(policy.includes('hasImageHollowOrangeDot'), 'detector must inspect image-backed marker icons');
+assert.ok(policy.includes('hasCanvasHollowOrangeDot'), 'detector must inspect small canvas-backed marker icons');
+assert.ok(policy.includes("hasPseudoHollowOrangeDot(el, '::before')"), 'detector must inspect CSS pseudo-element markers');
+assert.ok(policy.includes("querySelectorAll('div, span, svg, img, image, canvas')"), 'marker scan must include image/canvas renderers');
 assert.ok(!iPhoneRuntimeParts.includes('runtime.part-08.iphone-native-markers.js'), 'native marker experiment must not ship');
 assert.ok(!iPhoneRuntimeParts.includes('runtime.part-06zz.iphone-dom-overlay.js'), 'DOM overlay experiment must not ship');
 assert.ok(!iPhoneRuntimeParts.includes('runtime.part-06zzzzzz.iphone-forced-poi-colors.js'), 'forced color experiment must not ship');
