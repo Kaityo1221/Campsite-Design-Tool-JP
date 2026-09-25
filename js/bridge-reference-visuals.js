@@ -33,6 +33,7 @@
     .map(normalizeReference)
     .filter(Boolean)
     .filter(poi => !activeGuids.has(poi.guid));
+  const visibleReferences = references.filter(poi => poi.referenceKind === 'INACTIVE_POWERSPOT');
 
   if (!references.length || !window.L) return;
 
@@ -47,29 +48,13 @@
   let installedMap = null;
   let uiTimer = null;
 
-  function markerOptions(poi) {
-    if (poi.referenceKind === 'INACTIVE_POWERSPOT') {
-      return {
-        radius: 5,
-        color: '#ec4899',
-        weight: 2,
-        opacity: 0.82,
-        dashArray: '3 3',
-        fillColor: '#fbcfe8',
-        fillOpacity: 0.18,
-        interactive: false
-      };
-    }
-    return {
-      radius: 5,
-      color: '#64748b',
-      weight: 2,
-      opacity: 0.9,
-      dashArray: '3 3',
-      fillColor: '#f8fafc',
-      fillOpacity: 0.04,
-      interactive: false
-    };
+  function inactiveIcon() {
+    return L.divIcon({
+      className: 'bridge-reference-inactive-icon',
+      html: '<span class="bridge-reference-inactive-diamond"></span>',
+      iconSize: [28, 28],
+      iconAnchor: [14, 14]
+    });
   }
 
   function injectLegendStyles() {
@@ -78,8 +63,9 @@
     style.id = 'campsiteBridgeReferenceStyles';
     style.textContent = `
       #campsiteBridgeSelection .bridge-reference-note{width:100%;margin-top:2px;color:#cbd5e1;font-size:10px;font-weight:800}
-      #campsiteBridgeSelection .bridge-dot.reference-not-in-game{background:transparent!important;border:2px dashed #64748b;box-sizing:border-box}
-      #campsiteBridgeSelection .bridge-dot.reference-inactive-power{background:#fbcfe8!important;border:2px dashed #ec4899;box-sizing:border-box}
+      #campsiteBridgeSelection .bridge-dot.reference-inactive-power{width:10px;height:10px;border-radius:2px;background:#f3a8c9!important;border:2px solid #e879aa;box-sizing:border-box;transform:rotate(45deg)}
+      .bridge-reference-inactive-icon{background:transparent!important;border:0!important}
+      .bridge-reference-inactive-diamond{display:block;width:18px;height:18px;margin:5px;transform:rotate(45deg);border:3px solid #fff;border-radius:3px;background:#f3a8c9;box-shadow:0 0 0 2px #e879aa,0 2px 5px rgba(0,0,0,.25);opacity:.72}
     `;
     document.head.appendChild(style);
   }
@@ -89,20 +75,20 @@
     if (!legend) return false;
 
     injectLegendStyles();
-    if (!legend.querySelector('[data-bridge-reference-legend]')) {
-      const fragment = document.createDocumentFragment();
-      const notInGame = document.createElement('span');
-      notInGame.dataset.bridgeReferenceLegend = 'not-in-game';
-      notInGame.innerHTML = `<i class="bridge-dot reference-not-in-game"></i>Not in Game ${counts.notInGame.toLocaleString('ja-JP')}`;
+    if (counts.inactivePowerSpot > 0 && !legend.querySelector('[data-bridge-reference-legend="inactive-power"]')) {
       const inactivePower = document.createElement('span');
       inactivePower.dataset.bridgeReferenceLegend = 'inactive-power';
-      inactivePower.innerHTML = `<i class="bridge-dot reference-inactive-power"></i>Inactive Power Spot ${counts.inactivePowerSpot.toLocaleString('ja-JP')}`;
+      inactivePower.innerHTML = `<i class="bridge-dot reference-inactive-power"></i>Inactive PS ${counts.inactivePowerSpot.toLocaleString('ja-JP')}`;
+      legend.appendChild(inactivePower);
+    }
+    if (!legend.querySelector('[data-bridge-reference-legend="note"]')) {
       const note = document.createElement('div');
       note.className = 'bridge-reference-note';
       note.dataset.bridgeReferenceLegend = 'note';
-      note.textContent = '※ 点線の2種類はWayfarer照合用の参照表示です。ポリゴン選択・Campsite設計対象には含みません。';
-      fragment.append(notInGame, inactivePower, note);
-      legend.appendChild(fragment);
+      note.textContent = counts.notInGame
+        ? `Inactive PSは審査対象です。Not in Game ${counts.notInGame.toLocaleString('ja-JP')}件は内部照合のみ保持し、地図には表示しません。`
+        : 'Inactive PSは審査対象です。';
+      legend.appendChild(note);
     }
 
     const fitButton = document.getElementById('bridgeFitBtn');
@@ -111,7 +97,7 @@
       fitButton.addEventListener('click', () => {
         if (!installedMap) return;
         const active = Array.isArray(adapter?.pois) ? adapter.pois : [];
-        const points = [...active, ...references]
+        const points = [...active, ...visibleReferences]
           .map(poi => [Number(poi?.lat), Number(poi?.lng)])
           .filter(([lat, lng]) => Number.isFinite(lat) && Number.isFinite(lng));
         if (!points.length) return;
@@ -126,8 +112,8 @@
     if (!map || installedMap === map) return;
     installedMap = map;
     referenceLayer = L.layerGroup().addTo(map);
-    for (const poi of references) {
-      L.circleMarker([poi.lat, poi.lng], markerOptions(poi)).addTo(referenceLayer);
+    for (const poi of visibleReferences) {
+      L.marker([poi.lat, poi.lng], { icon: inactiveIcon(), interactive:false, keyboard:false }).addTo(referenceLayer);
     }
     if (uiTimer) clearInterval(uiTimer);
     let attempts = 0;
@@ -161,6 +147,7 @@
   window.CampsiteBridgeReferenceVisuals = Object.freeze({
     counts: { ...counts },
     references: references.map(poi => ({ ...poi })),
+    visibleReferences: visibleReferences.map(poi => ({ ...poi })),
     getMap: () => installedMap,
     getLayer: () => referenceLayer
   });
