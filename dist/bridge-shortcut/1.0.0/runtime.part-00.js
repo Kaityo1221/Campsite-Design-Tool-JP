@@ -211,10 +211,25 @@
     if (!Number.isFinite(latE6) || !Number.isFinite(lngE6)) return null;
 
     const gmo = Array.isArray(obj.gmo) ? obj.gmo : [];
-    const pgo = gmo.find(item =>
+    const pgoCandidates = gmo.filter(item =>
       isObject(item) &&
       typeof item.gameBrand === 'string' &&
       item.gameBrand.toUpperCase() === 'HOLOHOLO' &&
       GAME_ENTITIES.has(normalizeEntity(item.entity))
     );
-    if (!pgo) return null;
+    const pgo = pgoCandidates.find(item => normalizeStatus(item.status) === 'ACTIVE') || pgoCandidates[0];
+    if (!pgo) {
+      return {
+        guid,
+        title: String(obj.title || '(untitled)'),
+        description: String(obj.description || ''),
+        imageUrl: String(obj.mainImage || obj.imageUrl || obj.image?.url || ''),
+        lat: latE6 / 1_000_000,
+        lng: lngE6 / 1_000_000,
+        gameEntity: 'NOT_IN_GAME',
+        gameStatus: 'UNKNOWN',
+        sponsored: false,
+        smr: null,
+        provenance: ['WAYFARER_PASSIVE']
+      };
+    }
