@@ -4,16 +4,17 @@
     const byGuid = new Map();
     for (const raw of poiByGuid.values()) {
       const entity = normalizeEntity(raw.gameEntity);
+      const status = normalizeStatus(raw.gameStatus);
       const lat = Number(raw.lat);
       const lng = Number(raw.lng);
-      if (!raw.guid || !entity || !Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+      if (!raw.guid || !entity || status !== 'ACTIVE' || !Number.isFinite(lat) || !Number.isFinite(lng)) continue;
       const poi = {
         guid: String(raw.guid),
         title: String(raw.title || ''),
         lat,
         lng,
         gameEntity: entity,
-        gameStatus: normalizeStatus(raw.gameStatus),
+        gameStatus: 'ACTIVE',
         sponsored: raw.sponsored === true,
         smr: getSmrForPoi({ ...raw, gameEntity: entity, lat, lng }),
         imageUrl: String(raw.imageUrl || ''),
@@ -25,6 +26,48 @@
       byGuid.set(poi.guid, poi);
     }
     return [...byGuid.values()];
+  }
+
+  function getReferencePois() {
+    const byGuid = new Map();
+    for (const raw of poiByGuid.values()) {
+      const rawEntity = String(raw?.gameEntity || '').trim().toUpperCase().replace(/[\s_-]/g, '');
+      const entity = normalizeEntity(raw?.gameEntity);
+      const status = normalizeStatus(raw?.gameStatus);
+      const lat = Number(raw?.lat);
+      const lng = Number(raw?.lng);
+      if (!raw?.guid || !Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+
+      let referenceKind = '';
+      if (rawEntity === 'NOTINGAME') referenceKind = 'NOT_IN_GAME';
+      else if (entity === 'POWERSPOT' && status === 'INACTIVE') referenceKind = 'INACTIVE_POWERSPOT';
+      else if ((entity === 'POKESTOP' || entity === 'GYM') && status === 'INACTIVE') referenceKind = 'NOT_IN_GAME';
+      if (!referenceKind) continue;
+
+      byGuid.set(String(raw.guid), {
+        guid: String(raw.guid),
+        title: String(raw.title || ''),
+        lat,
+        lng,
+        referenceKind,
+        gameEntity: referenceKind === 'INACTIVE_POWERSPOT' ? 'POWERSPOT' : (entity || 'NOT_IN_GAME'),
+        gameStatus: status,
+        imageUrl: String(raw.imageUrl || ''),
+        description: String(raw.description || ''),
+        provenance: Array.isArray(raw.provenance) ? raw.provenance : ['WAYFARER_PASSIVE']
+      });
+    }
+    return [...byGuid.values()];
+  }
+
+  function getReferenceCounts() {
+    const refs = getReferencePois();
+    const counts = { total: refs.length, notInGame: 0, inactivePowerSpot: 0 };
+    for (const poi of refs) {
+      if (poi.referenceKind === 'INACTIVE_POWERSPOT') counts.inactivePowerSpot += 1;
+      else if (poi.referenceKind === 'NOT_IN_GAME') counts.notInGame += 1;
+    }
+    return counts;
   }
 
   function getCounts() {
@@ -71,7 +114,7 @@
     if (sendWorkflowActive) return;
     const initial = getSendPois();
     if (!initial.length) {
-      setSendStatus('POIがまだありません。地図を動かして取得してください。', 'error');
+      setSendStatus('有効なPOIがまだありません。地図を動かして取得してください。', 'error');
       return;
     }
 
@@ -103,6 +146,7 @@
     }
 
     const pois = getSendPois();
+    const referencePois = getReferencePois();
     const counts = getCounts();
     confirmedSponsorCount = counts.sponsored;
     confirmedSmrCount = counts.smr;
@@ -116,6 +160,7 @@
       handshakeId,
       sentAt: new Date().toISOString(),
       autoContinue: true,
+      referencePois,
       pois
     };
 
@@ -145,7 +190,7 @@
         sendWorkflowActive = false;
         if (accepted && count === pois.length) {
           sendSucceeded = true;
-          setSendStatus(`✅ ${count.toLocaleString('ja-JP')}件送信 / Sponsor ${counts.sponsored} / SMR ${counts.smr}`, 'ok');
+          setSendStatus(`✅ ${count.toLocaleString('ja-JP')}件送信 / 参照 ${referencePois.length.toLocaleString('ja-JP')} / Sponsor ${counts.sponsored} / SMR ${counts.smr}`, 'ok');
           scheduleRender();
           try { receiver.focus(); } catch (_) {}
         } else {
@@ -155,7 +200,7 @@
     };
 
     window.addEventListener('message', listener);
-    setSendStatus(`Campsiteへ${pois.length.toLocaleString('ja-JP')}件送信中…`);
+    setSendStatus(`Campsiteへ${pois.length.toLocaleString('ja-JP')}件 + 参照${referencePois.length.toLocaleString('ja-JP')}件を送信中…`);
     const interval = setInterval(transmit, 650);
     const timeout = setTimeout(() => {
       clearSendState();
