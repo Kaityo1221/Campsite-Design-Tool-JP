@@ -70,8 +70,6 @@
       return;
     }
 
-    // OAuth may temporarily leave this origin. Keep the active Bridge handoff
-    // recoverable until polygon selection/project creation continues.
     preservePendingHandoff(adapter);
 
     fetch('./index.html', { cache:'no-store', credentials:'same-origin' })
@@ -81,15 +79,16 @@
       })
       .then(html => {
         const leafletCss = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">';
-        const bridgeColorCss = '<style>#campsiteBridgeSelection .bridge-dot.gym{background:#facc15!important}#campsiteBridgeSelection .bridge-dot.power{background:#f472b6!important}#loginScreen,#splashScreen,#openingScreen{display:none!important}#caAccessGate.ca-gate-handoff-pending{visibility:visible!important;pointer-events:auto!important}</style>';
+        const bridgeColorCss = '<style>#campsiteBridgeSelection .bridge-dot.stop{background:#1677ff!important}#campsiteBridgeSelection .bridge-dot.gym{background:#ef4444!important}#campsiteBridgeSelection .bridge-dot.power{background:#8b35e8!important}#loginScreen,#splashScreen,#openingScreen{display:none!important}#caAccessGate.ca-gate-handoff-pending{visibility:visible!important;pointer-events:auto!important}</style>';
         const bridgeScripts = [
           '<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></' + 'script>',
-          '<script>(()=>{const original=L.circleMarker;L.circleMarker=function(latlng,options){if(options?.className==="bridge-poi-marker"){const next={...options};if(next.fillColor==="#f472b6")next.fillColor="#facc15";else if(next.fillColor==="#facc15")next.fillColor="#f472b6";return original.call(this,latlng,next);}return original.call(this,latlng,options);};})();</' + 'script>',
+          '<script>(()=>{const original=L.circleMarker;L.circleMarker=function(latlng,options){if(options?.className==="bridge-poi-marker"){const next={...options};if(next.fillColor==="#f472b6")next.fillColor="#ef4444";else if(next.fillColor==="#facc15")next.fillColor="#8b35e8";else if(next.fillColor==="#38bdf8")next.fillColor="#1677ff";return original.call(this,latlng,next);}return original.call(this,latlng,options);};})();</' + 'script>',
           '<script>(()=>{let payload=null;try{payload=JSON.parse(sessionStorage.getItem("campsiteBridgePoC.v0.3")||"null");}catch(_){}const view=payload?.selectedBounds;const lat=Number(view?.center?.lat);const lng=Number(view?.center?.lng);if(!Number.isFinite(lat)||!Number.isFinite(lng)||!window.L?.Map?.prototype)return;const sourceZoom=Number(view?.zoom);const zoom=Number.isFinite(sourceZoom)?Math.max(16,Math.min(18,Math.round(sourceZoom))):17;const proto=L.Map.prototype;const original=proto.fitBounds;let used=false;const patched=function(bounds,options){try{if(!used&&this.getContainer?.()?.id==="campsiteBridgeMap"){used=true;if(proto.fitBounds===patched)proto.fitBounds=original;return this.setView([lat,lng],zoom,{animate:false});}}catch(_){}return original.call(this,bounds,options);};proto.fitBounds=patched;setTimeout(()=>{if(proto.fitBounds===patched)proto.fitBounds=original;},5000);})();</' + 'script>',
           '<script src="js/bridge-selection-mobile.js?v=1"></' + 'script>',
           '<script src="js/bridge-entry.js?v=3"></' + 'script>',
-          '<script src="js/bridge-reference-visuals.js?v=1"></' + 'script>',
+          '<script src="js/bridge-reference-visuals.js?v=2"></' + 'script>',
           '<script src="js/bridge-selection.js?v=12"></' + 'script>',
+          '<script src="js/bridge-inactive-review.js?v=1"></' + 'script>',
           '<script src="js/bridge-next-flow.js?v=10"></' + 'script>'
         ].join('');
 
