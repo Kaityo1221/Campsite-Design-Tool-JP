@@ -75,11 +75,14 @@ const snapshot = {
   inactiveStatus: classified.pois.find(poi => poi.guid === 'e2e-inactive')?.gameStatus || null,
   export: {
     count: payload.pois.length,
-    guids: payload.pois.map(poi => poi.guid).sort()
+    guids: [...payload.pois].map(poi => poi.guid).sort()
   }
 };
 
-assert.deepEqual(snapshot, fixture.expected, 'POI Engine regression snapshot changed');
+// Parser/classifier/exporter execute in a VM context. Normalize realm-specific
+// Array/Object prototypes so this regression lock compares only serialized data.
+const normalizedSnapshot = JSON.parse(JSON.stringify(snapshot));
+assert.deepEqual(normalizedSnapshot, fixture.expected, 'POI Engine regression snapshot changed');
 assert.equal(payload.type, 'CAMPSITE_BRIDGE_POI_V1');
 assert.equal(payload.schemaVersion, '1.2');
 assert.equal(payload.bridgePlatform, 'pc');
@@ -89,4 +92,4 @@ assert.equal('diagnostics' in payload, false, 'Internal diagnostics must not lea
 assert.equal('enginePois' in payload, false, 'Internal Engine POIs must not leak into Bridge V1');
 
 console.log('POI Engine regression snapshot: OK');
-console.log(JSON.stringify(snapshot));
+console.log(JSON.stringify(normalizedSnapshot));
