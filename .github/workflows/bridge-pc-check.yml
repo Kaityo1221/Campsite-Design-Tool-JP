@@ -12,6 +12,7 @@ on:
       - 'scripts/build-pc-bridge.mjs'
       - 'scripts/check-bridge-wayfarer-map-adapter.mjs'
       - 'scripts/check-bridge-wayfarer-display-owner.mjs'
+      - 'scripts/check-bridge-wayfarer-deck-compat.mjs'
       - 'scripts/check-bridge-poi-parser.mjs'
       - 'scripts/check-bridge-poi-classifier.mjs'
       - 'scripts/check-bridge-poi-colors.mjs'
@@ -22,6 +23,7 @@ on:
       - 'scripts/check-pc-next-route.mjs'
       - 'js/bridge-wayfarer-map-adapter.js'
       - 'js/bridge-wayfarer-display-owner.js'
+      - 'js/bridge-wayfarer-deck-compat.js'
       - 'js/bridge-wayfarer-poi-colors.js'
       - 'js/bridge-next-flow.js'
       - 'js/bridge-selection.js'
@@ -38,6 +40,7 @@ on:
       - 'scripts/build-pc-bridge.mjs'
       - 'scripts/check-bridge-wayfarer-map-adapter.mjs'
       - 'scripts/check-bridge-wayfarer-display-owner.mjs'
+      - 'scripts/check-bridge-wayfarer-deck-compat.mjs'
       - 'scripts/check-bridge-poi-parser.mjs'
       - 'scripts/check-bridge-poi-classifier.mjs'
       - 'scripts/check-bridge-poi-colors.mjs'
@@ -48,6 +51,7 @@ on:
       - 'scripts/check-pc-next-route.mjs'
       - 'js/bridge-wayfarer-map-adapter.js'
       - 'js/bridge-wayfarer-display-owner.js'
+      - 'js/bridge-wayfarer-deck-compat.js'
       - 'js/bridge-wayfarer-poi-colors.js'
       - 'js/bridge-next-flow.js'
       - 'js/bridge-selection.js'
@@ -69,10 +73,11 @@ jobs:
         with:
           node-version: 22
 
-      - name: Contract, map adapter, display owner, parser, classifier, display, export, diagnostics, E2E and collector check
+      - name: Contract, map adapter, display owner, deck compatibility, parser, classifier, display, export, diagnostics, E2E and collector check
         run: |
           node scripts/check-bridge-wayfarer-map-adapter.mjs
           node scripts/check-bridge-wayfarer-display-owner.mjs
+          node scripts/check-bridge-wayfarer-deck-compat.mjs
           node scripts/check-bridge-poi-parser.mjs
           node scripts/check-bridge-poi-classifier.mjs
           node scripts/check-bridge-poi-colors.mjs
@@ -92,10 +97,12 @@ jobs:
           node --check bridge-pc/content.js
           node --check js/bridge-wayfarer-map-adapter.js
           node --check js/bridge-wayfarer-display-owner.js
+          node --check js/bridge-wayfarer-deck-compat.js
           node --check js/bridge-wayfarer-poi-colors.js
           node --check scripts/build-pc-bridge.mjs
           node --check scripts/check-bridge-wayfarer-map-adapter.mjs
           node --check scripts/check-bridge-wayfarer-display-owner.mjs
+          node --check scripts/check-bridge-wayfarer-deck-compat.mjs
           node --check scripts/check-bridge-poi-parser.mjs
           node --check scripts/check-bridge-poi-classifier.mjs
           node --check scripts/check-bridge-poi-colors.mjs
