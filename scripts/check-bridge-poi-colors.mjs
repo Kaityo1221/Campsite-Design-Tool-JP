@@ -3,18 +3,13 @@ import assert from 'node:assert/strict';
 
 const shared = fs.readFileSync('js/bridge-wayfarer-poi-colors.js', 'utf8');
 const launcher = fs.readFileSync('js/bridge-shortcut/shortcut-launcher.js', 'utf8');
-const runtimeParts = fs.readdirSync('dist/bridge-shortcut/1.0.0')
-  .filter(name => /^runtime\.part-\d+\.js$/.test(name))
-  .sort()
-  .map(name => fs.readFileSync(`dist/bridge-shortcut/1.0.0/${name}`, 'utf8'))
-  .join('');
-const iPhoneDomOverlay = fs.readFileSync('dist/bridge-shortcut/1.0.0/runtime.part-06zz.iphone-dom-overlay.js', 'utf8');
+const builtRuntime = fs.readFileSync('js/bridge-shortcut/campsite-bridge-shortcut-runtime.js', 'utf8');
+const policy = fs.readFileSync('dist/bridge-shortcut/1.0.0/runtime.part-09.iphone-wfmm-color-policy.js', 'utf8');
 const pcManifest = JSON.parse(fs.readFileSync('bridge-pc/manifest.json', 'utf8'));
 const androidBuilder = fs.readFileSync('scripts/build-android-bridge-0.3.6-unsigned.mjs', 'utf8');
 
 for (const entity of ['POKESTOP', 'GYM', 'POWERSPOT']) {
   assert.ok(shared.includes(entity), `shared overlay must support ${entity}`);
-  assert.ok(runtimeParts.includes(entity), `iPhone native overlay must support ${entity}`);
 }
 
 assert.ok(shared.includes("VERSION = '1.1.0'"), 'shared map display version must be 1.1.0');
@@ -41,15 +36,15 @@ assert.ok(shared.includes("glyph: '▲'"), 'Gym marker glyph missing');
 assert.ok(shared.includes("glyph: '◆'"), 'Power Spot marker glyph missing');
 
 assert.ok(launcher.includes('campsite-bridge-shortcut-runtime.js'), 'iPhone launcher must stay runtime-only');
-assert.ok(!launcher.includes('bridge-wayfarer-poi-colors.js'), 'iPhone must not create a second overlay from the launcher');
-assert.ok(runtimeParts.includes('function createGameEntityOverlay'), 'iPhone must draw POI colors on its existing native overlay');
-assert.ok(runtimeParts.includes('if (!wfmmPresent)'), 'iPhone native markers must yield to WFMM');
-assert.ok(runtimeParts.includes("marker.dataset.cbsGameEntity = entity"), 'iPhone native entity markers must use the Bridge overlay');
-assert.ok(runtimeParts.includes("pointerEvents: 'none'"), 'iPhone native markers must not block map interaction');
-assert.ok(iPhoneDomOverlay.includes('function isWayfarerDetailSheetOpen'), 'iPhone DOM fallback must detect Wayfarer detail sheets');
-assert.ok(iPhoneDomOverlay.includes("'mat-bottom-sheet-container'"), 'iPhone DOM fallback should recognize Angular bottom sheets');
-assert.ok(iPhoneDomOverlay.includes('detailSheetOpen'), 'iPhone DOM fallback must suppress POI markers while a detail sheet is open');
-assert.ok(!runtimeParts.includes('runtime.part-08'), 'iPhone runtime must not depend on the removed duplicate overlay tail');
+assert.ok(!launcher.includes('bridge-wayfarer-poi-colors.js'), 'iPhone launcher must not inject the shared Bridge color overlay');
+assert.ok(builtRuntime.includes("const IPHONE_GCS_PATH = '/api/v1/vault/mapview/gcs'"), 'iPhone runtime must keep GCS recovery for POI collection');
+assert.ok(builtRuntime.includes('window.CampsiteBridgeIPhonePoiColorPolicy'), 'iPhone runtime must publish the WFMM-only color policy');
+assert.ok(policy.includes("provider: 'WFMM'"), 'iPhone POI color provider must be WFMM');
+assert.ok(policy.includes('bridgeColors: false'), 'iPhone Bridge colors must stay disabled');
+assert.ok(policy.includes('[data-cbs-game-entity]'), 'policy must suppress the base Bridge entity markers');
+assert.ok(!builtRuntime.includes('iPhone/Safari native Google Maps POI renderer.'), 'native marker experiment must not ship in the iPhone runtime');
+assert.ok(!builtRuntime.includes('iPhone DOM fallback POI overlay'), 'DOM overlay experiment must not ship in the iPhone runtime');
+assert.ok(!builtRuntime.includes('iPhone forced POI colors'), 'forced color experiment must not ship in the iPhone runtime');
 
 const mainEntry = pcManifest.content_scripts?.find(entry => entry.world === 'MAIN');
 assert.ok(mainEntry, 'PC manifest MAIN-world entry missing');
@@ -64,4 +59,4 @@ assert.ok(androidBuilder.includes('bridge-wayfarer-poi-colors.js'), 'Android 0.3
 assert.ok(androidBuilder.includes("VERSION = '0.3.6'"), 'Android candidate version must be 0.3.6');
 assert.ok(androidBuilder.includes('Mozilla signing is required'), 'Android candidate must clearly remain unsigned');
 
-console.log('Bridge POI Engine map display checks: OK');
+console.log('Bridge POI display policy checks: OK');
