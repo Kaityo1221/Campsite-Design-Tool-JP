@@ -4,6 +4,8 @@ import crypto from 'node:crypto';
 
 const sourceDir = 'bridge-pc';
 const output = 'downloads/campsite-bridge-pc-0.1.0.zip';
+const sharedMapAdapter = 'js/bridge-wayfarer-map-adapter.js';
+const pcMapAdapter = path.join(sourceDir, 'wayfarer-map-adapter.js');
 const sharedPoiColors = 'js/bridge-wayfarer-poi-colors.js';
 const pcPoiColors = path.join(sourceDir, 'wayfarer-poi-colors.js');
 const FIXED_DOS_TIME = 0;
@@ -75,6 +77,8 @@ function centralHeader(name, data, crc, offset) {
   return Buffer.concat([header, filename]);
 }
 
+if (!fs.existsSync(sharedMapAdapter)) throw new Error(`Shared Wayfarer map adapter missing: ${sharedMapAdapter}`);
+fs.copyFileSync(sharedMapAdapter, pcMapAdapter);
 if (!fs.existsSync(sharedPoiColors)) throw new Error(`Shared POI color overlay missing: ${sharedPoiColors}`);
 fs.copyFileSync(sharedPoiColors, pcPoiColors);
 
@@ -82,7 +86,11 @@ const manifest = JSON.parse(fs.readFileSync(path.join(sourceDir, 'manifest.json'
 if (manifest.manifest_version !== 3) throw new Error('PC Bridge must use Manifest V3');
 if (manifest.version !== '0.1.0') throw new Error('PC Bridge manifest version must be 0.1.0');
 const mainScripts = manifest.content_scripts?.find(entry => entry.world === 'MAIN')?.js || [];
+if (!mainScripts.includes('wayfarer-map-adapter.js')) throw new Error('PC Bridge manifest must load wayfarer-map-adapter.js in MAIN world');
 if (!mainScripts.includes('wayfarer-poi-colors.js')) throw new Error('PC Bridge manifest must load wayfarer-poi-colors.js in MAIN world');
+if (mainScripts.indexOf('wayfarer-map-adapter.js') > mainScripts.indexOf('page-collector.js')) {
+  throw new Error('PC Bridge must load wayfarer-map-adapter.js before page-collector.js');
+}
 
 const files = listFiles(sourceDir);
 if (!files.length) throw new Error('PC Bridge source is empty');
