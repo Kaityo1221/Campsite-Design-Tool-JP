@@ -14,7 +14,7 @@
         "https://wayfarer.scopely.com/*",
         "https://wayfarer.nianticlabs.com/*"
       ],
-      "js": ["wayfarer-map-adapter.js", "wayfarer-display-owner.js", "poi-parser.js", "poi-classifier.js", "poi-diagnostics.js", "wayfarer-poi-colors.js", "bridge-v1-exporter.js", "page-collector.js"],
+      "js": ["wayfarer-map-adapter.js", "wayfarer-display-owner.js", "wayfarer-deck-compat.js", "poi-parser.js", "poi-classifier.js", "poi-diagnostics.js", "wayfarer-poi-colors.js", "bridge-v1-exporter.js", "page-collector.js"],
       "run_at": "document_idle",
       "world": "MAIN"
     },
