@@ -5,13 +5,13 @@ on:
     paths:
       - 'dist/bridge-shortcut/1.0.0/**'
       - 'js/bridge-shortcut/shortcut-launcher.js'
-      - 'scripts/check-bridge-poi-colors.mjs'
+      - 'scripts/check-bridge-display-ownership.mjs'
       - '.github/workflows/bridge-iphone-check.yml'
   pull_request:
     paths:
       - 'dist/bridge-shortcut/1.0.0/**'
       - 'js/bridge-shortcut/shortcut-launcher.js'
-      - 'scripts/check-bridge-poi-colors.mjs'
+      - 'scripts/check-bridge-display-ownership.mjs'
       - '.github/workflows/bridge-iphone-check.yml'
   workflow_dispatch:
 
@@ -27,11 +27,11 @@ jobs:
         with:
           node-version: 22
 
-      - name: Check iPhone data-only display policy
-        run: node scripts/check-bridge-poi-colors.mjs
+      - name: Check iPhone data-only display ownership
+        run: node scripts/check-bridge-display-ownership.mjs
 
       - name: Syntax check stable entrypoints
         run: |
           node --check js/bridge-shortcut/shortcut-launcher.js
           node --check dist/bridge-shortcut/1.0.0/runtime.part-09.iphone-wfmm-color-policy.js
-          node --check scripts/check-bridge-poi-colors.mjs
+          node --check scripts/check-bridge-display-ownership.mjs
