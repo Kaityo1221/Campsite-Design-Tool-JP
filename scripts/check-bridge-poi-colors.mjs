@@ -8,6 +8,7 @@ const runtimeParts = fs.readdirSync('dist/bridge-shortcut/1.0.0')
   .sort()
   .map(name => fs.readFileSync(`dist/bridge-shortcut/1.0.0/${name}`, 'utf8'))
   .join('');
+const iPhoneDomOverlay = fs.readFileSync('dist/bridge-shortcut/1.0.0/runtime.part-06zz.iphone-dom-overlay.js', 'utf8');
 const pcManifest = JSON.parse(fs.readFileSync('bridge-pc/manifest.json', 'utf8'));
 const androidBuilder = fs.readFileSync('scripts/build-android-bridge-0.3.6-unsigned.mjs', 'utf8');
 
@@ -45,9 +46,9 @@ assert.ok(runtimeParts.includes('function createGameEntityOverlay'), 'iPhone mus
 assert.ok(runtimeParts.includes('if (!wfmmPresent)'), 'iPhone native markers must yield to WFMM');
 assert.ok(runtimeParts.includes("marker.dataset.cbsGameEntity = entity"), 'iPhone native entity markers must use the Bridge overlay');
 assert.ok(runtimeParts.includes("pointerEvents: 'none'"), 'iPhone native markers must not block map interaction');
-assert.ok(runtimeParts.includes('function isWayfarerDetailSheetOpen'), 'iPhone overlay must detect Wayfarer detail sheets');
-assert.ok(runtimeParts.includes("'mat-bottom-sheet-container'"), 'iPhone overlay should recognize Angular bottom sheets');
-assert.ok(runtimeParts.includes('detailSheetOpen'), 'iPhone overlay must suppress POI markers while a detail sheet is open');
+assert.ok(iPhoneDomOverlay.includes('function isWayfarerDetailSheetOpen'), 'iPhone DOM fallback must detect Wayfarer detail sheets');
+assert.ok(iPhoneDomOverlay.includes("'mat-bottom-sheet-container'"), 'iPhone DOM fallback should recognize Angular bottom sheets');
+assert.ok(iPhoneDomOverlay.includes('detailSheetOpen'), 'iPhone DOM fallback must suppress POI markers while a detail sheet is open');
 assert.ok(!runtimeParts.includes('runtime.part-08'), 'iPhone runtime must not depend on the removed duplicate overlay tail');
 
 const mainEntry = pcManifest.content_scripts?.find(entry => entry.world === 'MAIN');
