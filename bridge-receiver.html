@@ -22,6 +22,8 @@
     <span>PokéStop</span><strong id="pokestop">0</strong>
     <span>Gym</span><strong id="gym">0</strong>
     <span>Power Spot</span><strong id="powerspot">0</strong>
+    <span>Not in Game（参照）</span><strong id="notInGame">0</strong>
+    <span>Inactive Power Spot（参照）</span><strong id="inactivePowerSpot">0</strong>
     <span>スポンサー</span><strong id="sponsored">0</strong>
     <span>SMR</span><strong id="smr">0</strong>
   </div>
@@ -42,13 +44,14 @@
 (() => {
   'use strict';
 
-  const VERSION = '0.8.9.4';
+  const VERSION = '0.8.9.5';
   const DEV_PARAM = 'campsiteBridgeDev';
   const HANDSHAKE_PARAM = 'handshake';
   const STORAGE_KEY = 'campsiteBridgePoC.v0.3';
   const ADAPTER_STORAGE_KEY = 'campsiteBridgeAdapter.v0.3';
   const ALLOWED_ENTITIES = new Set(['POKESTOP','GYM','POWERSPOT']);
   const ALLOWED_STATUSES = new Set(['ACTIVE','INACTIVE','UNKNOWN']);
+  const REFERENCE_KINDS = new Set(['NOT_IN_GAME','INACTIVE_POWERSPOT']);
   const ALLOWED_PROVENANCE = new Set(['WAYFARER_PASSIVE','WFMM_CACHE','BRIDGE_ENRICHMENT']);
   const ALLOWED_ORIGINS = new Set([
     'https://wayfarer.scopely.com',
@@ -99,19 +102,45 @@
     const gameStatus = String(raw.gameStatus || 'UNKNOWN').trim().toUpperCase();
     if (!guid || !Number.isFinite(lat) || !Number.isFinite(lng)) return null;
     if (!ALLOWED_ENTITIES.has(gameEntity) || !ALLOWED_STATUSES.has(gameStatus)) return null;
+    if (gameStatus !== 'ACTIVE') return null;
     return {
       guid,
       title,
       lat,
       lng,
       gameEntity,
-      gameStatus,
+      gameStatus:'ACTIVE',
       sponsored: raw.sponsored === true || String(raw.sponsored).toLowerCase() === 'true',
       smr: boolOrNull(raw.smr),
       imageUrl: String(raw.imageUrl || ''),
       description: String(raw.description || ''),
       s2L14: String(raw.s2L14 || ''),
       s2L17: String(raw.s2L17 || ''),
+      provenance: normalizeProvenance(raw.provenance)
+    };
+  }
+
+  function normalizeReferencePoi(raw) {
+    if (!raw || typeof raw !== 'object') return null;
+    const guid = String(raw.guid || raw.sourceId || raw.id || '').trim();
+    const title = String(raw.title || raw.name || '').trim();
+    const lat = Number(raw.lat);
+    const lng = Number(raw.lng);
+    const referenceKind = String(raw.referenceKind || '').trim().toUpperCase();
+    const gameEntity = String(raw.gameEntity || '').trim().toUpperCase();
+    const gameStatus = String(raw.gameStatus || 'UNKNOWN').trim().toUpperCase();
+    if (!guid || !Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+    if (!REFERENCE_KINDS.has(referenceKind)) return null;
+    return {
+      guid,
+      title,
+      lat,
+      lng,
+      referenceKind,
+      gameEntity,
+      gameStatus: ALLOWED_STATUSES.has(gameStatus) ? gameStatus : 'UNKNOWN',
+      imageUrl: String(raw.imageUrl || ''),
+      description: String(raw.description || ''),
       provenance: normalizeProvenance(raw.provenance)
     };
   }
@@ -134,6 +163,15 @@
       if (poi.gameEntity === 'POWERSPOT') result.powerspot++;
       if (poi.sponsored) result.sponsored++;
       if (poi.smr === true) result.smr++;
+    }
+    return result;
+  }
+
+  function referenceCounts(referencePois) {
+    const result = { total:referencePois.length, notInGame:0, inactivePowerSpot:0 };
+    for (const poi of referencePois) {
+      if (poi.referenceKind === 'NOT_IN_GAME') result.notInGame++;
+      if (poi.referenceKind === 'INACTIVE_POWERSPOT') result.inactivePowerSpot++;
     }
     return result;
   }
@@ -191,18 +229,22 @@
 
   function render(payload) {
     const pois = Array.isArray(payload?.pois) ? payload.pois : [];
+    const referencePois = Array.isArray(payload?.referencePois) ? payload.referencePois : [];
     const handoffId = resolveHandoffId(payload);
     const c = counts(pois);
+    const rc = referenceCounts(referencePois);
     $('total').textContent = c.total;
     $('pokestop').textContent = c.pokestop;
     $('gym').textContent = c.gym;
     $('powerspot').textContent = c.powerspot;
+    $('notInGame').textContent = rc.notInGame;
+    $('inactivePowerSpot').textContent = rc.inactivePowerSpot;
     $('sponsored').textContent = c.sponsored;
     $('smr').textContent = c.smr;
 
     const status = $('status');
     status.className = `status ${c.total ? 'ok' : 'warn'}`;
-    status.textContent = c.total ? `✅ ${c.total}件のPOIを受信しました` : '🌉 Wayfarerから受信しています…';
+    status.textContent = c.total ? `✅ 有効POI ${c.total}件 + 参照 ${rc.total}件を受信しました` : '🌉 Wayfarerから受信しています…';
     document.title = c.total ? `✅ ${c.total}件受信 | Campsite Bridge` : '受信中… | Campsite Bridge';
 
     const adapter = adaptForCampsite(pois);
@@ -234,15 +276,18 @@
       handoffId,
       bridgePlatform: String(payload?.bridgePlatform || '').trim().toLowerCase(),
       sourceCount: adapter.beforeCount,
+      referenceCount: rc.total,
       duplicateCount: adapter.duplicateCount,
-      pois: adapter.pois
+      pois: adapter.pois,
+      referencePois
     }));
 
     window.CampsiteBridgeAdapter = Object.freeze({
       version: VERSION,
       handoffId,
       result: adapter,
-      pois: adapter.pois
+      pois: adapter.pois,
+      referencePois
     });
 
     return adapter;
@@ -254,7 +299,9 @@
       version: VERSION,
       payload,
       pois: payload.pois,
-      counts: counts(payload.pois)
+      referencePois: payload.referencePois || [],
+      counts: counts(payload.pois),
+      referenceCounts: referenceCounts(payload.referencePois || [])
     });
     return render(payload);
   }
@@ -266,6 +313,12 @@
 
     const normalizedRaw = data.pois.map(normalizePoi).filter(Boolean);
     const deduped = dedupeByGuid(normalizedRaw);
+    const normalizedReferences = (Array.isArray(data.referencePois) ? data.referencePois : [])
+      .map(normalizeReferencePoi)
+      .filter(Boolean);
+    const referenceDeduped = dedupeByGuid(normalizedReferences);
+    const activeGuids = new Set(deduped.pois.map(poi => poi.guid));
+    const referencePois = referenceDeduped.pois.filter(poi => !activeGuids.has(poi.guid));
     const payload = {
       bridge: 'Campsite Bridge',
       bridgeVersion: String(data.bridgeVersion || ''),
@@ -275,11 +328,18 @@
       receivedAt: new Date().toISOString(),
       selectedBounds: data.selectedBounds || null,
       handshakeId: String(data.handshakeId || ''),
+      referencePois,
       pois: deduped.pois
     };
     const adapter = savePayload(payload);
     const accepted = data.pois.length > 0 && normalizedRaw.length === data.pois.length && adapter.clean;
-    return { accepted, count: adapter.afterCount, sourceCount:data.pois.length, duplicateCount:deduped.duplicateCount };
+    return {
+      accepted,
+      count: adapter.afterCount,
+      sourceCount:data.pois.length,
+      referenceCount:referencePois.length,
+      duplicateCount:deduped.duplicateCount
+    };
   }
 
   function gatewayUrl() {
@@ -305,6 +365,7 @@
       accepted: result.accepted,
       count: result.count,
       sourceCount: result.sourceCount,
+      referenceCount: result.referenceCount || 0,
       duplicateCount: result.duplicateCount || 0,
       receiverVersion: VERSION
     };
@@ -358,7 +419,7 @@
     sessionStorage.removeItem(ADAPTER_STORAGE_KEY);
     delete window.CampsiteBridgeReceiver;
     delete window.CampsiteBridgeAdapter;
-    render({ pois:[] });
+    render({ pois:[], referencePois:[] });
   });
 
   try {
