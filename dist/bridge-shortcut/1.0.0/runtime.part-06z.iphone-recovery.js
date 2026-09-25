@@ -5,8 +5,6 @@
       let visiblePoiRefreshTimer = null;
       let visiblePoiRefreshInFlight = false;
       let visiblePoiRefreshPending = false;
-      let viewportWatchTimer = null;
-      let lastObservedBoundsKey = '';
       let lastVisiblePoiBoundsKey = '';
       let performanceReplayInFlight = false;
       let lastPerformanceGcsUrl = '';
@@ -228,6 +226,7 @@
         };
         add('idle', 100);
         add('dragend', 80);
+        add('center_changed', 180);
         add('zoom_changed', 140);
         add('bounds_changed', 220);
         mapIdleListeners.set(map, {
@@ -237,24 +236,6 @@
             }
           }
         });
-      }
-
-      function startViewportWatch() {
-        if (viewportWatchTimer) return;
-        viewportWatchTimer = setInterval(() => {
-          let map = bridgeMap;
-          if (!looksLikeGoogleMap(map)) {
-            try { map = findMapFromAngular(); } catch (_) { map = null; }
-            if (map) {
-              try { captureBridgeMap(map); } catch (_) {}
-            }
-          }
-          if (!looksLikeGoogleMap(map)) return;
-          const key = boundsKeyFromSnapshot(currentMapBoundsSnapshot(map));
-          if (!key || key === lastObservedBoundsKey) return;
-          lastObservedBoundsKey = key;
-          scheduleVisiblePoiRefresh(false, 180);
-        }, 450);
       }
 
       const baseCaptureBridgeMap = captureBridgeMap;
@@ -273,9 +254,13 @@
           const wfmmMap = window.WFMM?.map?.get?.();
           if (captureBridgeMap(wfmmMap)) return bridgeMap;
         } catch (_) {}
-        if (captureBridgeMap(window.__campsiteBridgeGoogleMap)) return bridgeMap;
+
+        // Re-resolve the active Wayfarer MapView before trusting the cached map.
+        // This avoids staying attached to the initial/stale Google Map instance.
         const angularMap = findMapFromAngular();
         if (captureBridgeMap(angularMap)) return bridgeMap;
+        if (captureBridgeMap(window.__campsiteBridgeGoogleMap)) return bridgeMap;
+
         const fallback = baseDiscoverExistingGoogleMap();
         if (fallback) scheduleVisiblePoiRefresh(false, 100);
         return fallback;
@@ -355,7 +340,7 @@
             `<div style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.12);font-weight:800">iPhone data recovery</div>` +
             `<div>Latest POI ${latestRangePois.size} / visual overlay retired</div>` +
             `<div>GCS bounds ${latestRangeBounds ? 'ready' : 'waiting'} / performance URL ${latestPerformanceGcsUrl() ? 'yes' : 'no'}</div>` +
-            `<div>Viewport watch ${viewportWatchTimer ? 'on' : 'off'} / pending ${visiblePoiRefreshPending ? 'yes' : 'no'}</div>`
+            `<div>Map listeners ${mapIdleListeners.size} / pending ${visiblePoiRefreshPending ? 'yes' : 'no'}</div>`
           );
         }
         clearBridgeMapVisuals();
@@ -368,7 +353,6 @@
         latestRangeUrl = '';
         latestRangePois.clear();
         lastPerformanceGcsUrl = '';
-        lastObservedBoundsKey = '';
         lastVisiblePoiBoundsKey = '';
         visiblePoiRefreshPending = false;
         clearBridgeMapVisuals();
@@ -376,7 +360,6 @@
 
       function resumeRecovery() {
         try { discoverExistingGoogleMap(); } catch (_) {}
-        startViewportWatch();
         scheduleVisiblePoiRefresh(true, 160);
         void replayLatestPerformanceGcs(true);
       }
@@ -402,7 +385,7 @@
           poiCount: poiByGuid.size,
           visualFallback: false,
           continuousPolling: false,
-          viewportWatch: Boolean(viewportWatchTimer),
+          mapListeners: mapIdleListeners.size,
           refreshPending: visiblePoiRefreshPending
         })
       });
@@ -419,8 +402,6 @@
       window.addEventListener('pagehide', () => {
         if (visiblePoiRefreshTimer) clearTimeout(visiblePoiRefreshTimer);
         visiblePoiRefreshTimer = null;
-        if (viewportWatchTimer) clearInterval(viewportWatchTimer);
-        viewportWatchTimer = null;
         visiblePoiRefreshPending = false;
         for (const listener of mapIdleListeners.values()) {
           try { listener?.remove?.(); } catch (_) {}
