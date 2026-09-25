@@ -68,6 +68,7 @@
   loadOnce('js/field-mode-basemap-switch.js?v=1', 'data-field-basemap-switch-loader');
   loadOnce('js/field-mode-apac-v4.js?v=1', 'data-field-apac-v4-loader');
   loadOnce('js/field-mode-creative-shell-v2.js?v=1', 'data-field-creative-shell-v2-loader');
+  loadOnce('js/field-mode-poi-visuals-v2.js?v=1', 'data-field-poi-visuals-v2-loader');
 
   function syncFinishLabel() {
     const button = document.getElementById('fieldModeSaveButton');
