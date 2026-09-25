@@ -47,6 +47,12 @@
     return exporter;
   }
 
+  function mapAdapterApi() {
+    const adapter = window.CampsiteBridgeWayfarerMapAdapter;
+    if (!adapter?.findMap || !adapter?.findMapContext) return null;
+    return adapter;
+  }
+
   function numberFrom(value) {
     const num = Number(value);
     return Number.isFinite(num) ? num : null;
@@ -63,30 +69,13 @@
   }
 
   function findMap() {
-    const host = document.querySelector('app-wf-base-map');
-    if (!host || !Array.isArray(host.__ngContext__)) return null;
-    const ctx = host.__ngContext__;
-
-    for (const value of ctx) {
-      if (value && typeof value === 'object' &&
-          typeof value.getBounds === 'function' &&
-          typeof value.getZoom === 'function') {
-        return value;
-      }
-
-      if (!value || typeof value !== 'object') continue;
-      for (const key of Object.keys(value)) {
-        try {
-          const nested = value[key];
-          if (nested && typeof nested === 'object' &&
-              typeof nested.getBounds === 'function' &&
-              typeof nested.getZoom === 'function') {
-            return nested;
-          }
-        } catch (_) {}
-      }
+    const adapter = mapAdapterApi();
+    if (!adapter) return null;
+    try {
+      return adapter.findMap(document);
+    } catch (_) {
+      return null;
     }
-    return null;
   }
 
   function serializeBounds(map) {
