@@ -13,7 +13,8 @@
     "test": "npm run check:field-mode && npm run check:field-prep && npm run test:field-mode && npm run test:field-prep && npm run test:field-e2e",
     "check:bridge-pc-spec": "node scripts/check-pc-bridge-spec.mjs",
     "check:bridge-map-adapter": "node scripts/check-bridge-wayfarer-map-adapter.mjs",
-    "check:bridge-pc": "node scripts/check-bridge-wayfarer-map-adapter.mjs && node scripts/check-pc-bridge.mjs && node scripts/check-pc-next-route.mjs",
+    "check:bridge-display-owner": "node scripts/check-bridge-wayfarer-display-owner.mjs",
+    "check:bridge-pc": "node scripts/check-bridge-wayfarer-map-adapter.mjs && node scripts/check-bridge-wayfarer-display-owner.mjs && node scripts/check-pc-bridge.mjs && node scripts/check-pc-next-route.mjs",
     "build:bridge-pc": "node scripts/build-pc-bridge.mjs",
     "check:bridge-3device-e2e": "node scripts/check-bridge-three-device-e2e.mjs"
   },
