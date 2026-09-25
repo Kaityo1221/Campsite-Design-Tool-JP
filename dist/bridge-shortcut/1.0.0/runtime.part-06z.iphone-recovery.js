@@ -1,34 +1,22 @@
     ...(() => {
-      // iPhone/Safari recovery layer. This fragment is intentionally a spread
-      // expression because runtime.part-06.js ends inside Object.assign(..., {
-      // and runtime.part-07.js continues that object literal.
+      // iPhone/Safari recovery layer, data-only edition.
+      // Keep GCS acquisition/recovery while retiring Bridge-owned map visuals.
       const IPHONE_GCS_PATH = '/api/v1/vault/mapview/gcs';
-      const IPHONE_COLOR_ROOT_ID = 'campsite-bridge-iphone-latest-colors';
       let visiblePoiRefreshTimer = null;
       let visiblePoiRefreshInFlight = false;
       let lastVisiblePoiBoundsKey = '';
-      let performanceReplayTimer = null;
       let performanceReplayInFlight = false;
       let lastPerformanceGcsUrl = '';
       let latestRangeBounds = null;
       let latestRangeUrl = '';
       let latestRangePois = new Map();
+      const mapIdleListeners = new Map();
 
       function findMapFromAngular() {
         const host = document.querySelector('app-wf-base-map');
         if (!host || !Array.isArray(host.__ngContext__)) return null;
-
-        for (const value of host.__ngContext__) {
+        for (const value of host.__ngContext__.slice(0, 128)) {
           if (looksLikeGoogleMap(value)) return value;
-          if (!value || typeof value !== 'object') continue;
-
-          let keys = [];
-          try { keys = Object.keys(value); } catch (_) { continue; }
-          for (const key of keys) {
-            let nested = null;
-            try { nested = value[key]; } catch (_) { continue; }
-            if (looksLikeGoogleMap(nested)) return nested;
-          }
         }
         return null;
       }
@@ -53,7 +41,6 @@
         let bounds = null;
         try { bounds = map.getBounds(); } catch (_) { bounds = null; }
         if (!bounds) return null;
-
         const sw = bounds.getSouthWest?.();
         const ne = bounds.getNorthEast?.();
         const swLat = coordinateFromMapPoint(sw, 'lat');
@@ -61,7 +48,6 @@
         const neLat = coordinateFromMapPoint(ne, 'lat');
         const neLng = coordinateFromMapPoint(ne, 'lng');
         if (![swLat, swLng, neLat, neLng].every(Number.isFinite)) return null;
-
         return { swLat, swLng, neLat, neLng };
       }
 
@@ -108,133 +94,12 @@
         return byGuid;
       }
 
-      function getWayfarerMapRect() {
-        const candidates = [
-          document.querySelector('.gm-style'),
-          document.querySelector('app-wf-base-map'),
-          document.querySelector('google-map')
-        ].filter(Boolean);
-        for (const element of candidates) {
-          let rect = null;
-          try { rect = element.getBoundingClientRect(); } catch (_) { rect = null; }
-          if (!rect || rect.width < 100 || rect.height < 100) continue;
-          return rect;
-        }
-        return null;
-      }
-
-      function mercatorX(lng) {
-        return (Number(lng) + 180) / 360;
-      }
-
-      function mercatorY(lat) {
-        const clamped = Math.max(-85.05112878, Math.min(85.05112878, Number(lat)));
-        const sin = Math.sin(clamped * Math.PI / 180);
-        return 0.5 - (Math.log((1 + sin) / (1 - sin)) / (4 * Math.PI));
-      }
-
-      function viewportPointForPoi(poi, bounds, rect) {
-        if (!poi || !bounds || !rect) return null;
-        let swX = mercatorX(bounds.swLng);
-        let neX = mercatorX(bounds.neLng);
-        let poiX = mercatorX(poi.lng);
-        if (neX < swX) neX += 1;
-        if (poiX < swX) poiX += 1;
-        const northY = mercatorY(bounds.neLat);
-        const southY = mercatorY(bounds.swLat);
-        const poiY = mercatorY(poi.lat);
-        const spanX = neX - swX;
-        const spanY = southY - northY;
-        if (!(spanX > 0) || !(spanY > 0)) return null;
-        const rx = (poiX - swX) / spanX;
-        const ry = (poiY - northY) / spanY;
-        if (rx < -0.02 || rx > 1.02 || ry < -0.02 || ry > 1.02) return null;
-        return {
-          x: rect.left + (rx * rect.width),
-          y: rect.top + (ry * rect.height)
-        };
-      }
-
-      function ensureIphoneColorRoot() {
-        let root = document.getElementById(IPHONE_COLOR_ROOT_ID);
-        if (root) return root;
-        root = document.createElement('div');
-        root.id = IPHONE_COLOR_ROOT_ID;
-        Object.assign(root.style, {
-          position: 'fixed',
-          left: '0',
-          top: '0',
-          width: '100vw',
-          height: '100vh',
-          overflow: 'hidden',
-          pointerEvents: 'none',
-          zIndex: '2147483645'
-        });
-        document.documentElement.appendChild(root);
-        return root;
-      }
-
-      function makeIphoneColorMarker(poi, point) {
-        const entity = normalizeEntity(poi?.gameEntity);
-        const style = entity === 'POKESTOP'
-          ? { fill: '#22b8f0', border: '#1748b8' }
-          : entity === 'GYM'
-            ? { fill: '#f04463', border: '#b91c3c' }
-            : entity === 'POWERSPOT'
-              ? { fill: POWERSPOT_FILL, border: POWERSPOT_BORDER }
-              : null;
-        if (!style || !point) return null;
-        const marker = document.createElement('div');
-        marker.dataset.cbsIphoneLatestEntity = entity;
-        Object.assign(marker.style, {
-          position: 'fixed',
-          left: `${point.x}px`,
-          top: `${point.y}px`,
-          transform: 'translate(-50%,-50%) translateZ(0)',
-          width: '22px',
-          height: '22px',
-          borderRadius: '50%',
-          boxSizing: 'border-box',
-          background: style.fill,
-          border: `3px solid ${style.border}`,
-          boxShadow: '0 0 0 1px rgba(255,255,255,.94),0 2px 5px rgba(0,0,0,.36)',
-          pointerEvents: 'none'
-        });
-        marker.setAttribute('aria-hidden', 'true');
-        return marker;
-      }
-
-      function renderLatestRangeFallback() {
-        const root = ensureIphoneColorRoot();
-        if (isWfmmPresent() || bridgeMap || !latestRangeBounds || !latestRangePois.size) {
-          root.style.display = 'none';
-          root.replaceChildren();
-          return;
-        }
-        const rect = getWayfarerMapRect();
-        if (!rect) {
-          root.style.display = 'none';
-          root.replaceChildren();
-          return;
-        }
-        root.style.display = '';
-        const fragment = document.createDocumentFragment();
-        for (const poi of latestRangePois.values()) {
-          if (normalizeStatus(poi?.gameStatus) === 'INACTIVE') continue;
-          const point = viewportPointForPoi(poi, latestRangeBounds, rect);
-          const marker = makeIphoneColorMarker(poi, point);
-          if (marker) fragment.appendChild(marker);
-        }
-        root.replaceChildren(fragment);
-      }
-
       function setLatestRange(url, payload) {
         const bounds = boundsFromGcsUrl(url);
         if (!bounds) return false;
         latestRangeBounds = bounds;
         latestRangeUrl = String(url || '');
         latestRangePois = collectLatestRangePois(payload);
-        renderLatestRangeFallback();
         return true;
       }
 
@@ -242,7 +107,6 @@
         if (visiblePoiRefreshInFlight || !nativeFetch) return false;
         const snapshot = currentMapBoundsSnapshot(bridgeMap);
         if (!snapshot) return false;
-
         const boundsKey = [
           snapshot.swLat.toFixed(6),
           snapshot.swLng.toFixed(6),
@@ -258,10 +122,7 @@
             '&sw=(' + snapshot.swLat + ',' + snapshot.swLng + ')' +
             '&cellLevel=14';
           const url = IPHONE_GCS_PATH + '?' + query;
-          const response = await nativeFetch(url, {
-            credentials: 'include',
-            cache: 'no-store'
-          });
+          const response = await nativeFetch(url, { credentials: 'include', cache: 'no-store' });
           if (!response.ok) throw new Error('GCS HTTP ' + response.status);
           const payload = await response.json();
           stats.gcs += 1;
@@ -307,10 +168,7 @@
 
         performanceReplayInFlight = true;
         try {
-          const response = await nativeFetch(url, {
-            credentials: 'include',
-            cache: 'no-store'
-          });
+          const response = await nativeFetch(url, { credentials: 'include', cache: 'no-store' });
           if (!response.ok) throw new Error('GCS replay HTTP ' + response.status);
           const payload = await response.json();
           stats.gcs += 1;
@@ -329,11 +187,21 @@
         }
       }
 
+      function attachMapIdleRefresh(map) {
+        if (!map || mapIdleListeners.has(map) || typeof map.addListener !== 'function') return;
+        try {
+          const listener = map.addListener('idle', () => scheduleVisiblePoiRefresh(false, 120));
+          mapIdleListeners.set(map, listener || null);
+        } catch (_) {}
+      }
+
       const baseCaptureBridgeMap = captureBridgeMap;
       captureBridgeMap = function(map) {
         const captured = baseCaptureBridgeMap(map);
-        if (captured) scheduleVisiblePoiRefresh(false, bridgeMap === map ? 100 : 40);
-        renderLatestRangeFallback();
+        if (captured) {
+          attachMapIdleRefresh(map);
+          scheduleVisiblePoiRefresh(false, bridgeMap === map ? 100 : 40);
+        }
         return captured;
       };
 
@@ -343,12 +211,9 @@
           const wfmmMap = window.WFMM?.map?.get?.();
           if (captureBridgeMap(wfmmMap)) return bridgeMap;
         } catch (_) {}
-
         if (captureBridgeMap(window.__campsiteBridgeGoogleMap)) return bridgeMap;
-
         const angularMap = findMapFromAngular();
         if (captureBridgeMap(angularMap)) return bridgeMap;
-
         const fallback = baseDiscoverExistingGoogleMap();
         if (fallback) scheduleVisiblePoiRefresh(false, 100);
         return fallback;
@@ -358,9 +223,7 @@
         const originalFetch = window.fetch.bind(window);
         const wrappedFetch = async function(input, init) {
           const response = await originalFetch(input, init);
-          const url = typeof input === 'string'
-            ? input
-            : String(input?.url || response?.url || '');
+          const url = typeof input === 'string' ? input : String(input?.url || response?.url || '');
           if (url.includes(IPHONE_GCS_PATH)) {
             stats.gcs += 1;
             try {
@@ -369,6 +232,7 @@
                 .then(json => {
                   scanJson(json);
                   setLatestRange(url, json);
+                  scheduleRender();
                 })
                 .catch(() => { stats.parseErrors += 1; scheduleRender(); });
             } catch (_) {
@@ -377,11 +241,36 @@
           }
           return response;
         };
-        try {
-          Object.defineProperty(wrappedFetch, '__campsiteBridgeShortcutFetchPatched', { value: true });
-        } catch (_) {}
+        try { Object.defineProperty(wrappedFetch, '__campsiteBridgeShortcutFetchPatched', { value: true }); } catch (_) {}
         window.fetch = wrappedFetch;
       }
+
+      // Retire every Bridge-owned map visual path while leaving data functions active.
+      function clearBridgeMapVisuals() {
+        try {
+          if (bridgeOverlayRoot) {
+            bridgeOverlayRoot.replaceChildren?.();
+            bridgeOverlayRoot.style.display = 'none';
+            bridgeOverlayRoot.style.visibility = 'hidden';
+            bridgeOverlayRoot.style.pointerEvents = 'none';
+          }
+        } catch (_) {}
+        return false;
+      }
+      try { createGameEntityOverlay = () => null; } catch (_) {}
+      try { createSponsorRingOverlay = () => null; } catch (_) {}
+      try { createSponsorPopupOverlay = () => null; } catch (_) {}
+      try { renderBridgeOverlaysNow = clearBridgeMapVisuals; } catch (_) {}
+      try { scheduleOverlayRender = clearBridgeMapVisuals; } catch (_) {}
+      try { scheduleOverlayRenderAfterIdle = clearBridgeMapVisuals; } catch (_) {}
+      try {
+        if (bridgeOverlayFrame) cancelAnimationFrame(bridgeOverlayFrame);
+        bridgeOverlayFrame = 0;
+      } catch (_) {}
+      try {
+        if (sponsorRingStabilizeTimer) clearTimeout(sponsorRingStabilizeTimer);
+        sponsorRingStabilizeTimer = null;
+      } catch (_) {}
 
       const baseRenderForIphoneRecovery = render;
       render = function() {
@@ -394,16 +283,19 @@
             : '● 自動記録中：地図を動かすと記録します';
           ready.style.color = '#bbf7d0';
         }
+        const inactiveToggle = document.getElementById('cbs-inactive-toggle');
+        if (inactiveToggle) inactiveToggle.style.display = 'none';
+        const displayNote = document.getElementById('cbs-display-note');
+        if (displayNote) displayNote.style.display = 'none';
         const diag = document.getElementById('cbs-diagnostics');
         if (diag && diag.style.display !== 'none') {
-          const markerCount = document.querySelectorAll(`#${IPHONE_COLOR_ROOT_ID} [data-cbs-iphone-latest-entity]`).length;
           diag.insertAdjacentHTML('beforeend',
-            `<div style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.12);font-weight:800">iPhone latest-range</div>` +
-            `<div>Latest POI ${latestRangePois.size} / painted ${markerCount}</div>` +
+            `<div style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.12);font-weight:800">iPhone data recovery</div>` +
+            `<div>Latest POI ${latestRangePois.size} / visual overlay retired</div>` +
             `<div>GCS bounds ${latestRangeBounds ? 'ready' : 'waiting'} / performance URL ${latestPerformanceGcsUrl() ? 'yes' : 'no'}</div>`
           );
         }
-        renderLatestRangeFallback();
+        clearBridgeMapVisuals();
       };
 
       const baseResetForIphoneRecovery = reset;
@@ -413,26 +305,27 @@
         latestRangeUrl = '';
         latestRangePois.clear();
         lastPerformanceGcsUrl = '';
-        const root = document.getElementById(IPHONE_COLOR_ROOT_ID);
-        root?.replaceChildren?.();
-        if (root) root.style.display = 'none';
+        lastVisiblePoiBoundsKey = '';
+        clearBridgeMapVisuals();
       };
 
-      setTimeout(() => {
+      function resumeRecovery() {
         try { discoverExistingGoogleMap(); } catch (_) {}
         scheduleVisiblePoiRefresh(true, 160);
         void replayLatestPerformanceGcs(true);
-      }, 0);
+      }
 
-      performanceReplayTimer = setInterval(() => {
-        void replayLatestPerformanceGcs(false);
-      }, 1200);
-
-      window.addEventListener('resize', renderLatestRangeFallback, { passive: true });
+      setTimeout(resumeRecovery, 0);
+      const onVisibilityChange = () => {
+        if (document.visibilityState === 'visible') resumeRecovery();
+      };
+      const onPageShow = () => resumeRecovery();
+      document.addEventListener('visibilitychange', onVisibilityChange, { passive: true });
+      window.addEventListener('pageshow', onPageShow, { passive: true });
 
       window.CampsiteBridgeIPhoneRecovery = Object.freeze({
         replayLatestPerformanceGcs: () => replayLatestPerformanceGcs(true),
-        repaintLatestRange: renderLatestRangeFallback,
+        repaintLatestRange: () => false,
         getState: () => ({
           performanceUrlFound: Boolean(latestPerformanceGcsUrl()),
           lastPerformanceGcsUrl,
@@ -440,17 +333,31 @@
           latestRangeCount: latestRangePois.size,
           latestRangeBounds: latestRangeBounds ? { ...latestRangeBounds } : null,
           mapCaptured: Boolean(bridgeMap),
-          poiCount: poiByGuid.size
+          poiCount: poiByGuid.size,
+          visualFallback: false,
+          continuousPolling: false
         })
+      });
+
+      window.CampsiteBridgeIPhoneVisualPolicy = Object.freeze({
+        bridgeOwnedMapVisuals: false,
+        gameEntityOverlay: false,
+        sponsorRingOverlay: false,
+        manualViewportProjection: false,
+        wayfarerDisplayUntouched: true,
+        wfmmDisplayUntouched: true
       });
 
       window.addEventListener('pagehide', () => {
         if (visiblePoiRefreshTimer) clearTimeout(visiblePoiRefreshTimer);
         visiblePoiRefreshTimer = null;
-        if (performanceReplayTimer) clearInterval(performanceReplayTimer);
-        performanceReplayTimer = null;
-        window.removeEventListener('resize', renderLatestRangeFallback);
-        document.getElementById(IPHONE_COLOR_ROOT_ID)?.remove?.();
+        for (const listener of mapIdleListeners.values()) {
+          try { listener?.remove?.(); } catch (_) {}
+        }
+        mapIdleListeners.clear();
+        document.removeEventListener('visibilitychange', onVisibilityChange);
+        window.removeEventListener('pageshow', onPageShow);
+        clearBridgeMapVisuals();
       }, { once: true });
 
       return {};
