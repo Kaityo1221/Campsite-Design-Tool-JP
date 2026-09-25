@@ -63,6 +63,48 @@
         return best;
       }
 
+      function isVisibleBottomPanelCandidate(element) {
+        if (!element || element === document.body || element === document.documentElement) return false;
+        if (element.id === FALLBACK_ROOT_ID || element.closest?.(`#${FALLBACK_ROOT_ID}`)) return false;
+
+        let rect = null;
+        let style = null;
+        try {
+          rect = element.getBoundingClientRect();
+          style = getComputedStyle(element);
+        } catch (_) {
+          return false;
+        }
+        if (!rect || !style) return false;
+        if (style.display === 'none' || style.visibility === 'hidden' || Number(style.opacity) === 0) return false;
+        if (rect.width < innerWidth * 0.84 || rect.height < innerHeight * 0.24) return false;
+        if (rect.bottom < innerHeight * 0.88) return false;
+        if (rect.top > innerHeight * 0.78) return false;
+
+        // Do not mistake the map/app shell itself for a bottom sheet.
+        try {
+          if (element.matches?.('.gm-style, app-wf-base-map')) return false;
+          if (element.querySelector?.('.gm-style')) return false;
+        } catch (_) {}
+
+        const classText = `${String(element.className || '')} ${String(element.id || '')}`;
+        if (/sheet|drawer|detail|bottom|panel|place|location|poi/i.test(classText)) return true;
+
+        const background = String(style.backgroundColor || '');
+        const rgba = background.match(/rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)(?:\s*,\s*([\d.]+))?\s*\)/i);
+        const alpha = rgba ? (rgba[4] == null ? 1 : Number(rgba[4])) : 0;
+        return alpha >= 0.72 || style.backgroundImage !== 'none' || style.boxShadow !== 'none';
+      }
+
+      function hasBottomPanelAtViewportPoint(x, y) {
+        let hit = null;
+        try { hit = document.elementFromPoint(x, y); } catch (_) { hit = null; }
+        for (let element = hit; element && element !== document.body && element !== document.documentElement; element = element.parentElement) {
+          if (isVisibleBottomPanelCandidate(element)) return true;
+        }
+        return false;
+      }
+
       function isWayfarerDetailSheetOpen() {
         const selectors = [
           'mat-bottom-sheet-container',
@@ -79,22 +121,18 @@
           for (const element of elements) {
             if (!element || seen.has(element)) continue;
             seen.add(element);
-            if (element.id === FALLBACK_ROOT_ID || element.closest?.(`#${FALLBACK_ROOT_ID}`)) continue;
-            let rect = null;
-            let style = null;
-            try {
-              rect = element.getBoundingClientRect();
-              style = getComputedStyle(element);
-            } catch (_) {
-              continue;
-            }
-            if (!rect || !style) continue;
-            if (style.display === 'none' || style.visibility === 'hidden' || Number(style.opacity) === 0) continue;
-            if (rect.width < innerWidth * 0.84 || rect.height < innerHeight * 0.24) continue;
-            if (rect.bottom < innerHeight * 0.88) continue;
-            if (rect.top > innerHeight * 0.78) continue;
-            return true;
+            if (isVisibleBottomPanelCandidate(element)) return true;
           }
+        }
+
+        // Wayfarer has changed its mobile detail-sheet markup more than once.
+        // Probe the lower viewport as a markup-independent fallback. The Bridge
+        // overlay uses pointer-events:none, so hit-testing sees the Wayfarer UI
+        // underneath it rather than the Bridge markers themselves.
+        const x = Math.max(1, Math.min(innerWidth - 2, innerWidth * 0.5));
+        for (const ratio of [0.72, 0.82, 0.9]) {
+          const y = Math.max(1, Math.min(innerHeight - 2, innerHeight * ratio));
+          if (hasBottomPanelAtViewportPoint(x, y)) return true;
         }
         return false;
       }
@@ -139,7 +177,9 @@
             position: 'fixed',
             pointerEvents: 'none',
             overflow: 'hidden',
-            zIndex: '1200',
+            // Keep Bridge POIs in the map-layer neighborhood. Wayfarer sheets,
+            // dialogs, menus and other product UI must always paint above them.
+            zIndex: '40',
             isolation: 'isolate'
           });
           document.body.appendChild(root);
