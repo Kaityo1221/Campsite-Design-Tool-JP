@@ -246,7 +246,7 @@
   function bindLauncher(){
     const launcher=document.getElementById('fieldModeCreativeButton');
     if(!launcher)return false;
-    launcher.textContent='＋';
+    if(launcher.textContent!=='＋')launcher.textContent='＋';
     launcher.setAttribute('aria-label','候補地を追加');
     launcher.title='候補地を追加';
     if(launcherBound===launcher)return true;
