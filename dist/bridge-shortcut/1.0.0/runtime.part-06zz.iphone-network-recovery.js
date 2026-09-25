@@ -9,6 +9,7 @@
       let performanceObserved = 0;
       let performanceReplayed = 0;
       let performanceReplayErrors = 0;
+      let performanceGeneration = 0;
 
       function isGcsResourceUrl(value) {
         return String(value || '').includes(IPHONE_GCS_PATH);
@@ -29,17 +30,21 @@
         performanceReplayActive = true;
         try {
           while (performanceReplayQueue.length) {
-            const url = performanceReplayQueue.shift();
-            if (!url) continue;
+            const item = performanceReplayQueue.shift();
+            const url = String(item?.url || '');
+            const generation = Number(item?.generation);
+            if (!url || generation !== performanceGeneration) continue;
             try {
               const response = await nativeFetch(url, { credentials: 'include', cache: 'no-store' });
               if (!response.ok) throw new Error('GCS resource replay HTTP ' + response.status);
               const payload = await response.json();
+              if (generation !== performanceGeneration) continue;
               stats.gcs += 1;
               scanJson(payload);
               performanceReplayed += 1;
               scheduleRender();
             } catch (error) {
+              if (generation !== performanceGeneration) continue;
               performanceReplayErrors += 1;
               stats.parseErrors += 1;
               console.warn('[Campsite Bridge Shortcut] GCS resource replay failed', error);
@@ -49,6 +54,7 @@
         } finally {
           performanceReplayActive = false;
           scheduleRender();
+          if (performanceReplayQueue.length) void drainPerformanceReplayQueue();
         }
       }
 
@@ -57,7 +63,7 @@
         if (!isGcsResourceUrl(url) || observedPerformanceGcsUrls.has(url)) return false;
         observedPerformanceGcsUrls.add(url);
         performanceObserved += 1;
-        performanceReplayQueue.push(url);
+        performanceReplayQueue.push({ url, generation: performanceGeneration });
         void drainPerformanceReplayQueue();
         scheduleRender();
         return true;
@@ -87,6 +93,22 @@
       seedExistingPerformanceUrls();
       installPerformanceObserver();
 
+      const baseResetForNetworkRecovery = reset;
+      reset = function() {
+        // Bridge reset must also reset this module's URL de-duplication state.
+        // Otherwise Safari can request the same GCS URL again after reset while
+        // the recovery layer silently treats it as already handled. That left
+        // the foreground count partial until visibility/pageshow forced a replay.
+        performanceGeneration += 1;
+        observedPerformanceGcsUrls.clear();
+        performanceReplayQueue.length = 0;
+        performanceObserved = 0;
+        performanceReplayed = 0;
+        performanceReplayErrors = 0;
+        baseResetForNetworkRecovery();
+        scheduleRender();
+      };
+
       const baseRenderForNetworkRecovery = render;
       render = function() {
         baseRenderForNetworkRecovery();
@@ -107,6 +129,7 @@
           replayed: performanceReplayed,
           queued: performanceReplayQueue.length,
           errors: performanceReplayErrors,
+          generation: performanceGeneration,
           continuousPolling: false
         })
       });
@@ -114,6 +137,8 @@
       window.addEventListener('pagehide', () => {
         try { performanceObserver?.disconnect?.(); } catch (_) {}
         performanceObserver = null;
+        performanceGeneration += 1;
+        observedPerformanceGcsUrls.clear();
         performanceReplayQueue.length = 0;
       }, { once: true });
 
