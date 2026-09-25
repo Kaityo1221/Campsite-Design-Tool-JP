@@ -102,14 +102,13 @@
     const gameStatus = String(raw.gameStatus || 'UNKNOWN').trim().toUpperCase();
     if (!guid || !Number.isFinite(lat) || !Number.isFinite(lng)) return null;
     if (!ALLOWED_ENTITIES.has(gameEntity) || !ALLOWED_STATUSES.has(gameStatus)) return null;
-    if (gameStatus !== 'ACTIVE') return null;
     return {
       guid,
       title,
       lat,
       lng,
       gameEntity,
-      gameStatus:'ACTIVE',
+      gameStatus,
       sponsored: raw.sponsored === true || String(raw.sponsored).toLowerCase() === 'true',
       smr: boolOrNull(raw.smr),
       imageUrl: String(raw.imageUrl || ''),
@@ -142,6 +141,24 @@
       imageUrl: String(raw.imageUrl || ''),
       description: String(raw.description || ''),
       provenance: normalizeProvenance(raw.provenance)
+    };
+  }
+
+  function legacyReferenceFromPoi(poi) {
+    if (!poi || poi.gameStatus === 'ACTIVE') return null;
+    return {
+      guid: poi.guid,
+      title: poi.title,
+      lat: poi.lat,
+      lng: poi.lng,
+      referenceKind: poi.gameEntity === 'POWERSPOT' && poi.gameStatus === 'INACTIVE'
+        ? 'INACTIVE_POWERSPOT'
+        : 'NOT_IN_GAME',
+      gameEntity: poi.gameEntity,
+      gameStatus: poi.gameStatus,
+      imageUrl: poi.imageUrl,
+      description: poi.description,
+      provenance: poi.provenance
     };
   }
 
@@ -178,7 +195,7 @@
 
   function toCampsitePoi(bridgePoi) {
     const poi = normalizePoi(bridgePoi);
-    if (!poi) return null;
+    if (!poi || poi.gameStatus !== 'ACTIVE') return null;
     return {
       name: poi.title,
       title: poi.title,
@@ -186,7 +203,7 @@
       lng: poi.lng,
       type: poi.gameEntity,
       gameEntity: poi.gameEntity,
-      gameStatus: poi.gameStatus,
+      gameStatus: 'ACTIVE',
       guid: poi.guid,
       importChannel: 'BRIDGE',
       sponsored: poi.sponsored,
@@ -311,14 +328,21 @@
       return { accepted:false, count:0, reason:'invalid-payload' };
     }
 
-    const normalizedRaw = data.pois.map(normalizePoi).filter(Boolean);
-    const deduped = dedupeByGuid(normalizedRaw);
-    const normalizedReferences = (Array.isArray(data.referencePois) ? data.referencePois : [])
+    const normalizedIncoming = data.pois.map(normalizePoi).filter(Boolean);
+    const activeIncoming = normalizedIncoming.filter(poi => poi.gameStatus === 'ACTIVE');
+    const legacyReferences = normalizedIncoming
+      .filter(poi => poi.gameStatus !== 'ACTIVE')
+      .map(legacyReferenceFromPoi)
+      .filter(Boolean);
+    const explicitReferences = (Array.isArray(data.referencePois) ? data.referencePois : [])
       .map(normalizeReferencePoi)
       .filter(Boolean);
-    const referenceDeduped = dedupeByGuid(normalizedReferences);
-    const activeGuids = new Set(deduped.pois.map(poi => poi.guid));
+
+    const activeDeduped = dedupeByGuid(activeIncoming);
+    const referenceDeduped = dedupeByGuid([...legacyReferences, ...explicitReferences]);
+    const activeGuids = new Set(activeDeduped.pois.map(poi => poi.guid));
     const referencePois = referenceDeduped.pois.filter(poi => !activeGuids.has(poi.guid));
+
     const payload = {
       bridge: 'Campsite Bridge',
       bridgeVersion: String(data.bridgeVersion || ''),
@@ -329,16 +353,17 @@
       selectedBounds: data.selectedBounds || null,
       handshakeId: String(data.handshakeId || ''),
       referencePois,
-      pois: deduped.pois
+      pois: activeDeduped.pois
     };
     const adapter = savePayload(payload);
-    const accepted = data.pois.length > 0 && normalizedRaw.length === data.pois.length && adapter.clean;
+    const accepted = data.pois.length > 0 && normalizedIncoming.length === data.pois.length && adapter.clean;
     return {
       accepted,
-      count: adapter.afterCount,
+      count: normalizedIncoming.length,
+      activeCount: adapter.afterCount,
       sourceCount:data.pois.length,
       referenceCount:referencePois.length,
-      duplicateCount:deduped.duplicateCount
+      duplicateCount:activeDeduped.duplicateCount
     };
   }
 
@@ -364,6 +389,7 @@
       handshakeId,
       accepted: result.accepted,
       count: result.count,
+      activeCount: result.activeCount || 0,
       sourceCount: result.sourceCount,
       referenceCount: result.referenceCount || 0,
       duplicateCount: result.duplicateCount || 0,
