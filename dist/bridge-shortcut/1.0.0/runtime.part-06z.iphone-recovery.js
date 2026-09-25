@@ -13,10 +13,24 @@
       const mapIdleListeners = new Map();
 
       function findMapFromAngular() {
+        try {
+          const adapterMap = window.CampsiteBridgeWayfarerMapAdapter?.findMap?.();
+          if (looksLikeGoogleMap(adapterMap)) return adapterMap;
+        } catch (_) {}
+
         const host = document.querySelector('app-wf-base-map');
-        if (!host || !Array.isArray(host.__ngContext__)) return null;
-        for (const value of host.__ngContext__.slice(0, 128)) {
-          if (looksLikeGoogleMap(value)) return value;
+        const context = host?.__ngContext__;
+        if (!context || typeof context.length !== 'number') return null;
+
+        const limit = Math.min(context.length, 128);
+        for (let index = 0; index < limit; index += 1) {
+          const component = context[index];
+          if (!component || (typeof component !== 'object' && typeof component !== 'function')) continue;
+          if (typeof component.getMap !== 'function' || typeof component.setCustomLayers !== 'function') continue;
+          try {
+            const map = component.getMap();
+            if (looksLikeGoogleMap(map)) return map;
+          } catch (_) {}
         }
         return null;
       }
