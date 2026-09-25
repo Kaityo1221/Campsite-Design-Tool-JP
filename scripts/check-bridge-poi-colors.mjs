@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 
 const shared = fs.readFileSync('js/bridge-wayfarer-poi-colors.js', 'utf8');
 const launcher = fs.readFileSync('js/bridge-shortcut/shortcut-launcher.js', 'utf8');
+const recovery = fs.readFileSync('dist/bridge-shortcut/1.0.0/runtime.part-06z.iphone-recovery.js', 'utf8');
+const policy = fs.readFileSync('dist/bridge-shortcut/1.0.0/runtime.part-09.iphone-wfmm-color-policy.js', 'utf8');
 const iPhoneRuntimeParts = [
   'runtime.part-00.js',
   'runtime.part-01.js',
@@ -18,14 +20,17 @@ const iPhoneRuntimeParts = [
 const builtRuntime = iPhoneRuntimeParts
   .map(name => fs.readFileSync(`dist/bridge-shortcut/1.0.0/${name}`, 'utf8'))
   .join('');
-const policy = fs.readFileSync('dist/bridge-shortcut/1.0.0/runtime.part-09.iphone-wfmm-color-policy.js', 'utf8');
 const pcManifest = JSON.parse(fs.readFileSync('bridge-pc/manifest.json', 'utf8'));
 const androidBuilder = fs.readFileSync('scripts/build-android-bridge-0.3.6-unsigned.mjs', 'utf8');
+
+// The concatenated Shortcut runtime must remain syntactically valid.
+new Function(builtRuntime);
 
 for (const entity of ['POKESTOP', 'GYM', 'POWERSPOT']) {
   assert.ok(shared.includes(entity), `shared overlay must support ${entity}`);
 }
 
+// PC/Android still use the shared overlay until Stage 6.
 assert.ok(shared.includes("VERSION = '1.1.0'"), 'shared map display version must be 1.1.0');
 assert.ok(shared.includes('window.CampsiteBridgePoiParser'), 'PC map display must be able to consume the shared POI Parser');
 assert.ok(shared.includes('window.CampsiteBridgePoiClassifier'), 'PC map display must use POI Engine classification when available');
@@ -42,46 +47,63 @@ assert.ok(!shared.includes('NOT IN GAME'), 'Not in Game must remain hidden from 
 assert.ok(shared.includes('fromLatLngToDivPixel(new LatLng(poi.lat, poi.lng))'), 'markers must be projected directly from normalized lat/lng');
 assert.ok(!shared.includes('poi.lat +'), 'renderer must not apply latitude offsets');
 assert.ok(!shared.includes('poi.lng +'), 'renderer must not apply longitude offsets');
-assert.ok(shared.includes("POKESTOP: { fill: '#22b8f0', border: '#1738b8', size: 24"), 'PokéStop visual contract changed unexpectedly');
-assert.ok(shared.includes("GYM: { fill: '#f04463', border: '#b91c3c', size: 24"), 'Gym visual contract changed unexpectedly');
-assert.ok(shared.includes("POWERSPOT: { fill: '#de65d2', border: '#9b2aa7', size: 28"), 'Power Spot must remain visually larger than the other two entities');
-assert.ok(shared.includes("glyph: '●'"), 'PokéStop marker glyph missing');
-assert.ok(shared.includes("glyph: '▲'"), 'Gym marker glyph missing');
-assert.ok(shared.includes("glyph: '◆'"), 'Power Spot marker glyph missing');
 
+// iPhone Stage 5: data collection remains, every legacy visual intervention is retired.
+assert.ok(launcher.includes("const LAUNCHER_VERSION = '1.3.0'"), 'iPhone launcher version must reflect Stage 5');
 assert.ok(launcher.includes('campsite-bridge-shortcut-runtime.js'), 'iPhone launcher must stay runtime-only');
 assert.ok(!launcher.includes('bridge-wayfarer-poi-colors.js'), 'iPhone launcher must not inject the shared Bridge color overlay');
-assert.ok(builtRuntime.includes("const IPHONE_GCS_PATH = '/api/v1/vault/mapview/gcs'"), 'iPhone runtime must keep GCS recovery for POI collection');
-assert.ok(builtRuntime.includes('window.CampsiteBridgeIPhonePoiColorPolicy'), 'iPhone runtime must publish the WFMM-only color policy');
-assert.ok(policy.includes("provider: 'WFMM'"), 'iPhone POI color provider must be WFMM');
+assert.ok(!launcher.includes('NATIVE_MARKER_POLICY_URL'), 'launcher must not fetch the legacy native marker policy');
+assert.ok(!launcher.includes('runtime.part-10.iphone-native-wayfarer-marker-policy.js'), 'legacy native marker policy must not be loaded');
+assert.ok(launcher.includes('legacy native marker policy: retired'), 'launcher diagnostics must report native marker retirement');
+
+assert.ok(recovery.includes("const IPHONE_GCS_PATH = '/api/v1/vault/mapview/gcs'"), 'iPhone runtime must keep GCS recovery for POI collection');
+assert.ok(recovery.includes("credentials: 'include'"), 'iPhone GCS recovery must retain authenticated fetches');
+assert.ok(recovery.includes("map.addListener('idle'"), 'iPhone recovery must refresh from map idle instead of continuous polling');
+assert.ok(recovery.includes('window.CampsiteBridgeIPhoneRecovery'), 'iPhone recovery API must remain available');
+assert.ok(recovery.includes('visualFallback: false'), 'iPhone recovery must declare visual fallback retired');
+assert.ok(recovery.includes('continuousPolling: false'), 'iPhone recovery must declare continuous polling retired');
+assert.ok(recovery.includes('window.CampsiteBridgeIPhoneVisualPolicy'), 'iPhone visual retirement policy must be published');
+assert.ok(recovery.includes('bridgeOwnedMapVisuals: false'), 'Bridge-owned iPhone map visuals must stay disabled');
+assert.ok(recovery.includes('gameEntityOverlay: false'), 'iPhone game entity overlay must stay disabled');
+assert.ok(recovery.includes('sponsorRingOverlay: false'), 'iPhone sponsor ring overlay must stay disabled');
+assert.ok(recovery.includes('manualViewportProjection: false'), 'manual iPhone viewport projection must stay disabled');
+assert.ok(recovery.includes('createGameEntityOverlay = () => null'), 'legacy game entity renderer must be neutralized');
+assert.ok(recovery.includes('scheduleOverlayRender = clearBridgeMapVisuals'), 'legacy overlay scheduler must be neutralized');
+assert.ok(!recovery.includes('IPHONE_COLOR_ROOT_ID'), 'fixed iPhone color root must be removed');
+assert.ok(!recovery.includes('viewportPointForPoi'), 'manual viewport projection must be removed');
+assert.ok(!recovery.includes('makeIphoneColorMarker'), 'fixed color marker creation must be removed');
+assert.ok(!recovery.includes('renderLatestRangeFallback'), 'latest-range visual fallback must be removed');
+assert.ok(!recovery.includes('setInterval('), 'iPhone recovery must not run continuous polling');
+assert.ok(!recovery.includes('MutationObserver'), 'iPhone recovery must not observe the whole document');
+
+assert.ok(policy.includes("provider: 'WAYFARER_OR_WFMM'"), 'iPhone display provider must remain Wayfarer/WFMM');
 assert.ok(policy.includes('bridgeColors: false'), 'iPhone Bridge colors must stay disabled');
-assert.ok(policy.includes('[data-cbs-game-entity]'), 'policy must suppress the base Bridge entity markers');
-assert.ok(policy.includes("hideWayfarerHollowDots: true"), 'iPhone policy must enable Wayfarer hollow-dot suppression');
-assert.ok(policy.includes("data-campsite-hidden-wayfarer-hollow"), 'hollow Wayfarer dots must be marked and hidden conservatively');
-assert.ok(policy.includes('isWayfarerOrange'), 'hollow-dot detector must require the Wayfarer orange outline');
-assert.ok(policy.includes('isWhiteOrClear'), 'hollow-dot detector must require a white or clear center');
-assert.ok(policy.includes("text === 'white'"), 'color parser must understand named white');
-assert.ok(policy.includes("/^#([0-9a-f]{3,8})$/i"), 'color parser must understand SVG hex colors');
-assert.ok(policy.includes('decodeSvgDataUrl'), 'detector must inspect SVG data-image markers');
-assert.ok(policy.includes('hasImageHollowOrangeDot'), 'detector must inspect image-backed marker icons');
-assert.ok(policy.includes('hasCanvasHollowOrangeDot'), 'detector must inspect small canvas-backed marker icons');
-assert.ok(policy.includes("hasPseudoHollowOrangeDot(el, '::before')"), 'detector must inspect CSS pseudo-element markers');
-assert.ok(policy.includes("querySelectorAll('div, span, svg, img, image, canvas')"), 'marker scan must include image/canvas renderers');
+assert.ok(policy.includes('hideWayfarerHollowDots: false'), 'Bridge must no longer hide native Wayfarer dots');
+assert.ok(policy.includes('legacyDomScanning: false'), 'legacy DOM color scanning must remain disabled');
+assert.ok(policy.includes('legacyCanvasSampling: false'), 'legacy canvas sampling must remain disabled');
+assert.ok(policy.includes('mutationObserver: false'), 'legacy display observer must remain disabled');
+assert.ok(policy.includes('polling: false'), 'legacy display polling must remain disabled');
+assert.ok(!policy.includes('MutationObserver'), 'iPhone display policy must not create MutationObservers');
+assert.ok(!policy.includes('setInterval('), 'iPhone display policy must not poll');
+assert.ok(!policy.includes('querySelectorAll('), 'iPhone display policy must not scan marker DOM');
+assert.ok(!policy.includes('getImageData('), 'iPhone display policy must not sample marker pixels');
+assert.ok(!policy.includes('isWayfarerOrange'), 'color-guess detection must stay removed');
+
 assert.ok(!iPhoneRuntimeParts.includes('runtime.part-08.iphone-native-markers.js'), 'native marker experiment must not ship');
 assert.ok(!iPhoneRuntimeParts.includes('runtime.part-06zz.iphone-dom-overlay.js'), 'DOM overlay experiment must not ship');
 assert.ok(!iPhoneRuntimeParts.includes('runtime.part-06zzzzzz.iphone-forced-poi-colors.js'), 'forced color experiment must not ship');
+assert.ok(!iPhoneRuntimeParts.includes('runtime.part-10.iphone-native-wayfarer-marker-policy.js'), 'Angular marker policy must not ship');
 
 const mainEntry = pcManifest.content_scripts?.find(entry => entry.world === 'MAIN');
 assert.ok(mainEntry, 'PC manifest MAIN-world entry missing');
 assert.ok(mainEntry.js?.includes('poi-parser.js'), 'PC must load POI Parser');
 assert.ok(mainEntry.js?.includes('poi-classifier.js'), 'PC must load POI Classifier');
-assert.ok(mainEntry.js?.includes('wayfarer-poi-colors.js'), 'PC must load shared POI map display');
+assert.ok(mainEntry.js?.includes('wayfarer-poi-colors.js'), 'PC must load shared POI map display until Stage 6');
 assert.ok(mainEntry.js.indexOf('poi-parser.js') < mainEntry.js.indexOf('poi-classifier.js'), 'Parser must load before Classifier');
 assert.ok(mainEntry.js.indexOf('poi-classifier.js') < mainEntry.js.indexOf('wayfarer-poi-colors.js'), 'Classifier must load before map display');
-assert.ok(mainEntry.js.indexOf('wayfarer-poi-colors.js') < mainEntry.js.indexOf('page-collector.js'), 'map display must load before collector passive fetches begin');
 
-assert.ok(androidBuilder.includes('bridge-wayfarer-poi-colors.js'), 'Android 0.3.6 builder must embed the shared overlay');
+assert.ok(androidBuilder.includes('bridge-wayfarer-poi-colors.js'), 'Android 0.3.6 builder must embed the shared overlay until Stage 6');
 assert.ok(androidBuilder.includes("VERSION = '0.3.6'"), 'Android candidate version must be 0.3.6');
 assert.ok(androidBuilder.includes('Mozilla signing is required'), 'Android candidate must clearly remain unsigned');
 
-console.log('Bridge POI display policy checks: OK');
+console.log('Bridge display policy checks: iPhone data-only Stage 5 + PC/Android pre-Stage-6 OK');
