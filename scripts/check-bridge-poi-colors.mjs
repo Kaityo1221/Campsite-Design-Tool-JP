@@ -45,6 +45,9 @@ assert.ok(runtimeParts.includes('function createGameEntityOverlay'), 'iPhone mus
 assert.ok(runtimeParts.includes('if (!wfmmPresent)'), 'iPhone native markers must yield to WFMM');
 assert.ok(runtimeParts.includes("marker.dataset.cbsGameEntity = entity"), 'iPhone native entity markers must use the Bridge overlay');
 assert.ok(runtimeParts.includes("pointerEvents: 'none'"), 'iPhone native markers must not block map interaction');
+assert.ok(runtimeParts.includes('function isWayfarerDetailSheetOpen'), 'iPhone overlay must detect Wayfarer detail sheets');
+assert.ok(runtimeParts.includes("'mat-bottom-sheet-container'"), 'iPhone overlay should recognize Angular bottom sheets');
+assert.ok(runtimeParts.includes('detailSheetOpen'), 'iPhone overlay must suppress POI markers while a detail sheet is open');
 assert.ok(!runtimeParts.includes('runtime.part-08'), 'iPhone runtime must not depend on the removed duplicate overlay tail');
 
 const mainEntry = pcManifest.content_scripts?.find(entry => entry.world === 'MAIN');
