@@ -56,6 +56,10 @@ assert.ok(builtRuntime.includes('window.CampsiteBridgeIPhonePoiColorPolicy'), 'i
 assert.ok(policy.includes("provider: 'WFMM'"), 'iPhone POI color provider must be WFMM');
 assert.ok(policy.includes('bridgeColors: false'), 'iPhone Bridge colors must stay disabled');
 assert.ok(policy.includes('[data-cbs-game-entity]'), 'policy must suppress the base Bridge entity markers');
+assert.ok(policy.includes("hideWayfarerHollowDots: true"), 'iPhone policy must enable Wayfarer hollow-dot suppression');
+assert.ok(policy.includes("data-campsite-hidden-wayfarer-hollow"), 'hollow Wayfarer dots must be marked and hidden conservatively');
+assert.ok(policy.includes('isWayfarerOrange'), 'hollow-dot detector must require the Wayfarer orange outline');
+assert.ok(policy.includes('isWhiteOrClear'), 'hollow-dot detector must require a white or clear center');
 assert.ok(!iPhoneRuntimeParts.includes('runtime.part-08.iphone-native-markers.js'), 'native marker experiment must not ship');
 assert.ok(!iPhoneRuntimeParts.includes('runtime.part-06zz.iphone-dom-overlay.js'), 'DOM overlay experiment must not ship');
 assert.ok(!iPhoneRuntimeParts.includes('runtime.part-06zzzzzz.iphone-forced-poi-colors.js'), 'forced color experiment must not ship');
