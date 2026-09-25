@@ -1,8 +1,9 @@
 (async () => {
   'use strict';
 
-  const LAUNCHER_VERSION = '1.2.0';
+  const LAUNCHER_VERSION = '1.2.1';
   const RUNTIME_URL = 'https://kaityo1221.github.io/Campsite-Design-Tool-JP/js/bridge-shortcut/campsite-bridge-shortcut-runtime.js';
+  const NATIVE_MARKER_POLICY_URL = 'https://kaityo1221.github.io/Campsite-Design-Tool-JP/dist/bridge-shortcut/1.0.0/runtime.part-10.iphone-native-wayfarer-marker-policy.js';
   const WAYFARER_HOST = /(^|\.)wayfarer\.(nianticlabs\.com|scopely\.com)$/i;
   const PANEL_ID = 'campsite-bridge-shortcut-panel';
 
@@ -122,6 +123,7 @@
     `Campsite Bridge Launcher ${LAUNCHER_VERSION}`,
     `host: ${location.hostname}`,
     `fetch: ${report.fetch || '-'}`,
+    `native marker policy: ${report.nativePolicy || '-'}`,
     `eval: ${report.eval || '-'}`,
     `Function: ${report.function || '-'}`,
     `DOM: ${report.dom || '-'}`,
@@ -143,11 +145,25 @@
     const response = await fetch(`${RUNTIME_URL}?t=${Date.now()}`, { cache: 'no-store' });
     if (!response.ok) throw new Error(`runtime HTTP ${response.status}`);
 
-    const code = await response.text();
-    if (!code.includes("const BRIDGE_VERSION = '")) {
+    const runtimeCode = await response.text();
+    if (!runtimeCode.includes("const BRIDGE_VERSION = '")) {
       throw new Error('runtime validation failed');
     }
-    report.fetch = `PASS size=${code.length}`;
+    report.fetch = `PASS size=${runtimeCode.length}`;
+
+    let nativePolicyCode = '';
+    try {
+      const policyResponse = await fetch(`${NATIVE_MARKER_POLICY_URL}?t=${Date.now()}`, { cache: 'no-store' });
+      if (!policyResponse.ok) throw new Error(`policy HTTP ${policyResponse.status}`);
+      nativePolicyCode = await policyResponse.text();
+      if (!nativePolicyCode.includes('CampsiteBridgeWayfarerNativeMarkerPolicy')) throw new Error('policy validation failed');
+      report.nativePolicy = `PASS size=${nativePolicyCode.length}`;
+    } catch (error) {
+      report.nativePolicy = `SKIP ${formatError(error)}`;
+      nativePolicyCode = '';
+    }
+
+    const code = nativePolicyCode ? `${runtimeCode}\n${nativePolicyCode}` : runtimeCode;
 
     runCapabilityTests(report);
     await runRuntimeOnce(code, report);
