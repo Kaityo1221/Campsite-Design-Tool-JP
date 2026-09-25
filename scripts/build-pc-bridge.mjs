@@ -10,8 +10,7 @@ const sharedDisplayOwner = 'js/bridge-wayfarer-display-owner.js';
 const pcDisplayOwner = path.join(sourceDir, 'wayfarer-display-owner.js');
 const sharedDeckCompat = 'js/bridge-wayfarer-deck-compat.js';
 const pcDeckCompat = path.join(sourceDir, 'wayfarer-deck-compat.js');
-const sharedPoiColors = 'js/bridge-wayfarer-poi-colors.js';
-const pcPoiColors = path.join(sourceDir, 'wayfarer-poi-colors.js');
+const retiredPoiOverlay = path.join(sourceDir, 'wayfarer-poi-colors.js');
 const FIXED_DOS_TIME = 0;
 const FIXED_DOS_DATE = ((2026 - 1980) << 9) | (9 << 5) | 21;
 
@@ -87,8 +86,10 @@ if (!fs.existsSync(sharedDisplayOwner)) throw new Error(`Shared Wayfarer display
 fs.copyFileSync(sharedDisplayOwner, pcDisplayOwner);
 if (!fs.existsSync(sharedDeckCompat)) throw new Error(`Shared Wayfarer deck compatibility layer missing: ${sharedDeckCompat}`);
 fs.copyFileSync(sharedDeckCompat, pcDeckCompat);
-if (!fs.existsSync(sharedPoiColors)) throw new Error(`Shared POI color overlay missing: ${sharedPoiColors}`);
-fs.copyFileSync(sharedPoiColors, pcPoiColors);
+
+// Stage 6: Bridge no longer owns a colored POI renderer. Remove a stale generated
+// copy before packaging so local rebuilds cannot accidentally ship the retired overlay.
+fs.rmSync(retiredPoiOverlay, { force: true });
 
 const manifest = JSON.parse(fs.readFileSync(path.join(sourceDir, 'manifest.json'), 'utf8'));
 if (manifest.manifest_version !== 3) throw new Error('PC Bridge must use Manifest V3');
@@ -97,7 +98,7 @@ const mainScripts = manifest.content_scripts?.find(entry => entry.world === 'MAI
 if (!mainScripts.includes('wayfarer-map-adapter.js')) throw new Error('PC Bridge manifest must load wayfarer-map-adapter.js in MAIN world');
 if (!mainScripts.includes('wayfarer-display-owner.js')) throw new Error('PC Bridge manifest must load wayfarer-display-owner.js in MAIN world');
 if (!mainScripts.includes('wayfarer-deck-compat.js')) throw new Error('PC Bridge manifest must load wayfarer-deck-compat.js in MAIN world');
-if (!mainScripts.includes('wayfarer-poi-colors.js')) throw new Error('PC Bridge manifest must load wayfarer-poi-colors.js in MAIN world');
+if (mainScripts.includes('wayfarer-poi-colors.js')) throw new Error('PC Bridge must not load the retired wayfarer-poi-colors.js overlay');
 if (mainScripts.indexOf('wayfarer-map-adapter.js') > mainScripts.indexOf('wayfarer-display-owner.js')) {
   throw new Error('PC Bridge must load wayfarer-map-adapter.js before wayfarer-display-owner.js');
 }
@@ -110,6 +111,9 @@ if (mainScripts.indexOf('wayfarer-deck-compat.js') > mainScripts.indexOf('page-c
 
 const files = listFiles(sourceDir);
 if (!files.length) throw new Error('PC Bridge source is empty');
+if (files.some(file => file.relative === 'wayfarer-poi-colors.js')) {
+  throw new Error('Retired POI overlay must not enter the PC Bridge package');
+}
 
 const locals = [];
 const centrals = [];
