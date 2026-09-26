@@ -56,6 +56,38 @@ function renderJpGuide(){jpRefreshReviews();const box=ensureJpGuide(),adds=jpAdd
 
     html=html.replace("$('back').onclick=()=>history.back();","$('back').onclick=()=>location.href='../lab.html';");
     html=html.replace('<title>CREATIVE MODE | Next Lab</title>','<title>CREATIVE MODE | Campsite Lab</title>');
+
+    // Field-test follow-up: keep controls out of the way while retaining the new visual language.
+    const followupStyle=`<style id="cmJpFieldFollowupStyle">
+      .toolbox{bottom:calc(82px + env(safe-area-inset-bottom))!important}
+      .toolmenu{bottom:calc(142px + env(safe-area-inset-bottom))!important}
+      #cmStandaloneSaveMenu{left:10px!important;right:auto!important;transform:none!important;width:min(260px,calc(100vw - 20px))!important;padding:8px!important;gap:7px!important}
+      .left-hand #cmStandaloneSaveMenu{left:auto!important;right:10px!important;transform:none!important}
+      #cmStandaloneSaveMenu button{text-align:center!important;padding:0 14px!important}
+      #cmStandaloneSaveButton{transition:transform .2s ease!important}
+      body:has(.cm-coords) #cmStandaloneSaveButton{transform:translateY(92px)!important}
+      .cm-coords>div:last-child{padding-bottom:24px!important}
+    </style>`;
+    if(!html.includes('id="cmJpFieldFollowupStyle"'))html=html.replace('</head>',followupStyle+'</head>');
+
+    const followupRuntime=`<script id="cmJpFieldFollowupRuntime">
+(()=>{
+  let fabWasOpen=false;
+  const remember=e=>{
+    const fab=e.target&&e.target.closest?e.target.closest('#cmAddFab'):null;if(!fab)return;
+    try{fabWasOpen=typeof cmAddMenuOpen!=='undefined'&&!!cmAddMenuOpen}catch(_){fabWasOpen=false}
+  };
+  const suppress=e=>{
+    const fab=e.target&&e.target.closest?e.target.closest('#cmAddFab'):null;if(!fab||!fabWasOpen)return;
+    setTimeout(()=>{const hint=document.getElementById('cmV45AddFlash');if(hint)hint.classList.remove('show')},0);
+  };
+  document.addEventListener('pointerdown',remember,true);
+  document.addEventListener('touchstart',remember,{capture:true,passive:true});
+  document.addEventListener('click',suppress,true);
+})();
+<\/script>`;
+    if(!html.includes('id="cmJpFieldFollowupRuntime"'))html=html.replace('</body>',followupRuntime+'</body>');
+
     return html;
   };
 })();
