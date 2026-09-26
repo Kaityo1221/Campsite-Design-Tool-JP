@@ -5,6 +5,46 @@
   window.applyCreativePatches=function(src){
     src=previous(src);
 
+    // v45 uses !important for the default FAB corner. Use inline !important
+    // when the existing drag helper moves it so the user's saved position wins.
+    const fabOld=`wrap.style.left=p.x+'px';
+  wrap.style.top=p.y+'px';
+  wrap.style.right='auto';
+  wrap.style.bottom='auto';`;
+    const fabNew=`wrap.style.setProperty('left',p.x+'px','important');
+  wrap.style.setProperty('top',p.y+'px','important');
+  wrap.style.setProperty('right','auto','important');
+  wrap.style.setProperty('bottom','auto','important');`;
+    if(src.includes(fabOld))src=src.replace(fabOld,fabNew);
+
+    // Add the small blue shooting-star feedback inside the editor scope so it
+    // can access map/records/cmCount safely.
+    const placeMarker='function cmPlace(latlng){';
+    if(src.includes(placeMarker)&&!src.includes('function cmV46FlyStarToCount(')){
+      const helper=`function cmV46FlyStarToCount(r){
+  try{if(!r||!Array.isArray(r.latlng))return;if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+    const target=document.getElementById('cmCount');if(!target)return;
+    const container=map.getContainer(),mr=container.getBoundingClientRect(),p=map.latLngToContainerPoint(L.latLng(r.latlng[0],r.latlng[1])),tr=target.getBoundingClientRect();
+    const sx=mr.left+p.x,sy=mr.top+p.y,ex=tr.left+tr.width/2,ey=tr.top+tr.height/2;
+    const star=document.createElement('div');star.className='cm-v46-shooting-star';star.style.left=sx+'px';star.style.top=sy+'px';document.body.appendChild(star);
+    const dx=ex-sx,dy=ey-sy,angle=Math.atan2(dy,dx)*180/Math.PI;star.style.transform='translate(-50%,-50%) rotate('+angle+'deg)';
+    const anim=star.animate([{left:sx+'px',top:sy+'px',opacity:0,offset:0},{left:(sx+dx*.12)+'px',top:(sy+dy*.12)+'px',opacity:1,offset:.16},{left:ex+'px',top:ey+'px',opacity:.15,offset:1}],{duration:430,easing:'cubic-bezier(.22,.72,.24,1)',fill:'forwards'});
+    anim.onfinish=()=>{star.remove();target.classList.remove('cm-v46-count-pop');void target.offsetWidth;target.classList.add('cm-v46-count-pop');setTimeout(()=>target.classList.remove('cm-v46-count-pop'),320)};
+  }catch(e){console.warn('[Creative v46] star animation',e)}
+}
+`;
+      src=src.replace(placeMarker,helper+placeMarker);
+      src=src.replace('cmHaptic();cmAnimateMarker(r);cmShowUndo(r);cmClearPreview()','cmHaptic();cmAnimateMarker(r);cmV46FlyStarToCount(r);cmShowUndo(r);cmClearPreview()');
+    }
+
+    // Coordinate list: keep a submission reason directly under longitude.
+    // Reuse memo so it survives existing workspace/project persistence.
+    const coordTail="root.appendChild(card)});if(!cmActiveNew().length";
+    if(src.includes(coordTail)&&!src.includes("className='cm-v46-reason'")){
+      const coordReplacement=`const reason=document.createElement('label');reason.className='cm-v46-reason';reason.innerHTML='<span>理由</span><textarea class="cm-v46-reason-input" placeholder="この候補地を選んだ理由を入力"></textarea>';const reasonInput=reason.querySelector('textarea');reasonInput.value=String(r.memo||'');reasonInput.oninput=()=>{r.memo=reasonInput.value;snapshot();cmPersistCurrent()};card.appendChild(reason);root.appendChild(card)});if(!cmActiveNew().length`;
+      src=src.replace(coordTail,coordReplacement);
+    }
+
     const style=`<style id="cmV46FieldFeedbackStyle">
       /* Aベース + C要素：中心を隠さない配置インジケーター */
       #cmSafeAddDot{width:86px!important;height:86px!important;display:grid!important;place-items:center!important;pointer-events:none!important}
@@ -36,10 +76,7 @@
       }
 
       /* 保存メニューは中央寄せ・少し細身 */
-      #cmStandaloneSaveMenu{
-        left:50%!important;right:auto!important;transform:translateX(-50%)!important;
-        width:min(228px,calc(100vw - 44px))!important;padding:7px!important;gap:6px!important
-      }
+      #cmStandaloneSaveMenu{left:50%!important;right:auto!important;transform:translateX(-50%)!important;width:min(228px,calc(100vw - 44px))!important;padding:7px!important;gap:6px!important}
       .left-hand #cmStandaloneSaveMenu{left:50%!important;right:auto!important}
       #cmStandaloneSaveMenu button{min-height:44px!important;padding:0 12px!important}
 
@@ -58,87 +95,15 @@
     </style>`;
     if(!src.includes('id="cmV46FieldFeedbackStyle"'))src=src.replace('</head>',style+'</head>');
 
+    // DOM-only follow-up: keep the temporary 「追加」 label near a moved FAB.
     const runtime=`<script id="cmV46FieldFeedbackRuntime">
 (()=>{
-  /* v45 の !important 配置と両立させ、FABドラッグ位置を復活 */
-  try{
-    if(typeof cmApplyFabPosition==='function'){
-      cmApplyFabPosition=function(pos){
-        const wrap=document.getElementById('cmFabWrap');if(!wrap||!pos)return;
-        const p=typeof cmClampFabPosition==='function'?cmClampFabPosition(pos.x,pos.y):pos;
-        wrap.style.setProperty('left',Number(p.x)+'px','important');
-        wrap.style.setProperty('top',Number(p.y)+'px','important');
-        wrap.style.setProperty('right','auto','important');
-        wrap.style.setProperty('bottom','auto','important');
-      };
-      try{const saved=typeof cmReadFabPosition==='function'?cmReadFabPosition():null;if(saved)cmApplyFabPosition(saved)}catch(_){}
-    }
-  }catch(e){console.warn('[Creative v46] FAB drag restore',e)}
-
-  /* 「追加」ヒントを、移動した＋ボタンの近くへ追従 */
   function alignAddHint(){
     const fab=document.getElementById('cmAddFab'),hint=document.getElementById('cmV45AddFlash');if(!fab||!hint)return;
-    const r=fab.getBoundingClientRect();
-    hint.style.right='auto';hint.style.left=Math.max(6,r.left+(r.width-52)/2)+'px';
+    const r=fab.getBoundingClientRect();hint.style.right='auto';hint.style.left=Math.max(6,r.left+(r.width-52)/2)+'px';
   }
   function bindHint(){const fab=document.getElementById('cmAddFab');if(!fab||fab.dataset.cmV46Hint==='1')return;fab.dataset.cmV46Hint='1';fab.addEventListener('click',()=>setTimeout(alignAddHint,0));}
-
-  function flyStarToCount(record){
-    try{
-      if(!record||!Array.isArray(record.latlng)||!window.matchMedia('(prefers-reduced-motion: reduce)').matches===false)return;
-    }catch(_){}
-    try{
-      const target=document.getElementById('cmCount');if(!target||!map)return;
-      const container=map.getContainer(),mr=container.getBoundingClientRect(),p=map.latLngToContainerPoint(record.latlng),tr=target.getBoundingClientRect();
-      const sx=mr.left+p.x,sy=mr.top+p.y,ex=tr.left+tr.width/2,ey=tr.top+tr.height/2;
-      const star=document.createElement('div');star.className='cm-v46-shooting-star';star.style.left=sx+'px';star.style.top=sy+'px';document.body.appendChild(star);
-      const dx=ex-sx,dy=ey-sy,angle=Math.atan2(dy,dx)*180/Math.PI;
-      star.style.transform='translate(-50%,-50%) rotate('+angle+'deg)';
-      const anim=star.animate([
-        {left:sx+'px',top:sy+'px',opacity:0,offset:0},
-        {left:(sx+dx*.12)+'px',top:(sy+dy*.12)+'px',opacity:1,offset:.16},
-        {left:ex+'px',top:ey+'px',opacity:.18,offset:1}
-      ],{duration:430,easing:'cubic-bezier(.22,.72,.24,1)',fill:'forwards'});
-      anim.onfinish=()=>{star.remove();target.classList.remove('cm-v46-count-pop');void target.offsetWidth;target.classList.add('cm-v46-count-pop');setTimeout(()=>target.classList.remove('cm-v46-count-pop'),320)};
-    }catch(e){console.warn('[Creative v46] star animation',e)}
-  }
-
-  /* 候補地の追加成功時だけ小さな流れ星を飛ばす */
-  try{
-    if(typeof cmPlace==='function'&&!cmPlace.__cmV46Wrapped){
-      const basePlace=cmPlace;
-      const wrapped=function(latlng){
-        let before=0;try{before=typeof cmActiveNew==='function'?cmActiveNew().length:0}catch(_){}
-        const result=basePlace(latlng);
-        try{
-          const items=typeof cmActiveNew==='function'?cmActiveNew():[];
-          if(items.length>before)flyStarToCount(items[items.length-1]);
-        }catch(_){}
-        return result;
-      };
-      wrapped.__cmV46Wrapped=true;cmPlace=wrapped;
-    }
-  }catch(e){console.warn('[Creative v46] cmPlace wrap',e)}
-
-  /* 座標一覧カードの経度の下に、提出用の理由欄を追加 */
-  function enhanceCoords(){
-    const view=document.querySelector('.cm-coords');if(!view||view.dataset.cmV46Reasons==='1')return;
-    const cards=[...view.querySelectorAll('.cm-coord-card')];
-    let items=[];try{items=typeof cmActiveNew==='function'?cmActiveNew():[]}catch(_){}
-    cards.forEach((card,i)=>{
-      if(card.querySelector('.cm-v46-reason'))return;
-      const r=items[i];if(!r)return;
-      const label=document.createElement('label');label.className='cm-v46-reason';
-      const title=document.createElement('span');title.textContent='理由';
-      const ta=document.createElement('textarea');ta.placeholder='この候補地を選んだ理由を入力';ta.value=String(r.memo||'');
-      ta.addEventListener('input',()=>{r.memo=ta.value;try{snapshot()}catch(_){}try{cmPersistCurrent()}catch(_){}});
-      label.append(title,ta);card.appendChild(label);
-    });
-    view.dataset.cmV46Reasons='1';
-  }
-
-  bindHint();enhanceCoords();
-  new MutationObserver(()=>{bindHint();enhanceCoords()}).observe(document.body,{childList:true,subtree:true});
+  bindHint();new MutationObserver(bindHint).observe(document.body,{childList:true,subtree:true});
 })();
 </script>`;
     if(!src.includes('id="cmV46FieldFeedbackRuntime"'))src=src.replace('</body>',runtime+'</body>');
