@@ -62,7 +62,7 @@ html,body{margin:0;min-height:100%;background:#17130f;color:#fff8e8;font-family:
     if(bootText)bootText.textContent='機能を準備中…';
     const patchFiles=${JSON.stringify(PATCH_FILES)};
     const patchTexts=await Promise.all(patchFiles.map(async name=>{
-      const response=await fetch('./runtime/'+name,{cache:'force-cache'});
+      const response=await fetch('./runtime/'+name,{cache:'no-store'});
       if(!response.ok)throw new Error(name+' HTTP '+response.status);
       return response.text();
     }));
