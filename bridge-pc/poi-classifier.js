@@ -1,10 +1,18 @@
 (() => {
   'use strict';
 
-  const VERSION = '1.0.0';
+  const VERSION = '1.1.0';
   const ACTIVE_KINDS = new Set(['POKESTOP', 'GYM', 'POWERSPOT']);
   const ENTITY_PRIORITY = ['GYM', 'POKESTOP', 'POWERSPOT'];
   const SUPPORTED_BRAND = 'HOLOHOLO';
+
+  function optionalBoolean(...values) {
+    for (const value of values) {
+      if (value === true || String(value).toLowerCase() === 'true') return true;
+      if (value === false || String(value).toLowerCase() === 'false') return false;
+    }
+    return null;
+  }
 
   function normalizedBrand(value) {
     return String(value || '').trim().toUpperCase();
@@ -35,6 +43,10 @@
       entity: normalizedEntity(item?.entity),
       status: normalizedStatus(item?.status),
       gameBrand: normalizedBrand(item?.gameBrand),
+      sponsored: optionalBoolean(item?.sponsored),
+      smr: optionalBoolean(item?.smr),
+      title: String(item?.title || '').trim(),
+      imageUrl: String(item?.imageUrl || ''),
       malformed: item?.malformed === true,
       rawEntity: String(item?.rawEntity || item?.entity || '').trim()
     }));
@@ -53,6 +65,22 @@
     return null;
   }
 
+  function chooseInactivePowerSpot(objects) {
+    return objects.find(item =>
+      item.status === 'INACTIVE' &&
+      item.entity === 'POWERSPOT' &&
+      isSupportedBrand(item.gameBrand)
+    ) || null;
+  }
+
+  function chooseInactiveSupported(objects) {
+    return objects.find(item =>
+      item.status === 'INACTIVE' &&
+      ACTIVE_KINDS.has(item.entity) &&
+      isSupportedBrand(item.gameBrand)
+    ) || null;
+  }
+
   function hasAmbiguousMetadata(poi, objects) {
     if (Number(poi?.sourceGameObjectMeta?.malformedCount || 0) > 0) return true;
     return objects.some(item => {
@@ -65,11 +93,7 @@
   }
 
   function inactiveStatus(objects) {
-    return objects.some(item =>
-      item.status === 'INACTIVE' &&
-      ACTIVE_KINDS.has(item.entity) &&
-      isSupportedBrand(item.gameBrand)
-    ) ? 'INACTIVE' : 'UNKNOWN';
+    return chooseInactiveSupported(objects) ? 'INACTIVE' : 'UNKNOWN';
   }
 
   function activeReason(entity) {
@@ -84,29 +108,48 @@
 
     const objects = sourceObjects(parsedPoi);
     const active = chooseActive(objects);
+    const inactivePowerSpot = chooseInactivePowerSpot(objects);
+    const inactiveSupported = chooseInactiveSupported(objects);
 
     let poiKind = 'NOT_IN_GAME';
     let gameStatus = inactiveStatus(objects);
     let reasonCode = 'NO_ACTIVE_SUPPORTED_GAME_OBJECT';
     let gameEntity = null;
+    let referenceKind = 'NOT_IN_GAME';
+    let metadataSource = inactiveSupported;
 
     if (active) {
       poiKind = active.entity;
       gameEntity = active.entity;
       gameStatus = 'ACTIVE';
       reasonCode = activeReason(active.entity);
+      referenceKind = null;
+      metadataSource = active;
     } else if (hasAmbiguousMetadata(parsedPoi, objects)) {
       poiKind = 'UNKNOWN';
       gameStatus = 'UNKNOWN';
       reasonCode = 'AMBIGUOUS_GAME_OBJECT';
+      referenceKind = null;
+      metadataSource = null;
+    } else if (inactivePowerSpot) {
+      gameEntity = 'POWERSPOT';
+      gameStatus = 'INACTIVE';
+      reasonCode = 'INACTIVE_POWERSPOT_REFERENCE';
+      referenceKind = 'INACTIVE_POWERSPOT';
+      metadataSource = inactivePowerSpot;
     }
 
     return {
       ...parsedPoi,
+      title: String(parsedPoi.title || metadataSource?.title || ''),
+      sponsored: optionalBoolean(parsedPoi.sponsored, metadataSource?.sponsored) === true,
+      smr: optionalBoolean(parsedPoi.smr, metadataSource?.smr),
+      imageUrl: String(parsedPoi.imageUrl || metadataSource?.imageUrl || ''),
       poiKind,
       classification: poiKind,
       gameEntity,
       gameStatus,
+      referenceKind,
       reasonCode,
       bridgeEligible: ACTIVE_KINDS.has(poiKind) && gameStatus === 'ACTIVE'
     };
