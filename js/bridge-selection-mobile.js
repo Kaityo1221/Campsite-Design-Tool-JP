@@ -76,6 +76,17 @@
     mobileGuideCopy();
   }
 
+  function installMapTapGuard(mapEl) {
+    if (!mapEl || mapEl.dataset.mobileTapGuard === '1') return;
+    mapEl.dataset.mobileTapGuard = '1';
+    mapEl.addEventListener('click', event => {
+      const target = event.target;
+      if (target?.closest?.('.leaflet-control,.leaflet-popup')) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }, true);
+  }
+
   function addPointAtCenter(event) {
     event?.preventDefault?.();
     event?.stopPropagation?.();
@@ -95,6 +106,7 @@
     if (!mapEl || !drawBtn || !bridgeMap) return false;
 
     injectStyles();
+    installMapTapGuard(mapEl);
 
     if (!mapEl.querySelector('.bridge-mobile-crosshair')) {
       const crosshair = document.createElement('div');
