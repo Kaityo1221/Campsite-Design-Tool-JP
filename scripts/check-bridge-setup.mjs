@@ -83,7 +83,7 @@ has(js, "device === 'pc' && browser !== 'chrome'");
 
 has(config, "appleManualSetupUrl: './bridge-shortcut-install.html'");
 has(config, "appleRuntimeVersion: '1.0.0'");
-has(config, "appleShortcutUrl: 'https://www.icloud.com/shortcuts/3ddc90767d114bfba66de3a5d1a12d01'");
+has(config, "appleShortcutUrl: 'https://www.icloud.com/shortcuts/45d584b3fa2f46e7b006645404bc0c4f'");
 has(config, "androidRuntimeVersion: '0.3.5'");
 has(config, "androidReleaseLabel: 'M3.5'");
 has(config, "androidXpiSha256: 'f5c7d300c6cdd82758f88f651116c1b7af42863ef03e80f8ac89e39afa0fa7b7'");
