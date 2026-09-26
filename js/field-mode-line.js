@@ -45,7 +45,6 @@
       .field-mode-entry-started.field-creative-active.field-creative-menu-open .field-location-badge{
         bottom:148px!important;
       }
-      .field-creative-add-flash{display:none!important;visibility:hidden!important;opacity:0!important;animation:none!important}
       @media(max-width:520px){
         .field-mode-entry-started .field-mode-creative-launcher{left:10px!important;top:104px!important}
         .field-mode-entry-started .field-location-badge{left:10px!important;bottom:74px!important;max-width:min(220px,58vw)!important}
@@ -68,7 +67,7 @@
   loadOnce('js/field-mode-map-first.js?v=1', 'data-field-map-first-loader');
   loadOnce('js/field-mode-basemap-switch.js?v=1', 'data-field-basemap-switch-loader');
   loadOnce('js/field-mode-apac-v4.js?v=1', 'data-field-apac-v4-loader');
-  loadOnce('js/field-mode-creative-shell-v2.js?v=2', 'data-field-creative-shell-v2-loader');
+  loadOnce('js/field-mode-creative-shell-v2.js?v=1', 'data-field-creative-shell-v2-loader');
   loadOnce('js/field-mode-poi-visuals-v2.js?v=1', 'data-field-poi-visuals-v2-loader');
 
   function syncFinishLabel() {
