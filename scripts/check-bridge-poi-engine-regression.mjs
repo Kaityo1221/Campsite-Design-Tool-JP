@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 const fixture = JSON.parse(fs.readFileSync('scripts/fixtures/bridge-poi-engine-regression.json', 'utf8'));
 const parserSource = fs.readFileSync('bridge-pc/poi-parser.js', 'utf8');
 const classifierSource = fs.readFileSync('bridge-pc/poi-classifier.js', 'utf8');
+const referenceSource = fs.readFileSync('bridge-pc/poi-reference-layer.js', 'utf8');
 const exporterSource = fs.readFileSync('bridge-pc/bridge-v1-exporter.js', 'utf8');
 
 const context = {
@@ -26,19 +27,24 @@ const context = {
 vm.createContext(context);
 vm.runInContext(parserSource, context);
 vm.runInContext(classifierSource, context);
+vm.runInContext(referenceSource, context);
 vm.runInContext(exporterSource, context);
 
 const parser = context.window.CampsiteBridgePoiParser;
 const classifier = context.window.CampsiteBridgePoiClassifier;
+const referenceLayer = context.window.CampsiteBridgePoiReferenceLayer;
 const exporter = context.window.CampsiteBridgeV1Exporter;
 assert.ok(parser, 'POI Parser API missing');
 assert.ok(classifier, 'POI Classifier API missing');
+assert.ok(referenceLayer, 'POI Reference Layer API missing');
 assert.ok(exporter, 'Bridge V1 Exporter API missing');
 
 const parsed = parser.parsePayload(fixture.rawWayfarer);
 const classified = classifier.run(parsed);
+const routed = referenceLayer.splitClassified(classified.pois);
 const payload = exporter.makePayload({
   enginePois: classified.pois,
+  referencePois: routed.referencePois,
   selectedBounds: {
     center: { lat: 35.001, lng: 139.001 },
     zoom: 17,
@@ -90,6 +96,15 @@ assert.equal(payload.handshakeId, 'poi-engine-regression');
 assert.ok(payload.pois.every(poi => poi.gameStatus === 'ACTIVE'), 'Only ACTIVE POIs may be exported');
 assert.equal('diagnostics' in payload, false, 'Internal diagnostics must not leak into Bridge V1');
 assert.equal('enginePois' in payload, false, 'Internal Engine POIs must not leak into Bridge V1');
+
+assert.equal(routed.referencePois.length, 2, 'Regression fixture should retain two reference POIs');
+assert.equal(payload.referencePois.length, 2, 'Bridge V1 extension should carry reference POIs');
+assert.deepEqual(
+  new Set(payload.referencePois.map(poi => poi.guid)),
+  new Set(['e2e-not-in-game', 'e2e-inactive'])
+);
+assert.ok(payload.referencePois.every(poi => poi.referenceKind === 'NOT_IN_GAME'));
+assert.equal(payload.referencePois.some(poi => poi.guid === 'e2e-unknown'), false, 'UNKNOWN must remain diagnostics-only');
 
 console.log('POI Engine regression snapshot: OK');
 console.log(JSON.stringify(normalizedSnapshot));
