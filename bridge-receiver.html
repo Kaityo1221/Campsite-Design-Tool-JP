@@ -15,7 +15,7 @@
 <body>
 <div class="wrap"><div class="card">
   <h1>🌉 Campsite Bridge Receiver</h1>
-  <div class="muted">Bridge専用の受け入れ口です。受信後はCampsite Design Toolへ自動で引き渡します。</div>
+  <div class="muted">Bridge専用の受け入れ口です。正常時は表示せず、そのままCampsite Design Toolへ引き渡します。確認が必要な場合だけこの画面を表示します。</div>
   <div id="status" class="status warn">🌉 Wayfarerから受信しています…</div>
   <div class="grid">
     <span>受信POI</span><strong id="total">0</strong>
@@ -37,14 +37,14 @@
       <span>重複除外</span><strong id="duplicateCount">0</strong>
     </div>
   </div>
-  <button id="continueBtn" type="button">🏕 Campsite Design Toolへ進む</button>
+  <button id="continueBtn" type="button">🏕 内容を確認してCampsite Design Toolへ進む</button>
   <button id="clearBtn" type="button">受信データを消去</button>
 </div></div>
 <script>
 (() => {
   'use strict';
 
-  const VERSION = '0.8.9.5';
+  const VERSION = '0.8.9.6';
   const DEV_PARAM = 'campsiteBridgeDev';
   const HANDSHAKE_PARAM = 'handshake';
   const STORAGE_KEY = 'campsiteBridgePoC.v0.3';
@@ -70,6 +70,11 @@
 
   function showReceiverDetail() {
     document.body.classList.add('bridge-receiver-detail');
+  }
+
+  function hideReceiverDetail() {
+    if (receiverDebug) return;
+    document.body.classList.remove('bridge-receiver-detail');
   }
 
   if (receiverDebug) showReceiverDetail();
@@ -193,6 +198,23 @@
     return result;
   }
 
+  function integrityReview(integrity, adapter) {
+    const source = integrity && typeof integrity === 'object' ? integrity : {};
+    const issues = [];
+    const invalidActiveCount = Number(source.invalidActiveCount || 0);
+    const invalidReferenceCount = Number(source.invalidReferenceCount || 0);
+    const activeDuplicateCount = Number(source.activeDuplicateCount || 0);
+    const referenceDuplicateCount = Number(source.referenceDuplicateCount || 0);
+    const crossChannelDuplicateCount = Number(source.crossChannelDuplicateCount || 0);
+    if (invalidActiveCount > 0) issues.push(`無効なActive ${invalidActiveCount}件`);
+    if (invalidReferenceCount > 0) issues.push(`無効な参照 ${invalidReferenceCount}件`);
+    if (activeDuplicateCount > 0) issues.push(`Active重複 ${activeDuplicateCount}件`);
+    if (referenceDuplicateCount > 0) issues.push(`参照重複 ${referenceDuplicateCount}件`);
+    if (crossChannelDuplicateCount > 0) issues.push(`Active/参照競合 ${crossChannelDuplicateCount}件`);
+    if (adapter && !adapter.clean && adapter.beforeCount > 0) issues.push(`変換失敗 ${adapter.failedCount}件`);
+    return { requiresReview: issues.length > 0, issues };
+  }
+
   function toCampsitePoi(bridgePoi) {
     const poi = normalizePoi(bridgePoi);
     if (!poi || poi.gameStatus !== 'ACTIVE') return null;
@@ -267,6 +289,7 @@
     document.title = c.total ? `✅ ${c.total}件受信 | Campsite Bridge` : '受信中… | Campsite Bridge';
 
     const adapter = adaptForCampsite(pois);
+    const review = integrityReview(payload?.integrity, adapter);
     $('beforeCount').textContent = adapter.beforeCount;
     $('afterCount').textContent = adapter.afterCount;
     $('failedCount').textContent = adapter.failedCount;
@@ -274,20 +297,32 @@
 
     const adapterStatus = $('adapterStatus');
     const continueBtn = $('continueBtn');
-    if (adapter.clean && adapter.afterCount > 0) {
+    if (adapter.clean && adapter.afterCount > 0 && !review.requiresReview) {
+      clearTimeout(receiverDetailTimer);
+      hideReceiverDetail();
       adapterStatus.className = 'status ok';
       adapterStatus.textContent = `✅ ${adapter.afterCount}件をCampsite内部形式へ変換しました`;
       continueBtn.style.display = 'block';
-    } else if (adapter.beforeCount > 0) {
+    } else if (adapter.beforeCount > 0 || review.requiresReview) {
       showReceiverDetail();
+      status.className = 'status error';
+      status.textContent = '⚠ 受信内容に確認が必要です';
       adapterStatus.className = 'status error';
-      adapterStatus.textContent = '⚠ 変換できないPOIがあります';
-      continueBtn.style.display = 'none';
+      adapterStatus.textContent = review.issues.length
+        ? `⚠ ${review.issues.join(' / ')}`
+        : '⚠ 変換できないPOIがあります';
+      continueBtn.style.display = adapter.afterCount > 0 ? 'block' : 'none';
     } else {
       adapterStatus.className = 'status warn';
       adapterStatus.textContent = 'POI受信後に自動変換します';
       continueBtn.style.display = 'none';
     }
+
+    const integrity = {
+      ...(payload?.integrity && typeof payload.integrity === 'object' ? payload.integrity : {}),
+      requiresReview: review.requiresReview,
+      issues: review.issues
+    };
 
     sessionStorage.setItem(ADAPTER_STORAGE_KEY, JSON.stringify({
       version: VERSION,
@@ -297,6 +332,7 @@
       sourceCount: adapter.beforeCount,
       referenceCount: rc.total,
       duplicateCount: adapter.duplicateCount,
+      integrity,
       pois: adapter.pois,
       referencePois
     }));
@@ -305,11 +341,12 @@
       version: VERSION,
       handoffId,
       result: adapter,
+      integrity,
       pois: adapter.pois,
       referencePois
     });
 
-    return adapter;
+    return { ...adapter, integrity };
   }
 
   function savePayload(payload) {
@@ -319,6 +356,7 @@
       payload,
       pois: payload.pois,
       referencePois: payload.referencePois || [],
+      integrity: payload.integrity || {},
       counts: counts(payload.pois),
       referenceCounts: referenceCounts(payload.referencePois || [])
     });
@@ -327,23 +365,34 @@
 
   function receiveBridgePayload(data) {
     if (!data || data.type !== 'CAMPSITE_BRIDGE_POI_V1' || !Array.isArray(data.pois)) {
-      return { accepted:false, count:0, reason:'invalid-payload' };
+      return { accepted:false, count:0, reason:'invalid-payload', requiresReview:true };
     }
 
     const normalizedIncoming = data.pois.map(normalizePoi).filter(Boolean);
+    const invalidActiveCount = Math.max(0, data.pois.length - normalizedIncoming.length);
     const activeIncoming = normalizedIncoming.filter(poi => poi.gameStatus === 'ACTIVE');
     const legacyReferences = normalizedIncoming
       .filter(poi => poi.gameStatus !== 'ACTIVE')
       .map(legacyReferenceFromPoi)
       .filter(Boolean);
-    const explicitReferences = (Array.isArray(data.referencePois) ? data.referencePois : [])
-      .map(normalizeReferencePoi)
-      .filter(Boolean);
+
+    const explicitReferenceInput = Array.isArray(data.referencePois) ? data.referencePois : [];
+    const explicitReferences = explicitReferenceInput.map(normalizeReferencePoi).filter(Boolean);
+    const invalidReferenceCount = Math.max(0, explicitReferenceInput.length - explicitReferences.length);
 
     const activeDeduped = dedupeByGuid(activeIncoming);
     const referenceDeduped = dedupeByGuid([...legacyReferences, ...explicitReferences]);
     const activeGuids = new Set(activeDeduped.pois.map(poi => poi.guid));
+    const crossChannelDuplicateCount = referenceDeduped.pois.filter(poi => activeGuids.has(poi.guid)).length;
     const referencePois = referenceDeduped.pois.filter(poi => !activeGuids.has(poi.guid));
+
+    const integrity = {
+      invalidActiveCount,
+      invalidReferenceCount,
+      activeDuplicateCount: activeDeduped.duplicateCount,
+      referenceDuplicateCount: referenceDeduped.duplicateCount,
+      crossChannelDuplicateCount
+    };
 
     const payload = {
       bridge: 'Campsite Bridge',
@@ -354,18 +403,25 @@
       receivedAt: new Date().toISOString(),
       selectedBounds: data.selectedBounds || null,
       handshakeId: String(data.handshakeId || ''),
+      integrity,
       referencePois,
       pois: activeDeduped.pois
     };
     const adapter = savePayload(payload);
-    const accepted = data.pois.length > 0 && normalizedIncoming.length === data.pois.length && adapter.clean;
+    const requiresReview = adapter.integrity?.requiresReview === true;
+    const accepted = data.pois.length > 0 && invalidActiveCount === 0 && adapter.clean;
     return {
       accepted,
+      requiresReview,
       count: normalizedIncoming.length,
       activeCount: adapter.afterCount,
       sourceCount:data.pois.length,
       referenceCount:referencePois.length,
-      duplicateCount:activeDeduped.duplicateCount
+      duplicateCount:activeDeduped.duplicateCount,
+      invalidActiveCount,
+      invalidReferenceCount,
+      referenceDuplicateCount: referenceDeduped.duplicateCount,
+      crossChannelDuplicateCount
     };
   }
 
@@ -381,6 +437,8 @@
 
   function scheduleAutoContinue() {
     clearTimeout(autoContinueTimer);
+    clearTimeout(receiverDetailTimer);
+    hideReceiverDetail();
     autoContinueTimer = setTimeout(goToCampsite, 450);
   }
 
@@ -390,11 +448,16 @@
       type: 'CAMPSITE_BRIDGE_ACK_V1',
       handshakeId,
       accepted: result.accepted,
+      requiresReview: result.requiresReview === true,
       count: result.count,
       activeCount: result.activeCount || 0,
       sourceCount: result.sourceCount,
       referenceCount: result.referenceCount || 0,
       duplicateCount: result.duplicateCount || 0,
+      invalidActiveCount: result.invalidActiveCount || 0,
+      invalidReferenceCount: result.invalidReferenceCount || 0,
+      referenceDuplicateCount: result.referenceDuplicateCount || 0,
+      crossChannelDuplicateCount: result.crossChannelDuplicateCount || 0,
       receiverVersion: VERSION
     };
     const send = () => {
@@ -420,9 +483,17 @@
     const ackTarget = event.source || window.opener;
     postAckRepeated(ackTarget, event.origin, result, incomingHandshakeId || pageHandshakeId);
 
-    if (result.accepted && data.autoContinue !== false) {
-      scheduleAutoContinue();
+    if (!result.accepted || result.requiresReview) {
+      showReceiverDetail();
+      const status = $('status');
+      if (status) {
+        status.className = 'status error';
+        status.textContent = '⚠ 受信内容に確認が必要です';
+      }
+      return;
     }
+
+    if (data.autoContinue !== false) scheduleAutoContinue();
   });
 
   function announceReady() {
@@ -443,6 +514,7 @@
   $('continueBtn').addEventListener('click', goToCampsite);
   $('clearBtn').addEventListener('click', () => {
     clearTimeout(autoContinueTimer);
+    clearTimeout(receiverDetailTimer);
     sessionStorage.removeItem(STORAGE_KEY);
     sessionStorage.removeItem(ADAPTER_STORAGE_KEY);
     delete window.CampsiteBridgeReceiver;
