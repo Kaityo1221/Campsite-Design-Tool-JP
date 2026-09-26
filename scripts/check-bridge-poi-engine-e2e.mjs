@@ -6,6 +6,7 @@ import crypto from 'node:crypto';
 const fixture = JSON.parse(fs.readFileSync('scripts/fixtures/bridge-poi-engine-regression.json', 'utf8'));
 const parserSource = fs.readFileSync('bridge-pc/poi-parser.js', 'utf8');
 const classifierSource = fs.readFileSync('bridge-pc/poi-classifier.js', 'utf8');
+const referenceSource = fs.readFileSync('bridge-pc/poi-reference-layer.js', 'utf8');
 const exporterSource = fs.readFileSync('bridge-pc/bridge-v1-exporter.js', 'utf8');
 const receiverHtml = fs.readFileSync('bridge-receiver.html', 'utf8');
 const nextFlowSource = fs.readFileSync('js/bridge-next-flow.js', 'utf8');
@@ -81,6 +82,7 @@ function makeEngineContext() {
   vm.createContext(context);
   vm.runInContext(parserSource, context);
   vm.runInContext(classifierSource, context);
+  vm.runInContext(referenceSource, context);
   vm.runInContext(exporterSource, context);
   return context;
 }
@@ -88,7 +90,7 @@ function makeEngineContext() {
 function makeReceiverContext(handshakeId) {
   const sessionStorage = storage();
   const elements = new Map(
-    ['total','pokestop','gym','powerspot','sponsored','smr','status','beforeCount','afterCount','failedCount','duplicateCount','adapterStatus','continueBtn','clearBtn']
+    ['total','pokestop','gym','powerspot','notInGame','inactivePowerSpot','sponsored','smr','status','beforeCount','afterCount','failedCount','duplicateCount','adapterStatus','continueBtn','clearBtn']
       .map(id => [id, fakeElement()])
   );
   const listeners = new Map();
@@ -172,6 +174,7 @@ const expected = fixture.expected;
 const engineContext = makeEngineContext();
 const parser = engineContext.window.CampsiteBridgePoiParser;
 const classifier = engineContext.window.CampsiteBridgePoiClassifier;
+const referenceLayer = engineContext.window.CampsiteBridgePoiReferenceLayer;
 const exporter = engineContext.window.CampsiteBridgeV1Exporter;
 
 const parsed = parser.parsePayload(rawWayfarer);
@@ -181,7 +184,7 @@ assert.equal(parsed.duplicateCount, expected.parser.duplicateCount, 'E2E parser 
 assert.equal(parsed.failedCount, expected.parser.failedCount, 'E2E parser failure count');
 assert.equal(parsed.pois.find(p => p.guid === 'e2e-stop')?.title, expected.parser.laterDuplicateTitle, 'Later duplicate must win');
 
-// 2. Parser -> Classifier.
+// 2. Parser -> Classifier -> Reference Layer.
 const classified = classifier.run(parsed);
 assert.equal(classified.diagnostics.pokestopCount, expected.classifier.pokestopCount);
 assert.equal(classified.diagnostics.gymCount, expected.classifier.gymCount);
@@ -194,10 +197,21 @@ for (const [guid, kind] of Object.entries(expected.kinds)) {
 }
 assert.equal(classified.pois.find(p => p.guid === 'e2e-inactive')?.gameStatus, expected.inactiveStatus);
 
+const routed = referenceLayer.splitClassified(classified.pois);
+assert.equal(routed.activeEnginePois.length, expected.export.count);
+assert.equal(routed.referencePois.length, 2);
+assert.deepEqual(
+  new Set(routed.referencePois.map(p => p.guid)),
+  new Set(['e2e-not-in-game', 'e2e-inactive'])
+);
+assert.ok(routed.referencePois.every(p => p.referenceKind === 'NOT_IN_GAME'));
+assert.equal(routed.diagnosticPois.some(p => p.guid === 'e2e-unknown'), true);
+
 // 3. Engine snapshot -> Bridge V1 payload. Bridge does not render POIs.
 const handshakeId = 'e2e-raw-wayfarer-to-campsite';
 const payload = exporter.makePayload({
-  enginePois: classified.pois,
+  enginePois: routed.activeEnginePois,
+  referencePois: routed.referencePois,
   selectedBounds: {
     center: { lat: 35.001, lng: 139.001 },
     zoom: 17,
@@ -215,6 +229,8 @@ assert.equal(payload.handshakeId, handshakeId);
 assert.equal(payload.pois.length, expected.export.count, 'Bridge V1 export count');
 assert.deepEqual([...payload.pois.map(p => p.guid)].sort(), expected.export.guids);
 assert.ok(payload.pois.every(p => p.gameStatus === 'ACTIVE'));
+assert.equal(payload.referencePois.length, 2, 'Bridge V1 reference count');
+assert.equal(payload.referencePois.some(p => p.guid === 'e2e-unknown'), false, 'UNKNOWN must not leak into referencePois');
 assert.equal('diagnostics' in payload, false, 'Internal diagnostics must not leak into Bridge V1');
 assert.equal('enginePois' in payload, false, 'Internal Engine POIs must not leak into Bridge V1');
 
@@ -222,15 +238,20 @@ assert.equal('enginePois' in payload, false, 'Internal Engine POIs must not leak
 const receiver = makeReceiverContext(handshakeId);
 const received = receiver.window.CampsiteBridgeDevReceive(payload);
 assert.equal(received.accepted, true, 'Receiver must accept E2E payload');
-assert.equal(received.count, expected.export.count, 'Receiver accepted count');
-assert.equal(received.sourceCount, expected.export.count, 'Receiver source count');
+assert.equal(received.count, expected.export.count, 'Receiver accepted active count');
+assert.equal(received.sourceCount, expected.export.count, 'Receiver active source count');
 
 const adapter = JSON.parse(receiver.sessionStorage.getItem('campsiteBridgeAdapter.v0.3'));
 assert.ok(adapter, 'Campsite Adapter must be stored');
 assert.equal(adapter.bridgePlatform, 'pc');
 assert.equal(adapter.handoffId, 'handshake:' + handshakeId);
 assert.equal(adapter.pois.length, expected.export.count);
+assert.equal(adapter.referencePois.length, 2, 'Receiver must retain referencePois separately');
 assert.deepEqual([...adapter.pois.map(p => p.guid)].sort(), expected.export.guids);
+assert.deepEqual(
+  new Set(adapter.referencePois.map(p => p.guid)),
+  new Set(['e2e-not-in-game', 'e2e-inactive'])
+);
 assert.equal(receiver.window.CampsiteBridgeGatewayUrl(), './bridge-gateway.html?campsiteBridgeImport=1');
 
 // 5. Campsite adapter -> Project -> Creative entry contract.
@@ -268,7 +289,8 @@ assert.ok(
 console.log(`✓ Raw Wayfarer: ${expected.parser.sourceCount} source records`);
 console.log(`✓ Parser: ${expected.parser.parsedCount} unique valid POIs, ${expected.parser.duplicateCount} duplicate`);
 console.log(`✓ Classifier: ${expected.classifier.exportCount} active + ${expected.classifier.notInGameCount} Not in Game + ${expected.classifier.unknownCount} Unknown`);
-console.log(`✓ Bridge V1: ${expected.export.count} POIs, no internal diagnostics leaked`);
-console.log(`✓ Receiver/Adapter: ${expected.export.count} POIs accepted`);
-console.log(`✓ Campsite Project: same ${expected.export.count} GUIDs preserved`);
+console.log(`✓ Reference Layer: ${routed.referencePois.length} reference POIs separated`);
+console.log(`✓ Bridge V1: ${expected.export.count} active POIs + ${payload.referencePois.length} references, no internal diagnostics leaked`);
+console.log(`✓ Receiver/Adapter: ${expected.export.count} active + ${adapter.referencePois.length} references retained`);
+console.log(`✓ Campsite Project: same ${expected.export.count} active GUIDs preserved`);
 console.log('Raw Wayfarer -> Campsite data-only E2E: OK');
