@@ -82,6 +82,7 @@ jobs:
         run: |
           node --check bridge-pc/poi-parser.js
           node --check bridge-pc/poi-classifier.js
+          node --check bridge-pc/poi-reference-layer.js
           node --check bridge-pc/poi-diagnostics.js
           node --check bridge-pc/bridge-v1-exporter.js
           node --check bridge-pc/page-collector.js
