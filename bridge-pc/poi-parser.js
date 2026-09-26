@@ -1,9 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '1.1.0';
-  const KNOWN_ENTITIES = new Set(['POKESTOP', 'GYM', 'POWERSPOT']);
-  const ENTITY_PRIORITY = ['GYM', 'POKESTOP', 'POWERSPOT'];
+  const VERSION = '1.2.0';
 
   function numberFrom(value) {
     const num = Number(value);
@@ -54,8 +52,8 @@
           sponsored: null,
           smr: null,
           title: '',
-          malformed: true,
-          raw: null
+          imageUrl: '',
+          malformed: true
         };
       }
 
@@ -68,23 +66,10 @@
         sponsored: optionalBoolean(item.sponsored, item.isSponsored),
         smr: optionalBoolean(item.smr),
         title: String(item.title || item.name || '').trim(),
-        malformed: !rawEntity,
-        raw: item
+        imageUrl: String(item.imageUrl || item.imageURL || item.image || ''),
+        malformed: !rawEntity
       };
     });
-  }
-
-  function classifyGameObject(gameObjects) {
-    const active = gameObjects.filter(item =>
-      item.status === 'ACTIVE' &&
-      KNOWN_ENTITIES.has(item.entity) &&
-      (item.gameBrand === '' || item.gameBrand === 'HOLOHOLO')
-    );
-    for (const entity of ENTITY_PRIORITY) {
-      const found = active.find(item => item.entity === entity);
-      if (found) return found;
-    }
-    return null;
   }
 
   function sourceGameObjectMeta(raw, gameObjects) {
@@ -111,46 +96,25 @@
     if (!point) return { ok: false, reason: 'INVALID_COORDINATES', poi: null };
 
     const gameObjects = normalizeGameObjects(raw);
-    const primary = classifyGameObject(gameObjects);
     const meta = sourceGameObjectMeta(raw, gameObjects);
-    const title = String(
-      raw.title || raw.name || raw.poiName || primary?.title || ''
-    ).trim();
-
-    const supportedGameObjects = gameObjects.filter(item => KNOWN_ENTITIES.has(item.entity));
-    const classification = primary ? primary.entity : (supportedGameObjects.length ? 'UNKNOWN' : 'NOT_IN_GAME');
-    const gameStatus = primary ? 'ACTIVE' : (supportedGameObjects.some(item => item.status === 'INACTIVE') ? 'INACTIVE' : 'UNKNOWN');
 
     return {
       ok: true,
       reason: null,
       poi: {
         guid,
-        title,
+        title: String(raw.title || raw.name || raw.poiName || '').trim(),
         lat: point.lat,
         lng: point.lng,
-        classification,
-        gameEntity: primary?.entity || null,
-        gameStatus,
-        sponsored: optionalBoolean(
-          raw.sponsored,
-          raw.isSponsored,
-          primary?.sponsored
-        ) === true,
-        smr: optionalBoolean(raw.smr, primary?.smr),
-        imageUrl: String(raw.imageUrl || raw.imageURL || raw.image || primary?.raw?.imageUrl || ''),
+        sponsored: optionalBoolean(raw.sponsored, raw.isSponsored),
+        smr: optionalBoolean(raw.smr),
+        imageUrl: String(raw.imageUrl || raw.imageURL || raw.image || ''),
         description: String(raw.description || raw.poiDescription || ''),
         s2L14: String(raw.s2L14 || ''),
         s2L17: String(raw.s2L17 || ''),
         provenance: ['WAYFARER_PASSIVE'],
         sourceGameObjectMeta: meta,
-        sourceGameObjects: gameObjects.map(item => ({
-          entity: item.entity,
-          rawEntity: item.rawEntity,
-          status: item.status,
-          gameBrand: item.gameBrand,
-          malformed: item.malformed === true
-        }))
+        sourceGameObjects: gameObjects
       }
     };
   }
@@ -204,40 +168,12 @@
     };
   }
 
-  function toBridgePoi(parsedPoi) {
-    if (!parsedPoi || !KNOWN_ENTITIES.has(parsedPoi.gameEntity)) return null;
-    if (parsedPoi.gameStatus !== 'ACTIVE') return null;
-    return {
-      guid: parsedPoi.guid,
-      title: parsedPoi.title,
-      lat: parsedPoi.lat,
-      lng: parsedPoi.lng,
-      gameEntity: parsedPoi.gameEntity,
-      gameStatus: parsedPoi.gameStatus,
-      sponsored: parsedPoi.sponsored === true,
-      smr: parsedPoi.smr === true ? true : parsedPoi.smr === false ? false : null,
-      imageUrl: parsedPoi.imageUrl || '',
-      description: parsedPoi.description || '',
-      s2L14: parsedPoi.s2L14 || '',
-      s2L17: parsedPoi.s2L17 || '',
-      provenance: Array.isArray(parsedPoi.provenance) ? parsedPoi.provenance : ['WAYFARER_PASSIVE']
-    };
-  }
-
-  function bridgePoisFromParsed(list) {
-    return (Array.isArray(list) ? list : []).map(toBridgePoi).filter(Boolean);
-  }
-
   window.CampsiteBridgePoiParser = Object.freeze({
     version: VERSION,
-    entityPriority: [...ENTITY_PRIORITY],
     normalizeEntity,
     normalizeStatus,
     normalizeGameObjects,
-    classifyGameObject,
     parsePoi,
-    parsePayload,
-    toBridgePoi,
-    bridgePoisFromParsed
+    parsePayload
   });
 })();
