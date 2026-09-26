@@ -23,10 +23,11 @@ const payload = {
       pois: [
         { poiId:'stop-holo', title:'Stop', lat:35.0000, lng:139.0000, gmo:[{ gameBrand:'HOLOHOLO', entity:'POKESTOP', status:'ACTIVE' }] },
         { poiId:'gym-holo', title:'Gym', lat:35.0001, lng:139.0001, gmo:[{ gameBrand:'HOLOHOLO', entity:'GYM', status:'ACTIVE' }] },
-        { poiId:'power-holo', title:'Power', lat:35.0002, lng:139.0002, gmo:[{ gameBrand:'HOLOHOLO', entity:'POWERSPOT', status:'ACTIVE' }] },
+        { poiId:'power-holo', title:'Power', lat:35.0002, lng:139.0002, gmo:[{ gameBrand:'HOLOHOLO', entity:'POWERSPOT', status:'ACTIVE', sponsored:true, smr:false, imageUrl:'https://example.test/power.jpg' }] },
         { poiId:'stop-no-brand', title:'No brand', lat:35.0003, lng:139.0003, gmo:[{ entity:'POKESTOP', status:'ACTIVE' }] },
         { poiId:'not-in-game', title:'Portal', lat:35.0004, lng:139.0004, gmo:[] },
-        { poiId:'inactive', title:'Inactive', lat:35.0005, lng:139.0005, gmo:[{ gameBrand:'HOLOHOLO', entity:'POKESTOP', status:'INACTIVE' }] },
+        { poiId:'inactive', title:'Inactive Stop', lat:35.0005, lng:139.0005, gmo:[{ gameBrand:'HOLOHOLO', entity:'POKESTOP', status:'INACTIVE' }] },
+        { poiId:'inactive-power', title:'Inactive Power', lat:35.00055, lng:139.00055, gmo:[{ gameBrand:'HOLOHOLO', entity:'POWERSPOT', status:'INACTIVE', imageUrl:'https://example.test/inactive-power.jpg' }] },
         { poiId:'other-brand', title:'Other', lat:35.0006, lng:139.0006, gmo:[{ gameBrand:'INGRESS', entity:'GYM', status:'ACTIVE' }] },
         { poiId:'multi', title:'Multi', lat:35.0007, lng:139.0007, gmo:[
           { gameBrand:'HOLOHOLO', entity:'POWERSPOT', status:'ACTIVE' },
@@ -44,51 +45,69 @@ const payload = {
 };
 
 const parsed = parser.parsePayload(payload);
+assert.ok(parsed.pois.every(p => !('poiKind' in p)), 'Parser must hand unclassified POIs to classifier');
 const result = classifier.run(parsed);
 const byId = new Map(result.pois.map(p => [p.guid, p]));
 
-// 1-4: supported active entity classification.
+// Supported ACTIVE entities are owned only by Classifier.
 assert.equal(byId.get('stop-holo').poiKind, 'POKESTOP');
 assert.equal(byId.get('stop-holo').reasonCode, 'ACTIVE_POKESTOP');
+assert.equal(byId.get('stop-holo').referenceKind, null);
 assert.equal(byId.get('gym-holo').poiKind, 'GYM');
 assert.equal(byId.get('gym-holo').reasonCode, 'ACTIVE_GYM');
 assert.equal(byId.get('power-holo').poiKind, 'POWERSPOT');
 assert.equal(byId.get('power-holo').reasonCode, 'ACTIVE_POWERSPOT');
 assert.equal(byId.get('stop-no-brand').poiKind, 'POKESTOP');
 
-// 5-7: not represented by a supported active Pokémon GO entity.
+// GMO metadata is selected only after classification.
+assert.equal(byId.get('power-holo').sponsored, true);
+assert.equal(byId.get('power-holo').smr, false);
+assert.equal(byId.get('power-holo').imageUrl, 'https://example.test/power.jpg');
+
+// Generic non-active records become NOT_IN_GAME references.
 assert.equal(byId.get('not-in-game').poiKind, 'NOT_IN_GAME');
+assert.equal(byId.get('not-in-game').referenceKind, 'NOT_IN_GAME');
 assert.equal(byId.get('inactive').poiKind, 'NOT_IN_GAME');
 assert.equal(byId.get('inactive').gameStatus, 'INACTIVE');
+assert.equal(byId.get('inactive').referenceKind, 'NOT_IN_GAME');
 assert.equal(byId.get('other-brand').poiKind, 'NOT_IN_GAME');
+assert.equal(byId.get('other-brand').referenceKind, 'NOT_IN_GAME');
 
-// 8: deterministic multi-entity priority.
+// Inactive Power Spot keeps the five-kind taxonomy but gets a distinct referenceKind.
+assert.equal(byId.get('inactive-power').poiKind, 'NOT_IN_GAME');
+assert.equal(byId.get('inactive-power').gameEntity, 'POWERSPOT');
+assert.equal(byId.get('inactive-power').gameStatus, 'INACTIVE');
+assert.equal(byId.get('inactive-power').referenceKind, 'INACTIVE_POWERSPOT');
+assert.equal(byId.get('inactive-power').reasonCode, 'INACTIVE_POWERSPOT_REFERENCE');
+assert.equal(byId.get('inactive-power').imageUrl, 'https://example.test/inactive-power.jpg');
+
+// Deterministic multi-entity priority.
 assert.equal(byId.get('multi').poiKind, 'GYM');
 
-// 9-11: parser boundary and GUID dedupe diagnostics.
+// Parser boundary and GUID dedupe diagnostics.
 assert.equal(parsed.duplicateCount, 1);
 assert.equal(byId.get('stop-holo').title, 'Stop duplicate wins');
 assert.equal(parsed.failedCount, 2);
-assert.equal(result.diagnostics.sourceCount, 13);
-assert.equal(result.diagnostics.validCount, 10);
+assert.equal(result.diagnostics.sourceCount, 14);
+assert.equal(result.diagnostics.validCount, 11);
 assert.equal(result.diagnostics.invalidCount, 2);
 assert.equal(result.diagnostics.duplicateCount, 1);
 
-// 12: malformed/ambiguous source metadata must remain diagnostic UNKNOWN.
+// Malformed/ambiguous source metadata stays diagnostic UNKNOWN and is not a reference.
 assert.equal(byId.get('ambiguous-item').poiKind, 'UNKNOWN');
 assert.equal(byId.get('ambiguous-item').reasonCode, 'AMBIGUOUS_GAME_OBJECT');
+assert.equal(byId.get('ambiguous-item').referenceKind, null);
 assert.equal(byId.get('ambiguous-structure').poiKind, 'UNKNOWN');
 assert.equal(byId.get('ambiguous-structure').reasonCode, 'AMBIGUOUS_GAME_OBJECT');
+assert.equal(byId.get('ambiguous-structure').referenceKind, null);
 
-// 13: NOT_IN_GAME and UNKNOWN never enter Bridge V1 export.
+// NOT_IN_GAME and UNKNOWN never enter active Bridge pois[].
 const exportedIds = new Set(result.bridgePois.map(p => p.guid));
-assert.equal(exportedIds.has('not-in-game'), false);
-assert.equal(exportedIds.has('inactive'), false);
-assert.equal(exportedIds.has('other-brand'), false);
-assert.equal(exportedIds.has('ambiguous-item'), false);
-assert.equal(exportedIds.has('ambiguous-structure'), false);
+for (const id of ['not-in-game','inactive','inactive-power','other-brand','ambiguous-item','ambiguous-structure']) {
+  assert.equal(exportedIds.has(id), false, `${id} must not enter active Bridge export`);
+}
 
-// 14: active export remains inside the existing Receiver entity contract.
+// Active export remains inside the existing Receiver entity contract.
 assert.equal(result.bridgePois.length, 5);
 assert.deepEqual(new Set(result.bridgePois.map(p => p.gameEntity)), new Set(['POKESTOP', 'GYM', 'POWERSPOT']));
 assert.ok(result.bridgePois.every(p => p.gameStatus === 'ACTIVE'));
@@ -98,7 +117,7 @@ assert.ok(receiver.includes('POWERSPOT'));
 assert.equal(result.diagnostics.pokestopCount, 2);
 assert.equal(result.diagnostics.gymCount, 2);
 assert.equal(result.diagnostics.powerspotCount, 1);
-assert.equal(result.diagnostics.notInGameCount, 3);
+assert.equal(result.diagnostics.notInGameCount, 4);
 assert.equal(result.diagnostics.unknownCount, 2);
 assert.equal(result.diagnostics.exportCount, 5);
 
