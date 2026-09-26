@@ -142,5 +142,64 @@
         performanceReplayQueue.length = 0;
       }, { once: true });
 
+      // If the user closes the Campsite tab after a successful send, Safari can
+      // leave the fixed named target in a stale state. Keep the live Receiver
+      // window while it exists and create a fresh uniquely named blank window
+      // when it was closed. Also clear the previous success UI before retrying.
+      const baseSendToCampsiteForReceiverRecovery = sendToCampsite;
+      let iphoneReceiverWindow = null;
+      sendToCampsite = async function (...args) {
+        if (sendWorkflowActive) {
+          return baseSendToCampsiteForReceiverRecovery.apply(this, args);
+        }
+
+        if (sendSucceeded) {
+          sendSucceeded = false;
+          setSendStatus('');
+          scheduleRender();
+        }
+
+        const originalOpen = window.open;
+        let pending;
+        window.open = function (url, target, features) {
+          const href = String(url || '');
+          if (target !== RECEIVER_WINDOW_NAME || !href.startsWith(RECEIVER_ORIGIN)) {
+            return originalOpen.apply(this, arguments);
+          }
+
+          try {
+            if (iphoneReceiverWindow && !iphoneReceiverWindow.closed) {
+              try { iphoneReceiverWindow.location.href = href; } catch (_) {}
+              return iphoneReceiverWindow;
+            }
+          } catch (_) {
+            iphoneReceiverWindow = null;
+          }
+
+          let handshakeId = '';
+          try { handshakeId = new URL(href).searchParams.get('handshake') || ''; } catch (_) {}
+          const safeHandshake = handshakeId.replace(/[^a-z0-9_-]/gi, '').slice(0, 80);
+          const windowName = `${RECEIVER_WINDOW_NAME}_${safeHandshake || Date.now().toString(36)}`;
+
+          let popup = null;
+          try { popup = originalOpen.call(window, 'about:blank', windowName, features); } catch (_) {}
+          if (!popup) return null;
+          iphoneReceiverWindow = popup;
+          try { popup.location.replace(href); }
+          catch (_) {
+            try { popup.location.href = href; } catch (_) {}
+          }
+          return popup;
+        };
+
+        try {
+          pending = baseSendToCampsiteForReceiverRecovery.apply(this, args);
+        } finally {
+          window.open = originalOpen;
+        }
+
+        return await pending;
+      };
+
       return {};
     })(),
