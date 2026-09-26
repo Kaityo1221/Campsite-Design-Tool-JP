@@ -16,6 +16,8 @@ assert.ok(parser, 'Parser API must exist');
 assert.ok(classifier, 'Classifier API must exist');
 assert.deepEqual([...classifier.entityPriority], ['GYM', 'POKESTOP', 'POWERSPOT']);
 assert.equal(classifier.supportedBrand, 'HOLOHOLO');
+assert.equal(classifier.toBridgePoi, undefined, 'Classifier must not serialize Bridge POIs');
+assert.equal(classifier.bridgePoisFromClassified, undefined, 'Classifier must not own Bridge export');
 
 const payload = {
   result: {
@@ -101,16 +103,15 @@ assert.equal(byId.get('ambiguous-structure').poiKind, 'UNKNOWN');
 assert.equal(byId.get('ambiguous-structure').reasonCode, 'AMBIGUOUS_GAME_OBJECT');
 assert.equal(byId.get('ambiguous-structure').referenceKind, null);
 
-// NOT_IN_GAME and UNKNOWN never enter active Bridge pois[].
-const exportedIds = new Set(result.bridgePois.map(p => p.guid));
+// Classifier only marks Bridge eligibility. Serialization belongs to Bridge exporter.
+const activeEnginePois = result.pois.filter(p => p.bridgeEligible === true);
+assert.equal(activeEnginePois.length, 5);
+assert.deepEqual(new Set(activeEnginePois.map(p => p.gameEntity)), new Set(['POKESTOP', 'GYM', 'POWERSPOT']));
+assert.ok(activeEnginePois.every(p => p.gameStatus === 'ACTIVE'));
 for (const id of ['not-in-game','inactive','inactive-power','other-brand','ambiguous-item','ambiguous-structure']) {
-  assert.equal(exportedIds.has(id), false, `${id} must not enter active Bridge export`);
+  assert.equal(byId.get(id).bridgeEligible, false, `${id} must not be Bridge eligible`);
 }
 
-// Active export remains inside the existing Receiver entity contract.
-assert.equal(result.bridgePois.length, 5);
-assert.deepEqual(new Set(result.bridgePois.map(p => p.gameEntity)), new Set(['POKESTOP', 'GYM', 'POWERSPOT']));
-assert.ok(result.bridgePois.every(p => p.gameStatus === 'ACTIVE'));
 assert.ok(receiver.includes('POKESTOP'));
 assert.ok(receiver.includes('GYM'));
 assert.ok(receiver.includes('POWERSPOT'));
