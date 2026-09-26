@@ -25,7 +25,7 @@
 
   function classifierApi() {
     const classifier = window.CampsiteBridgePoiClassifier;
-    if (!classifier?.classifyPoi || !classifier?.run || !classifier?.bridgePoisFromClassified) {
+    if (!classifier?.classifyPoi || !classifier?.run) {
       throw new Error('Campsite Bridge POI分類Engineを読み込めませんでした。拡張機能を再読み込みしてください。');
     }
     return classifier;
@@ -125,7 +125,9 @@
     const parsed = parserApi().parsePoi(raw);
     if (!parsed?.ok) return null;
     const classified = classifierApi().classifyPoi(parsed.poi);
-    return classifierApi().toBridgePoi(classified);
+    const routed = referenceLayerApi().splitClassified([classified]);
+    if (routed.activeEnginePois.length !== 1) return null;
+    return exporterApi().normalizePoi(routed.activeEnginePois[0]);
   }
 
   function parseMapData(payload) {
@@ -137,7 +139,9 @@
   }
 
   function normalizeMapData(payload) {
-    return classifyMapData(payload).bridgePois;
+    const classified = classifyMapData(payload);
+    const routed = referenceLayerApi().splitClassified(classified.pois);
+    return exporterApi().exportPois({ enginePois: routed.activeEnginePois });
   }
 
   function buildDiagnosticReport(parsed, classified) {
@@ -181,10 +185,11 @@
     const parsed = parseMapData(payload);
     const classified = classifierApi().run(parsed);
     const routed = referenceLayerApi().splitClassified(classified.pois);
+    const activePois = exporterApi().exportPois({ enginePois: routed.activeEnginePois });
     const diagnosticReport = buildDiagnosticReport(parsed, classified);
 
     return {
-      pois: classified.bridgePois,
+      pois: activePois,
       referencePois: routed.referencePois,
       enginePois: classified.pois,
       diagnostics: parsed.diagnostics,
