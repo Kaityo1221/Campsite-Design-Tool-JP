@@ -1,16 +1,22 @@
 (() => {
   'use strict';
 
-  const VERSION = '1.0.0';
+  const VERSION = '1.1.0';
   const PROTOCOL = 'CAMPSITE_BRIDGE_POI_V1';
   const SCHEMA_VERSION = '1.2';
   const PLATFORM = 'pc';
   const ACTIVE_ENTITIES = new Set(['POKESTOP', 'GYM', 'POWERSPOT']);
+  const REFERENCE_KINDS = new Set(['NOT_IN_GAME', 'INACTIVE_POWERSPOT']);
   const ALLOWED_PROVENANCE = new Set(['WAYFARER_PASSIVE', 'WFMM_CACHE', 'BRIDGE_ENRICHMENT']);
 
   function classifierApi() {
     const classifier = window.CampsiteBridgePoiClassifier;
     return classifier?.bridgePoisFromClassified ? classifier : null;
+  }
+
+  function referenceLayerApi() {
+    const layer = window.CampsiteBridgePoiReferenceLayer;
+    return layer?.splitClassified ? layer : null;
   }
 
   function text(value) {
@@ -71,6 +77,34 @@
     };
   }
 
+  function normalizeReferencePoi(raw) {
+    if (!raw || typeof raw !== 'object') return null;
+    const guid = text(raw.guid || raw.sourceId || raw.id).trim();
+    const lat = finite(raw.lat);
+    const lng = finite(raw.lng);
+    const referenceKind = text(raw.referenceKind).trim().toUpperCase();
+    const gameEntity = text(raw.gameEntity).trim().toUpperCase();
+    const gameStatus = text(raw.gameStatus || 'UNKNOWN').trim().toUpperCase();
+
+    if (!guid) return null;
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+    if (!REFERENCE_KINDS.has(referenceKind)) return null;
+
+    return {
+      guid,
+      title: text(raw.title || raw.name),
+      lat,
+      lng,
+      referenceKind,
+      gameEntity: ACTIVE_ENTITIES.has(gameEntity) ? gameEntity : '',
+      gameStatus: gameStatus === 'ACTIVE' || gameStatus === 'INACTIVE' ? gameStatus : 'UNKNOWN',
+      imageUrl: text(raw.imageUrl),
+      description: text(raw.description),
+      provenance: normalizeProvenance(raw.provenance)
+    };
+  }
+
   function exportPois(snapshot) {
     const source = snapshot && typeof snapshot === 'object' ? snapshot : {};
     let candidates = [];
@@ -85,6 +119,26 @@
     const byGuid = new Map();
     for (const raw of candidates) {
       const poi = normalizePoi(raw);
+      if (!poi) continue;
+      byGuid.set(poi.guid, poi);
+    }
+    return [...byGuid.values()];
+  }
+
+  function exportReferencePois(snapshot) {
+    const source = snapshot && typeof snapshot === 'object' ? snapshot : {};
+    let candidates = [];
+
+    if (Array.isArray(source.referencePois)) {
+      candidates = source.referencePois;
+    } else if (Array.isArray(source.enginePois)) {
+      const layer = referenceLayerApi();
+      candidates = layer ? layer.splitClassified(source.enginePois).referencePois : [];
+    }
+
+    const byGuid = new Map();
+    for (const raw of candidates) {
+      const poi = normalizeReferencePoi(raw);
       if (!poi) continue;
       byGuid.set(poi.guid, poi);
     }
@@ -117,6 +171,10 @@
 
   function makePayload(snapshot, handshakeId, options = {}) {
     const id = text(handshakeId).trim();
+    const pois = exportPois(snapshot);
+    const activeGuids = new Set(pois.map(poi => poi.guid));
+    const referencePois = exportReferencePois(snapshot).filter(poi => !activeGuids.has(poi.guid));
+
     return {
       type: PROTOCOL,
       bridgeVersion: text(options.bridgeVersion || '0.1.0'),
@@ -125,7 +183,8 @@
       handshakeId: id,
       selectedBounds: normalizeBounds(snapshot?.selectedBounds),
       autoContinue: options.autoContinue !== false,
-      pois: exportPois(snapshot)
+      pois,
+      referencePois
     };
   }
 
@@ -135,8 +194,10 @@
     schemaVersion: SCHEMA_VERSION,
     platform: PLATFORM,
     normalizePoi,
+    normalizeReferencePoi,
     normalizeBounds,
     exportPois,
+    exportReferencePois,
     makePayload
   });
 })();
