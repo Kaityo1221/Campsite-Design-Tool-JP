@@ -1,59 +1,90 @@
-# Campsite Bridge POI Engine Specification v1
+# Campsite Bridge POI Engine Specification v1.1
 
-Updated: 2026-09-25  
-Status: FROZEN for initial implementation  
+Updated: 2026-09-26  
+Status: FROZEN for v1.1 implementation alignment  
 Repository: `Kaityo1221/Campsite-Design-Tool-JP`
+
+> File path remains `bridge-poi-engine-spec-v1.md` for existing CI/watch compatibility. This document supersedes the initial v1 behavior where `NOT_IN_GAME` was treated as a visible map category and inactive Power Spots were not modeled separately.
 
 ## 1. Purpose
 
-Campsite Bridge POI Engine is the normalization/classification layer between Wayfarer Map data and the existing Campsite Bridge payload.
+Campsite Bridge POI Engine is the normalization/classification layer between Wayfarer Map data and Campsite Bridge.
 
-Its job is intentionally narrow:
+The product flow is:
 
 ```text
 Wayfarer Map data
   -> Parser
-  -> POI classification
-  -> map display model
-  -> Bridge V1 export adapter
+  -> POI Classifier
+  -> Reference layer
+  -> Map display model
+  -> Bridge V1 adapter
   -> CAMPSITE_BRIDGE_POI_V1
+  -> Receiver
+  -> Creative Mode
 ```
 
-The Engine must not contain campsite design evaluation, placement recommendations, ranking, scoring, or distance-policy logic.
+The Engine is intentionally narrow. It identifies what a Wayfarer POI currently represents for Pokémon GO and preserves selected reference information required by Campsite.
 
-## 2. Security boundary
+The Engine must not contain:
+
+- 50 m / 40 m / 30 m distance-policy decisions;
+- campsite candidate evaluation;
+- candidate ranking/scoring;
+- recommendation logic;
+- S2 placement eligibility decisions;
+- unpublished CA operating rules.
+
+Distance evaluation belongs to Campsite after Bridge handoff.
+
+## 2. Core ownership rule
+
+A POI must be classified exactly once.
+
+Responsibility is divided as follows:
+
+| Layer | Owns | Must not own |
+| --- | --- | --- |
+| Parser | source validation, field normalization, coordinate normalization, source game-object normalization, GUID dedupe | `poiKind`, `referenceKind`, active/inactive business classification |
+| POI Classifier | `poiKind`, `gameEntity`, `gameStatus`, `reasonCode`, `referenceKind`, Bridge eligibility | rendering decisions, distance policy |
+| Reference layer | splits classified output into `pois[]`, `referencePois[]`, diagnostics-only records | reclassification from raw GMO data |
+| Map display model | visibility and visual category derived from already-classified state | source interpretation or GMO reclassification |
+| Bridge V1 adapter | backward-compatible payload serialization | source classification |
+| Receiver | validation, storage, active/reference separation, Campsite adapter conversion | Wayfarer source reclassification |
+| Creative Mode | selection-range use, distance checks, candidate design | Wayfarer GMO interpretation |
+
+Parser and renderer must never independently decide that a POI is a Gym, PokéStop, Power Spot, Not in Game, or inactive Power Spot.
+
+## 3. Security boundary
 
 The Wayfarer-side runtime is treated as a public/untrusted execution environment.
 
 Allowed responsibilities:
 
-- read POI data available to the current authenticated Wayfarer Map session;
-- minimally normalize POI fields;
-- classify Pokémon GO game entity state from the source game-object metadata;
+- read POI data available to the authenticated Wayfarer Map session;
+- normalize source fields;
+- classify Pokémon GO game entity state from source game-object metadata;
 - deduplicate by stable POI identifier;
-- prepare map-display state;
-- adapt supported POIs to the existing Bridge V1 contract.
+- prepare non-confidential display/reference state;
+- adapt supported output to Bridge V1.
 
 Not allowed on the Wayfarer side:
 
 - Campsite internal placement logic;
 - 50 m / 40 m / 30 m design policy decisions;
-- candidate scoring or ranking;
+- candidate scoring/ranking;
 - recommendation logic;
-- unpublished CA operating rules;
-- exposing confidential decision tables.
+- confidential decision tables.
 
 No Wayfarer cookie, token, or credential is persisted by the Engine.
 
-## 3. Input source
+## 4. Input source
 
 Initial source:
 
 ```text
 /api/v1/vault/mapview/gcs
 ```
-
-The Engine accepts raw POI objects returned from the Wayfarer Map session.
 
 Expected source fields may include:
 
@@ -62,12 +93,16 @@ Expected source fields may include:
 - `latE6` / `lngE6`
 - `lat` / `lng`
 - `gmo[]`
-- image / description fields when available
-- sponsorship / SMR metadata when available
+- image / description fields
+- sponsorship / SMR metadata
 
-The parser must tolerate absent optional fields.
+Optional fields may be absent.
 
-## 4. Parser output
+## 5. Parser contract
+
+### 5.1 Parser responsibility
+
+The Parser performs syntax/shape normalization only.
 
 A valid parsed POI must have:
 
@@ -75,7 +110,8 @@ A valid parsed POI must have:
 - `title`
 - `lat`
 - `lng`
-- normalized source metadata needed for classification
+- normalized `sourceGameObjects[]`
+- source metadata needed by the Classifier
 
 Coordinate rules:
 
@@ -84,33 +120,76 @@ Coordinate rules:
 -180 <= lng <= 180
 ```
 
-Invalid POIs are rejected before classification.
-
-A POI is invalid when any of the following is true:
+A source POI is rejected before classification when:
 
 - source object is not an object;
 - stable identifier is empty;
 - latitude or longitude is not finite;
 - coordinates are outside the valid range.
 
-Optional metadata may be preserved when available:
+### 5.2 Parser must not classify
 
-- `sponsored`
-- `smr`
-- `imageUrl`
-- `description`
-- `s2L14`
-- `s2L17`
+The Parser must not produce a final `poiKind` or `referenceKind`.
 
-## 5. Engine classification
+It may normalize source GMO values such as:
 
-Internal Engine classification field:
-
-```text
-poiKind
+```js
+{
+  entity: 'POKESTOP' | 'GYM' | 'POWERSPOT' | '',
+  rawEntity: string,
+  status: 'ACTIVE' | 'INACTIVE' | 'UNKNOWN',
+  gameBrand: string,
+  malformed: boolean
+}
 ```
 
-Allowed v1 values:
+The current implementation may temporarily expose legacy fields such as `classification`, `gameEntity`, or `gameStatus` during migration, but downstream v1.1 code must treat the Classifier result as the only authoritative classification.
+
+### 5.3 Parser deduplication
+
+Canonical dedupe key:
+
+```text
+guid
+```
+
+Rules:
+
+1. invalid POIs are rejected first;
+2. valid POIs are normalized;
+3. duplicate GUIDs collapse to one parsed record;
+4. later source data for the same GUID may replace earlier source data within the same collection snapshot;
+5. duplicate count is retained in diagnostics.
+
+Coordinate-only deduplication is not used.
+
+## 6. Classifier contract
+
+### 6.1 Supported active Pokémon GO object
+
+A source GMO item is a supported active Pokémon GO game object when:
+
+- `status === ACTIVE`;
+- normalized entity is `POKESTOP`, `GYM`, or `POWERSPOT`;
+- `gameBrand` is `HOLOHOLO` or absent/empty.
+
+Empty brand remains supported for source compatibility.
+
+### 6.2 Active entity priority
+
+When a single GUID unexpectedly contains multiple supported active entities, choose deterministically:
+
+```text
+GYM
+POKESTOP
+POWERSPOT
+```
+
+Once an active entity is selected, that GUID is an active POI and must not also appear in `referencePois[]`.
+
+### 6.3 `poiKind`
+
+Authoritative internal `poiKind` values remain:
 
 ```text
 POKESTOP
@@ -120,53 +199,94 @@ NOT_IN_GAME
 UNKNOWN
 ```
 
-`UNKNOWN` is diagnostic-only and must not be exported through Bridge V1.
+`INACTIVE_POWERSPOT` is not a new `poiKind`. It is a reference subtype represented by `referenceKind`.
 
-### 5.1 Pokémon GO source object
+### 6.4 `referenceKind`
 
-For v1, a source `gmo[]` item is considered a supported Pokémon GO game object when:
-
-- `status` is `ACTIVE`;
-- `entity` normalizes to `POKESTOP`, `GYM`, or `POWERSPOT`;
-- `gameBrand` is `HOLOHOLO` or is absent/empty.
-
-The empty-brand allowance is retained for compatibility with source responses that omit `gameBrand`.
-
-### 5.2 Entity priority
-
-If a single POI unexpectedly contains multiple supported active entities, use this deterministic priority:
+v1.1 introduces an authoritative optional reference field:
 
 ```text
-GYM
-POKESTOP
-POWERSPOT
+referenceKind = null | NOT_IN_GAME | INACTIVE_POWERSPOT
 ```
 
-This preserves the current Bridge PC behavior.
+Rules:
 
-### 5.3 NOT_IN_GAME
-
-A valid Wayfarer POI becomes:
+#### Active PokéStop / Gym / Power Spot
 
 ```text
-poiKind = NOT_IN_GAME
+poiKind        = POKESTOP | GYM | POWERSPOT
+gameEntity     = same as poiKind
+gameStatus     = ACTIVE
+referenceKind  = null
+bridgeEligible = true
+referenceEligible = false
 ```
 
-when it contains no supported active Pokémon GO game object.
+#### Inactive Power Spot
 
-This includes POIs whose available game objects are inactive, unsupported, or belong only to another game brand.
+When there is no supported active entity for the GUID, but source metadata contains a supported HOLOHOLO-or-empty-brand Power Spot with `status === INACTIVE`:
 
-`NOT_IN_GAME` means only "not represented by a supported active Pokémon GO entity in the current source data". It must not be treated as a permanent eligibility judgment.
+```text
+poiKind        = NOT_IN_GAME
+gameEntity     = POWERSPOT
+gameStatus     = INACTIVE
+referenceKind  = INACTIVE_POWERSPOT
+bridgeEligible = false
+referenceEligible = true
+```
 
-### 5.4 UNKNOWN
+This record is preserved because a Power Spot may become active again and is therefore relevant to later Campsite distance review.
 
-`UNKNOWN` is reserved for a valid POI whose source structure is present but cannot be classified safely because the relevant game-object metadata is malformed or ambiguous.
+#### Other valid Not in Game POI
 
-UNKNOWN must remain visible in diagnostics and must never be silently converted to another entity.
+When no supported active entity exists and the record is otherwise safely classifiable, and it is not an inactive Power Spot:
 
-## 6. Internal Engine POI shape
+```text
+poiKind        = NOT_IN_GAME
+gameEntity     = null unless a non-active entity is intentionally preserved for diagnostics
+gameStatus     = INACTIVE or UNKNOWN as supported by source metadata
+referenceKind  = NOT_IN_GAME
+bridgeEligible = false
+referenceEligible = true
+```
 
-Minimum normalized internal shape:
+`NOT_IN_GAME` means only:
+
+> not represented by a supported active Pokémon GO entity in the current source snapshot.
+
+It is not a permanent eligibility judgment.
+
+#### Unknown
+
+Malformed or ambiguous relevant game-object metadata becomes:
+
+```text
+poiKind        = UNKNOWN
+gameEntity     = null
+gameStatus     = UNKNOWN
+referenceKind  = null
+bridgeEligible = false
+referenceEligible = false
+```
+
+`UNKNOWN` is diagnostics-only and must never be silently converted to `NOT_IN_GAME`.
+
+### 6.5 Inactive priority details
+
+Inactive Power Spot reference detection runs only after active-entity selection.
+
+Therefore:
+
+- active Gym + inactive Power Spot on same GUID -> active Gym only;
+- active PokéStop + inactive Power Spot -> active PokéStop only;
+- active Power Spot + inactive Power Spot -> active Power Spot only;
+- inactive Power Spot with no supported active entity -> `INACTIVE_POWERSPOT` reference.
+
+This prevents one GUID from appearing in both active and reference channels.
+
+## 7. Internal classified POI shape
+
+Minimum v1.1 classified shape:
 
 ```js
 {
@@ -175,7 +295,11 @@ Minimum normalized internal shape:
   lat: number,
   lng: number,
   poiKind: 'POKESTOP' | 'GYM' | 'POWERSPOT' | 'NOT_IN_GAME' | 'UNKNOWN',
+  gameEntity: 'POKESTOP' | 'GYM' | 'POWERSPOT' | null,
   gameStatus: 'ACTIVE' | 'INACTIVE' | 'UNKNOWN',
+  referenceKind: null | 'NOT_IN_GAME' | 'INACTIVE_POWERSPOT',
+  bridgeEligible: boolean,
+  referenceEligible: boolean,
   sponsored: boolean,
   smr: boolean | null,
   imageUrl: string,
@@ -183,117 +307,199 @@ Minimum normalized internal shape:
   s2L14: string,
   s2L17: string,
   provenance: ['WAYFARER_PASSIVE'],
-  reasonCode: string
+  reasonCode: string,
+  sourceGameObjects: Array
 }
 ```
 
-`reasonCode` is diagnostic state only. It must describe source classification, not Campsite design logic.
+`reasonCode` is diagnostic source state only. It must not encode Campsite placement policy.
 
-Initial reason codes:
+Recommended v1.1 reason codes:
 
 ```text
 ACTIVE_GYM
 ACTIVE_POKESTOP
 ACTIVE_POWERSPOT
+INACTIVE_POWERSPOT_REFERENCE
 NO_ACTIVE_SUPPORTED_GAME_OBJECT
 AMBIGUOUS_GAME_OBJECT
 ```
 
-## 7. Deduplication
+## 8. Reference layer
 
-The canonical v1 deduplication key is `guid`.
+The Reference layer receives already-classified Engine records and creates delivery channels without inspecting raw GMO data again.
+
+Output channels:
+
+```js
+{
+  activePois: [...],
+  referencePois: [...],
+  diagnosticsOnly: [...]
+}
+```
 
 Rules:
 
-1. invalid POIs are rejected first;
-2. valid POIs are normalized;
-3. duplicate GUIDs collapse to one POI;
-4. later source data for the same GUID may replace earlier source data within the same collection snapshot;
-5. duplicate count is retained in diagnostics.
+| Classifier result | Channel |
+| --- | --- |
+| active `POKESTOP` / `GYM` / `POWERSPOT` | `activePois` |
+| `referenceKind === INACTIVE_POWERSPOT` | `referencePois` |
+| `referenceKind === NOT_IN_GAME` | `referencePois` |
+| `poiKind === UNKNOWN` | `diagnosticsOnly` |
 
-Coordinate-only deduplication is not used in v1.
+A GUID must appear in at most one channel.
 
-## 8. Map display contract
+## 9. Map display contract
 
-The Engine exposes all valid classified POIs to the Bridge map-display layer, including `NOT_IN_GAME` and `UNKNOWN`.
+v1.1 map display policy is product-defined as follows:
 
-Required display categories:
+| State | Wayfarer/Bridge map visibility | Visual |
+| --- | --- | --- |
+| PokéStop ACTIVE | visible | blue circle |
+| Gym ACTIVE | visible | red hexagon |
+| Power Spot ACTIVE | visible | purple diamond |
+| Inactive Power Spot reference | visible | light-pink diamond |
+| Not in Game reference | hidden | none |
+| Unknown | hidden except diagnostics | none |
+| Candidate | Creative Mode only | orange |
 
-- PokéStop
-- Gym
-- Power Spot
-- Not in Game
-- Unknown / diagnostic
+The renderer must consume classified/reference state. It must not interpret GMO source data.
 
-The exact visual color/icon implementation is separate from this specification, but the category must be preserved without reclassification by the renderer.
+Rendering uses normalized `lat` / `lng` without coordinate offsets.
 
-Rendering must use the normalized `lat` / `lng` without coordinate offsets.
+## 10. Distance-review boundary
 
-## 9. Bridge V1 export compatibility
+Distance policy is not part of POI Engine classification.
 
-The existing public Bridge protocol remains:
+After Bridge handoff, Campsite distance review considers:
+
+- active PokéStop;
+- active Gym;
+- active Power Spot;
+- inactive Power Spot reference.
+
+It does not consider:
+
+- `NOT_IN_GAME` reference;
+- `UNKNOWN` diagnostic records.
+
+Inactive Power Spots remain relevant because they may reappear as active Power Spots.
+
+No 50 m / 40 m / 30 m calculation is allowed inside Parser, Classifier, Reference layer, or Bridge V1 exporter.
+
+## 11. Bridge V1 compatibility
+
+The public protocol type remains unchanged:
 
 ```text
 CAMPSITE_BRIDGE_POI_V1
 ```
 
-The POI Engine must not introduce a new Receiver protocol in v1.
+No new top-level protocol type is introduced by POI Engine v1.1.
 
-The current Receiver contract accepts only:
+### 11.1 Required active channel
+
+`pois[]` remains the existing active-POI contract and contains only:
 
 ```text
-POKESTOP
-GYM
-POWERSPOT
+POKESTOP ACTIVE
+GYM ACTIVE
+POWERSPOT ACTIVE
 ```
 
-Therefore the v1 export adapter maps:
+Do not place `NOT_IN_GAME`, `UNKNOWN`, or inactive records in `pois[]`.
 
-| Engine `poiKind` | Bridge `gameEntity` | Bridge `gameStatus` | Export |
-| --- | --- | --- | --- |
-| `POKESTOP` | `POKESTOP` | `ACTIVE` | yes |
-| `GYM` | `GYM` | `ACTIVE` | yes |
-| `POWERSPOT` | `POWERSPOT` | `ACTIVE` | yes |
-| `NOT_IN_GAME` | n/a | `INACTIVE` conceptually | no |
-| `UNKNOWN` | n/a | `UNKNOWN` | no |
+### 11.2 Optional reference extension
 
-`NOT_IN_GAME` and `UNKNOWN` remain available to local display/diagnostics but are excluded from `CAMPSITE_BRIDGE_POI_V1.pois[]` until the shared Receiver contract is intentionally versioned.
+v1.1 formalizes the already-supported Receiver extension:
 
-Do not send an invented `gameEntity` value such as `NOT_IN_GAME` through Bridge V1.
+```js
+referencePois?: ReferencePoi[]
+```
 
-## 10. Bridge POI export shape
+Absence of `referencePois` must continue to behave as an empty array, preserving backward compatibility with earlier Bridge V1 senders.
 
-Exported POIs continue to use the existing fields:
+Reference shape:
 
 ```js
 {
-  guid,
-  title,
-  lat,
-  lng,
-  gameEntity,
-  gameStatus,
-  sponsored,
-  smr,
-  imageUrl,
-  description,
-  s2L14,
-  s2L17,
-  provenance
+  guid: string,
+  title: string,
+  lat: number,
+  lng: number,
+  referenceKind: 'NOT_IN_GAME' | 'INACTIVE_POWERSPOT',
+  gameEntity: 'POWERSPOT' | 'POKESTOP' | 'GYM' | '',
+  gameStatus: 'INACTIVE' | 'UNKNOWN',
+  imageUrl: string,
+  description: string,
+  provenance: string[]
 }
 ```
 
-Required provenance for direct Wayfarer acquisition:
+For `INACTIVE_POWERSPOT`, preferred values are:
 
 ```text
-WAYFARER_PASSIVE
+gameEntity = POWERSPOT
+gameStatus = INACTIVE
 ```
 
-The POI Engine must not change `campsiteProject.v1`, Receiver Adapter storage, Gateway selection storage, or the standard Bridge handshake.
+### 11.3 Export mapping
 
-## 11. Diagnostics
+| Engine state | `pois[]` | `referencePois[]` | diagnostics only |
+| --- | --- | --- | --- |
+| Active PokéStop | yes | no | no |
+| Active Gym | yes | no | no |
+| Active Power Spot | yes | no | no |
+| Inactive Power Spot | no | yes | no |
+| Not in Game | no | yes | no |
+| Unknown | no | no | yes |
 
-One collection run should produce diagnostics separately from the public Bridge POI payload.
+The optional `referencePois[]` field is additive. Existing consumers that only understand `pois[]` remain compatible.
+
+## 12. Receiver contract
+
+Receiver responsibilities:
+
+1. validate `pois[]` as active supported entities;
+2. validate optional `referencePois[]` against supported reference kinds;
+3. dedupe each channel by GUID;
+4. ensure active GUID ownership wins if an invalid payload contains the same GUID in both channels;
+5. store active POIs separately from references;
+6. adapt only active POIs into the standard Campsite active POI collection;
+7. retain references for visualization/review modules.
+
+Receiver must not inspect raw Wayfarer GMO data to decide reference kind.
+
+Legacy compatibility code that derives a reference from non-active `pois[]` may remain temporarily, but new v1.1 senders must use the explicit `referencePois[]` channel.
+
+## 13. Creative Mode handoff
+
+Normal UX target:
+
+```text
+Bridgeで内容確認
+  -> Campsiteへ送る
+  -> Receiver
+  -> Creative Modeへ直接進む
+```
+
+The normal count-confirmation screen is not part of the standard flow.
+
+A confirmation/diagnostic screen is shown only when data integrity requires attention, for example:
+
+- active/reference count inconsistency;
+- duplicate ownership conflict;
+- invalid Bridge records;
+- unexpected classification diagnostics above an accepted threshold.
+
+Within the selected range, `bridge-inactive-review.js` may carry `INACTIVE_POWERSPOT` references into Creative Mode.
+
+`NOT_IN_GAME` references remain stored but are not shown on the map and are not used for distance review.
+
+## 14. Diagnostics
+
+One collection run must produce diagnostics separately from active/reference delivery data.
 
 Minimum counters:
 
@@ -306,83 +512,169 @@ pokestopCount
 gymCount
 powerspotCount
 notInGameCount
+inactivePowerSpotReferenceCount
 unknownCount
-exportCount
+activeExportCount
+referenceExportCount
 ```
 
-The diagnostics object is local development/operational state and is not required by `CAMPSITE_BRIDGE_POI_V1`.
+Recommended integrity counters:
 
-No confidential Campsite evaluation data may be included in diagnostics exposed on the Wayfarer page.
+```text
+crossChannelDuplicateCount
+unknownReferenceKindCount
+invalidReferenceCount
+```
 
-## 12. Determinism
+No confidential Campsite evaluation data may be included in Wayfarer-side diagnostics.
+
+## 15. Regression baseline
+
+Kwajalein reference dataset is the v1.1 regression baseline:
+
+```text
+Active POI                37
+Reference total            5
+  Not in Game              4
+  Inactive Power Spot      1
+Visible map POI           38
+  Active                  37
+  Inactive Power Spot      1
+Hidden Not in Game         4
+```
+
+Required invariant:
+
+```text
+37 active + 4 Not in Game + 1 Inactive Power Spot = 42 classified non-UNKNOWN records
+visible map count = 38
+```
+
+This dataset must be used to detect accidental reintroduction of Not in Game map rendering or loss of the inactive Power Spot reference.
+
+## 16. Determinism
 
 For the same normalized source snapshot, the Engine must produce the same:
 
 - accepted/rejected POI set;
+- deduped GUID set;
 - `poiKind`;
-- reason code;
-- deduplicated output;
-- Bridge-export set.
+- `referenceKind`;
+- `reasonCode`;
+- active export set;
+- reference export set.
 
-Classification must not depend on map animation timing, DOM marker color, or third-party script rendering.
+Classification must not depend on:
 
-## 13. WFMM coexistence
+- map animation timing;
+- DOM marker color;
+- renderer state;
+- WFMM marker appearance;
+- Creative Mode state.
 
-WFMM may be present, but the Engine classification source of truth is the normalized Wayfarer source data, not WFMM marker appearance.
+## 17. WFMM coexistence
+
+WFMM may be present, but source of truth is normalized Wayfarer source data.
 
 Rules:
 
 - do not alter WFMM settings or storage;
-- do not require WFMM to classify POIs;
-- if WFMM is installed, avoid duplicate visual overlays where the existing Bridge coexistence behavior already suppresses them;
-- Bridge acquisition/export must continue to work without WFMM.
+- do not require WFMM for classification;
+- avoid duplicate visual overlays where current coexistence behavior suppresses them;
+- acquisition/export must work without WFMM.
 
-## 14. Non-goals for POI Engine v1
+## 18. Non-goals for POI Engine v1.1
 
-The following are explicitly outside v1:
+Explicitly outside this specification:
 
-- Campsite candidate quality evaluation;
+- candidate quality evaluation;
 - 50 m / 40 m / 30 m spacing decisions;
 - S2 eligibility decisions;
-- POI recommendation/ranking;
+- recommendation/ranking;
 - AI learning;
 - Supabase/R2 persistence of Wayfarer session data;
-- changing `CAMPSITE_BRIDGE_POI_V1`;
+- replacing WFMM;
 - changing `campsiteProject.v1`;
-- Chrome Web Store publication;
-- replacing WFMM.
+- introducing a new Bridge protocol type.
 
-## 15. Initial test matrix
+## 19. v1.1 test matrix
 
-Parser/classifier implementation must cover at least:
+Parser/classifier/reference implementation must cover at least:
 
-1. active HOLOHOLO PokéStop -> `POKESTOP`;
-2. active HOLOHOLO Gym -> `GYM`;
-3. active HOLOHOLO Power Spot -> `POWERSPOT`;
+1. active HOLOHOLO PokéStop -> active `POKESTOP`;
+2. active HOLOHOLO Gym -> active `GYM`;
+3. active HOLOHOLO Power Spot -> active `POWERSPOT`;
 4. absent `gameBrand` with supported active entity -> corresponding active entity;
-5. valid Wayfarer POI with no `gmo` -> `NOT_IN_GAME`;
-6. only inactive supported game objects -> `NOT_IN_GAME`;
-7. only non-HOLOHOLO game objects -> `NOT_IN_GAME`;
-8. multiple supported active entities -> priority `GYM > POKESTOP > POWERSPOT`;
-9. duplicate GUID -> one normalized POI plus duplicate diagnostic count;
-10. invalid latitude/longitude -> rejected;
-11. empty GUID -> rejected;
-12. malformed/ambiguous game-object metadata -> `UNKNOWN` where classification cannot be made safely;
-13. `NOT_IN_GAME` / `UNKNOWN` -> not included in Bridge V1 export;
-14. exported active POIs -> accepted by the existing Receiver contract.
+5. valid Wayfarer POI with no GMO -> `NOT_IN_GAME` reference;
+6. inactive Power Spot with no active entity -> `NOT_IN_GAME` + `referenceKind=INACTIVE_POWERSPOT`;
+7. inactive PokéStop/Gym only -> `NOT_IN_GAME` reference, not inactive Power Spot;
+8. only non-HOLOHOLO objects -> `NOT_IN_GAME` reference;
+9. malformed relevant GMO metadata -> `UNKNOWN`, no active/reference export;
+10. active Gym + inactive Power Spot -> Gym only;
+11. active PokéStop + inactive Power Spot -> PokéStop only;
+12. multiple supported active entities -> priority `GYM > POKESTOP > POWERSPOT`;
+13. duplicate GUID -> one authoritative classified record;
+14. invalid latitude/longitude -> rejected;
+15. empty GUID -> rejected;
+16. active records only -> Bridge `pois[]`;
+17. `NOT_IN_GAME` / `INACTIVE_POWERSPOT` -> Bridge `referencePois[]` only;
+18. `UNKNOWN` -> neither public channel;
+19. map display -> active + inactive Power Spot only;
+20. Not in Game -> retained but hidden;
+21. Receiver without `referencePois` -> still accepts legacy active-only Bridge V1 payload;
+22. duplicate GUID across active/reference input -> active wins and diagnostic is emitted;
+23. Kwajalein regression -> active 37, references 5 = Not in Game 4 + inactive Power Spot 1, visible 38;
+24. Creative Mode distance review receives inactive Power Spot but not Not in Game.
 
-## 16. Definition of done for specification task 1
+## 20. Migration plan from current implementation
 
-Task 1 is complete when these decisions are frozen:
+Implementation alignment should be performed in this order:
 
-- input source and parser boundary;
-- normalized internal POI shape;
-- entity classification rules;
-- NOT_IN_GAME behavior;
-- deduplication key;
-- diagnostics boundary;
-- Bridge V1 compatibility behavior;
-- security/non-goal boundary;
-- initial test matrix.
+### Phase A: Classifier authority
 
-Implementation task 2 must follow this document unless this spec is deliberately revised first.
+- remove final classification authority from `poi-parser.js`;
+- keep parser source normalization intact;
+- make `poi-classifier.js` the only owner of `poiKind`, `gameEntity`, `gameStatus`, `referenceKind`, and reason code.
+
+### Phase B: Reference builder
+
+- add a single reference-channel builder from classified POIs;
+- derive `INACTIVE_POWERSPOT` in the Classifier, not in Receiver or renderer;
+- ensure a GUID cannot exist in both active and reference outputs.
+
+### Phase C: Bridge V1 export
+
+- keep `CAMPSITE_BRIDGE_POI_V1`;
+- keep `pois[]` active-only;
+- serialize optional `referencePois[]`;
+- do not export `UNKNOWN`.
+
+### Phase D: Receiver cleanup
+
+- preserve legacy compatibility temporarily;
+- treat explicit `referencePois[]` as authoritative for new payloads;
+- stop deriving product classification from non-active active-channel records.
+
+### Phase E: Renderer / Creative Mode
+
+- renderer shows only inactive Power Spot references;
+- Not in Game stays hidden;
+- Creative Mode receives inactive Power Spot references for distance review;
+- no layer reclassifies source GMO data.
+
+## 21. Definition of done for POI Engine v1.1
+
+v1.1 specification alignment is complete when:
+
+- Parser no longer owns final classification;
+- Classifier is the single source of truth;
+- inactive Power Spot has explicit `referenceKind=INACTIVE_POWERSPOT`;
+- Not in Game has `referenceKind=NOT_IN_GAME` and remains hidden;
+- Unknown is diagnostics-only;
+- Bridge `pois[]` remains active-only;
+- optional `referencePois[]` is sent and accepted without changing the Bridge protocol type;
+- Receiver stores active and reference POIs separately;
+- map display uses active + inactive Power Spot only;
+- distance review uses active + inactive Power Spot only;
+- Kwajalein 37 + 4 + 1 regression passes;
+- existing Bridge V1 active-only payloads continue to work.
