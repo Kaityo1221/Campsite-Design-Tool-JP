@@ -67,25 +67,37 @@ function cmInstallAddLifecycleFix(){
     return result;
   };
 }
-function cmAlignAddHintToFab(){
-  const fab=document.getElementById('cmAddFab'),hint=document.getElementById('cmV45AddFlash');
-  if(!fab||!hint)return;
+function cmMountAddHintToFab(){
+  const wrap=document.getElementById('cmFabWrap'),fab=document.getElementById('cmAddFab');
+  if(!wrap||!fab)return null;
+  let hint=document.getElementById('cmV45AddFlash');
+  if(!hint){
+    hint=document.createElement('div');
+    hint.id='cmV45AddFlash';
+    hint.textContent='追加';
+  }
+  if(hint.parentElement!==wrap)wrap.appendChild(hint);
   const r=fab.getBoundingClientRect();
-  const hr=hint.getBoundingClientRect();
-  const hw=Math.max(52,hr.width||52),hh=Math.max(24,hr.height||24),edge=6,gap=6;
-  const left=Math.max(edge,Math.min(window.innerWidth-hw-edge,r.left+(r.width-hw)/2));
-  let top=r.bottom+gap;
-  if(top+hh>window.innerHeight-edge)top=Math.max(edge,r.top-hh-gap);
-  hint.style.setProperty('left',left+'px','important');
+  const bottomBar=document.querySelector('.bottom-bar')?.getBoundingClientRect();
+  const usableBottom=bottomBar?.top??window.innerHeight;
+  const placeBelow=r.bottom+36<=usableBottom;
+  hint.style.setProperty('position','absolute','important');
+  hint.style.setProperty('left','2px','important');
   hint.style.setProperty('right','auto','important');
-  hint.style.setProperty('top',top+'px','important');
-  hint.style.setProperty('bottom','auto','important');
+  if(placeBelow){
+    hint.style.setProperty('top','62px','important');
+    hint.style.setProperty('bottom','auto','important');
+  }else{
+    hint.style.setProperty('top','auto','important');
+    hint.style.setProperty('bottom','62px','important');
+  }
+  return hint;
 }
+function cmAlignAddHintToFab(){cmMountAddHintToFab()}
 let cmFabHintTimer=0;
 function cmShowAddHintAtFab(){
-  const hint=document.getElementById('cmV45AddFlash');
+  const hint=cmMountAddHintToFab();
   if(!hint)return;
-  cmAlignAddHintToFab();
   hint.classList.remove('show');
   void hint.offsetWidth;
   hint.classList.add('show');
@@ -106,6 +118,7 @@ function cmEnableFabDrag(){
   fab.style.webkitUserSelect='none';
   const saved=cmReadFabPosition();
   if(saved)cmApplyFabPosition(saved);
+  cmMountAddHintToFab();
   let drag=null,suppressClick=false;
   fab.addEventListener('pointerdown',e=>{
     if(e.pointerType==='mouse'&&e.button!==0)return;
@@ -128,6 +141,7 @@ function cmEnableFabDrag(){
     if(moved){
       const r=wrap.getBoundingClientRect();
       cmSaveFabPosition({x:r.left,y:r.top});
+      cmMountAddHintToFab();
       suppressClick=true;
       if(e.cancelable)e.preventDefault();
     }else{
@@ -161,11 +175,12 @@ function cmEnableFabDrag(){
   },true);
   window.addEventListener('resize',()=>{
     const p=cmReadFabPosition();
-    if(!p)return;
-    const next=cmClampFabPosition(p.x,p.y);
-    cmApplyFabPosition(next);
-    cmSaveFabPosition(next);
-    setTimeout(cmAlignAddHintToFab,0);
+    if(p){
+      const next=cmClampFabPosition(p.x,p.y);
+      cmApplyFabPosition(next);
+      cmSaveFabPosition(next);
+    }
+    cmMountAddHintToFab();
   });
 }
 `;
