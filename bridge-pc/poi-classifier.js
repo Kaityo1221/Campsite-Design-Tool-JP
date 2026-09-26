@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '1.1.0';
+  const VERSION = '1.1.1';
   const ACTIVE_KINDS = new Set(['POKESTOP', 'GYM', 'POWERSPOT']);
   const ENTITY_PRIORITY = ['GYM', 'POKESTOP', 'POWERSPOT'];
   const SUPPORTED_BRAND = 'HOLOHOLO';
@@ -175,30 +175,6 @@
     if (poi.bridgeEligible) counts.exportCount += 1;
   }
 
-  function toBridgePoi(enginePoi) {
-    if (!enginePoi?.bridgeEligible) return null;
-    if (!ACTIVE_KINDS.has(enginePoi.poiKind)) return null;
-    return {
-      guid: String(enginePoi.guid || ''),
-      title: String(enginePoi.title || ''),
-      lat: Number(enginePoi.lat),
-      lng: Number(enginePoi.lng),
-      gameEntity: enginePoi.poiKind,
-      gameStatus: 'ACTIVE',
-      sponsored: enginePoi.sponsored === true,
-      smr: enginePoi.smr === true ? true : enginePoi.smr === false ? false : null,
-      imageUrl: String(enginePoi.imageUrl || ''),
-      description: String(enginePoi.description || ''),
-      s2L14: String(enginePoi.s2L14 || ''),
-      s2L17: String(enginePoi.s2L17 || ''),
-      provenance: Array.isArray(enginePoi.provenance) ? enginePoi.provenance : ['WAYFARER_PASSIVE']
-    };
-  }
-
-  function bridgePoisFromClassified(list) {
-    return (Array.isArray(list) ? list : []).map(toBridgePoi).filter(Boolean);
-  }
-
   function classifyMany(list) {
     const pois = (Array.isArray(list) ? list : []).map(classifyPoi).filter(Boolean);
     const counts = emptyCounts();
@@ -233,7 +209,6 @@
     return {
       version: VERSION,
       pois: classified.pois,
-      bridgePois: bridgePoisFromClassified(classified.pois),
       diagnostics: stats,
       classificationDiagnostics: classified.diagnostics
     };
@@ -246,8 +221,6 @@
     isSupportedBrand,
     classifyPoi,
     classifyMany,
-    toBridgePoi,
-    bridgePoisFromClassified,
     run
   });
 })();
