@@ -13,6 +13,7 @@ const deckCompat = fs.readFileSync('js/bridge-wayfarer-deck-compat.js', 'utf8');
 const collector = fs.readFileSync('bridge-pc/page-collector.js', 'utf8');
 const parser = fs.readFileSync('bridge-pc/poi-parser.js', 'utf8');
 const classifier = fs.readFileSync('bridge-pc/poi-classifier.js', 'utf8');
+const referenceLayer = fs.readFileSync('bridge-pc/poi-reference-layer.js', 'utf8');
 const diagnostics = fs.readFileSync('bridge-pc/poi-diagnostics.js', 'utf8');
 const exporter = fs.readFileSync('bridge-pc/bridge-v1-exporter.js', 'utf8');
 
@@ -30,6 +31,7 @@ assert.deepEqual(mainEntry.js, [
   'wayfarer-deck-compat.js',
   'poi-parser.js',
   'poi-classifier.js',
+  'poi-reference-layer.js',
   'poi-diagnostics.js',
   'bridge-v1-exporter.js',
   'page-collector.js'
@@ -42,6 +44,7 @@ const runtimeSources = {
   collector,
   parser,
   classifier,
+  referenceLayer,
   diagnostics,
   exporter
 };
