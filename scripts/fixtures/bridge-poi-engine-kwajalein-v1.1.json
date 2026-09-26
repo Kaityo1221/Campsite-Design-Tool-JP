@@ -1,0 +1,29 @@
+{
+  "fixtureVersion": "1.0",
+  "name": "kwajalein-poi-engine-v1.1-count-baseline",
+  "baselineDate": "2026-09-26",
+  "source": "confirmed-device-counts",
+  "sourceNote": "Kwajalein実機確認で確定した件数契約。個別GUID・座標・POI名の生データは保存されていないため、CIでは匿名テストIDと合成座標を生成してParser→Classifier→Reference Layer→Exporterの件数不変条件を固定する。Active内のPokéStop/Gym/Power Spot内訳は基準事実として扱わない。",
+  "generator": {
+    "activeCount": 37,
+    "activeEntityCycle": ["POKESTOP", "GYM", "POWERSPOT"],
+    "notInGameCount": 4,
+    "inactivePowerSpotCount": 1,
+    "baseLatE6": 8720000,
+    "baseLngE6": 167730000,
+    "coordinateStepE6": 20
+  },
+  "expected": {
+    "sourceCount": 42,
+    "parsedCount": 42,
+    "activeCount": 37,
+    "referenceCount": 5,
+    "notInGameCount": 4,
+    "inactivePowerSpotCount": 1,
+    "unknownCount": 0,
+    "bridgePoisCount": 37,
+    "bridgeReferenceCount": 5,
+    "visibleMapCount": 38,
+    "distanceReviewCount": 38
+  }
+}
