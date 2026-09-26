@@ -2,7 +2,7 @@
   'use strict';
 
   window.CampsiteBridgeSetupConfig = Object.freeze({
-    appleShortcutUrl: 'https://www.icloud.com/shortcuts/3ddc90767d114bfba66de3a5d1a12d01',
+    appleShortcutUrl: 'https://www.icloud.com/shortcuts/45d584b3fa2f46e7b006645404bc0c4f',
     appleManualSetupUrl: './bridge-shortcut-install.html',
     appleRuntimeVersion: '1.0.0',
     androidExtensionUrl: './downloads/campsite-bridge-android-0.3.5.xpi',
