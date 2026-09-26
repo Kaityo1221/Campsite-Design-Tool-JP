@@ -40,6 +40,33 @@ function cmReadFabPosition(){
 function cmSaveFabPosition(pos){
   try{localStorage.setItem(CM_FAB_POS,JSON.stringify(cmClampFabPosition(pos.x,pos.y)))}catch{}
 }
+function cmForceHideAddUi(){
+  ['cmSafeAddDot','cmPersistentCrosshair','cmMoveCrosshair','cmRadiusGauge'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.style.setProperty('display','none','important');
+  });
+  try{if(typeof cmRemoveCenterGuideCircle==='function')cmRemoveCenterGuideCircle()}catch{}
+}
+function cmInstallAddLifecycleFix(){
+  if(document.documentElement.dataset.cmAddLifecycleFix==='1')return;
+  if(typeof cmStartAdd!=='function'||typeof cmExitAddMode!=='function')return;
+  document.documentElement.dataset.cmAddLifecycleFix='1';
+  const baseStart=cmStartAdd;
+  const baseExit=cmExitAddMode;
+  cmStartAdd=function(layer){
+    const existing=document.getElementById('cmSafeAddDot');
+    if(existing)existing.style.removeProperty('display');
+    const result=baseStart.apply(this,arguments);
+    const dot=document.getElementById('cmSafeAddDot');
+    if(dot)dot.style.setProperty('display','grid','important');
+    return result;
+  };
+  cmExitAddMode=function(message=true){
+    const result=baseExit.apply(this,arguments);
+    cmForceHideAddUi();
+    return result;
+  };
+}
 function cmEnableFabDrag(){
   const wrap=document.getElementById('cmFabWrap'),fab=document.getElementById('cmAddFab');
   if(!wrap||!fab||fab.dataset.dragReady==='1')return;
@@ -71,7 +98,9 @@ function cmEnableFabDrag(){
       cmSaveFabPosition({x:r.left,y:r.top});
       suppressClick=true;
       clearTimeout(suppressTimer);
-      suppressTimer=setTimeout(()=>{suppressClick=false},80);
+      // Only swallow the synthetic click emitted by this drag gesture.
+      // Do not keep a time window that can eat the user's next intentional tap.
+      suppressTimer=setTimeout(()=>{suppressClick=false},0);
     }
     try{fab.releasePointerCapture(e.pointerId)}catch{}
     drag=null;
@@ -95,7 +124,7 @@ function cmEnableFabDrag(){
 }
 `;
 
-    src=src.replace(marker,helper+marker.replace('cmInstallFab();','cmInstallFab();cmEnableFabDrag();'));
+    src=src.replace(marker,helper+marker.replace('cmInstallFab();','cmInstallFab();cmEnableFabDrag();cmInstallAddLifecycleFix();'));
     return src;
   };
 })();
