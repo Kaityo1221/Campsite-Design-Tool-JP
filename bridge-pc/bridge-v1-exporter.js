@@ -1,18 +1,13 @@
 (() => {
   'use strict';
 
-  const VERSION = '1.1.0';
+  const VERSION = '1.1.1';
   const PROTOCOL = 'CAMPSITE_BRIDGE_POI_V1';
   const SCHEMA_VERSION = '1.2';
   const PLATFORM = 'pc';
   const ACTIVE_ENTITIES = new Set(['POKESTOP', 'GYM', 'POWERSPOT']);
   const REFERENCE_KINDS = new Set(['NOT_IN_GAME', 'INACTIVE_POWERSPOT']);
   const ALLOWED_PROVENANCE = new Set(['WAYFARER_PASSIVE', 'WFMM_CACHE', 'BRIDGE_ENRICHMENT']);
-
-  function classifierApi() {
-    const classifier = window.CampsiteBridgePoiClassifier;
-    return classifier?.bridgePoisFromClassified ? classifier : null;
-  }
 
   function referenceLayerApi() {
     const layer = window.CampsiteBridgePoiReferenceLayer;
@@ -59,6 +54,7 @@
     if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
     if (!ACTIVE_ENTITIES.has(gameEntity)) return null;
     if (gameStatus !== 'ACTIVE') return null;
+    if (raw.bridgeEligible === false) return null;
 
     return {
       guid,
@@ -107,14 +103,9 @@
 
   function exportPois(snapshot) {
     const source = snapshot && typeof snapshot === 'object' ? snapshot : {};
-    let candidates = [];
-
-    if (Array.isArray(source.enginePois)) {
-      const classifier = classifierApi();
-      candidates = classifier ? classifier.bridgePoisFromClassified(source.enginePois) : [];
-    } else if (Array.isArray(source.pois)) {
-      candidates = source.pois;
-    }
+    const candidates = Array.isArray(source.enginePois)
+      ? source.enginePois
+      : Array.isArray(source.pois) ? source.pois : [];
 
     const byGuid = new Map();
     for (const raw of candidates) {
