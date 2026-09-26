@@ -49,7 +49,7 @@ function cmEnableFabDrag(){
   fab.style.webkitUserSelect='none';
   const saved=cmReadFabPosition();
   if(saved)cmApplyFabPosition(saved);
-  let drag=null,suppressClick=false;
+  let drag=null,suppressClick=false,suppressTimer=0;
   fab.addEventListener('pointerdown',e=>{
     if(e.pointerType==='mouse'&&e.button!==0)return;
     const r=wrap.getBoundingClientRect();
@@ -70,6 +70,8 @@ function cmEnableFabDrag(){
       const r=wrap.getBoundingClientRect();
       cmSaveFabPosition({x:r.left,y:r.top});
       suppressClick=true;
+      clearTimeout(suppressTimer);
+      suppressTimer=setTimeout(()=>{suppressClick=false},80);
     }
     try{fab.releasePointerCapture(e.pointerId)}catch{}
     drag=null;
@@ -79,6 +81,7 @@ function cmEnableFabDrag(){
   fab.addEventListener('click',e=>{
     if(!suppressClick)return;
     suppressClick=false;
+    clearTimeout(suppressTimer);
     e.preventDefault();
     e.stopImmediatePropagation();
   },true);
