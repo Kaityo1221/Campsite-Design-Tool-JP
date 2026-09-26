@@ -20,9 +20,12 @@ on:
       - 'scripts/check-bridge-poi-engine-regression.mjs'
       - 'scripts/check-bridge-poi-engine-e2e.mjs'
       - 'scripts/check-bridge-poi-diagnostics.mjs'
+      - 'scripts/check-bridge-kwajalein-regression.mjs'
+      - 'scripts/check-bridge-receiver-routing.mjs'
       - 'scripts/check-pc-bridge.mjs'
       - 'scripts/check-pc-next-route.mjs'
       - 'scripts/fixtures/bridge-poi-engine-regression.json'
+      - 'scripts/fixtures/bridge-poi-engine-kwajalein-v1.1.json'
       - 'js/bridge-wayfarer-map-adapter.js'
       - 'js/bridge-wayfarer-display-owner.js'
       - 'js/bridge-wayfarer-deck-compat.js'
@@ -49,9 +52,12 @@ on:
       - 'scripts/check-bridge-poi-engine-regression.mjs'
       - 'scripts/check-bridge-poi-engine-e2e.mjs'
       - 'scripts/check-bridge-poi-diagnostics.mjs'
+      - 'scripts/check-bridge-kwajalein-regression.mjs'
+      - 'scripts/check-bridge-receiver-routing.mjs'
       - 'scripts/check-pc-bridge.mjs'
       - 'scripts/check-pc-next-route.mjs'
       - 'scripts/fixtures/bridge-poi-engine-regression.json'
+      - 'scripts/fixtures/bridge-poi-engine-kwajalein-v1.1.json'
       - 'js/bridge-wayfarer-map-adapter.js'
       - 'js/bridge-wayfarer-display-owner.js'
       - 'js/bridge-wayfarer-deck-compat.js'
@@ -78,6 +84,11 @@ jobs:
       - name: Final Bridge architecture check
         run: npm run check:bridge-architecture
 
+      - name: POI v1.1 regression locks
+        run: |
+          node scripts/check-bridge-kwajalein-regression.mjs
+          node scripts/check-bridge-receiver-routing.mjs
+
       - name: Syntax check
         run: |
           node --check bridge-pc/poi-parser.js
@@ -102,5 +113,7 @@ jobs:
           node --check scripts/check-bridge-poi-diagnostics.mjs
           node --check scripts/check-bridge-poi-engine-regression.mjs
           node --check scripts/check-bridge-poi-engine-e2e.mjs
+          node --check scripts/check-bridge-kwajalein-regression.mjs
+          node --check scripts/check-bridge-receiver-routing.mjs
           node --check scripts/check-pc-bridge.mjs
           node --check scripts/check-pc-next-route.mjs
