@@ -31,6 +31,14 @@
     return classifier;
   }
 
+  function referenceLayerApi() {
+    const layer = window.CampsiteBridgePoiReferenceLayer;
+    if (!layer?.splitClassified) {
+      throw new Error('Campsite Bridge Reference Layerを読み込めませんでした。拡張機能を再読み込みしてください。');
+    }
+    return layer;
+  }
+
   function diagnosticsApi() {
     const diagnostics = window.CampsiteBridgePoiDiagnostics;
     if (!diagnostics?.build || !diagnostics?.summary) {
@@ -41,7 +49,7 @@
 
   function exporterApi() {
     const exporter = window.CampsiteBridgeV1Exporter;
-    if (!exporter?.makePayload || !exporter?.exportPois) {
+    if (!exporter?.makePayload || !exporter?.exportPois || !exporter?.exportReferencePois) {
       throw new Error('Campsite Bridge V1出力Adapterを読み込めませんでした。拡張機能を再読み込みしてください。');
     }
     return exporter;
@@ -172,10 +180,12 @@
     const payload = await response.json();
     const parsed = parseMapData(payload);
     const classified = classifierApi().run(parsed);
+    const routed = referenceLayerApi().splitClassified(classified.pois);
     const diagnosticReport = buildDiagnosticReport(parsed, classified);
 
     return {
       pois: classified.bridgePois,
+      referencePois: routed.referencePois,
       enginePois: classified.pois,
       diagnostics: parsed.diagnostics,
       classificationDiagnostics: classified.classificationDiagnostics,
