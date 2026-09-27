@@ -18,7 +18,7 @@
       .replace(/'/g, '&#039;');
   }
 
-  function commentedAddedPois(project) {
+  function addedPois(project) {
     const source = Array.isArray(project?.currentPois) ? project.currentPois : [];
     return source
       .filter(poi => poi?.role === 'added' || String(poi?.layer || '').startsWith('new-'))
@@ -26,39 +26,50 @@
         name: String(poi?.title || poi?.name || '').trim(),
         comment: String(poi?.description || poi?.memo || '').trim()
       }))
-      .filter(item => item.name && item.comment);
+      .filter(item => item.name);
+  }
+
+  function uniqueItems(items) {
+    const unique = [];
+    const seen = new Set();
+    items.forEach(item => {
+      const key = `${item.name}\n${item.comment}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+      unique.push(item);
+    });
+    return unique;
   }
 
   function decoratePairCards(project) {
-    const commented = commentedAddedPois(project);
+    const candidates = addedPois(project);
     const cards = Array.from(document.querySelectorAll('#distanceResult .distance-band-card'));
 
     cards.forEach(card => {
       card.querySelector('.campsite-ca-comment-note')?.remove();
-      card.dataset.caCommented = 'false';
+      delete card.dataset.caCommented;
+      card.dataset.caConfirmed = 'false';
       if (card.dataset.reference === 'true') return;
 
       const text = card.textContent || '';
-      const matches = commented.filter(item =>
+      const matches = uniqueItems(candidates.filter(item =>
         text.includes(`：${item.name}`) || text.includes(item.name)
-      );
+      ));
       if (!matches.length) return;
 
-      const unique = [];
-      const seen = new Set();
-      matches.forEach(item => {
-        const key = `${item.name}\n${item.comment}`;
-        if (!seen.has(key)) {
-          seen.add(key);
-          unique.push(item);
-        }
-      });
+      const confirmed = matches.every(item => Boolean(item.comment));
+      const missing = matches.filter(item => !item.comment);
+      card.dataset.caConfirmed = confirmed ? 'true' : 'false';
 
-      card.dataset.caCommented = 'true';
       const note = document.createElement('div');
       note.className = 'campsite-ca-comment-note';
-      note.style.cssText = 'margin-top:8px;padding:8px 9px;border-radius:9px;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.34);color:#dcfce7;font-size:12px;line-height:1.6';
-      note.innerHTML = `<strong style="color:#86efac">📝 CAコメント付き</strong>${unique.map(item => `<div style="margin-top:3px">${esc(item.name)}：${esc(item.comment)}</div>`).join('')}`;
+      if (confirmed) {
+        note.style.cssText = 'margin-top:8px;padding:8px 9px;border-radius:9px;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.34);color:#dcfce7;font-size:12px;line-height:1.6';
+        note.innerHTML = `<strong style="color:#86efac">✅ CA確認済み</strong>${matches.map(item => `<div style="margin-top:3px">📝 ${esc(item.name)}：${esc(item.comment)}</div>`).join('')}`;
+      } else {
+        note.style.cssText = 'margin-top:8px;padding:8px 9px;border-radius:9px;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.38);color:#fef3c7;font-size:12px;line-height:1.6';
+        note.innerHTML = `<strong style="color:#fde68a">⚠️ CA確認待ち</strong>${missing.length ? `<div style="margin-top:3px">コメント未入力：${missing.map(item => esc(item.name)).join(' / ')}</div>` : ''}`;
+      }
       card.appendChild(note);
     });
   }
@@ -73,14 +84,23 @@
 
     const targetCards = Array.from(document.querySelectorAll('#distanceResult .distance-band-card'))
       .filter(node => node.dataset.reference !== 'true');
-    const commentedCount = targetCards.filter(node => node.dataset.caCommented === 'true').length;
-    if (!commentedCount) return;
+    if (!targetCards.length) return;
 
-    const unresolvedCount = Math.max(0, targetCards.length - commentedCount);
+    const confirmedCount = targetCards.filter(node => node.dataset.caConfirmed === 'true').length;
+    const unresolvedCount = Math.max(0, targetCards.length - confirmedCount);
+    const allConfirmed = unresolvedCount === 0;
+
     const summary = document.createElement('div');
     summary.className = 'campsite-ca-comment-summary';
-    summary.style.cssText = 'margin-top:12px;padding:9px 10px;border-radius:10px;background:rgba(34,197,94,.10);border:1px solid rgba(34,197,94,.28);color:#dcfce7;font-size:13px;line-height:1.65';
-    summary.innerHTML = `<strong style="color:#86efac">📝 うちCAコメント付き：${commentedCount}組</strong><br>${unresolvedCount === 0 ? '50m未満の対象ペアはCAコメントで確認済みです。結果には記録として残します。' : `コメント未入力：${unresolvedCount}組`}`;
+    summary.style.cssText = allConfirmed
+      ? 'margin-top:12px;padding:10px 11px;border-radius:10px;background:rgba(34,197,94,.10);border:1px solid rgba(34,197,94,.30);color:#dcfce7;font-size:13px;line-height:1.75'
+      : 'margin-top:12px;padding:10px 11px;border-radius:10px;background:rgba(245,158,11,.10);border:1px solid rgba(245,158,11,.34);color:#fef3c7;font-size:13px;line-height:1.75';
+    summary.innerHTML = `
+      <div><strong>50m未満の候補：${targetCards.length}組</strong></div>
+      <div style="color:#86efac">✅ 確認済み：${confirmedCount}組</div>
+      <div style="color:${unresolvedCount ? '#fde68a' : '#86efac'}">${unresolvedCount ? '⚠️' : '✅'} 未確認：${unresolvedCount}組</div>
+      <div style="margin-top:6px;font-weight:950;color:${allConfirmed ? '#86efac' : '#fde68a'}">${allConfirmed ? '✅ 50m未満の候補はすべて確認済みです' : '⚠️ 確認が必要な候補があります'}</div>
+    `;
     card.appendChild(summary);
   }
 
