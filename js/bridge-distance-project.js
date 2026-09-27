@@ -49,6 +49,8 @@
       lat,
       lng,
       gameEntity: entityOf(poi),
+      role: roleOf(poi),
+      description: String(poi?.description || poi?.memo || ''),
       gameStatus: String(poi?.gameStatus || 'UNKNOWN'),
       sponsored: poi?.sponsored === true,
       smr: poi?.smr === true ? true : poi?.smr === false ? false : null,
@@ -87,6 +89,7 @@
     const under50 = [];
     const under30 = [];
     const duplicates = [];
+    const missingCommentPois = [];
     let minDistance = null;
     for (let i = 0; i < pois.length; i++) {
       for (let j = i + 1; j < pois.length; j++) {
@@ -102,6 +105,24 @@
         if (d < 1) duplicates.push(pair);
       }
     }
+
+    pois.filter(poi => poi.role === 'added').forEach(poi => {
+      let nearest = null;
+      for (const other of pois) {
+        if (other === poi || String(other.guid || other.id) === String(poi.guid || poi.id)) continue;
+        const distance = distanceMeters(poi, other);
+        if (!nearest || distance < nearest.distance) nearest = { other, distance };
+      }
+      if (!nearest || nearest.distance >= 50 || poi.description.trim()) return;
+      missingCommentPois.push({
+        id: poi.id,
+        guid: poi.guid,
+        name: poi.name,
+        nearestTo: nearest.other.guid || nearest.other.id,
+        nearestDistance: Math.round(nearest.distance * 10) / 10
+      });
+    });
+
     return {
       checkedAt: new Date().toISOString(),
       targetMeters: 50,
@@ -110,8 +131,43 @@
       under50Pairs: under50,
       under30Pairs: under30,
       duplicatePairs: duplicates,
+      missingCommentCount: missingCommentPois.length,
+      missingCommentPois,
       minDistance
     };
+  }
+
+  function renderDistanceCommentWarning(project) {
+    const result = document.getElementById('distanceResult');
+    if (!result || !result.textContent.trim()) return;
+
+    const snapshot = project?.distanceResult;
+    const missing = Array.isArray(snapshot?.missingCommentPois) ? snapshot.missingCommentPois : [];
+    let warning = document.getElementById('campsiteDistanceCommentWarning');
+    if (!missing.length) {
+      warning?.remove();
+      return;
+    }
+
+    if (!warning) {
+      warning = document.createElement('div');
+      warning.id = 'campsiteDistanceCommentWarning';
+      warning.style.cssText = 'margin:16px 0 8px;padding:14px;border:1px solid rgba(245,158,11,.48);border-radius:14px;background:rgba(245,158,11,.11);color:#fff7d6';
+      const checkpoint = document.getElementById('campsiteDistanceCheckpoint');
+      const guide = document.querySelector('#distance .distance-checklist-guide');
+      if (checkpoint) checkpoint.insertAdjacentElement('beforebegin', warning);
+      else if (guide) guide.insertAdjacentElement('beforebegin', warning);
+      else result.insertAdjacentElement('afterend', warning);
+    }
+
+    warning.replaceChildren();
+    const title = document.createElement('div');
+    title.style.cssText = 'font-size:14px;font-weight:950;line-height:1.55;color:#fde68a';
+    title.textContent = `⚠️ 50m未満の候補地のうち、コメント未入力が${missing.length}件あります。`;
+    const detail = document.createElement('div');
+    detail.style.cssText = 'margin-top:6px;font-size:12px;line-height:1.7;color:#fef3c7';
+    detail.textContent = 'コメントは必須ではありません。必要に応じてCREATIVE MODEで確認してください。';
+    warning.append(title, detail);
   }
 
   function renderProjectSourceNotice(project, groups) {
@@ -189,7 +245,11 @@
       } catch (error) {
         console.warn('[Campsite Project] distance result persist failed', error);
       }
-      setTimeout(() => installReworkAction(readProject() || project), 80);
+      setTimeout(() => {
+        const latest = readProject() || project;
+        renderDistanceCommentWarning(latest);
+        installReworkAction(latest);
+      }, 80);
       return result;
     };
     wrapped.__campsiteProjectWrapped = true;
