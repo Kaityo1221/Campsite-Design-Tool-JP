@@ -21,7 +21,7 @@ assert.ok(gate.includes('title.textContent !== wantedTitle'), 'Warning sync must
 assert.ok(gate.includes('detail.textContent !== wantedDetail'), 'Warning sync must avoid redundant DOM writes');
 
 const gatePos = distanceBridge.indexOf('js/bridge-distance-comment-gate.js?v=2');
-const projectPos = distanceBridge.indexOf('js/bridge-distance-project.js?v=3');
+const projectPos = distanceBridge.indexOf('js/bridge-distance-project.js?v=4');
 assert.ok(gatePos >= 0, 'Distance gateway must load comment gate v2');
 assert.ok(projectPos > gatePos, 'Comment gate must register before the Project tracking capture handler');
 
