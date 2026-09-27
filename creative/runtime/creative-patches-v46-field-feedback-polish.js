@@ -37,11 +37,12 @@
       src=src.replace('cmHaptic();cmAnimateMarker(r);cmShowUndo(r);cmClearPreview()','cmHaptic();cmAnimateMarker(r);cmV46FlyStarToCount(r);cmShowUndo(r);cmClearPreview()');
     }
 
-    // Coordinate list: keep a submission reason directly under longitude.
+    // Coordinate list: show a submission reason only when the candidate's
+    // nearest other POI is actually under the 50m design target.
     // Reuse memo so it survives existing workspace/project persistence.
     const coordTail="root.appendChild(card)});if(!cmActiveNew().length";
     if(src.includes(coordTail)&&!src.includes("className='cm-v46-reason'")){
-      const coordReplacement=`const reason=document.createElement('label');reason.className='cm-v46-reason';reason.innerHTML='<span>理由</span><textarea class="cm-v46-reason-input" placeholder="この候補地を選んだ理由を入力"></textarea>';const reasonInput=reason.querySelector('textarea');reasonInput.value=String(r.memo||'');reasonInput.oninput=()=>{r.memo=reasonInput.value;snapshot();cmPersistCurrent()};card.appendChild(reason);root.appendChild(card)});if(!cmActiveNew().length`;
+      const coordReplacement=`const cmV46Near=nearestRecord(r.latlng,r.id);if(cmV46Near&&cmV46Near.distance<50){const reason=document.createElement('label');reason.className='cm-v46-reason';reason.innerHTML='<span>理由</span><textarea class="cm-v46-reason-input" placeholder="この候補地を選んだ理由を入力"></textarea>';const reasonInput=reason.querySelector('textarea');reasonInput.value=String(r.memo||'');reasonInput.oninput=()=>{r.memo=reasonInput.value;snapshot();cmPersistCurrent()};card.appendChild(reason)}root.appendChild(card)});if(!cmActiveNew().length`;
       src=src.replace(coordTail,coordReplacement);
     }
 
