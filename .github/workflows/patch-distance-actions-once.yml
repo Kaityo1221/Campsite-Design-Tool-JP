@@ -1,0 +1,65 @@
+name: Patch distance action labels once
+
+on:
+  push:
+    paths:
+      - '.github/workflows/patch-distance-actions-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Patch distance action labels and cache versions
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          replacements = {
+            'js/bridge-distance-project.js': [
+              ('💾 保存して作り直す', '✏️ CREATIVE MODEに戻って修正'),
+            ],
+            'scripts/check-bridge-next-flow.mjs': [
+              ("distanceProject.includes('💾 保存して作り直す')", "distanceProject.includes('✏️ CREATIVE MODEに戻って修正')"),
+            ],
+            'docs/bridge-three-device-e2e.md': [
+              ('「保存して作り直す」で同じProjectへ戻れる', '「CREATIVE MODEに戻って修正」で同じProjectへ戻れる'),
+            ],
+            'bridge-distance.html': [
+              ('bridge-distance-project.js?v=3', 'bridge-distance-project.js?v=4'),
+              ('bridge-distance-checkpoint.js?v=1', 'bridge-distance-checkpoint.js?v=2'),
+            ],
+          }
+
+          for filename, pairs in replacements.items():
+            path = Path(filename)
+            text = path.read_text(encoding='utf-8')
+            for old, new in pairs:
+              if old not in text:
+                raise SystemExit(f'expected text not found in {filename}: {old}')
+              text = text.replace(old, new)
+            path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Verify patch
+        run: |
+          grep -F '✏️ CREATIVE MODEに戻って修正' js/bridge-distance-project.js
+          grep -F "distanceProject.includes('✏️ CREATIVE MODEに戻って修正')" scripts/check-bridge-next-flow.mjs
+          grep -F 'bridge-distance-project.js?v=4' bridge-distance.html
+          grep -F 'bridge-distance-checkpoint.js?v=2' bridge-distance.html
+          node --check js/bridge-distance-project.js
+          node --check js/bridge-distance-checkpoint.js
+          node scripts/check-bridge-next-flow.mjs
+
+      - name: Commit patch and remove one-off workflow
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/patch-distance-actions-once.yml
+          git add js/bridge-distance-project.js js/bridge-distance-checkpoint.js scripts/check-bridge-next-flow.mjs docs/bridge-three-device-e2e.md bridge-distance.html
+          git commit -m 'feat: clarify distance save and rework actions'
+          git push
