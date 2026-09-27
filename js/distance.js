@@ -193,12 +193,6 @@ const sectionTitleHtml = (title, sub = "") => `
 ${poiLimitWarningHtml}
 ${campsite.summary}<br><br>
 
-      密集：${campsite.under20}件<br>
-滞留：${campsite.under30}件<br>
-30〜50m参考：${campsite.under40}件<br>
-既存POI同士の50m未満近接：${campsite.referenceUnder40 || 0}件<br>
-通行：${campsite.trafficOk ? "良好" : "注意"}<br><br>
-
       <strong>現地環境チェック</strong><br>
       ・通行：${document.getElementById("trafficOk")?.checked ? "スムーズに通れる" : "注意が必要"}<br>
       ・広場：${document.getElementById("hasOpenSpace")?.checked ? "あり" : "なし"}<br>
