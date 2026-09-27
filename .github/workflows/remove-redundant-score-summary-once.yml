@@ -1,0 +1,49 @@
+name: Remove redundant distance score summary once
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/remove-redundant-score-summary-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Remove duplicated score summary lines
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('js/distance.js')
+          text = p.read_text(encoding='utf-8')
+          old = '''      密集：${campsite.under20}件<br>\n滞留：${campsite.under30}件<br>\n30〜50m参考：${campsite.under40}件<br>\n既存POI同士の50m未満近接：${campsite.referenceUnder40 || 0}件<br>\n通行：${campsite.trafficOk ? "良好" : "注意"}<br><br>\n\n'''
+          if old not in text:
+              raise SystemExit('target block not found')
+          text = text.replace(old, '', 1)
+          p.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Verify patch
+        shell: bash
+        run: |
+          node --check js/distance.js
+          ! grep -q '密集：${campsite.under20}件' js/distance.js
+          ! grep -q '通行：${campsite.trafficOk ? "良好" : "注意"}' js/distance.js
+
+      - name: Commit patch and remove one-off workflow
+        shell: bash
+        run: |
+          rm .github/workflows/remove-redundant-score-summary-once.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add js/distance.js .github/workflows/remove-redundant-score-summary-once.yml
+          git commit -m 'fix: remove redundant distance summary lines'
+          git push
