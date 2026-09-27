@@ -1,0 +1,65 @@
+name: Patch rework button nowrap once
+
+on:
+  push:
+    paths:
+      - '.github/workflows/patch-rework-button-nowrap-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Keep Creative rework label on one line
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          replacements = {
+            'js/bridge-distance-project.js': [
+              (
+                'font-size:15px;font-weight:950;cursor:pointer">✏️ CREATIVE MODEに戻って修正',
+                'font-size:clamp(11px,3.1vw,15px);font-weight:950;letter-spacing:-.02em;white-space:nowrap;cursor:pointer">✏️ CREATIVE MODEに戻って修正'
+              ),
+            ],
+            'bridge-distance.html': [
+              ('bridge-distance-project.js?v=4', 'bridge-distance-project.js?v=5'),
+            ],
+            'scripts/check-bridge-next-flow.mjs': [
+              ("distanceBridge.includes('js/bridge-distance-project.js?v=4')", "distanceBridge.includes('js/bridge-distance-project.js?v=5')"),
+            ],
+            'scripts/check-distance-comment-gate.mjs': [
+              ("distanceBridge.indexOf('js/bridge-distance-project.js?v=4')", "distanceBridge.indexOf('js/bridge-distance-project.js?v=5')"),
+            ],
+          }
+
+          for filename, pairs in replacements.items():
+            path = Path(filename)
+            text = path.read_text(encoding='utf-8')
+            for old, new in pairs:
+              if old not in text:
+                raise SystemExit(f'expected text not found in {filename}: {old}')
+              text = text.replace(old, new)
+            path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Verify patch
+        run: |
+          grep -F 'white-space:nowrap' js/bridge-distance-project.js
+          grep -F 'font-size:clamp(11px,3.1vw,15px)' js/bridge-distance-project.js
+          grep -F 'bridge-distance-project.js?v=5' bridge-distance.html
+          node --check js/bridge-distance-project.js
+          node scripts/check-distance-comment-gate.mjs
+
+      - name: Commit patch and remove one-off workflow
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/patch-rework-button-nowrap-once.yml
+          git add js/bridge-distance-project.js bridge-distance.html scripts/check-bridge-next-flow.mjs scripts/check-distance-comment-gate.mjs
+          git commit -m 'fix: keep Creative rework action on one line'
+          git push
