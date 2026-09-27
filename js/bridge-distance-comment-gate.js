@@ -2,6 +2,7 @@
   'use strict';
 
   const PROJECT_KEY = 'campsiteProject.v1';
+  let warningObserver = null;
 
   function readProject() {
     try { return JSON.parse(sessionStorage.getItem(PROJECT_KEY) || 'null'); }
@@ -36,17 +37,40 @@
 
   function syncInlineWarning() {
     const warning = document.getElementById('campsiteDistanceCommentWarning');
-    if (!warning) return;
+    if (!warning) return false;
+
     const title = warning.children?.[0];
     const detail = warning.children?.[1];
-    if (title) {
-      const project = readProject();
-      const count = missingComments(project).length;
-      if (count) title.textContent = `⚠️ 50m未満の候補地のうち、コメント未入力が${count}件あります。`;
-    }
-    if (detail) {
-      detail.textContent = '50m未満の候補地には理由コメントの入力をお願いします。CREATIVE MODEに戻って、ひとこと理由を添えてください。';
-    }
+    const count = missingComments(readProject()).length;
+    const wantedTitle = count
+      ? `⚠️ 50m未満の候補地のうち、コメント未入力が${count}件あります。`
+      : '';
+    const wantedDetail = '50m未満の候補地には理由コメントの入力をお願いします。CREATIVE MODEに戻って、ひとこと理由を添えてください。';
+
+    if (title && wantedTitle && title.textContent !== wantedTitle) title.textContent = wantedTitle;
+    if (detail && detail.textContent !== wantedDetail) detail.textContent = wantedDetail;
+    return true;
+  }
+
+  function observeInlineWarning() {
+    const root = document.getElementById('distance') || document.body;
+    if (!root || typeof MutationObserver === 'undefined') return;
+
+    warningObserver?.disconnect();
+    warningObserver = new MutationObserver(() => {
+      if (!document.getElementById('campsiteDistanceCommentWarning')) return;
+
+      // Disconnect while changing text so our own DOM updates never retrigger the observer.
+      warningObserver.disconnect();
+      syncInlineWarning();
+      setTimeout(() => {
+        const nextRoot = document.getElementById('distance') || document.body;
+        if (nextRoot?.isConnected) {
+          warningObserver.observe(nextRoot, { childList: true, subtree: true });
+        }
+      }, 0);
+    });
+    warningObserver.observe(root, { childList: true, subtree: true });
   }
 
   function showGate(count) {
@@ -91,7 +115,7 @@
     if (params.get('campsiteProject') !== 'bridge') return;
     document.addEventListener('click', onPreSubmitClick, true);
     syncInlineWarning();
-    new MutationObserver(syncInlineWarning).observe(document.body, { childList: true, subtree: true });
+    observeInlineWarning();
     window.CampsiteDistanceCommentGate = Object.freeze({
       getMissingCount: () => missingComments(readProject()).length,
       close: closeGate
