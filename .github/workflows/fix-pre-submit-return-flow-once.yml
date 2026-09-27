@@ -1,0 +1,105 @@
+name: Fix pre-submit return flow once
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-pre-submit-return-flow-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Keep manual final checks inside final-check flow
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('js/distance-core.js')
+          text = path.read_text(encoding='utf-8')
+
+          old = '''  const autoOk = autoItems.every(item => item.state === "ok");
+  const manualOk = manualItems.every(item => manualState[item.id] === true);
+  const ready = autoOk && manualOk;
+'''
+          new = '''  const autoOk = autoItems.every(item => item.state === "ok");
+  const manualOk = manualItems.every(item => manualState[item.id] === true);
+  const ready = autoOk && manualOk;
+  const distanceNeedsReview = autoItems.some(item =>
+    ["distanceRun", "duplicate"].includes(item.id) && item.state !== "ok"
+  );
+'''
+          if old not in text:
+              raise SystemExit('ready block not found')
+          text = text.replace(old, new, 1)
+
+          old = '''      <div class="pre-submit-actions">
+        <button type="button" data-pre-submit-distance>距離チェックへ戻る</button>
+      </div>
+'''
+          new = '''      <div class="pre-submit-actions">
+        ${!ready ? '<button type="button" data-pre-submit-review>未確認項目を確認する</button>' : ''}
+        ${distanceNeedsReview ? '<button type="button" data-pre-submit-distance>距離チェックへ戻る</button>' : ''}
+      </div>
+'''
+          if old not in text:
+              raise SystemExit('action block not found')
+          text = text.replace(old, new, 1)
+
+          old = '''  panel.querySelector("[data-pre-submit-distance]")?.addEventListener("click", () => {
+    const button = document.querySelector('.tab-button[onclick*="distance"]');
+    if (typeof window.openTab === "function") {
+      window.openTab("distance", button || null);
+    }
+  });
+'''
+          new = '''  panel.querySelector("[data-pre-submit-review]")?.addEventListener("click", () => {
+    const target = panel.querySelector('.pre-submit-item[data-state="warn"], .pre-submit-item[data-state="ng"]');
+    if (!target) return;
+    target.scrollIntoView({ behavior: "smooth", block: "center" });
+    const previousOutline = target.style.outline;
+    const previousOffset = target.style.outlineOffset;
+    target.style.outline = "3px solid rgba(245,158,11,.72)";
+    target.style.outlineOffset = "3px";
+    setTimeout(() => {
+      target.style.outline = previousOutline;
+      target.style.outlineOffset = previousOffset;
+    }, 1400);
+  });
+
+  panel.querySelector("[data-pre-submit-distance]")?.addEventListener("click", () => {
+    const button = document.querySelector('.tab-button[onclick*="distance"]');
+    if (typeof window.openTab === "function") {
+      window.openTab("distance", button || null);
+    }
+  });
+'''
+          if old not in text:
+              raise SystemExit('distance listener block not found')
+          text = text.replace(old, new, 1)
+
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Verify patch
+        run: |
+          grep -F 'const distanceNeedsReview = autoItems.some' js/distance-core.js
+          grep -F 'data-pre-submit-review>未確認項目を確認する' js/distance-core.js
+          grep -F "distanceNeedsReview ? '<button type=\"button\" data-pre-submit-distance>距離チェックへ戻る</button>' : ''" js/distance-core.js
+          node --check js/distance-core.js
+
+      - name: Commit patch
+        run: |
+          if git diff --quiet; then
+            echo 'No changes needed'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add js/distance-core.js
+          git commit -m 'fix(check): keep manual final checks in final flow'
+          git push
