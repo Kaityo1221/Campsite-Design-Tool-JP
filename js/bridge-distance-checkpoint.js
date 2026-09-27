@@ -30,23 +30,28 @@
 
   function currentState() {
     const project = readProject();
-    if (!project || project.source !== 'bridge') return { project: null, workspaceId: '', result: null, checkpoint: null, saved: false };
+    if (!project || project.source !== 'bridge') return { project: null, workspaceId: '', result: null, checkpoint: null, saved: false, stale: false };
     const workspaceId = workspaceIdOf(project);
     const result = project.distanceResult || null;
     const checkpoint = readCheckpoint(workspaceId);
     const checkedAt = String(result?.checkedAt || '');
+    const designSignature = String(result?.designSignature || '');
+    const stale = result?.stale === true;
     const saved = !!(
+      !stale &&
       workspaceId &&
       checkedAt &&
+      designSignature &&
       checkpoint?.workspaceId === workspaceId &&
-      String(checkpoint?.distanceResult?.checkedAt || '') === checkedAt
+      String(checkpoint?.distanceResult?.checkedAt || '') === checkedAt &&
+      String(checkpoint?.distanceResult?.designSignature || '') === designSignature
     );
-    return { project, workspaceId, result, checkpoint, saved };
+    return { project, workspaceId, result, checkpoint, saved, stale };
   }
 
   function saveCheckpoint() {
     const state = currentState();
-    if (!state.project || !state.workspaceId || !state.result?.checkedAt) return false;
+    if (!state.project || !state.workspaceId || !state.result?.checkedAt || !state.result?.designSignature || state.stale) return false;
 
     const savedAt = new Date().toISOString();
     const project = state.project;
@@ -55,12 +60,13 @@
     project.distanceCheckpoint = {
       workspaceId: state.workspaceId,
       checkedAt: String(state.result.checkedAt),
+      designSignature: String(state.result.designSignature),
       savedAt
     };
     writeProject(project);
 
     const payload = {
-      schemaVersion: '1.0',
+      schemaVersion: '1.1',
       workspaceId: state.workspaceId,
       savedAt,
       distanceResult: state.result,
@@ -91,7 +97,10 @@
     wrap.querySelector('[data-distance-checkpoint-save]')?.addEventListener('click', () => {
       if (!saveCheckpoint()) {
         const status = wrap.querySelector('[data-distance-checkpoint-status]');
-        if (status) status.textContent = '保存できませんでした。距離チェックをもう一度実行してください。';
+        const state = currentState();
+        if (status) status.textContent = state.stale
+          ? '設計が変更されています。距離チェックを再実行してから保存してください。'
+          : '保存できませんでした。距離チェックをもう一度実行してください。';
       }
     });
 
@@ -109,6 +118,17 @@
     if (!button || !status) return;
 
     const state = currentState();
+    if (state.stale) {
+      button.textContent = '↻ 距離チェックを再実行';
+      button.disabled = true;
+      button.style.cursor = 'default';
+      button.style.background = 'linear-gradient(135deg,#fef3c7,#fde68a)';
+      button.style.borderColor = 'rgba(245,158,11,.58)';
+      button.style.color = '#78350f';
+      status.textContent = '設計変更後のため、この距離チェック結果は保存できません。';
+      return;
+    }
+
     if (state.saved) {
       button.textContent = '✓ 保存済み';
       button.disabled = true;
