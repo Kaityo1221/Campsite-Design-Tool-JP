@@ -174,7 +174,7 @@ function installCampsiteProjectNext(project){
   const btn=document.createElement('button');
   btn.id='campsiteProjectNext';btn.type='button';btn.textContent='次へ →';btn.setAttribute('aria-label','次へ：距離チェック');btn.title='距離チェックへ';
   btn.style.cssText='position:fixed;left:50%;top:calc(10px + env(safe-area-inset-top));transform:translateX(-50%);z-index:1350;min-width:92px;min-height:44px;padding:0 12px;border:1px solid #8a6b31;border-radius:13px;background:linear-gradient(180deg,#f3d77f,#c58c1f);color:#37270c;font-weight:950;font-size:13px;box-shadow:0 4px 14px rgba(0,0,0,.24)'
-  btn.onclick=()=>{const warnings=campsProjectWarningRecords();if(warnings.length){campsProjectShowDistanceGate(warnings);return}const saved=syncCampsiteProjectFromCreative(project);if(!saved)return;location.href='../bridge-distance.html?campsiteProject=bridge'};
+  btn.onclick=()=>{const saved=syncCampsiteProjectFromCreative(project);if(!saved)return;location.href='../bridge-distance.html?campsiteProject=bridge'};
   document.body.appendChild(btn);
   const sync=()=>{try{syncCampsiteProjectFromCreative(project)}catch(_){}};
   window.addEventListener('pagehide',sync);
