@@ -57,11 +57,17 @@
   }
 
   function receivedCounts() {
+    const referencePois = Array.isArray(adapter?.referencePois) ? adapter.referencePois : [];
+    const inactivePowerSpots = referencePois.filter(poi =>
+      String(poi?.referenceKind || '').trim().toUpperCase() === 'INACTIVE_POWERSPOT'
+    );
+
     const result = {
-      total: adapter.pois.length,
+      total: adapter.pois.length + inactivePowerSpots.length,
       pokestop: 0,
       gym: 0,
       powerspot: 0,
+      inactivePowerSpot: inactivePowerSpots.length,
       sponsored: 0,
       smr: 0
     };
@@ -113,6 +119,7 @@
           <div class="bridge-count"><span>PokéStop</span><b>${c.pokestop.toLocaleString('ja-JP')}</b></div>
           <div class="bridge-count"><span>Gym</span><b>${c.gym.toLocaleString('ja-JP')}</b></div>
           <div class="bridge-count"><span>Power Spot</span><b>${c.powerspot.toLocaleString('ja-JP')}</b></div>
+          <div class="bridge-count"><span>Inactive Power Spot</span><b>${c.inactivePowerSpot.toLocaleString('ja-JP')}</b></div>
           <div class="bridge-count"><span>Sponsor</span><b>${c.sponsored.toLocaleString('ja-JP')}</b></div>
           <div class="bridge-count"><span>SMR</span><b>${c.smr.toLocaleString('ja-JP')}</b></div>
         </div>
