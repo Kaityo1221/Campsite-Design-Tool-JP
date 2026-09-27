@@ -70,6 +70,10 @@
       await loadScript(new URL('ca-geo-guard.js?v=1', base).href);
     }
 
+    if (!window.CampsiteChairmanTestGuard) {
+      await loadScript(new URL('ca-chairman-test-guard.js?v=1', base).href);
+    }
+
     if (!window.CampsiteCaDeviceLink) {
       await loadScript(new URL('ca-device-link.js?v=1', base).href);
     }
