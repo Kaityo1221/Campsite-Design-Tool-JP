@@ -37,6 +37,25 @@
     return 'existing';
   }
 
+  function buildDesignSignature(project) {
+    const source = Array.isArray(project?.currentPois) ? project.currentPois : [];
+    const pois = source.map(poi => ({
+      id: String(poi?.guid || poi?.id || ''),
+      lat: Number(poi?.lat),
+      lng: Number(poi?.lng),
+      role: String(poi?.role || ''),
+      layer: String(poi?.layer || ''),
+      gameEntity: String(poi?.gameEntity || ''),
+      title: String(poi?.title || poi?.name || ''),
+      description: String(poi?.description || poi?.memo || '')
+    })).sort((a, b) => a.id.localeCompare(b.id) || a.lat - b.lat || a.lng - b.lng);
+    const polygon = (Array.isArray(project?.polygon) ? project.polygon : []).map(point => [
+      Number(Array.isArray(point) ? point[0] : NaN),
+      Number(Array.isArray(point) ? point[1] : NaN)
+    ]);
+    return JSON.stringify({ pois, polygon });
+  }
+
   function toDistancePoint(poi) {
     const lat = Number(poi?.lat);
     const lng = Number(poi?.lng);
@@ -125,6 +144,11 @@
 
     return {
       checkedAt: new Date().toISOString(),
+      designSignature: buildDesignSignature(project),
+      stale: false,
+      staleAt: null,
+      staleReason: '',
+      currentDesignSignature: '',
       targetMeters: 50,
       poiCount: pois.length,
       addedCount: Array.isArray(project?.addedPois) ? project.addedPois.length : 0,
@@ -170,6 +194,30 @@
     warning.append(title, detail);
   }
 
+  function renderDistanceStaleWarning(project) {
+    const stale = project?.distanceResult?.stale === true;
+    let warning = document.getElementById('campsiteDistanceStaleWarning');
+    if (!stale) {
+      warning?.remove();
+      return;
+    }
+
+    const section = document.getElementById('distance');
+    const panel = section?.querySelector('.panel');
+    if (!panel) return;
+    if (!warning) {
+      warning = document.createElement('div');
+      warning.id = 'campsiteDistanceStaleWarning';
+      warning.style.cssText = 'margin:14px 0;padding:14px;border:1px solid rgba(245,158,11,.55);border-radius:14px;background:rgba(245,158,11,.12);color:#fde68a;font-size:13px;font-weight:850;line-height:1.7;text-align:center';
+      const source = panel.querySelector('.campsite-project-distance-source');
+      const fileStep = document.getElementById('distanceFile')?.closest('.step');
+      if (source) source.insertAdjacentElement('afterend', warning);
+      else if (fileStep) fileStep.insertAdjacentElement('afterend', warning);
+      else panel.querySelector('h2')?.insertAdjacentElement('afterend', warning);
+    }
+    warning.textContent = '⚠️ CREATIVE MODEで設計が変更されています。距離チェックを再実行してください。';
+  }
+
   function renderProjectSourceNotice(project, groups) {
     const section = document.getElementById('distance');
     const panel = section?.querySelector('.panel');
@@ -203,6 +251,7 @@
       const count = Object.values(groups).reduce((sum, list) => sum + list.length, 0);
       badge.textContent = `✅ Campsite Project ${String(project.projectId || '').slice(0, 8)} · ${count}件のPOIを読み込み済み`;
     }
+    renderDistanceStaleWarning(project);
   }
 
   function populateDistanceUi(project, groups) {
@@ -247,6 +296,7 @@
       }
       setTimeout(() => {
         const latest = readProject() || project;
+        renderDistanceStaleWarning(latest);
         renderDistanceCommentWarning(latest);
         installReworkAction(latest);
       }, 80);
@@ -287,6 +337,14 @@
       if (!button) return;
       try {
         const latest = readProject() || project;
+        if (latest?.distanceResult?.stale === true) {
+          event.preventDefault();
+          event.stopPropagation();
+          event.stopImmediatePropagation();
+          renderDistanceStaleWarning(latest);
+          try { window.openTab?.('distance'); } catch (_) {}
+          return;
+        }
         latest.phase = 'pre-submit';
         latest.preSubmit = {
           openedAt: new Date().toISOString(),
@@ -321,12 +379,17 @@
       installChecklistTracking(project);
       try { window.setWorkflowStep?.('distance'); } catch (_) {}
       try { window.openTab?.('distance'); } catch (_) { section.classList.add('active'); }
-      setTimeout(() => renderProjectSourceNotice(project, groups), 250);
+      setTimeout(() => {
+        const latest = readProject() || project;
+        renderProjectSourceNotice(latest, groups);
+        renderDistanceStaleWarning(latest);
+      }, 250);
       window.CampsiteDistanceProject = Object.freeze({
         projectId: String(project.projectId || ''),
         source: 'bridge',
         poiCount: Object.values(groups).reduce((sum, list) => sum + list.length, 0),
-        polygonCount: window._activityPolygons.length
+        polygonCount: window._activityPolygons.length,
+        designSignature: buildDesignSignature(project)
       });
     }, 100);
   }
