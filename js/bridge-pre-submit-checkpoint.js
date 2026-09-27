@@ -11,6 +11,10 @@
     catch (_) { return fallback; }
   }
 
+  function setText(node, text) {
+    if (node && node.textContent !== text) node.textContent = text;
+  }
+
   function readProject() {
     return readJson(sessionStorage, PROJECT_KEY, null);
   }
@@ -152,7 +156,7 @@
       warning.style.cssText = 'margin:0 0 14px;padding:12px 14px;border:1px solid rgba(245,158,11,.42);border-radius:12px;background:rgba(245,158,11,.08);color:#fde68a;font-size:13px;font-weight:800;line-height:1.65;text-align:center';
       resultBox?.insertAdjacentElement('beforebegin', warning);
     }
-    warning.textContent = `⚠️ 50m未満・コメント未入力：${missing}件`;
+    setText(warning, `⚠️ 50m未満・コメント未入力：${missing}件`);
   }
 
   function ensureSaveUi(panel, resultBox) {
@@ -166,7 +170,7 @@
     wrap.querySelector('[data-pre-submit-checkpoint-save]')?.addEventListener('click', () => {
       if (!saveCheckpoint()) {
         const status = wrap.querySelector('[data-pre-submit-checkpoint-status]');
-        if (status) status.textContent = '保存できませんでした。画面を開き直して、もう一度お試しください。';
+        setText(status, '保存できませんでした。画面を開き直して、もう一度お試しください。');
       }
     });
     resultBox?.insertAdjacentElement('beforebegin', wrap);
@@ -190,21 +194,21 @@
 
       const state = currentState();
       if (state.saved) {
-        button.textContent = '✓ 保存済み';
+        setText(button, '✓ 保存済み');
         button.disabled = true;
         button.style.cursor = 'default';
         button.style.background = 'linear-gradient(135deg,#dcfce7,#bbf7d0)';
         button.style.borderColor = 'rgba(34,197,94,.55)';
         button.style.color = '#14532d';
-        status.textContent = 'この最終確認の状態は保存済みです。';
+        setText(status, 'この最終確認の状態は保存済みです。');
       } else {
-        button.textContent = '💾 保存';
+        setText(button, '💾 保存');
         button.disabled = false;
         button.style.cursor = 'pointer';
         button.style.background = 'linear-gradient(135deg,#dbeafe,#bfdbfe)';
         button.style.borderColor = 'rgba(96,165,250,.62)';
         button.style.color = '#172554';
-        status.textContent = '距離チェック結果と最終確認の状態を、この案件に保存します。';
+        setText(status, '距離チェック結果と最終確認の状態を、この案件に保存します。');
       }
     } finally {
       rendering = false;
