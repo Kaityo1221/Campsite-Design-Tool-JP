@@ -7,6 +7,7 @@ const manifest=JSON.parse(fs.readFileSync('creative/runtime/next-lab-manifest.js
 const baseHtml=fs.readFileSync('creative/base-v7.html','utf8');
 const jpPatch=fs.readFileSync('creative/jp-creative-patch.js','utf8');
 const bridgePatch=fs.readFileSync('creative/bridge-project-patch.js','utf8');
+const workspacePatch=fs.readFileSync('creative/runtime/creative-patches-v50-add-crosshair-cleanup.js','utf8');
 
 function gitBlobShaBuffer(body){
   return crypto.createHash('sha1').update(Buffer.from('blob '+body.length+'\0')).update(body).digest('hex');
@@ -26,6 +27,11 @@ for(const name of manifest.order.slice(1)){
   new vm.Script(source,{filename:'creative/runtime/'+name}).runInContext(context);
   assert.equal(typeof context.window.applyCreativePatches,'function',name+' registration failed');
 }
+
+// v50 is part of the live JP loader even though the pinned Next-Lab manifest ends at v44.
+// Load it here so workspace identity changes are syntax-checked in the generated HTML.
+new vm.Script(workspacePatch,{filename:'creative/runtime/creative-patches-v50-add-crosshair-cleanup.js'}).runInContext(context);
+assert.equal(typeof context.window.applyCreativePatches,'function','workspace patch registration failed');
 
 let html=context.window.applyCreativePatches(baseHtml);
 
@@ -50,6 +56,9 @@ assert.ok(html.includes('function cmOpenCoords(){if(cmCoordView?.isConnected)ret
 assert.ok(html.includes("./assets/pokestop.png"),'Canonical Next-Lab PokéStop icon reference missing');
 assert.ok(html.includes("./assets/gym.png"),'Canonical Next-Lab Gym icon reference missing');
 assert.ok(html.includes("./assets/powerspot.png"),'Canonical Next-Lab PowerSpot icon reference missing');
+assert.ok(html.includes('workspaceId:cmEnsureWorkspaceId()'),'Creative workspace payload must carry workspaceId');
+assert.ok(html.includes('campsite-workspace-id'),'Creative KMZ must carry workspace identity metadata');
+assert.ok(html.includes('window.CampsiteCreativeWorkspace=Object.freeze'),'Creative workspace API missing');
 assert.ok(
   html.includes("circleExtras.slice().filter(radius=>Number(radius)!==50).sort((a,b)=>b-a).forEach(radius=>appendDistanceFolder(xml,doc,radius))"),
   'Creative KMZ export must exclude duplicate 50m circle from circleExtras'
