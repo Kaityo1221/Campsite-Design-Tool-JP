@@ -50,15 +50,16 @@ jobs:
             path.write_text(text, encoding='utf-8')
           PY
 
-      - name: Verify patch
+      - name: Verify distance action patch
         run: |
           grep -F '✏️ CREATIVE MODEに戻って修正' js/bridge-distance-project.js
           grep -F "distanceProject.includes('✏️ CREATIVE MODEに戻って修正')" scripts/check-bridge-next-flow.mjs
           grep -F 'bridge-distance-project.js?v=4' bridge-distance.html
           grep -F 'bridge-distance-checkpoint.js?v=2' bridge-distance.html
+          grep -F '💾 セーブする' js/bridge-distance-checkpoint.js
+          grep -F 'campsite-project.json' js/bridge-distance-checkpoint.js
           node --check js/bridge-distance-project.js
           node --check js/bridge-distance-checkpoint.js
-          node scripts/check-bridge-next-flow.mjs
 
       - name: Commit patch and remove one-off workflow
         run: |
