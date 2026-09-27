@@ -199,7 +199,7 @@ assert.ok(!creativeBridge.includes("document.write("), 'Legacy Bridge entry must
 assert.ok(nextFlow.includes("./creative/index.html?campsiteProject=bridge"), 'Next flow must enter Creative index directly');
 assert.ok(!nextFlow.includes("./creative/bridge.html?campsiteProject=bridge"), 'Next flow must not use the nested Bridge wrapper');
 
-assert.ok(distanceBridge.includes('js/bridge-distance-project.js?v=4'));
+assert.ok(distanceBridge.includes('js/bridge-distance-project.js?v=5'));
 assert.ok(distanceBridge.includes("fetch('./index.html'"));
 assert.ok(distanceBridge.includes("params.get('campsiteProject')!=='bridge'"));
 assert.ok(distanceProject.includes("const PROJECT_KEY = 'campsiteProject.v1'"));
