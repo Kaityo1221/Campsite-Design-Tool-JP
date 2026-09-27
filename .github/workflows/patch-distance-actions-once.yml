@@ -27,6 +27,7 @@ jobs:
               ("distanceProject.includes('💾 保存して作り直す')", "distanceProject.includes('✏️ CREATIVE MODEに戻って修正')"),
               ("assert.ok(transformed.includes(\"btn.onclick=()=>{const saved=syncCampsiteProjectFromCreative(project);if(!saved)return;location.href='../bridge-distance.html?campsiteProject=bridge'}\"), 'Creative next must hand off to distance without comment blocking');\nassert.ok(!transformed.includes(\"btn.onclick=()=>{const warnings=campsProjectWarningRecords()\"), 'Creative next must not block on missing comments');",
                "assert.ok(transformed.includes('const warnings=campsProjectWarningRecords();'), 'Creative next must inspect 50m spacing comments');\nassert.ok(transformed.includes('if(warnings.length){campsProjectShowDistanceGate(warnings);return;}'), 'Creative next must block when required spacing comments are missing');\nassert.ok(transformed.includes(\"location.href='../bridge-distance.html?campsiteProject=bridge';\"), 'Creative next must hand off to distance after the spacing gate');"),
+              ("distanceBridge.includes('js/bridge-distance-project.js?v=3')", "distanceBridge.includes('js/bridge-distance-project.js?v=4')"),
             ],
             'docs/bridge-three-device-e2e.md': [
               ('「保存して作り直す」で同じProjectへ戻れる', '「CREATIVE MODEに戻って修正」で同じProjectへ戻れる'),
