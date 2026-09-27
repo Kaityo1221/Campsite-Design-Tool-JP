@@ -80,6 +80,7 @@
 
     const project = readProject();
     if (!project || project.source !== 'bridge') return;
+    if (project?.distanceResult?.stale === true) return;
     const missing = missingComments(project);
     if (!missing.length) return;
 
