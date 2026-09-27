@@ -36,7 +36,7 @@
 
     const runtime=`<script id="cmV51CoordinateJumpRuntime">
 (()=>{
-  let panel=null,activeBar=null;
+  let panel=null,activeBar=null,jumpSequence=0;
 
   const toast=(text,ms=1400)=>{try{if(typeof msg==='function')msg(text,ms)}catch{}};
   const activeModeBar=()=>document.querySelector('.cm-safe-add-bar')||document.getElementById('cmMoveBar');
@@ -49,6 +49,49 @@
     const lat=Number(parts[0]),lng=Number(parts[1]);
     if(!Number.isFinite(lat)||!Number.isFinite(lng)||lat<-90||lat>90||lng<-180||lng>180)return null;
     return [lat,lng];
+  }
+
+  function syncPlacementGuides(target){
+    try{if(typeof cmSafeAddCircle!=='undefined'&&cmSafeAddCircle)cmSafeAddCircle.setLatLng(target)}catch{}
+    try{if(typeof cmMoveSession!=='undefined'&&cmMoveSession&&cmMoveSession.circle)cmMoveSession.circle.setLatLng(target)}catch{}
+    try{if(typeof draft!=='undefined'&&draft&&draft.marker){draft.marker.setLatLng(target);draft.c50?.setLatLng?.(target);draft.c40?.setLatLng?.(target)}}catch{}
+    try{if(typeof updateNearestHint==='function')updateNearestHint()}catch{}
+  }
+
+  function forceMapCenter(ll){
+    if(!Array.isArray(ll)||ll.length!==2)return false;
+    const target=L.latLng(ll[0],ll[1]),seq=++jumpSequence;
+    const apply=()=>{
+      if(seq!==jumpSequence)return;
+      try{
+        map.stop?.();
+        map.setView(target,map.getZoom(),{animate:false});
+        syncPlacementGuides(target);
+        map.invalidateSize?.({pan:false,animate:false});
+      }catch(err){console.error('[Creative v51] force map center',err)}
+    };
+    apply();
+    requestAnimationFrame(apply);
+    setTimeout(apply,90);
+    setTimeout(apply,260);
+    return true;
+  }
+
+  function findCoordinateNear(button){
+    const active=document.activeElement;
+    if(active&&active.tagName==='INPUT'){
+      const parsed=parseCoordinate(active.value);
+      if(parsed)return parsed;
+    }
+    let node=button;
+    while(node&&node!==document.body){
+      const inputs=node.querySelectorAll?Array.from(node.querySelectorAll('input')):[];
+      for(const input of inputs){const parsed=parseCoordinate(input.value);if(parsed)return parsed}
+      node=node.parentElement;
+    }
+    const candidates=Array.from(document.querySelectorAll('input')).filter(input=>input.offsetParent!==null);
+    for(const input of candidates){const parsed=parseCoordinate(input.value);if(parsed)return parsed}
+    return null;
   }
 
   function ensurePanel(){
@@ -95,7 +138,8 @@
     const ll=parseCoordinate(input?.value);
     if(!ll){if(error)error.textContent='「緯度, 経度」の形式で入力してください';toast('座標は「緯度, 経度」で入力してください');return}
     try{
-      map.setView(ll,map.getZoom(),{animate:false});
+      input?.blur?.();
+      forceMapCenter(ll);
       closePanel();
       toast('入力した座標へ移動しました');
     }catch(err){
@@ -119,6 +163,18 @@
     bars.forEach(bindBar);
     if(panel&&!panel.hidden&&!activeModeBar())closePanel();
   }
+
+  // Compatibility hook for the existing dark coordinate dialog used on some
+  // cached/mobile builds. Let its own UI close normally, then force the map
+  // center after the soft keyboard/visual viewport has settled.
+  document.addEventListener('click',e=>{
+    const button=e.target?.closest?.('button');
+    if(!button||String(button.textContent||'').trim()!=='座標へ移動')return;
+    const ll=findCoordinateNear(button);
+    if(!ll)return;
+    try{document.activeElement?.blur?.()}catch{}
+    setTimeout(()=>forceMapCenter(ll),0);
+  },true);
 
   sync();
   new MutationObserver(sync).observe(document.body,{childList:true,subtree:true});
