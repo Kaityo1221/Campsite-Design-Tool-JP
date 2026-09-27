@@ -34,11 +34,34 @@
     </style>`;
     if(!src.includes('id="cmV51CoordinateJumpStyle"'))src=src.replace('</head>',style+'</head>');
 
+    // The map and placement state live inside the main Creative IIFE, so expose
+    // one tiny same-scope bridge. A later standalone <script> cannot directly
+    // see lexical const/let bindings such as map or cmMoveSession.
+    const bridgeMarker='cmInstallUi();\n// ===== /CREATIVE MODE intuitive UX v6 =====';
+    if(src.includes(bridgeMarker)&&!src.includes('window.CampsiteCreativeCoordinateJump=Object.freeze')){
+      const sameScopeBridge=`window.CampsiteCreativeCoordinateJump=Object.freeze({
+  moveTo:(lat,lng)=>{
+    const nlat=Number(lat),nlng=Number(lng);
+    if(!Number.isFinite(nlat)||!Number.isFinite(nlng)||nlat<-90||nlat>90||nlng<-180||nlng>180)return false;
+    const target=L.latLng(nlat,nlng);
+    try{map.stop?.()}catch{}
+    map.setView(target,map.getZoom(),{animate:false});
+    try{if(typeof cmSafeAddCircle!=='undefined'&&cmSafeAddCircle)cmSafeAddCircle.setLatLng(target)}catch{}
+    try{if(typeof cmMoveSession!=='undefined'&&cmMoveSession&&cmMoveSession.circle)cmMoveSession.circle.setLatLng(target)}catch{}
+    try{if(typeof draft!=='undefined'&&draft&&draft.marker){draft.marker.setLatLng(target);draft.c50?.setLatLng?.(target);draft.c40?.setLatLng?.(target)}}catch{}
+    try{if(typeof updateNearestHint==='function')updateNearestHint()}catch{}
+    try{map.invalidateSize?.({pan:false,animate:false})}catch{}
+    return true;
+  }
+});
+`;
+      src=src.replace(bridgeMarker,sameScopeBridge+bridgeMarker);
+    }
+
     const runtime=`<script id="cmV51CoordinateJumpRuntime">
 (()=>{
   let panel=null,activeBar=null,jumpSequence=0;
 
-  const toast=(text,ms=1400)=>{try{if(typeof msg==='function')msg(text,ms)}catch{}};
   const activeModeBar=()=>document.querySelector('.cm-safe-add-bar')||document.getElementById('cmMoveBar');
 
   function parseCoordinate(raw){
@@ -51,24 +74,17 @@
     return [lat,lng];
   }
 
-  function syncPlacementGuides(target){
-    try{if(typeof cmSafeAddCircle!=='undefined'&&cmSafeAddCircle)cmSafeAddCircle.setLatLng(target)}catch{}
-    try{if(typeof cmMoveSession!=='undefined'&&cmMoveSession&&cmMoveSession.circle)cmMoveSession.circle.setLatLng(target)}catch{}
-    try{if(typeof draft!=='undefined'&&draft&&draft.marker){draft.marker.setLatLng(target);draft.c50?.setLatLng?.(target);draft.c40?.setLatLng?.(target)}}catch{}
-    try{if(typeof updateNearestHint==='function')updateNearestHint()}catch{}
-  }
-
   function forceMapCenter(ll){
     if(!Array.isArray(ll)||ll.length!==2)return false;
-    const target=L.latLng(ll[0],ll[1]),seq=++jumpSequence;
+    const api=window.CampsiteCreativeCoordinateJump;
+    if(!api||typeof api.moveTo!=='function'){
+      console.error('[Creative v51] coordinate bridge unavailable');
+      return false;
+    }
+    const seq=++jumpSequence;
     const apply=()=>{
       if(seq!==jumpSequence)return;
-      try{
-        map.stop?.();
-        map.setView(target,map.getZoom(),{animate:false});
-        syncPlacementGuides(target);
-        map.invalidateSize?.({pan:false,animate:false});
-      }catch(err){console.error('[Creative v51] force map center',err)}
+      try{api.moveTo(ll[0],ll[1])}catch(err){console.error('[Creative v51] force map center',err)}
     };
     apply();
     requestAnimationFrame(apply);
@@ -136,12 +152,11 @@
     const input=panel?.querySelector('#cmCoordinateInput');
     const error=panel?.querySelector('.cm-coordinate-error');
     const ll=parseCoordinate(input?.value);
-    if(!ll){if(error)error.textContent='「緯度, 経度」の形式で入力してください';toast('座標は「緯度, 経度」で入力してください');return}
+    if(!ll){if(error)error.textContent='「緯度, 経度」の形式で入力してください';return}
     try{
       input?.blur?.();
-      forceMapCenter(ll);
+      if(!forceMapCenter(ll)){if(error)error.textContent='地図との接続を準備できませんでした';return}
       closePanel();
-      toast('入力した座標へ移動しました');
     }catch(err){
       console.error('[Creative v51] coordinate jump',err);
       if(error)error.textContent='座標へ移動できませんでした';
@@ -164,9 +179,7 @@
     if(panel&&!panel.hidden&&!activeModeBar())closePanel();
   }
 
-  // Compatibility hook for the existing dark coordinate dialog used on some
-  // cached/mobile builds. Let its own UI close normally, then force the map
-  // center after the soft keyboard/visual viewport has settled.
+  // Compatibility hook for the older dark coordinate dialog on cached/mobile builds.
   document.addEventListener('click',e=>{
     const button=e.target?.closest?.('button');
     if(!button||String(button.textContent||'').trim()!=='座標へ移動')return;
