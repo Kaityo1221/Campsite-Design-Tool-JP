@@ -125,7 +125,7 @@
   addEventListener('resize',positionPanel,{passive:true});
   addEventListener('orientationchange',()=>setTimeout(positionPanel,80),{passive:true});
 })();
-<\\/script>`;
+<\/script>`;
     if(!src.includes('id="cmV51CoordinateJumpRuntime"'))src=src.replace('</body>',runtime+'</body>');
 
     return src;
