@@ -34,7 +34,7 @@ Wayfarer
 - 新規POIを追加できる
 - POIを移動・削除・種別変更できる
 - 「次へ」で距離チェックへ進める
-- 「保存して作り直す」で同じProjectへ戻れる
+- 「CREATIVE MODEに戻って修正」で同じProjectへ戻れる
 - 前回の別Projectが混入しない
 
 ## iPhone / iPad

@@ -173,8 +173,9 @@ assert.ok(transformed.includes('installCampsiteProjectNext'));
 assert.ok(!transformed.includes('installCampsiteProjectMobileUi'), 'Bridge must not override the canonical Next-Lab Creative UI');
 assert.ok(transformed.includes("btn.textContent='次へ →'"), 'Bridge-only next action should stay compact');
 assert.ok(transformed.includes("aria-label','次へ：距離チェック'"), 'Bridge-only next action must keep an accessible distance-check label');
-assert.ok(transformed.includes("btn.onclick=()=>{const saved=syncCampsiteProjectFromCreative(project);if(!saved)return;location.href='../bridge-distance.html?campsiteProject=bridge'}"), 'Creative next must hand off to distance without comment blocking');
-assert.ok(!transformed.includes("btn.onclick=()=>{const warnings=campsProjectWarningRecords()"), 'Creative next must not block on missing comments');
+assert.ok(transformed.includes('const warnings=campsProjectWarningRecords();'), 'Creative next must inspect 50m spacing comments');
+assert.ok(transformed.includes('if(warnings.length){campsProjectShowDistanceGate(warnings);return;}'), 'Creative next must block when required spacing comments are missing');
+assert.ok(transformed.includes("location.href='../bridge-distance.html?campsiteProject=bridge';"), 'Creative next must hand off to distance after the spacing gate');
 assert.ok(transformed.includes("role:campsProjectRole(r.layer)"));
 assert.ok(transformed.includes('project.circleRadii='), 'Project must carry Creative circle state');
 assert.ok(transformed.includes('campsProjectApplyCircleRadii(project.circleRadii)'), 'Creative must apply Bridge circle policy');
@@ -198,7 +199,7 @@ assert.ok(!creativeBridge.includes("document.write("), 'Legacy Bridge entry must
 assert.ok(nextFlow.includes("./creative/index.html?campsiteProject=bridge"), 'Next flow must enter Creative index directly');
 assert.ok(!nextFlow.includes("./creative/bridge.html?campsiteProject=bridge"), 'Next flow must not use the nested Bridge wrapper');
 
-assert.ok(distanceBridge.includes('js/bridge-distance-project.js?v=3'));
+assert.ok(distanceBridge.includes('js/bridge-distance-project.js?v=4'));
 assert.ok(distanceBridge.includes("fetch('./index.html'"));
 assert.ok(distanceBridge.includes("params.get('campsiteProject')!=='bridge'"));
 assert.ok(distanceProject.includes("const PROJECT_KEY = 'campsiteProject.v1'"));
@@ -221,7 +222,7 @@ assert.ok(distanceProject.includes('コメントは必須ではありません�
 assert.ok(distanceProject.includes("latest.phase = 'distance'"));
 assert.ok(distanceProject.includes("latest.phase = 'pre-submit'"));
 assert.ok(distanceProject.includes("'[data-go-pre-submit]'"));
-assert.ok(distanceProject.includes('💾 保存して作り直す'), 'Distance footer must offer save-and-rework');
+assert.ok(distanceProject.includes('✏️ CREATIVE MODEに戻って修正'), 'Distance footer must offer save-and-rework');
 assert.ok(distanceProject.includes("location.href = './creative/index.html?campsiteProject=bridge'"), 'Save-and-rework must return to Bridge Creative');
 assert.ok(distanceProject.includes("guide.insertAdjacentElement('afterend', wrap)"), 'Save-and-rework must be placed at the bottom after the checklist guide');
 assert.ok(distanceBandClarity.includes('対象：既存×新規 / 新規×新規'), 'Distance result must state the target pair types');
@@ -238,8 +239,8 @@ assert.ok(previewPage.includes('緊急時のみ旧フローを使う'));
 
 assert.ok(selection.includes('id="bridgeScrollHandle"'), 'Bridge map must expose a mobile scroll handle');
 assert.ok(selection.includes('id="bridgeGuide" class="bridge-guide bridge-guide-top"'), 'Polygon guidance must appear above the map');
-assert.ok(selection.includes('時計回りまたは反時計回りに1点ずつタップしてください'), 'Polygon guidance must explain tap order');
-assert.ok(selection.includes('指で線をなぞる操作ではありません'), 'Polygon guidance must explain that drawing is point-by-point');
+assert.ok(selection.includes('外周に沿って1点目・2点目を置いてください'), 'Polygon guidance must explain the first points');
+assert.ok(selection.includes('3点目からは緑の範囲がカーソルに追随します'), 'Polygon guidance must explain live polygon preview');
 assert.ok(selection.includes('<strong>範囲を確認</strong>'), 'Completed polygon guidance must switch to review');
 assert.ok(selection.includes('問題なければ下の「この範囲をCampsiteで使う」を押してください'), 'Completed polygon guidance must explain the confirm action');
 assert.ok(selection.indexOf('id="bridgeGuide" class="bridge-guide bridge-guide-top"') < selection.indexOf('id="campsiteBridgeMap"'), 'Polygon guidance must be above the map');
