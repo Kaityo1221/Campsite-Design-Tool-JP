@@ -11,6 +11,93 @@
       let performanceReplayErrors = 0;
       let performanceGeneration = 0;
 
+      // Campsite design only needs active game POIs plus inactive Power Spots.
+      // Wayfarer can return thousands of portal-only records for one visible range,
+      // especially on iPhone after resume/replay. Reject those before poiByGuid so
+      // they never inflate Bridge memory or the Receiver payload.
+      function isDiscardedNotInGamePoi(poi) {
+        const rawEntity = String(poi?.gameEntity || '')
+          .trim()
+          .toUpperCase()
+          .replace(/[\s_-]/g, '');
+        const entity = normalizeEntity(poi?.gameEntity);
+        const status = normalizeStatus(poi?.gameStatus);
+        return rawEntity === 'NOTINGAME' ||
+          ((entity === 'POKESTOP' || entity === 'GYM') && status === 'INACTIVE');
+      }
+
+      function readMapCoordinate(point, key) {
+        if (!point) return null;
+        try {
+          const value = point[key];
+          const number = Number(typeof value === 'function' ? value.call(point) : value);
+          return Number.isFinite(number) ? number : null;
+        } catch (_) {
+          return null;
+        }
+      }
+
+      function currentBridgeBounds() {
+        let map = bridgeMap || window.__campsiteBridgeGoogleMap || null;
+        if (!map) {
+          try { map = window.WFMM?.map?.get?.() || null; } catch (_) {}
+        }
+        if (!map || typeof map.getBounds !== 'function') return null;
+        try { return map.getBounds() || null; } catch (_) { return null; }
+      }
+
+      function isPoiInsideCurrentViewport(poi) {
+        const lat = Number(poi?.lat);
+        const lng = Number(poi?.lng);
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) return true;
+
+        const bounds = currentBridgeBounds();
+        if (!bounds) return true;
+
+        try {
+          if (typeof bounds.contains === 'function') {
+            const LatLng = window.google?.maps?.LatLng;
+            if (LatLng) return Boolean(bounds.contains(new LatLng(lat, lng)));
+            return Boolean(bounds.contains({ lat, lng }));
+          }
+        } catch (_) {}
+
+        const sw = bounds.getSouthWest?.();
+        const ne = bounds.getNorthEast?.();
+        const south = readMapCoordinate(sw, 'lat');
+        const west = readMapCoordinate(sw, 'lng');
+        const north = readMapCoordinate(ne, 'lat');
+        const east = readMapCoordinate(ne, 'lng');
+        if (![south, west, north, east].every(Number.isFinite)) return true;
+
+        const latitudeInside = lat >= south && lat <= north;
+        const longitudeInside = west <= east
+          ? lng >= west && lng <= east
+          : lng >= west || lng <= east;
+        return latitudeInside && longitudeInside;
+      }
+
+      const baseUpsertPoiForScopeFilter = upsertPoi;
+      upsertPoi = function(poi, deferRender = false) {
+        if (isDiscardedNotInGamePoi(poi)) return false;
+        if (!isPoiInsideCurrentViewport(poi)) return false;
+        return baseUpsertPoiForScopeFilter(poi, deferRender);
+      };
+
+      // Some POIs may have been observed before the Google Map instance became
+      // available. Re-apply viewport scope at read/send time as a second guard.
+      const baseGetSendPoisForScopeFilter = getSendPois;
+      getSendPois = function() {
+        return baseGetSendPoisForScopeFilter().filter(isPoiInsideCurrentViewport);
+      };
+
+      const baseGetReferencePoisForScopeFilter = getReferencePois;
+      getReferencePois = function() {
+        return baseGetReferencePoisForScopeFilter()
+          .filter(poi => poi.referenceKind !== 'NOT_IN_GAME')
+          .filter(isPoiInsideCurrentViewport);
+      };
+
       function isGcsResourceUrl(value) {
         return String(value || '').includes(IPHONE_GCS_PATH);
       }
