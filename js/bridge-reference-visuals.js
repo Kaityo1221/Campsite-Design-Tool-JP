@@ -51,9 +51,9 @@
   function inactiveIcon() {
     return L.divIcon({
       className: 'bridge-reference-inactive-icon',
-      html: '<span class="bridge-reference-inactive-diamond"></span>',
-      iconSize: [28, 28],
-      iconAnchor: [14, 14]
+      html: '<span class="bridge-reference-inactive-dot"></span>',
+      iconSize: [14, 14],
+      iconAnchor: [7, 7]
     });
   }
 
@@ -62,10 +62,9 @@
     const style = document.createElement('style');
     style.id = 'campsiteBridgeReferenceStyles';
     style.textContent = `
-      #campsiteBridgeSelection .bridge-reference-note{width:100%;margin-top:2px;color:#cbd5e1;font-size:10px;font-weight:800}
-      #campsiteBridgeSelection .bridge-dot.reference-inactive-power{width:10px;height:10px;border-radius:2px;background:#f3a8c9!important;border:2px solid #e879aa;box-sizing:border-box;transform:rotate(45deg)}
+      #campsiteBridgeSelection .bridge-dot.reference-inactive-power{width:7px;height:7px;border-radius:50%;background:#7c3aed!important;border:1px solid #c4b5fd;box-sizing:border-box}
       .bridge-reference-inactive-icon{background:transparent!important;border:0!important}
-      .bridge-reference-inactive-diamond{display:block;width:18px;height:18px;margin:5px;transform:rotate(45deg);border:3px solid #fff;border-radius:3px;background:#f3a8c9;box-shadow:0 0 0 2px #e879aa,0 2px 5px rgba(0,0,0,.25);opacity:.72}
+      .bridge-reference-inactive-dot{display:block;width:8px;height:8px;margin:3px;border-radius:50%;background:#7c3aed;border:1px solid #c4b5fd;box-shadow:0 0 0 1px rgba(109,40,217,.45);opacity:.82}
     `;
     document.head.appendChild(style);
   }
@@ -80,15 +79,6 @@
       inactivePower.dataset.bridgeReferenceLegend = 'inactive-power';
       inactivePower.innerHTML = `<i class="bridge-dot reference-inactive-power"></i>Inactive PS ${counts.inactivePowerSpot.toLocaleString('ja-JP')}`;
       legend.appendChild(inactivePower);
-    }
-    if (!legend.querySelector('[data-bridge-reference-legend="note"]')) {
-      const note = document.createElement('div');
-      note.className = 'bridge-reference-note';
-      note.dataset.bridgeReferenceLegend = 'note';
-      note.textContent = counts.notInGame
-        ? `Inactive PSは審査対象です。Not in Game ${counts.notInGame.toLocaleString('ja-JP')}件は内部照合のみ保持し、地図には表示しません。`
-        : 'Inactive PSは審査対象です。';
-      legend.appendChild(note);
     }
 
     const fitButton = document.getElementById('bridgeFitBtn');
