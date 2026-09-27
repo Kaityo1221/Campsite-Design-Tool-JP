@@ -1,0 +1,64 @@
+name: Fix Creative next spacing gate once
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-creative-next-spacing-gate-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Gate Next when under-50 candidate lacks reason
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('creative/bridge-project-patch.js')
+          text = path.read_text(encoding='utf-8')
+
+          old = "  btn.onclick=()=>{const saved=syncCampsiteProjectFromCreative(project);if(!saved)return;location.href='../bridge-distance.html?campsiteProject=bridge'};"
+          new = """  btn.onclick=()=>{\n    const saved=syncCampsiteProjectFromCreative(project);if(!saved)return;\n    const warnings=campsProjectWarningRecords();\n    if(warnings.length){campsProjectShowDistanceGate(warnings);return;}\n    location.href='../bridge-distance.html?campsiteProject=bridge';\n  };"""
+
+          if old not in text:
+              raise SystemExit('Next button target not found')
+          text = text.replace(old, new, 1)
+
+          text = text.replace(
+              'あと少し！ 50m未満のPOIがあります',
+              '50m未満の候補地があります',
+              1,
+          )
+          text = text.replace(
+              "overlay.querySelector('[data-gate-count]').textContent='⚠️マークが付いた新規POIを確認してから進みましょう。 '+warnings.length+'件あります。';",
+              "overlay.querySelector('[data-gate-count]').textContent='50m未満の候補地には、理由コメントの入力をお願いします。未入力が '+warnings.length+'件あります。';",
+              1,
+          )
+          text = text.replace('⚠️ POIを確認する', '候補地を確認する', 1)
+
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Verify patch
+        run: |
+          grep -F "const warnings=campsProjectWarningRecords();" creative/bridge-project-patch.js
+          grep -F "campsProjectShowDistanceGate(warnings)" creative/bridge-project-patch.js
+          grep -F "50m未満の候補地には、理由コメントの入力をお願いします。" creative/bridge-project-patch.js
+          node --check creative/bridge-project-patch.js
+
+      - name: Commit patch
+        run: |
+          if git diff --quiet; then
+            echo 'No changes needed'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add creative/bridge-project-patch.js
+          git commit -m 'fix(creative): warn on Next for under-50 candidates'
+          git push
