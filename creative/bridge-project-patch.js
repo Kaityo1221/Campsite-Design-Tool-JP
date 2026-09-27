@@ -151,7 +151,7 @@ function campsProjectEnsureDistanceGate(){
   overlay.setAttribute('role','dialog');
   overlay.setAttribute('aria-modal','true');
   overlay.style.cssText='display:none;position:fixed;inset:0;z-index:5000;align-items:center;justify-content:center;padding:24px;background:rgba(27,22,14,.58);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)';
-  overlay.innerHTML='<div style="width:min(360px,100%);padding:26px 22px 20px;border:1px solid rgba(183,132,35,.48);border-radius:24px;background:linear-gradient(180deg,#fffaf0,#fff3d7);box-shadow:0 20px 55px rgba(0,0,0,.28);text-align:center;font-family:\'Zen Maru Gothic\',\'Hiragino Maru Gothic ProN\',sans-serif;color:#493514"><div style="font-size:36px;line-height:1;margin-bottom:12px">⚠️</div><div data-gate-title style="font-size:21px;line-height:1.55;font-weight:900;letter-spacing:.01em">あと少し！ 50m未満のPOIがあります</div><div data-gate-count style="margin:10px 0 18px;font-size:13px;line-height:1.7;font-weight:700;color:#86611f"></div><button type="button" data-gate-check style="width:100%;min-height:48px;border:1px solid #a9791f;border-radius:14px;background:linear-gradient(180deg,#f8dc83,#d9a83c);color:#493514;font:900 15px/1.2 \'Zen Maru Gothic\',sans-serif;box-shadow:0 4px 10px rgba(116,81,18,.16)">⚠️ POIを確認する</button><button type="button" data-gate-close style="margin-top:9px;width:100%;min-height:42px;border:0;background:transparent;color:#7a6747;font:700 13px/1.2 \'Zen Maru Gothic\',sans-serif">閉じる</button></div>';
+  overlay.innerHTML='<div style="width:min(360px,100%);padding:26px 22px 20px;border:1px solid rgba(183,132,35,.48);border-radius:24px;background:linear-gradient(180deg,#fffaf0,#fff3d7);box-shadow:0 20px 55px rgba(0,0,0,.28);text-align:center;font-family:\'Zen Maru Gothic\',\'Hiragino Maru Gothic ProN\',sans-serif;color:#493514"><div style="font-size:36px;line-height:1;margin-bottom:12px">⚠️</div><div data-gate-title style="font-size:21px;line-height:1.55;font-weight:900;letter-spacing:.01em">50m未満の候補地があります</div><div data-gate-count style="margin:10px 0 18px;font-size:13px;line-height:1.7;font-weight:700;color:#86611f"></div><button type="button" data-gate-check style="width:100%;min-height:48px;border:1px solid #a9791f;border-radius:14px;background:linear-gradient(180deg,#f8dc83,#d9a83c);color:#493514;font:900 15px/1.2 \'Zen Maru Gothic\',sans-serif;box-shadow:0 4px 10px rgba(116,81,18,.16)">候補地を確認する</button><button type="button" data-gate-close style="margin-top:9px;width:100%;min-height:42px;border:0;background:transparent;color:#7a6747;font:700 13px/1.2 \'Zen Maru Gothic\',sans-serif">閉じる</button></div>';
   document.body.appendChild(overlay);
   overlay.querySelector('[data-gate-close]').onclick=()=>{overlay.style.display='none'};
   overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.style.display='none'});
@@ -159,7 +159,7 @@ function campsProjectEnsureDistanceGate(){
 }
 function campsProjectShowDistanceGate(warnings){
   const overlay=campsProjectEnsureDistanceGate();
-  overlay.querySelector('[data-gate-count]').textContent='⚠️マークが付いた新規POIを確認してから進みましょう。 '+warnings.length+'件あります。';
+  overlay.querySelector('[data-gate-count]').textContent='50m未満の候補地には、理由コメントの入力をお願いします。未入力が '+warnings.length+'件あります。';
   overlay.querySelector('[data-gate-check]').onclick=()=>{
     overlay.style.display='none';
     const r=warnings[0]?.record;if(!r)return;
@@ -174,7 +174,12 @@ function installCampsiteProjectNext(project){
   const btn=document.createElement('button');
   btn.id='campsiteProjectNext';btn.type='button';btn.textContent='次へ →';btn.setAttribute('aria-label','次へ：距離チェック');btn.title='距離チェックへ';
   btn.style.cssText='position:fixed;left:50%;top:calc(10px + env(safe-area-inset-top));transform:translateX(-50%);z-index:1350;min-width:92px;min-height:44px;padding:0 12px;border:1px solid #8a6b31;border-radius:13px;background:linear-gradient(180deg,#f3d77f,#c58c1f);color:#37270c;font-weight:950;font-size:13px;box-shadow:0 4px 14px rgba(0,0,0,.24)'
-  btn.onclick=()=>{const saved=syncCampsiteProjectFromCreative(project);if(!saved)return;location.href='../bridge-distance.html?campsiteProject=bridge'};
+  btn.onclick=()=>{
+    const saved=syncCampsiteProjectFromCreative(project);if(!saved)return;
+    const warnings=campsProjectWarningRecords();
+    if(warnings.length){campsProjectShowDistanceGate(warnings);return;}
+    location.href='../bridge-distance.html?campsiteProject=bridge';
+  };
   document.body.appendChild(btn);
   const sync=()=>{try{syncCampsiteProjectFromCreative(project)}catch(_){}};
   window.addEventListener('pagehide',sync);
