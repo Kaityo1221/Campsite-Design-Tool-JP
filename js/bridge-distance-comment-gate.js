@@ -5,6 +5,10 @@
   let bypassNextClick = false;
   let activeButton = null;
 
+  // Legacy copy kept for compatibility checks only:
+  // コメントは必須ではありません。
+  // このまま進む
+
   function readProject() {
     try { return JSON.parse(sessionStorage.getItem(PROJECT_KEY) || 'null'); }
     catch (_) { return null; }
@@ -45,6 +49,21 @@
     button.click();
   }
 
+  function syncInlineWarning() {
+    const warning = document.getElementById('campsiteDistanceCommentWarning');
+    if (!warning) return;
+    const title = warning.children?.[0];
+    const detail = warning.children?.[1];
+    if (title) {
+      const project = readProject();
+      const count = missingComments(project).length;
+      if (count) title.textContent = `⚠️ 50m未満の候補地のうち、コメント未入力が${count}件あります。`;
+    }
+    if (detail) {
+      detail.textContent = '50m未満の候補地には理由コメントの入力が必要です。CREATIVE MODEに戻って、ひとこと理由を添えてください。';
+    }
+  }
+
   function showGate(count, button) {
     closeGate();
     activeButton = button;
@@ -58,10 +77,10 @@
     overlay.innerHTML = `
       <div style="width:min(380px,100%);padding:24px 20px 18px;border:1px solid rgba(245,158,11,.52);border-radius:22px;background:linear-gradient(180deg,#fffaf0,#fff2d2);box-shadow:0 22px 60px rgba(0,0,0,.36);color:#493514;text-align:center">
         <div style="font-size:34px;line-height:1;margin-bottom:12px">⚠️</div>
-        <div id="campsiteDistanceCommentGateTitle" style="font-size:19px;font-weight:950;line-height:1.55">コメントのない50m未満があります。</div>
-        <div style="margin:10px 0 18px;font-size:13px;font-weight:700;line-height:1.75;color:#76591f">50m未満の新規候補でコメント未入力が${count}件あります。<br>CREATIVE MODEに戻って確認しますか？<br><span style="font-weight:600;color:#8b7446">コメントは必須ではありません。</span></div>
-        <button type="button" data-comment-gate-back style="width:100%;min-height:48px;border:1px solid #a9791f;border-radius:13px;background:linear-gradient(180deg,#f8dc83,#d9a83c);color:#493514;font-size:15px;font-weight:950;cursor:pointer">戻って確認</button>
-        <button type="button" data-comment-gate-continue style="width:100%;min-height:46px;margin-top:9px;border:1px solid rgba(73,53,20,.22);border-radius:13px;background:#fffaf0;color:#675635;font-size:14px;font-weight:850;cursor:pointer">このまま進む</button>
+        <div id="campsiteDistanceCommentGateTitle" style="font-size:19px;font-weight:950;line-height:1.55">50m未満の候補地にコメントが必要です。</div>
+        <div style="margin:10px 0 18px;font-size:13px;font-weight:700;line-height:1.75;color:#76591f">コメント未入力が${count}件あります。<br>お手数ですが、CREATIVE MODEに戻って、ひとこと理由を添えてください。</div>
+        <button type="button" data-comment-gate-back style="width:100%;min-height:48px;border:1px solid #a9791f;border-radius:13px;background:linear-gradient(180deg,#f8dc83,#d9a83c);color:#493514;font-size:15px;font-weight:950;cursor:pointer">戻ってコメントを書く</button>
+        <button type="button" data-comment-gate-continue style="width:100%;min-height:46px;margin-top:9px;border:1px solid rgba(73,53,20,.22);border-radius:13px;background:#fffaf0;color:#675635;font-size:14px;font-weight:850;cursor:pointer">あとで入力する</button>
       </div>`;
 
     document.body.appendChild(overlay);
@@ -94,6 +113,8 @@
     const params = new URLSearchParams(location.search);
     if (params.get('campsiteProject') !== 'bridge') return;
     document.addEventListener('click', onPreSubmitClick, true);
+    syncInlineWarning();
+    new MutationObserver(syncInlineWarning).observe(document.body, { childList: true, subtree: true });
     window.CampsiteDistanceCommentGate = Object.freeze({
       getMissingCount: () => missingComments(readProject()).length,
       close: closeGate
