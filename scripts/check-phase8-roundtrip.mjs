@@ -6,7 +6,7 @@ const workspacePatch = fs.readFileSync('creative/runtime/creative-patches-v50-ad
 const bridgePatch = fs.readFileSync('creative/bridge-project-patch.js', 'utf8');
 const stalePatch = fs.readFileSync('creative/bridge-distance-stale-patch.js', 'utf8');
 const distanceProject = fs.readFileSync('js/bridge-distance-project.js', 'utf8');
-const distanceCheckpoint = fs.readFileSync('js/bridge-distance-checkpoint.js', 'utf8');
+const distanceBackup = fs.readFileSync('js/bridge-distance-checkpoint.js', 'utf8');
 const commentGate = fs.readFileSync('js/bridge-distance-comment-gate.js', 'utf8');
 const preSubmitCheckpoint = fs.readFileSync('js/bridge-pre-submit-checkpoint.js', 'utf8');
 const distanceGateway = fs.readFileSync('bridge-distance.html', 'utf8');
@@ -40,9 +40,9 @@ const checks = [
     distanceProject.includes('designSignature: buildDesignSignature(project)') &&
     distanceProject.includes("latest.distanceResult = buildDistanceSnapshot(latest)")],
 
-  ['距離チェック保存はworkspaceIdと設計シグネチャを固定',
-    distanceCheckpoint.includes('workspaceId: state.workspaceId') &&
-    distanceCheckpoint.includes('designSignature: String(state.result.designSignature)')],
+  ['距離画面のセーブは同じProjectをバックアップKMZへ保持',
+    distanceBackup.includes("<Data name=\"workspaceId\"><value>${escapeXml(project?.workspaceId || '')}</value></Data>") &&
+    distanceBackup.includes("zip.file('campsite-project.json', JSON.stringify(project, null, 2))")],
 
   ['最終確認保存も同じworkspaceIdを使用',
     preSubmitCheckpoint.includes('workspaceId: state.workspaceId') &&
@@ -75,7 +75,7 @@ for (const [name, ok] of checks) {
   assert.ok(ok, `Phase 8 roundtrip contract failed: ${name}`);
 }
 
-// Identity continuity model: the three checkpoints must point at one workspace.
+// Identity continuity model: Creative, distance result, final check and return all stay in one workspace.
 const workspaceId = 'phase8-workspace-example';
 const model = {
   creative: { workspaceId },
