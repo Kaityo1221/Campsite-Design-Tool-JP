@@ -28,26 +28,36 @@
       #cmCoordinateJumpPanel.cm-v52-design-test #cmCoordinateApply{display:none!important}
 
       .cm-v52-mode-switch{
-        position:relative;display:grid;grid-template-columns:1fr 1fr;height:48px;
+        position:relative;height:48px;
         border:2px solid #78bff4;border-radius:14px;overflow:hidden;background:#fff;
         box-shadow:0 0 0 3px rgba(53,167,255,.06);isolation:isolate;
       }
-      .cm-v52-mode-switch::after{
-        content:"";position:absolute;left:50%;top:-8px;width:2px;height:64px;background:#fff;
-        transform:rotate(38deg);transform-origin:center;z-index:3;pointer-events:none;
-        box-shadow:0 0 0 1px rgba(255,255,255,.35);
-      }
       .cm-v52-mode-option{
-        position:relative;display:grid;place-items:center;border:0;padding:0 4px;
+        position:absolute;inset:0;border:0;padding:0;
         font:950 14px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
         pointer-events:none;user-select:none;
       }
-      .cm-v52-mode-option.existing{background:linear-gradient(180deg,#35a7ff 0%,#168ee8 100%);color:#fff}
-      .cm-v52-mode-option.new{background:linear-gradient(180deg,#fff1f5 0%,#ffe4ec 100%);color:#d92f67}
+      .cm-v52-mode-option span{position:absolute;top:50%;transform:translateY(-50%);white-space:nowrap}
+      .cm-v52-mode-option.existing{
+        z-index:1;background:linear-gradient(180deg,#35a7ff 0%,#168ee8 100%);color:#fff;
+        clip-path:polygon(0 0,60% 0,42% 100%,0 100%);
+      }
+      .cm-v52-mode-option.existing span{left:13%}
+      .cm-v52-mode-option.new{
+        z-index:2;background:linear-gradient(180deg,#fff1f5 0%,#ffe4ec 100%);color:#d92f67;
+        clip-path:polygon(60% 0,100% 0,100% 100%,42% 100%);
+      }
+      .cm-v52-mode-option.new span{right:11%}
+      .cm-v52-mode-option.new::before{
+        content:"";position:absolute;left:50.5%;top:-8px;width:2px;height:66px;background:rgba(255,255,255,.96);
+        transform:rotate(27deg);transform-origin:center;pointer-events:none;
+      }
       .cm-v52-mode-icon{font-size:11px;margin-right:2px;vertical-align:1px}
 
       @media(max-width:390px){
         #cmCoordinateJumpPanel.cm-v52-design-test .cm-coordinate-row{grid-template-columns:minmax(0,1fr) 124px}
+        .cm-v52-mode-option.existing span{left:11%}
+        .cm-v52-mode-option.new span{right:9%}
       }
     </style>`;
     if(!src.includes('id="cmV52ExistingNewDesignTestStyle"'))src=src.replace('</head>',style+'</head>');
