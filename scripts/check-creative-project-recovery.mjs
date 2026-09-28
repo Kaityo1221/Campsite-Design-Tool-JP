@@ -16,6 +16,8 @@ const cases = [
   ['50m / 40m / 30m円を復元', 'function campsProjectNormalizeCircleRadii(){return [50,40,30]}', creativePatch],
   ['円表示状態をProjectへ再保存', 'project.circleRadii=campsProjectCurrentCircleRadii()', creativePatch],
   ['活動範囲PolygonをProjectへ再保存', 'project.polygon=polygon', creativePatch],
+  ['Project本体を再構築せず同じオブジェクトへ同期', "function syncCampsiteProjectFromCreative(project){\n  if(!project||project.source!=='bridge')return null;", creativePatch],
+  ['MISSION 3を含む未知フィールドを保持したままProject全体を再保存', 'sessionStorage.setItem(CAMPSITE_PROJECT_KEY,JSON.stringify(project))', creativePatch],
   ['ページ離脱時にProject同期', "window.addEventListener('pagehide',sync)", creativePatch],
   ['編集中も定期的にProject同期', 'setInterval(sync,2500)', creativePatch],
   ['戻る操作前にProject同期', "if(backBtn)backBtn.onclick=()=>{syncCampsiteProjectFromCreative(project);snapshot();location.href='../bridge-gateway.html?campsiteBridgeImport=1'}", creativePatch],
@@ -28,6 +30,9 @@ const cases = [
 for (const [name, needle, source] of cases) {
   assert.ok(source.includes(needle), `Recovery contract missing: ${name}`);
 }
+
+assert.ok(!creativePatch.includes('delete project.siteEnvironment'), 'Creative roundtrip must not delete Mission 3 siteEnvironment');
+assert.ok(!creativePatch.includes('project.siteEnvironment = null'), 'Creative roundtrip must not clear Mission 3 siteEnvironment');
 
 const orderChecks = [
   ['削除判定後にcurrentへ追加しない', creativePatch.indexOf('if(r.deleted){deleted.push(poi);return}'), creativePatch.indexOf('current.push(poi)')],
