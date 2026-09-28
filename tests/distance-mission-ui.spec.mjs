@@ -4,6 +4,7 @@ import fs from 'node:fs';
 const leafletJs = fs.readFileSync('node_modules/leaflet/dist/leaflet.js', 'utf8');
 const leafletCss = fs.readFileSync('node_modules/leaflet/dist/leaflet.css', 'utf8');
 const jszipJs = fs.readFileSync('node_modules/jszip/dist/jszip.min.js', 'utf8');
+const caAccessStub = `window.CampsiteCaAccess=Object.freeze({checkAccess:async()=>({status:'approved',isApproved:true}),signInWithDiscord:async()=>{},signOut:async()=>{}});`;
 
 function poi(id, title, lat, lng, role = 'existing', description = '', gameEntity = 'POKESTOP') {
   return { id, guid: id, title, name: title, lat, lng, role, description, gameEntity };
@@ -86,15 +87,7 @@ async function openMission4Map(page) {
 }
 
 test.beforeEach(async ({ page }) => {
-  await page.addInitScript(() => {
-    const removeGate = () => document.getElementById('caAccessGate')?.remove();
-    const observe = () => {
-      removeGate();
-      new MutationObserver(removeGate).observe(document.documentElement, { childList: true, subtree: true });
-    };
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', observe, { once: true });
-    else observe();
-  });
+  await page.route(/\/js\/ca-access\.js(?:\?.*)?$/, route => route.fulfill({ status: 200, contentType: 'application/javascript', body: caAccessStub }));
   await page.route('https://unpkg.com/leaflet@1.9.4/dist/leaflet.js', route => route.fulfill({ status: 200, contentType: 'application/javascript', body: leafletJs }));
   await page.route('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css', route => route.fulfill({ status: 200, contentType: 'text/css', body: leafletCss }));
   await page.route('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js', route => route.fulfill({ status: 200, contentType: 'application/javascript', body: jszipJs }));
