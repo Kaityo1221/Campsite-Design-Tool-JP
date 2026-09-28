@@ -38,6 +38,15 @@ assert.ok(gate.includes('event.stopImmediatePropagation()'), 'Mission gate must 
 assert.ok(gate.includes('state.environmentComplete'), 'Mission gate must block incomplete field confirmation');
 assert.ok(gate.includes('state.duplicateCount > 0'), 'Mission gate must block duplicate POIs');
 assert.ok(gate.includes('state.stale'), 'Mission gate must block stale distance results');
+assert.ok(gate.includes('campsite-stale-distance-card'), 'Stale distance-derived mission cards must be masked');
+assert.ok(gate.includes('設計変更後の距離チェック待ちです。再チェックすると最新の結果を表示します。'), 'Stale mission guidance copy missing');
+assert.ok(gate.includes("cardByKicker(shell, 'MISSION 1')"), 'MISSION 1 must be hidden while the distance result is stale');
+assert.ok(gate.includes("cardByKicker(shell, 'MISSION 2')"), 'MISSION 2 must be hidden while the distance result is stale');
+assert.ok(gate.includes("cardByKicker(shell, 'OPERATION TIPS')"), 'Operation tips must be hidden while the distance result is stale');
+assert.ok(gate.includes("setLampState(shell, 0, 'yellow')"), 'Stale distance mission lamp must return to pending');
+assert.ok(gate.includes("setLampState(shell, 1, 'yellow')"), 'Stale density mission lamp must return to pending');
+assert.ok(gate.includes("setLampState(shell, 3, 'red')"), 'Stale final confirmation lamp must remain blocked');
+assert.ok(gate.includes('new MutationObserver(queuePresentationSync)'), 'Stale presentation must follow mission UI rerenders');
 
 const commentsPos = bridge.indexOf('js/bridge-distance-ca-comments.js?v=2');
 const enginePos = bridge.indexOf('js/distance-advice-engine.js?v=1');
