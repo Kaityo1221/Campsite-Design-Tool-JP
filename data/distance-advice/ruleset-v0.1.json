@@ -1,0 +1,109 @@
+{
+  "schema_version": "0.1.0",
+  "ruleset_id": "campsite-distance-advice-v0.1",
+  "status": "draft-implementation-ready",
+  "purpose": "MISSION 2の密集特性、MISSION 3の現地環境、任意のCampsite AI拡張入力から、評価点ではなく最大3件の運用ヒントを選ぶ。",
+  "principles": [
+    "距離や密集度を安全性・適否・優劣のスコアへ変換しない。",
+    "50m未満は事実として扱い、MISSION 1のCA確認とは分離する。",
+    "MISSION 2は拠点構造の理解、MISSION 3は現地確認を担う。",
+    "Campsite AI拡張値がnullでも通常助言を生成できる。",
+    "未知はゼロに置換しない。",
+    "より具体的な上位ルールを優先し、同カテゴリは原則1件、最終表示は最大3件。"
+  ],
+  "rule_files": [
+    "rules-level2-v0.1.json",
+    "rules-level3-v0.1.json",
+    "rules-level4-v0.1.json"
+  ],
+  "rule_count": 63,
+  "rule_defaults": {
+    "supersedes": "same_category_lower_priority",
+    "training_case_candidate": "level >= 3",
+    "suppresses": []
+  },
+  "input_schema": {
+    "existing_poi_count": "integer >= 0",
+    "under50_count": "integer >= 0",
+    "under20_count": "integer >= 0",
+    "between20_30_count": "integer >= 0",
+    "between30_50_count": "integer >= 0",
+    "under20_ratio": "derived number 0..1",
+    "between20_30_ratio": "derived number 0..1",
+    "between30_50_ratio": "derived number 0..1",
+    "traffic": "easy | narrow | careful",
+    "plaza": "boolean",
+    "circulation": "boolean",
+    "waiting": "boolean",
+    "group_size": "integer >= 1 | null",
+    "cluster_length_m": "number > 0 | null",
+    "expected_stop_points": "integer >= 0 | null"
+  },
+  "derivation": {
+    "ratio_denominator": "under50_count",
+    "density_tags": {
+      "NO_CLOSE": "under50_count == 0",
+      "FEW_CLOSE": "1 <= under50_count <= 3",
+      "VERY_CLOSE_HEAVY": "under50_count >= 4 AND exactly one distance-band ratio >= 0.45 AND that band is under20",
+      "MID_CLOSE_HEAVY": "under50_count >= 4 AND exactly one distance-band ratio >= 0.45 AND that band is 20-30m",
+      "WIDE_CLOSE_HEAVY": "under50_count >= 4 AND exactly one distance-band ratio >= 0.45 AND that band is 30-50m",
+      "MIXED_CLOSE": "under50_count >= 4 AND no single distance-band ratio uniquely reaches 0.45"
+    },
+    "feature_tags": {
+      "CLOSE_MANY": "under50_count >= 4 AND existing_poi_count > 0 AND under50_count / existing_poi_count >= 0.5"
+    },
+    "group_tags": {
+      "GROUP_SMALL": "group_size <= 10",
+      "GROUP_MID": "11 <= group_size <= 29",
+      "GROUP_LARGE": "group_size >= 30"
+    },
+    "cluster_tags": {
+      "CLUSTER_COMPACT": "cluster_length_m <= 100",
+      "CLUSTER_MID": "101 <= cluster_length_m <= 180",
+      "CLUSTER_SPREAD": "cluster_length_m > 180"
+    },
+    "stop_tags": {
+      "STOP_LOW": "expected_stop_points <= 2",
+      "STOP_MID": "3 <= expected_stop_points <= 4",
+      "STOP_HIGH": "expected_stop_points >= 5"
+    },
+    "threshold_note": "0.45、CLOSE_MANY、人数・距離・停止数の境界は安全基準ではなく、文章選択のための暫定ヒューリスティック。実運用データで再校正する。"
+  },
+  "selection_policy": {
+    "level_order": [4, 3, 2, 1],
+    "max_output": 3,
+    "one_per_category": true,
+    "categories": ["GATHERING", "FLOW", "TRAFFIC", "WAITING", "ROUTE"],
+    "conflict_behavior_pairs": [
+      ["WAITING_AS_HUB", "NO_WAITING"],
+      ["OUT_AND_BACK_ROUTE", "USE_CIRCULATION"]
+    ],
+    "semantic_dedupe_tags": [
+      "REDUCE_STOPS",
+      "PLAZA_AS_HUB",
+      "WAITING_AS_HUB",
+      "USE_CIRCULATION",
+      "DISTRIBUTED_START",
+      "ROLLING_START",
+      "NO_WAITING",
+      "PRIORITIZE_PUBLIC_FLOW"
+    ]
+  },
+  "fallback_contract": {
+    "library_size": 54,
+    "source_groups": {
+      "traffic": {"easy": 6, "narrow": 6, "careful": 6},
+      "plaza": {"true": 6, "false": 6},
+      "circulation": {"true": 6, "false": 6},
+      "waiting": {"true": 6, "false": 6}
+    },
+    "selection": "複合ルールが3件未満の場合、未使用カテゴリからProject design signatureで決定的に選ぶ。",
+    "note": "単発54コメント本文はUI文言ライブラリとして別ファイル化予定。"
+  },
+  "future_training_handoff": {
+    "target": "Campsite AI",
+    "preserve_fields": ["id", "when", "advice", "facts_used", "behavior_tags"],
+    "feedback_fields": ["shown", "accepted", "edited", "ca_feedback", "event_outcome_notes"],
+    "note": "実運用の観測が蓄積してから閾値や助言の妥当性を再校正する。"
+  }
+}
