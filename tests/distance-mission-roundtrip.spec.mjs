@@ -106,13 +106,15 @@ async function openPoi(page, title) {
   const count = await markers.count();
   for (let i = 0; i < count; i++) {
     await markers.nth(i).click({ force: true });
-    const popup = page.locator('.leaflet-popup-content');
-    if (await popup.isVisible().catch(() => false)) {
-      const text = await popup.innerText();
-      if (text.includes(title)) return;
+    const sheet = page.locator('.cm-sheet');
+    if (!await sheet.isVisible().catch(() => false)) continue;
+    const name = sheet.locator('#cmName');
+    if (await name.isVisible().catch(() => false)) {
+      if ((await name.inputValue()) === title) return;
     }
+    if ((await sheet.innerText()).includes(title)) return;
   }
-  throw new Error(`POI popup not found: ${title}`);
+  throw new Error(`POI sheet not found: ${title}`);
 }
 
 test.beforeEach(async ({ page }) => {
@@ -134,22 +136,25 @@ test('CREATIVE往復で実編集→stale→再チェック→セーブ→提出�
   await expect.poll(() => page.evaluate(() => window.CampsiteCreativeProject?.projectId || ''), { timeout: 20000 }).toBe(original.projectId);
 
   await openPoi(page, '新規A');
-  await page.locator('#editBtn').click();
-  await page.locator('#editTitle').fill('新規A 発表版');
-  await page.locator('#editMemo').fill('現地確認済み・発表用コメント');
-  await page.locator('#saveEdit').click();
+  await page.locator('#cmName').fill('新規A 発表版');
+  await page.locator('#cmMemo').fill('現地確認済み・発表用コメント');
+  await expect.poll(() => page.evaluate(() => {
+    const project = JSON.parse(sessionStorage.getItem('campsiteProject.v1') || 'null');
+    const poi = project?.currentPois?.find(item => item.guid === 'added-a');
+    return [poi?.title, poi?.description];
+  })).toEqual(['新規A 発表版', '現地確認済み・発表用コメント']);
 
+  await page.locator('#cmType').click();
+  await page.locator('#cmTypePicker button[data-layer="new-power"]').click();
   await openPoi(page, '新規A 発表版');
-  await page.locator('#moveLayer').selectOption('new-power');
-  await page.locator('#applyLayer').click();
 
-  await openPoi(page, '新規A 発表版');
-  await page.locator('#movePos').click();
+  await page.locator('#cmMove').click();
   await expect(page.locator('#cmMoveBar')).toBeVisible({ timeout: 5000 });
   await expect(page.locator('.cm-coordinate-trigger')).toBeVisible({ timeout: 5000 });
   await page.locator('.cm-coordinate-trigger').click();
   await page.locator('#cmCoordinateInput').fill('35.683000, 139.768500');
-  await page.locator('#cmCoordinateApply').click();
+  await page.locator('#cmCoordinateInput').press('Enter');
+  await expect(page.locator('#cmCoordinateJumpPanel')).toBeHidden();
   await page.locator('#cmMoveConfirm').click();
 
   await page.locator('#campsiteProjectNext').click();
@@ -213,14 +218,13 @@ test('BridgeのPOWER_SPOTをCREATIVEのPowerSpotレイヤーへ受け入れ、�
   await page.getByRole('button', { name: /レイヤー/ }).click();
   const powerRow = page.locator('.layer-row').filter({ hasText: '既存 PowerSpot' }).first();
   await expect(powerRow).toBeVisible();
-  const toggle = powerRow.locator('input[type="checkbox"]');
-  await expect(toggle).toBeChecked();
+  await expect(powerRow).toHaveAttribute('aria-pressed', 'true');
   await openPoi(page, 'Bridge PowerSpot');
 
-  await toggle.uncheck();
-  await expect(toggle).not.toBeChecked();
-  await toggle.check();
-  await expect(toggle).toBeChecked();
+  await powerRow.click();
+  await expect(powerRow).toHaveAttribute('aria-pressed', 'false');
+  await powerRow.click();
+  await expect(powerRow).toHaveAttribute('aria-pressed', 'true');
   await openPoi(page, 'Bridge PowerSpot');
 
   const backgroundImage = async () => page.locator('.entry').evaluate(el => getComputedStyle(el).backgroundImage);
