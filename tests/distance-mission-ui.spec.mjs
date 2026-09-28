@@ -66,6 +66,7 @@ async function openDistanceProject(page, project) {
   });
   await expect(page.locator('.campsite-mission-shell')).toHaveCount(1, { timeout: 12000 });
   await expect(page.locator('.campsite-mission-shell')).toHaveAttribute('data-layout-v2', 'true', { timeout: 12000 });
+  await expect(page.locator('.campsite-mission-shell')).toHaveAttribute('data-mission-state-version', '1', { timeout: 12000 });
 }
 
 async function projectPhase(page) {
@@ -108,8 +109,8 @@ test('MISSION 1〜5を順に確認し、地図確認後に準備完了になる'
   await expect(page.getByText('🗺️ 配置・マップ')).toBeVisible();
   await expect(page.getByText('✅ 最終確認')).toBeVisible();
 
-  expect(await missionStates(page)).toEqual(['green', 'green', 'green', 'gray', 'yellow']);
-  await expect(page.getByText('🟡 確認が残っています')).toBeVisible();
+  expect(await missionStates(page)).toEqual(['green', 'green', 'green', 'gray', 'gray']);
+  await expect(page.getByText('⚪ 準備中')).toBeVisible();
   await expect(page.locator('[data-v2-submit]')).toBeDisabled();
   await expect(page.locator('.campsite-mission-card').filter({ hasText: 'OPERATION TIPS' })).toBeHidden();
   await expect(page.locator('#campsiteDistanceCommentWarning')).toBeHidden();
@@ -126,7 +127,7 @@ test('MISSION 1〜5を順に確認し、地図確認後に準備完了になる'
   expect(pageErrors).toEqual([]);
 });
 
-test('現地未確認ならMISSION 3が黄のままで入力を促す', async ({ page }) => {
+test('現地未着手ならMISSION 3は灰で入力を促す', async ({ page }) => {
   await openDistanceProject(page, projectFixture({ environment: 'missing' }));
 
   const sign = page.locator('.campsite-chairman-sign');
@@ -134,9 +135,10 @@ test('現地未確認ならMISSION 3が黄のままで入力を促す', async ({
   await expect(page.locator('[data-v2-env-toggle]')).toHaveText('現地確認を入力');
 
   const states = await missionStates(page);
-  expect(states[2]).toBe('yellow');
+  expect(states[2]).toBe('gray');
   expect(states[3]).toBe('gray');
-  expect(states[4]).toBe('yellow');
+  expect(states[4]).toBe('gray');
+  await expect(page.getByText('⚪ 準備中')).toBeVisible();
   await expect(page.locator('[data-v2-submit]')).toBeDisabled();
 
   expect(await projectPhase(page)).toBe('distance');
@@ -154,7 +156,7 @@ test('MISSION 3を現地確認し、MISSION 4も確認すると完了する', as
 
   await expect(page.locator('.campsite-chairman-sign')).toHaveCount(0);
   expect((await missionStates(page)).slice(0, 4)).toEqual(['green', 'green', 'green', 'gray']);
-  await expect(page.getByText('🟡 確認が残っています')).toBeVisible();
+  await expect(page.getByText('⚪ 準備中')).toBeVisible();
 
   await openMission4Map(page);
   expect(await missionStates(page)).toEqual(['green', 'green', 'green', 'green', 'green']);
@@ -200,7 +202,7 @@ test('設計変更でstaleになった結果はMISSION 1・2・4を確定表示�
   await expect(page.locator('.campsite-stale-mission-note')).toHaveCount(3);
   await expect(page.locator('.campsite-mission-lamp').nth(0)).toHaveAttribute('data-state', 'yellow');
   await expect(page.locator('.campsite-mission-lamp').nth(1)).toHaveAttribute('data-state', 'yellow');
-  await expect(page.locator('.campsite-mission-lamp').nth(3)).toHaveAttribute('data-state', 'red');
+  await expect(page.locator('.campsite-mission-lamp').nth(3)).toHaveAttribute('data-state', 'gray');
   await expect(page.locator('.campsite-mission-lamp').nth(4)).toHaveAttribute('data-state', 'red');
   await expect(page.locator('[data-v2-submit]')).toBeDisabled();
 
