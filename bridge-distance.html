@@ -20,7 +20,7 @@
     fetch('./index.html',{cache:'no-store',credentials:'same-origin'})
       .then(response=>{if(!response.ok)throw new Error(`index.html ${response.status}`);return response.text()})
       .then(html=>{
-        const scripts='<script src="js/bridge-distance-comment-gate.js?v=2"></'+'script><script src="js/bridge-distance-mobile-safe.js?v=2"></'+'script><script src="js/bridge-distance-project.js?v=5"></'+'script><script src="js/bridge-distance-checkpoint.js?v=2"></'+'script><script src="js/bridge-pre-submit-checkpoint.js?v=1"></'+'script><script src="js/bridge-pre-submit-final-flow.js?v=1"></'+'script><script src="js/bridge-distance-ca-comments.js?v=2"></'+'script><script src="js/distance-advice-engine.js?v=1"></'+'script><script src="js/bridge-distance-mission-ui.js?v=1"></'+'script><script src="js/bridge-distance-mission-gate.js?v=1"></'+'script>';
+        const scripts='<script src="js/bridge-distance-comment-gate.js?v=2"></'+'script><script src="js/bridge-distance-mobile-safe.js?v=2"></'+'script><script src="js/bridge-distance-project.js?v=5"></'+'script><script src="js/bridge-distance-checkpoint.js?v=2"></'+'script><script src="js/bridge-pre-submit-checkpoint.js?v=1"></'+'script><script src="js/bridge-pre-submit-final-flow.js?v=1"></'+'script><script src="js/bridge-distance-ca-comments.js?v=2"></'+'script><script src="js/distance-advice-engine.js?v=1"></'+'script><script src="js/bridge-distance-mission-ui.js?v=1"></'+'script><script src="js/bridge-distance-mission-gate.js?v=1"></'+'script><script src="js/bridge-distance-advice-trace.js?v=1"></'+'script>';
         const injected=html.includes('</body>')?html.replace('</body>',scripts+'</body>'):html+scripts;
         document.open();document.write(injected);document.close();
       })
