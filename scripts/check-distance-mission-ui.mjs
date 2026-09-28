@@ -29,6 +29,7 @@ assert.ok(!ui.includes('拠点充実度'), 'Mission UI must not reintroduce the 
 assert.ok(!ui.includes('判定結果：問題なし'), 'Mission UI must not present a pseudo overall verdict');
 
 assert.ok(gate.includes('#distance .distance-site-observation-step{display:none!important}'), 'Legacy field observation controls must be hidden in mission mode');
+assert.ok(gate.includes('#campsiteDistanceCommentWarning{display:none!important}'), 'Legacy optional-comment warning must stay hidden in mission mode');
 assert.ok(gate.includes("'[data-go-pre-submit]'"), 'Mission gate must intercept pre-submit');
 assert.ok(gate.includes('project?.siteEnvironment'), 'Mission gate must use persisted Mission 3 answers');
 assert.ok(gate.includes("'#campsiteDistanceStaleWarning'"), 'Mission gate must focus stale-design warning');
