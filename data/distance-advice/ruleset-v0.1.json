@@ -1,7 +1,7 @@
 {
   "schema_version": "0.1.0",
   "ruleset_id": "campsite-distance-advice-v0.1",
-  "status": "draft-implementation-ready",
+  "status": "implementation-ready",
   "purpose": "MISSION 2の密集特性、MISSION 3の現地環境、任意のCampsite AI拡張入力から、評価点ではなく最大3件の運用ヒントを選ぶ。",
   "principles": [
     "距離や密集度を安全性・適否・優劣のスコアへ変換しない。",
@@ -14,9 +14,12 @@
   "rule_files": [
     "rules-level2-v0.1.json",
     "rules-level3-v0.1.json",
-    "rules-level4-v0.1.json"
+    "rules-level4-v0.1.json",
+    "single-comments-v0.1.json"
   ],
+  "qa_script": "scripts/check-distance-advice-rules.mjs",
   "rule_count": 63,
+  "fallback_comment_count": 54,
   "rule_defaults": {
     "supersedes": "same_category_lower_priority",
     "training_case_candidate": "level >= 3",
@@ -91,6 +94,7 @@
   },
   "fallback_contract": {
     "library_size": 54,
+    "file": "single-comments-v0.1.json",
     "source_groups": {
       "traffic": {"easy": 6, "narrow": 6, "careful": 6},
       "plaza": {"true": 6, "false": 6},
@@ -98,7 +102,24 @@
       "waiting": {"true": 6, "false": 6}
     },
     "selection": "複合ルールが3件未満の場合、未使用カテゴリからProject design signatureで決定的に選ぶ。",
-    "note": "単発54コメント本文はUI文言ライブラリとして別ファイル化予定。"
+    "note": "単発コメントは複合助言の不足分だけを補完し、上位ルールの意味を上書きしない。"
+  },
+  "qa_contract": {
+    "matrix_cases": 4032,
+    "density_profiles": 6,
+    "site_environment_profiles": 24,
+    "event_profiles": 28,
+    "checks": [
+      "rule counts and unique ids",
+      "all compound rules can fire",
+      "all compound rules can survive selection",
+      "no contradictory behavior pair survives selection",
+      "one output per category",
+      "maximum three outputs",
+      "fallback guarantees at least one advice",
+      "large-group dense-site precedence",
+      "small-group case does not inherit large-group advice"
+    ]
   },
   "future_training_handoff": {
     "target": "Campsite AI",
