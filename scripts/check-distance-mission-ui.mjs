@@ -52,9 +52,12 @@ assert.ok(!ui.includes('判定結果：問題なし'), 'Mission UI must not pres
 assert.ok(ui.includes('added.every((point) => Boolean(point.comment))'), 'MISSION 1 must require comments on every new POI in a pair');
 
 assert.ok(layout.includes('新規 × 新規') && layout.includes('新規 × 既存'), 'MISSION 1 detail must identify new-existing/new-new pairs');
+assert.ok(layout.includes('campsite-v2-pair-kind'), 'MISSION 1 pair kind must use the stable selector expected by E2E/CSS');
+assert.ok(layout.includes('v2PairToggle'), 'MISSION 1 detail toggle must use the stable selector expected by E2E');
+assert.ok(layout.includes('v2EnvToggle'), 'MISSION 3 editor toggle must use the stable selector expected by E2E');
 assert.ok(layout.includes("MK='campsiteDistanceMission4Viewed.v1'"), 'MISSION 4 viewed state must be tied to the current distance result');
 assert.ok(layout.includes('mark(latest)'), 'MISSION 4 map click must record the viewed state');
-assert.ok(layout.includes("data.v2Hidden='true'"), 'Legacy OPERATION TIPS must stay hidden in the final mission layout');
+assert.ok(layout.includes("dataset.v2Hidden='true'"), 'Legacy OPERATION TIPS must stay hidden in the final mission layout');
 
 assert.ok(state.includes("const mission1 = stale ? 'yellow'"), 'MISSION 1 stale state must be yellow, not a distance-quality verdict');
 assert.ok(state.includes("const mission2 = stale ? 'yellow' : 'green'"), 'MISSION 2 stale state must request re-check');
