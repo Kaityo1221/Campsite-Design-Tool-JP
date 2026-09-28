@@ -1,0 +1,43 @@
+name: Distance Advice QA
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'data/distance-advice/**'
+      - 'js/distance-advice-engine.js'
+      - 'js/bridge-distance-mission-ui.js'
+      - 'bridge-distance.html'
+      - 'scripts/check-distance-advice-rules.mjs'
+      - 'scripts/check-distance-advice-engine.mjs'
+      - 'scripts/check-distance-mission-ui.mjs'
+      - 'package.json'
+      - '.github/workflows/distance-advice-check.yml'
+  pull_request:
+    paths:
+      - 'data/distance-advice/**'
+      - 'js/distance-advice-engine.js'
+      - 'js/bridge-distance-mission-ui.js'
+      - 'bridge-distance.html'
+      - 'scripts/check-distance-advice-rules.mjs'
+      - 'scripts/check-distance-advice-engine.mjs'
+      - 'scripts/check-distance-mission-ui.mjs'
+      - 'package.json'
+      - '.github/workflows/distance-advice-check.yml'
+  workflow_dispatch:
+
+jobs:
+  distance-advice:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Run distance advice QA
+        run: npm run check:distance-advice
