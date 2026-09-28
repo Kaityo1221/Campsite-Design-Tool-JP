@@ -74,6 +74,7 @@
     style.id = 'campsiteMissionGateStyles';
     style.textContent = `
       #distance .distance-site-observation-step{display:none!important}
+      #campsiteDistanceCommentWarning{display:none!important}
       .campsite-chairman-sign.campsite-mission-gate-pop{animation:campsiteMissionGatePop .46s ease both}
       .campsite-mission-card.campsite-stale-distance-card>.campsite-mission-body{display:none!important}
       .campsite-stale-mission-note{margin:0 16px 16px;padding:12px 13px;border:1px solid rgba(245,158,11,.5);border-radius:12px;background:rgba(245,158,11,.1);color:#fde68a;font-size:12px;font-weight:800;line-height:1.65}
