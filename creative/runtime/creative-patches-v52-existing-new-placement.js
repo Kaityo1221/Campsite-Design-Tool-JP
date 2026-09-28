@@ -113,6 +113,7 @@
 (()=>{
   const placementState={sourceType:'existing'};
   let panelObserver=null;
+  let panelWasOpen=false;
 
   function normalizeSourceType(value){return value==='new'?'new':'existing'}
   function emitSourceChange(){
@@ -162,6 +163,11 @@
 
   function syncPanelOpenState(panel){
     const open=!!panel&&!panel.hidden;
+    if(open&&!panelWasOpen){
+      syncSourceFromActiveLayer();
+      syncVisibleToggle();
+    }
+    panelWasOpen=open;
     document.documentElement.classList.toggle('cm-v52-panel-open',open);
   }
 
@@ -203,7 +209,11 @@
 
   function decorate(){
     const panel=document.getElementById('cmCoordinateJumpPanel');
-    if(!panel){document.documentElement.classList.remove('cm-v52-panel-open');return}
+    if(!panel){
+      panelWasOpen=false;
+      document.documentElement.classList.remove('cm-v52-panel-open');
+      return;
+    }
     const row=panel.querySelector('.cm-coordinate-row');
     if(!row)return;
 
