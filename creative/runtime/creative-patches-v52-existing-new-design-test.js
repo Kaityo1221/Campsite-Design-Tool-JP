@@ -6,7 +6,7 @@
     src=previous(src);
 
     const style=`<style id="cmV52ExistingNewDesignTestStyle">
-      /* TEST ONLY: visual + independent existing/new placement state. No save behavior yet. */
+      /* TEST ONLY: merged coordinate panel + independent existing/new state. */
       #cmCoordinateJumpPanel.cm-v52-design-test{
         width:min(360px,calc(100vw - 28px));
         padding:14px;
@@ -14,6 +14,7 @@
         border-radius:20px;
         overflow:hidden;
         transition:border-color .18s ease,box-shadow .18s ease;
+        bottom:calc(96px + env(safe-area-inset-bottom))!important;
       }
       #cmCoordinateJumpPanel.cm-v52-design-test .cm-coordinate-head{margin-bottom:8px}
       #cmCoordinateJumpPanel.cm-v52-design-test .cm-coordinate-head strong{font-size:16px;letter-spacing:.01em}
@@ -61,10 +62,26 @@
       .cm-v52-mode-switch[data-mode="new"]{border-color:#f29ab7;box-shadow:0 0 0 3px rgba(230,56,112,.08)}
       .cm-v52-mode-option:active{transform:scale(.985)}
 
+      .cm-v52-confirm-row{display:flex;justify-content:flex-end;margin-top:13px}
+      .cm-v52-confirm{
+        min-width:108px;height:44px;padding:0 22px;border:1px solid #176fe0;border-radius:999px;
+        background:linear-gradient(180deg,#3888ff 0%,#2471ee 100%);color:#fff;
+        box-shadow:0 5px 14px rgba(36,113,238,.24);font-size:14px;font-weight:950;
+        -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+      }
+      .cm-v52-confirm:active{transform:scale(.97)}
+
+      /* When the coordinate panel is open, it replaces the separate bottom dock visually. */
+      html.cm-v52-panel-open .cm-safe-add-bar{
+        opacity:0!important;pointer-events:none!important;transform:translateX(-50%) translateY(16px)!important;
+        transition:opacity .12s ease,transform .12s ease;
+      }
+
       @media(max-width:390px){
         #cmCoordinateJumpPanel.cm-v52-design-test .cm-coordinate-row{grid-template-columns:minmax(0,1fr) 124px}
         .cm-v52-mode-option.existing span{left:11%}
         .cm-v52-mode-option.new span{right:9%}
+        .cm-v52-confirm{min-width:104px;height:42px}
       }
     </style>`;
     if(!src.includes('id="cmV52ExistingNewDesignTestStyle"'))src=src.replace('</head>',style+'</head>');
@@ -74,6 +91,7 @@
   // Phase 2/3 TEST STATE
   // sourceType is deliberately independent from PokéStop / Gym / PowerSpot type.
   const placementState={sourceType:'existing'};
+  let panelObserver=null;
 
   function normalizeSourceType(value){return value==='new'?'new':'existing'}
   function emitSourceChange(){
@@ -100,6 +118,46 @@
     return next;
   }
 
+  function parseCoordinate(raw){
+    const normalized=String(raw||'').trim().replace(/，/g,',');
+    if(!normalized)return null;
+    let parts=normalized.split(',').map(v=>v.trim()).filter(Boolean);
+    if(parts.length!==2)parts=normalized.split(/\\s+/).map(v=>v.trim()).filter(Boolean);
+    if(parts.length!==2)return false;
+    const lat=Number(parts[0]),lng=Number(parts[1]);
+    if(!Number.isFinite(lat)||!Number.isFinite(lng)||lat<-90||lat>90||lng<-180||lng>180)return false;
+    return [lat,lng];
+  }
+
+  function syncPanelOpenState(panel){
+    const open=!!panel&&!panel.hidden;
+    document.documentElement.classList.toggle('cm-v52-panel-open',open);
+  }
+
+  function integratedConfirm(){
+    const panel=document.getElementById('cmCoordinateJumpPanel');
+    const input=panel?.querySelector('#cmCoordinateInput');
+    const error=panel?.querySelector('.cm-coordinate-error');
+    const parsed=parseCoordinate(input?.value);
+    if(parsed===false){if(error)error.textContent='「緯度, 経度」の形式で入力してください';return}
+    if(error)error.textContent='';
+
+    if(Array.isArray(parsed)){
+      const api=window.CampsiteCreativeCoordinateJump;
+      if(!api||typeof api.moveTo!=='function'){
+        if(error)error.textContent='地図との接続を準備できませんでした';
+        return;
+      }
+      try{api.moveTo(parsed[0],parsed[1])}catch(err){console.error('[Creative v52] coordinate move',err);return}
+    }
+
+    const original=document.getElementById('cmSafeAddConfirm');
+    if(original){
+      input?.blur?.();
+      setTimeout(()=>original.click(),Array.isArray(parsed)?70:0);
+    }
+  }
+
   // Test API only. Save/POI type wiring comes in later phases.
   window.CampsiteCreativePlacementState=Object.freeze({
     get sourceType(){return placementState.sourceType},
@@ -108,7 +166,7 @@
 
   function decorate(){
     const panel=document.getElementById('cmCoordinateJumpPanel');
-    if(!panel)return;
+    if(!panel){document.documentElement.classList.remove('cm-v52-panel-open');return}
     const row=panel.querySelector('.cm-coordinate-row');
     if(!row)return;
 
@@ -125,9 +183,20 @@
       toggle.querySelector('.existing').addEventListener('click',e=>{e.preventDefault();e.stopPropagation();setSourceType('existing')});
       toggle.querySelector('.new').addEventListener('click',e=>{e.preventDefault();e.stopPropagation();setSourceType('new')});
       row.appendChild(toggle);
+
+      const confirmRow=document.createElement('div');
+      confirmRow.className='cm-v52-confirm-row';
+      confirmRow.innerHTML='<button type="button" class="cm-v52-confirm">確定</button>';
+      confirmRow.querySelector('.cm-v52-confirm').addEventListener('click',e=>{e.preventDefault();e.stopPropagation();integratedConfirm()});
+      row.insertAdjacentElement('afterend',confirmRow);
+
+      panelObserver?.disconnect?.();
+      panelObserver=new MutationObserver(()=>syncPanelOpenState(panel));
+      panelObserver.observe(panel,{attributes:true,attributeFilter:['hidden','style','class']});
     }
 
     syncVisibleToggle();
+    syncPanelOpenState(panel);
   }
 
   decorate();
