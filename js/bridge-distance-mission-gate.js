@@ -126,9 +126,10 @@
       return;
     }
 
-    // 設計変更後は、距離由来のMISSION 1・2と運用ヒントを確定結果として見せない。
+    // 設計変更後は、距離由来のMISSION 1・2・4と運用ヒントを確定結果として見せない。
     addStaleNote(cardByKicker(shell, 'MISSION 1'));
     addStaleNote(cardByKicker(shell, 'MISSION 2'));
+    addStaleNote(cardByKicker(shell, 'MISSION 4'));
     const advice = cardByKicker(shell, 'OPERATION TIPS');
     if (advice instanceof HTMLElement && advice.dataset.staleHidden !== 'true') {
       advice.style.display = 'none';
@@ -137,7 +138,7 @@
     setLampState(shell, 0, 'yellow');
     setLampState(shell, 1, 'yellow');
     setLampState(shell, 3, 'red');
-    setLampState(shell, 4, 'gray');
+    setLampState(shell, 4, 'red');
   }
 
   function queuePresentationSync() {
