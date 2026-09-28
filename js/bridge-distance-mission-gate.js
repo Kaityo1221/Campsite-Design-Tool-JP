@@ -137,7 +137,7 @@
     }
     setLampState(shell, 0, 'yellow');
     setLampState(shell, 1, 'yellow');
-    setLampState(shell, 3, 'red');
+    setLampState(shell, 3, 'gray');
     setLampState(shell, 4, 'red');
   }
 
