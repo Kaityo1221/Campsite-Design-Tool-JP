@@ -7,7 +7,17 @@ const manifest=JSON.parse(fs.readFileSync('creative/runtime/next-lab-manifest.js
 const baseHtml=fs.readFileSync('creative/base-v7.html','utf8');
 const jpPatch=fs.readFileSync('creative/jp-creative-patch.js','utf8');
 const bridgePatch=fs.readFileSync('creative/bridge-project-patch.js','utf8');
-const workspacePatch=fs.readFileSync('creative/runtime/creative-patches-v50-add-crosshair-cleanup.js','utf8');
+const livePostManifestPatches=[
+  'creative-patches-v45-unified-map-ui.js',
+  'creative-patches-v46-field-feedback-polish.js',
+  'creative-patches-v48-comet-a-arc.js',
+  'creative-patches-v49-remove-add-text.js',
+  'creative-patches-v50-add-crosshair-cleanup.js',
+  'creative-patches-v51-coordinate-jump.js',
+  'creative-patches-v52-existing-new-placement.js',
+  'creative-patches-v53-new-poi-auto-memo.js',
+  'creative-patches-v54-coordinate-memo-reason.js'
+];
 
 function gitBlobShaBuffer(body){
   return crypto.createHash('sha1').update(Buffer.from('blob '+body.length+'\0')).update(body).digest('hex');
@@ -28,10 +38,13 @@ for(const name of manifest.order.slice(1)){
   assert.equal(typeof context.window.applyCreativePatches,'function',name+' registration failed');
 }
 
-// v50 is part of the live JP loader even though the pinned Next-Lab manifest ends at v44.
-// Load it here so workspace identity changes are syntax-checked in the generated HTML.
-new vm.Script(workspacePatch,{filename:'creative/runtime/creative-patches-v50-add-crosshair-cleanup.js'}).runInContext(context);
-assert.equal(typeof context.window.applyCreativePatches,'function','workspace patch registration failed');
+// The JP loader continues beyond the pinned Next-Lab v44 snapshot. Apply the
+// exact live post-manifest chain so generated-HTML checks represent production.
+for(const name of livePostManifestPatches){
+  const source=fs.readFileSync('creative/runtime/'+name,'utf8');
+  new vm.Script(source,{filename:'creative/runtime/'+name}).runInContext(context);
+  assert.equal(typeof context.window.applyCreativePatches,'function',name+' registration failed');
+}
 
 let html=context.window.applyCreativePatches(baseHtml);
 
