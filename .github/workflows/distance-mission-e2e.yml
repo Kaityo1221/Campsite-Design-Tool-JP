@@ -1,0 +1,67 @@
+name: Distance Mission E2E
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'bridge-distance.html'
+      - 'index.html'
+      - 'css/distance.css'
+      - 'js/distance*.js'
+      - 'js/bridge-distance*.js'
+      - 'js/bridge-pre-submit*.js'
+      - 'data/distance-advice/**'
+      - 'tests/distance-mission-ui.spec.mjs'
+      - 'playwright.config.mjs'
+      - 'package.json'
+      - '.github/workflows/distance-mission-e2e.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'bridge-distance.html'
+      - 'index.html'
+      - 'css/distance.css'
+      - 'js/distance*.js'
+      - 'js/bridge-distance*.js'
+      - 'js/bridge-pre-submit*.js'
+      - 'data/distance-advice/**'
+      - 'tests/distance-mission-ui.spec.mjs'
+      - 'playwright.config.mjs'
+      - 'package.json'
+      - '.github/workflows/distance-mission-e2e.yml'
+  workflow_dispatch:
+
+jobs:
+  distance-mission-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Static distance advice checks
+        run: npm run check:distance-advice
+
+      - name: Install WebKit
+        run: npx playwright install --with-deps webkit
+
+      - name: Run iPhone/WebKit distance mission tests
+        run: npm run test:distance-mission
+
+      - name: Upload Playwright trace on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: distance-mission-playwright-report
+          path: |
+            test-results
+            playwright-report
+          if-no-files-found: ignore
