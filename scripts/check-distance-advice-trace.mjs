@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 
 const trace = fs.readFileSync('js/bridge-distance-advice-trace.js', 'utf8');
 const bridge = fs.readFileSync('bridge-distance.html', 'utf8');
+const checkpoint = fs.readFileSync('js/bridge-distance-checkpoint.js', 'utf8');
 const ruleset = JSON.parse(fs.readFileSync('data/distance-advice/ruleset-v0.1.json', 'utf8'));
 
 new vm.Script(trace, { filename: 'js/bridge-distance-advice-trace.js' });
@@ -26,6 +27,11 @@ assert.ok(trace.includes('staleAt'), 'Advice trace must record when it became st
 assert.ok(trace.includes('accepted: null'), 'Future CA acceptance feedback field missing');
 assert.ok(trace.includes('eventOutcomeNotes: null'), 'Future event outcome feedback field missing');
 assert.ok(!trace.includes('fetch('), 'Advice trace must not transmit project/training data externally');
+
+// 💾 セーブする must preserve the whole Campsite Project, including distanceAdviceResult,
+// inside campsites-project.json. Do not replace this with a filtered export object later.
+assert.ok(checkpoint.includes("zip.file('campsite-project.json', JSON.stringify(project, null, 2))"), 'Backup KMZ must serialize the full Campsite Project so advice provenance survives');
+assert.ok(!checkpoint.includes("delete project.distanceAdviceResult"), 'Backup KMZ must not strip distanceAdviceResult');
 
 const enginePos = bridge.indexOf('js/distance-advice-engine.js?v=1');
 const uiPos = bridge.indexOf('js/bridge-distance-mission-ui.js?v=1');
