@@ -17,11 +17,11 @@
 
   function mission1(card,p){
     const list=card?.querySelector('.campsite-pair-list');
-    if(!(list instanceof HTMLElement)||card.querySelector('[data-v3-pairs]')||!list.children.length)return;
+    if(!(list instanceof HTMLElement)||card.querySelector('[data-v2-pair-toggle]')||!list.children.length)return;
     const added=new Set((Array.isArray(p?.currentPois)?p.currentPois:[]).filter(x=>x?.role==='added'||String(x?.layer||'').toLowerCase().startsWith('new-')).map(x=>String(x?.title||x?.name||'').trim()));
-    list.querySelectorAll('.campsite-pair').forEach(pair=>{if(pair.querySelector('.campsite-v2-pair-type'))return;const line=String(pair.innerText||'').split('\n').map(x=>x.trim()).find(x=>x.includes(' × '));if(!line)return;const names=line.split(' × ').map(x=>x.trim()),count=names.filter(x=>added.has(x)).length;const tag=document.createElement('div');tag.className='campsite-v2-pair-type';tag.style.cssText='margin-top:5px;color:#bae6fd;font-size:10px;font-weight:900';tag.textContent=count>=2?'新規 × 新規':'新規 × 既存';pair.appendChild(tag)});
+    list.querySelectorAll('.campsite-pair').forEach(pair=>{if(pair.querySelector('.campsite-v2-pair-kind'))return;const line=String(pair.innerText||'').split('\n').map(x=>x.trim()).find(x=>x.includes(' × '));if(!line)return;const names=line.split(' × ').map(x=>x.trim()),count=names.filter(x=>added.has(x)).length;const tag=document.createElement('div');tag.className='campsite-v2-pair-kind';tag.style.cssText='margin-top:5px;color:#bae6fd;font-size:10px;font-weight:900';tag.textContent=count>=2?'新規 × 新規':'新規 × 既存';pair.appendChild(tag)});
     list.dataset.v2Collapsed='true';
-    const b=document.createElement('button');b.type='button';b.className='campsite-v2-toggle';b.dataset.v3Pairs='1';b.textContent='詳細を見る';b.setAttribute('aria-expanded','false');list.before(b);
+    const b=document.createElement('button');b.type='button';b.className='campsite-v2-toggle';b.dataset.v2PairToggle='1';b.textContent='詳細を見る';b.setAttribute('aria-expanded','false');list.before(b);
     b.onclick=()=>{const open=list.dataset.v2Collapsed==='true';list.dataset.v2Collapsed=open?'false':'true';b.textContent=open?'詳細を閉じる':'詳細を見る';b.setAttribute('aria-expanded',open?'true':'false')};
   }
 
@@ -46,10 +46,10 @@
       editor=document.createElement('div');editor.className='campsite-env-editor';rows[0].before(editor);rows.forEach(r=>editor.appendChild(r));
     }
     editor.dataset.v2Collapsed='true';
-    body.querySelector(':scope > .campsite-env-summary')?.remove();body.querySelector(':scope > [data-v3-env]')?.remove();
+    body.querySelector(':scope > .campsite-env-summary')?.remove();body.querySelector(':scope > [data-v2-env-toggle]')?.remove();
     const {e,t,complete}=envState(p);
     body.insertAdjacentHTML('afterbegin',`<div class="campsite-env-summary"><div class="campsite-env-summary-row"><span>🚶 通行</span><strong>${envValue('traffic',t)}</strong></div><div class="campsite-env-summary-row"><span>🏞 広場</span><strong>${envValue('bool',e.plaza)}</strong></div><div class="campsite-env-summary-row"><span>🔄 回遊</span><strong>${envValue('circulation',e.circulation)}</strong></div><div class="campsite-env-summary-row"><span>🪑 待機</span><strong>${envValue('bool',e.waiting)}</strong></div></div>`);
-    const b=document.createElement('button');b.type='button';b.className='campsite-v2-toggle';b.dataset.v3Env='1';b.textContent=complete?'確認内容を編集':'現地確認を入力';body.querySelector(':scope > .campsite-env-summary')?.after(b);
+    const b=document.createElement('button');b.type='button';b.className='campsite-v2-toggle';b.dataset.v2EnvToggle='1';b.textContent=complete?'確認内容を編集':'現地確認を入力';body.querySelector(':scope > .campsite-env-summary')?.after(b);
     b.onclick=()=>{const open=editor.dataset.v2Collapsed==='true';editor.dataset.v2Collapsed=open?'false':'true';b.textContent=open?'閉じる':(complete?'確認内容を編集':'現地確認を入力')};
     const sign=body.querySelector('.campsite-chairman-sign');if(sign&&!complete)sign.textContent='⚠️ 現地環境の確認が残っています。現地で状況を確認して入力してください。';
   }
