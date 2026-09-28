@@ -56,6 +56,13 @@ async function openAndRun(page) {
   }).toBe(true);
   await page.evaluate(async () => window.runDistanceCheck());
   await expect(page.locator('.campsite-mission-shell')).toHaveCount(1, { timeout: 12000 });
+  await expect(page.locator('.campsite-mission-shell')).toHaveAttribute('data-layout-v2', 'true', { timeout: 12000 });
+}
+
+async function openMission4Map(page) {
+  await page.locator('[data-mission-map]').dispatchEvent('click');
+  await expect(page.locator('.campsite-mission-lamp').nth(3)).toHaveAttribute('data-state', 'green');
+  await expect(page.locator('[data-v2-submit]')).toBeEnabled();
 }
 
 test.beforeEach(async ({ page }) => {
@@ -65,23 +72,25 @@ test.beforeEach(async ({ page }) => {
   await page.route(/https:\/\/[^/]+\.tile\.openstreetmap\.org\/.*/, route => route.fulfill({ status: 204, body: '' }));
 });
 
-test('MISSION UIの下でもセーブ・修正・提出前チェックの3導線が残る', async ({ page }) => {
+test('MISSION 5内にセーブ・修正・提出前チェックの3導線を集約する', async ({ page }) => {
   await openAndRun(page);
 
-  await expect(page.locator('[data-distance-checkpoint-save]')).toBeVisible();
-  await expect(page.locator('[data-project-rework]')).toBeVisible();
-  await expect(page.locator('[data-go-pre-submit]')).toBeVisible();
-  await expect(page.locator('[data-distance-checkpoint-save]')).toHaveText('💾 セーブする');
-  await expect(page.locator('[data-project-rework]')).toContainText('✏️ CREATIVE MODEに戻って修正');
-  await expect(page.locator('[data-go-pre-submit]')).toContainText('提出前チェックリストへ進む');
+  const finalCard = page.locator('.campsite-mission-card').filter({ hasText: 'MISSION 5' });
+  await expect(finalCard.locator('[data-v2-save]')).toHaveText('💾 セーブする');
+  await expect(finalCard.locator('[data-v2-rework]')).toContainText('✏️ CREATIVE MODEに戻って修正');
+  await expect(finalCard.locator('[data-v2-submit]')).toContainText('提出前チェックへ進む');
+  await expect(finalCard.locator('[data-v2-submit]')).toBeDisabled();
+
+  await openMission4Map(page);
+  await expect(page.getByText('🟢 準備完了！')).toBeVisible();
 });
 
-test('セーブするKMZはdoc.kmlとcampsite-project.jsonを保持する', async ({ page }) => {
+test('MISSION 5のセーブするKMZはdoc.kmlとcampsite-project.jsonを保持する', async ({ page }) => {
   await openAndRun(page);
 
   const [download] = await Promise.all([
     page.waitForEvent('download'),
-    page.locator('[data-distance-checkpoint-save]').click()
+    page.locator('[data-v2-save]').click()
   ]);
   const downloadPath = await download.path();
   expect(downloadPath).toBeTruthy();
@@ -100,11 +109,13 @@ test('セーブするKMZはdoc.kmlとcampsite-project.jsonを保持する', asyn
   });
 });
 
-test('MISSION完了時は提出前チェックへ進める', async ({ page }) => {
+test('MISSION 4確認後はMISSION 5から提出前チェックへ進める', async ({ page }) => {
   await openAndRun(page);
+  await expect(page.getByText('🟡 確認が残っています')).toBeVisible();
+  await openMission4Map(page);
   await expect(page.getByText('🟢 準備完了！')).toBeVisible();
 
-  await page.locator('[data-go-pre-submit]').dispatchEvent('click');
+  await page.locator('[data-v2-submit]').click();
 
   await expect.poll(() => page.evaluate(() => {
     return JSON.parse(sessionStorage.getItem('campsiteProject.v1') || 'null')?.phase || null;
