@@ -46,18 +46,8 @@
       .cm-v52-mode-option.new{background:linear-gradient(180deg,#fff1f5 0%,#ffe4ec 100%);color:#d92f67}
       .cm-v52-mode-icon{font-size:11px;margin-right:2px;vertical-align:1px}
 
-      .cm-v52-mode-notes{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
-      .cm-v52-mode-note{min-height:70px;padding:9px 10px;border-radius:12px;box-sizing:border-box;font-size:11.5px;font-weight:750;line-height:1.5}
-      .cm-v52-mode-note strong{display:inline-block;margin-bottom:3px;padding:2px 7px;border-radius:999px;font-size:10px;font-weight:950}
-      .cm-v52-mode-note.existing{background:linear-gradient(180deg,#eef8ff,#e4f3ff);color:#53708a}
-      .cm-v52-mode-note.existing strong{background:#269cf4;color:#fff}
-      .cm-v52-mode-note.new{background:linear-gradient(180deg,#fff1f5,#ffe7ee);color:#c33161}
-      .cm-v52-mode-note.new strong{background:#e63870;color:#fff}
-      .cm-v52-design-caption{margin:8px 2px 0;color:#9a866c;font-size:9.5px;font-weight:800;text-align:right;letter-spacing:.02em}
-
       @media(max-width:390px){
         #cmCoordinateJumpPanel.cm-v52-design-test .cm-coordinate-row{grid-template-columns:minmax(0,1fr) 124px}
-        .cm-v52-mode-note{font-size:10.8px;padding:8px}
       }
     </style>`;
     if(!src.includes('id="cmV52ExistingNewDesignTestStyle"'))src=src.replace('</head>',style+'</head>');
@@ -80,16 +70,6 @@
     toggle.setAttribute('aria-label','既存・新規 デザイン確認用');
     toggle.innerHTML='<div class="cm-v52-mode-option existing"><span><span class="cm-v52-mode-icon">◎</span>既存</span></div><div class="cm-v52-mode-option new"><span><span class="cm-v52-mode-icon">✦</span>新規</span></div>';
     row.appendChild(toggle);
-
-    const notes=document.createElement('div');
-    notes.className='cm-v52-mode-notes';
-    notes.innerHTML='<div class="cm-v52-mode-note existing"><strong>既存</strong><br>すでにゲーム内にある<br>PokéStop・Gym・PowerSpot<br>などの場所を登録します。</div><div class="cm-v52-mode-note new"><strong>新規</strong><br>新しく提案する候補地を<br>登録します。</div>';
-    row.insertAdjacentElement('afterend',notes);
-
-    const caption=document.createElement('div');
-    caption.className='cm-v52-design-caption';
-    caption.textContent='DESIGN TEST · 切り替え操作は未実装';
-    notes.insertAdjacentElement('afterend',caption);
   }
 
   decorate();
