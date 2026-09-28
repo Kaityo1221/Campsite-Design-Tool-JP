@@ -101,20 +101,7 @@ function buildRawKwajalein() {
 
 function makePoiEngineContext() {
   const context = {
-    window: {},
-    console,
-    Map,
-    Set,
-    WeakSet,
-    Object,
-    Number,
-    String,
-    Array,
-    JSON,
-    Math,
-    Date,
-    Promise,
-    Error
+    window: {}, console, Map, Set, WeakSet, Object, Number, String, Array, JSON, Math, Date, Promise, Error
   };
   vm.createContext(context);
   vm.runInContext(parserSource, context);
@@ -131,42 +118,18 @@ function makeReceiverContext(sessionStorage, handshakeId) {
   );
   const listeners = new Map();
   const document = {
-    body: fakeElement(),
-    title: '',
-    referrer: '',
+    body: fakeElement(), title: '', referrer: '',
     getElementById(id) { return elements.get(id) || null; }
   };
   const window = {
-    opener: null,
-    focus() {},
+    opener: null, focus() {},
     addEventListener(type, fn) { listeners.set(type, fn); },
     removeEventListener(type) { listeners.delete(type); }
   };
   const context = {
-    window,
-    document,
-    location: {
-      search: `?campsiteBridgeDev=1&handshake=${encodeURIComponent(handshakeId)}`,
-      replaced: '',
-      replace(value) { this.replaced = value; }
-    },
-    sessionStorage,
-    URLSearchParams,
-    URL,
-    console,
-    setTimeout() { return 1; },
-    clearTimeout() {},
-    Map,
-    Set,
-    Object,
-    Number,
-    String,
-    Array,
-    JSON,
-    Math,
-    Date,
-    Promise,
-    Error
+    window, document,
+    location: { search: `?campsiteBridgeDev=1&handshake=${encodeURIComponent(handshakeId)}`, replaced: '', replace(value) { this.replaced = value; } },
+    sessionStorage, URLSearchParams, URL, console, setTimeout() { return 1; }, clearTimeout() {}, Map, Set, Object, Number, String, Array, JSON, Math, Date, Promise, Error
   };
   vm.createContext(context);
   vm.runInContext(receiverSource, context);
@@ -181,19 +144,7 @@ function makeInactiveReviewContext(sessionStorage) {
       addEventListener(type, fn) { if (type === 'click') clickListeners.push(fn); },
       getElementById() { return null; }
     },
-    sessionStorage,
-    console,
-    Map,
-    Set,
-    Object,
-    Number,
-    String,
-    Array,
-    JSON,
-    Math,
-    Date,
-    Promise,
-    Error
+    sessionStorage, console, Map, Set, Object, Number, String, Array, JSON, Math, Date, Promise, Error
   };
   vm.createContext(context);
   vm.runInContext(inactiveReviewSource, context);
@@ -203,25 +154,9 @@ function makeInactiveReviewContext(sessionStorage) {
 function makeNextFlowContext(sessionStorage) {
   const localStorage = storage();
   const context = {
-    window: {},
-    location: { search: '?campsiteBridgeImport=1', href: '' },
-    sessionStorage,
-    localStorage,
+    window: {}, location: { search: '?campsiteBridgeImport=1', href: '' }, sessionStorage, localStorage,
     document: { addEventListener() {}, getElementById() { return null; } },
-    URLSearchParams,
-    console,
-    setTimeout() {},
-    crypto: crypto.webcrypto,
-    Math,
-    Date,
-    JSON,
-    Map,
-    Set,
-    Object,
-    Number,
-    String,
-    Array,
-    Error
+    URLSearchParams, console, setTimeout() {}, crypto: crypto.webcrypto, Math, Date, JSON, Map, Set, Object, Number, String, Array, Error
   };
   vm.createContext(context);
   vm.runInContext(nextFlowSource, context);
@@ -286,13 +221,8 @@ const polygon = [
 const selectionKey = 'campsiteBridgeSelection.v0.8.5';
 const handoffId = String(adapter.handoffId || '');
 sessionStorage.setItem(selectionKey, JSON.stringify({
-  version: '0.8.5',
-  handoffId,
-  selectedAt: new Date().toISOString(),
-  sourceCount: adapter.pois.length,
-  selectedCount: adapter.pois.length,
-  polygon,
-  pois: adapter.pois
+  version: '0.8.5', handoffId, selectedAt: new Date().toISOString(), sourceCount: adapter.pois.length,
+  selectedCount: adapter.pois.length, polygon, pois: adapter.pois
 }));
 
 const inactiveReview = makeInactiveReviewContext(sessionStorage);
@@ -330,8 +260,8 @@ assert.ok(
   'Bridge map must only expose Inactive Power Spot references visually'
 );
 assert.ok(
-  referenceVisualSource.includes('#f3a8c9') && referenceVisualSource.includes('rotate(45deg)'),
-  'Inactive Power Spot must retain the light-pink diamond Bridge visual contract'
+  referenceVisualSource.includes('#7c3aed') && referenceVisualSource.includes('border-radius:50%'),
+  'Inactive Power Spot must retain the current purple circular Bridge visual contract'
 );
 assert.ok(
   creativePatchSource.includes("gameStatus:String(poi.gameStatus||'UNKNOWN')"),

@@ -264,9 +264,8 @@ assert.ok(selection.indexOf('if (isNextFlowEnabled())') < selection.indexOf("con
 assert.ok(nextFlow.includes('setTimeout(continueToCreative, 0)'), 'Next flow must wait until selection snapshot is saved');
 assert.ok(!nextFlow.includes('stopImmediatePropagation'), 'Next flow must not block the selection save listener');
 const selectionPos = gateway.indexOf('js/bridge-selection.js?v=12');
-const nextPos = gateway.indexOf('js/bridge-next-flow.js?v=8');
+const nextPos = gateway.indexOf('js/bridge-next-flow.js?v=10');
 assert.ok(selectionPos >= 0 && nextPos > selectionPos, 'Next flow must load after polygon selection');
-
 
 const caAccess = fs.readFileSync('js/ca-access.js', 'utf8');
 const caBootstrap = fs.readFileSync('js/ca-access-bootstrap.js', 'utf8');
@@ -295,7 +294,6 @@ assert.ok(receiver.includes("setTimeout(goToCampsite, 450)"), 'Receiver must pre
 assert.ok(receiver.includes("setTimeout(showReceiverDetail, 2500)"), 'Receiver detail should be fallback-only');
 assert.ok(receiver.includes('bridge-receiver-detail'), 'Receiver must support diagnostic detail mode');
 assert.ok(gateway.includes('#loginScreen,#splashScreen,#openingScreen{display:none!important}'), 'Gateway must suppress legacy login/splash flash');
-
 
 const creativeManifest = JSON.parse(fs.readFileSync('creative/runtime/next-lab-manifest.json', 'utf8'));
 assert.equal(creativeManifest.sourceRepo, 'Kaityo1221/Campsite-Design-Tool-Next-Lab');

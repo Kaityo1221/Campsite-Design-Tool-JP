@@ -39,8 +39,36 @@ html,body{margin:0;min-height:100%;background:#17130f;color:#fff8e8;font-family:
     }
     return true;
   };
+  const canonicalGameEntity=value=>{
+    const raw=String(value||'').trim().toUpperCase();
+    const compact=raw.replace(/[\s_-]+/g,'');
+    if(compact==='POWERSPOT')return'POWERSPOT';
+    if(compact==='GYM')return'GYM';
+    if(compact==='POKESTOP')return'POKESTOP';
+    return raw;
+  };
+  const normalizeBridgeProjectEntities=()=>{
+    if(!isBridgeProject)return;
+    const key='campsiteProject.v1';
+    try{
+      const project=JSON.parse(sessionStorage.getItem(key)||'null');
+      if(!project||project.source!=='bridge')return;
+      const normalizePoi=poi=>{
+        if(!poi||typeof poi!=='object')return;
+        const canonical=canonicalGameEntity(poi.gameEntity||poi.type);
+        if(canonical)poi.gameEntity=canonical;
+      };
+      ['sourcePois','selectedPois','currentPois','addedPois','deletedPois'].forEach(name=>{
+        if(Array.isArray(project[name]))project[name].forEach(normalizePoi);
+      });
+      sessionStorage.setItem(key,JSON.stringify(project));
+    }catch(error){
+      console.warn('[CREATIVE MODE] Bridge gameEntity normalize skipped',error);
+    }
+  };
 
   try{
+    normalizeBridgeProjectEntities();
     setBootStatus(isBridgeProject?'CREATIVE MODEを開いています…':'認証システムを準備しています…');
     if(!await waitFor(()=>!!window.CampsiteCaAccess,10000))throw new Error('認証システムの起動に時間がかかっています');
 
@@ -96,7 +124,11 @@ html,body{margin:0;min-height:100%;background:#17130f;color:#fff8e8;font-family:
     const bgOldMain='https://raw.githubusercontent.com/Kaityo1221/campsite-design-tool-adv-lab/main/creative/runtime/assets/creative-mode-opening.png';
     const bgOldPinned='https://raw.githubusercontent.com/Kaityo1221/campsite-design-tool-adv-lab/1c27ca3ef14f423688f755d350ecc602bee1c573/creative/runtime/assets/creative-mode-opening.png';
     const bgStable='https://media.githubusercontent.com/media/Kaityo1221/campsite-design-tool-adv-lab/1c27ca3ef14f423688f755d350ecc602bee1c573/creative/runtime/assets/creative-mode-opening.png';
-    html=html.split(bgOldMain).join(bgStable).split(bgOldPinned).join(bgStable);
+    const bgMobile='../assets/top/campsite-top-mobile.png';
+    const bgDesktop='../assets/top/campsite-top-desktop.png';
+    html=html.split(bgOldMain).join(bgMobile).split(bgOldPinned).join(bgMobile).split(bgStable).join(bgMobile);
+    const topStyle='<style id="campsiteNewFlowTopV1">.entry{background-image:linear-gradient(180deg,rgba(0,0,0,.12),rgba(0,0,0,.38)),url("'+bgMobile+'")!important;background-size:cover!important;background-position:center center!important;background-repeat:no-repeat!important}@media (min-width:768px){.entry{background-image:linear-gradient(180deg,rgba(0,0,0,.12),rgba(0,0,0,.38)),url("'+bgDesktop+'")!important;background-position:center center!important}}</style>';
+    html=html.replace('</head>',topStyle+'</head>');
     html=html.replace(/<input\\b[^>]*\\bid=["']entryFile["'][^>]*>/i,m=>m.replace(/\\saccept\\s*=\\s*(?:"[^"]*"|'[^']*'|[^\\s>]+)/i,''));
     html=html.replace('entryFile.onchange=()=>{',"entryFile.removeAttribute('accept');entryFile.accept='';entryFile.onchange=()=>{");
   }catch(e){

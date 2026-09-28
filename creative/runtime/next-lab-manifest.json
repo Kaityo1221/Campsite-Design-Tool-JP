@@ -47,7 +47,7 @@
     "creative-patches-v6-intuitive.js": "958d999318696c3958cb01601b8ff4d95f25a77b",
     "creative-patches-v9-return-main.js": "e37e29bf8168c1635bde64405fafbf765b98b575",
     "creative-patches-v10-save-labels.js": "82289db564dd45c850c82d6b2132c723c837c463",
-    "creative-patches-v13-draggable-fab.js": "f64e6aa2b00922d6580a3e4d2e3accef765bfe35",
+    "creative-patches-v13-draggable-fab.js": "2d1d8790c46bd1c4e9f5a442a7ceb62f0d0fb41d",
     "creative-patches-v14-layer-tap-layout.js": "fce2a374c0049913093bb7a51224c80eea04f14e",
     "creative-patches-v18-preview-crosshair.js": "ba2a21b32324e4ac379c2eee2463bcf6deb4b044",
     "creative-patches-v19-persistent-crosshair.js": "6cf5c5b3e4ba567236217270dd10acc8981ca943",
@@ -72,7 +72,7 @@
     "creative-patches-v40-recent-filename.js": "0f86accbc05d93c3f2b30cb013a7b4979ea6cfc4",
     "creative-patches-v41-save-output-wiring.js": "c04fd31b945fc0fc290d42cb54ecfc228b168cca",
     "creative-patches-v42-save-button-hardbind.js": "f7a580a0047a267f8f56f3c5872cd46e1d33c241",
-    "creative-patches-v43-save-standalone.js": "041c064354a82f6bc6ca82338049e891b785443c",
+    "creative-patches-v43-save-standalone.js": "d224c6656de484f0fc63b8cd44d52ace492c0268",
     "creative-patches-v44-lab-update-3-lines.js": "d76d7b4bebd564a921c06213b47ddb124f5fa67a"
   },
   "assets": {
