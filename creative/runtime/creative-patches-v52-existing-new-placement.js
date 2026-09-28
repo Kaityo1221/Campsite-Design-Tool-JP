@@ -61,7 +61,14 @@
       .cm-v52-mode-switch[data-mode="new"]{border-color:#f29ab7;box-shadow:0 0 0 3px rgba(230,56,112,.08)}
       .cm-v52-mode-option:active{transform:scale(.985)}
 
-      .cm-v52-confirm-row{display:flex;justify-content:flex-end;margin-top:13px}
+      .cm-v52-confirm-row{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:13px}
+      .cm-v52-keyboard-toggle{
+        min-width:82px;height:40px;padding:0 13px;border:1px solid rgba(111,91,65,.28);border-radius:999px;
+        background:rgba(255,255,255,.9);color:#5d4d38;box-shadow:0 3px 10px rgba(72,54,34,.10);
+        font-size:12px;font-weight:950;-webkit-tap-highlight-color:transparent;touch-action:manipulation;
+      }
+      .cm-v52-keyboard-toggle[data-keyboard="text"]{border-color:#8bb9dc;background:#f3f9ff;color:#226896}
+      .cm-v52-keyboard-toggle:active{transform:scale(.97)}
       .cm-v52-confirm{
         min-width:108px;height:44px;padding:0 22px;border:1px solid #176fe0;border-radius:999px;
         background:linear-gradient(180deg,#3888ff 0%,#2471ee 100%);color:#fff;
@@ -79,6 +86,7 @@
         #cmCoordinateJumpPanel.cm-v52-existing-new .cm-coordinate-row{grid-template-columns:minmax(0,1fr) 124px}
         .cm-v52-mode-option.existing span{left:11%}
         .cm-v52-mode-option.new span{right:9%}
+        .cm-v52-keyboard-toggle{min-width:78px;height:38px;padding:0 11px}
         .cm-v52-confirm{min-width:104px;height:42px}
       }
     </style>`;
@@ -148,6 +156,32 @@
     syncVisibleToggle();
     emitSourceChange();
     return next;
+  }
+
+  function setKeyboardMode(mode,refocus=true){
+    const panel=document.getElementById('cmCoordinateJumpPanel');
+    const input=panel?.querySelector('#cmCoordinateInput');
+    const button=panel?.querySelector('.cm-v52-keyboard-toggle');
+    if(!input||!button)return;
+    const next=mode==='text'?'text':'decimal';
+    let start=null,end=null;
+    try{start=input.selectionStart;end=input.selectionEnd}catch{}
+    try{input.blur()}catch{}
+    input.setAttribute('inputmode',next);
+    input.dataset.cmKeyboardMode=next;
+    button.dataset.keyboard=next;
+    button.textContent=next==='decimal'?'⌨︎ ABC':'⌨︎ 123';
+    button.setAttribute('aria-label',next==='decimal'?'通常キーボードに切り替える':'テンキーに切り替える');
+    if(!refocus)return;
+    setTimeout(()=>{
+      try{input.focus({preventScroll:true})}catch{try{input.focus()}catch{}}
+      if(start!==null&&end!==null){try{input.setSelectionRange(start,end)}catch{}}
+    },90);
+  }
+  function toggleKeyboardMode(){
+    const input=document.querySelector('#cmCoordinateJumpPanel #cmCoordinateInput');
+    const current=input?.dataset.cmKeyboardMode||input?.getAttribute('inputmode')||'decimal';
+    setKeyboardMode(current==='text'?'decimal':'text',true);
   }
 
   function parseCoordinate(raw){
@@ -225,6 +259,12 @@
       const apply=panel.querySelector('#cmCoordinateApply');
       if(apply)apply.hidden=true;
 
+      const input=panel.querySelector('#cmCoordinateInput');
+      if(input){
+        input.setAttribute('inputmode','decimal');
+        input.dataset.cmKeyboardMode='decimal';
+      }
+
       const toggle=document.createElement('div');
       toggle.className='cm-v52-mode-switch';
       toggle.innerHTML='<button type="button" class="cm-v52-mode-option existing" aria-pressed="true"><span><span class="cm-v52-mode-icon">◎</span>既存</span></button><button type="button" class="cm-v52-mode-option new" aria-pressed="false"><span><span class="cm-v52-mode-icon">✦</span>新規</span></button>';
@@ -234,7 +274,8 @@
 
       const confirmRow=document.createElement('div');
       confirmRow.className='cm-v52-confirm-row';
-      confirmRow.innerHTML='<button type="button" class="cm-v52-confirm">確定</button>';
+      confirmRow.innerHTML='<button type="button" class="cm-v52-keyboard-toggle" data-keyboard="decimal" aria-label="通常キーボードに切り替える">⌨︎ ABC</button><button type="button" class="cm-v52-confirm">確定</button>';
+      confirmRow.querySelector('.cm-v52-keyboard-toggle').addEventListener('click',e=>{e.preventDefault();e.stopPropagation();toggleKeyboardMode()});
       confirmRow.querySelector('.cm-v52-confirm').addEventListener('click',e=>{e.preventDefault();e.stopPropagation();integratedConfirm()});
       row.insertAdjacentElement('afterend',confirmRow);
 
