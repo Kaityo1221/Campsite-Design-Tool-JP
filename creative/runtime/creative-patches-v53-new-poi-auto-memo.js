@@ -28,16 +28,13 @@
     const panel=document.getElementById('cmCoordinateJumpPanel');
     const input=panel?.querySelector('#cmCoordinateInput');
     const button=panel?.querySelector('.cm-v52-keyboard-toggle');
+    const confirmRow=panel?.querySelector('.cm-v52-confirm-row');
+    if(button)button.remove();
+    if(confirmRow)confirmRow.style.justifyContent='flex-end';
     if(!input)return;
-    if(input.dataset.cmV53DefaultKeyboard==='1')return;
-    input.dataset.cmV53DefaultKeyboard='1';
     input.setAttribute('inputmode','text');
     input.dataset.cmKeyboardMode='text';
-    if(button){
-      button.dataset.keyboard='text';
-      button.textContent='⌨︎ 123';
-      button.setAttribute('aria-label','テンキーに切り替える');
-    }
+    input.dataset.cmV53DefaultKeyboard='1';
   }
   useNormalKeyboard();
   new MutationObserver(()=>setTimeout(useNormalKeyboard,0)).observe(document.body,{childList:true,subtree:true});
