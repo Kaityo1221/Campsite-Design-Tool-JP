@@ -11,12 +11,16 @@ new vm.Script(ui, { filename: 'js/bridge-distance-mission-ui.js' });
 new vm.Script(gate, { filename: 'js/bridge-distance-mission-gate.js' });
 new vm.Script(engine, { filename: 'js/distance-advice-engine.js' });
 
-for (const label of ['MISSION 1', 'MISSION 2', 'MISSION 3', 'MISSION 4', '準備完了！']) {
+for (const label of ['MISSION 1', 'MISSION 2', 'MISSION 3', 'MISSION 4', 'MISSION 5', '準備完了！']) {
   assert.ok(ui.includes(label), `Mission UI copy missing: ${label}`);
 }
 for (const label of ['新しいPOIを確認しましょう', '自分の拠点を理解しましょう', '現地を確認しましょう', '最後に確認しましょう']) {
   assert.ok(ui.includes(label), `Mission instruction missing: ${label}`);
 }
+for (const label of ['📏 新規POIの距離確認', '🏕️ 拠点の密集特性', '🌳 現地環境', '✅ 最終確認', '🗺️ 配置・マップ']) {
+  assert.ok(ui.includes(label), `Mission result panel title missing: ${label}`);
+}
+assert.ok(ui.includes('campsite-mission-prompt'), 'Mission instruction and result panel title must remain visually separate');
 assert.ok(ui.includes('見てこないとだめだよ❗️'), 'Chairman field-check message missing');
 assert.ok(ui.includes('現地へGO‼️'), 'Chairman GO message missing');
 assert.ok(ui.includes('project.siteEnvironment = env'), 'Mission 3 answers must persist in the Campsite Project');
