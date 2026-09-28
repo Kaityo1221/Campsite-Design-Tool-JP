@@ -6,7 +6,7 @@
     src=previous(src);
 
     const style=`<style id="cmV52ExistingNewDesignTestStyle">
-      /* TEST ONLY: existing/new visual prototype. No state/save behavior yet. */
+      /* TEST ONLY: visual + local toggle state. No save behavior yet. */
       #cmCoordinateJumpPanel.cm-v52-design-test{
         width:min(360px,calc(100vw - 28px));
         padding:14px;
@@ -33,11 +33,11 @@
         box-shadow:0 0 0 3px rgba(53,167,255,.06);isolation:isolate;
       }
       .cm-v52-mode-option{
-        position:absolute;inset:0;border:0;padding:0;
+        position:absolute;inset:0;border:0;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent;
         font:950 14px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-        pointer-events:none;user-select:none;
+        user-select:none;transition:filter .16s ease,opacity .16s ease,transform .16s ease;
       }
-      .cm-v52-mode-option span{position:absolute;top:50%;transform:translateY(-50%);white-space:nowrap}
+      .cm-v52-mode-option span{position:absolute;top:50%;transform:translateY(-50%);white-space:nowrap;pointer-events:none}
       .cm-v52-mode-option.existing{
         z-index:1;background:linear-gradient(180deg,#35a7ff 0%,#168ee8 100%);color:#fff;
         clip-path:polygon(0 0,60% 0,42% 100%,0 100%);
@@ -53,6 +53,13 @@
         transform:rotate(27deg);transform-origin:center;pointer-events:none;
       }
       .cm-v52-mode-icon{font-size:11px;margin-right:2px;vertical-align:1px}
+      .cm-v52-mode-switch[data-mode="existing"] .cm-v52-mode-option.existing{filter:saturate(1.08) brightness(1);opacity:1}
+      .cm-v52-mode-switch[data-mode="existing"] .cm-v52-mode-option.new{filter:saturate(.55) brightness(1.06);opacity:.72}
+      .cm-v52-mode-switch[data-mode="new"] .cm-v52-mode-option.existing{filter:saturate(.55) brightness(1.14);opacity:.62}
+      .cm-v52-mode-switch[data-mode="new"] .cm-v52-mode-option.new{filter:saturate(1.08) brightness(.99);opacity:1}
+      .cm-v52-mode-switch[data-mode="existing"]{border-color:#4bacef;box-shadow:0 0 0 3px rgba(53,167,255,.10)}
+      .cm-v52-mode-switch[data-mode="new"]{border-color:#f29ab7;box-shadow:0 0 0 3px rgba(230,56,112,.08)}
+      .cm-v52-mode-option:active{transform:scale(.985)}
 
       @media(max-width:390px){
         #cmCoordinateJumpPanel.cm-v52-design-test .cm-coordinate-row{grid-template-columns:minmax(0,1fr) 124px}
@@ -64,6 +71,15 @@
 
     const runtime=`<script id="cmV52ExistingNewDesignTestRuntime">
 (()=>{
+  let localMode='existing';
+  function applyMode(toggle,mode){
+    localMode=mode==='new'?'new':'existing';
+    toggle.dataset.mode=localMode;
+    toggle.setAttribute('aria-label',localMode==='existing'?'既存を選択中':'新規を選択中');
+    toggle.querySelector('.existing')?.setAttribute('aria-pressed',String(localMode==='existing'));
+    toggle.querySelector('.new')?.setAttribute('aria-pressed',String(localMode==='new'));
+  }
+
   function decorate(){
     const panel=document.getElementById('cmCoordinateJumpPanel');
     if(!panel||panel.dataset.cmV52Design==='1')return;
@@ -77,9 +93,12 @@
 
     const toggle=document.createElement('div');
     toggle.className='cm-v52-mode-switch';
-    toggle.setAttribute('aria-label','既存・新規 デザイン確認用');
-    toggle.innerHTML='<div class="cm-v52-mode-option existing"><span><span class="cm-v52-mode-icon">◎</span>既存</span></div><div class="cm-v52-mode-option new"><span><span class="cm-v52-mode-icon">✦</span>新規</span></div>';
+    toggle.dataset.mode=localMode;
+    toggle.innerHTML='<button type="button" class="cm-v52-mode-option existing" aria-pressed="true"><span><span class="cm-v52-mode-icon">◎</span>既存</span></button><button type="button" class="cm-v52-mode-option new" aria-pressed="false"><span><span class="cm-v52-mode-icon">✦</span>新規</span></button>';
+    toggle.querySelector('.existing').addEventListener('click',e=>{e.preventDefault();e.stopPropagation();applyMode(toggle,'existing')});
+    toggle.querySelector('.new').addEventListener('click',e=>{e.preventDefault();e.stopPropagation();applyMode(toggle,'new')});
     row.appendChild(toggle);
+    applyMode(toggle,localMode);
   }
 
   decorate();
