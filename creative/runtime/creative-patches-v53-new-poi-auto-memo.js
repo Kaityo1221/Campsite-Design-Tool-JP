@@ -5,20 +5,19 @@
   window.applyCreativePatches=function(src){
     src=previous(src);
 
-    const marker='function cmPlace(latlng){';
-    const start=src.indexOf(marker);
-    if(start<0||src.includes('cmV53NewPoiAutoMemo'))return src;
+    const startMarker='function cmPlace(latlng){';
+    const endMarker='function cmMapClick(';
+    const start=src.indexOf(startMarker);
+    const end=start>=0?src.indexOf(endMarker,start+startMarker.length):-1;
+    if(start<0||end<0||src.includes('cmV53NewPoiAutoMemo'))return src;
 
-    const nextFunction=src.indexOf('function ',start+marker.length);
-    const end=nextFunction>=0?nextFunction:src.length;
     let body=src.slice(start,end);
-
-    const needle="memo:'',deleted:false};if(helperRadius!==50)r.customRadius=helperRadius;";
-    const replacement="memo:'',deleted:false};if(/^new-/.test(String(r.layer||''))&&!String(r.memo||'').trim())r.memo='新規ゲームスポット';if(helperRadius!==50)r.customRadius=helperRadius;";
+    const needle="memo:'',deleted:false";
+    const replacement="memo:/^new-/.test(String(layer||''))?'新規ゲームスポット':'',deleted:false";
 
     if(body.includes(needle)){
       body=body.replace(needle,replacement);
-      body=body.replace(marker,marker+'/* cmV53NewPoiAutoMemo */');
+      body=body.replace(startMarker,startMarker+'/* cmV53NewPoiAutoMemo */');
       src=src.slice(0,start)+body+src.slice(end);
     }
 
