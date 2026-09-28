@@ -99,3 +99,19 @@ test('セーブするKMZはdoc.kmlとcampsite-project.jsonを保持する', asyn
     waiting: true
   });
 });
+
+test('MISSION完了時は提出前チェックへ進める', async ({ page }) => {
+  await openAndRun(page);
+  await expect(page.getByText('🟢 準備完了！')).toBeVisible();
+
+  await page.locator('[data-go-pre-submit]').dispatchEvent('click');
+
+  await expect.poll(() => page.evaluate(() => {
+    return JSON.parse(sessionStorage.getItem('campsiteProject.v1') || 'null')?.phase || null;
+  })).toBe('pre-submit');
+  const preSubmit = await page.evaluate(() => {
+    const project = JSON.parse(sessionStorage.getItem('campsiteProject.v1') || 'null');
+    return project?.preSubmit || null;
+  });
+  expect(preSubmit?.source).toBe('campsiteProject.v1');
+});
