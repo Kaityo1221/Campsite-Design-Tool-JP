@@ -14,7 +14,7 @@
         border-radius:20px;
         overflow:hidden;
         transition:border-color .18s ease,box-shadow .18s ease;
-        bottom:calc(28px + env(safe-area-inset-bottom))!important;
+        bottom:calc(8px + env(safe-area-inset-bottom))!important;
       }
       #cmCoordinateJumpPanel.cm-v52-design-test .cm-coordinate-head{margin-bottom:8px}
       #cmCoordinateJumpPanel.cm-v52-design-test .cm-coordinate-head strong{font-size:16px;letter-spacing:.01em}
