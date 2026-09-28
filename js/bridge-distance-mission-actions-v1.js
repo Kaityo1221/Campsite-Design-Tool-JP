@@ -17,6 +17,8 @@
   }
 
   function missionReady(shell) {
+    const canonical = window.CampsiteMissionState?.getState?.();
+    if (canonical?.mission5) return canonical.mission5 === 'green';
     const finalLamp = shell?.querySelectorAll('.campsite-mission-lamp')?.[4];
     return finalLamp instanceof HTMLElement && finalLamp.dataset.state === 'green';
   }
