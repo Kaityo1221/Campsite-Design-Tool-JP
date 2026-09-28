@@ -86,10 +86,32 @@
     </style>`;
     if(!src.includes('id="cmV52ExistingNewDesignTestStyle"'))src=src.replace('</head>',style+'</head>');
 
+    // Same-scope bridge: commit the independent existing/new state into the
+    // layer that cmPlace() already stores. This preserves PokéStop/Gym/PowerSpot
+    // while changing only existing/new, so the existing list/export logic works unchanged.
+    const placeMarker='function cmPlace(latlng){';
+    if(src.includes(placeMarker)&&!src.includes('window.CampsiteCreativePlacementCommit=Object.freeze')){
+      const bridge=`window.CampsiteCreativePlacementCommit=Object.freeze({
+  applySource:(value)=>{
+    const source=value==='new'?'new':'existing';
+    const current=String(activeLayer||'');
+    let type='pokestop';
+    if(/gym/i.test(current))type='gym';
+    else if(/power/i.test(current))type='power';
+    const next=source+'-'+type;
+    activeLayer=next;
+    try{renderLayerPanel()}catch{}
+    return next;
+  },
+  getActiveLayer:()=>String(activeLayer||'')
+});
+`;
+      src=src.replace(placeMarker,bridge+placeMarker);
+    }
+
     const runtime=`<script id="cmV52ExistingNewDesignTestRuntime">
 (()=>{
-  // Phase 2/3 TEST STATE
-  // sourceType is deliberately independent from PokéStop / Gym / PowerSpot type.
+  // TEST STATE: existing/new is independent from PokéStop/Gym/PowerSpot.
   const placementState={sourceType:'existing'};
   let panelObserver=null;
 
@@ -151,6 +173,19 @@
       try{api.moveTo(parsed[0],parsed[1])}catch(err){console.error('[Creative v52] coordinate move',err);return}
     }
 
+    const commit=window.CampsiteCreativePlacementCommit;
+    if(!commit||typeof commit.applySource!=='function'){
+      if(error)error.textContent='既存・新規の登録状態を準備できませんでした';
+      return;
+    }
+    let committedLayer='';
+    try{committedLayer=commit.applySource(placementState.sourceType)}catch(err){
+      console.error('[Creative v52] placement source commit',err);
+      if(error)error.textContent='既存・新規の登録状態を反映できませんでした';
+      return;
+    }
+    if(panel)panel.dataset.committedLayer=committedLayer;
+
     const original=document.getElementById('cmSafeAddConfirm');
     if(original){
       input?.blur?.();
@@ -158,7 +193,6 @@
     }
   }
 
-  // Test API only. Save/POI type wiring comes in later phases.
   window.CampsiteCreativePlacementState=Object.freeze({
     get sourceType(){return placementState.sourceType},
     setSourceType
