@@ -1,0 +1,19 @@
+.campsite-mission-shell[data-layout-v2="true"] .campsite-advice-list,
+.campsite-mission-shell[data-layout-v2="true"] .campsite-advice-item{display:none!important}
+.campsite-mission-shell[data-layout-v2="true"] .campsite-mission-card[data-v2-hidden="true"]{display:none!important}
+.campsite-mission-shell[data-layout-v2="true"] .campsite-pair-list[data-v2-collapsed="true"]{display:none!important}
+.campsite-mission-shell[data-layout-v2="true"] .campsite-v2-toggle{width:100%;margin-top:10px;padding:10px 12px;border:1px solid rgba(148,163,184,.28);border-radius:10px;background:rgba(30,41,59,.76);color:#e2e8f0;font-size:12px;font-weight:900;cursor:pointer}
+.campsite-mission-shell[data-layout-v2="true"] .campsite-env-summary{display:grid;gap:7px;margin-bottom:10px}
+.campsite-mission-shell[data-layout-v2="true"] .campsite-env-summary-row{display:grid;grid-template-columns:1fr auto;gap:10px;padding:9px 10px;border-radius:10px;background:rgba(148,163,184,.07);font-size:12px;line-height:1.5}
+.campsite-mission-shell[data-layout-v2="true"] .campsite-env-editor[data-v2-collapsed="true"]{display:none!important}
+.campsite-mission-shell[data-layout-v2="true"] .campsite-chairman-sign{margin-top:10px!important;padding:11px 12px!important;border:1px solid rgba(245,158,11,.42)!important;border-radius:10px!important;background:rgba(245,158,11,.09)!important;color:#fde68a!important;text-align:left!important;box-shadow:none!important;transform:none!important;font-size:12px!important;font-weight:850!important;line-height:1.65!important}
+.campsite-mission-shell[data-layout-v2="true"] .campsite-v2-final-note{margin-top:10px;color:#94a3b8;font-size:11px;line-height:1.65}
+.campsite-mission-shell[data-layout-v2="true"] .campsite-goal{margin-top:12px}
+.campsite-mission-shell[data-layout-v2="true"] .campsite-goal>.campsite-mission-kicker{display:none!important}
+.campsite-mission-shell[data-layout-v2="true"] .campsite-map-card{order:0}
+body.campsite-mission-layout-v2 #campsiteDistanceCheckpoint,
+body.campsite-mission-layout-v2 .campsite-project-rework,
+body.campsite-mission-layout-v2 #distance .distance-checklist-guide{margin-top:9px!important;margin-bottom:9px!important}
+body.campsite-mission-layout-v2 #distance .distance-checklist-guide>p{font-size:12px;line-height:1.6}
+@keyframes campsiteMissionV2Focus{0%{box-shadow:0 0 0 0 rgba(125,211,252,0)}45%{box-shadow:0 0 0 4px rgba(125,211,252,.22)}100%{box-shadow:0 0 0 0 rgba(125,211,252,0)}}
+.campsite-mission-card.campsite-v2-focus{animation:campsiteMissionV2Focus .7s ease}
