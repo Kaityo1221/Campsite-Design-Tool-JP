@@ -88,6 +88,11 @@ test('MISSION 1〜5が完了し、運用のヒントと任意マップを表示�
   await expect(page.getByText('自分の拠点を理解しましょう')).toBeVisible();
   await expect(page.getByText('現地を確認しましょう')).toBeVisible();
   await expect(page.getByText('最後に確認しましょう')).toBeVisible();
+  await expect(page.getByText('📏 新規POIの距離確認')).toBeVisible();
+  await expect(page.getByText('🏕️ 拠点の密集特性')).toBeVisible();
+  await expect(page.getByText('🌳 現地環境')).toBeVisible();
+  await expect(page.getByText('✅ 最終確認')).toBeVisible();
+  await expect(page.getByText('MISSION 5')).toBeVisible();
   await expect(page.getByText('🟢 準備完了！')).toBeVisible();
 
   const states = await page.locator('.campsite-mission-lamp').evaluateAll(items => items.map(item => item.dataset.state));
@@ -141,11 +146,20 @@ test('MISSION 3を現地確認すると看板が消え、自動完了して運�
   expect(saved).toEqual({ traffic: 'narrow', plaza: true, circulation: true, waiting: false });
 });
 
-test('重複POIは赤い割り込み警告になり提出をブロックする', async ({ page }) => {
+test('重複POIは赤い割り込み警告になり、内容確認後も提出をブロックする', async ({ page }) => {
   await openDistanceProject(page, projectFixture({ duplicate: true }));
 
-  await expect(page.locator('.campsite-duplicate-alert')).toContainText('🚨 修正候補');
-  await expect(page.locator('.campsite-duplicate-alert')).toContainText('重複POI');
+  const alert = page.locator('.campsite-duplicate-alert');
+  const details = page.locator('.campsite-duplicate-details');
+  await expect(alert).toContainText('🚨 修正候補');
+  await expect(alert).toContainText('重複POI');
+  await expect(page.getByRole('button', { name: '内容を確認する' })).toBeVisible();
+  await expect(details).toBeHidden();
+  await page.getByRole('button', { name: '内容を確認する' }).click();
+  await expect(details).toBeVisible();
+  await expect(details.locator('.campsite-duplicate-pair').first()).toContainText('既存A');
+  await expect(details.locator('.campsite-duplicate-pair').first()).toContainText('新規A');
+  await expect(page.getByRole('button', { name: '内容を閉じる' })).toBeVisible();
   await expect(page.locator('.campsite-mission-lamp').nth(0)).toHaveAttribute('data-state', 'red');
   await expect(page.locator('.campsite-mission-lamp').nth(3)).toHaveAttribute('data-state', 'red');
 
