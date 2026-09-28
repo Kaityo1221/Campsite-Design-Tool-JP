@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover,user-scalable=no">
 <meta name="robots" content="noindex,nofollow,noarchive">
-<title>CREATIVE MODE | Existing/New Design Test</title>
+<title>CREATIVE MODE | Existing/New Production Mirror</title>
 <style>
 html,body{margin:0;min-height:100%;background:#17130f;color:#fff8e8;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
 #testBoot{min-height:100vh;display:grid;place-items:center;padding:24px;text-align:center;box-sizing:border-box}
@@ -13,25 +13,20 @@ html,body{margin:0;min-height:100%;background:#17130f;color:#fff8e8;font-family:
 </style>
 </head>
 <body>
-<div id="testBoot"><div><strong>🎨 CREATIVE MODE DESIGN TEST</strong><small>現行CreativeModeを複製して、既存 / 新規のデザインだけを追加しています…</small></div></div>
+<div id="testBoot"><div><strong>🎨 CREATIVE MODE TEST</strong><small>本番と同じv52実装を読み込んでいます…</small></div></div>
 <script>
 (async()=>{
   try{
     const response=await fetch('./index.html',{cache:'no-store'});
     if(!response.ok)throw new Error('index.html HTTP '+response.status);
     let html=await response.text();
-
-    const current='"creative-patches-v51-coordinate-jump.js"]';
-    const test='"creative-patches-v51-coordinate-jump.js","creative-patches-v52-existing-new-design-test.js"]';
-    if(!html.includes(current))throw new Error('Creative patch list target not found');
-    html=html.replace(current,test);
-    html=html.replace('<title>CREATIVE MODE | Campsite Lab</title>','<title>CREATIVE MODE | Existing/New Design Test</title>');
-
+    if(!html.includes('creative-patches-v52-existing-new-placement.js'))throw new Error('v52 production patch not found');
+    html=html.replace('<title>CREATIVE MODE | Campsite Lab</title>','<title>CREATIVE MODE | Existing/New Production Mirror</title>');
     document.open();
     document.write(html);
     document.close();
   }catch(error){
-    document.body.innerHTML='<div id="testBoot"><div><strong>⚠️ DESIGN TEST</strong><small>テストページを開けませんでした。<br>'+String(error&&error.message||error)+'</small></div></div>';
+    document.body.innerHTML='<div id="testBoot"><div><strong>⚠️ TEST</strong><small>テストページを開けませんでした。<br>'+String(error&&error.message||error)+'</small></div></div>';
   }
 })();
 </script>
