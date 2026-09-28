@@ -122,6 +122,25 @@ test('現地未確認なら会長看板が出て提出前へ進めない', async
   await expect(sign).toHaveClass(/campsite-mission-gate-pop/);
 });
 
+test('MISSION 3を現地確認すると看板が消え、自動完了して運用ヒントが出る', async ({ page }) => {
+  await openDistanceProject(page, projectFixture({ environment: 'missing' }));
+  await expect(page.locator('.campsite-chairman-sign')).toBeVisible();
+
+  await page.locator('[data-env-key="traffic"][data-env-value="narrow"]').dispatchEvent('click');
+  await page.locator('[data-env-key="plaza"][data-env-value="true"]').dispatchEvent('click');
+  await page.locator('[data-env-key="circulation"][data-env-value="true"]').dispatchEvent('click');
+  await page.locator('[data-env-key="waiting"][data-env-value="false"]').dispatchEvent('click');
+
+  await expect(page.locator('.campsite-chairman-sign')).toHaveCount(0);
+  await expect(page.locator('.campsite-mission-card').filter({ hasText: 'OPERATION TIPS' })).toBeVisible();
+  await expect(page.getByText('🟢 準備完了！')).toBeVisible();
+  const states = await page.locator('.campsite-mission-lamp').evaluateAll(items => items.map(item => item.dataset.state));
+  expect(states).toEqual(['green', 'green', 'green', 'green', 'green']);
+
+  const saved = await page.evaluate(() => JSON.parse(sessionStorage.getItem('campsiteProject.v1') || 'null')?.siteEnvironment || null);
+  expect(saved).toEqual({ traffic: 'narrow', plaza: true, circulation: true, waiting: false });
+});
+
 test('重複POIは赤い割り込み警告になり提出をブロックする', async ({ page }) => {
   await openDistanceProject(page, projectFixture({ duplicate: true }));
 
