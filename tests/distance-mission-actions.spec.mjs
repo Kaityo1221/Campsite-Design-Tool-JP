@@ -57,6 +57,7 @@ async function openAndRun(page) {
   await page.evaluate(async () => window.runDistanceCheck());
   await expect(page.locator('.campsite-mission-shell')).toHaveCount(1, { timeout: 12000 });
   await expect(page.locator('.campsite-mission-shell')).toHaveAttribute('data-layout-v2', 'true', { timeout: 12000 });
+  await expect(page.locator('.campsite-mission-shell')).toHaveAttribute('data-mission-state-version', '1', { timeout: 12000 });
 }
 
 async function openMission4Map(page) {
@@ -80,6 +81,7 @@ test('MISSION 5内にセーブ・修正・提出前チェックの3導線を集�
   await expect(finalCard.locator('[data-v2-rework]')).toContainText('✏️ CREATIVE MODEに戻って修正');
   await expect(finalCard.locator('[data-v2-submit]')).toContainText('提出前チェックへ進む');
   await expect(finalCard.locator('[data-v2-submit]')).toBeDisabled();
+  await expect(page.getByText('⚪ 準備中')).toBeVisible();
 
   await openMission4Map(page);
   await expect(page.getByText('🟢 準備完了！')).toBeVisible();
@@ -111,7 +113,7 @@ test('MISSION 5のセーブするKMZはdoc.kmlとcampsite-project.jsonを保持�
 
 test('MISSION 4確認後はMISSION 5から提出前チェックへ進める', async ({ page }) => {
   await openAndRun(page);
-  await expect(page.getByText('🟡 確認が残っています')).toBeVisible();
+  await expect(page.getByText('⚪ 準備中')).toBeVisible();
   await openMission4Map(page);
   await expect(page.getByText('🟢 準備完了！')).toBeVisible();
 
