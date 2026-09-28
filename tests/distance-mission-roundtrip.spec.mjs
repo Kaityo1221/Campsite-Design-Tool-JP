@@ -87,11 +87,15 @@ async function runDistance(page) {
   await waitForDistance(page);
   await page.evaluate(async () => window.runDistanceCheck());
   await expect(page.locator('.campsite-mission-shell')).toHaveCount(1, { timeout: 12000 });
+  await expect(page.locator('.campsite-mission-shell')).toHaveAttribute('data-layout-v2', 'true', { timeout: 12000 });
   await expect(page.locator('.campsite-mission-shell')).toHaveAttribute('data-mission-state-version', '1', { timeout: 12000 });
 }
 
 async function openMission4(page) {
+  const legacy = page.locator('#distanceResult > .campsite-mission-legacy');
+  await expect(legacy).not.toHaveAttribute('data-map-open', 'true');
   await page.locator('[data-mission-map]').dispatchEvent('click');
+  await expect(legacy).toHaveAttribute('data-map-open', 'true');
   await expect(page.locator('.campsite-mission-lamp').nth(3)).toHaveAttribute('data-state', 'green');
   await expect(page.locator('[data-v2-submit]')).toBeEnabled();
 }
@@ -169,6 +173,7 @@ test('CREATIVE往復で実編集→stale→再チェック→セーブ→提出�
 
   await page.evaluate(async () => window.runDistanceCheck());
   await expect(page.locator('.campsite-mission-shell')).toHaveCount(1, { timeout: 12000 });
+  await expect(page.locator('.campsite-mission-shell')).toHaveAttribute('data-layout-v2', 'true', { timeout: 12000 });
   await expect.poll(() => page.evaluate(() => JSON.parse(sessionStorage.getItem('campsiteProject.v1') || 'null')?.distanceResult?.stale)).toBe(false);
   await expect(page.locator('.campsite-mission-lamp').nth(3)).toHaveAttribute('data-state', 'gray');
   await openMission4(page);
@@ -205,6 +210,7 @@ test('BridgeのPOWER_SPOTをCREATIVEのPowerSpotレイヤーへ受け入れ、�
   expect(normalized.currentPois[0].gameEntity).toBe('POWERSPOT');
   expect(normalized.selectedPois[0].gameEntity).toBe('POWERSPOT');
 
+  await page.getByRole('button', { name: /レイヤー/ }).click();
   const powerRow = page.locator('.layer-row').filter({ hasText: '既存 PowerSpot' }).first();
   await expect(powerRow).toBeVisible();
   const toggle = powerRow.locator('input[type="checkbox"]');
