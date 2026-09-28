@@ -73,7 +73,8 @@ async function installRoutes(page) {
 
 async function seed(page, project) {
   await page.addInitScript(value => {
-    sessionStorage.setItem('campsiteProject.v1', JSON.stringify(value));
+    const key = 'campsiteProject.v1';
+    if (!sessionStorage.getItem(key)) sessionStorage.setItem(key, JSON.stringify(value));
   }, project);
 }
 
@@ -215,16 +216,17 @@ test('BridgeのPOWER_SPOTをCREATIVEのPowerSpotレイヤーへ受け入れ、�
   expect(normalized.currentPois[0].gameEntity).toBe('POWERSPOT');
   expect(normalized.selectedPois[0].gameEntity).toBe('POWERSPOT');
 
-  await page.getByRole('button', { name: /レイヤー/ }).click();
+  const layerToggle = page.getByRole('button', { name: /レイヤー/ });
+  await layerToggle.click();
   const powerRow = page.locator('.layer-row').filter({ hasText: '既存 PowerSpot' }).first();
   await expect(powerRow).toBeVisible();
-  await expect(powerRow).toHaveAttribute('aria-pressed', 'true');
-  await openPoi(page, 'Bridge PowerSpot');
-
-  await powerRow.click();
-  await expect(powerRow).toHaveAttribute('aria-pressed', 'false');
-  await powerRow.click();
-  await expect(powerRow).toHaveAttribute('aria-pressed', 'true');
+  const powerButton = powerRow.locator('button').first();
+  await expect(powerButton).toHaveAttribute('aria-pressed', 'true');
+  await powerButton.click();
+  await expect(powerButton).toHaveAttribute('aria-pressed', 'false');
+  await powerButton.click();
+  await expect(powerButton).toHaveAttribute('aria-pressed', 'true');
+  await layerToggle.click();
   await openPoi(page, 'Bridge PowerSpot');
 
   const backgroundImage = async () => page.locator('.entry').evaluate(el => getComputedStyle(el).backgroundImage);
