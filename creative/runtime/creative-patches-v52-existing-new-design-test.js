@@ -6,7 +6,7 @@
     src=previous(src);
 
     const style=`<style id="cmV52ExistingNewDesignTestStyle">
-      /* TEST ONLY: visual + local toggle state. No save behavior yet. */
+      /* TEST ONLY: visual + independent existing/new placement state. No save behavior yet. */
       #cmCoordinateJumpPanel.cm-v52-design-test{
         width:min(360px,calc(100vw - 28px));
         padding:14px;
@@ -71,34 +71,63 @@
 
     const runtime=`<script id="cmV52ExistingNewDesignTestRuntime">
 (()=>{
-  let localMode='existing';
-  function applyMode(toggle,mode){
-    localMode=mode==='new'?'new':'existing';
-    toggle.dataset.mode=localMode;
-    toggle.setAttribute('aria-label',localMode==='existing'?'既存を選択中':'新規を選択中');
-    toggle.querySelector('.existing')?.setAttribute('aria-pressed',String(localMode==='existing'));
-    toggle.querySelector('.new')?.setAttribute('aria-pressed',String(localMode==='new'));
+  // Phase 2/3 TEST STATE
+  // sourceType is deliberately independent from PokéStop / Gym / PowerSpot type.
+  const placementState={sourceType:'existing'};
+
+  function normalizeSourceType(value){return value==='new'?'new':'existing'}
+  function emitSourceChange(){
+    try{
+      window.dispatchEvent(new CustomEvent('campsite:placement-source-change',{detail:{sourceType:placementState.sourceType}}));
+    }catch{}
   }
+  function syncVisibleToggle(){
+    const toggle=document.querySelector('.cm-v52-mode-switch');
+    if(!toggle)return;
+    toggle.dataset.mode=placementState.sourceType;
+    toggle.setAttribute('aria-label',placementState.sourceType==='existing'?'既存を選択中':'新規を選択中');
+    toggle.querySelector('.existing')?.setAttribute('aria-pressed',String(placementState.sourceType==='existing'));
+    toggle.querySelector('.new')?.setAttribute('aria-pressed',String(placementState.sourceType==='new'));
+    const panel=document.getElementById('cmCoordinateJumpPanel');
+    if(panel)panel.dataset.placementSource=placementState.sourceType;
+  }
+  function setSourceType(value){
+    const next=normalizeSourceType(value);
+    if(placementState.sourceType===next){syncVisibleToggle();return next}
+    placementState.sourceType=next;
+    syncVisibleToggle();
+    emitSourceChange();
+    return next;
+  }
+
+  // Test API only. Save/POI type wiring comes in later phases.
+  window.CampsiteCreativePlacementState=Object.freeze({
+    get sourceType(){return placementState.sourceType},
+    setSourceType
+  });
 
   function decorate(){
     const panel=document.getElementById('cmCoordinateJumpPanel');
-    if(!panel||panel.dataset.cmV52Design==='1')return;
+    if(!panel)return;
     const row=panel.querySelector('.cm-coordinate-row');
     if(!row)return;
-    panel.dataset.cmV52Design='1';
-    panel.classList.add('cm-v52-design-test');
 
-    const apply=panel.querySelector('#cmCoordinateApply');
-    if(apply)apply.hidden=true;
+    if(panel.dataset.cmV52Design!=='1'){
+      panel.dataset.cmV52Design='1';
+      panel.classList.add('cm-v52-design-test');
 
-    const toggle=document.createElement('div');
-    toggle.className='cm-v52-mode-switch';
-    toggle.dataset.mode=localMode;
-    toggle.innerHTML='<button type="button" class="cm-v52-mode-option existing" aria-pressed="true"><span><span class="cm-v52-mode-icon">◎</span>既存</span></button><button type="button" class="cm-v52-mode-option new" aria-pressed="false"><span><span class="cm-v52-mode-icon">✦</span>新規</span></button>';
-    toggle.querySelector('.existing').addEventListener('click',e=>{e.preventDefault();e.stopPropagation();applyMode(toggle,'existing')});
-    toggle.querySelector('.new').addEventListener('click',e=>{e.preventDefault();e.stopPropagation();applyMode(toggle,'new')});
-    row.appendChild(toggle);
-    applyMode(toggle,localMode);
+      const apply=panel.querySelector('#cmCoordinateApply');
+      if(apply)apply.hidden=true;
+
+      const toggle=document.createElement('div');
+      toggle.className='cm-v52-mode-switch';
+      toggle.innerHTML='<button type="button" class="cm-v52-mode-option existing" aria-pressed="true"><span><span class="cm-v52-mode-icon">◎</span>既存</span></button><button type="button" class="cm-v52-mode-option new" aria-pressed="false"><span><span class="cm-v52-mode-icon">✦</span>新規</span></button>';
+      toggle.querySelector('.existing').addEventListener('click',e=>{e.preventDefault();e.stopPropagation();setSourceType('existing')});
+      toggle.querySelector('.new').addEventListener('click',e=>{e.preventDefault();e.stopPropagation();setSourceType('new')});
+      row.appendChild(toggle);
+    }
+
+    syncVisibleToggle();
   }
 
   decorate();
