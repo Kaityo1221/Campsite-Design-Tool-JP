@@ -20,7 +20,7 @@ LAB固有のDOM ID、class、storage key、event、global variable、script名�
 
 ## Current phase
 
-Phase 4-C2: Phase 4-C1のData Layer / State Engine / Renderer分離を維持した、LAB専用Coloring Engineの最小実証。
+Phase 4-C3: Phase 4-C2のData Layer / State Engine / Coloring Engine / Renderer分離を維持した、複数Active entity混在時のState優先順位実証。
 
 ```text
 Fixture (6 POIs)
@@ -31,19 +31,34 @@ Fixture (6 POIs)
   -> Leaflet 1.9.4
 ```
 
-- Fixtureの正常POIは`sourceGameObjects`を持つ。
-- Data Layerは不正座標2件とGUID重複1件を除外し、`sourceGameObjects`を解釈せず保持した正規化済み3件を返す。
-- State EngineはData Layer出力だけを受け取り、`ACTIVE`かつ対応entity、かつ`HOLOHOLO`または空/absent brandのデータだけを分類する。
-- 複数の対応active entityは`GYM > POKESTOP > POWERSPOT`の優先順位で分類し、安全に分類できないデータは`UNKNOWN`とする。
-- Coloring EngineはState Engine出力だけを受け取り、Stateを再判定せずMarker表示情報へ変換する。
-- POKESTOPは青、GYMは赤、POWERSPOTは紫。UNKNOWNはLAB fail-safeとして既存グレーを維持する。
-- RendererはColoring Engine出力だけを受け取り、検証・State判定・State別色判定を行わない。
-- Markerの形状と大きさはPhase 4-C1と同じCircleMarker / radius 8を維持する。
-- Pan / Zoom / resize後もLeafletの`getLatLng()`とData Layer座標の一致を画面で確認できる。
+- Raw 6件、不正座標2件、GUID重複1件、Data Layer出力3件を維持する。
+- `poi-a` は `POWERSPOT + POKESTOP` の複数Active entityを持ち、優先順位により `POKESTOP` となる。
+- `poi-b` は `POWERSPOT + POKESTOP + GYM` の複数Active entityを持ち、優先順位により `GYM` となる。
+- `poi-c` は `POWERSPOT` のみを持ち、`POWERSPOT` となる。
+- State Engineの優先順位 `GYM > POKESTOP > POWERSPOT` 自体はPhase 4-C1実装から変更しない。
+- Coloring Engineの色仕様はPhase 4-C2のまま、POKESTOP=青、GYM=赤、POWERSPOT=紫を維持する。
+- RendererはState判定・State別色判定を行わず、Diagnostics用に入力の`sourceGameObjects`を透過的に返すだけとする。
+- Pan / Zoom / resize後もLeafletの`getLatLng()`とData Layer座標の一致を維持する。
 - 再描画はRenderer専用LayerGroupだけをclearし、Map本体を再初期化しない。
+
+期待結果:
+
+```text
+Raw: 6
+Invalid: 2
+Duplicate: 1
+Data Layer: 3
+POKESTOP: 1
+GYM: 1
+POWERSPOT: 1
+UNKNOWN: 0
+Rendered: 3
+```
 
 このPhaseでは以下を扱わない。
 
+- State Engineの判定ロジック変更
+- Coloring Engineの色仕様変更
 - `NOT_IN_GAME` / `INACTIVE_POWERSPOT`
 - UNKNOWN / NOT_IN_GAMEの非表示処理
 - live Wayfarer通信、XHR / fetch監視

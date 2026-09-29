@@ -7,6 +7,7 @@
       lat: 35.7148,
       lng: 139.7731,
       sourceGameObjects: Object.freeze([
+        Object.freeze({ entity: 'POWERSPOT', status: 'ACTIVE', gameBrand: '' }),
         Object.freeze({ entity: 'POKESTOP', status: 'ACTIVE', gameBrand: 'HOLOHOLO' })
       ])
     }),
@@ -15,6 +16,8 @@
       lat: 35.71515,
       lng: 139.77355,
       sourceGameObjects: Object.freeze([
+        Object.freeze({ entity: 'POWERSPOT', status: 'ACTIVE', gameBrand: '' }),
+        Object.freeze({ entity: 'POKESTOP', status: 'ACTIVE', gameBrand: 'HOLOHOLO' }),
         Object.freeze({ entity: 'GYM', status: 'ACTIVE', gameBrand: 'HOLOHOLO' })
       ])
     }),

@@ -32,6 +32,7 @@
         return renderedMarkers.map(({ poi, marker }) => ({
           guid: poi.guid,
           state: poi.state,
+          sourceGameObjects: poi.sourceGameObjects,
           fillColor: marker.options.fillColor,
           dataLayerLat: poi.lat,
           dataLayerLng: poi.lng,
