@@ -20,47 +20,88 @@ LAB固有のDOM ID、class、storage key、event、global variable、script名�
 
 ## Current phase
 
-Phase 4-C3: Phase 4-C2のData Layer / State Engine / Coloring Engine / Renderer分離を維持した、複数Active entity混在時のState優先順位実証。
+Phase 4-D1: Gate Cで確定したData Layer / State Engine / Coloring Engine / Renderer分離を維持したまま、Reference分類だけを追加する。
 
 ```text
-Fixture (6 POIs)
+Fixture (9 POIs)
   -> LAB Data Layer (validation -> valid GUID first-wins dedupe -> normalization)
-  -> LAB State Engine (POKESTOP / GYM / POWERSPOT / UNKNOWN)
-  -> LAB Coloring Engine (State -> Marker表示情報)
+  -> LAB State Engine (active State + Reference Kind classification)
+  -> LAB Coloring Engine (既存State -> Marker表示情報。D1では表示ルール変更なし)
   -> Map Renderer (LAB専用LayerGroup + CircleMarker)
   -> Leaflet 1.9.4
 ```
 
-- Raw 6件、不正座標2件、GUID重複1件、Data Layer出力3件を維持する。
-- `poi-a` は `POWERSPOT + POKESTOP` の複数Active entityを持ち、優先順位により `POKESTOP` となる。
-- `poi-b` は `POWERSPOT + POKESTOP + GYM` の複数Active entityを持ち、優先順位により `GYM` となる。
-- `poi-c` は `POWERSPOT` のみを持ち、`POWERSPOT` となる。
-- State Engineの優先順位 `GYM > POKESTOP > POWERSPOT` 自体はPhase 4-C1実装から変更しない。
-- Coloring Engineの色仕様はPhase 4-C2のまま、POKESTOP=青、GYM=赤、POWERSPOT=紫を維持する。
-- RendererはState判定・State別色判定を行わず、Diagnostics用に入力の`sourceGameObjects`を透過的に返すだけとする。
+State Engineの分類:
+
+```text
+ACTIVE POKESTOP
+  -> state=POKESTOP
+  -> referenceKind=null
+
+ACTIVE GYM
+  -> state=GYM
+  -> referenceKind=null
+
+ACTIVE POWERSPOT
+  -> state=POWERSPOT
+  -> referenceKind=null
+
+Inactive Power Spot
+  -> state=NOT_IN_GAME
+  -> referenceKind=INACTIVE_POWERSPOT
+
+Other safely classifiable non-active POI
+  -> state=NOT_IN_GAME
+  -> referenceKind=NOT_IN_GAME
+
+Malformed / ambiguous metadata
+  -> state=UNKNOWN
+  -> referenceKind=null
+```
+
+重要:
+
+- `INACTIVE_POWERSPOT`は新しい`state`ではなくReference subtypeとして扱う。
+- `UNKNOWN != NOT_IN_GAME`を維持する。
+- Active entity判定を先に行い、優先順位`GYM > POKESTOP > POWERSPOT`を維持する。
+- D1ではColoring Engineの色仕様を変更しない。
+- D1では`NOT_IN_GAME` / `UNKNOWN`をまだ非表示にしない。既存fallback表示のまま分類結果だけを検証する。
+- RendererはReference分類を行わない。
 - Pan / Zoom / resize後もLeafletの`getLatLng()`とData Layer座標の一致を維持する。
 - 再描画はRenderer専用LayerGroupだけをclearし、Map本体を再初期化しない。
+
+Fixture:
+
+- `poi-a`: `POWERSPOT ACTIVE + POKESTOP ACTIVE` -> `POKESTOP`
+- `poi-b`: `POWERSPOT ACTIVE + POKESTOP ACTIVE + GYM ACTIVE` -> `GYM`
+- `poi-c`: `POWERSPOT ACTIVE` -> `POWERSPOT`
+- `poi-d`: `POWERSPOT INACTIVE` -> `NOT_IN_GAME / INACTIVE_POWERSPOT`
+- `poi-e`: game objectなし -> `NOT_IN_GAME / NOT_IN_GAME`
+- `poi-f`: `sourceGameObjects`なし -> `UNKNOWN / null`
 
 期待結果:
 
 ```text
-Raw: 6
+Raw: 9
 Invalid: 2
 Duplicate: 1
-Data Layer: 3
+Data Layer: 6
 POKESTOP: 1
 GYM: 1
 POWERSPOT: 1
-UNKNOWN: 0
-Rendered: 3
+NOT_IN_GAME: 2
+UNKNOWN: 1
+Reference NOT_IN_GAME: 1
+Reference INACTIVE_POWERSPOT: 1
+Rendered: 6
 ```
 
 このPhaseでは以下を扱わない。
 
-- State Engineの判定ロジック変更
-- Coloring Engineの色仕様変更
-- `NOT_IN_GAME` / `INACTIVE_POWERSPOT`
-- UNKNOWN / NOT_IN_GAMEの非表示処理
+- `INACTIVE_POWERSPOT`の薄い紫表示
+- `NOT_IN_GAME`の非表示
+- `UNKNOWN`の非表示
+- Active / Reference / Unknownの混在優先テスト
 - live Wayfarer通信、XHR / fetch監視
 - Bridge通信、WFMM連携
 - storage / 50m / S2 / Candidate
