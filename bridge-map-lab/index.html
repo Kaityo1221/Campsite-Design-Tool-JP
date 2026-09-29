@@ -5,30 +5,323 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="robots" content="noindex,nofollow,noarchive">
   <title>Campsite Bridge Map LAB</title>
+  <script>
+    window.bridgeMapLab_leafletLoadFailed = false;
+    window.bridgeMapLab_markLeafletLoadFailure = function () {
+      window.bridgeMapLab_leafletLoadFailed = true;
+    };
+  </script>
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+    onerror="bridgeMapLab_markLeafletLoadFailure()"
+  >
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+    defer
+    onerror="bridgeMapLab_markLeafletLoadFailure()"
+  ></script>
   <style>
-    :root{color-scheme:dark}
-    *{box-sizing:border-box}
-    html,body{margin:0;min-height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0b1220;color:#e5eefc}
-    body{display:grid;place-items:center;padding:24px}
-    main{width:min(720px,100%);padding:28px;border:1px solid #334155;border-radius:20px;background:#111827;box-shadow:0 24px 80px rgba(0,0,0,.35)}
-    .badge{display:inline-flex;align-items:center;gap:8px;padding:7px 11px;border-radius:999px;background:#7f1d1d;color:#fee2e2;font-size:12px;font-weight:800;letter-spacing:.08em}
-    h1{margin:16px 0 8px;font-size:clamp(28px,7vw,46px);line-height:1.05}
-    p{margin:0;color:#b8c5d9;line-height:1.8}
-    .status{margin-top:24px;padding:16px;border:1px solid #334155;border-radius:14px;background:#0f172a}
-    .status strong{display:block;margin-bottom:6px;color:#dbeafe}
-    code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:#bfdbfe}
+    :root {
+      color-scheme: dark;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0b1118;
+      color: #e8edf3;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      min-height: 100%;
+      margin: 0;
+    }
+
+    body {
+      background: #0b1118;
+    }
+
+    .campsiteLab_shell {
+      width: min(1080px, 100%);
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .campsiteLab_header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 18px;
+    }
+
+    .campsiteLab_eyebrow {
+      margin: 0 0 6px;
+      color: #ff9f7a;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .08em;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 28px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+
+    .campsiteLab_phase {
+      margin: 0;
+      color: #aeb9c6;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .campsiteLab_mapFrame {
+      overflow: hidden;
+      border: 1px solid #34404d;
+      border-radius: 8px;
+      background: #17212b;
+    }
+
+    #campsiteLab_map {
+      width: 100%;
+      height: clamp(360px, 62vh, 620px);
+      background: #dce3e8;
+    }
+
+    .campsiteLab_info {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      border-top: 1px solid #34404d;
+      background: #111922;
+    }
+
+    .campsiteLab_metric {
+      min-width: 0;
+      padding: 14px 16px;
+    }
+
+    .campsiteLab_metric + .campsiteLab_metric {
+      border-left: 1px solid #34404d;
+    }
+
+    .campsiteLab_label {
+      display: block;
+      margin-bottom: 5px;
+      color: #8f9ba8;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .04em;
+    }
+
+    .campsiteLab_value {
+      display: block;
+      overflow-wrap: anywhere;
+      color: #edf3f8;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    #campsiteLab_anchorStatus[data-stable="true"] {
+      color: #78d6a0;
+    }
+
+    #campsiteLab_anchorStatus[data-stable="false"] {
+      color: #ff8b7b;
+    }
+
+    .campsiteLab_error {
+      margin: 0 0 14px;
+      padding: 12px 14px;
+      border: 1px solid #8d3f39;
+      border-radius: 6px;
+      background: #351b1b;
+      color: #ffd2cc;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .campsiteLab_error[hidden] {
+      display: none;
+    }
+
+    .leaflet-container {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .leaflet-control-attribution {
+      color: #394450;
+      font-size: 10px;
+    }
+
+    @media (max-width: 680px) {
+      .campsiteLab_shell {
+        padding: 16px;
+      }
+
+      .campsiteLab_header {
+        display: block;
+      }
+
+      h1 {
+        font-size: 24px;
+      }
+
+      .campsiteLab_phase {
+        margin-top: 8px;
+      }
+
+      #campsiteLab_map {
+        height: min(58vh, 520px);
+        min-height: 340px;
+      }
+
+      .campsiteLab_info {
+        grid-template-columns: 1fr;
+      }
+
+      .campsiteLab_metric + .campsiteLab_metric {
+        border-top: 1px solid #34404d;
+        border-left: 0;
+      }
+    }
   </style>
 </head>
 <body>
-  <main>
-    <span class="badge">LAB ONLY</span>
-    <h1>Campsite Bridge Map LAB</h1>
-    <p>次世代Campsite Bridgeの実験専用ページです。本番Creative Modeとは分離されています。</p>
-    <div class="status">
-      <strong>Phase 2: LAB shell</strong>
-      <p>Map、Bridge通信、WFMM連携、localStorage、XHR / fetch監視はまだ実装していません。</p>
-      <p>Branch: <code>bridge-map-lab</code></p>
-    </div>
+  <main class="campsiteLab_shell">
+    <header class="campsiteLab_header">
+      <div>
+        <p class="campsiteLab_eyebrow">LAB ONLY</p>
+        <h1>Geographic anchor proof</h1>
+      </div>
+      <p class="campsiteLab_phase">Phase 4-A / Leaflet 1.9.4</p>
+    </header>
+
+    <p id="campsiteLab_error" class="campsiteLab_error" role="alert" hidden></p>
+
+    <section class="campsiteLab_mapFrame" aria-label="固定座標マーカー検証">
+      <div id="campsiteLab_map" aria-label="Leaflet検証地図"></div>
+      <div class="campsiteLab_info" aria-live="polite">
+        <div class="campsiteLab_metric">
+          <span class="campsiteLab_label">LAB CONSTANT [lat, lng]</span>
+          <span id="campsiteLab_constantCoordinates" class="campsiteLab_value">35.714800, 139.773100</span>
+        </div>
+        <div class="campsiteLab_metric">
+          <span class="campsiteLab_label">MARKER getLatLng()</span>
+          <span id="campsiteLab_markerCoordinates" class="campsiteLab_value">初期化待機中</span>
+        </div>
+        <div class="campsiteLab_metric">
+          <span class="campsiteLab_label">ANCHOR / ZOOM</span>
+          <span id="campsiteLab_anchorStatus" class="campsiteLab_value">確認待機中</span>
+        </div>
+      </div>
+    </section>
   </main>
+
+  <script>
+    (() => {
+      'use strict';
+
+      const bridgeMapLab_anchor = Object.freeze({ lat: 35.7148, lng: 139.7731 });
+      const bridgeMapLab_state = {
+        map: null,
+        circleMarker: null,
+        resizeFrame: null
+      };
+
+      window.bridgeMapLab_state = bridgeMapLab_state;
+
+      function bridgeMapLab_showError(message) {
+        const errorElement = document.getElementById('campsiteLab_error');
+        errorElement.textContent = message;
+        errorElement.hidden = false;
+      }
+
+      function bridgeMapLab_updateDiagnostics() {
+        if (!bridgeMapLab_state.map || !bridgeMapLab_state.circleMarker) return;
+
+        const markerLatLng = bridgeMapLab_state.circleMarker.getLatLng();
+        const isStable = markerLatLng.lat === bridgeMapLab_anchor.lat
+          && markerLatLng.lng === bridgeMapLab_anchor.lng;
+        const coordinatesElement = document.getElementById('campsiteLab_markerCoordinates');
+        const statusElement = document.getElementById('campsiteLab_anchorStatus');
+
+        coordinatesElement.textContent = `${markerLatLng.lat.toFixed(6)}, ${markerLatLng.lng.toFixed(6)}`;
+        statusElement.dataset.stable = String(isStable);
+        statusElement.textContent = `${isStable ? '固定を確認' : '座標変化を検出'} / zoom ${bridgeMapLab_state.map.getZoom()}`;
+      }
+
+      function bridgeMapLab_invalidateMapSize() {
+        if (!bridgeMapLab_state.map) return;
+
+        if (bridgeMapLab_state.resizeFrame !== null) {
+          cancelAnimationFrame(bridgeMapLab_state.resizeFrame);
+        }
+
+        bridgeMapLab_state.resizeFrame = requestAnimationFrame(() => {
+          bridgeMapLab_state.resizeFrame = null;
+          bridgeMapLab_state.map.invalidateSize({ pan: false, animate: false });
+          bridgeMapLab_updateDiagnostics();
+        });
+      }
+
+      function bridgeMapLab_initialize() {
+        if (window.bridgeMapLab_leafletLoadFailed || !window.L || typeof window.L.map !== 'function') {
+          bridgeMapLab_showError('Leaflet 1.9.4を読み込めませんでした。ネットワーク接続を確認して再読み込みしてください。');
+          return;
+        }
+
+        if (bridgeMapLab_state.map) {
+          bridgeMapLab_state.map.remove();
+          bridgeMapLab_state.map = null;
+          bridgeMapLab_state.circleMarker = null;
+        }
+
+        bridgeMapLab_state.map = L.map('campsiteLab_map', {
+          attributionControl: true,
+          zoomControl: true,
+          zoomAnimation: false,
+          fadeAnimation: false,
+          markerZoomAnimation: false,
+          inertia: false
+        }).setView([bridgeMapLab_anchor.lat, bridgeMapLab_anchor.lng], 17, { animate: false });
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(bridgeMapLab_state.map);
+
+        bridgeMapLab_state.circleMarker = L.circleMarker(
+          [bridgeMapLab_anchor.lat, bridgeMapLab_anchor.lng],
+          {
+            radius: 9,
+            color: '#ffffff',
+            weight: 3,
+            fillColor: '#e74335',
+            fillOpacity: 1,
+            interactive: false
+          }
+        ).addTo(bridgeMapLab_state.map);
+
+        bridgeMapLab_state.map.on('moveend zoomend', bridgeMapLab_updateDiagnostics);
+        bridgeMapLab_updateDiagnostics();
+      }
+
+      window.addEventListener('resize', bridgeMapLab_invalidateMapSize, { passive: true });
+      window.addEventListener('orientationchange', bridgeMapLab_invalidateMapSize, { passive: true });
+      window.addEventListener('pageshow', (event) => {
+        if (event.persisted) bridgeMapLab_invalidateMapSize();
+      });
+      document.addEventListener('DOMContentLoaded', bridgeMapLab_initialize, { once: true });
+    })();
+  </script>
 </body>
 </html>

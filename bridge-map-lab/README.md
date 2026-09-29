@@ -20,11 +20,14 @@ LAB固有のDOM ID、class、storage key、event、global variable、script名�
 
 ## Current phase
 
-Phase 2: LAB shell only.
+Phase 4-A: Leaflet 1.9.4 single-marker geographic anchor proof.
+
+- LAB定数 `[35.7148, 139.7731]` に `L.circleMarker` を1個だけ表示する。
+- Pan / Zoom / resize後も `getLatLng()` がLAB定数と一致することを画面上で確認する。
+- OpenStreetMap tileとattributionを表示する。
 
 まだ以下は未実装。
 
-- Map Engine
 - Bridge Data Layer
 - State / Coloring Engine
 - Not in game filter
