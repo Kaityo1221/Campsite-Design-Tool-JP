@@ -25,11 +25,11 @@
     defer
     onerror="bridgeMapLab_markLeafletLoadFailure()"
   ></script>
-  <script src="fixture.js?v=4d1-bf73906" defer></script>
-  <script src="data-layer.js?v=4d1-bf73906" defer></script>
-  <script src="state-engine.js?v=4d1-bf73906" defer></script>
-  <script src="coloring-engine.js?v=4d1-bf73906" defer></script>
-  <script src="map-renderer.js?v=4d1-bf73906" defer></script>
+  <script src="fixture.js?v=4d2" defer></script>
+  <script src="data-layer.js?v=4d2" defer></script>
+  <script src="state-engine.js?v=4d2" defer></script>
+  <script src="coloring-engine.js?v=4d2" defer></script>
+  <script src="map-renderer.js?v=4d2" defer></script>
   <style>
     :root {
       color-scheme: dark;
@@ -183,6 +183,10 @@
       color: #78d6a0;
     }
 
+    .campsiteLab_hiddenDecision {
+      color: #8f9ba8;
+    }
+
     .campsiteLab_error {
       margin: 0 0 14px;
       padding: 12px 14px;
@@ -252,14 +256,14 @@
     <header class="campsiteLab_header">
       <div>
         <p class="campsiteLab_eyebrow">LAB ONLY</p>
-        <h1>Reference State classification proof</h1>
+        <h1>Reference display policy proof</h1>
       </div>
-      <p class="campsiteLab_phase">Phase 4-D1 / Leaflet 1.9.4</p>
+      <p class="campsiteLab_phase">Phase 4-D2 / Leaflet 1.9.4</p>
     </header>
 
     <p id="campsiteLab_error" class="campsiteLab_error" role="alert" hidden></p>
 
-    <section class="campsiteLab_mapFrame" aria-label="Reference State分類とRenderer分離検証">
+    <section class="campsiteLab_mapFrame" aria-label="Reference表示ルールとRenderer分離検証">
       <div id="campsiteLab_map" aria-label="Leaflet検証地図"></div>
       <div class="campsiteLab_info" aria-live="polite">
         <div class="campsiteLab_metric">
@@ -307,6 +311,14 @@
           <span id="campsiteLab_unknownCount" class="campsiteLab_value">UNKNOWN: -</span>
         </div>
         <div class="campsiteLab_metric">
+          <span class="campsiteLab_label">DISPLAY</span>
+          <span id="campsiteLab_visibleCount" class="campsiteLab_value">Visible: -</span>
+        </div>
+        <div class="campsiteLab_metric">
+          <span class="campsiteLab_label">DISPLAY</span>
+          <span id="campsiteLab_hiddenCount" class="campsiteLab_value">Hidden: -</span>
+        </div>
+        <div class="campsiteLab_metric">
           <span class="campsiteLab_label">RENDERED MARKERS</span>
           <span id="campsiteLab_renderedCount" class="campsiteLab_value">Rendered: -</span>
         </div>
@@ -316,7 +328,7 @@
         </div>
       </div>
       <div class="campsiteLab_diagnostics">
-        <h2>Reference state diagnostics</h2>
+        <h2>Display policy diagnostics</h2>
         <div class="campsiteLab_tableWrap">
           <table>
             <thead>
@@ -325,12 +337,14 @@
                 <th scope="col">Source game objects</th>
                 <th scope="col">Final State</th>
                 <th scope="col">Reference Kind</th>
+                <th scope="col">Display</th>
+                <th scope="col">Fill</th>
                 <th scope="col">Data Layer lat/lng</th>
                 <th scope="col">Leaflet getLatLng()</th>
               </tr>
             </thead>
             <tbody id="campsiteLab_markerDiagnostics">
-              <tr><td colspan="6">初期化待機中</td></tr>
+              <tr><td colspan="8">初期化待機中</td></tr>
             </tbody>
           </table>
         </div>
@@ -371,6 +385,7 @@
         const counts = bridgeMapLab_state.dataLayerResult.counts;
         const stateCounts = bridgeMapLab_state.stateLayerResult.counts;
         const referenceCounts = bridgeMapLab_state.stateLayerResult.referenceCounts;
+        const displayCounts = bridgeMapLab_state.colorLayerResult.counts;
         document.getElementById('campsiteLab_rawCount').textContent = `Raw: ${counts.raw}`;
         document.getElementById('campsiteLab_invalidCount').textContent = `Invalid: ${counts.invalid}`;
         document.getElementById('campsiteLab_duplicateCount').textContent = `Duplicate: ${counts.duplicate}`;
@@ -382,41 +397,61 @@
         document.getElementById('campsiteLab_notInGameReferenceCount').textContent = `NOT_IN_GAME: ${referenceCounts.NOT_IN_GAME}`;
         document.getElementById('campsiteLab_inactivePowerSpotCount').textContent = `INACTIVE_POWERSPOT: ${referenceCounts.INACTIVE_POWERSPOT}`;
         document.getElementById('campsiteLab_unknownCount').textContent = `UNKNOWN: ${stateCounts.UNKNOWN}`;
+        document.getElementById('campsiteLab_visibleCount').textContent = `Visible: ${displayCounts.visible}`;
+        document.getElementById('campsiteLab_hiddenCount').textContent = `Hidden: ${displayCounts.hidden}`;
         document.getElementById('campsiteLab_renderedCount').textContent = `Rendered: ${bridgeMapLab_state.renderedCount}`;
         document.getElementById('campsiteLab_currentZoom').textContent = `Zoom: ${bridgeMapLab_state.map.getZoom()}`;
 
-        const stateByGuid = new Map(
-          bridgeMapLab_state.stateLayerResult.pois.map((poi) => [poi.guid, poi])
+        const renderedByGuid = new Map(
+          bridgeMapLab_state.renderer.getDiagnostics().map((diagnostic) => [diagnostic.guid, diagnostic])
         );
         const diagnosticsBody = document.getElementById('campsiteLab_markerDiagnostics');
-        diagnosticsBody.replaceChildren(...bridgeMapLab_state.renderer.getDiagnostics().map((diagnostic) => {
-          const statePoi = stateByGuid.get(diagnostic.guid);
+        diagnosticsBody.replaceChildren(...bridgeMapLab_state.colorLayerResult.decisions.map((decision) => {
+          const rendered = renderedByGuid.get(decision.guid);
           const row = document.createElement('tr');
           const guidCell = document.createElement('td');
           const sourceCell = document.createElement('td');
           const stateCell = document.createElement('td');
           const referenceCell = document.createElement('td');
+          const displayCell = document.createElement('td');
+          const fillCell = document.createElement('td');
           const dataLayerCell = document.createElement('td');
           const leafletCell = document.createElement('td');
-          const coordinatesMatch = diagnostic.dataLayerLat === diagnostic.leafletLatLng.lat
-            && diagnostic.dataLayerLng === diagnostic.leafletLatLng.lng;
-          const sourceEntities = Array.isArray(diagnostic.sourceGameObjects)
-            ? diagnostic.sourceGameObjects.map((gameObject) => {
+          const sourceEntities = Array.isArray(decision.sourceGameObjects)
+            ? decision.sourceGameObjects.map((gameObject) => {
               if (gameObject === null || typeof gameObject !== 'object') return 'MALFORMED';
               return `${gameObject.entity || '?'} / ${gameObject.status || '?'}`;
             }).join(' + ')
             : '';
 
-          guidCell.textContent = diagnostic.guid;
+          guidCell.textContent = decision.guid;
           sourceCell.textContent = sourceEntities || '—';
-          stateCell.textContent = statePoi ? statePoi.state : diagnostic.state;
-          referenceCell.textContent = statePoi && statePoi.referenceKind
-            ? statePoi.referenceKind
-            : '—';
-          dataLayerCell.textContent = `${diagnostic.dataLayerLat.toFixed(6)}, ${diagnostic.dataLayerLng.toFixed(6)}`;
-          leafletCell.textContent = `${diagnostic.leafletLatLng.lat.toFixed(6)}, ${diagnostic.leafletLatLng.lng.toFixed(6)}`;
-          leafletCell.className = coordinatesMatch ? 'campsiteLab_coordinateMatch' : '';
-          row.append(guidCell, sourceCell, stateCell, referenceCell, dataLayerCell, leafletCell);
+          stateCell.textContent = decision.state;
+          referenceCell.textContent = decision.referenceKind || '—';
+          displayCell.textContent = decision.visible ? 'VISIBLE' : 'HIDDEN';
+          fillCell.textContent = decision.markerStyle ? decision.markerStyle.fillColor : '—';
+          dataLayerCell.textContent = `${decision.lat.toFixed(6)}, ${decision.lng.toFixed(6)}`;
+
+          if (rendered) {
+            const coordinatesMatch = decision.lat === rendered.leafletLatLng.lat
+              && decision.lng === rendered.leafletLatLng.lng;
+            leafletCell.textContent = `${rendered.leafletLatLng.lat.toFixed(6)}, ${rendered.leafletLatLng.lng.toFixed(6)}`;
+            leafletCell.className = coordinatesMatch ? 'campsiteLab_coordinateMatch' : '';
+          } else {
+            leafletCell.textContent = 'HIDDEN';
+            leafletCell.className = 'campsiteLab_hiddenDecision';
+          }
+
+          row.append(
+            guidCell,
+            sourceCell,
+            stateCell,
+            referenceCell,
+            displayCell,
+            fillCell,
+            dataLayerCell,
+            leafletCell
+          );
           return row;
         }));
       }
