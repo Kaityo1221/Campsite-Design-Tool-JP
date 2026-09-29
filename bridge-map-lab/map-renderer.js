@@ -28,6 +28,7 @@
       getDiagnostics() {
         return renderedMarkers.map(({ poi, marker }) => ({
           guid: poi.guid,
+          state: poi.state,
           dataLayerLat: poi.lat,
           dataLayerLng: poi.lng,
           leafletLatLng: marker.getLatLng()

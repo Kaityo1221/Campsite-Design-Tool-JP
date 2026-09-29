@@ -32,7 +32,8 @@
       normalizedPois.push(Object.freeze({
         guid: poi.guid,
         lat: poi.lat,
-        lng: poi.lng
+        lng: poi.lng,
+        sourceGameObjects: poi.sourceGameObjects
       }));
     });
 

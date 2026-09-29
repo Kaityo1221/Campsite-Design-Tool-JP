@@ -20,26 +20,30 @@ LAB固有のDOM ID、class、storage key、event、global variable、script名�
 
 ## Current phase
 
-Phase 4-B: Leaflet 1.9.4の地理座標固定を維持したData Layer / Renderer分離の最小実証。
+Phase 4-C1: Phase 4-Bの地理座標固定とData Layer / Renderer分離を維持した、LAB専用State Engineの最小実証。
 
 ```text
 Fixture (6 POIs)
   -> LAB Data Layer (validation -> valid GUID first-wins dedupe -> normalization)
+  -> LAB State Engine (POKESTOP / GYM / POWERSPOT / UNKNOWN)
   -> Map Renderer (LAB専用LayerGroup + uniform gray CircleMarker)
   -> Leaflet 1.9.4
 ```
 
-- Fixtureは`guid`、`lat`、`lng`だけを持つ。
-- Data Layerは不正座標2件とGUID重複1件を除外し、正規化済み3件を返す。
-- RendererはData Layer出力だけを受け取り、検証や判定を行わない。
+- Fixtureの正常POIは`sourceGameObjects`を持つ。
+- Data Layerは不正座標2件とGUID重複1件を除外し、`sourceGameObjects`を解釈せず保持した正規化済み3件を返す。
+- State EngineはData Layer出力だけを受け取り、`ACTIVE`かつ対応entity、かつ`HOLOHOLO`または空/absent brandのデータだけを分類する。
+- 複数の対応active entityは`GYM > POKESTOP > POWERSPOT`の優先順位で分類し、安全に分類できないデータは`UNKNOWN`とする。
+- RendererはState Engine出力だけを受け取り、検証やState判定を行わない。
+- State別の見た目は適用せず、全Markerを同一のグレーCircleMarkerとして描画する。
 - Pan / Zoom / resize後もLeafletの`getLatLng()`とData Layer座標の一致を画面で確認できる。
 - 再描画はRenderer専用LayerGroupだけをclearし、Map本体を再初期化しない。
 
 このPhaseでは以下を扱わない。
 
-- State Engine / Coloring Engine
+- Coloring Engine、State別の色・形状
+- `NOT_IN_GAME` / `INACTIVE_POWERSPOT`
 - live Wayfarer通信、XHR / fetch監視
 - Bridge通信、WFMM連携
-- PokéStop / Gym / Power Spot等の判定や色分け
 
 Production baseline: `314a7bf7bb2bdb24741c93ff0dcf1af93caa2143`

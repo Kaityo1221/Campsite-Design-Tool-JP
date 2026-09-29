@@ -27,6 +27,7 @@
   ></script>
   <script src="fixture.js" defer></script>
   <script src="data-layer.js" defer></script>
+  <script src="state-engine.js" defer></script>
   <script src="map-renderer.js" defer></script>
   <style>
     :root {
@@ -101,7 +102,7 @@
 
     .campsiteLab_info {
       display: grid;
-      grid-template-columns: repeat(6, minmax(0, 1fr));
+      grid-template-columns: repeat(5, minmax(0, 1fr));
       border-top: 1px solid #34404d;
       background: #111922;
     }
@@ -113,6 +114,14 @@
 
     .campsiteLab_metric + .campsiteLab_metric {
       border-left: 1px solid #34404d;
+    }
+
+    .campsiteLab_metric:nth-child(5n + 1) {
+      border-left: 0;
+    }
+
+    .campsiteLab_metric:nth-child(n + 6) {
+      border-top: 1px solid #34404d;
     }
 
     .campsiteLab_label {
@@ -224,11 +233,15 @@
       }
 
       .campsiteLab_metric + .campsiteLab_metric {
-        border-top: 1px solid #34404d;
+        border-left: 0;
       }
 
-      .campsiteLab_metric:nth-child(odd) {
-        border-left: 0;
+      .campsiteLab_metric:nth-child(even) {
+        border-left: 1px solid #34404d;
+      }
+
+      .campsiteLab_metric:nth-child(n + 3) {
+        border-top: 1px solid #34404d;
       }
     }
   </style>
@@ -238,9 +251,9 @@
     <header class="campsiteLab_header">
       <div>
         <p class="campsiteLab_eyebrow">LAB ONLY</p>
-        <h1>Data Layer → Renderer proof</h1>
+        <h1>Data Layer → State Engine → Renderer proof</h1>
       </div>
-      <p class="campsiteLab_phase">Phase 4-B / Leaflet 1.9.4</p>
+      <p class="campsiteLab_phase">Phase 4-C1 / Leaflet 1.9.4</p>
     </header>
 
     <p id="campsiteLab_error" class="campsiteLab_error" role="alert" hidden></p>
@@ -265,6 +278,22 @@
           <span id="campsiteLab_dataLayerCount" class="campsiteLab_value">Data Layer: -</span>
         </div>
         <div class="campsiteLab_metric">
+          <span class="campsiteLab_label">STATE</span>
+          <span id="campsiteLab_pokestopCount" class="campsiteLab_value">POKESTOP: -</span>
+        </div>
+        <div class="campsiteLab_metric">
+          <span class="campsiteLab_label">STATE</span>
+          <span id="campsiteLab_gymCount" class="campsiteLab_value">GYM: -</span>
+        </div>
+        <div class="campsiteLab_metric">
+          <span class="campsiteLab_label">STATE</span>
+          <span id="campsiteLab_powerspotCount" class="campsiteLab_value">POWERSPOT: -</span>
+        </div>
+        <div class="campsiteLab_metric">
+          <span class="campsiteLab_label">STATE</span>
+          <span id="campsiteLab_unknownCount" class="campsiteLab_value">UNKNOWN: -</span>
+        </div>
+        <div class="campsiteLab_metric">
           <span class="campsiteLab_label">RENDERED MARKERS</span>
           <span id="campsiteLab_renderedCount" class="campsiteLab_value">Rendered: -</span>
         </div>
@@ -280,12 +309,13 @@
             <thead>
               <tr>
                 <th scope="col">GUID</th>
+                <th scope="col">State</th>
                 <th scope="col">Data Layer lat/lng</th>
                 <th scope="col">Leaflet getLatLng()</th>
               </tr>
             </thead>
             <tbody id="campsiteLab_markerDiagnostics">
-              <tr><td colspan="3">初期化待機中</td></tr>
+              <tr><td colspan="4">初期化待機中</td></tr>
             </tbody>
           </table>
         </div>
@@ -302,6 +332,7 @@
         map: null,
         renderer: null,
         dataLayerResult: null,
+        stateLayerResult: null,
         renderedCount: 0,
         resizeFrame: null
       };
@@ -315,13 +346,21 @@
       }
 
       function bridgeMapLab_updateDiagnostics() {
-        if (!bridgeMapLab_state.map || !bridgeMapLab_state.renderer || !bridgeMapLab_state.dataLayerResult) return;
+        if (!bridgeMapLab_state.map
+          || !bridgeMapLab_state.renderer
+          || !bridgeMapLab_state.dataLayerResult
+          || !bridgeMapLab_state.stateLayerResult) return;
 
         const counts = bridgeMapLab_state.dataLayerResult.counts;
+        const stateCounts = bridgeMapLab_state.stateLayerResult.counts;
         document.getElementById('campsiteLab_rawCount').textContent = `Raw: ${counts.raw}`;
         document.getElementById('campsiteLab_invalidCount').textContent = `Invalid: ${counts.invalid}`;
         document.getElementById('campsiteLab_duplicateCount').textContent = `Duplicate: ${counts.duplicate}`;
         document.getElementById('campsiteLab_dataLayerCount').textContent = `Data Layer: ${counts.output}`;
+        document.getElementById('campsiteLab_pokestopCount').textContent = `POKESTOP: ${stateCounts.POKESTOP}`;
+        document.getElementById('campsiteLab_gymCount').textContent = `GYM: ${stateCounts.GYM}`;
+        document.getElementById('campsiteLab_powerspotCount').textContent = `POWERSPOT: ${stateCounts.POWERSPOT}`;
+        document.getElementById('campsiteLab_unknownCount').textContent = `UNKNOWN: ${stateCounts.UNKNOWN}`;
         document.getElementById('campsiteLab_renderedCount').textContent = `Rendered: ${bridgeMapLab_state.renderedCount}`;
         document.getElementById('campsiteLab_currentZoom').textContent = `Zoom: ${bridgeMapLab_state.map.getZoom()}`;
 
@@ -329,16 +368,18 @@
         diagnosticsBody.replaceChildren(...bridgeMapLab_state.renderer.getDiagnostics().map((diagnostic) => {
           const row = document.createElement('tr');
           const guidCell = document.createElement('td');
+          const stateCell = document.createElement('td');
           const dataLayerCell = document.createElement('td');
           const leafletCell = document.createElement('td');
           const coordinatesMatch = diagnostic.dataLayerLat === diagnostic.leafletLatLng.lat
             && diagnostic.dataLayerLng === diagnostic.leafletLatLng.lng;
 
           guidCell.textContent = diagnostic.guid;
+          stateCell.textContent = diagnostic.state;
           dataLayerCell.textContent = `${diagnostic.dataLayerLat.toFixed(6)}, ${diagnostic.dataLayerLng.toFixed(6)}`;
           leafletCell.textContent = `${diagnostic.leafletLatLng.lat.toFixed(6)}, ${diagnostic.leafletLatLng.lng.toFixed(6)}`;
           leafletCell.className = coordinatesMatch ? 'campsiteLab_coordinateMatch' : '';
-          row.append(guidCell, dataLayerCell, leafletCell);
+          row.append(guidCell, stateCell, dataLayerCell, leafletCell);
           return row;
         }));
       }
@@ -380,9 +421,12 @@
         }).addTo(bridgeMapLab_state.map);
 
         bridgeMapLab_state.dataLayerResult = window.bridgeMapLab_buildDataLayer(window.bridgeMapLab_fixture);
+        bridgeMapLab_state.stateLayerResult = window.bridgeMapLab_buildStateLayer(
+          bridgeMapLab_state.dataLayerResult
+        );
         bridgeMapLab_state.renderer = window.bridgeMapLab_createMapRenderer(bridgeMapLab_state.map);
         bridgeMapLab_state.renderedCount = bridgeMapLab_state.renderer.render(
-          bridgeMapLab_state.dataLayerResult.pois
+          bridgeMapLab_state.stateLayerResult.pois
         );
 
         bridgeMapLab_state.map.on('moveend zoomend', bridgeMapLab_updateDiagnostics);
