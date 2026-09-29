@@ -15,28 +15,33 @@
     const markerLayer = L.layerGroup().addTo(map);
     let renderedMarkers = [];
     let renderedCircles50 = [];
+    let destroyed = false;
+
+    function bridgeMapLab_assertAlive() {
+      if (destroyed) throw new Error('Map renderer has been destroyed');
+    }
+
+    function bridgeMapLab_clearRenderedState() {
+      circle50Layer.clearLayers();
+      markerLayer.clearLayers();
+      renderedMarkers = [];
+      renderedCircles50 = [];
+    }
 
     return Object.freeze({
       render(scene) {
-        circle50Layer.clearLayers();
-        markerLayer.clearLayers();
-        renderedMarkers = [];
-        renderedCircles50 = [];
+        bridgeMapLab_assertAlive();
+        bridgeMapLab_clearRenderedState();
 
         scene.items.forEach((renderItem) => {
           if (renderItem.layerKey === 'circle-50') {
             if (renderItem.geometry?.type !== 'circle') {
               throw new Error(`Invalid circle geometry for ${renderItem.key}`);
             }
-
             const circle = L.circle(
               [renderItem.geometry.lat, renderItem.geometry.lng],
-              Object.assign({
-                radius: renderItem.geometry.radiusMeters,
-                interactive: false
-              }, renderItem.style || {})
+              Object.assign({ radius: renderItem.geometry.radiusMeters, interactive: false }, renderItem.style || {})
             ).addTo(circle50Layer);
-
             renderedCircles50.push({ renderItem, circle });
             return;
           }
@@ -45,12 +50,10 @@
             if (renderItem.geometry?.type !== 'point') {
               throw new Error(`Invalid marker geometry for ${renderItem.key}`);
             }
-
             const marker = L.circleMarker(
               [renderItem.geometry.lat, renderItem.geometry.lng],
               Object.assign({}, bridgeMapLab_markerBaseStyle, renderItem.style || {})
             ).addTo(markerLayer);
-
             renderedMarkers.push({ renderItem, marker });
             return;
           }
@@ -59,6 +62,18 @@
         });
 
         return renderedMarkers.length;
+      },
+
+      destroy() {
+        if (destroyed) return;
+        bridgeMapLab_clearRenderedState();
+        map.removeLayer(circle50Layer);
+        map.removeLayer(markerLayer);
+        destroyed = true;
+      },
+
+      isDestroyed() {
+        return destroyed;
       },
 
       getDiagnostics() {
@@ -86,10 +101,7 @@
       },
 
       getRenderedCounts() {
-        return Object.freeze({
-          markers: renderedMarkers.length,
-          circles50: renderedCircles50.length
-        });
+        return Object.freeze({ markers: renderedMarkers.length, circles50: renderedCircles50.length });
       }
     });
   };
