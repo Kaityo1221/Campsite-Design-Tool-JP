@@ -25,11 +25,12 @@
     defer
     onerror="bridgeMapLab_markLeafletLoadFailure()"
   ></script>
-  <script src="fixture.js?v=4d3" defer></script>
-  <script src="data-layer.js?v=4d3" defer></script>
-  <script src="state-engine.js?v=4d3" defer></script>
-  <script src="coloring-engine.js?v=4d3" defer></script>
-  <script src="map-renderer.js?v=4d3" defer></script>
+  <script src="fixture.js?v=5a1" defer></script>
+  <script src="data-layer.js?v=5a1" defer></script>
+  <script src="state-engine.js?v=5a1" defer></script>
+  <script src="scene-builder.js?v=5a1" defer></script>
+  <script src="coloring-engine.js?v=5a1" defer></script>
+  <script src="map-renderer.js?v=5a1" defer></script>
   <style>
     :root {
       color-scheme: dark;
@@ -258,7 +259,7 @@
         <p class="campsiteLab_eyebrow">LAB ONLY</p>
         <h1>Mixed Active / Reference / Unknown proof</h1>
       </div>
-      <p class="campsiteLab_phase">Phase 4-D3 / Leaflet 1.9.4</p>
+      <p class="campsiteLab_phase">Phase 5-A1 / Leaflet 1.9.4</p>
     </header>
 
     <p id="campsiteLab_error" class="campsiteLab_error" role="alert" hidden></p>
@@ -362,6 +363,7 @@
         renderer: null,
         dataLayerResult: null,
         stateLayerResult: null,
+        sceneResult: null,
         colorLayerResult: null,
         renderedCount: 0,
         resizeFrame: null
@@ -380,12 +382,16 @@
           || !bridgeMapLab_state.renderer
           || !bridgeMapLab_state.dataLayerResult
           || !bridgeMapLab_state.stateLayerResult
+          || !bridgeMapLab_state.sceneResult
           || !bridgeMapLab_state.colorLayerResult) return;
 
         const counts = bridgeMapLab_state.dataLayerResult.counts;
         const stateCounts = bridgeMapLab_state.stateLayerResult.counts;
         const referenceCounts = bridgeMapLab_state.stateLayerResult.referenceCounts;
-        const displayCounts = bridgeMapLab_state.colorLayerResult.counts;
+        const displayCounts = {
+          visible: bridgeMapLab_state.sceneResult.items.length,
+          hidden: bridgeMapLab_state.stateLayerResult.pois.length - bridgeMapLab_state.sceneResult.items.length
+        };
         document.getElementById('campsiteLab_rawCount').textContent = `Raw: ${counts.raw}`;
         document.getElementById('campsiteLab_invalidCount').textContent = `Invalid: ${counts.invalid}`;
         document.getElementById('campsiteLab_duplicateCount').textContent = `Duplicate: ${counts.duplicate}`;
@@ -402,12 +408,17 @@
         document.getElementById('campsiteLab_renderedCount').textContent = `Rendered: ${bridgeMapLab_state.renderedCount}`;
         document.getElementById('campsiteLab_currentZoom').textContent = `Zoom: ${bridgeMapLab_state.map.getZoom()}`;
 
-        const renderedByGuid = new Map(
-          bridgeMapLab_state.renderer.getDiagnostics().map((diagnostic) => [diagnostic.guid, diagnostic])
+        const styledByOwnerKey = new Map(
+          bridgeMapLab_state.colorLayerResult.items.map((renderItem) => [renderItem.ownerKey, renderItem])
+        );
+        const renderedByOwnerKey = new Map(
+          bridgeMapLab_state.renderer.getDiagnostics().map((diagnostic) => [diagnostic.ownerKey, diagnostic])
         );
         const diagnosticsBody = document.getElementById('campsiteLab_markerDiagnostics');
-        diagnosticsBody.replaceChildren(...bridgeMapLab_state.colorLayerResult.decisions.map((decision) => {
-          const rendered = renderedByGuid.get(decision.guid);
+        diagnosticsBody.replaceChildren(...bridgeMapLab_state.stateLayerResult.pois.map((poi) => {
+          const ownerKey = `poi:${poi.guid}`;
+          const styledItem = styledByOwnerKey.get(ownerKey);
+          const rendered = renderedByOwnerKey.get(ownerKey);
           const row = document.createElement('tr');
           const guidCell = document.createElement('td');
           const sourceCell = document.createElement('td');
@@ -417,24 +428,24 @@
           const fillCell = document.createElement('td');
           const dataLayerCell = document.createElement('td');
           const leafletCell = document.createElement('td');
-          const sourceEntities = Array.isArray(decision.sourceGameObjects)
-            ? decision.sourceGameObjects.map((gameObject) => {
+          const sourceEntities = Array.isArray(poi.sourceGameObjects)
+            ? poi.sourceGameObjects.map((gameObject) => {
               if (gameObject === null || typeof gameObject !== 'object') return 'MALFORMED';
               return `${gameObject.entity || '?'} / ${gameObject.status || '?'}`;
             }).join(' + ')
             : '';
 
-          guidCell.textContent = decision.guid;
+          guidCell.textContent = poi.guid;
           sourceCell.textContent = sourceEntities || '—';
-          stateCell.textContent = decision.state;
-          referenceCell.textContent = decision.referenceKind || '—';
-          displayCell.textContent = decision.visible ? 'VISIBLE' : 'HIDDEN';
-          fillCell.textContent = decision.markerStyle ? decision.markerStyle.fillColor : '—';
-          dataLayerCell.textContent = `${decision.lat.toFixed(6)}, ${decision.lng.toFixed(6)}`;
+          stateCell.textContent = poi.state;
+          referenceCell.textContent = poi.referenceKind || '—';
+          displayCell.textContent = styledItem ? 'VISIBLE' : 'HIDDEN';
+          fillCell.textContent = styledItem ? styledItem.style.fillColor : '—';
+          dataLayerCell.textContent = `${poi.lat.toFixed(6)}, ${poi.lng.toFixed(6)}`;
 
           if (rendered) {
-            const coordinatesMatch = decision.lat === rendered.leafletLatLng.lat
-              && decision.lng === rendered.leafletLatLng.lng;
+            const coordinatesMatch = poi.lat === rendered.leafletLatLng.lat
+              && poi.lng === rendered.leafletLatLng.lng;
             leafletCell.textContent = `${rendered.leafletLatLng.lat.toFixed(6)}, ${rendered.leafletLatLng.lng.toFixed(6)}`;
             leafletCell.className = coordinatesMatch ? 'campsiteLab_coordinateMatch' : '';
           } else {
@@ -496,12 +507,15 @@
         bridgeMapLab_state.stateLayerResult = window.bridgeMapLab_buildStateLayer(
           bridgeMapLab_state.dataLayerResult
         );
-        bridgeMapLab_state.colorLayerResult = window.bridgeMapLab_buildColorLayer(
+        bridgeMapLab_state.sceneResult = window.bridgeMapLab_buildScene(
           bridgeMapLab_state.stateLayerResult
+        );
+        bridgeMapLab_state.colorLayerResult = window.bridgeMapLab_buildColorLayer(
+          bridgeMapLab_state.sceneResult
         );
         bridgeMapLab_state.renderer = window.bridgeMapLab_createMapRenderer(bridgeMapLab_state.map);
         bridgeMapLab_state.renderedCount = bridgeMapLab_state.renderer.render(
-          bridgeMapLab_state.colorLayerResult.pois
+          bridgeMapLab_state.colorLayerResult
         );
 
         bridgeMapLab_state.map.on('moveend zoomend', bridgeMapLab_updateDiagnostics);
