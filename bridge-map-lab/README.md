@@ -18,9 +18,49 @@ LAB固有のDOM ID、class、storage key、event、global variable、script名�
 - `campsiteLab_*`
 - `bridgeMapLab_*`
 
-## Current phase
+## Status
 
-Phase 4-D3: Gate C / D1 / D2で確定した分類・表示ロジックを変更せず、Active / Reference / Unknownが同一Fixture内および同一POI内で混在した場合の優先順位を最終実証する。
+**Phase 4 COMPLETE ✅**
+
+2026/09/30 00:59 JST、iPhone実機でPhase 4-D3最終回帰をPASS。
+
+完了Gate:
+
+- Gate A: WFMM / Map挙動解析 PASS
+- Gate B: Leaflet地理座標固定 PASS
+- Gate C: State Engine / Coloring Engine / 混在State優先順位 PASS
+- Gate D: Reference State分類 / 表示ルール / Active・Reference・Unknown混在 PASS
+
+Phase 4で確定したアーキテクチャ:
+
+```text
+Fixture / 将来Bridge実データ
+  -> Data Layer
+  -> State Engine
+  -> Coloring Engine
+  -> Renderer
+  -> Leaflet 1.9.4
+```
+
+責務:
+
+```text
+Data Layer
+  -> validation / dedupe / normalization
+
+State Engine
+  -> POIの意味判定
+
+Coloring Engine
+  -> State / Reference Kindから表示可否と表示情報へ変換
+
+Renderer
+  -> Coloring Engineから渡された表示対象をLeafletへ描画だけ
+```
+
+## Phase 4-D3 final verification
+
+Gate C / D1 / D2で確定した分類・表示ロジックを変更せず、Active / Reference / Unknownが同一Fixture内および同一POI内で混在した場合の優先順位を最終実証した。
 
 ```text
 Fixture (10 POIs)
@@ -31,7 +71,7 @@ Fixture (10 POIs)
   -> Leaflet 1.9.4
 ```
 
-State Engineのルールは変更しない。
+State Engineの確定ルール:
 
 ```text
 Active entity priority:
@@ -54,7 +94,7 @@ Activeなし + malformed / ambiguous metadata:
   -> referenceKind=null
 ```
 
-Coloring Engineの表示ルールもPhase 4-D2から変更しない。
+Coloring Engineの確定表示ルール:
 
 ```text
 POKESTOP
@@ -90,7 +130,7 @@ Phase 4-D3 Fixture:
 - `poi-f`: `sourceGameObjects`なし -> `UNKNOWN / null` -> hidden
 - `poi-g`: `GYM ACTIVE + malformed GMO` -> `GYM / null` -> visible red
 
-D3で確認する優先順位:
+D3で確認した優先順位:
 
 ```text
 Active > Reference
@@ -100,18 +140,7 @@ INACTIVE_POWERSPOT > generic NOT_IN_GAME reference
 UNKNOWN != NOT_IN_GAME
 ```
 
-重要:
-
-- `INACTIVE_POWERSPOT`はStateではなくReference subtypeのまま維持する。
-- Activeが確定したGUIDをReference channelとして扱わない。
-- malformed GMOが併存してもsupported Active entityが確定していればActiveを優先する。
-- Coloring Engineが表示可否とMarker色を決定する。
-- RendererはStateやReference Kindを解釈しない。
-- Diagnosticsでは全7 decisionを表示し、非表示POIはLeaflet列を`HIDDEN`とする。
-- Pan / Zoom / resize後も、表示中MarkerのLeaflet `getLatLng()`とData Layer座標の一致を維持する。
-- 再描画はRenderer専用LayerGroupだけをclearし、Map本体を再初期化しない。
-
-期待結果:
+最終実機結果:
 
 ```text
 Raw: 10
@@ -130,7 +159,7 @@ Hidden: 2
 Rendered: 5
 ```
 
-地図上の期待Marker:
+地図上のMarker:
 
 ```text
 blue: 1
@@ -139,24 +168,26 @@ purple: 1
 light purple: 1
 ```
 
-Phase 4-D3 PASS条件:
+最終確認済み:
 
-1. 上記カウントが一致する。
+1. 上記カウントが一致。
 2. `poi-a/b/c/g`がActiveとして表示され、Referenceにならない。
-3. `poi-d`だけが`INACTIVE_POWERSPOT`として薄紫表示される。
-4. `poi-e`と`poi-f`は非表示になる。
-5. 表示中5 MarkerのData Layer座標とLeaflet `getLatLng()`が一致する。
-6. Pan / Zoom / resize後も上記を維持する。
+3. `poi-d`だけが`INACTIVE_POWERSPOT`として薄紫表示。
+4. `poi-e`と`poi-f`は非表示。
+5. 表示中5 MarkerのData Layer座標とLeaflet `getLatLng()`が一致。
+6. Pan / Zoom後も地理座標固定を維持。
+7. Phase 4全差分は`bridge-map-lab/`配下だけで、本番Creative Mode / Bridge / workflow / WFMM / productionコードへの変更なし。
 
-Phase 4-D3 PASSをもって、Phase 4のData Layer / State Engine / Coloring Engine / Renderer / Reference State検証を完了とする。
+## Phase 4で扱わなかったもの
 
-このPhaseでは以下を扱わない。
+次Phase以降で扱う。
 
-- live Wayfarer通信、XHR / fetch監視
-- Bridge実データ接続
+- Campsite固有Map機能（50m / Candidate / 必要なS2）
+- Fixture卒業 / live Bridge・Wayfarer実データ接続
+- Map lifecycle（open / close / reopen / cleanup）
 - WFMM共存
-- storage / 50m / S2 / Candidate
+- 長時間・大量POI・端末試験
+- Feature Flag付き本番統合
 - Popup / Tooltip / fitBounds / auto pan
-- Map open / close / reopen lifecycle
 
 Production baseline: `314a7bf7bb2bdb24741c93ff0dcf1af93caa2143`
