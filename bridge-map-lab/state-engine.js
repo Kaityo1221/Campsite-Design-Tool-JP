@@ -41,8 +41,6 @@
   }
 
   function bridgeMapLab_hasAmbiguousGameMetadata(sourceGameObjects) {
-    if (!Array.isArray(sourceGameObjects)) return true;
-
     return sourceGameObjects.some((sourceGameObject) => sourceGameObject === null
       || typeof sourceGameObject !== 'object'
       || sourceGameObject.malformed === true
@@ -63,13 +61,17 @@
 
   function bridgeMapLab_classifyPoi(poi) {
     const sourceGameObjects = poi.sourceGameObjects;
-    if (bridgeMapLab_hasAmbiguousGameMetadata(sourceGameObjects)) {
+    if (!Array.isArray(sourceGameObjects)) {
       return Object.freeze({ state: 'UNKNOWN', referenceKind: null });
     }
 
     const activeState = bridgeMapLab_selectActiveState(sourceGameObjects);
     if (activeState !== 'UNKNOWN') {
       return Object.freeze({ state: activeState, referenceKind: null });
+    }
+
+    if (bridgeMapLab_hasAmbiguousGameMetadata(sourceGameObjects)) {
+      return Object.freeze({ state: 'UNKNOWN', referenceKind: null });
     }
 
     const hasInactivePowerSpot = sourceGameObjects.some(bridgeMapLab_isInactivePowerSpotCompatible);
