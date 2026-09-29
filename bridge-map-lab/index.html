@@ -25,11 +25,11 @@
     defer
     onerror="bridgeMapLab_markLeafletLoadFailure()"
   ></script>
-  <script src="fixture.js?v=4d2" defer></script>
-  <script src="data-layer.js?v=4d2" defer></script>
-  <script src="state-engine.js?v=4d2" defer></script>
-  <script src="coloring-engine.js?v=4d2" defer></script>
-  <script src="map-renderer.js?v=4d2" defer></script>
+  <script src="fixture.js?v=4d3" defer></script>
+  <script src="data-layer.js?v=4d3" defer></script>
+  <script src="state-engine.js?v=4d3" defer></script>
+  <script src="coloring-engine.js?v=4d3" defer></script>
+  <script src="map-renderer.js?v=4d3" defer></script>
   <style>
     :root {
       color-scheme: dark;
@@ -256,14 +256,14 @@
     <header class="campsiteLab_header">
       <div>
         <p class="campsiteLab_eyebrow">LAB ONLY</p>
-        <h1>Reference display policy proof</h1>
+        <h1>Mixed Active / Reference / Unknown proof</h1>
       </div>
-      <p class="campsiteLab_phase">Phase 4-D2 / Leaflet 1.9.4</p>
+      <p class="campsiteLab_phase">Phase 4-D3 / Leaflet 1.9.4</p>
     </header>
 
     <p id="campsiteLab_error" class="campsiteLab_error" role="alert" hidden></p>
 
-    <section class="campsiteLab_mapFrame" aria-label="Reference表示ルールとRenderer分離検証">
+    <section class="campsiteLab_mapFrame" aria-label="Active・Reference・Unknown混在優先順位と表示ルール検証">
       <div id="campsiteLab_map" aria-label="Leaflet検証地図"></div>
       <div class="campsiteLab_info" aria-live="polite">
         <div class="campsiteLab_metric">
@@ -328,7 +328,7 @@
         </div>
       </div>
       <div class="campsiteLab_diagnostics">
-        <h2>Display policy diagnostics</h2>
+        <h2>Mixed state priority diagnostics</h2>
         <div class="campsiteLab_tableWrap">
           <table>
             <thead>
