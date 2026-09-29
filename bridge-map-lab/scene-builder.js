@@ -19,7 +19,7 @@
     return null;
   }
 
-  function bridgeMapLab_buildMarkerRenderItem(poi, renderKind) {
+  function bridgeMapLab_buildMarkerRenderItem(poi, renderKind, pointGeometry) {
     const ownerKey = `poi:${poi.guid}`;
 
     return Object.freeze({
@@ -29,21 +29,31 @@
       origin: 'existing',
       renderKind,
       layerKey: 'marker',
-      geometry: Object.freeze({
-        type: 'point',
-        lat: poi.lat,
-        lng: poi.lng
-      })
+      geometry: pointGeometry
     });
   }
 
-  window.bridgeMapLab_buildScene = function (stateLayerResult) {
+  window.bridgeMapLab_buildScene = function (stateLayerResult, geometryLayerResult) {
     const items = [];
+    const geometryByOwnerKey = new Map(
+      geometryLayerResult.entries.map((entry) => [entry.ownerKey, entry])
+    );
 
     stateLayerResult.pois.forEach((poi) => {
       const renderKind = bridgeMapLab_resolveRenderKind(poi);
       if (renderKind === null) return;
-      items.push(bridgeMapLab_buildMarkerRenderItem(poi, renderKind));
+
+      const ownerKey = `poi:${poi.guid}`;
+      const geometryEntry = geometryByOwnerKey.get(ownerKey);
+      if (!geometryEntry || !geometryEntry.pointGeometry) {
+        throw new Error(`Missing geometry for ${ownerKey}`);
+      }
+
+      items.push(bridgeMapLab_buildMarkerRenderItem(
+        poi,
+        renderKind,
+        geometryEntry.pointGeometry
+      ));
     });
 
     return Object.freeze({
