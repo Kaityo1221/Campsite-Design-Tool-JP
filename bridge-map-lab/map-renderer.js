@@ -15,13 +15,13 @@
     let renderedMarkers = [];
 
     return Object.freeze({
-      render(pois) {
+      render(scene) {
         markerLayer.clearLayers();
-        renderedMarkers = pois.map((poi) => ({
-          poi,
+        renderedMarkers = scene.items.map((renderItem) => ({
+          renderItem,
           marker: L.circleMarker(
-            [poi.lat, poi.lng],
-            Object.assign({}, bridgeMapLab_markerBaseStyle, poi.markerStyle || {})
+            [renderItem.geometry.lat, renderItem.geometry.lng],
+            Object.assign({}, bridgeMapLab_markerBaseStyle, renderItem.style || {})
           ).addTo(markerLayer)
         }));
 
@@ -29,13 +29,13 @@
       },
 
       getDiagnostics() {
-        return renderedMarkers.map(({ poi, marker }) => ({
-          guid: poi.guid,
-          state: poi.state,
-          sourceGameObjects: poi.sourceGameObjects,
+        return renderedMarkers.map(({ renderItem, marker }) => ({
+          key: renderItem.key,
+          ownerKey: renderItem.ownerKey,
+          renderKind: renderItem.renderKind,
           fillColor: marker.options.fillColor,
-          dataLayerLat: poi.lat,
-          dataLayerLng: poi.lng,
+          dataLayerLat: renderItem.geometry.lat,
+          dataLayerLng: renderItem.geometry.lng,
           leafletLatLng: marker.getLatLng()
         }));
       }
