@@ -25,12 +25,13 @@
     defer
     onerror="bridgeMapLab_markLeafletLoadFailure()"
   ></script>
-  <script src="fixture.js?v=5a1" defer></script>
-  <script src="data-layer.js?v=5a1" defer></script>
-  <script src="state-engine.js?v=5a1" defer></script>
-  <script src="scene-builder.js?v=5a1" defer></script>
-  <script src="coloring-engine.js?v=5a1" defer></script>
-  <script src="map-renderer.js?v=5a1" defer></script>
+  <script src="fixture.js?v=5a2" defer></script>
+  <script src="data-layer.js?v=5a2" defer></script>
+  <script src="state-engine.js?v=5a2" defer></script>
+  <script src="geometry-engine.js?v=5a2" defer></script>
+  <script src="scene-builder.js?v=5a2" defer></script>
+  <script src="coloring-engine.js?v=5a2" defer></script>
+  <script src="map-renderer.js?v=5a2" defer></script>
   <style>
     :root {
       color-scheme: dark;
@@ -259,7 +260,7 @@
         <p class="campsiteLab_eyebrow">LAB ONLY</p>
         <h1>Mixed Active / Reference / Unknown proof</h1>
       </div>
-      <p class="campsiteLab_phase">Phase 5-A1 / Leaflet 1.9.4</p>
+      <p class="campsiteLab_phase">Phase 5-A2 / Leaflet 1.9.4</p>
     </header>
 
     <p id="campsiteLab_error" class="campsiteLab_error" role="alert" hidden></p>
@@ -363,6 +364,7 @@
         renderer: null,
         dataLayerResult: null,
         stateLayerResult: null,
+        geometryLayerResult: null,
         sceneResult: null,
         colorLayerResult: null,
         renderedCount: 0,
@@ -382,6 +384,7 @@
           || !bridgeMapLab_state.renderer
           || !bridgeMapLab_state.dataLayerResult
           || !bridgeMapLab_state.stateLayerResult
+          || !bridgeMapLab_state.geometryLayerResult
           || !bridgeMapLab_state.sceneResult
           || !bridgeMapLab_state.colorLayerResult) return;
 
@@ -507,8 +510,12 @@
         bridgeMapLab_state.stateLayerResult = window.bridgeMapLab_buildStateLayer(
           bridgeMapLab_state.dataLayerResult
         );
-        bridgeMapLab_state.sceneResult = window.bridgeMapLab_buildScene(
+        bridgeMapLab_state.geometryLayerResult = window.bridgeMapLab_buildGeometryLayer(
           bridgeMapLab_state.stateLayerResult
+        );
+        bridgeMapLab_state.sceneResult = window.bridgeMapLab_buildScene(
+          bridgeMapLab_state.stateLayerResult,
+          bridgeMapLab_state.geometryLayerResult
         );
         bridgeMapLab_state.colorLayerResult = window.bridgeMapLab_buildColorLayer(
           bridgeMapLab_state.sceneResult
