@@ -7,27 +7,35 @@
   <title>Campsite Bridge Map LAB Test</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin="" defer></script>
-  <script src="fixture.js?v=5a3-public" defer></script>
-  <script src="data-layer.js?v=5a3-public" defer></script>
-  <script src="state-engine.js?v=5a3-public" defer></script>
-  <script src="geometry-engine.js?v=5a3-public" defer></script>
-  <script src="scene-builder.js?v=5a3-public" defer></script>
-  <script src="coloring-engine.js?v=5a3-public" defer></script>
-  <script src="map-renderer.js?v=5a3-public" defer></script>
+  <script src="fixture.js?v=5b1-public" defer></script>
+  <script src="data-layer.js?v=5b1-public" defer></script>
+  <script src="state-engine.js?v=5b1-public" defer></script>
+  <script src="geometry-engine.js?v=5b1-public" defer></script>
+  <script src="scene-builder.js?v=5b1-public" defer></script>
+  <script src="coloring-engine.js?v=5b1-public" defer></script>
+  <script src="map-renderer.js?v=5b1-public" defer></script>
   <style>
     :root{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color-scheme:dark;background:#0b1118;color:#eef3f7}
     *{box-sizing:border-box} body{margin:0;background:#0b1118}.wrap{max-width:760px;margin:0 auto;padding:16px}
     .head{display:flex;justify-content:space-between;gap:12px;align-items:flex-end;margin-bottom:12px}.tag{margin:0 0 4px;color:#ff9f7a;font-size:11px;font-weight:800;letter-spacing:.08em}.title{margin:0;font-size:22px}.phase{margin:0;color:#9eabb8;font-size:12px;white-space:nowrap}
-    .control{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;margin-bottom:12px;border:1px solid #34404d;border-radius:12px;background:#111922}.control label{display:flex;align-items:center;gap:8px;font-weight:800}.control input{width:22px;height:22px}.control strong{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:#9eabb8}
+    .control{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;margin-bottom:10px;border:1px solid #34404d;border-radius:12px;background:#111922}.control label{display:flex;align-items:center;gap:8px;font-weight:800}.control input{width:22px;height:22px}.control strong{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:#9eabb8}
+    .lifecycle{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}.lifecycle button{min-height:44px;border:1px solid #34404d;border-radius:10px;background:#17212b;color:#eef3f7;font-weight:800;font-size:14px}.lifecycle button:disabled{opacity:.38}.lifecycleState{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;padding:9px 11px;border:1px solid #34404d;border-radius:10px;background:#111922;font-size:12px;color:#9eabb8}.lifecycleState strong{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:#eef3f7}
     #map{height:min(58vh,520px);min-height:360px;border-radius:12px;overflow:hidden;background:#dce3e8}.status{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}.card{padding:10px;border:1px solid #34404d;border-radius:10px;background:#111922}.label{display:block;color:#8f9ba8;font-size:10px;font-weight:800;letter-spacing:.04em}.value{display:block;margin-top:4px;font:800 15px ui-monospace,SFMono-Regular,Menlo,monospace}.legend{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:12px;font-size:12px;color:#bac4ce}.legend span{display:flex;align-items:center;gap:7px}.dot{width:11px;height:11px;border-radius:50%;display:inline-block}.note{margin:12px 0 0;color:#9eabb8;font-size:12px;line-height:1.5}.error{padding:12px;border-radius:10px;background:#351b1b;color:#ffd2cc}.error[hidden]{display:none}
-    @media(max-width:430px){.head{display:block}.phase{margin-top:6px}.status{grid-template-columns:1fr 1fr}.card:last-child{grid-column:1/-1}#map{height:52vh;min-height:340px}}
+    @media(max-width:430px){.head{display:block}.phase{margin-top:6px}.status{grid-template-columns:1fr 1fr}.card:last-child{grid-column:1/-1}#map{height:50vh;min-height:330px}}
   </style>
 </head>
 <body>
   <main class="wrap">
-    <header class="head"><div><p class="tag">LAB ONLY / PUBLIC TEST</p><h1 class="title">Campsite Bridge Map</h1></div><p class="phase">Phase 5-A3</p></header>
+    <header class="head"><div><p class="tag">LAB ONLY / PUBLIC TEST</p><h1 class="title">Campsite Bridge Map</h1></div><p class="phase">Phase 5-B1</p></header>
     <p id="error" class="error" hidden></p>
+
     <div class="control"><label><input id="toggle50" type="checkbox" checked>50m Circle</label><strong id="toggleStatus">ON</strong></div>
+    <div class="lifecycle">
+      <button id="closeRenderer" type="button">Rendererを閉じる</button>
+      <button id="reopenRenderer" type="button" disabled>Rendererを再開</button>
+      <div class="lifecycleState"><span>LIFECYCLE</span><strong id="lifecycleStatus">OPEN</strong></div>
+    </div>
+
     <div id="map" aria-label="Campsite Bridge Map LAB test map"></div>
     <section class="status" aria-live="polite">
       <div class="card"><span class="label">MARKERS</span><span id="markerCount" class="value">-</span></div>
@@ -37,21 +45,45 @@
     <div class="legend">
       <span><i class="dot" style="background:#2F80ED"></i>PokéStop</span><span><i class="dot" style="background:#E53935"></i>Gym</span><span><i class="dot" style="background:#8E44AD"></i>Power Spot</span><span><i class="dot" style="background:#C9A7EB"></i>Inactive</span>
     </div>
-    <p class="note">OFFにしても50m Geometryは残る仕様です。Markerと円の中心ずれ、色、ON/OFFだけ確認してください。</p>
+    <p class="note">B1テスト：閉じるとMarker/Circleだけ0になり、Geometryは7のまま。再開するとMarker/Circleが復元されればPASSです。</p>
   </main>
   <script>
     (()=>{'use strict';
       const app={map:null,renderer:null,data:null,state:null,geometry:null,scene:null,styled:null,settings:{circle50Visible:true}};
       function fail(message){const e=document.getElementById('error');e.textContent=message;e.hidden=false;}
+      function geometryCount(){return app.geometry?app.geometry.entries.filter(e=>e.circleGeometries?.[50]).length:0;}
+      function setLifecycle(open){
+        document.getElementById('lifecycleStatus').textContent=open?'OPEN':'CLOSED';
+        document.getElementById('closeRenderer').disabled=!open;
+        document.getElementById('reopenRenderer').disabled=open;
+        document.getElementById('toggle50').disabled=!open;
+      }
+      function updateCounts(markers,circles){
+        document.getElementById('markerCount').textContent=String(markers);
+        document.getElementById('circleCount').textContent=String(circles);
+        document.getElementById('geometryCount').textContent=String(geometryCount());
+        document.getElementById('toggleStatus').textContent=app.settings.circle50Visible?'ON':'OFF';
+      }
       function render(){
+        if(!app.renderer||app.renderer.isDestroyed()){return;}
         app.scene=window.bridgeMapLab_buildScene(app.state,app.geometry,app.settings);
         app.styled=window.bridgeMapLab_buildColorLayer(app.scene);
         app.renderer.render(app.styled);
         const c=app.renderer.getRenderedCounts();
-        document.getElementById('markerCount').textContent=String(c.markers);
-        document.getElementById('circleCount').textContent=String(c.circles50);
-        document.getElementById('geometryCount').textContent=String(app.geometry.entries.filter(e=>e.circleGeometries?.[50]).length);
-        document.getElementById('toggleStatus').textContent=app.settings.circle50Visible?'ON':'OFF';
+        updateCounts(c.markers,c.circles50);
+      }
+      function closeRenderer(){
+        if(!app.renderer||app.renderer.isDestroyed())return;
+        app.renderer.destroy();
+        updateCounts(0,0);
+        setLifecycle(false);
+      }
+      function reopenRenderer(){
+        if(app.renderer&&!app.renderer.isDestroyed())return;
+        app.renderer=window.bridgeMapLab_createMapRenderer(app.map);
+        setLifecycle(true);
+        render();
+        requestAnimationFrame(()=>app.map.invalidateSize({pan:false,animate:false}));
       }
       function init(){
         if(!window.L||!window.bridgeMapLab_fixture||!window.bridgeMapLab_buildDataLayer||!window.bridgeMapLab_buildStateLayer||!window.bridgeMapLab_buildGeometryLayer||!window.bridgeMapLab_buildScene||!window.bridgeMapLab_buildColorLayer||!window.bridgeMapLab_createMapRenderer){fail('必要なファイルを読み込めませんでした。再読み込みしてください。');return;}
@@ -61,8 +93,13 @@
         app.state=window.bridgeMapLab_buildStateLayer(app.data);
         app.geometry=window.bridgeMapLab_buildGeometryLayer(app.state);
         app.renderer=window.bridgeMapLab_createMapRenderer(app.map);
+
         const toggle=document.getElementById('toggle50');
         toggle.addEventListener('change',()=>{app.settings.circle50Visible=toggle.checked;render();});
+        document.getElementById('closeRenderer').addEventListener('click',closeRenderer);
+        document.getElementById('reopenRenderer').addEventListener('click',reopenRenderer);
+
+        setLifecycle(true);
         render();
         window.addEventListener('pageshow',()=>requestAnimationFrame(()=>app.map.invalidateSize({pan:false,animate:false})),{passive:true});
         window.addEventListener('orientationchange',()=>setTimeout(()=>app.map.invalidateSize({pan:false,animate:false}),150),{passive:true});
