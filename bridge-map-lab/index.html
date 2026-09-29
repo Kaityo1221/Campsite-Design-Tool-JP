@@ -25,13 +25,13 @@
     defer
     onerror="bridgeMapLab_markLeafletLoadFailure()"
   ></script>
-  <script src="fixture.js?v=5a2" defer></script>
-  <script src="data-layer.js?v=5a2" defer></script>
-  <script src="state-engine.js?v=5a2" defer></script>
-  <script src="geometry-engine.js?v=5a2" defer></script>
-  <script src="scene-builder.js?v=5a2" defer></script>
-  <script src="coloring-engine.js?v=5a2" defer></script>
-  <script src="map-renderer.js?v=5a2" defer></script>
+  <script src="fixture.js?v=5a3" defer></script>
+  <script src="data-layer.js?v=5a3" defer></script>
+  <script src="state-engine.js?v=5a3" defer></script>
+  <script src="geometry-engine.js?v=5a3" defer></script>
+  <script src="scene-builder.js?v=5a3" defer></script>
+  <script src="coloring-engine.js?v=5a3" defer></script>
+  <script src="map-renderer.js?v=5a3" defer></script>
   <style>
     :root {
       color-scheme: dark;
@@ -88,6 +88,38 @@
       color: #aeb9c6;
       font-size: 13px;
       white-space: nowrap;
+    }
+
+    .campsiteLab_controls {
+      display: flex;
+      justify-content: flex-end;
+      margin: 0 0 12px;
+    }
+
+    .campsiteLab_toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border: 1px solid #34404d;
+      border-radius: 8px;
+      background: #111922;
+      color: #e8edf3;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .campsiteLab_toggle input {
+      width: 18px;
+      height: 18px;
+      margin: 0;
+    }
+
+    .campsiteLab_toggle strong {
+      min-width: 28px;
+      color: #aeb9c6;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      text-align: right;
     }
 
     .campsiteLab_mapFrame {
@@ -230,6 +262,10 @@
         margin-top: 8px;
       }
 
+      .campsiteLab_controls {
+        justify-content: flex-start;
+      }
+
       #campsiteLab_map {
         height: min(58vh, 520px);
         min-height: 340px;
@@ -260,10 +296,18 @@
         <p class="campsiteLab_eyebrow">LAB ONLY</p>
         <h1>Mixed Active / Reference / Unknown proof</h1>
       </div>
-      <p class="campsiteLab_phase">Phase 5-A2 / Leaflet 1.9.4</p>
+      <p class="campsiteLab_phase">Phase 5-A3 / Leaflet 1.9.4</p>
     </header>
 
     <p id="campsiteLab_error" class="campsiteLab_error" role="alert" hidden></p>
+
+    <div class="campsiteLab_controls" aria-label="Map表示設定">
+      <label class="campsiteLab_toggle">
+        <input id="campsiteLab_circle50Toggle" type="checkbox" checked>
+        <span>50m Circle</span>
+        <strong id="campsiteLab_circle50Status">ON</strong>
+      </label>
+    </div>
 
     <section class="campsiteLab_mapFrame" aria-label="Active・Reference・Unknown混在優先順位と表示ルール検証">
       <div id="campsiteLab_map" aria-label="Leaflet検証地図"></div>
@@ -325,6 +369,10 @@
           <span id="campsiteLab_renderedCount" class="campsiteLab_value">Rendered: -</span>
         </div>
         <div class="campsiteLab_metric">
+          <span class="campsiteLab_label">50m CIRCLES</span>
+          <span id="campsiteLab_circle50Count" class="campsiteLab_value">Circles: -</span>
+        </div>
+        <div class="campsiteLab_metric">
           <span class="campsiteLab_label">CURRENT ZOOM</span>
           <span id="campsiteLab_currentZoom" class="campsiteLab_value">Zoom: -</span>
         </div>
@@ -367,7 +415,11 @@
         geometryLayerResult: null,
         sceneResult: null,
         colorLayerResult: null,
+        displaySettings: {
+          circle50Visible: true
+        },
         renderedCount: 0,
+        renderedCircleCount: 0,
         resizeFrame: null
       };
 
@@ -391,10 +443,15 @@
         const counts = bridgeMapLab_state.dataLayerResult.counts;
         const stateCounts = bridgeMapLab_state.stateLayerResult.counts;
         const referenceCounts = bridgeMapLab_state.stateLayerResult.referenceCounts;
+        const markerItems = bridgeMapLab_state.sceneResult.items.filter((item) => item.itemType === 'marker');
+        const renderedCounts = bridgeMapLab_state.renderer.getRenderedCounts();
         const displayCounts = {
-          visible: bridgeMapLab_state.sceneResult.items.length,
-          hidden: bridgeMapLab_state.stateLayerResult.pois.length - bridgeMapLab_state.sceneResult.items.length
+          visible: markerItems.length,
+          hidden: bridgeMapLab_state.stateLayerResult.pois.length - markerItems.length
         };
+        bridgeMapLab_state.renderedCount = renderedCounts.markers;
+        bridgeMapLab_state.renderedCircleCount = renderedCounts.circles50;
+
         document.getElementById('campsiteLab_rawCount').textContent = `Raw: ${counts.raw}`;
         document.getElementById('campsiteLab_invalidCount').textContent = `Invalid: ${counts.invalid}`;
         document.getElementById('campsiteLab_duplicateCount').textContent = `Duplicate: ${counts.duplicate}`;
@@ -409,10 +466,16 @@
         document.getElementById('campsiteLab_visibleCount').textContent = `Visible: ${displayCounts.visible}`;
         document.getElementById('campsiteLab_hiddenCount').textContent = `Hidden: ${displayCounts.hidden}`;
         document.getElementById('campsiteLab_renderedCount').textContent = `Rendered: ${bridgeMapLab_state.renderedCount}`;
+        document.getElementById('campsiteLab_circle50Count').textContent = `Circles: ${bridgeMapLab_state.renderedCircleCount}`;
         document.getElementById('campsiteLab_currentZoom').textContent = `Zoom: ${bridgeMapLab_state.map.getZoom()}`;
+        document.getElementById('campsiteLab_circle50Status').textContent = bridgeMapLab_state.displaySettings.circle50Visible
+          ? 'ON'
+          : 'OFF';
 
         const styledByOwnerKey = new Map(
-          bridgeMapLab_state.colorLayerResult.items.map((renderItem) => [renderItem.ownerKey, renderItem])
+          bridgeMapLab_state.colorLayerResult.items
+            .filter((renderItem) => renderItem.itemType === 'marker')
+            .map((renderItem) => [renderItem.ownerKey, renderItem])
         );
         const renderedByOwnerKey = new Map(
           bridgeMapLab_state.renderer.getDiagnostics().map((diagnostic) => [diagnostic.ownerKey, diagnostic])
@@ -470,6 +533,21 @@
         }));
       }
 
+      function bridgeMapLab_rebuildSceneAndRender() {
+        bridgeMapLab_state.sceneResult = window.bridgeMapLab_buildScene(
+          bridgeMapLab_state.stateLayerResult,
+          bridgeMapLab_state.geometryLayerResult,
+          bridgeMapLab_state.displaySettings
+        );
+        bridgeMapLab_state.colorLayerResult = window.bridgeMapLab_buildColorLayer(
+          bridgeMapLab_state.sceneResult
+        );
+        bridgeMapLab_state.renderedCount = bridgeMapLab_state.renderer.render(
+          bridgeMapLab_state.colorLayerResult
+        );
+        bridgeMapLab_updateDiagnostics();
+      }
+
       function bridgeMapLab_invalidateMapSize() {
         if (!bridgeMapLab_state.map) return;
 
@@ -513,20 +591,17 @@
         bridgeMapLab_state.geometryLayerResult = window.bridgeMapLab_buildGeometryLayer(
           bridgeMapLab_state.stateLayerResult
         );
-        bridgeMapLab_state.sceneResult = window.bridgeMapLab_buildScene(
-          bridgeMapLab_state.stateLayerResult,
-          bridgeMapLab_state.geometryLayerResult
-        );
-        bridgeMapLab_state.colorLayerResult = window.bridgeMapLab_buildColorLayer(
-          bridgeMapLab_state.sceneResult
-        );
         bridgeMapLab_state.renderer = window.bridgeMapLab_createMapRenderer(bridgeMapLab_state.map);
-        bridgeMapLab_state.renderedCount = bridgeMapLab_state.renderer.render(
-          bridgeMapLab_state.colorLayerResult
-        );
+
+        const circle50Toggle = document.getElementById('campsiteLab_circle50Toggle');
+        circle50Toggle.checked = bridgeMapLab_state.displaySettings.circle50Visible;
+        circle50Toggle.addEventListener('change', () => {
+          bridgeMapLab_state.displaySettings.circle50Visible = circle50Toggle.checked;
+          bridgeMapLab_rebuildSceneAndRender();
+        });
 
         bridgeMapLab_state.map.on('moveend zoomend', bridgeMapLab_updateDiagnostics);
-        bridgeMapLab_updateDiagnostics();
+        bridgeMapLab_rebuildSceneAndRender();
       }
 
       window.addEventListener('resize', bridgeMapLab_invalidateMapSize, { passive: true });
