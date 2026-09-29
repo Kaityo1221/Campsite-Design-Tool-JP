@@ -8,7 +8,8 @@
       lng: 139.7731,
       sourceGameObjects: Object.freeze([
         Object.freeze({ entity: 'POWERSPOT', status: 'ACTIVE', gameBrand: '' }),
-        Object.freeze({ entity: 'POKESTOP', status: 'ACTIVE', gameBrand: 'HOLOHOLO' })
+        Object.freeze({ entity: 'POKESTOP', status: 'ACTIVE', gameBrand: 'HOLOHOLO' }),
+        Object.freeze({ entity: 'POWERSPOT', status: 'INACTIVE', gameBrand: 'HOLOHOLO' })
       ])
     }),
     Object.freeze({
@@ -16,9 +17,9 @@
       lat: 35.71515,
       lng: 139.77355,
       sourceGameObjects: Object.freeze([
-        Object.freeze({ entity: 'POWERSPOT', status: 'ACTIVE', gameBrand: '' }),
         Object.freeze({ entity: 'POKESTOP', status: 'ACTIVE', gameBrand: 'HOLOHOLO' }),
-        Object.freeze({ entity: 'GYM', status: 'ACTIVE', gameBrand: 'HOLOHOLO' })
+        Object.freeze({ entity: 'GYM', status: 'ACTIVE', gameBrand: 'HOLOHOLO' }),
+        Object.freeze({ entity: 'POWERSPOT', status: 'INACTIVE', gameBrand: '' })
       ])
     }),
     Object.freeze({
@@ -26,7 +27,8 @@
       lat: 35.71442,
       lng: 139.77262,
       sourceGameObjects: Object.freeze([
-        Object.freeze({ entity: 'POWERSPOT', status: 'ACTIVE', gameBrand: '' })
+        Object.freeze({ entity: 'POWERSPOT', status: 'ACTIVE', gameBrand: '' }),
+        Object.freeze({ entity: 'POWERSPOT', status: 'INACTIVE', gameBrand: 'HOLOHOLO' })
       ])
     }),
     Object.freeze({
@@ -47,6 +49,15 @@
       guid: 'poi-f',
       lat: 35.71572,
       lng: 139.77272
+    }),
+    Object.freeze({
+      guid: 'poi-g',
+      lat: 35.71402,
+      lng: 139.77222,
+      sourceGameObjects: Object.freeze([
+        Object.freeze({ entity: 'GYM', status: 'ACTIVE', gameBrand: 'HOLOHOLO' }),
+        Object.freeze({ malformed: true })
+      ])
     }),
     Object.freeze({ guid: 'poi-a', lat: 35.71542, lng: 139.77295 }),
     Object.freeze({ guid: 'poi-invalid-lat', lat: 91, lng: 139.7731 }),
