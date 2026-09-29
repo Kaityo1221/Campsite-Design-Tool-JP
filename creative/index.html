@@ -124,12 +124,8 @@ html,body{margin:0;min-height:100%;background:#17130f;color:#fff8e8;font-family:
     const bgOldMain='https://raw.githubusercontent.com/Kaityo1221/campsite-design-tool-adv-lab/main/creative/runtime/assets/creative-mode-opening.png';
     const bgOldPinned='https://raw.githubusercontent.com/Kaityo1221/campsite-design-tool-adv-lab/1c27ca3ef14f423688f755d350ecc602bee1c573/creative/runtime/assets/creative-mode-opening.png';
     const bgStable='https://media.githubusercontent.com/media/Kaityo1221/campsite-design-tool-adv-lab/1c27ca3ef14f423688f755d350ecc602bee1c573/creative/runtime/assets/creative-mode-opening.png';
-    const bgMobile='../assets/top/campsite-top-mobile.png';
-    const bgDesktop='../assets/top/campsite-top-desktop.png';
-    html=html.split(bgOldMain).join(bgMobile).split(bgOldPinned).join(bgMobile).split(bgStable).join(bgMobile);
-    const topStyle='<style id="campsiteNewFlowTopV1">.entry{background-image:linear-gradient(180deg,rgba(0,0,0,.12),rgba(0,0,0,.38)),url("'+bgMobile+'")!important;background-size:cover!important;background-position:center center!important;background-repeat:no-repeat!important}@media (min-width:768px){.entry{background-image:linear-gradient(180deg,rgba(0,0,0,.12),rgba(0,0,0,.38)),url("'+bgDesktop+'")!important;background-position:center center!important}}</style>';
-    html=html.replace('</head>',topStyle+'</head>');
-    html=html.replace(/<input\\b[^>]*\\bid=["']entryFile["'][^>]*>/i,m=>m.replace(/\\saccept\\s*=\\s*(?:"[^"]*"|'[^']*'|[^\\s>]+)/i,''));
+    html=html.split(bgOldMain).join(bgStable).split(bgOldPinned).join(bgStable);
+    html=html.replace(/<input\b[^>]*\bid=["']entryFile["'][^>]*>/i,m=>m.replace(/\saccept\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/i,''));
     html=html.replace('entryFile.onchange=()=>{',"entryFile.removeAttribute('accept');entryFile.accept='';entryFile.onchange=()=>{");
   }catch(e){
     document.body.style.cssText='margin:0;padding:24px;background:#17130f;color:#ffd0c8;font-family:-apple-system,BlinkMacSystemFont,sans-serif;white-space:pre-wrap';
