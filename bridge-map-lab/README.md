@@ -20,18 +20,18 @@ LAB固有のDOM ID、class、storage key、event、global variable、script名�
 
 ## Current phase
 
-Phase 4-D1: Gate Cで確定したData Layer / State Engine / Coloring Engine / Renderer分離を維持したまま、Reference分類だけを追加する。
+Phase 4-D2: Phase 4-D1で確定したReference分類を変更せず、Coloring Engineで表示可否と表示色だけを決定する。
 
 ```text
 Fixture (9 POIs)
   -> LAB Data Layer (validation -> valid GUID first-wins dedupe -> normalization)
   -> LAB State Engine (active State + Reference Kind classification)
-  -> LAB Coloring Engine (既存State -> Marker表示情報。D1では表示ルール変更なし)
-  -> Map Renderer (LAB専用LayerGroup + CircleMarker)
+  -> LAB Coloring Engine (State / Reference Kind -> visibility + Marker style)
+  -> Map Renderer (Coloring Engineが渡した表示対象だけを描画)
   -> Leaflet 1.9.4
 ```
 
-State Engineの分類:
+State Engineの分類はPhase 4-D1から変更しない。
 
 ```text
 ACTIVE POKESTOP
@@ -59,25 +59,52 @@ Malformed / ambiguous metadata
   -> referenceKind=null
 ```
 
+Phase 4-D2の表示ルール:
+
+```text
+POKESTOP
+  -> visible
+  -> blue #2F80ED
+
+GYM
+  -> visible
+  -> red #E53935
+
+POWERSPOT
+  -> visible
+  -> purple #8E44AD
+
+NOT_IN_GAME / INACTIVE_POWERSPOT
+  -> visible
+  -> light purple #C9A7EB
+
+NOT_IN_GAME / NOT_IN_GAME
+  -> hidden
+
+UNKNOWN
+  -> hidden
+```
+
 重要:
 
-- `INACTIVE_POWERSPOT`は新しい`state`ではなくReference subtypeとして扱う。
+- `INACTIVE_POWERSPOT`はStateではなくReference subtypeのまま維持する。
 - `UNKNOWN != NOT_IN_GAME`を維持する。
-- Active entity判定を先に行い、優先順位`GYM > POKESTOP > POWERSPOT`を維持する。
-- D1ではColoring Engineの色仕様を変更しない。
-- D1では`NOT_IN_GAME` / `UNKNOWN`をまだ非表示にしない。既存fallback表示のまま分類結果だけを検証する。
-- RendererはReference分類を行わない。
-- Pan / Zoom / resize後もLeafletの`getLatLng()`とData Layer座標の一致を維持する。
+- State EngineのActive優先順位`GYM > POKESTOP > POWERSPOT`は変更しない。
+- Coloring Engineが表示可否とMarker色を決定する。
+- RendererはStateやReference Kindを解釈しない。
+- RendererはColoring Engineから渡された`pois[]`だけを描画する。
+- DiagnosticsではColoring Engineの全decisionを表示し、非表示POIはLeaflet列を`HIDDEN`とする。
+- Pan / Zoom / resize後も、表示中MarkerのLeaflet `getLatLng()`とData Layer座標の一致を維持する。
 - 再描画はRenderer専用LayerGroupだけをclearし、Map本体を再初期化しない。
 
 Fixture:
 
-- `poi-a`: `POWERSPOT ACTIVE + POKESTOP ACTIVE` -> `POKESTOP`
-- `poi-b`: `POWERSPOT ACTIVE + POKESTOP ACTIVE + GYM ACTIVE` -> `GYM`
-- `poi-c`: `POWERSPOT ACTIVE` -> `POWERSPOT`
-- `poi-d`: `POWERSPOT INACTIVE` -> `NOT_IN_GAME / INACTIVE_POWERSPOT`
-- `poi-e`: game objectなし -> `NOT_IN_GAME / NOT_IN_GAME`
-- `poi-f`: `sourceGameObjects`なし -> `UNKNOWN / null`
+- `poi-a`: `POWERSPOT ACTIVE + POKESTOP ACTIVE` -> `POKESTOP` -> visible blue
+- `poi-b`: `POWERSPOT ACTIVE + POKESTOP ACTIVE + GYM ACTIVE` -> `GYM` -> visible red
+- `poi-c`: `POWERSPOT ACTIVE` -> `POWERSPOT` -> visible purple
+- `poi-d`: `POWERSPOT INACTIVE` -> `NOT_IN_GAME / INACTIVE_POWERSPOT` -> visible light purple
+- `poi-e`: game objectなし -> `NOT_IN_GAME / NOT_IN_GAME` -> hidden
+- `poi-f`: `sourceGameObjects`なし -> `UNKNOWN / null` -> hidden
 
 期待結果:
 
@@ -93,15 +120,25 @@ NOT_IN_GAME: 2
 UNKNOWN: 1
 Reference NOT_IN_GAME: 1
 Reference INACTIVE_POWERSPOT: 1
-Rendered: 6
+Visible: 4
+Hidden: 2
+Rendered: 4
+```
+
+地図上の期待Marker:
+
+```text
+blue: 1
+red: 1
+purple: 1
+light purple: 1
 ```
 
 このPhaseでは以下を扱わない。
 
-- `INACTIVE_POWERSPOT`の薄い紫表示
-- `NOT_IN_GAME`の非表示
-- `UNKNOWN`の非表示
+- State Engineの分類変更
 - Active / Reference / Unknownの混在優先テスト
+- Marker形状変更
 - live Wayfarer通信、XHR / fetch監視
 - Bridge通信、WFMM連携
 - storage / 50m / S2 / Candidate
