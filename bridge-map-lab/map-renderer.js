@@ -15,13 +15,25 @@
     const markerLayer = L.layerGroup().addTo(map);
     let renderedMarkers = [];
     let renderedCircles50 = [];
+    let destroyed = false;
+
+    function bridgeMapLab_assertAlive() {
+      if (destroyed) {
+        throw new Error('Map renderer has been destroyed');
+      }
+    }
+
+    function bridgeMapLab_clearRenderedState() {
+      circle50Layer.clearLayers();
+      markerLayer.clearLayers();
+      renderedMarkers = [];
+      renderedCircles50 = [];
+    }
 
     return Object.freeze({
       render(scene) {
-        circle50Layer.clearLayers();
-        markerLayer.clearLayers();
-        renderedMarkers = [];
-        renderedCircles50 = [];
+        bridgeMapLab_assertAlive();
+        bridgeMapLab_clearRenderedState();
 
         scene.items.forEach((renderItem) => {
           if (renderItem.layerKey === 'circle-50') {
@@ -59,6 +71,19 @@
         });
 
         return renderedMarkers.length;
+      },
+
+      destroy() {
+        if (destroyed) return;
+
+        bridgeMapLab_clearRenderedState();
+        map.removeLayer(circle50Layer);
+        map.removeLayer(markerLayer);
+        destroyed = true;
+      },
+
+      isDestroyed() {
+        return destroyed;
       },
 
       getDiagnostics() {
