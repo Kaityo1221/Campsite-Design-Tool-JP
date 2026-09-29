@@ -33,8 +33,23 @@
     });
   }
 
-  window.bridgeMapLab_buildScene = function (stateLayerResult, geometryLayerResult) {
+  function bridgeMapLab_buildCircle50RenderItem(poi, renderKind, circleGeometry) {
+    const ownerKey = `poi:${poi.guid}`;
+
+    return Object.freeze({
+      key: `circle50:${ownerKey}`,
+      itemType: 'circle',
+      ownerKey,
+      origin: 'existing',
+      renderKind,
+      layerKey: 'circle-50',
+      geometry: circleGeometry
+    });
+  }
+
+  window.bridgeMapLab_buildScene = function (stateLayerResult, geometryLayerResult, displaySettings) {
     const items = [];
+    const settings = Object.assign({ circle50Visible: true }, displaySettings || {});
     const geometryByOwnerKey = new Map(
       geometryLayerResult.entries.map((entry) => [entry.ownerKey, entry])
     );
@@ -46,7 +61,7 @@
       const ownerKey = `poi:${poi.guid}`;
       const geometryEntry = geometryByOwnerKey.get(ownerKey);
       if (!geometryEntry || !geometryEntry.pointGeometry) {
-        throw new Error(`Missing geometry for ${ownerKey}`);
+        throw new Error(`Missing point geometry for ${ownerKey}`);
       }
 
       items.push(bridgeMapLab_buildMarkerRenderItem(
@@ -54,6 +69,19 @@
         renderKind,
         geometryEntry.pointGeometry
       ));
+
+      if (settings.circle50Visible) {
+        const circleGeometry = geometryEntry.circleGeometries?.[50];
+        if (!circleGeometry) {
+          throw new Error(`Missing 50m circle geometry for ${ownerKey}`);
+        }
+
+        items.push(bridgeMapLab_buildCircle50RenderItem(
+          poi,
+          renderKind,
+          circleGeometry
+        ));
+      }
     });
 
     return Object.freeze({
