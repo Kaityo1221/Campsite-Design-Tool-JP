@@ -28,6 +28,7 @@
   <script src="fixture.js" defer></script>
   <script src="data-layer.js" defer></script>
   <script src="state-engine.js" defer></script>
+  <script src="coloring-engine.js" defer></script>
   <script src="map-renderer.js" defer></script>
   <style>
     :root {
@@ -251,9 +252,9 @@
     <header class="campsiteLab_header">
       <div>
         <p class="campsiteLab_eyebrow">LAB ONLY</p>
-        <h1>Data Layer → State Engine → Renderer proof</h1>
+        <h1>Data Layer → State Engine → Coloring Engine → Renderer proof</h1>
       </div>
-      <p class="campsiteLab_phase">Phase 4-C1 / Leaflet 1.9.4</p>
+      <p class="campsiteLab_phase">Phase 4-C2 / Leaflet 1.9.4</p>
     </header>
 
     <p id="campsiteLab_error" class="campsiteLab_error" role="alert" hidden></p>
@@ -333,6 +334,7 @@
         renderer: null,
         dataLayerResult: null,
         stateLayerResult: null,
+        colorLayerResult: null,
         renderedCount: 0,
         resizeFrame: null
       };
@@ -349,7 +351,8 @@
         if (!bridgeMapLab_state.map
           || !bridgeMapLab_state.renderer
           || !bridgeMapLab_state.dataLayerResult
-          || !bridgeMapLab_state.stateLayerResult) return;
+          || !bridgeMapLab_state.stateLayerResult
+          || !bridgeMapLab_state.colorLayerResult) return;
 
         const counts = bridgeMapLab_state.dataLayerResult.counts;
         const stateCounts = bridgeMapLab_state.stateLayerResult.counts;
@@ -424,9 +427,12 @@
         bridgeMapLab_state.stateLayerResult = window.bridgeMapLab_buildStateLayer(
           bridgeMapLab_state.dataLayerResult
         );
+        bridgeMapLab_state.colorLayerResult = window.bridgeMapLab_buildColorLayer(
+          bridgeMapLab_state.stateLayerResult
+        );
         bridgeMapLab_state.renderer = window.bridgeMapLab_createMapRenderer(bridgeMapLab_state.map);
         bridgeMapLab_state.renderedCount = bridgeMapLab_state.renderer.render(
-          bridgeMapLab_state.stateLayerResult.pois
+          bridgeMapLab_state.colorLayerResult.pois
         );
 
         bridgeMapLab_state.map.on('moveend zoomend', bridgeMapLab_updateDiagnostics);

@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const bridgeMapLab_markerStyle = Object.freeze({
+  const bridgeMapLab_markerBaseStyle = Object.freeze({
     radius: 8,
     color: '#f1f3f5',
     weight: 2,
@@ -19,7 +19,10 @@
         markerLayer.clearLayers();
         renderedMarkers = pois.map((poi) => ({
           poi,
-          marker: L.circleMarker([poi.lat, poi.lng], bridgeMapLab_markerStyle).addTo(markerLayer)
+          marker: L.circleMarker(
+            [poi.lat, poi.lng],
+            Object.assign({}, bridgeMapLab_markerBaseStyle, poi.markerStyle || {})
+          ).addTo(markerLayer)
         }));
 
         return renderedMarkers.length;
@@ -29,6 +32,7 @@
         return renderedMarkers.map(({ poi, marker }) => ({
           guid: poi.guid,
           state: poi.state,
+          fillColor: marker.options.fillColor,
           dataLayerLat: poi.lat,
           dataLayerLng: poi.lng,
           leafletLatLng: marker.getLatLng()
