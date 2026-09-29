@@ -252,14 +252,14 @@
     <header class="campsiteLab_header">
       <div>
         <p class="campsiteLab_eyebrow">LAB ONLY</p>
-        <h1>Mixed State Priority → Coloring → Renderer proof</h1>
+        <h1>Reference State classification proof</h1>
       </div>
-      <p class="campsiteLab_phase">Phase 4-C3 / Leaflet 1.9.4</p>
+      <p class="campsiteLab_phase">Phase 4-D1 / Leaflet 1.9.4</p>
     </header>
 
     <p id="campsiteLab_error" class="campsiteLab_error" role="alert" hidden></p>
 
-    <section class="campsiteLab_mapFrame" aria-label="複数State優先順位とRendererの分離検証">
+    <section class="campsiteLab_mapFrame" aria-label="Reference State分類とRenderer分離検証">
       <div id="campsiteLab_map" aria-label="Leaflet検証地図"></div>
       <div class="campsiteLab_info" aria-live="polite">
         <div class="campsiteLab_metric">
@@ -292,6 +292,18 @@
         </div>
         <div class="campsiteLab_metric">
           <span class="campsiteLab_label">STATE</span>
+          <span id="campsiteLab_notInGameCount" class="campsiteLab_value">NOT_IN_GAME: -</span>
+        </div>
+        <div class="campsiteLab_metric">
+          <span class="campsiteLab_label">REFERENCE</span>
+          <span id="campsiteLab_notInGameReferenceCount" class="campsiteLab_value">NOT_IN_GAME: -</span>
+        </div>
+        <div class="campsiteLab_metric">
+          <span class="campsiteLab_label">REFERENCE</span>
+          <span id="campsiteLab_inactivePowerSpotCount" class="campsiteLab_value">INACTIVE_POWERSPOT: -</span>
+        </div>
+        <div class="campsiteLab_metric">
+          <span class="campsiteLab_label">STATE</span>
           <span id="campsiteLab_unknownCount" class="campsiteLab_value">UNKNOWN: -</span>
         </div>
         <div class="campsiteLab_metric">
@@ -304,20 +316,21 @@
         </div>
       </div>
       <div class="campsiteLab_diagnostics">
-        <h2>State priority diagnostics</h2>
+        <h2>Reference state diagnostics</h2>
         <div class="campsiteLab_tableWrap">
           <table>
             <thead>
               <tr>
                 <th scope="col">GUID</th>
-                <th scope="col">Source active entities</th>
+                <th scope="col">Source game objects</th>
                 <th scope="col">Final State</th>
+                <th scope="col">Reference Kind</th>
                 <th scope="col">Data Layer lat/lng</th>
                 <th scope="col">Leaflet getLatLng()</th>
               </tr>
             </thead>
             <tbody id="campsiteLab_markerDiagnostics">
-              <tr><td colspan="5">初期化待機中</td></tr>
+              <tr><td colspan="6">初期化待機中</td></tr>
             </tbody>
           </table>
         </div>
@@ -357,6 +370,7 @@
 
         const counts = bridgeMapLab_state.dataLayerResult.counts;
         const stateCounts = bridgeMapLab_state.stateLayerResult.counts;
+        const referenceCounts = bridgeMapLab_state.stateLayerResult.referenceCounts;
         document.getElementById('campsiteLab_rawCount').textContent = `Raw: ${counts.raw}`;
         document.getElementById('campsiteLab_invalidCount').textContent = `Invalid: ${counts.invalid}`;
         document.getElementById('campsiteLab_duplicateCount').textContent = `Duplicate: ${counts.duplicate}`;
@@ -364,31 +378,45 @@
         document.getElementById('campsiteLab_pokestopCount').textContent = `POKESTOP: ${stateCounts.POKESTOP}`;
         document.getElementById('campsiteLab_gymCount').textContent = `GYM: ${stateCounts.GYM}`;
         document.getElementById('campsiteLab_powerspotCount').textContent = `POWERSPOT: ${stateCounts.POWERSPOT}`;
+        document.getElementById('campsiteLab_notInGameCount').textContent = `NOT_IN_GAME: ${stateCounts.NOT_IN_GAME}`;
+        document.getElementById('campsiteLab_notInGameReferenceCount').textContent = `NOT_IN_GAME: ${referenceCounts.NOT_IN_GAME}`;
+        document.getElementById('campsiteLab_inactivePowerSpotCount').textContent = `INACTIVE_POWERSPOT: ${referenceCounts.INACTIVE_POWERSPOT}`;
         document.getElementById('campsiteLab_unknownCount').textContent = `UNKNOWN: ${stateCounts.UNKNOWN}`;
         document.getElementById('campsiteLab_renderedCount').textContent = `Rendered: ${bridgeMapLab_state.renderedCount}`;
         document.getElementById('campsiteLab_currentZoom').textContent = `Zoom: ${bridgeMapLab_state.map.getZoom()}`;
 
+        const stateByGuid = new Map(
+          bridgeMapLab_state.stateLayerResult.pois.map((poi) => [poi.guid, poi])
+        );
         const diagnosticsBody = document.getElementById('campsiteLab_markerDiagnostics');
         diagnosticsBody.replaceChildren(...bridgeMapLab_state.renderer.getDiagnostics().map((diagnostic) => {
+          const statePoi = stateByGuid.get(diagnostic.guid);
           const row = document.createElement('tr');
           const guidCell = document.createElement('td');
           const sourceCell = document.createElement('td');
           const stateCell = document.createElement('td');
+          const referenceCell = document.createElement('td');
           const dataLayerCell = document.createElement('td');
           const leafletCell = document.createElement('td');
           const coordinatesMatch = diagnostic.dataLayerLat === diagnostic.leafletLatLng.lat
             && diagnostic.dataLayerLng === diagnostic.leafletLatLng.lng;
           const sourceEntities = Array.isArray(diagnostic.sourceGameObjects)
-            ? diagnostic.sourceGameObjects.map((gameObject) => gameObject.entity).join(' + ')
+            ? diagnostic.sourceGameObjects.map((gameObject) => {
+              if (gameObject === null || typeof gameObject !== 'object') return 'MALFORMED';
+              return `${gameObject.entity || '?'} / ${gameObject.status || '?'}`;
+            }).join(' + ')
             : '';
 
           guidCell.textContent = diagnostic.guid;
           sourceCell.textContent = sourceEntities || '—';
-          stateCell.textContent = diagnostic.state;
+          stateCell.textContent = statePoi ? statePoi.state : diagnostic.state;
+          referenceCell.textContent = statePoi && statePoi.referenceKind
+            ? statePoi.referenceKind
+            : '—';
           dataLayerCell.textContent = `${diagnostic.dataLayerLat.toFixed(6)}, ${diagnostic.dataLayerLng.toFixed(6)}`;
           leafletCell.textContent = `${diagnostic.leafletLatLng.lat.toFixed(6)}, ${diagnostic.leafletLatLng.lng.toFixed(6)}`;
           leafletCell.className = coordinatesMatch ? 'campsiteLab_coordinateMatch' : '';
-          row.append(guidCell, sourceCell, stateCell, dataLayerCell, leafletCell);
+          row.append(guidCell, sourceCell, stateCell, referenceCell, dataLayerCell, leafletCell);
           return row;
         }));
       }
