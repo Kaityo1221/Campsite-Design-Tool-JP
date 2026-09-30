@@ -57,6 +57,29 @@ cmCandidateShadowPublish=function(reason){
     }
   }catch(error){console.warn('[D11 Dev Default] diagnostics publish failed',error)}
 };
+function cmD11LegacyCandidateTarget(){
+  if(!cmD11LegacyRendererRequested())return null;
+  try{
+    const record=(records||[]).find(r=>r&&!r.deleted&&String(r.layer||'').startsWith('new-'));
+    const marker=record?.marker;
+    const element=marker?.getElement?.();
+    if(!record||!marker||!element)return null;
+    const rect=element.getBoundingClientRect();
+    const style=getComputedStyle(element);
+    return Object.freeze({
+      id:String(record.id||''),
+      layer:String(record.layer||''),
+      inMap:!!map?.hasLayer?.(marker),
+      x:rect.left+rect.width/2,
+      y:rect.top+rect.height/2,
+      width:rect.width,
+      height:rect.height,
+      pointerEvents:String(style.pointerEvents||''),
+      opacity:Number(style.opacity)
+    });
+  }catch(error){console.warn('[D11 Dev Default] legacy marker probe failed',error);return null}
+}
+window.__cmD11LegacyProbe=Object.freeze({getCandidateTarget:cmD11LegacyCandidateTarget});
 `;
         src=src.slice(0,coreEnd)+augment+src.slice(coreEnd);
       }
