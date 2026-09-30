@@ -55,7 +55,8 @@
   }
 
   window.bridgeMapLab_createMapRenderer = function (map, options) {
-    const settings = Object.assign({ opacity: 1 }, options || {});
+    const settings = Object.assign({ opacity: 1, onMarkerActivate: null }, options || {});
+    const markerActivationEnabled = typeof settings.onMarkerActivate === 'function';
     const circleLayers = new Map();
     const circleEntries = new Map();
     bridgeMapLab_circleRadii.forEach((radius) => {
@@ -128,19 +129,30 @@
       return style;
     }
 
+    function bridgeMapLab_bindMarkerActivation(layer, key, fallbackRenderItem) {
+      if (!markerActivationEnabled) return;
+      layer.on('click', (event) => {
+        const current = markerEntries.get(key)?.renderItem || fallbackRenderItem;
+        try {
+          settings.onMarkerActivate(current, event);
+        } catch (error) {
+          console.error('[bridgeMapLab Map Renderer] marker activation failed', error);
+        }
+      });
+    }
+
     function bridgeMapLab_createMarkerLayer(renderItem, latLng) {
       const kind = bridgeMapLab_markerKind(renderItem);
       if (kind === 'candidate-pin' || kind === 'existing-icon') {
-        return {
-          kind,
-          layer: L.marker(latLng, {
-            icon: kind === 'candidate-pin' ? bridgeMapLab_candidateIcon() : bridgeMapLab_existingIcon(renderItem.renderKind),
-            interactive: false,
-            keyboard: false,
-            opacity: kind === 'candidate-pin' ? settings.opacity : bridgeMapLab_markerOpacity(renderItem),
-            zIndexOffset: kind === 'candidate-pin' ? 20 : 0
-          }).addTo(markerLayer)
-        };
+        const layer = L.marker(latLng, {
+          icon: kind === 'candidate-pin' ? bridgeMapLab_candidateIcon() : bridgeMapLab_existingIcon(renderItem.renderKind),
+          interactive: markerActivationEnabled,
+          keyboard: markerActivationEnabled,
+          opacity: kind === 'candidate-pin' ? settings.opacity : bridgeMapLab_markerOpacity(renderItem),
+          zIndexOffset: kind === 'candidate-pin' ? 20 : 0
+        }).addTo(markerLayer);
+        bridgeMapLab_bindMarkerActivation(layer, renderItem.key, renderItem);
+        return { kind, layer };
       }
 
       const style = bridgeMapLab_markerStyle(renderItem);
@@ -326,6 +338,7 @@
             fillColor: marker.options?.fillColor || null,
             opacity: marker.options?.opacity ?? null,
             fillOpacity: marker.options?.fillOpacity ?? null,
+            interactive: marker.options?.interactive === true,
             dataLayerLat: renderItem.geometry.lat,
             dataLayerLng: renderItem.geometry.lng,
             leafletLatLng: marker.getLatLng(),
