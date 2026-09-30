@@ -5,6 +5,18 @@
   window.applyCreativePatches=function(src){
     src=previous(src);
 
+    // D8 changes renderer behavior. Bump only Map Engine asset URLs so Safari/GitHub Pages
+    // cannot reuse the D7 renderer while keeping the D8 cutover fully query-gated.
+    src=src.split('runtime/map-engine/existing-records-adapter.js?v=5d4').join('runtime/map-engine/existing-records-adapter.js?v=5d8');
+    src=src.split('runtime/map-engine/existing-records-refresh-store.js?v=5d4').join('runtime/map-engine/existing-records-refresh-store.js?v=5d8');
+    src=src.split('runtime/map-engine/existing-geometry.js?v=5d4').join('runtime/map-engine/existing-geometry.js?v=5d8');
+    src=src.split('runtime/map-engine/candidate-records-adapter.js?v=5d4').join('runtime/map-engine/candidate-records-adapter.js?v=5d8');
+    src=src.split('runtime/map-engine/candidate-records-refresh-store.js?v=5d4').join('runtime/map-engine/candidate-records-refresh-store.js?v=5d8');
+    src=src.split('runtime/map-engine/candidate-geometry.js?v=5d4').join('runtime/map-engine/candidate-geometry.js?v=5d8');
+    src=src.split('runtime/map-engine/scene-builder.js?v=5d4').join('runtime/map-engine/scene-builder.js?v=5d8');
+    src=src.split('runtime/map-engine/candidate-scene-builder.js?v=5d4').join('runtime/map-engine/candidate-scene-builder.js?v=5d8');
+    src=src.split('runtime/map-engine/map-renderer.js?v=5d4').join('runtime/map-engine/map-renderer.js?v=5d8');
+
     const style=`<style id="cmD8UnifiedVisibleStyle">
       .cm-engine-existing-icon{pointer-events:none!important}
       body.cm-unified-renderer-visible .cm-engine-legacy-existing{opacity:0!important}
