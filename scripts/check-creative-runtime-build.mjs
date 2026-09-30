@@ -111,6 +111,9 @@ assert.ok(mapRendererSource.includes("POKESTOP: 'https://maps.google.com/mapfile
 assert.ok(mapRendererSource.includes("GYM: 'https://maps.google.com/mapfiles/ms/icons/yellow-dot.png'"),'Feedback #002 Gym candidate icon missing');
 assert.ok(mapRendererSource.includes("POWERSPOT: 'https://maps.google.com/mapfiles/ms/icons/purple-dot.png'"),'Feedback #002 PowerSpot candidate icon missing');
 assert.ok(mapRendererSource.includes('entry.layer.setIcon(bridgeMapLab_candidateIcon(renderItem.renderKind));'),'Feedback #002 candidate type-change icon refresh missing');
+assert.ok(html.includes('.cm-v45-power{background:var(--cm-purple);box-shadow:0 0 0 2px #681fc1}'),'Feedback #003 active PowerSpot visual baseline missing');
+assert.ok(html.includes('.cm-v45-inactive{background:var(--cm-purple);box-shadow:0 0 0 2px #681fc1;opacity:1}'),'Feedback #003 inactive PowerSpot must match active PowerSpot visual');
+assert.ok(mapRendererSource.includes("INACTIVE_POWERSPOT: 'cm-v45-inactive'"),'Feedback #003 inactive PowerSpot render-kind mapping must remain intact');
 
 function extractScripts(source){
   const scripts=[];

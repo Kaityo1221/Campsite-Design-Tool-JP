@@ -86,7 +86,7 @@
       .cm-v45-gym:after{content:"";width:20px;height:20px;clip-path:inherit;background:var(--cm-red)}
       .cm-v45-power,.cm-v45-inactive{width:21px;height:21px;transform:rotate(45deg);border:3px solid #fff;border-radius:3px}
       .cm-v45-power{background:var(--cm-purple);box-shadow:0 0 0 2px #681fc1}
-      .cm-v45-inactive{background:var(--cm-pink);box-shadow:0 0 0 2px #e879aa;opacity:.68}
+      .cm-v45-inactive{background:var(--cm-purple);box-shadow:0 0 0 2px #681fc1;opacity:1}
       .cm-v45-candidate{position:relative;width:25px;height:25px;transform:rotate(-45deg);border:3px solid #fff;border-radius:50% 50% 50% 0;background:var(--cm-orange);box-shadow:0 2px 7px rgba(0,0,0,.25)}
       .cm-v45-candidate:after{content:"✓";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(45deg);color:#fff;font-size:14px;font-weight:1000;line-height:1}
       .cm-v45-icon-wrap{position:relative;width:36px;height:36px;display:grid;place-items:center}
