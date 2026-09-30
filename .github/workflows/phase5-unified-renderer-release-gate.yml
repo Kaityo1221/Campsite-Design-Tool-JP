@@ -1,0 +1,84 @@
+name: Phase 5 Unified Renderer Release Gate
+
+on:
+  push:
+    branches:
+      - release/phase-5-d13-unified-renderer
+    paths:
+      - 'creative/index.html'
+      - 'creative/runtime/creative-patches-v54-coordinate-memo-reason.js'
+      - 'creative/runtime/creative-patches-v55-unified-visible.js'
+      - 'creative/runtime/creative-patches-v56-unified-interaction.js'
+      - 'creative/runtime/creative-patches-v57-dev-default-unified.js'
+      - 'creative/runtime/map-engine/**'
+      - 'scripts/check-creative-runtime-build.mjs'
+      - 'tests/creative-unified-interaction.spec.mjs'
+      - 'tests/creative-dev-default-renderer.spec.mjs'
+      - '.github/workflows/phase5-unified-renderer-release-gate.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'creative/index.html'
+      - 'creative/runtime/creative-patches-v54-coordinate-memo-reason.js'
+      - 'creative/runtime/creative-patches-v55-unified-visible.js'
+      - 'creative/runtime/creative-patches-v56-unified-interaction.js'
+      - 'creative/runtime/creative-patches-v57-dev-default-unified.js'
+      - 'creative/runtime/map-engine/**'
+      - 'scripts/check-creative-runtime-build.mjs'
+      - 'tests/creative-unified-interaction.spec.mjs'
+      - 'tests/creative-dev-default-renderer.spec.mjs'
+      - '.github/workflows/phase5-unified-renderer-release-gate.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  creative-unified-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Syntax check release files
+        run: |
+          node --check creative/runtime/map-engine/existing-records-adapter.js
+          node --check creative/runtime/map-engine/existing-records-refresh-store.js
+          node --check creative/runtime/map-engine/existing-geometry.js
+          node --check creative/runtime/map-engine/candidate-records-adapter.js
+          node --check creative/runtime/map-engine/candidate-records-refresh-store.js
+          node --check creative/runtime/map-engine/candidate-geometry.js
+          node --check creative/runtime/map-engine/scene-builder.js
+          node --check creative/runtime/map-engine/candidate-scene-builder.js
+          node --check creative/runtime/map-engine/map-renderer.js
+          node --check creative/runtime/creative-patches-v54-coordinate-memo-reason.js
+          node --check creative/runtime/creative-patches-v55-unified-visible.js
+          node --check creative/runtime/creative-patches-v56-unified-interaction.js
+          node --check creative/runtime/creative-patches-v57-dev-default-unified.js
+          node --check tests/creative-unified-interaction.spec.mjs
+          node --check tests/creative-dev-default-renderer.spec.mjs
+
+      - name: Verify generated Creative runtime
+        run: node scripts/check-creative-runtime-build.mjs
+
+      - name: Install WebKit
+        run: npx playwright install --with-deps webkit
+
+      - name: Run real Creative Mode iPhone WebKit gate
+        run: npx playwright test tests/creative-unified-interaction.spec.mjs tests/creative-dev-default-renderer.spec.mjs
+
+      - name: Upload Playwright traces on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase5-unified-renderer-release-traces
+          path: test-results
+          if-no-files-found: ignore
