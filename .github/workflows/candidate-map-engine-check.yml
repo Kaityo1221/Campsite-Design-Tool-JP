@@ -8,6 +8,7 @@ on:
       - 'creative/runtime/creative-patches-v54-coordinate-memo-reason.js'
       - 'creative/runtime/creative-patches-v55-unified-visible.js'
       - 'creative/runtime/creative-patches-v56-unified-interaction.js'
+      - 'creative/runtime/creative-patches-v57-dev-default-unified.js'
       - 'creative/index.html'
       - 'creative/bridge-project-patch.js'
       - 'bridge-map-lab/candidate-shadow-parity-test.html'
@@ -17,6 +18,7 @@ on:
       - 'bridge-map-lab/unified-interaction-parity-test.html'
       - 'tests/candidate-map-engine.spec.mjs'
       - 'tests/creative-unified-interaction.spec.mjs'
+      - 'tests/creative-dev-default-renderer.spec.mjs'
       - 'scripts/check-creative-runtime-build.mjs'
       - 'playwright.config.mjs'
       - 'package.json'
@@ -28,6 +30,7 @@ on:
       - 'creative/runtime/creative-patches-v54-coordinate-memo-reason.js'
       - 'creative/runtime/creative-patches-v55-unified-visible.js'
       - 'creative/runtime/creative-patches-v56-unified-interaction.js'
+      - 'creative/runtime/creative-patches-v57-dev-default-unified.js'
       - 'creative/index.html'
       - 'creative/bridge-project-patch.js'
       - 'bridge-map-lab/candidate-shadow-parity-test.html'
@@ -37,6 +40,7 @@ on:
       - 'bridge-map-lab/unified-interaction-parity-test.html'
       - 'tests/candidate-map-engine.spec.mjs'
       - 'tests/creative-unified-interaction.spec.mjs'
+      - 'tests/creative-dev-default-renderer.spec.mjs'
       - 'scripts/check-creative-runtime-build.mjs'
       - 'playwright.config.mjs'
       - 'package.json'
@@ -73,8 +77,10 @@ jobs:
           node --check creative/runtime/creative-patches-v54-coordinate-memo-reason.js
           node --check creative/runtime/creative-patches-v55-unified-visible.js
           node --check creative/runtime/creative-patches-v56-unified-interaction.js
+          node --check creative/runtime/creative-patches-v57-dev-default-unified.js
           node --check tests/candidate-map-engine.spec.mjs
           node --check tests/creative-unified-interaction.spec.mjs
+          node --check tests/creative-dev-default-renderer.spec.mjs
 
       - name: Verify generated Creative runtime
         run: node scripts/check-creative-runtime-build.mjs
@@ -83,7 +89,7 @@ jobs:
         run: npx playwright install --with-deps webkit
 
       - name: Run Candidate Map Engine and Creative interactive iPhone/WebKit parity
-        run: npx playwright test tests/candidate-map-engine.spec.mjs tests/creative-unified-interaction.spec.mjs
+        run: npx playwright test tests/candidate-map-engine.spec.mjs tests/creative-unified-interaction.spec.mjs tests/creative-dev-default-renderer.spec.mjs
 
       - name: Upload Playwright trace on failure
         if: failure()
