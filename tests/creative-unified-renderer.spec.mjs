@@ -92,8 +92,19 @@ test('Phase 5-D9 real Creative Mode keeps unified renderer stable through move u
 
   const existingLegacyOpacity = await page.locator('.cm-engine-legacy-existing').first().evaluate(el => getComputedStyle(el).opacity);
   expect(existingLegacyOpacity).toBe('0');
-  const candidateLegacyOpacity = await page.locator('.cm-engine-legacy-candidate .cm-v45-poi').first().evaluate(el => getComputedStyle(el).opacity);
-  expect(candidateLegacyOpacity).toBe('0');
+  const visibleLegacyCandidateBaseShapes = await page.locator('.cm-engine-legacy-candidate').first().evaluate(el => {
+    const selector = '.cm-v45-poi,.poi-image-icon,.poi-dot';
+    return [...el.querySelectorAll(selector)].filter(node => {
+      const style = getComputedStyle(node);
+      const rect = node.getBoundingClientRect();
+      return style.display !== 'none'
+        && style.visibility !== 'hidden'
+        && Number(style.opacity || 1) > 0
+        && rect.width > 0
+        && rect.height > 0;
+    }).length;
+  });
+  expect(visibleLegacyCandidateBaseShapes).toBe(0);
 
   const initialDiagnostics = await engineDiagnostics(page);
   const candidateKey = 'marker:candidate:c-stop';
