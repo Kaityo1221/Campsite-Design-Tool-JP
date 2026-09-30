@@ -41,6 +41,21 @@ test('Phase 5-D6 Candidate Renderer parity passes on iPhone/WebKit', async ({ pa
   expect(browserErrors).toEqual([]);
 });
 
+test('Phase 5-D7 Existing POI shadow parity passes on iPhone/WebKit', async ({ page }) => {
+  const browserErrors = collectBrowserErrors(page);
+
+  await page.goto('/bridge-map-lab/existing-shadow-parity-test.html');
+  await expect(page.locator('#run')).toBeVisible();
+  await page.locator('#run').click();
+
+  await expect(page.locator('#summary')).toContainText('PASS');
+  const result = await page.evaluate(() => window.__existingShadowParity);
+  expect(result).toBeTruthy();
+  expect(result.passed).toBe(result.total);
+  expect(result.total).toBeGreaterThanOrEqual(20);
+  expect(browserErrors).toEqual([]);
+});
+
 test('Phase 5-D7 Unified existing + Candidate records parity passes on iPhone/WebKit', async ({ page }) => {
   const browserErrors = collectBrowserErrors(page);
 
