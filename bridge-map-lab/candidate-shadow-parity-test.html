@@ -4,30 +4,32 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="robots" content="noindex,nofollow,noarchive">
-  <title>Phase 5-D6 Candidate Shadow Parity</title>
+  <title>Phase 5-D6 Candidate Renderer Parity</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <style>
+    :root{--cm-orange:#ff8418}
     html,body{margin:0;background:#16130f;color:#f8f2e5;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
     main{max-width:760px;margin:0 auto;padding:18px}.card{margin:12px 0;padding:14px;border:1px solid #5f533d;border-radius:14px;background:#211d17}
-    #map{height:220px;border-radius:12px;overflow:hidden}.pass{color:#a8e6a1}.fail{color:#ffaaa0}.row{padding:5px 0;border-bottom:1px solid rgba(255,255,255,.08)}
+    #map{height:260px;border-radius:12px;overflow:hidden}.pass{color:#a8e6a1}.fail{color:#ffaaa0}.row{padding:5px 0;border-bottom:1px solid rgba(255,255,255,.08)}
     code{font-size:11px;color:#f4d58a}button{min-height:42px;padding:0 14px;border-radius:10px;border:1px solid #8d784f;background:#f6e6ba;color:#2b2419;font-weight:800}
+    .cm-v45-map-icon{background:transparent!important;border:0!important;pointer-events:none!important}.cm-v45-poi{width:30px;height:30px;display:grid;place-items:center;filter:drop-shadow(0 2px 3px rgba(0,0,0,.26))}.cm-v45-candidate{position:relative;width:25px;height:25px;transform:rotate(-45deg);border:3px solid #fff;border-radius:50% 50% 50% 0;background:var(--cm-orange);box-shadow:0 2px 7px rgba(0,0,0,.25)}.cm-v45-candidate:after{content:"✓";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(45deg);color:#fff;font-size:14px;font-weight:1000;line-height:1}.cm-v45-icon-wrap{position:relative;width:36px;height:36px;display:grid;place-items:center}
   </style>
 </head>
 <body>
 <main>
-  <h1>Phase 5-D6 Candidate Shadow Parity</h1>
-  <p>Production Map Engineを実Leaflet上で検証します。既存Creative Mode本体は変更しません。</p>
+  <h1>Phase 5-D6 Candidate Renderer Parity</h1>
+  <p>Production Map Engineを実Leaflet上で可視化して検証します。既存Creative Mode本体は変更しません。</p>
   <div class="card"><div id="map"></div></div>
   <div class="card"><button id="run">テスト実行</button> <strong id="summary">未実行</strong></div>
   <div class="card" id="results"></div>
 </main>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="../creative/runtime/map-engine/candidate-records-adapter.js?v=5d2"></script>
-<script src="../creative/runtime/map-engine/candidate-records-refresh-store.js?v=5d2"></script>
-<script src="../creative/runtime/map-engine/candidate-geometry.js?v=5d2"></script>
-<script src="../creative/runtime/map-engine/scene-builder.js?v=5d2"></script>
-<script src="../creative/runtime/map-engine/candidate-scene-builder.js?v=5d2"></script>
-<script src="../creative/runtime/map-engine/map-renderer.js?v=5d2"></script>
+<script src="../creative/runtime/map-engine/candidate-records-adapter.js?v=5d3"></script>
+<script src="../creative/runtime/map-engine/candidate-records-refresh-store.js?v=5d3"></script>
+<script src="../creative/runtime/map-engine/candidate-geometry.js?v=5d3"></script>
+<script src="../creative/runtime/map-engine/scene-builder.js?v=5d3"></script>
+<script src="../creative/runtime/map-engine/candidate-scene-builder.js?v=5d3"></script>
+<script src="../creative/runtime/map-engine/map-renderer.js?v=5d3"></script>
 <script>
 (() => {
   const results=document.getElementById('results'),summary=document.getElementById('summary');
@@ -37,9 +39,11 @@
     try{fn();row.classList.add('pass');row.textContent='✅ '+name;return true}catch(error){row.classList.add('fail');row.textContent='❌ '+name+' — '+(error?.message||error);return false}finally{results.appendChild(row)}
   }
   function equal(actual,expected,label){if(JSON.stringify(actual)!==JSON.stringify(expected))throw new Error((label||'value')+' expected '+JSON.stringify(expected)+' got '+JSON.stringify(actual))}
-  function markerId(key){return renderer.getDiagnostics().find(x=>x.key===key)?.leafletId}
-  function circleId(radius,key){return renderer.getCircleDiagnostics(radius).find(x=>x.key===key)?.leafletId}
-  function coords(key){const d=renderer.getDiagnostics().find(x=>x.key===key);return d?[Number(d.leafletLatLng.lat.toFixed(6)),Number(d.leafletLatLng.lng.toFixed(6))]:null}
+  function markerDiag(key){return renderer.getDiagnostics().find(x=>x.key===key)}
+  function markerId(key){return markerDiag(key)?.leafletId}
+  function circleDiag(radius,key){return renderer.getCircleDiagnostics(radius).find(x=>x.key===key)}
+  function circleId(radius,key){return circleDiag(radius,key)?.leafletId}
+  function coords(key){const d=markerDiag(key);return d?[Number(d.leafletLatLng.lat.toFixed(6)),Number(d.leafletLatLng.lng.toFixed(6))]:null}
   function resetMap(){
     try{unsubscribe?.()}catch{}try{renderer?.destroy?.()}catch{}try{map?.remove?.()}catch{}
     document.getElementById('map').replaceChildren();
@@ -54,7 +58,7 @@
     ];
     let display={circleRadiiVisible:[50,40,30],candidateTypesVisible:{'new-pokestop':true,'new-gym':true,'new-power':true}};
     const store=window.bridgeMapLab_createCandidateRecordsRefreshStore(()=>records);
-    renderer=window.bridgeMapLab_createMapRenderer(map,{opacity:0});
+    renderer=window.bridgeMapLab_createMapRenderer(map,{opacity:1});
     let renderPasses=0;
     const render=()=>{
       const geometry=window.bridgeMapLab_buildCandidateGeometry(store.list());
@@ -67,9 +71,13 @@
     run('initial adapter outputs only 2 candidates',()=>equal(store.getCounts().output,2));
     run('existing record is ignored',()=>equal(store.getCounts().ignoredExisting,1));
     run('all candidate markers render',()=>equal(renderer.getRenderedCounts().markers,2));
+    run('Candidate marker uses candidate-pin renderer',()=>equal(markerDiag('marker:candidate:c-stop').markerKind,'candidate-pin'));
     run('50m circles render for both candidates',()=>equal(renderer.getRenderedCounts().circles50,2));
     run('40m circles render for both candidates',()=>equal(renderer.getRenderedCounts().circles40,2));
     run('30m circles render for both candidates',()=>equal(renderer.getRenderedCounts().circles30,2));
+    run('50m circle color matches Creative Mode',()=>equal(circleDiag(50,'circle50:candidate:c-stop').color,'#d18a00'));
+    run('40m circle color matches Creative Mode',()=>equal(circleDiag(40,'circle40:candidate:c-stop').color,'#8d62c1'));
+    run('30m circle color matches Creative Mode',()=>equal(circleDiag(30,'circle30:candidate:c-stop').color,'#3e9b68'));
 
     const stopMarkerId=markerId('marker:candidate:c-stop');
     const stop50Id=circleId(50,'circle50:candidate:c-stop');
