@@ -7,6 +7,7 @@ on:
       - 'creative/runtime/map-engine/**'
       - 'creative/runtime/creative-patches-v54-coordinate-memo-reason.js'
       - 'bridge-map-lab/candidate-shadow-parity-test.html'
+      - 'bridge-map-lab/unified-records-parity-test.html'
       - 'tests/candidate-map-engine.spec.mjs'
       - 'playwright.config.mjs'
       - 'package.json'
@@ -17,6 +18,7 @@ on:
       - 'creative/runtime/map-engine/**'
       - 'creative/runtime/creative-patches-v54-coordinate-memo-reason.js'
       - 'bridge-map-lab/candidate-shadow-parity-test.html'
+      - 'bridge-map-lab/unified-records-parity-test.html'
       - 'tests/candidate-map-engine.spec.mjs'
       - 'playwright.config.mjs'
       - 'package.json'
@@ -41,6 +43,9 @@ jobs:
 
       - name: Syntax check Candidate Map Engine
         run: |
+          node --check creative/runtime/map-engine/existing-records-adapter.js
+          node --check creative/runtime/map-engine/existing-records-refresh-store.js
+          node --check creative/runtime/map-engine/existing-geometry.js
           node --check creative/runtime/map-engine/candidate-records-adapter.js
           node --check creative/runtime/map-engine/candidate-records-refresh-store.js
           node --check creative/runtime/map-engine/candidate-geometry.js
