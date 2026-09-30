@@ -70,3 +70,18 @@ test('Phase 5-D7 Unified existing + Candidate records parity passes on iPhone/We
   expect(result.total).toBeGreaterThanOrEqual(24);
   expect(browserErrors).toEqual([]);
 });
+
+test('Phase 5-D8 Existing POI visible ownership parity passes on iPhone/WebKit', async ({ page }) => {
+  const browserErrors = collectBrowserErrors(page);
+
+  await page.goto('/bridge-map-lab/existing-visible-parity-test.html');
+  await expect(page.locator('#run')).toBeVisible();
+  await page.locator('#run').click();
+
+  await expect(page.locator('#summary')).toContainText('PASS');
+  const result = await page.evaluate(() => window.__existingVisibleParity);
+  expect(result).toBeTruthy();
+  expect(result.passed).toBe(result.total);
+  expect(result.total).toBeGreaterThanOrEqual(20);
+  expect(browserErrors).toEqual([]);
+});
