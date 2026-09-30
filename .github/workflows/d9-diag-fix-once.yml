@@ -1,0 +1,37 @@
+name: D9 diagnostics fix once
+
+on:
+  push:
+    branches: [bridge-map-lab-d9-interaction]
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: bridge-map-lab-d9-interaction
+      - name: Add origin to marker diagnostics
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('creative/runtime/map-engine/map-renderer.js')
+          s=p.read_text()
+          old='''            renderKind: renderItem.renderKind,\n            markerKind: entry.kind,'''
+          new='''            renderKind: renderItem.renderKind,\n            origin: renderItem.origin || null,\n            markerKind: entry.kind,'''
+          if new not in s:
+              if old not in s:
+                  raise SystemExit('diagnostics needle missing')
+              s=s.replace(old,new,1)
+              p.write_text(s)
+          PY
+          node --check creative/runtime/map-engine/map-renderer.js
+          git config user.name Kaityo1221
+          git config user.email rakugo100@gmail.com
+          git add creative/runtime/map-engine/map-renderer.js
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Phase 5-D9: expose RenderItem origin in diagnostics'
+          git push origin HEAD:bridge-map-lab-d9-interaction
