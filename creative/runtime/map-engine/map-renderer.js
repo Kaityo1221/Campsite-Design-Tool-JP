@@ -15,6 +15,12 @@
     40: Object.freeze({ color:'#8d62c1', fillColor:'#8d62c1', weight:2, dashArray:'6 5', fillOpacity:.055 }),
     30: Object.freeze({ color:'#3e9b68', fillColor:'#3e9b68', weight:2, dashArray:'4 5', fillOpacity:.045 })
   });
+  const bridgeMapLab_existingShapes = Object.freeze({
+    POKESTOP: 'cm-v45-stop',
+    GYM: 'cm-v45-gym',
+    POWERSPOT: 'cm-v45-power',
+    INACTIVE_POWERSPOT: 'cm-v45-inactive'
+  });
 
   function bridgeMapLab_zeroStats() {
     return Object.freeze({ created: 0, reused: 0, removed: 0 });
@@ -29,14 +35,23 @@
     });
   }
 
-  function bridgeMapLab_candidateIcon() {
+  function bridgeMapLab_divIcon(shapeClass, engineClass) {
     return L.divIcon({
-      className: 'cm-v45-map-icon cm-engine-candidate-icon',
-      html: '<div class="cm-v45-icon-wrap"><span class="cm-v45-poi"><span class="cm-v45-candidate"></span></span></div>',
+      className: `cm-v45-map-icon ${engineClass}`,
+      html: `<div class="cm-v45-icon-wrap"><span class="cm-v45-poi"><span class="${shapeClass}"></span></span></div>`,
       iconSize: [36, 36],
       iconAnchor: [18, 18],
       popupAnchor: [0, -18]
     });
+  }
+
+  function bridgeMapLab_candidateIcon() {
+    return bridgeMapLab_divIcon('cm-v45-candidate', 'cm-engine-candidate-icon');
+  }
+
+  function bridgeMapLab_existingIcon(renderKind) {
+    const shapeClass = bridgeMapLab_existingShapes[renderKind] || 'cm-v45-stop';
+    return bridgeMapLab_divIcon(shapeClass, 'cm-engine-existing-icon');
   }
 
   window.bridgeMapLab_createMapRenderer = function (map, options) {
@@ -93,7 +108,14 @@
     }
 
     function bridgeMapLab_markerKind(renderItem) {
-      return renderItem?.origin === 'candidate' ? 'candidate-pin' : 'circle-marker';
+      if (renderItem?.origin === 'candidate') return 'candidate-pin';
+      if (renderItem?.origin === 'existing') return 'existing-icon';
+      return 'circle-marker';
+    }
+
+    function bridgeMapLab_markerOpacity(renderItem) {
+      const naturalOpacity = Number.isFinite(Number(renderItem?.style?.opacity)) ? Number(renderItem.style.opacity) : 1;
+      return naturalOpacity * settings.opacity;
     }
 
     function bridgeMapLab_markerStyle(renderItem) {
@@ -108,15 +130,15 @@
 
     function bridgeMapLab_createMarkerLayer(renderItem, latLng) {
       const kind = bridgeMapLab_markerKind(renderItem);
-      if (kind === 'candidate-pin') {
+      if (kind === 'candidate-pin' || kind === 'existing-icon') {
         return {
           kind,
           layer: L.marker(latLng, {
-            icon: bridgeMapLab_candidateIcon(),
+            icon: kind === 'candidate-pin' ? bridgeMapLab_candidateIcon() : bridgeMapLab_existingIcon(renderItem.renderKind),
             interactive: false,
             keyboard: false,
-            opacity: settings.opacity,
-            zIndexOffset: 20
+            opacity: kind === 'candidate-pin' ? settings.opacity : bridgeMapLab_markerOpacity(renderItem),
+            zIndexOffset: kind === 'candidate-pin' ? 20 : 0
           }).addTo(markerLayer)
         };
       }
@@ -134,6 +156,9 @@
       entry.layer.setLatLng(latLng);
       if (entry.kind === 'candidate-pin') {
         entry.layer.setOpacity(settings.opacity);
+      } else if (entry.kind === 'existing-icon') {
+        entry.layer.setIcon(bridgeMapLab_existingIcon(renderItem.renderKind));
+        entry.layer.setOpacity(bridgeMapLab_markerOpacity(renderItem));
       } else {
         const style = bridgeMapLab_markerStyle(renderItem);
         const radius = Number.isFinite(Number(style.radius)) ? Number(style.radius) : bridgeMapLab_markerBaseStyle.radius;
