@@ -16,7 +16,8 @@ const livePostManifestPatches=[
   'creative-patches-v51-coordinate-jump.js',
   'creative-patches-v52-existing-new-placement.js',
   'creative-patches-v53-new-poi-auto-memo.js',
-  'creative-patches-v54-coordinate-memo-reason.js'
+  'creative-patches-v54-coordinate-memo-reason.js',
+  'creative-patches-v55-existing-visible.js'
 ];
 
 function gitBlobShaBuffer(body){
@@ -38,8 +39,6 @@ for(const name of manifest.order.slice(1)){
   assert.equal(typeof context.window.applyCreativePatches,'function',name+' registration failed');
 }
 
-// The JP loader continues beyond the pinned Next-Lab v44 snapshot. Apply the
-// exact live post-manifest chain so generated-HTML checks represent production.
 for(const name of livePostManifestPatches){
   const source=fs.readFileSync('creative/runtime/'+name,'utf8');
   new vm.Script(source,{filename:'creative/runtime/'+name}).runInContext(context);
@@ -88,6 +87,12 @@ assert.ok(html.includes('let cmExistingShadowStore=null'),'D7 existing shadow st
 assert.ok(html.includes('bridgeMapLab_createExistingRecordsRefreshStore'),'D7 existing store integration missing');
 assert.ok(html.includes('existingCounts:cmExistingShadowStore'),'D7 existing diagnostics publishing missing');
 assert.ok(html.includes('unified:true'),'D7 Unified Scene state marker missing');
+assert.ok(html.includes('id="cmD8ExistingRendererVisibleStyle"'),'D8 existing visual ownership style missing');
+assert.ok(html.includes('function cmExistingRendererVisible()'),'D8 existing visual gate missing');
+assert.ok(html.includes('function cmAnyMapRendererVisible()'),'D8 combined visual gate missing');
+assert.ok(html.includes("document.body.classList.toggle('cm-existing-renderer-visible',existingVisible)"),'D8 legacy existing marker ownership sync missing');
+assert.ok(html.includes("item.origin==='candidate'?candidateVisible:item.origin==='existing'?existingVisible:false"),'D8 per-origin visibility policy missing');
+assert.ok(html.includes('candidateVisible,existingVisible,unified:true'),'D8 diagnostics ownership state missing');
 
 function extractScripts(source){
   const scripts=[];
