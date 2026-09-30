@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>Phase 5-C7 Creative Integration Readiness</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="geometry-engine.js?v=5c7" defer></script>
+  <script src="scene-builder.js?v=5c7" defer></script>
+  <script src="candidate-records-adapter.js?v=5c7" defer></script>
+  <script src="candidate-records-refresh-store.js?v=5c7" defer></script>
+  <script src="candidate-geometry.js?v=5c7" defer></script>
+  <script src="candidate-scene-builder.js?v=5c7" defer></script>
+  <script src="map-renderer.js?v=5c7" defer></script>
+  <style>
+    :root{color-scheme:dark;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0b1118;color:#e8edf3}
+    *{box-sizing:border-box}html,body{min-height:100%;margin:0}body{background:#0b1118}.shell{width:min(920px,100%);margin:0 auto;padding:24px}.eyebrow{margin:0 0 6px;color:#ff9f7a;font-size:12px;font-weight:800;letter-spacing:.08em}h1{margin:0;font-size:28px;line-height:1.2}.scope{margin:10px 0 20px;color:#aeb9c6;font-size:13px;line-height:1.6}.summary,.tests,.mapwrap{border:1px solid #34404d;border-radius:10px;background:#111922}.summary{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:16px;margin-bottom:14px}.result{margin:0;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:15px;font-weight:800}.pass{color:#78d6a0}.fail{color:#ff8f86}.wait{color:#aeb9c6}button{appearance:none;border:1px solid #52606e;border-radius:8px;background:#17212b;color:#edf3f8;padding:9px 12px;font:inherit;font-weight:700}.mapwrap{padding:10px;margin-bottom:14px}#map{height:240px;border-radius:8px;overflow:hidden}.row{display:grid;grid-template-columns:110px 1fr;gap:18px;padding:14px 16px;border-top:1px solid #2c3743;font-size:13px;line-height:1.5}.row:first-child{border-top:0}.status{font-weight:900}.details{color:#dfe7ee}@media(max-width:560px){.shell{padding:16px}.row{grid-template-columns:92px 1fr;gap:10px}h1{font-size:24px}#map{height:210px}}
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <p class="eyebrow">LAB ONLY</p>
+    <h1>Phase 5-C7 Creative Integration Readiness</h1>
+    <p class="scope">Creative Mode本体は変更せず、recordsを既存UIが直接変更する前提で、refresh() → Candidate Geometry → Unified Scene → keyed Renderer が安全に追従できるかを実Leafletで確認します。</p>
+    <section class="summary"><p id="summary" class="result wait">C7 WAIT</p><button id="rerun" type="button">再テスト</button></section>
+    <section class="mapwrap"><div id="map"></div></section>
+    <section id="tests" class="tests"></section>
+  </main>
+  <script>
+    (()=>{
+      'use strict';
+      const testsElement=document.getElementById('tests');
+      const summaryElement=document.getElementById('summary');
+      let map=null,renderer=null;
+      const clone=value=>JSON.parse(JSON.stringify(value));
+      const byKey=(list,key)=>list.find(x=>x.key===key);
+      const layerIds=()=>Object.fromEntries(renderer.getDiagnostics().concat(renderer.getCircleDiagnostics()).map(x=>[x.key,x.leafletId]));
+      function row(ok,name,detail=''){const el=document.createElement('div');el.className='row';const s=document.createElement('div');s.className=`status ${ok?'pass':'fail'}`;s.textContent=ok?'PASS':'FAIL';const d=document.createElement('div');d.className='details';d.textContent=detail?`${name} — ${detail}`:name;el.append(s,d);return el}
+      function existingFixture(){return{
+        state:{pois:[{guid:'e1',state:'POKESTOP',referenceKind:null},{guid:'e2',state:'GYM',referenceKind:null}]},
+        geometry:{entries:[
+          {ownerKey:'poi:e1',pointGeometry:{type:'point',lat:35.6812,lng:139.7671},circleGeometries:{50:{type:'circle',lat:35.6812,lng:139.7671,radiusMeters:50}}},
+          {ownerKey:'poi:e2',pointGeometry:{type:'point',lat:35.6820,lng:139.7680},circleGeometries:{50:{type:'circle',lat:35.6820,lng:139.7680,radiusMeters:50}}}
+        ]}
+      }}
+      function resetRenderer(){if(renderer){renderer.destroy();renderer=null}if(map){map.remove();map=null}document.getElementById('map').replaceChildren();map=L.map('map',{zoomControl:false,attributionControl:false}).setView([35.6816,139.7675],17);renderer=window.bridgeMapLab_createMapRenderer(map)}
+      function sceneFromCandidates(candidates){const fx=existingFixture();const cg=window.bridgeMapLab_buildCandidateGeometry(candidates);return window.bridgeMapLab_buildSceneWithCandidates(fx.state,fx.geometry,cg,{circle50Visible:true})}
+      function run(){
+        const results=[];const check=(name,fn)=>{try{fn();results.push({ok:true,name})}catch(error){results.push({ok:false,name,detail:error?.message||String(error)})}};
+        const createStore=window.bridgeMapLab_createCandidateRecordsRefreshStore;
+        if(typeof createStore!=='function'){summaryElement.className='result fail';summaryElement.textContent='C7 FAIL 0/0';testsElement.replaceChildren(row(false,'Store load','function not found'));return}
+        try{resetRenderer()}catch(error){summaryElement.className='result fail';summaryElement.textContent='C7 FAIL 0/0';testsElement.replaceChildren(row(false,'Renderer setup',error?.message||String(error)));return}
+
+        let records=[];
+        const fakeProject={source:'bridge',addedPois:[{id:'sentinel'}],updatedAt:'unchanged'};
+        const fakeProjectBefore=JSON.stringify(fakeProject);
+        const store=createStore(()=>records);
+        let notifications=0;
+        let renderPasses=0;
+        const renderFromStore=()=>{renderPasses+=1;renderer.render(sceneFromCandidates(store.list()))};
+        renderer.render(sceneFromCandidates(store.list()));
+        const baseIds=layerIds();
+        const unsubscribe=store.subscribe(()=>{notifications+=1;renderFromStore()});
+
+        check('initial records-backed Candidate snapshot is empty',()=>{if(store.list().length!==0)throw new Error(JSON.stringify(store.list()))});
+        check('initial renderer contains only existing POIs',()=>{const c=renderer.getRenderedCounts();if(c.markers!==2||c.circles50!==2)throw new Error(JSON.stringify(c))});
+
+        records.push({id:'c1',layer:'new-pokestop',latlng:[35.6816,139.7676],deleted:false,title:'Candidate',memo:''});
+        check('direct records add is invisible before refresh',()=>{if(store.list().length!==0||renderer.getRenderedCounts().markers!==2)throw new Error('changed before refresh')});
+        const notifBeforeAdd=notifications,renderBeforeAdd=renderPasses;store.refresh();const addIds=layerIds();const addStats=renderer.getLastSyncStats();
+        check('refresh adds exactly Candidate Marker and Circle',()=>{if(addStats.markers.created!==1||addStats.circles50.created!==1||addStats.markers.reused!==2||addStats.circles50.reused!==2)throw new Error(JSON.stringify(addStats))});
+        check('existing Leaflet IDs survive Candidate add',()=>{for(const key of ['marker:poi:e1','marker:poi:e2','circle50:poi:e1','circle50:poi:e2'])if(baseIds[key]!==addIds[key])throw new Error(`${key} recreated`)});
+        check('one refresh emits one notification',()=>{if(notifications-notifBeforeAdd!==1)throw new Error(String(notifications-notifBeforeAdd))});
+        check('subscriber performs one render pass per refresh',()=>{if(renderPasses-renderBeforeAdd!==1)throw new Error(String(renderPasses-renderBeforeAdd))});
+
+        records[0].latlng=[35.6833,139.7699];
+        const addCandidateIds={marker:addIds['marker:candidate:c1'],circle:addIds['circle50:candidate:c1']};
+        store.refresh();const moveIds=layerIds();const movedMarker=byKey(renderer.getDiagnostics(),'marker:candidate:c1');
+        check('direct Candidate move updates coordinates after refresh',()=>{if(Math.abs(movedMarker.leafletLatLng.lat-35.6833)>1e-9||Math.abs(movedMarker.leafletLatLng.lng-139.7699)>1e-9)throw new Error(JSON.stringify(movedMarker.leafletLatLng))});
+        check('Candidate Leaflet IDs survive move',()=>{if(moveIds['marker:candidate:c1']!==addCandidateIds.marker||moveIds['circle50:candidate:c1']!==addCandidateIds.circle)throw new Error('Candidate recreated')});
+        check('existing Leaflet IDs survive Candidate move',()=>{for(const key of ['marker:poi:e1','marker:poi:e2','circle50:poi:e1','circle50:poi:e2'])if(baseIds[key]!==moveIds[key])throw new Error(`${key} recreated`)});
+
+        records[0].deleted=true;store.refresh();const deleteIds=layerIds();const deleteStats=renderer.getLastSyncStats();
+        check('deleted:true removes only Candidate layers after refresh',()=>{if(deleteStats.markers.removed!==1||deleteStats.circles50.removed!==1||renderer.getRenderedCounts().markers!==2||renderer.getRenderedCounts().circles50!==2)throw new Error(JSON.stringify(deleteStats))});
+        check('existing Leaflet IDs survive Candidate removal',()=>{for(const key of ['marker:poi:e1','marker:poi:e2','circle50:poi:e1','circle50:poi:e2'])if(baseIds[key]!==deleteIds[key])throw new Error(`${key} recreated`)});
+
+        records.push({id:'existing-x',layer:'existing-power',latlng:[35.7,139.7],deleted:false});store.refresh();
+        check('existing-* record never enters Candidate snapshot',()=>{if(store.list().some(x=>x.id==='existing-x'))throw new Error(JSON.stringify(store.list()))});
+
+        records.push({id:'bad',layer:'new-gym',latlng:[999,139],deleted:false});
+        records.push({id:'c2',layer:'new-power',latlng:[35.684,139.770],deleted:false});
+        store.refresh();
+        check('invalid Candidate is isolated while valid Candidate continues',()=>{const ids=store.list().map(x=>x.id);if(ids.includes('bad')||!ids.includes('c2')||store.getDiagnostics().length<1)throw new Error(JSON.stringify({ids,diagnostics:store.getDiagnostics()}))});
+
+        const snapshot=store.list();snapshot[0].lat=0;snapshot.push({id:'fake',lat:0,lng:0,candidateType:'new-pokestop'});
+        check('list remains copy-isolated from records-backed snapshot',()=>{const now=store.list();if(now.some(x=>x.id==='fake')||now.find(x=>x.id==='c2')?.lat===0)throw new Error(JSON.stringify(now))});
+        check('read-following integration exposes no add/remove/move mutation methods',()=>{if(typeof store.add==='function'||typeof store.remove==='function'||typeof store.move==='function')throw new Error('mutation method exposed')});
+        check('Project persistence object is untouched by LAB pipeline',()=>{if(JSON.stringify(fakeProject)!==fakeProjectBefore)throw new Error(JSON.stringify(fakeProject))});
+
+        const beforeUnsubNotifications=notifications,beforeUnsubRenders=renderPasses;unsubscribe();records.push({id:'c3',layer:'new-pokestop',latlng:[35.685,139.771],deleted:false});store.refresh();
+        check('unsubscribe stops automatic notification/render callback',()=>{if(notifications!==beforeUnsubNotifications||renderPasses!==beforeUnsubRenders)throw new Error(JSON.stringify({notifications,renderPasses}))});
+
+        testsElement.replaceChildren(...results.map(x=>row(x.ok,x.name,x.detail||'')));const passed=results.filter(x=>x.ok).length;const ok=passed===results.length;summaryElement.className=`result ${ok?'pass':'fail'}`;summaryElement.textContent=`C7 ${ok?'PASS':'FAIL'} ${passed}/${results.length}`;
+      }
+      document.getElementById('rerun').addEventListener('click',run);window.addEventListener('load',run,{once:true});
+    })();
+  </script>
+</body>
+</html>
