@@ -1,0 +1,66 @@
+name: D10 move test fix2 once
+
+on:
+  push:
+    branches: [bridge-map-lab-d10-creative-interactive-e2e]
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: bridge-map-lab-d10-creative-interactive-e2e
+      - name: Patch D10 E2E to current crosshair move flow
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          p=Path('tests/creative-unified-interaction.spec.mjs')
+          s=p.read_text()
+
+          s=re.sub(
+              r"async function markDomIdentity\(locator, token\) \{.*?\n\}\n\nasync function expectDomIdentity\(locator, token\) \{.*?\n\}\n\n",
+              '', s, count=1, flags=re.S
+          )
+          s=s.replace("  await markDomIdentity(engineExisting.first(), 'existing-stable');\n  await markDomIdentity(engineCandidate, 'candidate-stable');\n\n", '')
+          s=s.replace("  await expectDomIdentity(engineCandidate, 'candidate-stable');\n  await expectDomIdentity(engineExisting.first(), 'existing-stable');\n", '')
+          s=s.replace("  await expectDomIdentity(engineExisting.first(), 'existing-stable');\n", '')
+
+          start_marker='  // Start the existing move flow and complete a real Leaflet drag.\n'
+          end_marker="  await page.locator('#undo').click();\n"
+          start=s.find(start_marker)
+          end=s.find(end_marker,start)
+          if start < 0 or end < 0:
+              raise SystemExit('move block markers missing')
+
+          new_block="""  // Start the current move flow: pan the map under the fixed crosshair, then confirm.\n  await page.locator('#cmMove').click();\n  await expect(page.locator('#cmMoveCrosshair')).toBeVisible();\n  await expect(page.locator('#cmMoveBar')).toBeVisible();\n  await expect(page.locator('#cmMoveConfirm')).toContainText('移動確定');\n\n  const mapSurface = page.locator('.leaflet-container').first();\n  const box = await mapSurface.boundingBox();\n  expect(box).toBeTruthy();\n  const startX = box.x + box.width * 0.50;\n  const startY = box.y + box.height * 0.45;\n  await page.mouse.move(startX, startY);\n  await page.mouse.down();\n  await page.mouse.move(startX + 72, startY - 54, { steps:12 });\n  await page.mouse.up();\n\n  await page.locator('#cmMoveConfirm').click();\n  await expect(page.locator('#cmMoveBar')).toHaveCount(0);\n  await expect(page.locator('#cmMoveCrosshair')).toBeHidden();\n  const movedCandidate = await workspaceRecord(page, 'c-stop');\n  expect(movedCandidate.latlng).not.toEqual(initialPosition);\n  const movedPosition = movedCandidate.latlng;\n  await expect.poll(() => page.evaluate(() => {\n    const m=window.__cmCandidateShadow?.getState?.()?.sync?.markers;\n    return m ? [m.created,m.reused,m.removed] : null;\n  })).toEqual([0,5,0]);\n\n  // The current move flow returns directly to the map, so Undo/Redo are immediately available.\n"""
+          s=s[:start]+new_block+s[end:]
+
+          undo_line="  await expect.poll(async () => (await workspaceRecord(page, 'c-stop'))?.latlng).toEqual(initialPosition);\n"
+          undo_extra="""  await expect.poll(() => page.evaluate(() => {\n    const m=window.__cmCandidateShadow?.getState?.()?.sync?.markers;\n    return m ? [m.created,m.reused,m.removed] : null;\n  })).toEqual([0,5,0]);\n"""
+          if undo_extra not in s:
+              s=s.replace(undo_line,undo_line+undo_extra,1)
+
+          redo_line="  await expect.poll(async () => (await workspaceRecord(page, 'c-stop'))?.latlng).toEqual(movedPosition);\n"
+          redo_extra="""  await expect.poll(() => page.evaluate(() => {\n    const m=window.__cmCandidateShadow?.getState?.()?.sync?.markers;\n    return m ? [m.created,m.reused,m.removed] : null;\n  })).toEqual([0,5,0]);\n"""
+          if s.count(redo_extra) < 1:
+              s=s.replace(redo_line,redo_line+redo_extra,1)
+
+          final_line="  await expect(engineExisting).toHaveCount(4);\n"
+          final_extra="""  await expect.poll(() => page.evaluate(() => {\n    const m=window.__cmCandidateShadow?.getState?.()?.sync?.markers;\n    return m ? [m.created,m.reused,m.removed] : null;\n  })).toEqual([0,4,1]);\n"""
+          if final_extra not in s:
+              s=s.replace(final_line,final_line+final_extra,1)
+
+          p.write_text(s)
+          PY
+          node --check tests/creative-unified-interaction.spec.mjs
+          git config user.name Kaityo1221
+          git config user.email rakugo100@gmail.com
+          git add tests/creative-unified-interaction.spec.mjs
+          git commit -m 'Phase 5-D10: test current crosshair move interaction'
+          git push origin HEAD:bridge-map-lab-d10-creative-interactive-e2e
