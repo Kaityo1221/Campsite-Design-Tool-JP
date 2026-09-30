@@ -7,6 +7,7 @@ const manifest=JSON.parse(fs.readFileSync('creative/runtime/next-lab-manifest.js
 const baseHtml=fs.readFileSync('creative/base-v7.html','utf8');
 const jpPatch=fs.readFileSync('creative/jp-creative-patch.js','utf8');
 const bridgePatch=fs.readFileSync('creative/bridge-project-patch.js','utf8');
+const mapRendererSource=fs.readFileSync('creative/runtime/map-engine/map-renderer.js','utf8');
 const livePostManifestPatches=[
   'creative-patches-v45-unified-map-ui.js',
   'creative-patches-v46-field-feedback-polish.js',
@@ -86,7 +87,7 @@ assert.ok(html.includes('existing-records-adapter.js?v=5d8'),'D8 existing record
 assert.ok(html.includes('existing-records-refresh-store.js?v=5d8'),'D8 existing refresh store cache-bust missing');
 assert.ok(html.includes('existing-geometry.js?v=5d8'),'D8 existing geometry cache-bust missing');
 assert.ok(html.includes('candidate-records-adapter.js?v=5d8'),'D8 candidate adapter cache-bust missing');
-assert.ok(html.includes('map-renderer.js?v=5d9'),'D9 renderer cache-bust missing');
+assert.ok(html.includes('map-renderer.js?v=5d14'),'D14 feedback renderer cache-bust missing');
 assert.ok(html.includes('let cmExistingShadowStore=null'),'D7 existing shadow store binding missing');
 assert.ok(html.includes('bridgeMapLab_createExistingRecordsRefreshStore'),'D7 existing store integration missing');
 assert.ok(html.includes('existingCounts:cmExistingShadowStore'),'D7 existing diagnostics publishing missing');
@@ -103,6 +104,13 @@ assert.ok(html.includes("params.get('rendererMode')==='legacy'"),'D11 legacy esc
 assert.ok(html.includes('if(params.get(\'candidateRenderer\')!==null)return false;'),'D11 candidate-only explicit mode preservation missing');
 assert.ok(html.includes('devDefaultUnified:!explicit'),'D11 default-mode diagnostics missing');
 assert.ok(html.includes('legacyOverride:cmD11LegacyRendererRequested()'),'D11 legacy diagnostics missing');
+assert.ok(html.includes('cmD14FeedbackHotfixStyle'),'D14 feedback hotfix style missing');
+assert.ok(html.includes('#cmCoordinateJumpPanel{z-index:7200!important}'),'Feedback #001 coordinate panel front-layer guard missing');
+assert.ok(html.includes('body.cm-unified-renderer-interactive .cm-engine-legacy-candidate{opacity:0!important}'),'Feedback #002 duplicate legacy candidate suppression missing');
+assert.ok(mapRendererSource.includes("POKESTOP: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png'"),'Feedback #002 PokéStop candidate icon missing');
+assert.ok(mapRendererSource.includes("GYM: 'https://maps.google.com/mapfiles/ms/icons/yellow-dot.png'"),'Feedback #002 Gym candidate icon missing');
+assert.ok(mapRendererSource.includes("POWERSPOT: 'https://maps.google.com/mapfiles/ms/icons/purple-dot.png'"),'Feedback #002 PowerSpot candidate icon missing');
+assert.ok(mapRendererSource.includes('entry.layer.setIcon(bridgeMapLab_candidateIcon(renderItem.renderKind));'),'Feedback #002 candidate type-change icon refresh missing');
 
 function extractScripts(source){
   const scripts=[];
