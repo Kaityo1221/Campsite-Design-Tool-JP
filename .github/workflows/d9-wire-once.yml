@@ -17,7 +17,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Wire D9 loader and gates
+      - name: Wire D9 loader and runtime checks
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -57,14 +57,6 @@ jobs:
               if needle not in s: raise SystemExit('D8 assertion needle missing')
               s=s.replace(needle,needle+extra,1)
           p.write_text(s)
-
-          p=Path('.github/workflows/candidate-map-engine-check.yml')
-          s=p.read_text()
-          if "creative-patches-v56-unified-interaction.js" not in s:
-              s=s.replace("      - 'creative/runtime/creative-patches-v55-unified-visible.js'\n", "      - 'creative/runtime/creative-patches-v55-unified-visible.js'\n      - 'creative/runtime/creative-patches-v56-unified-interaction.js'\n")
-              s=s.replace("      - 'bridge-map-lab/unified-visible-parity-test.html'\n", "      - 'bridge-map-lab/unified-visible-parity-test.html'\n      - 'bridge-map-lab/unified-interaction-parity-test.html'\n")
-              s=s.replace("          node --check creative/runtime/creative-patches-v55-unified-visible.js\n", "          node --check creative/runtime/creative-patches-v55-unified-visible.js\n          node --check creative/runtime/creative-patches-v56-unified-interaction.js\n")
-          p.write_text(s)
           PY
 
           node --check creative/runtime/map-engine/map-renderer.js
@@ -72,9 +64,9 @@ jobs:
           node --check tests/candidate-map-engine.spec.mjs
           node scripts/check-creative-runtime-build.mjs
 
-          git rm .github/workflows/d9-wire-once.yml
           git config user.name Kaityo1221
           git config user.email rakugo100@gmail.com
-          git add creative/index.html tests/candidate-map-engine.spec.mjs scripts/check-creative-runtime-build.mjs .github/workflows/candidate-map-engine-check.yml
+          git add creative/index.html tests/candidate-map-engine.spec.mjs scripts/check-creative-runtime-build.mjs
+          if git diff --cached --quiet; then exit 0; fi
           git commit -m 'Phase 5-D9: wire interaction runtime and WebKit gate'
           git push origin HEAD:bridge-map-lab-d9-interaction
