@@ -15,6 +15,12 @@
     40: Object.freeze({ color:'#8d62c1', fillColor:'#8d62c1', weight:2, dashArray:'6 5', fillOpacity:.055 }),
     30: Object.freeze({ color:'#3e9b68', fillColor:'#3e9b68', weight:2, dashArray:'4 5', fillOpacity:.045 })
   });
+  const bridgeMapLab_existingShapeClass = Object.freeze({
+    POKESTOP: 'cm-v45-stop',
+    GYM: 'cm-v45-gym',
+    POWERSPOT: 'cm-v45-power',
+    INACTIVE_POWERSPOT: 'cm-v45-inactive'
+  });
 
   function bridgeMapLab_zeroStats() {
     return Object.freeze({ created: 0, reused: 0, removed: 0 });
@@ -33,6 +39,18 @@
     return L.divIcon({
       className: 'cm-v45-map-icon cm-engine-candidate-icon',
       html: '<div class="cm-v45-icon-wrap"><span class="cm-v45-poi"><span class="cm-v45-candidate"></span></span></div>',
+      iconSize: [36, 36],
+      iconAnchor: [18, 18],
+      popupAnchor: [0, -18]
+    });
+  }
+
+  function bridgeMapLab_existingIcon(renderKind) {
+    const shapeClass = bridgeMapLab_existingShapeClass[renderKind];
+    if (!shapeClass) throw new TypeError(`Unsupported existing renderKind: ${renderKind}`);
+    return L.divIcon({
+      className: `cm-v45-map-icon cm-engine-existing-icon cm-engine-existing-${String(renderKind).toLowerCase()}`,
+      html: `<div class="cm-v45-icon-wrap"><span class="cm-v45-poi"><span class="${shapeClass}"></span></span></div>`,
       iconSize: [36, 36],
       iconAnchor: [18, 18],
       popupAnchor: [0, -18]
@@ -93,7 +111,14 @@
     }
 
     function bridgeMapLab_markerKind(renderItem) {
-      return renderItem?.origin === 'candidate' ? 'candidate-pin' : 'circle-marker';
+      if (renderItem?.origin === 'candidate') return 'candidate-pin';
+      if (renderItem?.origin === 'existing') return 'existing-pin';
+      return 'circle-marker';
+    }
+
+    function bridgeMapLab_itemOpacity(renderItem) {
+      const value = Number(renderItem?.style?.opacity);
+      return (Number.isFinite(value) ? value : 1) * settings.opacity;
     }
 
     function bridgeMapLab_markerStyle(renderItem) {
@@ -115,8 +140,20 @@
             icon: bridgeMapLab_candidateIcon(),
             interactive: false,
             keyboard: false,
-            opacity: settings.opacity,
+            opacity: bridgeMapLab_itemOpacity(renderItem),
             zIndexOffset: 20
+          }).addTo(markerLayer)
+        };
+      }
+      if (kind === 'existing-pin') {
+        return {
+          kind,
+          layer: L.marker(latLng, {
+            icon: bridgeMapLab_existingIcon(renderItem.renderKind),
+            interactive: false,
+            keyboard: false,
+            opacity: bridgeMapLab_itemOpacity(renderItem),
+            zIndexOffset: 10
           }).addTo(markerLayer)
         };
       }
@@ -133,7 +170,10 @@
       if (entry.kind !== bridgeMapLab_markerKind(renderItem)) return false;
       entry.layer.setLatLng(latLng);
       if (entry.kind === 'candidate-pin') {
-        entry.layer.setOpacity(settings.opacity);
+        entry.layer.setOpacity(bridgeMapLab_itemOpacity(renderItem));
+      } else if (entry.kind === 'existing-pin') {
+        entry.layer.setIcon(bridgeMapLab_existingIcon(renderItem.renderKind));
+        entry.layer.setOpacity(bridgeMapLab_itemOpacity(renderItem));
       } else {
         const style = bridgeMapLab_markerStyle(renderItem);
         const radius = Number.isFinite(Number(style.radius)) ? Number(style.radius) : bridgeMapLab_markerBaseStyle.radius;
@@ -257,6 +297,8 @@
           renderKind: renderItem.renderKind,
           color: circle.options.color,
           fillColor: circle.options.fillColor,
+          opacity: circle.options.opacity,
+          fillOpacity: circle.options.fillOpacity,
           radiusMeters: circle.getRadius(),
           leafletLatLng: circle.getLatLng(),
           leafletId: L.stamp(circle)
