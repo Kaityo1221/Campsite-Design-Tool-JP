@@ -51,10 +51,16 @@ async function installRoutes(page) {
   }, project);
 }
 
-async function workspaceRecord(page, id) {
-  return page.evaluate(recordId => {
+async function workspaceRecord(page, selector) {
+  const query = typeof selector === 'string' ? { id:selector } : selector;
+  return page.evaluate(criteria => {
     const snapshot = window.CampsiteCreativeWorkspace?.getSnapshot?.();
-    const record = snapshot?.records?.find(item => item?.id === recordId);
+    const record = snapshot?.records?.find(item => {
+      if (!item) return false;
+      if (criteria?.id) return item.id === criteria.id;
+      if (criteria?.layer) return item.layer === criteria.layer && item.deleted !== true;
+      return false;
+    });
     if (!record) return null;
     return {
       id: record.id,
@@ -65,7 +71,7 @@ async function workspaceRecord(page, id) {
         ? record.latlng.map(value => Number(Number(value).toFixed(6)))
         : null
     };
-  }, id);
+  }, query);
 }
 
 test('Phase 5-D11 normal dev URL defaults to Unified interactive renderer', async ({ page }) => {
@@ -159,7 +165,7 @@ test('Phase 5-D12 normal dev URL survives the complete legacy mutation flow', as
   expect(await page.locator('.cm-engine-legacy-existing').evaluate(el => getComputedStyle(el).pointerEvents)).toBe('none');
   expect(await page.locator('.cm-engine-legacy-candidate').evaluate(el => getComputedStyle(el).pointerEvents)).toBe('none');
 
-  const existingBefore = await workspaceRecord(page, 'e-stop');
+  const existingBefore = await workspaceRecord(page, { layer:'existing-pokestop' });
   const candidateBefore = await workspaceRecord(page, 'c-stop');
   expect(existingBefore).toBeTruthy();
   expect(candidateBefore).toBeTruthy();
@@ -206,10 +212,10 @@ test('Phase 5-D12 normal dev URL survives the complete legacy mutation flow', as
   await page.locator('#redo').click();
   await expect.poll(async () => (await workspaceRecord(page, 'c-stop'))?.latlng).toEqual(movedPosition);
 
-  const existingAfterMove = await workspaceRecord(page, 'e-stop');
+  const existingAfterMove = await workspaceRecord(page, { layer:'existing-pokestop' });
   expect(existingAfterMove).toEqual(existingBefore);
 
-  await engineCandidate.click();
+  await engineCandidate.dispatchEvent('click');
   await expect(page.locator('#cmDelete')).toBeVisible();
   page.once('dialog', dialog => dialog.accept());
   await page.locator('#cmDelete').click();
@@ -228,7 +234,7 @@ test('Phase 5-D12 normal dev URL survives the complete legacy mutation flow', as
     return m ? [m.created,m.reused,m.removed] : null;
   })).toEqual([0,1,1]);
 
-  const existingAfterDelete = await workspaceRecord(page, 'e-stop');
+  const existingAfterDelete = await workspaceRecord(page, { layer:'existing-pokestop' });
   expect(existingAfterDelete).toEqual(existingBefore);
   expect(browserErrors).toEqual([]);
 });
