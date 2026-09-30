@@ -17,12 +17,17 @@ test.beforeEach(async ({ page }) => {
   }));
 });
 
-test('Phase 5-D6 Candidate Renderer parity passes on iPhone/WebKit', async ({ page }) => {
+function collectBrowserErrors(page) {
   const browserErrors = [];
   page.on('console', message => {
     if (message.type() === 'error') browserErrors.push(`console: ${message.text()}`);
   });
   page.on('pageerror', error => browserErrors.push(`pageerror: ${error.message}`));
+  return browserErrors;
+}
+
+test('Phase 5-D6 Candidate Renderer parity passes on iPhone/WebKit', async ({ page }) => {
+  const browserErrors = collectBrowserErrors(page);
 
   await page.goto('/bridge-map-lab/candidate-shadow-parity-test.html');
   await expect(page.locator('#run')).toBeVisible();
@@ -30,6 +35,21 @@ test('Phase 5-D6 Candidate Renderer parity passes on iPhone/WebKit', async ({ pa
 
   await expect(page.locator('#summary')).toContainText('PASS');
   const result = await page.evaluate(() => window.__candidateShadowParity);
+  expect(result).toBeTruthy();
+  expect(result.passed).toBe(result.total);
+  expect(result.total).toBeGreaterThanOrEqual(24);
+  expect(browserErrors).toEqual([]);
+});
+
+test('Phase 5-D7 Unified existing + Candidate records parity passes on iPhone/WebKit', async ({ page }) => {
+  const browserErrors = collectBrowserErrors(page);
+
+  await page.goto('/bridge-map-lab/unified-records-parity-test.html');
+  await expect(page.locator('#run')).toBeVisible();
+  await page.locator('#run').click();
+
+  await expect(page.locator('#summary')).toContainText('PASS');
+  const result = await page.evaluate(() => window.__unifiedRecordsParity);
   expect(result).toBeTruthy();
   expect(result.passed).toBe(result.total);
   expect(result.total).toBeGreaterThanOrEqual(24);
