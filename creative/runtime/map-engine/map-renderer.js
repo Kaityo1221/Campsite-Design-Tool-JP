@@ -10,6 +10,11 @@
     interactive: false
   });
   const bridgeMapLab_circleRadii = Object.freeze([50, 40, 30]);
+  const bridgeMapLab_circleStyles = Object.freeze({
+    50: Object.freeze({ color:'#d18a00', fillColor:'#d18a00', weight:2, fillOpacity:.07 }),
+    40: Object.freeze({ color:'#8d62c1', fillColor:'#8d62c1', weight:2, dashArray:'6 5', fillOpacity:.055 }),
+    30: Object.freeze({ color:'#3e9b68', fillColor:'#3e9b68', weight:2, dashArray:'4 5', fillOpacity:.045 })
+  });
 
   function bridgeMapLab_zeroStats() {
     return Object.freeze({ created: 0, reused: 0, removed: 0 });
@@ -24,16 +29,26 @@
     });
   }
 
+  function bridgeMapLab_candidateIcon() {
+    return L.divIcon({
+      className: 'cm-v45-map-icon cm-engine-candidate-icon',
+      html: '<div class="cm-v45-icon-wrap"><span class="cm-v45-poi"><span class="cm-v45-candidate"></span></span></div>',
+      iconSize: [36, 36],
+      iconAnchor: [18, 18],
+      popupAnchor: [0, -18]
+    });
+  }
+
   window.bridgeMapLab_createMapRenderer = function (map, options) {
     const settings = Object.assign({ opacity: 1 }, options || {});
-    const markerLayer = L.layerGroup().addTo(map);
-    const markerEntries = new Map();
     const circleLayers = new Map();
     const circleEntries = new Map();
     bridgeMapLab_circleRadii.forEach((radius) => {
       circleLayers.set(radius, L.layerGroup().addTo(map));
       circleEntries.set(radius, new Map());
     });
+    const markerLayer = L.layerGroup().addTo(map);
+    const markerEntries = new Map();
 
     let markerOrder = [];
     const circleOrder = new Map(bridgeMapLab_circleRadii.map((radius) => [radius, []]));
@@ -66,9 +81,7 @@
         if (circleMatch) {
           const radius = Number(circleMatch[1]);
           if (renderItem.geometry?.type !== 'circle') throw new Error(`Invalid circle geometry for ${key}`);
-          if (Number(renderItem.geometry.radiusMeters) !== radius) {
-            throw new Error(`Circle radius mismatch for ${key}`);
-          }
+          if (Number(renderItem.geometry.radiusMeters) !== radius) throw new Error(`Circle radius mismatch for ${key}`);
           circles.get(radius).push(renderItem);
           return;
         }
@@ -77,6 +90,56 @@
       });
 
       return { markers, circles };
+    }
+
+    function bridgeMapLab_markerKind(renderItem) {
+      return renderItem?.origin === 'candidate' ? 'candidate-pin' : 'circle-marker';
+    }
+
+    function bridgeMapLab_createMarkerLayer(renderItem, latLng) {
+      const kind = bridgeMapLab_markerKind(renderItem);
+      if (kind === 'candidate-pin') {
+        return {
+          kind,
+          layer: L.marker(latLng, {
+            icon: bridgeMapLab_candidateIcon(),
+            interactive: false,
+            keyboard: false,
+            opacity: settings.opacity,
+            zIndexOffset: 20
+          }).addTo(markerLayer)
+        };
+      }
+
+      const style = Object.assign({}, bridgeMapLab_markerBaseStyle, renderItem.style || {});
+      const naturalFillOpacity = Number.isFinite(Number(style.fillOpacity)) ? Number(style.fillOpacity) : bridgeMapLab_markerBaseStyle.fillOpacity;
+      style.opacity = settings.opacity;
+      style.fillOpacity = naturalFillOpacity * settings.opacity;
+      style.interactive = false;
+      const radius = Number.isFinite(Number(style.radius)) ? Number(style.radius) : bridgeMapLab_markerBaseStyle.radius;
+      return {
+        kind,
+        layer: L.circleMarker(latLng, Object.assign({}, style, { radius })).addTo(markerLayer)
+      };
+    }
+
+    function bridgeMapLab_updateMarkerLayer(entry, renderItem, latLng) {
+      if (entry.kind !== bridgeMapLab_markerKind(renderItem)) return false;
+      entry.layer.setLatLng(latLng);
+      if (entry.kind === 'candidate-pin') {
+        entry.layer.setOpacity(settings.opacity);
+      } else {
+        const style = Object.assign({}, bridgeMapLab_markerBaseStyle, renderItem.style || {});
+        const naturalFillOpacity = Number.isFinite(Number(style.fillOpacity)) ? Number(style.fillOpacity) : bridgeMapLab_markerBaseStyle.fillOpacity;
+        style.opacity = settings.opacity;
+        style.fillOpacity = naturalFillOpacity * settings.opacity;
+        style.interactive = false;
+        const radius = Number.isFinite(Number(style.radius)) ? Number(style.radius) : bridgeMapLab_markerBaseStyle.radius;
+        entry.layer.setRadius(radius);
+        entry.layer.setStyle(style);
+      }
+      entry.renderItem = renderItem;
+      return true;
     }
 
     function syncMarkers(renderItems) {
@@ -95,30 +158,31 @@
       markerOrder = renderItems.map((renderItem) => {
         const key = renderItem.key;
         const latLng = [renderItem.geometry.lat, renderItem.geometry.lng];
-        const style = Object.assign({}, bridgeMapLab_markerBaseStyle, renderItem.style || {});
-        const naturalFillOpacity = Number.isFinite(Number(style.fillOpacity)) ? Number(style.fillOpacity) : bridgeMapLab_markerBaseStyle.fillOpacity;
-        style.opacity = settings.opacity;
-        style.fillOpacity = naturalFillOpacity * settings.opacity;
-        style.interactive = false;
-        const radius = Number.isFinite(Number(style.radius)) ? Number(style.radius) : bridgeMapLab_markerBaseStyle.radius;
         const existing = markerEntries.get(key);
 
-        if (existing) {
-          existing.layer.setLatLng(latLng);
-          existing.layer.setRadius(radius);
-          existing.layer.setStyle(style);
-          existing.renderItem = renderItem;
+        if (existing && bridgeMapLab_updateMarkerLayer(existing, renderItem, latLng)) {
           reused += 1;
           return key;
         }
+        if (existing) {
+          markerLayer.removeLayer(existing.layer);
+          markerEntries.delete(key);
+          removed += 1;
+        }
 
-        const layer = L.circleMarker(latLng, style).addTo(markerLayer);
-        markerEntries.set(key, { renderItem, layer });
+        const createdEntry = bridgeMapLab_createMarkerLayer(renderItem, latLng);
+        markerEntries.set(key, Object.assign({ renderItem }, createdEntry));
         created += 1;
         return key;
       });
 
       return Object.freeze({ created, reused, removed });
+    }
+
+    function bridgeMapLab_circleBaseStyle(radius) {
+      const style = Object.assign({ interactive: false }, bridgeMapLab_circleStyles[radius] || {});
+      if (typeof map.getPane === 'function' && map.getPane('distance')) style.pane = 'distance';
+      return style;
     }
 
     function syncCircles(radius, renderItems) {
@@ -139,7 +203,7 @@
       circleOrder.set(radius, renderItems.map((renderItem) => {
         const key = renderItem.key;
         const latLng = [renderItem.geometry.lat, renderItem.geometry.lng];
-        const baseStyle = Object.assign({ interactive: false, fillOpacity: 0 }, renderItem.style || {});
+        const baseStyle = Object.assign(bridgeMapLab_circleBaseStyle(radius), renderItem.style || {});
         const naturalOpacity = Number.isFinite(Number(baseStyle.opacity)) ? Number(baseStyle.opacity) : 1;
         const naturalFillOpacity = Number.isFinite(Number(baseStyle.fillOpacity)) ? Number(baseStyle.fillOpacity) : 0;
         const style = Object.assign({}, baseStyle, {
@@ -189,6 +253,8 @@
           key: renderItem.key,
           ownerKey: renderItem.ownerKey,
           renderKind: renderItem.renderKind,
+          color: circle.options.color,
+          fillColor: circle.options.fillColor,
           radiusMeters: circle.getRadius(),
           leafletLatLng: circle.getLatLng(),
           leafletId: L.stamp(circle)
@@ -229,7 +295,8 @@
             key: renderItem.key,
             ownerKey: renderItem.ownerKey,
             renderKind: renderItem.renderKind,
-            fillColor: marker.options.fillColor,
+            markerKind: entry.kind,
+            fillColor: marker.options?.fillColor || null,
             dataLayerLat: renderItem.geometry.lat,
             dataLayerLng: renderItem.geometry.lng,
             leafletLatLng: marker.getLatLng(),
