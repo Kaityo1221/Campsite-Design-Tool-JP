@@ -85,3 +85,19 @@ test('Phase 5-D8 Unified visible renderer parity passes on iPhone/WebKit', async
   expect(result.total).toBeGreaterThanOrEqual(20);
   expect(browserErrors).toEqual([]);
 });
+
+
+test('Phase 5-D9 Unified interaction parity passes on iPhone/WebKit', async ({ page }) => {
+  const browserErrors = collectBrowserErrors(page);
+
+  await page.goto('/bridge-map-lab/unified-interaction-parity-test.html');
+  await expect(page.locator('#run')).toBeVisible();
+  await page.locator('#run').click();
+
+  await expect(page.locator('#summary')).toContainText('PASS');
+  const result = await page.evaluate(() => window.__unifiedInteractionParity);
+  expect(result).toBeTruthy();
+  expect(result.passed).toBe(result.total);
+  expect(result.total).toBeGreaterThanOrEqual(13);
+  expect(browserErrors).toEqual([]);
+});
