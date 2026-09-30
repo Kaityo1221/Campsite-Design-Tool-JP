@@ -7,7 +7,7 @@ const jszipJs = fs.readFileSync('node_modules/jszip/dist/jszip.min.js', 'utf8');
 
 const project = {
   source: 'bridge',
-  projectId: 'phase5-d11-dev-default',
+  projectId: 'phase5-d12-final-gate',
   phase: 'design',
   createdAt: '2026-09-30T12:25:00.000Z',
   updatedAt: '2026-09-30T12:25:00.000Z',
@@ -49,6 +49,23 @@ async function installRoutes(page) {
   await page.addInitScript(value => {
     sessionStorage.setItem('campsiteProject.v1', JSON.stringify(value));
   }, project);
+}
+
+async function workspaceRecord(page, id) {
+  return page.evaluate(recordId => {
+    const snapshot = window.CampsiteCreativeWorkspace?.getSnapshot?.();
+    const record = snapshot?.records?.find(item => item?.id === recordId);
+    if (!record) return null;
+    return {
+      id: record.id,
+      title: record.title || '',
+      layer: record.layer || '',
+      deleted: record.deleted === true,
+      latlng: Array.isArray(record.latlng)
+        ? record.latlng.map(value => Number(Number(value).toFixed(6)))
+        : null
+    };
+  }, id);
 }
 
 test('Phase 5-D11 normal dev URL defaults to Unified interactive renderer', async ({ page }) => {
@@ -113,5 +130,105 @@ test('Phase 5-D11 rendererMode=legacy restores legacy visual and interaction own
   await page.mouse.click(legacyMarker.x, legacyMarker.y);
   await expect(page.locator('.cm-sheet')).toBeVisible();
   await expect(page.locator('#cmDelete')).toBeVisible();
+  expect(browserErrors).toEqual([]);
+});
+
+test('Phase 5-D12 normal dev URL survives the complete legacy mutation flow', async ({ page }) => {
+  const browserErrors = collectBrowserErrors(page);
+  await installRoutes(page);
+
+  await page.goto('/creative/index.html?campsiteProject=bridge');
+  await expect.poll(() => page.evaluate(() => window.CampsiteCreativeProject?.count || 0), { timeout:15000 }).toBe(2);
+  await expect.poll(() => page.evaluate(() => window.__cmCandidateShadow?.getState?.()?.interactionOwner || ''), { timeout:15000 }).toBe('map-engine');
+  await expect.poll(() => page.evaluate(() => typeof window.CampsiteCreativeWorkspace?.getSnapshot === 'function'), { timeout:15000 }).toBe(true);
+
+  const initialState = await page.evaluate(() => window.__cmCandidateShadow.getState());
+  expect(initialState.ready).toBe(true);
+  expect(initialState.unified).toBe(true);
+  expect(initialState.unifiedVisible).toBe(true);
+  expect(initialState.interactive).toBe(true);
+  expect(initialState.interactionOwner).toBe('map-engine');
+  expect(initialState.rendered).toEqual({ markers:2, circles50:2, circles40:2, circles30:2 });
+
+  const engineExisting = page.locator('.cm-engine-existing-icon');
+  const engineCandidate = page.locator('.cm-engine-candidate-icon');
+  await expect(engineExisting).toHaveCount(1);
+  await expect(engineCandidate).toHaveCount(1);
+  await expect(page.locator('.cm-engine-legacy-existing')).toHaveCount(1);
+  await expect(page.locator('.cm-engine-legacy-candidate')).toHaveCount(1);
+  expect(await page.locator('.cm-engine-legacy-existing').evaluate(el => getComputedStyle(el).pointerEvents)).toBe('none');
+  expect(await page.locator('.cm-engine-legacy-candidate').evaluate(el => getComputedStyle(el).pointerEvents)).toBe('none');
+
+  const existingBefore = await workspaceRecord(page, 'e-stop');
+  const candidateBefore = await workspaceRecord(page, 'c-stop');
+  expect(existingBefore).toBeTruthy();
+  expect(candidateBefore).toBeTruthy();
+  const initialPosition = candidateBefore.latlng;
+
+  await engineExisting.click();
+  await expect(page.locator('.cm-sheet')).toBeVisible();
+  await expect(page.locator('.cm-sheet')).toContainText('既存POI（閲覧のみ）');
+  await page.locator('.cm-sheet-close').click();
+  await expect(page.locator('.cm-sheet')).toHaveCount(0);
+
+  await engineCandidate.click();
+  await expect(page.locator('#cmMove')).toBeVisible();
+  await expect(page.locator('#cmDelete')).toBeVisible();
+  await page.locator('#cmName').fill('Candidate Stop D12');
+  await expect.poll(async () => (await workspaceRecord(page, 'c-stop'))?.title || '').toBe('Candidate Stop D12');
+
+  await page.locator('#cmMove').click();
+  await expect(page.locator('#cmMoveCrosshair')).toBeVisible();
+  await expect(page.locator('#cmMoveBar')).toBeVisible();
+
+  const mapSurface = page.locator('.leaflet-container').first();
+  const box = await mapSurface.boundingBox();
+  expect(box).toBeTruthy();
+  const startX = box.x + box.width * 0.50;
+  const startY = box.y + box.height * 0.45;
+  await page.mouse.move(startX, startY);
+  await page.mouse.down();
+  await page.mouse.move(startX + 64, startY - 48, { steps:12 });
+  await page.mouse.up();
+  await page.locator('#cmMoveConfirm').click();
+
+  await expect(page.locator('#cmMoveBar')).toHaveCount(0);
+  const movedCandidate = await workspaceRecord(page, 'c-stop');
+  expect(movedCandidate.latlng).not.toEqual(initialPosition);
+  const movedPosition = movedCandidate.latlng;
+  await expect.poll(() => page.evaluate(() => {
+    const m=window.__cmCandidateShadow?.getState?.()?.sync?.markers;
+    return m ? [m.created,m.reused,m.removed] : null;
+  })).toEqual([0,2,0]);
+
+  await page.locator('#undo').click();
+  await expect.poll(async () => (await workspaceRecord(page, 'c-stop'))?.latlng).toEqual(initialPosition);
+  await page.locator('#redo').click();
+  await expect.poll(async () => (await workspaceRecord(page, 'c-stop'))?.latlng).toEqual(movedPosition);
+
+  const existingAfterMove = await workspaceRecord(page, 'e-stop');
+  expect(existingAfterMove).toEqual(existingBefore);
+
+  await engineCandidate.click();
+  await expect(page.locator('#cmDelete')).toBeVisible();
+  page.once('dialog', dialog => dialog.accept());
+  await page.locator('#cmDelete').click();
+
+  await expect.poll(() => page.evaluate(() => window.__cmCandidateShadow.getState().rendered.markers)).toBe(1);
+  const deletedCandidate = await workspaceRecord(page, 'c-stop');
+  expect(deletedCandidate?.deleted).toBe(true);
+  await expect(engineCandidate).toHaveCount(0);
+  await expect(engineExisting).toHaveCount(1);
+  await expect.poll(() => page.evaluate(() => {
+    const state=window.__cmCandidateShadow?.getState?.();
+    return state ? [state.rendered.markers,state.rendered.circles50,state.rendered.circles40,state.rendered.circles30] : null;
+  })).toEqual([1,1,1,1]);
+  await expect.poll(() => page.evaluate(() => {
+    const m=window.__cmCandidateShadow?.getState?.()?.sync?.markers;
+    return m ? [m.created,m.reused,m.removed] : null;
+  })).toEqual([0,1,1]);
+
+  const existingAfterDelete = await workspaceRecord(page, 'e-stop');
+  expect(existingAfterDelete).toEqual(existingBefore);
   expect(browserErrors).toEqual([]);
 });
