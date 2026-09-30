@@ -100,14 +100,31 @@ test('Phase 5-D11 rendererMode=legacy restores legacy visual and interaction own
   await expect(engineCandidate).toHaveCount(1);
   expect(Number(await engineCandidate.evaluate(el => getComputedStyle(el).opacity))).toBe(0);
 
-  // In full legacy mode the D6/D9 ownership tag is intentionally not added,
-  // because the new renderer is not the visual/interaction owner. Target the
-  // actual current Creative Mode marker by its v45 Candidate shape instead.
-  const legacyCandidate = page.locator('.leaflet-marker-icon.cm-v45-map-icon:not(.cm-engine-candidate-icon):has(.cm-v45-candidate)');
-  await expect(legacyCandidate).toHaveCount(1);
-  expect(await legacyCandidate.evaluate(el => getComputedStyle(el).pointerEvents)).not.toBe('none');
+  // Probe the exact legacy Leaflet Marker referenced by Creative Mode's records.
+  // This deliberately avoids coupling the escape-hatch test to icon CSS/HTML.
+  const legacyMarker = await page.evaluate(() => {
+    const creativeRecords = eval('records');
+    const record = creativeRecords.find(r => r && !r.deleted && r.layer === 'new-pokestop');
+    const element = record?.marker?.getElement?.();
+    if (!element) return null;
+    const rect = element.getBoundingClientRect();
+    const style = getComputedStyle(element);
+    return {
+      x: rect.left + rect.width / 2,
+      y: rect.top + rect.height / 2,
+      width: rect.width,
+      height: rect.height,
+      pointerEvents: style.pointerEvents,
+      opacity: Number(style.opacity)
+    };
+  });
+  expect(legacyMarker).toBeTruthy();
+  expect(legacyMarker.width).toBeGreaterThan(0);
+  expect(legacyMarker.height).toBeGreaterThan(0);
+  expect(legacyMarker.pointerEvents).not.toBe('none');
+  expect(legacyMarker.opacity).toBeGreaterThan(0);
 
-  await legacyCandidate.click();
+  await page.mouse.click(legacyMarker.x, legacyMarker.y);
   await expect(page.locator('.cm-sheet')).toBeVisible();
   await expect(page.locator('#cmDelete')).toBeVisible();
   expect(browserErrors).toEqual([]);
