@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>Phase 5-C3 Refresh Coexistence</title>
+  <script src="candidate-records-adapter.js?v=5c3" defer></script>
+  <script src="candidate-records-refresh-store.js?v=5c3" defer></script>
+  <style>
+    :root{color-scheme:dark;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0b1118;color:#e8edf3}
+    *{box-sizing:border-box}html,body{min-height:100%;margin:0}body{background:#0b1118}.shell{width:min(860px,100%);margin:0 auto;padding:24px}.eyebrow{margin:0 0 6px;color:#ff9f7a;font-size:12px;font-weight:800;letter-spacing:.08em}h1{margin:0;font-size:28px;line-height:1.2}.scope{margin:10px 0 20px;color:#aeb9c6;font-size:13px;line-height:1.6}.summary,.tests{border:1px solid #34404d;border-radius:10px;background:#111922}.summary{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:16px;margin-bottom:14px}.result{margin:0;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:15px;font-weight:800}.pass{color:#78d6a0}.fail{color:#ff8f86}.wait{color:#aeb9c6}button{appearance:none;border:1px solid #52606e;border-radius:8px;background:#17212b;color:#edf3f8;padding:9px 12px;font:inherit;font-weight:700}.row{display:grid;grid-template-columns:110px 1fr;gap:18px;padding:14px 16px;border-top:1px solid #2c3743;font-size:13px;line-height:1.5}.row:first-child{border-top:0}.status{font-weight:900}.details{color:#dfe7ee}@media(max-width:560px){.shell{padding:16px}.row{grid-template-columns:92px 1fr;gap:10px}h1{font-size:24px}}
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <p class="eyebrow">LAB ONLY</p>
+    <h1>Phase 5-C3 Refresh Coexistence</h1>
+    <p class="scope">既存UIがrecordsを直接変更しても、refresh()でCandidate全件を再取得してchange通知できることを検証します。Creative Mode本体、project.addedPois、Geometry、Scene、Rendererは変更しません。</p>
+    <section class="summary"><p id="summary" class="result wait">C3 WAIT</p><button id="rerun" type="button">再テスト</button></section>
+    <section id="tests" class="tests"></section>
+  </main>
+  <script>
+    (()=>{
+      'use strict';
+      const testsElement=document.getElementById('tests');
+      const summaryElement=document.getElementById('summary');
+      function same(a,b){return JSON.stringify(a)===JSON.stringify(b)}
+      function clone(v){return JSON.parse(JSON.stringify(v))}
+      function row(ok,name,detail=''){const el=document.createElement('div');el.className='row';const s=document.createElement('div');s.className=`status ${ok?'pass':'fail'}`;s.textContent=ok?'PASS':'FAIL';const d=document.createElement('div');d.className='details';d.textContent=detail?`${name} — ${detail}`:name;el.append(s,d);return el}
+      function run(){
+        const results=[];
+        const check=(name,fn)=>{try{fn();results.push({ok:true,name})}catch(error){results.push({ok:false,name,detail:error?.message||String(error)})}};
+        const create=window.bridgeMapLab_createCandidateRecordsRefreshStore;
+        if(typeof create!=='function'){summaryElement.className='result fail';summaryElement.textContent='C3 FAIL 0/0';testsElement.replaceChildren(row(false,'Refresh Store load','function not found'));return}
+
+        check('initial snapshot reads new-* Candidate records',()=>{let records=[{id:'a',layer:'new-pokestop',latlng:[35,139]}];const store=create(()=>records);if(!same(store.list(),[{id:'a',lat:35,lng:139,candidateType:'new-pokestop'}]))throw new Error(JSON.stringify(store.list()))});
+        check('direct records push is invisible before refresh',()=>{let records=[{id:'a',layer:'new-pokestop',latlng:[35,139]}];const store=create(()=>records);records.push({id:'b',layer:'new-gym',latlng:[36,140]});if(store.list().length!==1)throw new Error('snapshot changed without refresh')});
+        check('refresh picks up direct records add',()=>{let records=[{id:'a',layer:'new-pokestop',latlng:[35,139]}];const store=create(()=>records);records.push({id:'b',layer:'new-gym',latlng:[36,140]});store.refresh();if(store.list().length!==2||store.list()[1].candidateType!=='new-gym')throw new Error(JSON.stringify(store.list()))});
+        check('refresh picks up direct coordinate move',()=>{let records=[{id:'a',layer:'new-pokestop',latlng:[35,139]}];const store=create(()=>records);records[0].latlng=[35.5,139.5];store.refresh();const c=store.list()[0];if(c.lat!==35.5||c.lng!==139.5)throw new Error(JSON.stringify(c))});
+        check('refresh removes Candidate marked deleted by existing UI',()=>{let records=[{id:'a',layer:'new-pokestop',latlng:[35,139]}];const store=create(()=>records);records[0].deleted=true;store.refresh();if(store.list().length!==0)throw new Error(JSON.stringify(store.list()))});
+        check('refresh ignores existing-* records',()=>{let records=[{id:'a',layer:'new-pokestop',latlng:[35,139]}];const store=create(()=>records);records.push({id:'e',layer:'existing-gym',latlng:[36,140]});store.refresh();if(store.list().length!==1||store.getCounts().ignoredExisting!==1)throw new Error(JSON.stringify(store.getCounts()))});
+        check('invalid Candidate is excluded after refresh with diagnostic',()=>{let records=[{id:'a',layer:'new-pokestop',latlng:[35,139]}];const store=create(()=>records);records.push({id:'bad',layer:'new-gym',latlng:[999,140]});store.refresh();if(store.list().length!==1||store.getDiagnostics()[0]?.code!=='INVALID_LATITUDE')throw new Error(JSON.stringify(store.getDiagnostics()))});
+        check('one invalid Candidate does not block valid refresh output',()=>{let records=[{id:'a',layer:'new-pokestop',latlng:[35,139]}];const store=create(()=>records);records.push({id:'bad',layer:'new-gym',latlng:[999,140]},{id:'b',layer:'new-power',latlng:[36,140]});store.refresh();if(store.list().length!==2||store.getDiagnostics().length!==1)throw new Error(JSON.stringify(store.getCounts()))});
+        check('refresh emits exactly one change notification',()=>{let records=[];const store=create(()=>records);let calls=0;store.subscribe(()=>{calls+=1});records.push({id:'a',layer:'new-pokestop',latlng:[35,139]});store.refresh();if(calls!==1)throw new Error(`calls=${calls}`)});
+        check('refresh notification carries no diff payload',()=>{let records=[];const store=create(()=>records);let args=null;store.subscribe((...value)=>{args=value});store.refresh();if(!Array.isArray(args)||args.length!==0)throw new Error(JSON.stringify(args))});
+        check('repeated refresh emits once per refresh',()=>{let records=[];const store=create(()=>records);let calls=0;store.subscribe(()=>{calls+=1});store.refresh();store.refresh();if(calls!==2)throw new Error(`calls=${calls}`)});
+        check('unsubscribe stops future refresh notifications',()=>{let records=[];const store=create(()=>records);let calls=0;const off=store.subscribe(()=>{calls+=1});store.refresh();off();store.refresh();if(calls!==1)throw new Error(`calls=${calls}`)});
+        check('list() remains copy-isolated after refresh',()=>{let records=[{id:'a',layer:'new-pokestop',latlng:[35,139]}];const store=create(()=>records);store.refresh();const list=store.list();list[0].lat=1;list.push({id:'x'});const again=store.list();if(again.length!==1||again[0].lat!==35)throw new Error(JSON.stringify(again))});
+        check('refresh does not mutate records',()=>{let records=[{id:'a',layer:'new-pokestop',latlng:[35,139],title:'keep'},{id:'e',layer:'existing-power',latlng:[36,140]}];const before=clone(records);const store=create(()=>records);store.refresh();if(!same(records,before))throw new Error('records mutated')});
+        check('candidateType is preserved across refresh',()=>{let records=[{id:'a',layer:'new-power',latlng:[35,139]}];const store=create(()=>records);store.refresh();if(store.list()[0]?.candidateType!=='new-power')throw new Error(JSON.stringify(store.list()))});
+        check('unknown new-* remains isolated after refresh',()=>{let records=[{id:'a',layer:'new-pokestop',latlng:[35,139]}];const store=create(()=>records);records.push({id:'u',layer:'new-portal',latlng:[36,140]});store.refresh();if(store.list().length!==1||store.getDiagnostics()[0]?.code!=='UNKNOWN_CANDIDATE_TYPE')throw new Error(JSON.stringify(store.getDiagnostics()))});
+        check('duplicate id remains first-valid-wins after refresh',()=>{let records=[{id:'dup',layer:'new-pokestop',latlng:[35,139]}];const store=create(()=>records);records.push({id:'dup',layer:'new-gym',latlng:[36,140]});store.refresh();if(store.list().length!==1||store.list()[0].candidateType!=='new-pokestop'||store.getDiagnostics()[0]?.code!=='DUPLICATE_ID')throw new Error(JSON.stringify({list:store.list(),diagnostics:store.getDiagnostics()}))});
+
+        testsElement.replaceChildren(...results.map(x=>row(x.ok,x.name,x.detail||'')));
+        const passed=results.filter(x=>x.ok).length,ok=passed===results.length;
+        summaryElement.className=`result ${ok?'pass':'fail'}`;
+        summaryElement.textContent=`C3 ${ok?'PASS':'FAIL'} ${passed}/${results.length}`;
+      }
+      document.getElementById('rerun').addEventListener('click',run);
+      document.addEventListener('DOMContentLoaded',run,{once:true});
+    })();
+  </script>
+</body>
+</html>
