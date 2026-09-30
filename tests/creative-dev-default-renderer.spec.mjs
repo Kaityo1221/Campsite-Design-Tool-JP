@@ -86,6 +86,7 @@ test('Phase 5-D11 rendererMode=legacy restores legacy visual and interaction own
   await page.goto('/creative/index.html?campsiteProject=bridge&rendererMode=legacy');
   await expect.poll(() => page.evaluate(() => window.CampsiteCreativeProject?.count || 0), { timeout:15000 }).toBe(2);
   await expect.poll(() => page.evaluate(() => window.__cmCandidateShadow?.getState?.()?.interactionOwner || ''), { timeout:15000 }).toBe('legacy');
+  await expect.poll(() => page.evaluate(() => !!window.__cmD11LegacyProbe?.getCandidateTarget?.()), { timeout:15000 }).toBe(true);
 
   const state = await page.evaluate(() => window.__cmCandidateShadow.getState());
   expect(state.ready).toBe(true);
@@ -100,25 +101,10 @@ test('Phase 5-D11 rendererMode=legacy restores legacy visual and interaction own
   await expect(engineCandidate).toHaveCount(1);
   expect(Number(await engineCandidate.evaluate(el => getComputedStyle(el).opacity))).toBe(0);
 
-  // Probe the exact legacy Leaflet Marker referenced by Creative Mode's records.
-  // This deliberately avoids coupling the escape-hatch test to icon CSS/HTML.
-  const legacyMarker = await page.evaluate(() => {
-    const creativeRecords = eval('records');
-    const record = creativeRecords.find(r => r && !r.deleted && r.layer === 'new-pokestop');
-    const element = record?.marker?.getElement?.();
-    if (!element) return null;
-    const rect = element.getBoundingClientRect();
-    const style = getComputedStyle(element);
-    return {
-      x: rect.left + rect.width / 2,
-      y: rect.top + rect.height / 2,
-      width: rect.width,
-      height: rect.height,
-      pointerEvents: style.pointerEvents,
-      opacity: Number(style.opacity)
-    };
-  });
+  const legacyMarker = await page.evaluate(() => window.__cmD11LegacyProbe.getCandidateTarget());
   expect(legacyMarker).toBeTruthy();
+  expect(legacyMarker.layer).toBe('new-pokestop');
+  expect(legacyMarker.inMap).toBe(true);
   expect(legacyMarker.width).toBeGreaterThan(0);
   expect(legacyMarker.height).toBeGreaterThan(0);
   expect(legacyMarker.pointerEvents).not.toBe('none');
