@@ -7,27 +7,27 @@
   <title>Campsite Bridge Map LAB Test</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin="" defer></script>
-  <script src="fixture.js?v=5b2-public" defer></script>
-  <script src="data-layer.js?v=5b2-public" defer></script>
-  <script src="state-engine.js?v=5b2-public" defer></script>
-  <script src="geometry-engine.js?v=5b2-public" defer></script>
-  <script src="scene-builder.js?v=5b2-public" defer></script>
-  <script src="coloring-engine.js?v=5b2-public" defer></script>
-  <script src="map-renderer.js?v=5b2-public" defer></script>
+  <script src="fixture.js?v=5b3-public" defer></script>
+  <script src="data-layer.js?v=5b3-public" defer></script>
+  <script src="state-engine.js?v=5b3-public" defer></script>
+  <script src="geometry-engine.js?v=5b3-public" defer></script>
+  <script src="scene-builder.js?v=5b3-public" defer></script>
+  <script src="coloring-engine.js?v=5b3-public" defer></script>
+  <script src="map-renderer.js?v=5b3-public" defer></script>
   <style>
     :root{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color-scheme:dark;background:#0b1118;color:#eef3f7}
     *{box-sizing:border-box}body{margin:0;background:#0b1118}.wrap{max-width:760px;margin:0 auto;padding:16px}
     .head{display:flex;justify-content:space-between;gap:12px;align-items:flex-end;margin-bottom:12px}.tag{margin:0 0 4px;color:#ff9f7a;font-size:11px;font-weight:800;letter-spacing:.08em}.title{margin:0;font-size:22px}.phase{margin:0;color:#9eabb8;font-size:12px;white-space:nowrap}
     .control{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;margin-bottom:10px;border:1px solid #34404d;border-radius:12px;background:#111922}.control label{display:flex;align-items:center;gap:8px;font-weight:800}.control input{width:22px;height:22px}.control strong{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:#9eabb8}
-    .lifecycle{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}.lifecycle button,.navButton{min-height:44px;border:1px solid #34404d;border-radius:10px;background:#17212b;color:#eef3f7;font-weight:800;font-size:14px}.lifecycle button:disabled{opacity:.38}.lifecycleState{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;padding:9px 11px;border:1px solid #34404d;border-radius:10px;background:#111922;font-size:12px;color:#9eabb8}.lifecycleState strong{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:#eef3f7}
-    .resumePanel{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}.navButton{grid-column:1/-1;text-decoration:none;display:flex;align-items:center;justify-content:center}.mini{padding:9px 10px;border:1px solid #34404d;border-radius:10px;background:#111922}.mini .label{font-size:9px}.health.pass{color:#78d6a0}.health.fail{color:#ff8b82}
+    .lifecycle{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}.lifecycle button,.navButton{min-height:44px;border:1px solid #34404d;border-radius:10px;background:#17212b;color:#eef3f7;font-weight:800;font-size:14px}.lifecycle button:disabled,.navButton:disabled{opacity:.38}.lifecycleState{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;padding:9px 11px;border:1px solid #34404d;border-radius:10px;background:#111922;font-size:12px;color:#9eabb8}.lifecycleState strong{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:#eef3f7}
+    .resumePanel{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}.navButton{grid-column:1/-1;text-decoration:none;display:flex;align-items:center;justify-content:center}.mini{padding:9px 10px;border:1px solid #34404d;border-radius:10px;background:#111922;min-width:0}.mini .label{font-size:9px}.mini .value{word-break:break-word}.health.pass{color:#78d6a0}.health.fail{color:#ff8b82}
     #map{height:min(58vh,520px);min-height:360px;border-radius:12px;overflow:hidden;background:#dce3e8}.status{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}.card{padding:10px;border:1px solid #34404d;border-radius:10px;background:#111922}.label{display:block;color:#8f9ba8;font-size:10px;font-weight:800;letter-spacing:.04em}.value{display:block;margin-top:4px;font:800 15px ui-monospace,SFMono-Regular,Menlo,monospace}.legend{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:12px;font-size:12px;color:#bac4ce}.legend span{display:flex;align-items:center;gap:7px}.dot{width:11px;height:11px;border-radius:50%;display:inline-block}.note{margin:12px 0 0;color:#9eabb8;font-size:12px;line-height:1.5}.error{padding:12px;border-radius:10px;background:#351b1b;color:#ffd2cc}.error[hidden]{display:none}
     @media(max-width:430px){.head{display:block}.phase{margin-top:6px}.status{grid-template-columns:1fr 1fr}.card:last-child{grid-column:1/-1}#map{height:48vh;min-height:320px}}
   </style>
 </head>
 <body>
   <main class="wrap">
-    <header class="head"><div><p class="tag">LAB ONLY / PUBLIC TEST</p><h1 class="title">Campsite Bridge Map</h1></div><p class="phase">Phase 5-B2</p></header>
+    <header class="head"><div><p class="tag">LAB ONLY / PUBLIC TEST</p><h1 class="title">Campsite Bridge Map</h1></div><p class="phase">Phase 5-B3</p></header>
     <p id="error" class="error" hidden></p>
 
     <div class="control"><label><input id="toggle50" type="checkbox" checked>50m Circle</label><strong id="toggleStatus">ON</strong></div>
@@ -36,6 +36,12 @@
       <button id="reopenRenderer" type="button" disabled>Rendererを再開</button>
       <div class="lifecycleState"><span>LIFECYCLE</span><strong id="lifecycleStatus">OPEN</strong></div>
     </div>
+
+    <section class="resumePanel" aria-label="差分同期テスト">
+      <button id="testStableSync" class="navButton" type="button">同じSceneを再描画</button>
+      <div class="mini"><span class="label">LAST SYNC</span><span id="lastSync" class="value">-</span></div>
+      <div class="mini"><span class="label">SYNC TEST</span><span id="syncHealth" class="value health">READY</span></div>
+    </section>
 
     <section class="resumePanel" aria-label="Safari復帰テスト">
       <a class="navButton" href="lifecycle-away.html">別ページへ移動して戻る</a>
@@ -52,7 +58,7 @@
     <div class="legend">
       <span><i class="dot" style="background:#2F80ED"></i>PokéStop</span><span><i class="dot" style="background:#E53935"></i>Gym</span><span><i class="dot" style="background:#8E44AD"></i>Power Spot</span><span><i class="dot" style="background:#C9A7EB"></i>Inactive</span>
     </div>
-    <p class="note">B2テスト：再読み込み、別ページから戻る、別アプリからSafariへ戻る。復帰後もHEALTHがPASSで、通常は5 / 5 / 7ならOKです。</p>
+    <p class="note">B3テスト：「同じSceneを再描画」を押してSYNC TESTがPASS、LAST SYNCが M +0 =5 -0 / C +0 =5 -0 なら、既存Leaflet Layerを消さずに再利用できています。B1/B2の閉じる・再開・Safari復帰もそのまま確認できます。</p>
   </main>
   <script>
     (()=>{'use strict';
@@ -64,10 +70,23 @@
         document.getElementById('closeRenderer').disabled=!open;
         document.getElementById('reopenRenderer').disabled=open;
         document.getElementById('toggle50').disabled=!open;
+        document.getElementById('testStableSync').disabled=!open;
       }
       function currentCounts(){
         if(!app.renderer||app.renderer.isDestroyed())return{markers:0,circles50:0};
         return app.renderer.getRenderedCounts();
+      }
+      function setSyncHealth(value,ok){
+        const el=document.getElementById('syncHealth');
+        el.textContent=value;
+        el.classList.toggle('pass',ok===true);
+        el.classList.toggle('fail',ok===false);
+      }
+      function updateSyncStats(){
+        const el=document.getElementById('lastSync');
+        if(!app.renderer||app.renderer.isDestroyed()||typeof app.renderer.getLastSyncStats!=='function'){el.textContent='-';return;}
+        const s=app.renderer.getLastSyncStats();
+        el.textContent=`M +${s.markers.created} =${s.markers.reused} -${s.markers.removed} / C +${s.circles50.created} =${s.circles50.reused} -${s.circles50.removed}`;
       }
       function updateCounts(){
         const c=currentCounts();
@@ -83,6 +102,7 @@
         health.textContent=ok?'PASS':'FAIL';
         health.classList.toggle('pass',ok);
         health.classList.toggle('fail',!ok);
+        updateSyncStats();
       }
       function render(){
         if(!app.renderer||app.renderer.isDestroyed()){updateCounts();return;}
@@ -91,16 +111,35 @@
         app.renderer.render(app.styled);
         updateCounts();
       }
+      function sameLayerIdentity(before,after){
+        if(before.length!==after.length)return false;
+        const byKey=new Map(before.map(item=>[item.key,item.leafletId]));
+        return after.every(item=>byKey.get(item.key)===item.leafletId);
+      }
+      function testStableSync(){
+        if(!app.renderer||app.renderer.isDestroyed())return;
+        const beforeMarkers=app.renderer.getDiagnostics();
+        const beforeCircles=app.renderer.getCircleDiagnostics();
+        render();
+        const afterMarkers=app.renderer.getDiagnostics();
+        const afterCircles=app.renderer.getCircleDiagnostics();
+        const s=app.renderer.getLastSyncStats();
+        const expectedCircles=app.settings.circle50Visible?5:0;
+        const ok=sameLayerIdentity(beforeMarkers,afterMarkers)&&sameLayerIdentity(beforeCircles,afterCircles)&&s.markers.created===0&&s.markers.reused===5&&s.markers.removed===0&&s.circles50.created===0&&s.circles50.reused===expectedCircles&&s.circles50.removed===0;
+        setSyncHealth(ok?'PASS':'FAIL',ok);
+      }
       function closeRenderer(){
         if(!app.renderer||app.renderer.isDestroyed())return;
         app.renderer.destroy();
         setLifecycle(false);
+        setSyncHealth('READY',null);
         updateCounts();
       }
       function reopenRenderer(){
         if(app.renderer&&!app.renderer.isDestroyed())return;
         app.renderer=window.bridgeMapLab_createMapRenderer(app.map);
         setLifecycle(true);
+        setSyncHealth('READY',null);
         render();
         scheduleResume('REOPEN');
       }
@@ -123,9 +162,10 @@
         app.geometry=window.bridgeMapLab_buildGeometryLayer(app.state);
         app.renderer=window.bridgeMapLab_createMapRenderer(app.map);
         const toggle=document.getElementById('toggle50');
-        toggle.addEventListener('change',()=>{app.settings.circle50Visible=toggle.checked;render();});
+        toggle.addEventListener('change',()=>{app.settings.circle50Visible=toggle.checked;setSyncHealth('READY',null);render();});
         document.getElementById('closeRenderer').addEventListener('click',closeRenderer);
         document.getElementById('reopenRenderer').addEventListener('click',reopenRenderer);
+        document.getElementById('testStableSync').addEventListener('click',testStableSync);
         setLifecycle(true);
         render();
       }
