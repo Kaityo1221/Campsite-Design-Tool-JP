@@ -4,6 +4,17 @@
 
   window.applyCreativePatches=function(src){
     src=previous(src);
+
+    // D14 feedback hotfix: force the updated renderer and keep the coordinate panel
+    // above placement controls. In the normal interactive Unified mode the legacy
+    // candidate marker remains as mutation state only, not as a second visual.
+    src=src.split('runtime/map-engine/map-renderer.js?v=5d9').join('runtime/map-engine/map-renderer.js?v=5d14');
+    const feedbackStyle=`<style id="cmD14FeedbackHotfixStyle">
+      #cmCoordinateJumpPanel{z-index:7200!important}
+      body.cm-unified-renderer-interactive .cm-engine-legacy-candidate{opacity:0!important}
+    </style>`;
+    if(!src.includes('id="cmD14FeedbackHotfixStyle"'))src=src.replace('</head>',feedbackStyle+'</head>');
+
     if(src.includes('cmD11DevDefaultRenderer'))return src;
 
     src=src.replace(
