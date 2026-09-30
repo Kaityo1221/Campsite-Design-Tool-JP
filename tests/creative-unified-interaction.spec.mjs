@@ -138,7 +138,7 @@ test('Phase 5-D10 real Creative Mode delegates engine taps to legacy edit flows 
   const startY = box.y + box.height * 0.45;
   await page.mouse.move(startX, startY);
   await page.mouse.down();
-  await page.mouse.move(startX + 72, startY - 54, { steps:12 });
+  await page.mouse.move(startX + 24, startY - 18, { steps:8 });
   await page.mouse.up();
 
   await page.locator('#cmMoveConfirm').click();
@@ -167,7 +167,7 @@ test('Phase 5-D10 real Creative Mode delegates engine taps to legacy edit flows 
     return m ? [m.created,m.reused,m.removed] : null;
   })).toEqual([0,5,0]);
 
-  // Delete through the real sheet to prove mutation ownership remains legacy Creative Mode.
+  // Re-open through the real rendered marker after the smaller move keeps it on screen.
   await engineCandidate.click();
   await expect(page.locator('#cmDelete')).toBeVisible();
   page.once('dialog', dialog => dialog.accept());
