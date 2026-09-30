@@ -93,10 +93,6 @@ test('Phase 5-D10 real Creative Mode delegates engine taps to legacy edit flows 
   const engineExisting = page.locator('.cm-engine-existing-icon');
   const engineCandidate = page.locator('.cm-engine-candidate-icon');
   await expect(engineExisting).toHaveCount(4);
-  await expect.poll(() => page.evaluate(() => {
-    const m=window.__cmCandidateShadow?.getState?.()?.sync?.markers;
-    return m ? [m.created,m.reused,m.removed] : null;
-  })).toEqual([0,4,1]);
   await expect(engineCandidate).toHaveCount(1);
   await expect(page.locator('.cm-engine-legacy-existing')).toHaveCount(4);
   await expect(page.locator('.cm-engine-legacy-candidate')).toHaveCount(1);
@@ -159,9 +155,17 @@ test('Phase 5-D10 real Creative Mode delegates engine taps to legacy edit flows 
   // The current move flow returns directly to the map, so Undo/Redo are immediately available.
   await page.locator('#undo').click();
   await expect.poll(async () => (await workspaceRecord(page, 'c-stop'))?.latlng).toEqual(initialPosition);
+  await expect.poll(() => page.evaluate(() => {
+    const m=window.__cmCandidateShadow?.getState?.()?.sync?.markers;
+    return m ? [m.created,m.reused,m.removed] : null;
+  })).toEqual([0,5,0]);
 
   await page.locator('#redo').click();
   await expect.poll(async () => (await workspaceRecord(page, 'c-stop'))?.latlng).toEqual(movedPosition);
+  await expect.poll(() => page.evaluate(() => {
+    const m=window.__cmCandidateShadow?.getState?.()?.sync?.markers;
+    return m ? [m.created,m.reused,m.removed] : null;
+  })).toEqual([0,5,0]);
 
   // Delete through the real sheet to prove mutation ownership remains legacy Creative Mode.
   await engineCandidate.click();
@@ -174,6 +178,10 @@ test('Phase 5-D10 real Creative Mode delegates engine taps to legacy edit flows 
   expect(deletedCandidate?.deleted).toBe(true);
   await expect(engineCandidate).toHaveCount(0);
   await expect(engineExisting).toHaveCount(4);
+  await expect.poll(() => page.evaluate(() => {
+    const m=window.__cmCandidateShadow?.getState?.()?.sync?.markers;
+    return m ? [m.created,m.reused,m.removed] : null;
+  })).toEqual([0,4,1]);
 
   expect(browserErrors).toEqual([]);
 });
