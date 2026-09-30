@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>Phase 5-D7 Unified Records Parity</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <style>
+    html,body{margin:0;background:#16130f;color:#f8f2e5;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    main{max-width:760px;margin:0 auto;padding:18px}.card{margin:12px 0;padding:14px;border:1px solid #5f533d;border-radius:14px;background:#211d17}
+    #map{height:240px;border-radius:12px;overflow:hidden}.pass{color:#a8e6a1}.fail{color:#ffaaa0}.row{padding:5px 0;border-bottom:1px solid rgba(255,255,255,.08)}
+    button{min-height:42px;padding:0 14px;border-radius:10px;border:1px solid #8d784f;background:#f6e6ba;color:#2b2419;font-weight:800}
+    .cm-v45-map-icon{background:transparent!important;border:0!important;pointer-events:none!important}.cm-v45-poi{width:30px;height:30px;display:grid;place-items:center}.cm-v45-candidate{position:relative;width:25px;height:25px;transform:rotate(-45deg);border:3px solid #fff;border-radius:50% 50% 50% 0;background:#ff8418}.cm-v45-candidate:after{content:"✓";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(45deg);color:#fff;font-size:14px;font-weight:1000}.cm-v45-icon-wrap{width:36px;height:36px;display:grid;place-items:center}
+  </style>
+</head>
+<body>
+<main>
+  <h1>Phase 5-D7 Unified Records Parity</h1>
+  <p>Creative Modeのexisting-*とnew-*を同一Unified Sceneへ載せ、相互にLeaflet IDを壊さないことを検証します。</p>
+  <div class="card"><div id="map"></div></div>
+  <div class="card"><button id="run">テスト実行</button> <strong id="summary">未実行</strong></div>
+  <div class="card" id="results"></div>
+</main>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="../creative/runtime/map-engine/existing-records-adapter.js?v=5d4"></script>
+<script src="../creative/runtime/map-engine/existing-records-refresh-store.js?v=5d4"></script>
+<script src="../creative/runtime/map-engine/existing-geometry.js?v=5d4"></script>
+<script src="../creative/runtime/map-engine/candidate-records-adapter.js?v=5d4"></script>
+<script src="../creative/runtime/map-engine/candidate-records-refresh-store.js?v=5d4"></script>
+<script src="../creative/runtime/map-engine/candidate-geometry.js?v=5d4"></script>
+<script src="../creative/runtime/map-engine/scene-builder.js?v=5d4"></script>
+<script src="../creative/runtime/map-engine/candidate-scene-builder.js?v=5d4"></script>
+<script src="../creative/runtime/map-engine/map-renderer.js?v=5d4"></script>
+<script>
+(() => {
+  const results=document.getElementById('results'),summary=document.getElementById('summary');
+  let map=null,renderer=null;
+  function equal(actual,expected,label){if(JSON.stringify(actual)!==JSON.stringify(expected))throw new Error((label||'value')+' expected '+JSON.stringify(expected)+' got '+JSON.stringify(actual))}
+  function check(name,fn){const row=document.createElement('div');row.className='row';try{fn();row.classList.add('pass');row.textContent='✅ '+name;return true}catch(error){row.classList.add('fail');row.textContent='❌ '+name+' — '+(error?.message||error);return false}finally{results.appendChild(row)}}
+  function markerId(key){return renderer.getDiagnostics().find(x=>x.key===key)?.leafletId}
+  function markerKind(key){return renderer.getDiagnostics().find(x=>x.key===key)?.renderKind}
+  function coords(key){const d=renderer.getDiagnostics().find(x=>x.key===key);return d?[Number(d.leafletLatLng.lat.toFixed(6)),Number(d.leafletLatLng.lng.toFixed(6))]:null}
+  function resetMap(){try{renderer?.destroy?.()}catch{}try{map?.remove?.()}catch{}document.getElementById('map').replaceChildren();map=L.map('map',{zoomControl:false,attributionControl:false}).setView([35.6816,139.7675],17)}
+
+  document.getElementById('run').onclick=()=>{
+    results.replaceChildren();resetMap();let passed=0,total=0;
+    let records=[
+      {id:'e-stop',guid:'guid-stop',layer:'existing-pokestop',latlng:[35.68150,139.76740],gameStatus:'ACTIVE',deleted:false},
+      {id:'e-gym',guid:'guid-gym',layer:'existing-gym',latlng:[35.68175,139.76770],gameStatus:'ACTIVE',deleted:false},
+      {id:'e-power',guid:'guid-power',layer:'existing-power',latlng:[35.68200,139.76800],gameStatus:'ACTIVE',deleted:false},
+      {id:'e-inactive',guid:'guid-inactive',layer:'existing-power',latlng:[35.68225,139.76830],gameStatus:'INACTIVE',deleted:false},
+      {id:'c-stop',layer:'new-pokestop',latlng:[35.68250,139.76860],deleted:false}
+    ];
+    const originalRecords=JSON.stringify(records);
+    const existingStore=window.bridgeMapLab_createExistingRecordsRefreshStore(()=>records);
+    const candidateStore=window.bridgeMapLab_createCandidateRecordsRefreshStore(()=>records);
+    renderer=window.bridgeMapLab_createMapRenderer(map,{opacity:1});
+    let display={circleRadiiVisible:[50,40,30],candidateTypesVisible:{'new-pokestop':true,'new-gym':true,'new-power':true},existingTypesVisible:{'existing-pokestop':true,'existing-gym':true,'existing-power':true}};
+    const render=()=>{const existing=existingStore.list(),eg=window.bridgeMapLab_buildExistingGeometry(existing),cg=window.bridgeMapLab_buildCandidateGeometry(candidateStore.list()),scene=window.bridgeMapLab_buildSceneWithCandidates({pois:existing},eg,cg,display);renderer.render(scene)};
+    render();
+    const run=(name,fn)=>{total++;if(check(name,fn))passed++};
+
+    run('existing adapter outputs 4 existing POIs',()=>equal(existingStore.getCounts().output,4));
+    run('existing adapter ignores Candidate',()=>equal(existingStore.getCounts().ignoredCandidate,1));
+    run('candidate adapter outputs only Candidate',()=>equal(candidateStore.getCounts().output,1));
+    run('adapters do not mutate records',()=>equal(JSON.stringify(records),originalRecords));
+    run('Unified Scene renders 5 markers',()=>equal(renderer.getRenderedCounts().markers,5));
+    run('Unified Scene renders all 50m circles',()=>equal(renderer.getRenderedCounts().circles50,5));
+    run('Unified Scene renders all 40m circles',()=>equal(renderer.getRenderedCounts().circles40,5));
+    run('Unified Scene renders all 30m circles',()=>equal(renderer.getRenderedCounts().circles30,5));
+    run('existing PokéStop state is preserved',()=>equal(markerKind('marker:poi:guid-stop'),'POKESTOP'));
+    run('existing Gym state is preserved',()=>equal(markerKind('marker:poi:guid-gym'),'GYM'));
+    run('existing PowerSpot state is preserved',()=>equal(markerKind('marker:poi:guid-power'),'POWERSPOT'));
+    run('inactive existing PowerSpot becomes reference render kind',()=>equal(markerKind('marker:poi:guid-inactive'),'INACTIVE_POWERSPOT'));
+
+    const existingStopId=markerId('marker:poi:guid-stop');
+    const candidateId=markerId('marker:candidate:c-stop');
+    records[0].latlng=[35.68300,139.76900];existingStore.refresh();render();
+    run('existing move updates existing coordinates',()=>equal(coords('marker:poi:guid-stop'),[35.683,139.769]));
+    run('existing move reuses existing Leaflet ID',()=>equal(markerId('marker:poi:guid-stop'),existingStopId));
+    run('existing move preserves Candidate Leaflet ID',()=>equal(markerId('marker:candidate:c-stop'),candidateId));
+
+    records[4].latlng=[35.68325,139.76925];candidateStore.refresh();render();
+    run('Candidate move updates Candidate coordinates',()=>equal(coords('marker:candidate:c-stop'),[35.68325,139.76925]));
+    run('Candidate move reuses Candidate Leaflet ID',()=>equal(markerId('marker:candidate:c-stop'),candidateId));
+    run('Candidate move preserves existing Leaflet ID',()=>equal(markerId('marker:poi:guid-stop'),existingStopId));
+
+    display={...display,existingTypesVisible:{'existing-pokestop':true,'existing-gym':false,'existing-power':true}};render();
+    run('existing Gym layer visibility removes only Gym marker',()=>equal(renderer.getRenderedCounts().markers,4));
+    run('remaining existing and Candidate IDs survive layer toggle',()=>equal([markerId('marker:poi:guid-stop'),markerId('marker:candidate:c-stop')],[existingStopId,candidateId]));
+
+    records[0].deleted=true;existingStore.refresh();render();
+    run('deleted existing POI is removed',()=>{if(markerId('marker:poi:guid-stop')!==undefined)throw new Error('existing marker still rendered')});
+    run('deleting existing POI leaves Candidate intact',()=>equal(markerId('marker:candidate:c-stop'),candidateId));
+
+    records.push({id:'bad-existing',layer:'existing-gym',latlng:['bad',139.7],deleted:false});existingStore.refresh();render();
+    run('invalid existing POI is isolated to diagnostics',()=>{if(!existingStore.getDiagnostics().some(x=>x.id==='bad-existing'&&x.code==='INVALID_LATITUDE'))throw new Error('diagnostic missing')});
+    run('invalid existing POI does not stop Candidate rendering',()=>equal(markerId('marker:candidate:c-stop'),candidateId));
+
+    summary.textContent=passed+' / '+total+(passed===total?' PASS':' FAIL');summary.className=passed===total?'pass':'fail';window.__unifiedRecordsParity={passed,total};
+  };
+})();
+</script>
+</body>
+</html>

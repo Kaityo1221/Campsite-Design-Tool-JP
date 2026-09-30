@@ -6,8 +6,12 @@ on:
     paths:
       - 'creative/runtime/map-engine/**'
       - 'creative/runtime/creative-patches-v54-coordinate-memo-reason.js'
+      - 'creative/index.html'
       - 'bridge-map-lab/candidate-shadow-parity-test.html'
+      - 'bridge-map-lab/existing-shadow-parity-test.html'
+      - 'bridge-map-lab/unified-records-parity-test.html'
       - 'tests/candidate-map-engine.spec.mjs'
+      - 'scripts/check-creative-runtime-build.mjs'
       - 'playwright.config.mjs'
       - 'package.json'
       - '.github/workflows/candidate-map-engine-check.yml'
@@ -16,8 +20,12 @@ on:
     paths:
       - 'creative/runtime/map-engine/**'
       - 'creative/runtime/creative-patches-v54-coordinate-memo-reason.js'
+      - 'creative/index.html'
       - 'bridge-map-lab/candidate-shadow-parity-test.html'
+      - 'bridge-map-lab/existing-shadow-parity-test.html'
+      - 'bridge-map-lab/unified-records-parity-test.html'
       - 'tests/candidate-map-engine.spec.mjs'
+      - 'scripts/check-creative-runtime-build.mjs'
       - 'playwright.config.mjs'
       - 'package.json'
       - '.github/workflows/candidate-map-engine-check.yml'
@@ -41,6 +49,9 @@ jobs:
 
       - name: Syntax check Candidate Map Engine
         run: |
+          node --check creative/runtime/map-engine/existing-records-adapter.js
+          node --check creative/runtime/map-engine/existing-records-refresh-store.js
+          node --check creative/runtime/map-engine/existing-geometry.js
           node --check creative/runtime/map-engine/candidate-records-adapter.js
           node --check creative/runtime/map-engine/candidate-records-refresh-store.js
           node --check creative/runtime/map-engine/candidate-geometry.js
@@ -49,6 +60,9 @@ jobs:
           node --check creative/runtime/map-engine/map-renderer.js
           node --check creative/runtime/creative-patches-v54-coordinate-memo-reason.js
           node --check tests/candidate-map-engine.spec.mjs
+
+      - name: Verify generated Creative runtime
+        run: node scripts/check-creative-runtime-build.mjs
 
       - name: Install WebKit
         run: npx playwright install --with-deps webkit

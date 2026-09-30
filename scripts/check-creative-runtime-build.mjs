@@ -81,6 +81,13 @@ assert.ok(
   !html.includes("appendDistanceFolder(xml,doc,50);circleExtras.slice().sort((a,b)=>b-a).forEach(radius=>appendDistanceFolder(xml,doc,radius))"),
   'Creative KMZ export must not write the canonical 50m circle twice'
 );
+assert.ok(html.includes('existing-records-adapter.js?v=5d4'),'D7 existing records adapter script missing');
+assert.ok(html.includes('existing-records-refresh-store.js?v=5d4'),'D7 existing refresh store script missing');
+assert.ok(html.includes('existing-geometry.js?v=5d4'),'D7 existing geometry script missing');
+assert.ok(html.includes('let cmExistingShadowStore=null'),'D7 existing shadow store binding missing');
+assert.ok(html.includes('bridgeMapLab_createExistingRecordsRefreshStore'),'D7 existing store integration missing');
+assert.ok(html.includes('existingCounts:cmExistingShadowStore'),'D7 existing diagnostics publishing missing');
+assert.ok(html.includes('unified:true'),'D7 Unified Scene state marker missing');
 
 function extractScripts(source){
   const scripts=[];

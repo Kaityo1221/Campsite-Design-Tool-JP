@@ -96,6 +96,16 @@
       return renderItem?.origin === 'candidate' ? 'candidate-pin' : 'circle-marker';
     }
 
+    function bridgeMapLab_markerStyle(renderItem) {
+      const style = Object.assign({}, bridgeMapLab_markerBaseStyle, renderItem.style || {});
+      const naturalOpacity = Number.isFinite(Number(style.opacity)) ? Number(style.opacity) : 1;
+      const naturalFillOpacity = Number.isFinite(Number(style.fillOpacity)) ? Number(style.fillOpacity) : bridgeMapLab_markerBaseStyle.fillOpacity;
+      style.opacity = naturalOpacity * settings.opacity;
+      style.fillOpacity = naturalFillOpacity * settings.opacity;
+      style.interactive = false;
+      return style;
+    }
+
     function bridgeMapLab_createMarkerLayer(renderItem, latLng) {
       const kind = bridgeMapLab_markerKind(renderItem);
       if (kind === 'candidate-pin') {
@@ -111,11 +121,7 @@
         };
       }
 
-      const style = Object.assign({}, bridgeMapLab_markerBaseStyle, renderItem.style || {});
-      const naturalFillOpacity = Number.isFinite(Number(style.fillOpacity)) ? Number(style.fillOpacity) : bridgeMapLab_markerBaseStyle.fillOpacity;
-      style.opacity = settings.opacity;
-      style.fillOpacity = naturalFillOpacity * settings.opacity;
-      style.interactive = false;
+      const style = bridgeMapLab_markerStyle(renderItem);
       const radius = Number.isFinite(Number(style.radius)) ? Number(style.radius) : bridgeMapLab_markerBaseStyle.radius;
       return {
         kind,
@@ -129,11 +135,7 @@
       if (entry.kind === 'candidate-pin') {
         entry.layer.setOpacity(settings.opacity);
       } else {
-        const style = Object.assign({}, bridgeMapLab_markerBaseStyle, renderItem.style || {});
-        const naturalFillOpacity = Number.isFinite(Number(style.fillOpacity)) ? Number(style.fillOpacity) : bridgeMapLab_markerBaseStyle.fillOpacity;
-        style.opacity = settings.opacity;
-        style.fillOpacity = naturalFillOpacity * settings.opacity;
-        style.interactive = false;
+        const style = bridgeMapLab_markerStyle(renderItem);
         const radius = Number.isFinite(Number(style.radius)) ? Number(style.radius) : bridgeMapLab_markerBaseStyle.radius;
         entry.layer.setRadius(radius);
         entry.layer.setStyle(style);
@@ -297,6 +299,8 @@
             renderKind: renderItem.renderKind,
             markerKind: entry.kind,
             fillColor: marker.options?.fillColor || null,
+            opacity: marker.options?.opacity ?? null,
+            fillOpacity: marker.options?.fillOpacity ?? null,
             dataLayerLat: renderItem.geometry.lat,
             dataLayerLng: renderItem.geometry.lng,
             leafletLatLng: marker.getLatLng(),
