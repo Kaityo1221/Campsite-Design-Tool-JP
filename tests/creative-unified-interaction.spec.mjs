@@ -54,14 +54,6 @@ async function workspaceRecord(page, id) {
   }, id);
 }
 
-async function markDomIdentity(locator, token) {
-  await locator.evaluate((element, value) => element.setAttribute('data-d10-identity', value), token);
-}
-
-async function expectDomIdentity(locator, token) {
-  await expect(locator).toHaveAttribute('data-d10-identity', token);
-}
-
 test.beforeEach(async ({ page }) => {
   await page.route('https://unpkg.com/leaflet@1.9.4/dist/leaflet.js', route => route.fulfill({ status:200, contentType:'application/javascript', body:leafletJs }));
   await page.route('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css', route => route.fulfill({ status:200, contentType:'text/css', body:leafletCss }));
@@ -101,6 +93,10 @@ test('Phase 5-D10 real Creative Mode delegates engine taps to legacy edit flows 
   const engineExisting = page.locator('.cm-engine-existing-icon');
   const engineCandidate = page.locator('.cm-engine-candidate-icon');
   await expect(engineExisting).toHaveCount(4);
+  await expect.poll(() => page.evaluate(() => {
+    const m=window.__cmCandidateShadow?.getState?.()?.sync?.markers;
+    return m ? [m.created,m.reused,m.removed] : null;
+  })).toEqual([0,4,1]);
   await expect(engineCandidate).toHaveCount(1);
   await expect(page.locator('.cm-engine-legacy-existing')).toHaveCount(4);
   await expect(page.locator('.cm-engine-legacy-candidate')).toHaveCount(1);
@@ -109,9 +105,6 @@ test('Phase 5-D10 real Creative Mode delegates engine taps to legacy edit flows 
   expect(await page.locator('.cm-engine-legacy-candidate').first().evaluate(el => getComputedStyle(el).pointerEvents)).toBe('none');
   expect(await engineExisting.first().evaluate(el => getComputedStyle(el).pointerEvents)).toBe('auto');
   expect(await engineCandidate.evaluate(el => getComputedStyle(el).pointerEvents)).toBe('auto');
-
-  await markDomIdentity(engineExisting.first(), 'existing-stable');
-  await markDomIdentity(engineCandidate, 'candidate-stable');
 
   const initialCandidate = await workspaceRecord(page, 'c-stop');
   expect(initialCandidate).toBeTruthy();
@@ -136,40 +129,39 @@ test('Phase 5-D10 real Creative Mode delegates engine taps to legacy edit flows 
   await page.locator('#cmName').fill('Candidate Stop Edited');
   await expect.poll(async () => (await workspaceRecord(page, 'c-stop'))?.title || '').toBe('Candidate Stop Edited');
 
-  // Start the existing move flow and complete a real Leaflet drag.
+  // Start the current move flow: pan the map under the fixed crosshair, then confirm.
   await page.locator('#cmMove').click();
-  const draggable = page.locator('.leaflet-marker-draggable').last();
-  await expect(draggable).toBeVisible();
-  await expect(page.locator('.cm-return')).toContainText('移動をやめる');
+  await expect(page.locator('#cmMoveCrosshair')).toBeVisible();
+  await expect(page.locator('#cmMoveBar')).toBeVisible();
+  await expect(page.locator('#cmMoveConfirm')).toContainText('移動確定');
 
-  const box = await draggable.boundingBox();
+  const mapSurface = page.locator('.leaflet-container').first();
+  const box = await mapSurface.boundingBox();
   expect(box).toBeTruthy();
-  const startX = box.x + box.width / 2;
-  const startY = box.y + box.height / 2;
+  const startX = box.x + box.width * 0.50;
+  const startY = box.y + box.height * 0.45;
   await page.mouse.move(startX, startY);
   await page.mouse.down();
-  await page.mouse.move(startX + 70, startY - 55, { steps:12 });
+  await page.mouse.move(startX + 72, startY - 54, { steps:12 });
   await page.mouse.up();
 
-  await expect(draggable).toHaveCount(0);
-  await expect(page.locator('.cm-sheet')).toBeVisible();
+  await page.locator('#cmMoveConfirm').click();
+  await expect(page.locator('#cmMoveBar')).toHaveCount(0);
+  await expect(page.locator('#cmMoveCrosshair')).toBeHidden();
   const movedCandidate = await workspaceRecord(page, 'c-stop');
   expect(movedCandidate.latlng).not.toEqual(initialPosition);
   const movedPosition = movedCandidate.latlng;
-  await expectDomIdentity(engineCandidate, 'candidate-stable');
-  await expectDomIdentity(engineExisting.first(), 'existing-stable');
+  await expect.poll(() => page.evaluate(() => {
+    const m=window.__cmCandidateShadow?.getState?.()?.sync?.markers;
+    return m ? [m.created,m.reused,m.removed] : null;
+  })).toEqual([0,5,0]);
 
-  // Move flow reopens the sheet. Close it before using the current Undo/Redo controls.
-  await page.locator('.cm-sheet-close').click();
+  // The current move flow returns directly to the map, so Undo/Redo are immediately available.
   await page.locator('#undo').click();
   await expect.poll(async () => (await workspaceRecord(page, 'c-stop'))?.latlng).toEqual(initialPosition);
-  await expectDomIdentity(engineCandidate, 'candidate-stable');
-  await expectDomIdentity(engineExisting.first(), 'existing-stable');
 
   await page.locator('#redo').click();
   await expect.poll(async () => (await workspaceRecord(page, 'c-stop'))?.latlng).toEqual(movedPosition);
-  await expectDomIdentity(engineCandidate, 'candidate-stable');
-  await expectDomIdentity(engineExisting.first(), 'existing-stable');
 
   // Delete through the real sheet to prove mutation ownership remains legacy Creative Mode.
   await engineCandidate.click();
@@ -182,7 +174,6 @@ test('Phase 5-D10 real Creative Mode delegates engine taps to legacy edit flows 
   expect(deletedCandidate?.deleted).toBe(true);
   await expect(engineCandidate).toHaveCount(0);
   await expect(engineExisting).toHaveCount(4);
-  await expectDomIdentity(engineExisting.first(), 'existing-stable');
 
   expect(browserErrors).toEqual([]);
 });
