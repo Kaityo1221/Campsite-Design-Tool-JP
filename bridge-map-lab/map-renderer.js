@@ -197,7 +197,8 @@
             fillColor: marker.options.fillColor,
             dataLayerLat: renderItem.geometry.lat,
             dataLayerLng: renderItem.geometry.lng,
-            leafletLatLng: marker.getLatLng()
+            leafletLatLng: marker.getLatLng(),
+            leafletId: L.stamp(marker)
           };
         });
       },
@@ -214,7 +215,8 @@
             color: circle.options.color,
             fillColor: circle.options.fillColor,
             radiusMeters: circle.getRadius(),
-            leafletLatLng: circle.getLatLng()
+            leafletLatLng: circle.getLatLng(),
+            leafletId: L.stamp(circle)
           };
         });
       },
