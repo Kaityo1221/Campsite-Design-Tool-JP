@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>Phase 5-C1 Candidate Store Core</title>
+  <script src="candidate-store.js?v=5c1" defer></script>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0b1118;
+      color: #e8edf3;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body { min-height: 100%; margin: 0; }
+
+    body { background: #0b1118; }
+
+    .campsiteLab_shell {
+      width: min(860px, 100%);
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .campsiteLab_eyebrow {
+      margin: 0 0 6px;
+      color: #ff9f7a;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .08em;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 28px;
+      line-height: 1.2;
+    }
+
+    .campsiteLab_scope {
+      margin: 10px 0 20px;
+      color: #aeb9c6;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .campsiteLab_summary,
+    .campsiteLab_tests {
+      border: 1px solid #34404d;
+      border-radius: 10px;
+      background: #111922;
+    }
+
+    .campsiteLab_summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+
+    .campsiteLab_result {
+      margin: 0;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 15px;
+      font-weight: 800;
+    }
+
+    .campsiteLab_pass { color: #78d6a0; }
+    .campsiteLab_fail { color: #ff8f86; }
+    .campsiteLab_wait { color: #aeb9c6; }
+
+    button {
+      appearance: none;
+      border: 1px solid #52606e;
+      border-radius: 8px;
+      background: #17212b;
+      color: #edf3f8;
+      padding: 9px 12px;
+      font: inherit;
+      font-weight: 700;
+    }
+
+    button:active { transform: translateY(1px); }
+
+    .campsiteLab_tests {
+      overflow: hidden;
+    }
+
+    .campsiteLab_test {
+      display: grid;
+      grid-template-columns: 74px minmax(0, 1fr);
+      gap: 12px;
+      padding: 12px 14px;
+      border-top: 1px solid #27323d;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .campsiteLab_test:first-child { border-top: 0; }
+
+    .campsiteLab_badge {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-weight: 800;
+    }
+
+    .campsiteLab_detail {
+      color: #c7d0da;
+      overflow-wrap: anywhere;
+    }
+
+    .campsiteLab_error {
+      display: block;
+      margin-top: 4px;
+      color: #ffb1aa;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 11px;
+    }
+
+    @media (max-width: 640px) {
+      .campsiteLab_shell { padding: 16px; }
+      h1 { font-size: 24px; }
+      .campsiteLab_summary { align-items: flex-start; }
+      .campsiteLab_test { grid-template-columns: 64px minmax(0, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <main class="campsiteLab_shell">
+    <p class="campsiteLab_eyebrow">LAB ONLY</p>
+    <h1>Phase 5-C1 Candidate Store Core</h1>
+    <p class="campsiteLab_scope">
+      メモリ上のCandidate Storeだけを検証します。Creative Mode、records、project.addedPois、Geometry、Scene、Rendererには接続しません。
+    </p>
+
+    <section class="campsiteLab_summary" aria-live="polite">
+      <p id="campsiteLab_result" class="campsiteLab_result campsiteLab_wait">TEST WAITING</p>
+      <button id="campsiteLab_rerun" type="button">再テスト</button>
+    </section>
+
+    <section id="campsiteLab_tests" class="campsiteLab_tests" aria-label="Candidate Store Core test results"></section>
+  </main>
+
+  <script>
+    (() => {
+      'use strict';
+
+      function assert(condition, message = 'assertion failed') {
+        if (!condition) throw new Error(message);
+      }
+
+      function assertThrows(fn, message) {
+        let threw = false;
+        try {
+          fn();
+        } catch (_) {
+          threw = true;
+        }
+        assert(threw, message || 'expected function to throw');
+      }
+
+      function runCase(name, fn) {
+        try {
+          fn();
+          return { name, passed: true, error: '' };
+        } catch (error) {
+          return {
+            name,
+            passed: false,
+            error: error instanceof Error ? error.message : String(error)
+          };
+        }
+      }
+
+      function runTests() {
+        if (typeof window.bridgeMapLab_createCandidateStore !== 'function') {
+          return [{
+            name: 'Candidate Store script load',
+            passed: false,
+            error: 'bridgeMapLab_createCandidateStore is not available'
+          }];
+        }
+
+        const results = [];
+        const store = window.bridgeMapLab_createCandidateStore();
+        let changeCount = 0;
+        let lastCallbackArgCount = -1;
+        const unsubscribe = store.subscribe(function () {
+          changeCount += 1;
+          lastCallbackArgCount = arguments.length;
+        });
+
+        results.push(runCase('list(): empty store starts empty', () => {
+          assert(store.list().length === 0, 'initial list must be empty');
+        }));
+
+        results.push(runCase('add(): accepts new-pokestop and emits once', () => {
+          const before = changeCount;
+          store.add({ id: 'candidate-a', lat: 35.7148, lng: 139.7731, candidateType: 'new-pokestop' });
+          assert(store.list().length === 1, 'candidate was not added');
+          assert(store.list()[0].candidateType === 'new-pokestop', 'candidateType changed');
+          assert(changeCount === before + 1, 'add must emit exactly once');
+          assert(lastCallbackArgCount === 0, 'change notification must not carry diff arguments');
+        }));
+
+        results.push(runCase('add(): accepts new-gym and new-power', () => {
+          store.add({ id: 'candidate-b', lat: 35.7150, lng: 139.7733, candidateType: 'new-gym' });
+          store.add({ id: 'candidate-c', lat: 35.7152, lng: 139.7735, candidateType: 'new-power' });
+          const types = store.list().map((candidate) => candidate.candidateType);
+          assert(types.includes('new-gym'), 'new-gym missing');
+          assert(types.includes('new-power'), 'new-power missing');
+        }));
+
+        results.push(runCase('list(): returned array is isolated', () => {
+          const copy = store.list();
+          copy.pop();
+          assert(store.list().length === 3, 'mutating returned array changed store');
+        }));
+
+        results.push(runCase('list(): returned candidate objects are isolated', () => {
+          const copy = store.list();
+          copy[0].lat = 0;
+          copy[0].candidateType = 'new-gym';
+          const original = store.list().find((candidate) => candidate.id === 'candidate-a');
+          assert(original.lat === 35.7148, 'mutating returned object changed lat in store');
+          assert(original.candidateType === 'new-pokestop', 'mutating returned object changed candidateType in store');
+        }));
+
+        results.push(runCase('move(): updates only coordinates and emits once', () => {
+          const before = changeCount;
+          store.move('candidate-a', 35.7160, 139.7740);
+          const moved = store.list().find((candidate) => candidate.id === 'candidate-a');
+          assert(moved.lat === 35.7160 && moved.lng === 139.7740, 'coordinates were not updated');
+          assert(moved.candidateType === 'new-pokestop', 'move changed candidateType');
+          assert(changeCount === before + 1, 'move must emit exactly once');
+        }));
+
+        results.push(runCase('remove(): removes by id and emits once', () => {
+          const before = changeCount;
+          store.remove('candidate-b');
+          assert(!store.list().some((candidate) => candidate.id === 'candidate-b'), 'candidate-b was not removed');
+          assert(changeCount === before + 1, 'remove must emit exactly once');
+        }));
+
+        results.push(runCase('refresh(): keeps data and emits once', () => {
+          const beforeList = JSON.stringify(store.list());
+          const beforeCount = changeCount;
+          store.refresh();
+          assert(JSON.stringify(store.list()) === beforeList, 'refresh changed in-memory candidates');
+          assert(changeCount === beforeCount + 1, 'refresh must emit exactly once');
+        }));
+
+        results.push(runCase('validation: missing id is rejected', () => {
+          const before = changeCount;
+          assertThrows(() => store.add({ lat: 35.7, lng: 139.7, candidateType: 'new-pokestop' }));
+          assert(changeCount === before, 'rejected add emitted change');
+        }));
+
+        results.push(runCase('validation: invalid latitude is rejected', () => {
+          const before = changeCount;
+          assertThrows(() => store.add({ id: 'bad-lat', lat: 91, lng: 139.7, candidateType: 'new-pokestop' }));
+          assert(changeCount === before, 'rejected latitude emitted change');
+        }));
+
+        results.push(runCase('validation: invalid longitude is rejected', () => {
+          const before = changeCount;
+          assertThrows(() => store.add({ id: 'bad-lng', lat: 35.7, lng: Infinity, candidateType: 'new-pokestop' }));
+          assert(changeCount === before, 'rejected longitude emitted change');
+        }));
+
+        results.push(runCase('validation: unknown candidateType is rejected', () => {
+          const before = changeCount;
+          assertThrows(() => store.add({ id: 'bad-type', lat: 35.7, lng: 139.7, candidateType: 'POKESTOP' }));
+          assert(changeCount === before, 'rejected candidateType emitted change');
+        }));
+
+        results.push(runCase('validation: duplicate id add is rejected', () => {
+          const before = changeCount;
+          assertThrows(() => store.add({ id: 'candidate-a', lat: 35.7, lng: 139.7, candidateType: 'new-gym' }));
+          assert(changeCount === before, 'duplicate add emitted change');
+        }));
+
+        results.push(runCase('validation: move of missing id is rejected', () => {
+          const before = changeCount;
+          assertThrows(() => store.move('candidate-missing', 35.7, 139.7));
+          assert(changeCount === before, 'rejected move emitted change');
+        }));
+
+        results.push(runCase('validation: remove of missing id is rejected', () => {
+          const before = changeCount;
+          assertThrows(() => store.remove('candidate-missing'));
+          assert(changeCount === before, 'rejected remove emitted change');
+        }));
+
+        results.push(runCase('subscribe(): unsubscribe stops future notifications', () => {
+          const before = changeCount;
+          unsubscribe();
+          store.refresh();
+          assert(changeCount === before, 'unsubscribed callback was called');
+        }));
+
+        results.push(runCase('initialCandidates: validates and copies input', () => {
+          const source = { id: 'seed-a', lat: 35.71, lng: 139.77, candidateType: 'new-power' };
+          const seeded = window.bridgeMapLab_createCandidateStore([source]);
+          source.lat = 0;
+          assert(seeded.list()[0].lat === 35.71, 'initial candidate was retained by reference');
+          assertThrows(() => window.bridgeMapLab_createCandidateStore([source, source]), 'duplicate initial id must be rejected');
+        }));
+
+        return results;
+      }
+
+      function renderResults(results) {
+        const root = document.getElementById('campsiteLab_tests');
+        const passedCount = results.filter((result) => result.passed).length;
+        const allPassed = passedCount === results.length;
+        const resultElement = document.getElementById('campsiteLab_result');
+
+        resultElement.textContent = allPassed
+          ? `C1 PASS ${passedCount}/${results.length}`
+          : `C1 FAIL ${passedCount}/${results.length}`;
+        resultElement.className = `campsiteLab_result ${allPassed ? 'campsiteLab_pass' : 'campsiteLab_fail'}`;
+
+        root.replaceChildren(...results.map((result) => {
+          const row = document.createElement('div');
+          const badge = document.createElement('div');
+          const detail = document.createElement('div');
+
+          row.className = 'campsiteLab_test';
+          badge.className = `campsiteLab_badge ${result.passed ? 'campsiteLab_pass' : 'campsiteLab_fail'}`;
+          detail.className = 'campsiteLab_detail';
+          badge.textContent = result.passed ? 'PASS' : 'FAIL';
+          detail.textContent = result.name;
+
+          if (!result.passed && result.error) {
+            const error = document.createElement('span');
+            error.className = 'campsiteLab_error';
+            error.textContent = result.error;
+            detail.appendChild(error);
+          }
+
+          row.append(badge, detail);
+          return row;
+        }));
+      }
+
+      function execute() {
+        renderResults(runTests());
+      }
+
+      document.getElementById('campsiteLab_rerun').addEventListener('click', execute);
+      window.addEventListener('load', execute, { once: true });
+    })();
+  </script>
+</body>
+</html>
