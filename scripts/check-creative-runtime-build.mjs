@@ -18,7 +18,8 @@ const livePostManifestPatches=[
   'creative-patches-v53-new-poi-auto-memo.js',
   'creative-patches-v54-coordinate-memo-reason.js',
   'creative-patches-v55-unified-visible.js',
-  'creative-patches-v56-unified-interaction.js'
+  'creative-patches-v56-unified-interaction.js',
+  'creative-patches-v57-unified-default.js'
 ];
 
 function gitBlobShaBuffer(body){
@@ -97,6 +98,10 @@ assert.ok(html.includes("return mode==='visible'||mode==='interactive'"),'D9 uni
 assert.ok(html.includes('cm-unified-renderer-visible'),'D8 legacy existing marker suppression class missing');
 assert.ok(html.includes("mode:unifiedVisible?'unified-visible'"),'D8 unified visible diagnostics mode missing');
 assert.ok(html.includes('cmD9UnifiedInteractionRuntime'),'D9 unified interaction runtime missing');
+assert.ok(html.includes('cmD11UnifiedDefaultMode'),'D11 Unified default mode missing');
+assert.ok(html.includes("if(mode===null||mode==='')return'interactive'"),'D11 no-query default must be interactive');
+assert.ok(html.includes("mode==='interactive'||mode==='visible'||mode==='legacy'"),'D11 known renderer modes missing');
+assert.ok(html.includes("return'legacy'"),'D11 unknown-mode safe fallback missing');
 assert.ok(html.includes('cmUnifiedRendererInteractive'),'D9 interactive query gate missing');
 assert.ok(html.includes('onMarkerActivate:cmUnifiedRendererInteractive()?cmUnifiedRendererActivate:null'),'D9 renderer activation bridge missing');
 assert.ok(html.includes("interactionOwner:cmUnifiedRendererInteractive()?'map-engine':'legacy'"),'D9 interaction ownership diagnostics missing');
