@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>Phase 5-D8 Existing POI Visible Parity</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <style>
+    html,body{margin:0;background:#16130f;color:#f8f2e5;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    main{max-width:760px;margin:0 auto;padding:18px}.card{margin:12px 0;padding:14px;border:1px solid #5f533d;border-radius:14px;background:#211d17}
+    #map{height:240px;border-radius:12px;overflow:hidden}.pass{color:#a8e6a1}.fail{color:#ffaaa0}.row{padding:5px 0;border-bottom:1px solid rgba(255,255,255,.08)}
+    button{min-height:42px;padding:0 14px;border-radius:10px;border:1px solid #8d784f;background:#f6e6ba;color:#2b2419;font-weight:800}
+    .cm-v45-map-icon{background:transparent!important;border:0!important}.cm-v45-poi{width:30px;height:30px;display:grid;place-items:center;filter:drop-shadow(0 2px 3px rgba(0,0,0,.26))}
+    .cm-v45-stop{width:19px;height:19px;border-radius:50%;background:#1677ff;border:3px solid #fff;box-shadow:0 0 0 2px #0b5ed7}
+    .cm-v45-gym{position:relative;width:25px;height:25px;display:grid;place-items:center;clip-path:polygon(25% 4%,75% 4%,100% 50%,75% 96%,25% 96%,0 50%);background:#fff}.cm-v45-gym:after{content:"";width:20px;height:20px;clip-path:inherit;background:#ef4444}
+    .cm-v45-power,.cm-v45-inactive{width:21px;height:21px;transform:rotate(45deg);border:3px solid #fff;border-radius:3px}.cm-v45-power{background:#8b35e8;box-shadow:0 0 0 2px #681fc1}.cm-v45-inactive{background:#f3a8c9;box-shadow:0 0 0 2px #e879aa;opacity:.68}
+    .cm-v45-candidate{position:relative;width:25px;height:25px;transform:rotate(-45deg);border:3px solid #fff;border-radius:50% 50% 50% 0;background:#ff8418}.cm-v45-candidate:after{content:"✓";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(45deg);color:#fff;font-size:14px;font-weight:1000}.cm-v45-icon-wrap{width:36px;height:36px;display:grid;place-items:center}
+  </style>
+</head>
+<body>
+<main>
+  <h1>Phase 5-D8 Existing POI Visible Parity</h1>
+  <p>Existing POIの表示所有権だけを新Rendererへ渡した状態を実Leafletで検証します。</p>
+  <div class="card"><div id="map"></div></div>
+  <div class="card"><button id="run">テスト実行</button> <strong id="summary">未実行</strong></div>
+  <div class="card" id="results"></div>
+</main>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="../creative/runtime/map-engine/existing-records-adapter.js?v=5d4"></script>
+<script src="../creative/runtime/map-engine/existing-records-refresh-store.js?v=5d4"></script>
+<script src="../creative/runtime/map-engine/existing-geometry.js?v=5d4"></script>
+<script src="../creative/runtime/map-engine/candidate-records-adapter.js?v=5d4"></script>
+<script src="../creative/runtime/map-engine/candidate-records-refresh-store.js?v=5d4"></script>
+<script src="../creative/runtime/map-engine/candidate-geometry.js?v=5d4"></script>
+<script src="../creative/runtime/map-engine/scene-builder.js?v=5d4"></script>
+<script src="../creative/runtime/map-engine/candidate-scene-builder.js?v=5d4"></script>
+<script src="../creative/runtime/map-engine/map-renderer.js?v=5d5"></script>
+<script>
+(() => {
+  const results=document.getElementById('results'),summary=document.getElementById('summary');
+  let map=null,renderer=null;
+  function equal(actual,expected,label){if(JSON.stringify(actual)!==JSON.stringify(expected))throw new Error((label||'value')+' expected '+JSON.stringify(expected)+' got '+JSON.stringify(actual))}
+  function check(name,fn){const row=document.createElement('div');row.className='row';try{fn();row.classList.add('pass');row.textContent='✅ '+name;return true}catch(error){row.classList.add('fail');row.textContent='❌ '+name+' — '+(error?.message||error);return false}finally{results.appendChild(row)}}
+  function marker(key){return renderer.getDiagnostics().find(x=>x.key===key)}
+  function markerId(key){return marker(key)?.leafletId}
+  function circle(key,radius){return renderer.getCircleDiagnostics(radius).find(x=>x.key===key)}
+  function resetMap(){try{renderer?.destroy?.()}catch{}try{map?.remove?.()}catch{}document.getElementById('map').replaceChildren();map=L.map('map',{zoomControl:false,attributionControl:false}).setView([35.6816,139.7675],17)}
+  function ownedScene(existingStore,candidateStore,display){
+    const existing=existingStore.list(),eg=window.bridgeMapLab_buildExistingGeometry(existing),cg=window.bridgeMapLab_buildCandidateGeometry(candidateStore.list());
+    const scene=window.bridgeMapLab_buildSceneWithCandidates({pois:existing},eg,cg,display);
+    return Object.freeze({items:Object.freeze(scene.items.map(item=>item.origin==='candidate'?Object.freeze({...item,style:Object.freeze({...item.style,opacity:0,fillOpacity:0})}):item))});
+  }
+
+  document.getElementById('run').onclick=()=>{
+    results.replaceChildren();resetMap();let passed=0,total=0;
+    let records=[
+      {id:'e-stop',guid:'guid-stop',layer:'existing-pokestop',latlng:[35.68150,139.76740],gameStatus:'ACTIVE',deleted:false},
+      {id:'e-gym',guid:'guid-gym',layer:'existing-gym',latlng:[35.68175,139.76770],gameStatus:'ACTIVE',deleted:false},
+      {id:'e-power',guid:'guid-power',layer:'existing-power',latlng:[35.68200,139.76800],gameStatus:'ACTIVE',deleted:false},
+      {id:'e-inactive',guid:'guid-inactive',layer:'existing-power',latlng:[35.68225,139.76830],gameStatus:'INACTIVE',deleted:false},
+      {id:'c-stop',layer:'new-pokestop',latlng:[35.68250,139.76860],deleted:false}
+    ];
+    const existingStore=window.bridgeMapLab_createExistingRecordsRefreshStore(()=>records);
+    const candidateStore=window.bridgeMapLab_createCandidateRecordsRefreshStore(()=>records);
+    renderer=window.bridgeMapLab_createMapRenderer(map,{opacity:1});
+    let display={circleRadiiVisible:[50,40,30],candidateTypesVisible:{'new-pokestop':true,'new-gym':true,'new-power':true},existingTypesVisible:{'existing-pokestop':true,'existing-gym':true,'existing-power':true}};
+    const render=()=>renderer.render(ownedScene(existingStore,candidateStore,display));render();
+    const run=(name,fn)=>{total++;if(check(name,fn))passed++};
+
+    run('Existing 4 markers + hidden Candidate stay in keyed Scene',()=>equal(renderer.getRenderedCounts().markers,5));
+    run('PokéStop uses existing-pin renderer',()=>equal(marker('marker:poi:guid-stop')?.markerKind,'existing-pin'));
+    run('Gym uses existing-pin renderer',()=>equal(marker('marker:poi:guid-gym')?.markerKind,'existing-pin'));
+    run('Power Spot uses existing-pin renderer',()=>equal(marker('marker:poi:guid-power')?.markerKind,'existing-pin'));
+    run('Inactive Power Spot uses existing-pin renderer',()=>equal(marker('marker:poi:guid-inactive')?.markerKind,'existing-pin'));
+    run('Existing markers are visible',()=>equal(marker('marker:poi:guid-stop')?.opacity,1));
+    run('Candidate marker is hidden in Existing-only ownership',()=>equal(marker('marker:candidate:c-stop')?.opacity,0));
+    run('Candidate 50m circle is hidden in Existing-only ownership',()=>equal(circle('circle50:candidate:c-stop',50)?.opacity,0));
+    run('PokéStop DOM shape is current blue stop',()=>{if(!document.querySelector('.cm-engine-existing-pokestop .cm-v45-stop'))throw new Error('stop shape missing')});
+    run('Gym DOM shape is current red gym',()=>{if(!document.querySelector('.cm-engine-existing-gym .cm-v45-gym'))throw new Error('gym shape missing')});
+    run('Power Spot DOM shape is current purple diamond',()=>{if(!document.querySelector('.cm-engine-existing-powerspot .cm-v45-power'))throw new Error('power shape missing')});
+    run('Inactive Power Spot DOM shape is current pink diamond',()=>{if(!document.querySelector('.cm-engine-existing-inactive_powerspot .cm-v45-inactive'))throw new Error('inactive shape missing')});
+    run('Existing 50m circles visible',()=>equal(renderer.getCircleDiagnostics(50).filter(x=>x.ownerKey.startsWith('poi:')).every(x=>x.opacity===1),true));
+    run('Existing 40m circles visible',()=>equal(renderer.getCircleDiagnostics(40).filter(x=>x.ownerKey.startsWith('poi:')).every(x=>x.opacity===1),true));
+    run('Existing 30m circles visible',()=>equal(renderer.getCircleDiagnostics(30).filter(x=>x.ownerKey.startsWith('poi:')).every(x=>x.opacity===1),true));
+
+    const stopId=markerId('marker:poi:guid-stop'),inactiveId=markerId('marker:poi:guid-inactive');
+    records[0].latlng=[35.68300,139.76900];existingStore.refresh();render();
+    run('Existing move reuses Leaflet ID',()=>equal(markerId('marker:poi:guid-stop'),stopId));
+
+    records[3].gameStatus='ACTIVE';existingStore.refresh();render();
+    run('Inactive to active state change reuses Leaflet ID',()=>equal(markerId('marker:poi:guid-inactive'),inactiveId));
+    run('Inactive to active state change updates renderKind',()=>equal(marker('marker:poi:guid-inactive')?.renderKind,'POWERSPOT'));
+    run('Inactive to active state change updates DOM shape',()=>{if(!document.querySelector('.cm-engine-existing-powerspot .cm-v45-power'))throw new Error('updated power shape missing')});
+
+    display={...display,existingTypesVisible:{'existing-pokestop':true,'existing-gym':false,'existing-power':true}};render();
+    run('Existing Gym layer toggle removes Gym only',()=>{if(markerId('marker:poi:guid-gym')!==undefined)throw new Error('gym still rendered');equal(renderer.getRenderedCounts().markers,4)});
+    run('Existing PokéStop ID survives layer toggle',()=>equal(markerId('marker:poi:guid-stop'),stopId));
+
+    summary.textContent=passed+' / '+total+(passed===total?' PASS':' FAIL');summary.className=passed===total?'pass':'fail';window.__existingVisibleParity={passed,total};
+  };
+})();
+</script>
+</body>
+</html>
