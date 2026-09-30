@@ -194,7 +194,7 @@ test('Phase 5-D12 normal dev URL survives the complete legacy mutation flow', as
   const startY = box.y + box.height * 0.45;
   await page.mouse.move(startX, startY);
   await page.mouse.down();
-  await page.mouse.move(startX + 64, startY - 48, { steps:12 });
+  await page.mouse.move(startX + 24, startY - 18, { steps:8 });
   await page.mouse.up();
   await page.locator('#cmMoveConfirm').click();
 
@@ -215,7 +215,8 @@ test('Phase 5-D12 normal dev URL survives the complete legacy mutation flow', as
   const existingAfterMove = await workspaceRecord(page, { layer:'existing-pokestop' });
   expect(existingAfterMove).toEqual(existingBefore);
 
-  await engineCandidate.dispatchEvent('click');
+  // Re-open through the real rendered marker after the smaller move keeps it on screen.
+  await engineCandidate.click();
   await expect(page.locator('#cmDelete')).toBeVisible();
   page.once('dialog', dialog => dialog.accept());
   await page.locator('#cmDelete').click();
