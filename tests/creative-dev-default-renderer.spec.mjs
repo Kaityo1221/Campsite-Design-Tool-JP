@@ -99,9 +99,15 @@ test('Phase 5-D11 rendererMode=legacy restores legacy visual and interaction own
   const engineCandidate = page.locator('.cm-engine-candidate-icon');
   await expect(engineCandidate).toHaveCount(1);
   expect(Number(await engineCandidate.evaluate(el => getComputedStyle(el).opacity))).toBe(0);
-  expect(await page.locator('.cm-engine-legacy-candidate').evaluate(el => getComputedStyle(el).pointerEvents)).not.toBe('none');
 
-  await page.locator('.cm-engine-legacy-candidate').click();
+  // In full legacy mode the D6/D9 ownership tag is intentionally not added,
+  // because the new renderer is not the visual/interaction owner. Target the
+  // actual current Creative Mode marker by its v45 Candidate shape instead.
+  const legacyCandidate = page.locator('.leaflet-marker-icon.cm-v45-map-icon:not(.cm-engine-candidate-icon):has(.cm-v45-candidate)');
+  await expect(legacyCandidate).toHaveCount(1);
+  expect(await legacyCandidate.evaluate(el => getComputedStyle(el).pointerEvents)).not.toBe('none');
+
+  await legacyCandidate.click();
   await expect(page.locator('.cm-sheet')).toBeVisible();
   await expect(page.locator('#cmDelete')).toBeVisible();
   expect(browserErrors).toEqual([]);
