@@ -334,6 +334,7 @@
             key: renderItem.key,
             ownerKey: renderItem.ownerKey,
             renderKind: renderItem.renderKind,
+            origin: renderItem.origin || null,
             markerKind: entry.kind,
             fillColor: marker.options?.fillColor || null,
             opacity: marker.options?.opacity ?? null,
