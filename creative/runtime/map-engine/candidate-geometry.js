@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const bridgeMapLab_candidateCircleRadiusMeters = 50;
+  const bridgeMapLab_candidateCircleRadiiMeters = Object.freeze([50, 40, 30]);
 
   function bridgeMapLab_buildCandidatePointGeometry(candidate) {
     return Object.freeze({
@@ -11,12 +11,12 @@
     });
   }
 
-  function bridgeMapLab_buildCandidateCircleGeometry(candidate) {
+  function bridgeMapLab_buildCandidateCircleGeometry(candidate, radiusMeters) {
     return Object.freeze({
       type: 'circle',
       lat: candidate.lat,
       lng: candidate.lng,
-      radiusMeters: bridgeMapLab_candidateCircleRadiusMeters
+      radiusMeters
     });
   }
 
@@ -45,13 +45,15 @@
 
     const entries = candidates.map((candidate, index) => {
       bridgeMapLab_validateCandidateGeometryInput(candidate, index);
+      const circleGeometries = {};
+      bridgeMapLab_candidateCircleRadiiMeters.forEach((radiusMeters) => {
+        circleGeometries[radiusMeters] = bridgeMapLab_buildCandidateCircleGeometry(candidate, radiusMeters);
+      });
       return Object.freeze({
         candidateId: candidate.id,
         candidateType: candidate.candidateType,
         pointGeometry: bridgeMapLab_buildCandidatePointGeometry(candidate),
-        circleGeometries: Object.freeze({
-          50: bridgeMapLab_buildCandidateCircleGeometry(candidate)
-        })
+        circleGeometries: Object.freeze(circleGeometries)
       });
     });
 
