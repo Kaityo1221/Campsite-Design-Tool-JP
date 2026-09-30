@@ -17,7 +17,8 @@ const livePostManifestPatches=[
   'creative-patches-v52-existing-new-placement.js',
   'creative-patches-v53-new-poi-auto-memo.js',
   'creative-patches-v54-coordinate-memo-reason.js',
-  'creative-patches-v55-unified-visible.js'
+  'creative-patches-v55-unified-visible.js',
+  'creative-patches-v56-unified-interaction.js'
 ];
 
 function gitBlobShaBuffer(body){
@@ -86,15 +87,19 @@ assert.ok(html.includes('existing-records-adapter.js?v=5d8'),'D8 existing record
 assert.ok(html.includes('existing-records-refresh-store.js?v=5d8'),'D8 existing refresh store cache-bust missing');
 assert.ok(html.includes('existing-geometry.js?v=5d8'),'D8 existing geometry cache-bust missing');
 assert.ok(html.includes('candidate-records-adapter.js?v=5d8'),'D8 candidate adapter cache-bust missing');
-assert.ok(html.includes('map-renderer.js?v=5d8'),'D8 renderer cache-bust missing');
+assert.ok(html.includes('map-renderer.js?v=5d9'),'D9 renderer cache-bust missing');
 assert.ok(html.includes('let cmExistingShadowStore=null'),'D7 existing shadow store binding missing');
 assert.ok(html.includes('bridgeMapLab_createExistingRecordsRefreshStore'),'D7 existing store integration missing');
 assert.ok(html.includes('existingCounts:cmExistingShadowStore'),'D7 existing diagnostics publishing missing');
 assert.ok(html.includes('unified:true'),'D7 Unified Scene state marker missing');
 assert.ok(html.includes('cmD8UnifiedRendererVisible'),'D8 unified visible runtime missing');
-assert.ok(html.includes("get('unifiedRenderer')==='visible'"),'D8 unified visible query gate missing');
+assert.ok(html.includes("return mode==='visible'||mode==='interactive'"),'D9 unified interactive mode must preserve visible cutover');
 assert.ok(html.includes('cm-unified-renderer-visible'),'D8 legacy existing marker suppression class missing');
 assert.ok(html.includes("mode:unifiedVisible?'unified-visible'"),'D8 unified visible diagnostics mode missing');
+assert.ok(html.includes('cmD9UnifiedInteractionRuntime'),'D9 unified interaction runtime missing');
+assert.ok(html.includes('cmUnifiedRendererInteractive'),'D9 interactive query gate missing');
+assert.ok(html.includes('onMarkerActivate:cmUnifiedRendererInteractive()?cmUnifiedRendererActivate:null'),'D9 renderer activation bridge missing');
+assert.ok(html.includes("interactionOwner:cmUnifiedRendererInteractive()?'map-engine':'legacy'"),'D9 interaction ownership diagnostics missing');
 
 function extractScripts(source){
   const scripts=[];
