@@ -9,12 +9,14 @@ on:
       - 'creative/runtime/creative-patches-v55-unified-visible.js'
       - 'creative/runtime/creative-patches-v56-unified-interaction.js'
       - 'creative/index.html'
+      - 'creative/bridge-project-patch.js'
       - 'bridge-map-lab/candidate-shadow-parity-test.html'
       - 'bridge-map-lab/existing-shadow-parity-test.html'
       - 'bridge-map-lab/unified-records-parity-test.html'
       - 'bridge-map-lab/unified-visible-parity-test.html'
       - 'bridge-map-lab/unified-interaction-parity-test.html'
       - 'tests/candidate-map-engine.spec.mjs'
+      - 'tests/creative-unified-interaction.spec.mjs'
       - 'scripts/check-creative-runtime-build.mjs'
       - 'playwright.config.mjs'
       - 'package.json'
@@ -27,12 +29,14 @@ on:
       - 'creative/runtime/creative-patches-v55-unified-visible.js'
       - 'creative/runtime/creative-patches-v56-unified-interaction.js'
       - 'creative/index.html'
+      - 'creative/bridge-project-patch.js'
       - 'bridge-map-lab/candidate-shadow-parity-test.html'
       - 'bridge-map-lab/existing-shadow-parity-test.html'
       - 'bridge-map-lab/unified-records-parity-test.html'
       - 'bridge-map-lab/unified-visible-parity-test.html'
       - 'bridge-map-lab/unified-interaction-parity-test.html'
       - 'tests/candidate-map-engine.spec.mjs'
+      - 'tests/creative-unified-interaction.spec.mjs'
       - 'scripts/check-creative-runtime-build.mjs'
       - 'playwright.config.mjs'
       - 'package.json'
@@ -70,6 +74,7 @@ jobs:
           node --check creative/runtime/creative-patches-v55-unified-visible.js
           node --check creative/runtime/creative-patches-v56-unified-interaction.js
           node --check tests/candidate-map-engine.spec.mjs
+          node --check tests/creative-unified-interaction.spec.mjs
 
       - name: Verify generated Creative runtime
         run: node scripts/check-creative-runtime-build.mjs
@@ -77,8 +82,8 @@ jobs:
       - name: Install WebKit
         run: npx playwright install --with-deps webkit
 
-      - name: Run Candidate Map Engine iPhone/WebKit parity
-        run: npx playwright test tests/candidate-map-engine.spec.mjs
+      - name: Run Candidate Map Engine and Creative interactive iPhone/WebKit parity
+        run: npx playwright test tests/candidate-map-engine.spec.mjs tests/creative-unified-interaction.spec.mjs
 
       - name: Upload Playwright trace on failure
         if: failure()
