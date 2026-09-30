@@ -21,6 +21,11 @@
     POWERSPOT: 'cm-v45-power',
     INACTIVE_POWERSPOT: 'cm-v45-inactive'
   });
+  const bridgeMapLab_candidateIconUrls = Object.freeze({
+    POKESTOP: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png',
+    GYM: 'https://maps.google.com/mapfiles/ms/icons/yellow-dot.png',
+    POWERSPOT: 'https://maps.google.com/mapfiles/ms/icons/purple-dot.png'
+  });
 
   function bridgeMapLab_zeroStats() {
     return Object.freeze({ created: 0, reused: 0, removed: 0 });
@@ -45,8 +50,15 @@
     });
   }
 
-  function bridgeMapLab_candidateIcon() {
-    return bridgeMapLab_divIcon('cm-v45-candidate', 'cm-engine-candidate-icon');
+  function bridgeMapLab_candidateIcon(renderKind) {
+    const iconUrl = bridgeMapLab_candidateIconUrls[renderKind] || bridgeMapLab_candidateIconUrls.POKESTOP;
+    return L.icon({
+      className: 'cm-engine-candidate-icon',
+      iconUrl,
+      iconSize: [32, 32],
+      iconAnchor: [16, 32],
+      popupAnchor: [0, -30]
+    });
   }
 
   function bridgeMapLab_existingIcon(renderKind) {
@@ -145,7 +157,7 @@
       const kind = bridgeMapLab_markerKind(renderItem);
       if (kind === 'candidate-pin' || kind === 'existing-icon') {
         const layer = L.marker(latLng, {
-          icon: kind === 'candidate-pin' ? bridgeMapLab_candidateIcon() : bridgeMapLab_existingIcon(renderItem.renderKind),
+          icon: kind === 'candidate-pin' ? bridgeMapLab_candidateIcon(renderItem.renderKind) : bridgeMapLab_existingIcon(renderItem.renderKind),
           interactive: markerActivationEnabled,
           keyboard: markerActivationEnabled,
           opacity: kind === 'candidate-pin' ? settings.opacity : bridgeMapLab_markerOpacity(renderItem),
@@ -167,6 +179,7 @@
       if (entry.kind !== bridgeMapLab_markerKind(renderItem)) return false;
       entry.layer.setLatLng(latLng);
       if (entry.kind === 'candidate-pin') {
+        entry.layer.setIcon(bridgeMapLab_candidateIcon(renderItem.renderKind));
         entry.layer.setOpacity(settings.opacity);
       } else if (entry.kind === 'existing-icon') {
         entry.layer.setIcon(bridgeMapLab_existingIcon(renderItem.renderKind));
