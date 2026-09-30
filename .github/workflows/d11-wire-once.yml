@@ -1,0 +1,67 @@
+name: D11 wire once
+
+on:
+  push:
+    branches: [bridge-map-lab-d11-default-interactive]
+
+permissions:
+  contents: write
+
+jobs:
+  wire:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: bridge-map-lab-d11-default-interactive
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Wire D11 default Interactive gate
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          # Creative loader: v57 last.
+          p=Path('creative/index.html'); s=p.read_text()
+          old='"creative-patches-v56-unified-interaction.js"]'
+          new='"creative-patches-v56-unified-interaction.js","creative-patches-v57-unified-default.js"]'
+          if new not in s:
+              if old not in s: raise SystemExit('creative/index v56 tail missing')
+              s=s.replace(old,new,1)
+          p.write_text(s)
+
+          # Generated runtime contract.
+          p=Path('scripts/check-creative-runtime-build.mjs'); s=p.read_text()
+          if "'creative-patches-v57-unified-default.js'" not in s:
+              s=s.replace("  'creative-patches-v56-unified-interaction.js'\n];", "  'creative-patches-v56-unified-interaction.js',\n  'creative-patches-v57-unified-default.js'\n];")
+          marker="assert.ok(html.includes('cmD9UnifiedInteractionRuntime'),'D9 unified interaction runtime missing');"
+          if 'D11 Unified default mode missing' not in s:
+              extra="""\nassert.ok(html.includes('cmD11UnifiedDefaultMode'),'D11 Unified default mode missing');\nassert.ok(html.includes("if(mode===null||mode==='')return'interactive'"),'D11 no-query default must be interactive');\nassert.ok(html.includes("mode==='interactive'||mode==='visible'||mode==='legacy'"),'D11 known renderer modes missing');\nassert.ok(html.includes("return'legacy'"),'D11 unknown-mode safe fallback missing');"""
+              if marker not in s: raise SystemExit('D9 build assertion marker missing')
+              s=s.replace(marker,marker+extra,1)
+          p.write_text(s)
+
+          # Real Creative default + rollback E2E.
+          p=Path('tests/creative-unified-interaction.spec.mjs'); s=p.read_text()
+          if 'Phase 5-D11 default Creative Mode uses Unified Interactive with legacy rollback' not in s:
+              s += r'''\n\ntest('Phase 5-D11 default Creative Mode uses Unified Interactive with legacy rollback', async ({ page }) => {\n  const browserErrors = collectBrowserErrors(page);\n\n  await page.route('**/js/ca-access-bootstrap.js*', route => route.fulfill({\n    status: 200,\n    contentType: 'application/javascript',\n    body: 'window.CampsiteCaAccess=Object.freeze({test:true});'\n  }));\n\n  await page.addInitScript(value => {\n    sessionStorage.setItem('campsiteProject.v1', JSON.stringify(value));\n  }, project);\n\n  // No unifiedRenderer query: D11 development default must be fully interactive.\n  await page.goto('/creative/index.html?campsiteProject=bridge');\n  await expect.poll(() => page.evaluate(() => window.CampsiteCreativeProject?.count || 0), { timeout:15000 }).toBe(5);\n  await expect.poll(() => page.evaluate(() => window.__cmCandidateShadow?.getState?.()?.interactionOwner || ''), { timeout:15000 }).toBe('map-engine');\n\n  let state = await page.evaluate(() => window.__cmCandidateShadow.getState());\n  expect(state.unifiedVisible).toBe(true);\n  expect(state.interactive).toBe(true);\n  expect(state.interactionOwner).toBe('map-engine');\n  await expect(page.locator('.cm-engine-existing-icon')).toHaveCount(4);\n  await expect(page.locator('.cm-engine-candidate-icon')).toHaveCount(1);\n  expect(await page.locator('.cm-engine-candidate-icon').evaluate(el => getComputedStyle(el).pointerEvents)).toBe('auto');\n\n  await page.locator('.cm-engine-candidate-icon').click();\n  await expect(page.locator('.cm-sheet')).toBeVisible();\n  await expect(page.locator('#cmMove')).toBeVisible();\n  await page.locator('.cm-sheet-close').click();\n\n  // Explicit rollback must restore legacy ownership without changing project data.\n  await page.goto('/creative/index.html?campsiteProject=bridge&unifiedRenderer=legacy');\n  await expect.poll(() => page.evaluate(() => window.CampsiteCreativeProject?.count || 0), { timeout:15000 }).toBe(5);\n  await expect.poll(() => page.evaluate(() => window.__cmCandidateShadow?.getState?.()?.interactionOwner || ''), { timeout:15000 }).toBe('legacy');\n\n  state = await page.evaluate(() => window.__cmCandidateShadow.getState());\n  expect(state.unifiedVisible).toBe(false);\n  expect(state.interactive).toBe(false);\n  expect(state.interactionOwner).toBe('legacy');\n  expect(await page.locator('.cm-engine-candidate-icon').evaluate(el => getComputedStyle(el).pointerEvents)).toBe('none');\n  expect(await page.locator('.cm-engine-legacy-candidate').first().evaluate(el => getComputedStyle(el).pointerEvents)).not.toBe('none');\n\n  await page.locator('.cm-engine-legacy-candidate').first().click();\n  await expect(page.locator('.cm-sheet')).toBeVisible();\n  await expect(page.locator('#cmMove')).toBeVisible();\n\n  expect(browserErrors).toEqual([]);\n});\n'''.replace('\\n','\n')
+          p.write_text(s)
+
+          # CI watches and syntax-checks v57.
+          p=Path('.github/workflows/candidate-map-engine-check.yml'); s=p.read_text()
+          if 'creative-patches-v57-unified-default.js' not in s:
+              s=s.replace("      - 'creative/runtime/creative-patches-v56-unified-interaction.js'\n", "      - 'creative/runtime/creative-patches-v56-unified-interaction.js'\n      - 'creative/runtime/creative-patches-v57-unified-default.js'\n")
+              s=s.replace("          node --check creative/runtime/creative-patches-v56-unified-interaction.js\n", "          node --check creative/runtime/creative-patches-v56-unified-interaction.js\n          node --check creative/runtime/creative-patches-v57-unified-default.js\n")
+          p.write_text(s)
+          PY
+
+          node --check creative/runtime/creative-patches-v57-unified-default.js
+          node --check tests/creative-unified-interaction.spec.mjs
+          node scripts/check-creative-runtime-build.mjs
+
+          git config user.name Kaityo1221
+          git config user.email rakugo100@gmail.com
+          git add creative/index.html scripts/check-creative-runtime-build.mjs tests/creative-unified-interaction.spec.mjs .github/workflows/candidate-map-engine-check.yml
+          git commit -m 'Phase 5-D11: wire default Interactive and rollback gates'
+          git push origin HEAD:bridge-map-lab-d11-default-interactive
