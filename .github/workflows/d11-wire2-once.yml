@@ -1,0 +1,50 @@
+name: D11 wire2 once
+
+on:
+  push:
+    branches: [bridge-map-lab-d11-default-interactive]
+
+permissions:
+  contents: write
+
+jobs:
+  wire:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: bridge-map-lab-d11-default-interactive
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Wire loader and generated runtime checks
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          p=Path('creative/index.html'); s=p.read_text()
+          old='"creative-patches-v56-unified-interaction.js"]'
+          new='"creative-patches-v56-unified-interaction.js","creative-patches-v57-unified-default.js"]'
+          if new not in s:
+              if old not in s: raise SystemExit('index v56 tail missing')
+              s=s.replace(old,new,1)
+          p.write_text(s)
+
+          p=Path('scripts/check-creative-runtime-build.mjs'); s=p.read_text()
+          if "'creative-patches-v57-unified-default.js'" not in s:
+              s=s.replace("  'creative-patches-v56-unified-interaction.js'\n];", "  'creative-patches-v56-unified-interaction.js',\n  'creative-patches-v57-unified-default.js'\n];")
+          marker="assert.ok(html.includes('cmD9UnifiedInteractionRuntime'),'D9 unified interaction runtime missing');"
+          if 'D11 Unified default mode missing' not in s:
+              extra="""\nassert.ok(html.includes('cmD11UnifiedDefaultMode'),'D11 Unified default mode missing');\nassert.ok(html.includes("if(mode===null||mode==='')return'interactive'"),'D11 no-query default must be interactive');\nassert.ok(html.includes("mode==='interactive'||mode==='visible'||mode==='legacy'"),'D11 known renderer modes missing');\nassert.ok(html.includes("return'legacy'"),'D11 unknown-mode safe fallback missing');"""
+              if marker not in s: raise SystemExit('D9 assertion marker missing')
+              s=s.replace(marker,marker+extra,1)
+          p.write_text(s)
+          PY
+
+          node --check creative/runtime/creative-patches-v57-unified-default.js
+          node scripts/check-creative-runtime-build.mjs
+          git config user.name Kaityo1221
+          git config user.email rakugo100@gmail.com
+          git add creative/index.html scripts/check-creative-runtime-build.mjs
+          git commit -m 'Phase 5-D11: wire default Interactive runtime'
+          git push origin HEAD:bridge-map-lab-d11-default-interactive
