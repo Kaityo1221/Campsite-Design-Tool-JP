@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>Phase 5-C5 Candidate Scene</title>
+  <script src="scene-builder.js?v=5c5" defer></script>
+  <script src="candidate-geometry.js?v=5c5" defer></script>
+  <script src="candidate-scene-builder.js?v=5c5" defer></script>
+  <style>
+    :root{color-scheme:dark;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0b1118;color:#e8edf3}
+    *{box-sizing:border-box}html,body{min-height:100%;margin:0}body{background:#0b1118}.shell{width:min(860px,100%);margin:0 auto;padding:24px}.eyebrow{margin:0 0 6px;color:#ff9f7a;font-size:12px;font-weight:800;letter-spacing:.08em}h1{margin:0;font-size:28px;line-height:1.2}.scope{margin:10px 0 20px;color:#aeb9c6;font-size:13px;line-height:1.6}.summary,.tests{border:1px solid #34404d;border-radius:10px;background:#111922}.summary{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:16px;margin-bottom:14px}.result{margin:0;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:15px;font-weight:800}.pass{color:#78d6a0}.fail{color:#ff8f86}.wait{color:#aeb9c6}button{appearance:none;border:1px solid #52606e;border-radius:8px;background:#17212b;color:#edf3f8;padding:9px 12px;font:inherit;font-weight:700}.row{display:grid;grid-template-columns:110px 1fr;gap:18px;padding:14px 16px;border-top:1px solid #2c3743;font-size:13px;line-height:1.5}.row:first-child{border-top:0}.status{font-weight:900}.details{color:#dfe7ee}@media(max-width:560px){.shell{padding:16px}.row{grid-template-columns:92px 1fr;gap:10px}h1{font-size:24px}}
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <p class="eyebrow">LAB ONLY</p>
+    <h1>Phase 5-C5 Candidate Scene</h1>
+    <p class="scope">既存POI Sceneを変更せず、CandidateのMarker / 50m Circle RenderItemを同じSceneへ統合します。originはcandidate、ownerKeyはcandidate:&lt;id&gt;。Renderer / Leafletにはまだ接続しません。</p>
+    <section class="summary"><p id="summary" class="result wait">C5 WAIT</p><button id="rerun" type="button">再テスト</button></section>
+    <section id="tests" class="tests"></section>
+  </main>
+  <script>
+    (()=>{
+      'use strict';
+      const testsElement=document.getElementById('tests');
+      const summaryElement=document.getElementById('summary');
+      const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+      function row(ok,name,detail=''){const el=document.createElement('div');el.className='row';const s=document.createElement('div');s.className=`status ${ok?'pass':'fail'}`;s.textContent=ok?'PASS':'FAIL';const d=document.createElement('div');d.className='details';d.textContent=detail?`${name} — ${detail}`:name;el.append(s,d);return el}
+
+      function existingFixture(){
+        return {
+          state:{pois:[
+            {guid:'existing-a',state:'POKESTOP',referenceKind:null},
+            {guid:'hidden-a',state:'UNKNOWN',referenceKind:null}
+          ]},
+          geometry:{entries:[
+            {ownerKey:'poi:existing-a',pointGeometry:{type:'point',lat:35,lng:139},circleGeometries:{50:{type:'circle',lat:35,lng:139,radiusMeters:50}}},
+            {ownerKey:'poi:hidden-a',pointGeometry:{type:'point',lat:36,lng:140},circleGeometries:{50:{type:'circle',lat:36,lng:140,radiusMeters:50}}}
+          ]}
+        };
+      }
+
+      function run(){
+        const results=[];
+        const check=(name,fn)=>{try{fn();results.push({ok:true,name})}catch(error){results.push({ok:false,name,detail:error?.message||String(error)})}};
+        const build=window.bridgeMapLab_buildSceneWithCandidates;
+        const buildGeom=window.bridgeMapLab_buildCandidateGeometry;
+        if(typeof build!=='function'||typeof buildGeom!=='function'){
+          summaryElement.className='result fail';summaryElement.textContent='C5 FAIL 0/0';testsElement.replaceChildren(row(false,'Scene integration load','function not found'));return;
+        }
+        const fx=existingFixture();
+        const candidateGeom=(list)=>buildGeom(list);
+
+        check('empty Candidate Geometry preserves existing Scene',()=>{const r=build(fx.state,fx.geometry,{entries:[]},{circle50Visible:true});if(r.items.length!==2||r.items.some(x=>x.origin!=='existing'))throw new Error(JSON.stringify(r.items))});
+        check('Candidate Marker has origin candidate',()=>{const r=build(fx.state,fx.geometry,candidateGeom([{id:'c1',lat:35.1,lng:139.1,candidateType:'new-pokestop'}]));const m=r.items.find(x=>x.key==='marker:candidate:c1');if(m?.origin!=='candidate')throw new Error(JSON.stringify(m))});
+        check('Candidate ownerKey uses candidate:<id>',()=>{const r=build(fx.state,fx.geometry,candidateGeom([{id:'c1',lat:35.1,lng:139.1,candidateType:'new-pokestop'}]));const owned=r.items.filter(x=>x.origin==='candidate');if(owned.some(x=>x.ownerKey!=='candidate:c1'))throw new Error(JSON.stringify(owned))});
+        check('Candidate Marker and Circle share ownerKey',()=>{const r=build(fx.state,fx.geometry,candidateGeom([{id:'c1',lat:35.1,lng:139.1,candidateType:'new-pokestop'}]));const owned=r.items.filter(x=>x.origin==='candidate');if(owned.length!==2||owned[0].ownerKey!==owned[1].ownerKey)throw new Error(JSON.stringify(owned))});
+        check('Candidate Marker key is stable',()=>{const r=build(fx.state,fx.geometry,candidateGeom([{id:'c1',lat:35.1,lng:139.1,candidateType:'new-pokestop'}]));if(!r.items.some(x=>x.key==='marker:candidate:c1'))throw new Error('marker key missing')});
+        check('Candidate 50m Circle key is stable',()=>{const r=build(fx.state,fx.geometry,candidateGeom([{id:'c1',lat:35.1,lng:139.1,candidateType:'new-pokestop'}]));if(!r.items.some(x=>x.key==='circle50:candidate:c1'))throw new Error('circle key missing')});
+        check('new-pokestop maps to POKESTOP only at Scene time',()=>{const r=build(fx.state,fx.geometry,candidateGeom([{id:'c1',lat:35.1,lng:139.1,candidateType:'new-pokestop'}]));const m=r.items.find(x=>x.key==='marker:candidate:c1');if(m?.renderKind!=='POKESTOP'||m?.candidateType!=='new-pokestop')throw new Error(JSON.stringify(m))});
+        check('new-gym maps to GYM only at Scene time',()=>{const r=build(fx.state,fx.geometry,candidateGeom([{id:'c2',lat:35.2,lng:139.2,candidateType:'new-gym'}]));const m=r.items.find(x=>x.key==='marker:candidate:c2');if(m?.renderKind!=='GYM'||m?.candidateType!=='new-gym')throw new Error(JSON.stringify(m))});
+        check('new-power maps to POWERSPOT only at Scene time',()=>{const r=build(fx.state,fx.geometry,candidateGeom([{id:'c3',lat:35.3,lng:139.3,candidateType:'new-power'}]));const m=r.items.find(x=>x.key==='marker:candidate:c3');if(m?.renderKind!=='POWERSPOT'||m?.candidateType!=='new-power')throw new Error(JSON.stringify(m))});
+        check('Candidate geometry is passed through unchanged',()=>{const cg=candidateGeom([{id:'c1',lat:35.123,lng:139.456,candidateType:'new-pokestop'}]);const r=build(fx.state,fx.geometry,cg);const m=r.items.find(x=>x.key==='marker:candidate:c1');if(m.geometry!==cg.entries[0].pointGeometry)throw new Error('geometry object replaced')});
+        check('circle50Visible true includes Candidate Circle',()=>{const r=build(fx.state,fx.geometry,candidateGeom([{id:'c1',lat:35.1,lng:139.1,candidateType:'new-pokestop'}]),{circle50Visible:true});if(!r.items.some(x=>x.key==='circle50:candidate:c1'))throw new Error('circle missing')});
+        check('circle50Visible false hides Candidate Circle only',()=>{const r=build(fx.state,fx.geometry,candidateGeom([{id:'c1',lat:35.1,lng:139.1,candidateType:'new-pokestop'}]),{circle50Visible:false});if(!r.items.some(x=>x.key==='marker:candidate:c1')||r.items.some(x=>x.key==='circle50:candidate:c1'))throw new Error(JSON.stringify(r.items))});
+        check('existing Scene items remain before Candidate items',()=>{const r=build(fx.state,fx.geometry,candidateGeom([{id:'c1',lat:35.1,lng:139.1,candidateType:'new-pokestop'}]));if(r.items[0].origin!=='existing'||r.items[1].origin!=='existing'||r.items[2].origin!=='candidate')throw new Error(r.items.map(x=>x.origin).join(','))});
+        check('hidden existing POI stays hidden after Candidate merge',()=>{const r=build(fx.state,fx.geometry,candidateGeom([{id:'c1',lat:35.1,lng:139.1,candidateType:'new-pokestop'}]));if(r.items.some(x=>x.ownerKey==='poi:hidden-a'))throw new Error('hidden existing rendered')});
+        check('multiple Candidates each contribute Marker and Circle',()=>{const r=build(fx.state,fx.geometry,candidateGeom([{id:'c1',lat:35.1,lng:139.1,candidateType:'new-pokestop'},{id:'c2',lat:35.2,lng:139.2,candidateType:'new-gym'}]));if(r.items.filter(x=>x.origin==='candidate').length!==4)throw new Error(JSON.stringify(r.items))});
+        check('missing Candidate point Geometry is rejected',()=>{let threw=false;try{build(fx.state,fx.geometry,{entries:[{candidateId:'bad',candidateType:'new-pokestop',circleGeometries:{50:{type:'circle',lat:35,lng:139,radiusMeters:50}}}]})}catch{threw=true}if(!threw)throw new Error('did not throw')});
+        check('missing Candidate 50m Circle is rejected when visible',()=>{let threw=false;try{build(fx.state,fx.geometry,{entries:[{candidateId:'bad',candidateType:'new-pokestop',pointGeometry:{type:'point',lat:35,lng:139},circleGeometries:{}}]},{circle50Visible:true})}catch{threw=true}if(!threw)throw new Error('did not throw')});
+
+        testsElement.replaceChildren(...results.map(x=>row(x.ok,x.name,x.detail||'')));
+        const passed=results.filter(x=>x.ok).length;
+        const ok=passed===results.length;
+        summaryElement.className=`result ${ok?'pass':'fail'}`;
+        summaryElement.textContent=`C5 ${ok?'PASS':'FAIL'} ${passed}/${results.length}`;
+      }
+      document.getElementById('rerun').addEventListener('click',run);
+      document.addEventListener('DOMContentLoaded',run,{once:true});
+    })();
+  </script>
+</body>
+</html>
