@@ -1,0 +1,67 @@
+name: Candidate Map Engine Check
+
+on:
+  push:
+    branches: [bridge-map-lab]
+    paths:
+      - 'creative/runtime/map-engine/**'
+      - 'creative/runtime/creative-patches-v54-coordinate-memo-reason.js'
+      - 'bridge-map-lab/candidate-shadow-parity-test.html'
+      - 'tests/candidate-map-engine.spec.mjs'
+      - 'playwright.config.mjs'
+      - 'package.json'
+      - '.github/workflows/candidate-map-engine-check.yml'
+  pull_request:
+    branches: [bridge-map-lab]
+    paths:
+      - 'creative/runtime/map-engine/**'
+      - 'creative/runtime/creative-patches-v54-coordinate-memo-reason.js'
+      - 'bridge-map-lab/candidate-shadow-parity-test.html'
+      - 'tests/candidate-map-engine.spec.mjs'
+      - 'playwright.config.mjs'
+      - 'package.json'
+      - '.github/workflows/candidate-map-engine-check.yml'
+  workflow_dispatch:
+
+jobs:
+  candidate-map-engine:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Syntax check Candidate Map Engine
+        run: |
+          node --check creative/runtime/map-engine/candidate-records-adapter.js
+          node --check creative/runtime/map-engine/candidate-records-refresh-store.js
+          node --check creative/runtime/map-engine/candidate-geometry.js
+          node --check creative/runtime/map-engine/scene-builder.js
+          node --check creative/runtime/map-engine/candidate-scene-builder.js
+          node --check creative/runtime/map-engine/map-renderer.js
+          node --check creative/runtime/creative-patches-v54-coordinate-memo-reason.js
+          node --check tests/candidate-map-engine.spec.mjs
+
+      - name: Install WebKit
+        run: npx playwright install --with-deps webkit
+
+      - name: Run Candidate Map Engine iPhone/WebKit parity
+        run: npx playwright test tests/candidate-map-engine.spec.mjs
+
+      - name: Upload Playwright trace on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: candidate-map-engine-playwright-report
+          path: |
+            test-results
+            playwright-report
+          if-no-files-found: ignore
