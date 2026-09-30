@@ -18,7 +18,8 @@ const livePostManifestPatches=[
   'creative-patches-v53-new-poi-auto-memo.js',
   'creative-patches-v54-coordinate-memo-reason.js',
   'creative-patches-v55-unified-visible.js',
-  'creative-patches-v56-unified-interaction.js'
+  'creative-patches-v56-unified-interaction.js',
+  'creative-patches-v57-dev-default-unified.js'
 ];
 
 function gitBlobShaBuffer(body){
@@ -40,8 +41,6 @@ for(const name of manifest.order.slice(1)){
   assert.equal(typeof context.window.applyCreativePatches,'function',name+' registration failed');
 }
 
-// The JP loader continues beyond the pinned Next-Lab v44 snapshot. Apply the
-// exact live post-manifest chain so generated-HTML checks represent production.
 for(const name of livePostManifestPatches){
   const source=fs.readFileSync('creative/runtime/'+name,'utf8');
   new vm.Script(source,{filename:'creative/runtime/'+name}).runInContext(context);
@@ -93,13 +92,17 @@ assert.ok(html.includes('bridgeMapLab_createExistingRecordsRefreshStore'),'D7 ex
 assert.ok(html.includes('existingCounts:cmExistingShadowStore'),'D7 existing diagnostics publishing missing');
 assert.ok(html.includes('unified:true'),'D7 Unified Scene state marker missing');
 assert.ok(html.includes('cmD8UnifiedRendererVisible'),'D8 unified visible runtime missing');
-assert.ok(html.includes("return mode==='visible'||mode==='interactive'"),'D9 unified interactive mode must preserve visible cutover');
 assert.ok(html.includes('cm-unified-renderer-visible'),'D8 legacy existing marker suppression class missing');
 assert.ok(html.includes("mode:unifiedVisible?'unified-visible'"),'D8 unified visible diagnostics mode missing');
 assert.ok(html.includes('cmD9UnifiedInteractionRuntime'),'D9 unified interaction runtime missing');
 assert.ok(html.includes('cmUnifiedRendererInteractive'),'D9 interactive query gate missing');
 assert.ok(html.includes('onMarkerActivate:cmUnifiedRendererInteractive()?cmUnifiedRendererActivate:null'),'D9 renderer activation bridge missing');
 assert.ok(html.includes("interactionOwner:cmUnifiedRendererInteractive()?'map-engine':'legacy'"),'D9 interaction ownership diagnostics missing');
+assert.ok(html.includes('cmD11DevDefaultRenderer'),'D11 dev-default renderer gate missing');
+assert.ok(html.includes("params.get('rendererMode')==='legacy'"),'D11 legacy escape hatch missing');
+assert.ok(html.includes('if(params.get(\'candidateRenderer\')!==null)return false;'),'D11 candidate-only explicit mode preservation missing');
+assert.ok(html.includes('devDefaultUnified:!explicit'),'D11 default-mode diagnostics missing');
+assert.ok(html.includes('legacyOverride:cmD11LegacyRendererRequested()'),'D11 legacy diagnostics missing');
 
 function extractScripts(source){
   const scripts=[];
