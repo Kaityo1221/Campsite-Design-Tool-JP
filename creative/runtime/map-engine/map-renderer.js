@@ -253,6 +253,8 @@
           key: renderItem.key,
           ownerKey: renderItem.ownerKey,
           renderKind: renderItem.renderKind,
+          color: circle.options.color,
+          fillColor: circle.options.fillColor,
           radiusMeters: circle.getRadius(),
           leafletLatLng: circle.getLatLng(),
           leafletId: L.stamp(circle)
