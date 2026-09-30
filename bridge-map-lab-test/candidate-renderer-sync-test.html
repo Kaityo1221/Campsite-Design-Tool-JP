@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>Phase 5-C6 Candidate Renderer Sync</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="geometry-engine.js?v=5c6" defer></script>
+  <script src="scene-builder.js?v=5c6" defer></script>
+  <script src="candidate-geometry.js?v=5c6" defer></script>
+  <script src="candidate-scene-builder.js?v=5c6" defer></script>
+  <script src="map-renderer.js?v=5c6" defer></script>
+  <style>
+    :root{color-scheme:dark;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0b1118;color:#e8edf3}
+    *{box-sizing:border-box}html,body{min-height:100%;margin:0}body{background:#0b1118}.shell{width:min(920px,100%);margin:0 auto;padding:24px}.eyebrow{margin:0 0 6px;color:#ff9f7a;font-size:12px;font-weight:800;letter-spacing:.08em}h1{margin:0;font-size:28px;line-height:1.2}.scope{margin:10px 0 20px;color:#aeb9c6;font-size:13px;line-height:1.6}.summary,.tests,.mapwrap{border:1px solid #34404d;border-radius:10px;background:#111922}.summary{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:16px;margin-bottom:14px}.result{margin:0;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:15px;font-weight:800}.pass{color:#78d6a0}.fail{color:#ff8f86}.wait{color:#aeb9c6}button{appearance:none;border:1px solid #52606e;border-radius:8px;background:#17212b;color:#edf3f8;padding:9px 12px;font:inherit;font-weight:700}.mapwrap{padding:10px;margin-bottom:14px}#map{height:260px;border-radius:8px;overflow:hidden}.row{display:grid;grid-template-columns:110px 1fr;gap:18px;padding:14px 16px;border-top:1px solid #2c3743;font-size:13px;line-height:1.5}.row:first-child{border-top:0}.status{font-weight:900}.details{color:#dfe7ee}@media(max-width:560px){.shell{padding:16px}.row{grid-template-columns:92px 1fr;gap:10px}h1{font-size:24px}#map{height:220px}}
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <p class="eyebrow">LAB ONLY</p>
+    <h1>Phase 5-C6 Candidate Renderer Sync</h1>
+    <p class="scope">実Leaflet Rendererで既存POIを描画後、Candidateの追加・移動・削除を連続同期します。同じRenderItem.keyのLayerは再利用し、既存POIを再生成しないことをLeaflet IDで確認します。</p>
+    <section class="summary"><p id="summary" class="result wait">C6 WAIT</p><button id="rerun" type="button">再テスト</button></section>
+    <section class="mapwrap"><div id="map"></div></section>
+    <section id="tests" class="tests"></section>
+  </main>
+  <script>
+    (()=>{
+      'use strict';
+      const testsElement=document.getElementById('tests');
+      const summaryElement=document.getElementById('summary');
+      let map=null,renderer=null;
+      function row(ok,name,detail=''){const el=document.createElement('div');el.className='row';const s=document.createElement('div');s.className=`status ${ok?'pass':'fail'}`;s.textContent=ok?'PASS':'FAIL';const d=document.createElement('div');d.className='details';d.textContent=detail?`${name} — ${detail}`:name;el.append(s,d);return el}
+      const byKey=(list,key)=>list.find(x=>x.key===key);
+      const ids=(renderer)=>Object.fromEntries(renderer.getDiagnostics().concat(renderer.getCircleDiagnostics()).map(x=>[x.key,x.leafletId]));
+      function existingFixture(){return{
+        state:{pois:[{guid:'e1',state:'POKESTOP',referenceKind:null},{guid:'e2',state:'GYM',referenceKind:null}]},
+        geometry:{entries:[
+          {ownerKey:'poi:e1',pointGeometry:{type:'point',lat:35.6812,lng:139.7671},circleGeometries:{50:{type:'circle',lat:35.6812,lng:139.7671,radiusMeters:50}}},
+          {ownerKey:'poi:e2',pointGeometry:{type:'point',lat:35.6820,lng:139.7680},circleGeometries:{50:{type:'circle',lat:35.6820,lng:139.7680,radiusMeters:50}}}
+        ]}
+      }}
+      function sceneFor(candidates){const fx=existingFixture();const cg=window.bridgeMapLab_buildCandidateGeometry(candidates);return window.bridgeMapLab_buildSceneWithCandidates(fx.state,fx.geometry,cg,{circle50Visible:true})}
+      function resetRenderer(){if(renderer){renderer.destroy();renderer=null}if(map){map.remove();map=null}document.getElementById('map').replaceChildren();map=L.map('map',{zoomControl:false,attributionControl:false}).setView([35.6816,139.7675],17);renderer=window.bridgeMapLab_createMapRenderer(map)}
+      function run(){
+        const results=[];const check=(name,fn)=>{try{fn();results.push({ok:true,name})}catch(error){results.push({ok:false,name,detail:error?.message||String(error)})}};
+        try{resetRenderer()}catch(error){summaryElement.className='result fail';summaryElement.textContent='C6 FAIL 0/0';testsElement.replaceChildren(row(false,'Renderer setup',error?.message||String(error)));return}
+        const base=sceneFor([]);renderer.render(base);const baseIds=ids(renderer);const baseStats=renderer.getLastSyncStats();
+        check('initial existing Scene renders 2 Markers',()=>{if(renderer.getRenderedCounts().markers!==2)throw new Error(JSON.stringify(renderer.getRenderedCounts()))});
+        check('initial existing Scene renders 2 Circles',()=>{if(renderer.getRenderedCounts().circles50!==2)throw new Error(JSON.stringify(renderer.getRenderedCounts()))});
+        check('initial render creates existing Layers',()=>{if(baseStats.markers.created!==2||baseStats.circles50.created!==2)throw new Error(JSON.stringify(baseStats))});
+
+        const added=sceneFor([{id:'c1',lat:35.6816,lng:139.7676,candidateType:'new-pokestop'}]);renderer.render(added);const addedIds=ids(renderer);const addStats=renderer.getLastSyncStats();
+        check('Candidate add creates exactly +1 Marker',()=>{if(addStats.markers.created!==1||addStats.markers.reused!==2||addStats.markers.removed!==0)throw new Error(JSON.stringify(addStats.markers))});
+        check('Candidate add creates exactly +1 Circle',()=>{if(addStats.circles50.created!==1||addStats.circles50.reused!==2||addStats.circles50.removed!==0)throw new Error(JSON.stringify(addStats.circles50))});
+        check('existing Marker Leaflet IDs survive Candidate add',()=>{for(const key of ['marker:poi:e1','marker:poi:e2'])if(baseIds[key]!==addedIds[key])throw new Error(`${key} recreated`)});
+        check('existing Circle Leaflet IDs survive Candidate add',()=>{for(const key of ['circle50:poi:e1','circle50:poi:e2'])if(baseIds[key]!==addedIds[key])throw new Error(`${key} recreated`)});
+        check('Candidate Marker and Circle exist after add',()=>{if(!addedIds['marker:candidate:c1']||!addedIds['circle50:candidate:c1'])throw new Error(JSON.stringify(addedIds))});
+
+        const moved=sceneFor([{id:'c1',lat:35.6833,lng:139.7699,candidateType:'new-pokestop'}]);renderer.render(moved);const movedIds=ids(renderer);const moveStats=renderer.getLastSyncStats();const movedMarker=byKey(renderer.getDiagnostics(),'marker:candidate:c1');const movedCircle=byKey(renderer.getCircleDiagnostics(),'circle50:candidate:c1');
+        check('Candidate move creates no Layers',()=>{if(moveStats.markers.created!==0||moveStats.circles50.created!==0||moveStats.markers.removed!==0||moveStats.circles50.removed!==0)throw new Error(JSON.stringify(moveStats))});
+        check('Candidate move reuses all existing keys',()=>{if(moveStats.markers.reused!==3||moveStats.circles50.reused!==3)throw new Error(JSON.stringify(moveStats))});
+        check('existing POI IDs survive Candidate move',()=>{for(const key of ['marker:poi:e1','marker:poi:e2','circle50:poi:e1','circle50:poi:e2'])if(addedIds[key]!==movedIds[key])throw new Error(`${key} recreated`)});
+        check('Candidate IDs survive move',()=>{for(const key of ['marker:candidate:c1','circle50:candidate:c1'])if(addedIds[key]!==movedIds[key])throw new Error(`${key} recreated`)});
+        check('Candidate Marker coordinates update in place',()=>{if(Math.abs(movedMarker.leafletLatLng.lat-35.6833)>1e-9||Math.abs(movedMarker.leafletLatLng.lng-139.7699)>1e-9)throw new Error(JSON.stringify(movedMarker.leafletLatLng))});
+        check('Candidate Circle coordinates update in place',()=>{if(Math.abs(movedCircle.leafletLatLng.lat-35.6833)>1e-9||Math.abs(movedCircle.leafletLatLng.lng-139.7699)>1e-9||movedCircle.radiusMeters!==50)throw new Error(JSON.stringify(movedCircle))});
+
+        renderer.render(base);const removedIds=ids(renderer);const removeStats=renderer.getLastSyncStats();
+        check('Candidate removal removes exactly its Marker and Circle',()=>{if(removeStats.markers.removed!==1||removeStats.circles50.removed!==1||removeStats.markers.created!==0||removeStats.circles50.created!==0)throw new Error(JSON.stringify(removeStats))});
+        check('existing POI IDs survive Candidate removal',()=>{for(const key of ['marker:poi:e1','marker:poi:e2','circle50:poi:e1','circle50:poi:e2'])if(baseIds[key]!==removedIds[key])throw new Error(`${key} recreated`)});
+
+        renderer.render(base);const sameIds=ids(renderer);const sameStats=renderer.getLastSyncStats();
+        check('same Scene rerender is pure key reuse',()=>{if(sameStats.markers.created||sameStats.markers.removed||sameStats.circles50.created||sameStats.circles50.removed||sameStats.markers.reused!==2||sameStats.circles50.reused!==2)throw new Error(JSON.stringify(sameStats));for(const key of Object.keys(baseIds))if(baseIds[key]!==sameIds[key])throw new Error(`${key} identity changed`)});
+
+        testsElement.replaceChildren(...results.map(x=>row(x.ok,x.name,x.detail||'')));const passed=results.filter(x=>x.ok).length;const ok=passed===results.length;summaryElement.className=`result ${ok?'pass':'fail'}`;summaryElement.textContent=`C6 ${ok?'PASS':'FAIL'} ${passed}/${results.length}`;
+      }
+      document.getElementById('rerun').addEventListener('click',run);window.addEventListener('load',run,{once:true});
+    })();
+  </script>
+</body>
+</html>
