@@ -16,7 +16,8 @@ const livePostManifestPatches=[
   'creative-patches-v51-coordinate-jump.js',
   'creative-patches-v52-existing-new-placement.js',
   'creative-patches-v53-new-poi-auto-memo.js',
-  'creative-patches-v54-coordinate-memo-reason.js'
+  'creative-patches-v54-coordinate-memo-reason.js',
+  'creative-patches-v55-unified-visible.js'
 ];
 
 function gitBlobShaBuffer(body){
@@ -88,6 +89,10 @@ assert.ok(html.includes('let cmExistingShadowStore=null'),'D7 existing shadow st
 assert.ok(html.includes('bridgeMapLab_createExistingRecordsRefreshStore'),'D7 existing store integration missing');
 assert.ok(html.includes('existingCounts:cmExistingShadowStore'),'D7 existing diagnostics publishing missing');
 assert.ok(html.includes('unified:true'),'D7 Unified Scene state marker missing');
+assert.ok(html.includes('cmD8UnifiedRendererVisible'),'D8 unified visible runtime missing');
+assert.ok(html.includes("get('unifiedRenderer')==='visible'"),'D8 unified visible query gate missing');
+assert.ok(html.includes('cm-unified-renderer-visible'),'D8 legacy existing marker suppression class missing');
+assert.ok(html.includes("mode:unifiedVisible?'unified-visible'"),'D8 unified visible diagnostics mode missing');
 
 function extractScripts(source){
   const scripts=[];
