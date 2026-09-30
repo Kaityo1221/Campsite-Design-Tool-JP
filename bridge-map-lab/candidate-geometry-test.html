@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>Phase 5-C4 Candidate Geometry</title>
+  <script src="candidate-geometry.js?v=5c4" defer></script>
+  <style>
+    :root{color-scheme:dark;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0b1118;color:#e8edf3}
+    *{box-sizing:border-box}html,body{min-height:100%;margin:0}body{background:#0b1118}.shell{width:min(860px,100%);margin:0 auto;padding:24px}.eyebrow{margin:0 0 6px;color:#ff9f7a;font-size:12px;font-weight:800;letter-spacing:.08em}h1{margin:0;font-size:28px;line-height:1.2}.scope{margin:10px 0 20px;color:#aeb9c6;font-size:13px;line-height:1.6}.summary,.tests{border:1px solid #34404d;border-radius:10px;background:#111922}.summary{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:16px;margin-bottom:14px}.result{margin:0;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:15px;font-weight:800}.pass{color:#78d6a0}.fail{color:#ff8f86}.wait{color:#aeb9c6}button{appearance:none;border:1px solid #52606e;border-radius:8px;background:#17212b;color:#edf3f8;padding:9px 12px;font:inherit;font-weight:700}.row{display:grid;grid-template-columns:110px 1fr;gap:18px;padding:14px 16px;border-top:1px solid #2c3743;font-size:13px;line-height:1.5}.row:first-child{border-top:0}.status{font-weight:900}.details{color:#dfe7ee}@media(max-width:560px){.shell{padding:16px}.row{grid-template-columns:92px 1fr;gap:10px}h1{font-size:24px}}
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <p class="eyebrow">LAB ONLY</p>
+    <h1>Phase 5-C4 Candidate Geometry</h1>
+    <p class="scope">Candidateからpoint geometryと50m circle geometryだけを生成します。50m違反判定、40m/30m Circle、Scene、Renderer、Leafletには接続しません。</p>
+    <section class="summary"><p id="summary" class="result wait">C4 WAIT</p><button id="rerun" type="button">再テスト</button></section>
+    <section id="tests" class="tests"></section>
+  </main>
+  <script>
+    (()=>{
+      'use strict';
+      const testsElement=document.getElementById('tests');
+      const summaryElement=document.getElementById('summary');
+      const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+      const clone=value=>JSON.parse(JSON.stringify(value));
+      function row(ok,name,detail=''){const el=document.createElement('div');el.className='row';const s=document.createElement('div');s.className=`status ${ok?'pass':'fail'}`;s.textContent=ok?'PASS':'FAIL';const d=document.createElement('div');d.className='details';d.textContent=detail?`${name} — ${detail}`:name;el.append(s,d);return el}
+      function run(){
+        const results=[];
+        const check=(name,fn)=>{try{fn();results.push({ok:true,name})}catch(error){results.push({ok:false,name,detail:error?.message||String(error)})}};
+        const build=window.bridgeMapLab_buildCandidateGeometry;
+        if(typeof build!=='function'){summaryElement.className='result fail';summaryElement.textContent='C4 FAIL 0/0';testsElement.replaceChildren(row(false,'Geometry load','function not found'));return}
+
+        check('empty Candidate list produces empty Geometry',()=>{const r=build([]);if(r.entries.length!==0)throw new Error('not empty')});
+        check('new-pokestop produces point geometry',()=>{const r=build([{id:'a',lat:35,lng:139,candidateType:'new-pokestop'}]);if(!same(r.entries[0].pointGeometry,{type:'point',lat:35,lng:139}))throw new Error(JSON.stringify(r.entries[0]))});
+        check('new-gym is accepted without Geometry branching',()=>{const r=build([{id:'g',lat:35.1,lng:139.1,candidateType:'new-gym'}]);if(r.entries[0].candidateType!=='new-gym')throw new Error('type mismatch')});
+        check('new-power is accepted without Geometry branching',()=>{const r=build([{id:'p',lat:35.2,lng:139.2,candidateType:'new-power'}]);if(r.entries[0].candidateType!=='new-power')throw new Error('type mismatch')});
+        check('every Candidate gets a 50m circle',()=>{const r=build([{id:'a',lat:35,lng:139,candidateType:'new-pokestop'}]);if(r.entries[0].circleGeometries[50]?.radiusMeters!==50)throw new Error('50m circle missing')});
+        check('point and 50m circle share exact coordinates',()=>{const r=build([{id:'a',lat:35.123456,lng:139.654321,candidateType:'new-pokestop'}]);const e=r.entries[0];if(e.pointGeometry.lat!==e.circleGeometries[50].lat||e.pointGeometry.lng!==e.circleGeometries[50].lng)throw new Error('coordinate mismatch')});
+        check('multiple Candidates produce one Geometry entry each',()=>{const r=build([{id:'a',lat:35,lng:139,candidateType:'new-pokestop'},{id:'b',lat:35.1,lng:139.1,candidateType:'new-gym'},{id:'c',lat:35.2,lng:139.2,candidateType:'new-power'}]);if(r.entries.length!==3)throw new Error(String(r.entries.length))});
+        check('Candidate order is preserved',()=>{const r=build([{id:'a',lat:35,lng:139,candidateType:'new-pokestop'},{id:'b',lat:36,lng:140,candidateType:'new-gym'}]);if(r.entries.map(x=>x.candidateId).join(',')!=='a,b')throw new Error('order changed')});
+        check('Geometry build does not mutate Candidates',()=>{const source=[{id:'a',lat:35,lng:139,candidateType:'new-pokestop'}];const before=clone(source);build(source);if(!same(source,before))throw new Error('source mutated')});
+        check('Geometry output is frozen',()=>{const r=build([{id:'a',lat:35,lng:139,candidateType:'new-pokestop'}]);if(!Object.isFrozen(r)||!Object.isFrozen(r.entries)||!Object.isFrozen(r.entries[0])||!Object.isFrozen(r.entries[0].pointGeometry)||!Object.isFrozen(r.entries[0].circleGeometries[50]))throw new Error('not frozen')});
+        check('Candidates closer than 50m still both get Geometry',()=>{const r=build([{id:'a',lat:35,lng:139,candidateType:'new-pokestop'},{id:'b',lat:35.00001,lng:139.00001,candidateType:'new-gym'}]);if(r.entries.length!==2||r.entries.some(x=>x.circleGeometries[50]?.radiusMeters!==50))throw new Error('close Candidate blocked')});
+        check('Geometry contains no 50m violation result',()=>{const e=build([{id:'a',lat:35,lng:139,candidateType:'new-pokestop'}]).entries[0];const text=JSON.stringify(e);if(/violation|warning|valid/i.test(text))throw new Error(text)});
+        check('40m circle is not generated',()=>{const e=build([{id:'a',lat:35,lng:139,candidateType:'new-pokestop'}]).entries[0];if(e.circleGeometries[40]!==undefined)throw new Error('40m exists')});
+        check('30m circle is not generated',()=>{const e=build([{id:'a',lat:35,lng:139,candidateType:'new-pokestop'}]).entries[0];if(e.circleGeometries[30]!==undefined)throw new Error('30m exists')});
+        check('non-array Candidate input is rejected',()=>{let threw=false;try{build(null)}catch{threw=true}if(!threw)throw new Error('did not throw')});
+        check('invalid coordinates are rejected at Geometry contract boundary',()=>{let threw=false;try{build([{id:'a',lat:999,lng:139,candidateType:'new-pokestop'}])}catch{threw=true}if(!threw)throw new Error('did not throw')});
+        check('unknown candidateType is rejected at Geometry contract boundary',()=>{let threw=false;try{build([{id:'a',lat:35,lng:139,candidateType:'new-portal'}])}catch{threw=true}if(!threw)throw new Error('did not throw')});
+
+        testsElement.replaceChildren(...results.map(x=>row(x.ok,x.name,x.detail||'')));
+        const passed=results.filter(x=>x.ok).length;
+        const ok=passed===results.length;
+        summaryElement.className=`result ${ok?'pass':'fail'}`;
+        summaryElement.textContent=`C4 ${ok?'PASS':'FAIL'} ${passed}/${results.length}`;
+      }
+      document.getElementById('rerun').addEventListener('click',run);
+      document.addEventListener('DOMContentLoaded',run,{once:true});
+    })();
+  </script>
+</body>
+</html>
