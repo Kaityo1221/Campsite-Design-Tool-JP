@@ -46,6 +46,7 @@ jobs:
           s=p.read_text()
           if "'creative-patches-v56-unified-interaction.js'" not in s:
               s=s.replace("  'creative-patches-v55-unified-visible.js'\n];", "  'creative-patches-v55-unified-visible.js',\n  'creative-patches-v56-unified-interaction.js'\n];")
+          s=s.replace("assert.ok(html.includes('map-renderer.js?v=5d8'),'D8 renderer cache-bust missing');", "assert.ok(html.includes('map-renderer.js?v=5d9'),'D9 renderer cache-bust missing');")
           old="assert.ok(html.includes(\"get('unifiedRenderer')==='visible'\"),'D8 unified visible query gate missing');"
           new="assert.ok(html.includes(\"return mode==='visible'||mode==='interactive'\"),'D9 unified interactive mode must preserve visible cutover');"
           if old in s:
