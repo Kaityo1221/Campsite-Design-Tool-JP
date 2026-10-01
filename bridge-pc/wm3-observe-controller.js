@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '0.1.0';
+  const VERSION = '0.2.0';
   const COMMAND_EVENT = 'campsite-bridge-pc:observe-command';
   const STATE_EVENT = 'campsite-bridge-pc:observe-state';
   const BUFFER_METERS = 200;
