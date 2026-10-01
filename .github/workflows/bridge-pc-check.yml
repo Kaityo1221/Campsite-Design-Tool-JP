@@ -20,6 +20,7 @@ on:
       - 'scripts/check-wm3b-tab-link.mjs'
       - 'scripts/check-wm3b-creative-link.mjs'
       - 'scripts/check-wm3b2b-live-test.mjs'
+      - 'scripts/check-wm3b2d-project-save.mjs'
       - 'scripts/check-bridge-wayfarer-display-owner.mjs'
       - 'scripts/check-bridge-wayfarer-deck-compat.mjs'
       - 'scripts/check-bridge-poi-parser.mjs'
@@ -66,6 +67,7 @@ on:
       - 'scripts/check-wm3b-tab-link.mjs'
       - 'scripts/check-wm3b-creative-link.mjs'
       - 'scripts/check-wm3b2b-live-test.mjs'
+      - 'scripts/check-wm3b2d-project-save.mjs'
       - 'scripts/check-bridge-wayfarer-display-owner.mjs'
       - 'scripts/check-bridge-wayfarer-deck-compat.mjs'
       - 'scripts/check-bridge-poi-parser.mjs'
@@ -112,11 +114,11 @@ jobs:
       - name: Final Bridge architecture check
         run: npm run check:bridge-architecture
 
-      - name: Upload WM-3B-2B PC Bridge test package
+      - name: Upload WM-3B-2D PC Bridge test package
         if: ${{ github.event_name == 'pull_request' }}
         uses: actions/upload-artifact@v4
         with:
-          name: wm3b2b-bridge-pc-test
+          name: wm3b2d-bridge-pc-test
           path: downloads/campsite-bridge-pc-0.1.0.zip
           if-no-files-found: error
 
@@ -162,6 +164,7 @@ jobs:
           node --check scripts/check-wm3b-tab-link.mjs
           node --check scripts/check-wm3b-creative-link.mjs
           node --check scripts/check-wm3b2b-live-test.mjs
+          node --check scripts/check-wm3b2d-project-save.mjs
           node --check bridge-pc/creative-wm3b2b-test-injector.js
           node --check scripts/check-bridge-wayfarer-display-owner.mjs
           node --check scripts/check-bridge-wayfarer-deck-compat.mjs
