@@ -9,6 +9,7 @@ const acquisitionSource = fs.readFileSync('bridge-pc/wayfarer-acquisition-engine
 const parserSource = fs.readFileSync('bridge-pc/poi-parser.js', 'utf8');
 const classifierSource = fs.readFileSync('bridge-pc/poi-classifier.js', 'utf8');
 const referenceSource = fs.readFileSync('bridge-pc/poi-reference-layer.js', 'utf8');
+const diagnosticsSource = fs.readFileSync('bridge-pc/poi-diagnostics.js', 'utf8');
 const exporterSource = fs.readFileSync('bridge-pc/bridge-v1-exporter.js', 'utf8');
 const collector = fs.readFileSync('bridge-pc/page-collector.js', 'utf8');
 const content = fs.readFileSync('bridge-pc/content.js', 'utf8');
@@ -45,6 +46,7 @@ new vm.Script(acquisitionSource, { filename: 'bridge-pc/wayfarer-acquisition-eng
 new vm.Script(parserSource, { filename: 'bridge-pc/poi-parser.js' });
 new vm.Script(classifierSource, { filename: 'bridge-pc/poi-classifier.js' });
 new vm.Script(referenceSource, { filename: 'bridge-pc/poi-reference-layer.js' });
+new vm.Script(diagnosticsSource, { filename: 'bridge-pc/poi-diagnostics.js' });
 new vm.Script(exporterSource, { filename: 'bridge-pc/bridge-v1-exporter.js' });
 new vm.Script(collector, { filename: 'bridge-pc/page-collector.js' });
 new vm.Script(content, { filename: 'bridge-pc/content.js' });
@@ -87,6 +89,7 @@ vm.runInContext(acquisitionSource, context);
 vm.runInContext(parserSource, context);
 vm.runInContext(classifierSource, context);
 vm.runInContext(referenceSource, context);
+vm.runInContext(diagnosticsSource, context);
 vm.runInContext(exporterSource, context);
 vm.runInContext(collector, context);
 
@@ -99,6 +102,7 @@ assert.ok(fakeWindow.CampsiteWayfarerAcquisitionEngine, 'Wayfarer acquisition en
 assert.ok(fakeWindow.CampsiteBridgePoiParser, 'POI parser API missing');
 assert.ok(fakeWindow.CampsiteBridgePoiClassifier, 'POI classifier API missing');
 assert.ok(fakeWindow.CampsiteBridgePoiReferenceLayer, 'POI reference layer API missing');
+assert.ok(fakeWindow.CampsiteBridgePoiDiagnostics, 'POI diagnostics API missing');
 assert.ok(fakeWindow.CampsiteBridgeV1Exporter, 'Bridge V1 exporter API missing');
 assert.equal(typeof api.classifyMapData, 'function', 'Collector must expose classification stage');
 assert.equal(typeof api.collectPolygon, 'function', 'Collector must expose polygon-driven WM-1 acquisition');
