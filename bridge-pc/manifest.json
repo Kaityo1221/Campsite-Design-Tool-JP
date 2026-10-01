@@ -24,7 +24,8 @@
         "poi-reference-layer.js",
         "poi-diagnostics.js",
         "bridge-v1-exporter.js",
-        "page-collector.js"
+        "page-collector.js",
+        "wm1-live-verifier.js"
       ],
       "run_at": "document_idle",
       "world": "MAIN"
