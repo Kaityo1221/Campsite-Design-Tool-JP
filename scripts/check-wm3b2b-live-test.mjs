@@ -27,6 +27,7 @@ for (const token of [
   "CAMPSITE_WAYFARER_OBSERVE_PONG_V1",
   "CAMPSITE_WAYFARER_OBSERVE_REQUEST_V1",
   "CAMPSITE_WAYFARER_OBSERVE_ACCEPTED_V1",
+  "CAMPSITE_WAYFARER_OBSERVE_RESULT_V1",
   "CampsiteWayfarerObserve",
   "Wayfarerで観察を開始しました。",
   "Production Creative未変更"
@@ -45,8 +46,12 @@ assert.ok(source.includes("function startObservation() {\n    ensureMessageListe
 assert.ok(source.includes("setInterval(() =>"), 'TEST panel must have a short-lived reinstall fallback');
 assert.ok(source.includes("z-index:2147483000"), 'TEST panel must stay above Creative runtime overlays');
 assert.ok(source.includes("polygon.length >= 3 && polygon.length <= 30"));
-assert.ok(!source.includes("wayfarerObservation ="), 'Live gate must not save observation result yet');
-assert.ok(!source.includes("CAMPSITE_WAYFARER_OBSERVE_RESULT_V1"), 'WM-3B-2C must not leak into live gate');
+assert.ok(source.includes("project.wayfarerObservation = observation"), 'WM-3B-2D must save only the observation field');
+assert.ok(source.includes("OBSERVE_RESULT_TIMEOUT_MS"));
+assert.ok(source.includes("pending.stage = 'await-result'"));
+assert.ok(source.includes("saveObservationResult(data.result)"));
+assert.ok(background.includes("keepForObservationResult"));
+assert.ok(background.includes("OBSERVE_ROUTE_TTL_MS"));
 assert.ok(source.includes('CAMPSITE_CREATIVE_MAIN_TO_EXTENSION_V1'));
 assert.ok(source.includes('CAMPSITE_EXTENSION_TO_CREATIVE_MAIN_V1'));
 assert.ok(!source.includes('window.open(WAYFARER_URL, WINDOW_NAME)'), 'TEST must not create a second Wayfarer tab');
@@ -55,4 +60,4 @@ assert.ok(background.includes('tabs.length !== 1'));
 assert.ok(wayfarerRelay.includes('CAMPSITE_EXTENSION_TO_WAYFARER_MAIN_V1'));
 assert.ok(creativeRelay.includes('CAMPSITE_EXTENSION_TO_CREATIVE_MAIN_V1'));
 
-console.log('WM-3B-2 live Creative injector contract: OK');
+console.log('WM-3B-2C/2D live Creative result + Project save contract: OK');
