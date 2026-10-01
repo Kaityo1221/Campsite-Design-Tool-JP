@@ -69,8 +69,21 @@
     for (const element of document.querySelectorAll('button,[role="button"]')) {
       if (!visibleElement(element)) continue;
       const text = String(element.textContent || '').replace(/\s+/g, ' ').trim();
-      if (!categoryLabels.has(text)) continue;
-      found.push(element);
+      if (categoryLabels.has(text)) {
+        found.push(element);
+        continue;
+      }
+
+      if (/^(コミュニティ|Community)$/.test(text)) {
+        const rect = element.getBoundingClientRect();
+        const isMapTopControl =
+          rect.top < 340 &&
+          rect.left > 180 &&
+          rect.width >= 80 &&
+          rect.width <= 320 &&
+          rect.height <= 90;
+        if (isMapTopControl) found.push(compactControlShell(element));
+      }
     }
 
     return [...new Set(found.filter(Boolean))];
