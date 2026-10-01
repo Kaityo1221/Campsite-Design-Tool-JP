@@ -61,6 +61,14 @@
     return adapter;
   }
 
+  function acquisitionEngineApi() {
+    const engine = window.CampsiteWayfarerAcquisitionEngine;
+    if (!engine?.createPlan || !engine?.executePlan) {
+      throw new Error('Wayfarer取得Engineを読み込めませんでした。拡張機能を再読み込みしてください。');
+    }
+    return engine;
+  }
+
   function numberFrom(value) {
     const num = Number(value);
     return Number.isFinite(num) ? num : null;
@@ -158,6 +166,74 @@
       zoom: Number.isFinite(Number(bounds.zoom)) ? Number(bounds.zoom) : null,
       sw: { lat: bounds.swLat, lng: bounds.swLng },
       ne: { lat: bounds.neLat, lng: bounds.neLng }
+    };
+  }
+
+  async function fetchGcsTile(tile) {
+    const response = await fetch(MAP_DATA_PATH + '?' + tile.query, {
+      credentials: 'include',
+      cache: 'no-store'
+    });
+    if (!response.ok) {
+      throw new Error('Wayfarer Mapデータ取得に失敗しました (' + response.status + ')');
+    }
+    return response.json();
+  }
+
+  async function collectPolygon(polygon, options = {}) {
+    const acquisitionEngine = acquisitionEngineApi();
+    const plan = acquisitionEngine.createPlan(polygon, {
+      bufferMeters: Number(options.bufferMeters ?? acquisitionEngine.defaultBufferMeters ?? 200),
+      maxTileMeters: options.maxTileMeters,
+      cellLevel: 14
+    });
+
+    const executionOptions = {};
+    if (typeof options.responseVerifier === 'function') {
+      executionOptions.responseVerifier = options.responseVerifier;
+    }
+
+    const acquisition = await acquisitionEngine.executePlan(
+      plan,
+      fetchGcsTile,
+      executionOptions
+    );
+
+    const parsed = parseMapData(acquisition.mergedPayload);
+    const classified = classifierApi().run(parsed);
+    const routed = referenceLayerApi().splitClassified(classified.pois);
+    const activePois = exporterApi().exportPois({ enginePois: routed.activeEnginePois });
+    const diagnosticReport = buildDiagnosticReport(parsed, classified);
+
+    return {
+      pois: activePois,
+      referencePois: routed.referencePois,
+      enginePois: classified.pois,
+      diagnostics: parsed.diagnostics,
+      classificationDiagnostics: classified.classificationDiagnostics,
+      diagnosticReport,
+      engineStats: classified.diagnostics,
+      parserStats: {
+        sourceCount: parsed.sourceCount,
+        parsedCount: parsed.parsedCount,
+        duplicateCount: parsed.duplicateCount,
+        failedCount: parsed.failedCount
+      },
+      selectedBounds: null,
+      acquisition: {
+        engineVersion: acquisition.version,
+        bufferMeters: plan.bufferMeters,
+        cellLevel: plan.cellLevel,
+        acquisitionBounds: plan.acquisitionBounds,
+        tileCount: plan.tiles.length,
+        geometryCoverageComplete: acquisition.geometryCoverageComplete,
+        transportComplete: acquisition.transportComplete,
+        sourceComplete: acquisition.sourceComplete,
+        coverageComplete: acquisition.coverageComplete,
+        coverageStatus: acquisition.coverageStatus,
+        requests: acquisition.results
+      },
+      sourcePath: MAP_DATA_PATH
     };
   }
 
@@ -406,6 +482,7 @@
     classifyMapData,
     buildDiagnosticReport,
     makePayload,
+    collectPolygon,
     collect,
     startBridge
   });
