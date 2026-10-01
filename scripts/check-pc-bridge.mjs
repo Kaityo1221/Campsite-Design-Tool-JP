@@ -5,6 +5,7 @@ import { execFileSync } from 'node:child_process';
 
 const manifest = JSON.parse(fs.readFileSync('bridge-pc/manifest.json', 'utf8'));
 const mapAdapterSource = fs.readFileSync('js/bridge-wayfarer-map-adapter.js', 'utf8');
+const acquisitionSource = fs.readFileSync('bridge-pc/wayfarer-acquisition-engine.js', 'utf8');
 const parserSource = fs.readFileSync('bridge-pc/poi-parser.js', 'utf8');
 const classifierSource = fs.readFileSync('bridge-pc/poi-classifier.js', 'utf8');
 const referenceSource = fs.readFileSync('bridge-pc/poi-reference-layer.js', 'utf8');
@@ -25,12 +26,14 @@ assert.equal(manifest.host_permissions.some(value => value.includes('<all_urls>'
 const mainWorld = manifest.content_scripts.find(item => item.world === 'MAIN');
 const isolatedWorld = manifest.content_scripts.find(item => item.world === 'ISOLATED');
 assert.ok(mainWorld?.js?.includes('wayfarer-map-adapter.js'), 'MAIN Wayfarer map adapter missing');
+assert.ok(mainWorld?.js?.includes('wayfarer-acquisition-engine.js'), 'MAIN acquisition engine missing');
 assert.ok(mainWorld?.js?.includes('poi-parser.js'), 'MAIN parser missing');
 assert.ok(mainWorld?.js?.includes('poi-classifier.js'), 'MAIN classifier missing');
 assert.ok(mainWorld?.js?.includes('poi-reference-layer.js'), 'MAIN reference layer missing');
 assert.ok(mainWorld?.js?.includes('bridge-v1-exporter.js'), 'MAIN Bridge V1 exporter missing');
 assert.ok(mainWorld?.js?.includes('page-collector.js'), 'MAIN collector missing');
 assert.ok(mainWorld.js.indexOf('wayfarer-map-adapter.js') < mainWorld.js.indexOf('page-collector.js'), 'Map adapter must load before collector');
+assert.ok(mainWorld.js.indexOf('wayfarer-acquisition-engine.js') < mainWorld.js.indexOf('page-collector.js'), 'Acquisition engine must load before collector');
 assert.ok(mainWorld.js.indexOf('poi-parser.js') < mainWorld.js.indexOf('poi-classifier.js'), 'Parser must load before classifier');
 assert.ok(mainWorld.js.indexOf('poi-classifier.js') < mainWorld.js.indexOf('poi-reference-layer.js'), 'Classifier must load before reference layer');
 assert.ok(mainWorld.js.indexOf('poi-reference-layer.js') < mainWorld.js.indexOf('bridge-v1-exporter.js'), 'Reference layer must load before exporter');
@@ -38,6 +41,7 @@ assert.ok(mainWorld.js.indexOf('bridge-v1-exporter.js') < mainWorld.js.indexOf('
 assert.ok(isolatedWorld?.js?.includes('content.js'), 'ISOLATED UI missing');
 
 new vm.Script(mapAdapterSource, { filename: 'js/bridge-wayfarer-map-adapter.js' });
+new vm.Script(acquisitionSource, { filename: 'bridge-pc/wayfarer-acquisition-engine.js' });
 new vm.Script(parserSource, { filename: 'bridge-pc/poi-parser.js' });
 new vm.Script(classifierSource, { filename: 'bridge-pc/poi-classifier.js' });
 new vm.Script(referenceSource, { filename: 'bridge-pc/poi-reference-layer.js' });
@@ -79,6 +83,7 @@ const context = {
 };
 vm.createContext(context);
 vm.runInContext(mapAdapterSource, context);
+vm.runInContext(acquisitionSource, context);
 vm.runInContext(parserSource, context);
 vm.runInContext(classifierSource, context);
 vm.runInContext(referenceSource, context);
@@ -90,12 +95,22 @@ assert.ok(api, 'PC collector API missing');
 assert.equal(api.version, '0.1.0');
 assert.equal(api.mapDataPath, '/api/v1/vault/mapview/gcs');
 assert.ok(fakeWindow.CampsiteBridgeWayfarerMapAdapter, 'Wayfarer map adapter API missing');
+assert.ok(fakeWindow.CampsiteWayfarerAcquisitionEngine, 'Wayfarer acquisition engine API missing');
 assert.ok(fakeWindow.CampsiteBridgePoiParser, 'POI parser API missing');
 assert.ok(fakeWindow.CampsiteBridgePoiClassifier, 'POI classifier API missing');
 assert.ok(fakeWindow.CampsiteBridgePoiReferenceLayer, 'POI reference layer API missing');
 assert.ok(fakeWindow.CampsiteBridgeV1Exporter, 'Bridge V1 exporter API missing');
 assert.equal(typeof api.classifyMapData, 'function', 'Collector must expose classification stage');
+assert.equal(typeof api.collectPolygon, 'function', 'Collector must expose polygon-driven WM-1 acquisition');
 assert.equal(api.findMap(), null, 'Collector should fail quietly when Wayfarer map host is absent');
+
+context.fetch = async url => ({
+  ok: true,
+  status: 200,
+  async json() {
+    return sample;
+  }
+});
 
 const sample = {
   result: {
@@ -162,6 +177,21 @@ const sample = {
   }
 };
 
+const polygonCollection = await api.collectPolygon([
+  [35.0000, 139.0000],
+  [35.0000, 139.0100],
+  [35.0100, 139.0100],
+  [35.0100, 139.0000]
+], {
+  maxTileMeters: 500,
+  responseVerifier: () => true
+});
+assert.ok(polygonCollection.acquisition.tileCount > 1, 'Polygon collection should support partitioned GCS acquisition');
+assert.equal(polygonCollection.acquisition.coverageComplete, true);
+assert.equal(polygonCollection.acquisition.coverageStatus, 'complete');
+assert.equal(polygonCollection.pois.length, 3, 'Merged polygon acquisition must dedupe GUIDs through the existing parser');
+assert.equal(polygonCollection.selectedBounds, null, 'Polygon acquisition must not depend on viewport bounds');
+
 const parsed = api.parseMapData(sample);
 assert.equal(parsed.sourceCount, 7);
 assert.equal(parsed.parsedCount, 6);
@@ -222,6 +252,8 @@ assert.ok(bridgePayload.pois.every(p => p.gameStatus === 'ACTIVE'));
 assert.ok(collector.includes('/api/v1/vault/mapview/gcs'));
 assert.ok(collector.includes('credentials: \'include\''));
 assert.ok(collector.includes('CampsiteBridgeWayfarerMapAdapter'), 'Collector must use the shared Wayfarer map adapter');
+assert.ok(collector.includes('CampsiteWayfarerAcquisitionEngine'), 'Collector must use the polygon acquisition engine');
+assert.ok(collector.includes('collectPolygon'), 'Collector must expose polygon acquisition without replacing the legacy viewport path');
 assert.equal(collector.includes("document.querySelector('app-wf-base-map')"), false, 'Collector must not scan Wayfarer Angular context directly');
 assert.ok(collector.includes('CampsiteBridgePoiReferenceLayer'), 'Collector must use the Reference Layer');
 assert.ok(collector.includes('CampsiteBridgeV1Exporter'), 'Collector must use the V1 exporter');
@@ -247,6 +279,7 @@ assert.ok(receiver.includes("function gatewayUrl()"), 'Receiver must expose the 
 assert.ok(receiver.includes("location.replace(gatewayUrl())"), 'Receiver must send every Bridge platform to the shared Gateway');
 
 execFileSync(process.execPath, ['scripts/check-bridge-wayfarer-map-adapter.mjs'], { stdio: 'inherit' });
+execFileSync(process.execPath, ['scripts/check-wayfarer-acquisition-engine.mjs'], { stdio: 'inherit' });
 execFileSync(process.execPath, ['scripts/check-bridge-poi-parser.mjs'], { stdio: 'inherit' });
 execFileSync(process.execPath, ['scripts/check-bridge-poi-classifier.mjs'], { stdio: 'inherit' });
 execFileSync(process.execPath, ['scripts/check-bridge-v1-export.mjs'], { stdio: 'inherit' });
@@ -256,6 +289,7 @@ assert.ok(zip.length > 1000, 'PC Bridge ZIP is unexpectedly small');
 assert.equal(zip.readUInt32LE(0), 0x04034b50, 'PC Bridge output is not a ZIP');
 assert.ok(zip.includes(Buffer.from('manifest.json')), 'ZIP must contain manifest.json');
 assert.ok(zip.includes(Buffer.from('wayfarer-map-adapter.js')), 'ZIP must contain Wayfarer map adapter');
+assert.ok(zip.includes(Buffer.from('wayfarer-acquisition-engine.js')), 'ZIP must contain WM-1 acquisition engine');
 assert.ok(zip.includes(Buffer.from('poi-parser.js')), 'ZIP must contain poi-parser.js');
 assert.ok(zip.includes(Buffer.from('poi-classifier.js')), 'ZIP must contain poi-classifier.js');
 assert.ok(zip.includes(Buffer.from('poi-reference-layer.js')), 'ZIP must contain poi-reference-layer.js');
