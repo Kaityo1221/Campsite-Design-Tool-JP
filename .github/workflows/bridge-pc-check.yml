@@ -110,11 +110,11 @@ jobs:
       - name: Final Bridge architecture check
         run: npm run check:bridge-architecture
 
-      - name: Upload WM-3B-1 PC Bridge test package
+      - name: Upload WM-3B-2B PC Bridge test package
         if: ${{ github.event_name == 'pull_request' }}
         uses: actions/upload-artifact@v4
         with:
-          name: wm3b1-bridge-pc-test
+          name: wm3b2b-bridge-pc-test
           path: downloads/campsite-bridge-pc-0.1.0.zip
           if-no-files-found: error
 
