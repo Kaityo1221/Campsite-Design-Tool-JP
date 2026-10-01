@@ -147,6 +147,7 @@
   }
 
   function checkConnection() {
+    ensureMessageListener();
     syncAndReadProject();
     if (!wayfarerWindow) return Promise.resolve(fail('先にWayfarer Mapを開いてください。'));
     try {
@@ -176,6 +177,7 @@
   }
 
   function startObservation() {
+    ensureMessageListener();
     const project = syncAndReadProject();
     const polygon = normalizePolygon(project);
     if (!state.connected || state.duplicateMapTabs) {
@@ -278,6 +280,16 @@
     }
   }
 
+  function ensureMessageListener() {
+    try {
+      window.removeEventListener('message', onMessage);
+      window.addEventListener('message', onMessage);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   function install() {
     if (!location.pathname.includes('/Campsite-Design-Tool-JP/creative/')) return false;
     if (document.getElementById('campsiteWm3b2bTestPanel')) return true;
@@ -309,7 +321,7 @@
     return true;
   }
 
-  window.addEventListener('message', onMessage);
+  ensureMessageListener();
 
   // Creative boots by rewriting the whole document more than once.
   // Re-install the TEST panel after each document.close() without touching
@@ -319,10 +331,10 @@
     document.close = function(...args) {
       const result = nativeClose(...args);
       setTimeout(() => {
-        try { install(); render(); } catch (_) {}
+        try { ensureMessageListener(); install(); render(); } catch (_) {}
       }, 0);
       setTimeout(() => {
-        try { install(); render(); } catch (_) {}
+        try { ensureMessageListener(); install(); render(); } catch (_) {}
       }, 250);
       return result;
     };
@@ -339,7 +351,7 @@
   let reinstallChecks = 0;
   const reinstallTimer = setInterval(() => {
     reinstallChecks += 1;
-    try { install(); render(); } catch (_) {}
+    try { ensureMessageListener(); install(); render(); } catch (_) {}
     if (reinstallChecks >= 40) clearInterval(reinstallTimer);
   }, 500);
 
@@ -350,6 +362,7 @@
     openWayfarer,
     checkConnection,
     startObservation,
+    ensureMessageListener,
     getState() { return { ...state }; }
   });
 })();
