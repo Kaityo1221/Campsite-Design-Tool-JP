@@ -18,6 +18,7 @@
         "wayfarer-map-adapter.js",
         "wayfarer-display-owner.js",
         "wayfarer-deck-compat.js",
+        "wayfarer-polygon-controller.js",
         "wayfarer-acquisition-engine.js",
         "poi-parser.js",
         "poi-classifier.js",
@@ -36,7 +37,8 @@
         "https://wayfarer.nianticlabs.com/*"
       ],
       "js": [
-        "content.js"
+        "content.js",
+        "polygon-ui.js"
       ],
       "run_at": "document_idle",
       "world": "ISOLATED"
