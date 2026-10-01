@@ -12,9 +12,12 @@
     const PONG_TYPE = 'CAMPSITE_WAYFARER_OBSERVE_PONG_V1';
     const OBSERVE_REQUEST_TYPE = 'CAMPSITE_WAYFARER_OBSERVE_REQUEST_V1';
     const OBSERVE_ACCEPTED_TYPE = 'CAMPSITE_WAYFARER_OBSERVE_ACCEPTED_V1';
+    const OBSERVE_RESULT_TYPE = 'CAMPSITE_WAYFARER_OBSERVE_RESULT_V1';
+    const PROJECT_KEY = 'campsiteProject.v1';
     const RELAY_FROM_MAIN_TYPE = 'CAMPSITE_CREATIVE_MAIN_TO_EXTENSION_V1';
     const RELAY_TO_MAIN_TYPE = 'CAMPSITE_EXTENSION_TO_CREATIVE_MAIN_V1';
     const CONNECT_TIMEOUT_MS = 4200;
+    const OBSERVE_RESULT_TIMEOUT_MS = 120000;
 
     let wayfarerWindow = null;
     let pendingRequestId = '';
@@ -22,6 +25,7 @@
     let pendingObserveRequestId = '';
     let pendingObserveTimer = null;
     let pendingObserveResolve = null;
+    let pendingObserveStage = '';
     let linkState = {
       status: 'idle',
       connected: false,
@@ -162,11 +166,82 @@
       return normalized.length >= 3 && normalized.length <= 30 ? normalized : [];
     }
 
+    function readCurrentProject() {
+      try {
+        const project = JSON.parse(sessionStorage.getItem(PROJECT_KEY) || 'null');
+        return project && project.source === 'bridge' ? project : null;
+      } catch (_) {
+        return null;
+      }
+    }
+
+    function cloneJson(value, fallback) {
+      try { return JSON.parse(JSON.stringify(value)); }
+      catch (_) { return fallback; }
+    }
+
+    function samePolygon(a, b) {
+      return JSON.stringify(normalizeProjectPolygon({ polygon: a })) ===
+        JSON.stringify(normalizeProjectPolygon({ polygon: b }));
+    }
+
+    function normalizeObservationResult(raw) {
+      if (!raw || typeof raw !== 'object') {
+        throw new Error('Wayfarer観察結果の形式が正しくありません。');
+      }
+      const polygon = normalizeProjectPolygon({ polygon: raw.polygon });
+      if (!polygon.length) {
+        throw new Error('Wayfarer観察結果のPolygonを確認できませんでした。');
+      }
+      const zones = raw.zones && typeof raw.zones === 'object' ? raw.zones : {};
+      if (
+        !Array.isArray(zones.interior) ||
+        !Array.isArray(zones.reference100) ||
+        !Array.isArray(zones.reserve200)
+      ) {
+        throw new Error('Wayfarer観察結果のゾーン情報を確認できませんでした。');
+      }
+
+      return {
+        version: String(raw.version || '0.1.0'),
+        observedAt: String(raw.observedAt || new Date().toISOString()),
+        polygon,
+        counts: cloneJson(raw.counts || {}, {}),
+        zones: {
+          interior: cloneJson(zones.interior, []),
+          reference100: cloneJson(zones.reference100, []),
+          reserve200: cloneJson(zones.reserve200, [])
+        },
+        visibleTotal: Number(raw.visibleTotal || 0),
+        retainedTotal: Number(raw.retainedTotal || 0),
+        excludedCount: Number(raw.excludedCount || 0),
+        outsideCount: Number(raw.outsideCount || 0),
+        canProceed: raw.canProceed === true,
+        acquisition: cloneJson(raw.acquisition || {}, {})
+      };
+    }
+
+    function saveObservationResult(raw) {
+      const project = readCurrentProject();
+      if (!project) {
+        throw new Error('campsiteProject.v1 を確認できませんでした。');
+      }
+      const observation = normalizeObservationResult(raw);
+      if (!samePolygon(project.polygon, observation.polygon)) {
+        throw new Error('観察中に設計範囲が変更されたため、古い観察結果は保存しませんでした。');
+      }
+
+      project.wayfarerObservation = observation;
+      sessionStorage.setItem(PROJECT_KEY, JSON.stringify(project));
+      return observation;
+    }
+
     function clearObservePending() {
       if (pendingObserveTimer) clearTimeout(pendingObserveTimer);
       pendingObserveTimer = null;
       pendingObserveRequestId = '';
       pendingObserveResolve = null;
+      pendingObserveStage = '';
     }
 
     function failObservation(message) {
@@ -184,7 +259,8 @@
       if (!linkState.connected || linkState.duplicateMapTabs) {
         return Promise.resolve(failObservation('先にWayfarer Mapとの接続確認を完了してください。'));
       }
-      const polygon = normalizeProjectPolygon(project);
+      const currentProject = readCurrentProject() || project;
+      const polygon = normalizeProjectPolygon(currentProject);
       if (!polygon.length) {
         return Promise.resolve(failObservation('Creative Modeの設計範囲を確認できませんでした。'));
       }
@@ -192,6 +268,7 @@
       clearObservePending();
       const requestId = createId('creative-observe');
       pendingObserveRequestId = requestId;
+      pendingObserveStage = 'await-accepted';
       setState({
         status: 'sending',
         connected: true,
@@ -296,6 +373,7 @@
         data = data.payload && typeof data.payload === 'object' ? data.payload : {};
         if (!pendingObserveRequestId || relayedId !== pendingObserveRequestId) return;
         if (data.relayError) {
+          if (pendingObserveStage !== 'await-accepted') return;
           const resolve = pendingObserveResolve;
           const next = failObservation(String(data.relayError));
           if (typeof resolve === 'function') resolve(next);
@@ -306,23 +384,76 @@
         if (wayfarerWindow && event.source !== wayfarerWindow) return;
         if (!pendingObserveRequestId || String(data.requestId || '') !== pendingObserveRequestId) return;
       }
-      if (data.type !== OBSERVE_ACCEPTED_TYPE) return;
+      if (data.type !== OBSERVE_ACCEPTED_TYPE || pendingObserveStage !== 'await-accepted') return;
 
       const resolve = pendingObserveResolve;
       const accepted = data.accepted === true;
-      let next;
       if (!accepted) {
-        next = failObservation(String(data.error || data.warning || 'Wayfarerが設計範囲を受け取れませんでした。'));
+        const next = failObservation(String(data.error || data.warning || 'Wayfarerが設計範囲を受け取れませんでした。'));
+        if (typeof resolve === 'function') resolve(next);
+        return;
+      }
+
+      if (pendingObserveTimer) clearTimeout(pendingObserveTimer);
+      pendingObserveStage = 'await-result';
+      pendingObserveTimer = setTimeout(() => {
+        const finish = pendingObserveResolve;
+        const next = failObservation('Wayfarerの観察結果を受信できませんでした。');
+        if (typeof finish === 'function') finish(next);
+      }, OBSERVE_RESULT_TIMEOUT_MS);
+
+      setState({
+        status: 'observing',
+        connected: true,
+        duplicateMapTabs: false,
+        message: 'Wayfarerで観察中です…'
+      });
+    }
+
+    function handleObserveResult(event) {
+      let data = event.data || {};
+      let relayedId = '';
+      if (event.source === window && event.origin === location.origin && data.type === RELAY_TO_MAIN_TYPE) {
+        relayedId = String(data.relayId || '');
+        data = data.payload && typeof data.payload === 'object' ? data.payload : {};
+        if (!pendingObserveRequestId || relayedId !== pendingObserveRequestId) return;
+        if (data.relayError) {
+          if (pendingObserveStage !== 'await-result') return;
+          const resolve = pendingObserveResolve;
+          const next = failObservation(String(data.relayError));
+          if (typeof resolve === 'function') resolve(next);
+          return;
+        }
       } else {
+        if (!WAYFARER_ORIGINS.has(event.origin)) return;
+        if (wayfarerWindow && event.source !== wayfarerWindow) return;
+        if (!pendingObserveRequestId || String(data.requestId || '') !== pendingObserveRequestId) return;
+      }
+      if (data.type !== OBSERVE_RESULT_TYPE || pendingObserveStage !== 'await-result') return;
+
+      const resolve = pendingObserveResolve;
+      if (data.ok !== true) {
+        const next = failObservation(String(data.error || 'Wayfarer観察に失敗しました。'));
+        if (typeof resolve === 'function') resolve(next);
+        return;
+      }
+
+      try {
+        const observation = saveObservationResult(data.result);
+        const inside = Number(observation.counts?.interior?.total || observation.zones.interior.length || 0);
+        const outer = Number(observation.counts?.reference100?.total || observation.zones.reference100.length || 0);
         clearObservePending();
-        next = setState({
-          status: 'observing',
+        const next = setState({
+          status: 'success',
           connected: true,
           duplicateMapTabs: false,
-          message: 'Wayfarerで観察を開始しました。'
+          message: '観察結果をProjectへ保存しました。設計範囲内 ' + inside + '件 / 外周100m ' + outer + '件'
         });
+        if (typeof resolve === 'function') resolve(next);
+      } catch (error) {
+        const next = failObservation(String(error?.message || error || '観察結果を保存できませんでした。'));
+        if (typeof resolve === 'function') resolve(next);
       }
-      if (typeof resolve === 'function') resolve(next);
     }
 
     function installUi(project) {
@@ -347,12 +478,12 @@
         'box-shadow:0 22px 58px rgba(0,0,0,.32);font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif">' +
         '<div style="font-size:21px;font-weight:950">🔭 Wayfarerで観察</div>' +
         '<div style="margin-top:8px;font-size:12px;line-height:1.65;color:#6b5b42">' +
-        '接続にはこの画面からWayfarer Mapを開きます。Wayfarer Mapは1タブだけにしてください。</div>' +
+        '既に開いているWayfarer Mapを使用します。Wayfarer Mapは1タブだけにしてください。</div>' +
         '<div id="campsiteWayfarerObserveStatus" data-state="idle" style="margin-top:14px;padding:10px 12px;' +
         'border-radius:12px;background:#f0eadf;font-size:12px;line-height:1.55;font-weight:800">未接続</div>' +
         '<button id="campsiteWayfarerObserveOpen" type="button" style="margin-top:14px;width:100%;min-height:46px;' +
         'border:1px solid #5276a4;border-radius:13px;background:#e9f2ff;color:#24476f;font:900 13px/1 system-ui">' +
-        'Wayfarer Mapを開く</button>' +
+        'Wayfarer Mapを確認</button>' +
         '<button id="campsiteWayfarerObserveCheck" type="button" style="margin-top:9px;width:100%;min-height:46px;' +
         'border:1px solid #5d7353;border-radius:13px;background:#edf7e8;color:#294227;font:900 13px/1 system-ui">' +
         '接続確認</button>' +
@@ -387,13 +518,15 @@
 
     window.addEventListener('message', handlePong);
     window.addEventListener('message', handleObserveAccepted);
+    window.addEventListener('message', handleObserveResult);
 
     window.installCampsiteWayfarerObserveLink = installUi;
     window.CampsiteCreativeWayfarerLink = Object.freeze({
-      version: '0.2.0',
+      version: '0.3.0',
       openWayfarer,
       checkConnection,
       startObservation,
+      saveObservationResult,
       getState() { return { ...linkState }; }
     });
   }
