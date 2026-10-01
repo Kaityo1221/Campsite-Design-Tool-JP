@@ -20,7 +20,7 @@
     "check:bridge-display-ownership": "node scripts/check-bridge-display-ownership.mjs",
     "check:bridge-poi-engine-regression": "node scripts/check-bridge-poi-engine-regression.mjs",
     "check:phase8-roundtrip": "node scripts/check-phase8-roundtrip.mjs",
-    "check:bridge-architecture": "node scripts/check-bridge-wayfarer-map-adapter.mjs && node scripts/check-wayfarer-acquisition-engine.mjs && node scripts/check-wm1-live-verifier.mjs && node scripts/check-wm2-polygon-controller.mjs && node scripts/check-wm2-polygon-ui.mjs && node scripts/check-wm3-observation-zone.mjs && node scripts/check-wm3-observe-controller.mjs && node scripts/check-wm3b-tab-link.mjs && node scripts/check-bridge-wayfarer-display-owner.mjs && node scripts/check-bridge-wayfarer-deck-compat.mjs && node scripts/check-bridge-poi-parser.mjs && node scripts/check-bridge-poi-classifier.mjs && node scripts/check-bridge-display-ownership.mjs && node scripts/check-bridge-v1-export.mjs && node scripts/check-bridge-poi-diagnostics.mjs && node scripts/check-bridge-poi-engine-regression.mjs && node scripts/check-bridge-poi-engine-e2e.mjs && node scripts/check-pc-bridge.mjs && node scripts/check-pc-next-route.mjs && node scripts/check-distance-comment-gate.mjs && node scripts/check-pre-submit-checkpoint.mjs && node scripts/check-distance-stale-invalidation.mjs && node scripts/check-phase8-roundtrip.mjs",
+    "check:bridge-architecture": "node scripts/check-bridge-wayfarer-map-adapter.mjs && node scripts/check-wayfarer-acquisition-engine.mjs && node scripts/check-wm1-live-verifier.mjs && node scripts/check-wm2-polygon-controller.mjs && node scripts/check-wm2-polygon-ui.mjs && node scripts/check-wm3-observation-zone.mjs && node scripts/check-wm3-observe-controller.mjs && node scripts/check-wm3b-tab-link.mjs && node scripts/check-wm3b-creative-link.mjs && node scripts/check-bridge-wayfarer-display-owner.mjs && node scripts/check-bridge-wayfarer-deck-compat.mjs && node scripts/check-bridge-poi-parser.mjs && node scripts/check-bridge-poi-classifier.mjs && node scripts/check-bridge-display-ownership.mjs && node scripts/check-bridge-v1-export.mjs && node scripts/check-bridge-poi-diagnostics.mjs && node scripts/check-bridge-poi-engine-regression.mjs && node scripts/check-bridge-poi-engine-e2e.mjs && node scripts/check-pc-bridge.mjs && node scripts/check-pc-next-route.mjs && node scripts/check-distance-comment-gate.mjs && node scripts/check-pre-submit-checkpoint.mjs && node scripts/check-distance-stale-invalidation.mjs && node scripts/check-phase8-roundtrip.mjs",
     "check:bridge-pc": "npm run check:bridge-architecture",
     "build:bridge-pc": "node scripts/build-pc-bridge.mjs",
     "check:bridge-3device-e2e": "node scripts/check-bridge-three-device-e2e.mjs",
@@ -29,7 +29,8 @@
     "check:wm1-live": "node scripts/check-wm1-live-verifier.mjs",
     "check:wm2-polygon": "node scripts/check-wm2-polygon-controller.mjs && node scripts/check-wm2-polygon-ui.mjs",
     "check:wm3-observe": "node scripts/check-wm3-observation-zone.mjs && node scripts/check-wm3-observe-controller.mjs",
-    "check:wm3b-tab-link": "node scripts/check-wm3b-tab-link.mjs"
+    "check:wm3b-tab-link": "node scripts/check-wm3b-tab-link.mjs",
+    "check:wm3b-creative-link": "node scripts/check-wm3b-creative-link.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.55.0",
