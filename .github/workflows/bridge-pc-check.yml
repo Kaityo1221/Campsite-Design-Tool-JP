@@ -96,6 +96,14 @@ jobs:
       - name: Final Bridge architecture check
         run: npm run check:bridge-architecture
 
+      - name: Upload WM-1 PC Bridge test package
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: wm1-bridge-pc-test
+          path: downloads/campsite-bridge-pc-0.1.0.zip
+          if-no-files-found: error
+
       - name: POI v1.1 regression locks
         run: |
           node scripts/check-bridge-kwajalein-regression.mjs
