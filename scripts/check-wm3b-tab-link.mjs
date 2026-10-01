@@ -9,6 +9,9 @@ assert.ok(source.includes('🧪 Bridge '));
 assert.ok(source.includes('/ 接続待受中'));
 assert.ok(source.includes('/ PING受信'));
 assert.ok(source.includes('/ PONG送信済み'));
+assert.ok(source.includes('CAMPSITE_EXTENSION_TO_WAYFARER_MAIN_V1'));
+assert.ok(source.includes('CAMPSITE_WAYFARER_MAIN_TO_EXTENSION_V1'));
+assert.ok(source.includes('relaySource(relayId)'));
 
 const bus = [];
 class FakeBroadcastChannel {
