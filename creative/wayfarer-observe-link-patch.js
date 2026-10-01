@@ -12,6 +12,8 @@
     const PONG_TYPE = 'CAMPSITE_WAYFARER_OBSERVE_PONG_V1';
     const OBSERVE_REQUEST_TYPE = 'CAMPSITE_WAYFARER_OBSERVE_REQUEST_V1';
     const OBSERVE_ACCEPTED_TYPE = 'CAMPSITE_WAYFARER_OBSERVE_ACCEPTED_V1';
+    const RELAY_FROM_MAIN_TYPE = 'CAMPSITE_CREATIVE_MAIN_TO_EXTENSION_V1';
+    const RELAY_TO_MAIN_TYPE = 'CAMPSITE_EXTENSION_TO_CREATIVE_MAIN_V1';
     const CONNECT_TIMEOUT_MS = 4200;
 
     let wayfarerWindow = null;
@@ -74,27 +76,27 @@
 
     function openWayfarer(project) {
       syncProject(project);
-      let popup = null;
-      try {
-        popup = window.open(WAYFARER_URL, WINDOW_NAME);
-      } catch (_) {}
-      if (!popup) {
-        setState({
-          status: 'error',
-          connected: false,
-          message: 'Wayfarer Mapを開けませんでした。ポップアップを許可して再試行してください。'
-        });
-        return null;
-      }
-      wayfarerWindow = popup;
-      try { popup.focus(); } catch (_) {}
+      wayfarerWindow = null;
       setState({
         status: 'waiting',
         connected: false,
         duplicateMapTabs: false,
-        message: 'Wayfarer Mapでログインし、Map画面が表示されたらCreative Modeへ戻って「接続確認」を押してください。'
+        message: '既に開いているWayfarer Map 1タブを使用します。Wayfarer Mapを1タブだけ開いた状態で「接続確認」を押してください。'
       });
-      return popup;
+      return null;
+    }
+
+    function postToWayfarer(message) {
+      try {
+        window.postMessage({
+          type: RELAY_FROM_MAIN_TYPE,
+          relayId: String(message?.requestId || ''),
+          payload: message
+        }, location.origin);
+        return true;
+      } catch (_) {
+        return false;
+      }
     }
 
     function clearPending() {
@@ -114,16 +116,6 @@
 
     function checkConnection(project) {
       syncProject(project);
-      if (!wayfarerWindow) {
-        return Promise.resolve(failConnection('先に「Wayfarer Mapを開く」から観察用タブを開いてください。'));
-      }
-      try {
-        if (wayfarerWindow.closed) {
-          wayfarerWindow = null;
-          return Promise.resolve(failConnection('観察用のWayfarer Mapが閉じています。もう一度開いてください。'));
-        }
-      } catch (_) {}
-
       clearPending();
       const requestId = createId('creative-wayfarer');
       pendingRequestId = requestId;
@@ -148,17 +140,11 @@
 
         window.__campsiteWayfarerObserveResolve = finish;
 
-        let sent = false;
-        for (const origin of WAYFARER_ORIGINS) {
-          try {
-            wayfarerWindow.postMessage({
-              type: PING_TYPE,
-              requestId,
-              sentAt: new Date().toISOString()
-            }, origin);
-            sent = true;
-          } catch (_) {}
-        }
+        const sent = postToWayfarer({
+          type: PING_TYPE,
+          requestId,
+          sentAt: new Date().toISOString()
+        });
         if (!sent) {
           finish(failConnection('Wayfarer Mapへ接続確認を送信できませんでした。'));
         }
@@ -198,16 +184,6 @@
       if (!linkState.connected || linkState.duplicateMapTabs) {
         return Promise.resolve(failObservation('先にWayfarer Mapとの接続確認を完了してください。'));
       }
-      if (!wayfarerWindow) {
-        return Promise.resolve(failObservation('観察用のWayfarer Mapを確認できませんでした。'));
-      }
-      try {
-        if (wayfarerWindow.closed) {
-          wayfarerWindow = null;
-          return Promise.resolve(failObservation('観察用のWayfarer Mapが閉じています。もう一度開いてください。'));
-        }
-      } catch (_) {}
-
       const polygon = normalizeProjectPolygon(project);
       if (!polygon.length) {
         return Promise.resolve(failObservation('Creative Modeの設計範囲を確認できませんでした。'));
@@ -228,18 +204,12 @@
           resolve(failObservation('Wayfarerが設計範囲を受信したことを確認できませんでした。'));
         }, CONNECT_TIMEOUT_MS);
 
-        let sent = false;
-        for (const origin of WAYFARER_ORIGINS) {
-          try {
-            wayfarerWindow.postMessage({
-              type: OBSERVE_REQUEST_TYPE,
-              requestId,
-              sentAt: new Date().toISOString(),
-              polygon
-            }, origin);
-            sent = true;
-          } catch (_) {}
-        }
+        const sent = postToWayfarer({
+          type: OBSERVE_REQUEST_TYPE,
+          requestId,
+          sentAt: new Date().toISOString(),
+          polygon
+        });
         if (!sent) {
           resolve(failObservation('Wayfarerへ設計範囲を送信できませんでした。'));
         }
@@ -247,11 +217,24 @@
     }
 
     function handlePong(event) {
-      if (!WAYFARER_ORIGINS.has(event.origin)) return;
-      if (wayfarerWindow && event.source !== wayfarerWindow) return;
-      const data = event.data || {};
+      let data = event.data || {};
+      let relayedId = '';
+      if (event.source === window && event.origin === location.origin && data.type === RELAY_TO_MAIN_TYPE) {
+        relayedId = String(data.relayId || '');
+        data = data.payload && typeof data.payload === 'object' ? data.payload : {};
+        if (!pendingRequestId || relayedId !== pendingRequestId) return;
+        if (data.relayError) {
+          const finish = window.__campsiteWayfarerObserveResolve;
+          const next = failConnection(String(data.relayError));
+          if (typeof finish === 'function') finish(next);
+          return;
+        }
+      } else {
+        if (!WAYFARER_ORIGINS.has(event.origin)) return;
+        if (wayfarerWindow && event.source !== wayfarerWindow) return;
+        if (!pendingRequestId || String(data.requestId || '') !== pendingRequestId) return;
+      }
       if (data.type !== PONG_TYPE) return;
-      if (!pendingRequestId || String(data.requestId || '') !== pendingRequestId) return;
 
       const finish = window.__campsiteWayfarerObserveResolve;
       const mapTabCount = Number(data.mapTabCount || 0);
@@ -306,11 +289,24 @@
     }
 
     function handleObserveAccepted(event) {
-      if (!WAYFARER_ORIGINS.has(event.origin)) return;
-      if (wayfarerWindow && event.source !== wayfarerWindow) return;
-      const data = event.data || {};
+      let data = event.data || {};
+      let relayedId = '';
+      if (event.source === window && event.origin === location.origin && data.type === RELAY_TO_MAIN_TYPE) {
+        relayedId = String(data.relayId || '');
+        data = data.payload && typeof data.payload === 'object' ? data.payload : {};
+        if (!pendingObserveRequestId || relayedId !== pendingObserveRequestId) return;
+        if (data.relayError) {
+          const resolve = pendingObserveResolve;
+          const next = failObservation(String(data.relayError));
+          if (typeof resolve === 'function') resolve(next);
+          return;
+        }
+      } else {
+        if (!WAYFARER_ORIGINS.has(event.origin)) return;
+        if (wayfarerWindow && event.source !== wayfarerWindow) return;
+        if (!pendingObserveRequestId || String(data.requestId || '') !== pendingObserveRequestId) return;
+      }
       if (data.type !== OBSERVE_ACCEPTED_TYPE) return;
-      if (!pendingObserveRequestId || String(data.requestId || '') !== pendingObserveRequestId) return;
 
       const resolve = pendingObserveResolve;
       const accepted = data.accepted === true;
