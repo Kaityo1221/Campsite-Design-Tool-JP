@@ -26,7 +26,9 @@
         "poi-diagnostics.js",
         "bridge-v1-exporter.js",
         "page-collector.js",
-        "wm1-live-verifier.js"
+        "wm1-live-verifier.js",
+        "wayfarer-observation-zone.js",
+        "wm3-observe-controller.js"
       ],
       "run_at": "document_idle",
       "world": "MAIN"
