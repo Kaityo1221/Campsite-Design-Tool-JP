@@ -6,8 +6,11 @@
   const TO_WAYFARER = 'CAMPSITE_RELAY_TO_WAYFARER_ISOLATED_V1';
   const WAYFARER_RESPONSE = 'CAMPSITE_WAYFARER_RELAY_RESPONSE_V1';
   const TO_CREATIVE = 'CAMPSITE_RELAY_TO_CREATIVE_ISOLATED_V1';
+  const OBSERVE_ACCEPTED_TYPE = 'CAMPSITE_WAYFARER_OBSERVE_ACCEPTED_V1';
+  const OBSERVE_RESULT_TYPE = 'CAMPSITE_WAYFARER_OBSERVE_RESULT_V1';
   const FRESH_MS = 5000;
   const ROUTE_TTL_MS = 15000;
+  const OBSERVE_ROUTE_TTL_MS = 120000;
 
   const wayfarerTabs = new Map();
   const routes = new Map();
@@ -116,9 +119,25 @@
       const route = routes.get(relayId);
       const tabId = sender.tab?.id;
       if (!route || !Number.isInteger(tabId) || tabId !== route.wayfarerTabId || !isWayfarerUrl(sender.url)) return false;
-      routes.delete(relayId);
-      deliverToCreative(route.creativeTabId, relayId, data.payload || {});
-      sendResponse?.({ ok:true });
+
+      const payload = data.payload || {};
+      const keepForObservationResult =
+        payload.type === OBSERVE_ACCEPTED_TYPE &&
+        payload.accepted === true;
+
+      if (keepForObservationResult) {
+        route.expiresAt = now() + OBSERVE_ROUTE_TTL_MS;
+        routes.set(relayId, route);
+      } else {
+        routes.delete(relayId);
+      }
+
+      deliverToCreative(route.creativeTabId, relayId, payload);
+      sendResponse?.({
+        ok:true,
+        retained:keepForObservationResult,
+        final:payload.type === OBSERVE_RESULT_TYPE || !keepForObservationResult
+      });
       return false;
     }
 
