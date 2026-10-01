@@ -10,6 +10,7 @@ const networkRecovery = fs.readFileSync('dist/bridge-shortcut/1.0.0/runtime.part
 const iphonePolicy = fs.readFileSync('dist/bridge-shortcut/1.0.0/runtime.part-09.iphone-wfmm-color-policy.js', 'utf8');
 const displayOwner = fs.readFileSync('js/bridge-wayfarer-display-owner.js', 'utf8');
 const deckCompat = fs.readFileSync('js/bridge-wayfarer-deck-compat.js', 'utf8');
+const acquisition = fs.readFileSync('bridge-pc/wayfarer-acquisition-engine.js', 'utf8');
 const collector = fs.readFileSync('bridge-pc/page-collector.js', 'utf8');
 const parser = fs.readFileSync('bridge-pc/poi-parser.js', 'utf8');
 const classifier = fs.readFileSync('bridge-pc/poi-classifier.js', 'utf8');
@@ -29,6 +30,7 @@ assert.deepEqual(mainEntry.js, [
   'wayfarer-map-adapter.js',
   'wayfarer-display-owner.js',
   'wayfarer-deck-compat.js',
+  'wayfarer-acquisition-engine.js',
   'poi-parser.js',
   'poi-classifier.js',
   'poi-reference-layer.js',
@@ -41,6 +43,7 @@ assert.ok(!mainEntry.js.includes('wayfarer-poi-colors.js'), 'PC must never load 
 const runtimeSources = {
   displayOwner,
   deckCompat,
+  acquisition,
   collector,
   parser,
   classifier,
