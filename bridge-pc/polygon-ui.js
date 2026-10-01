@@ -24,6 +24,88 @@
     instruction: ''
   };
   let draftPrompted = false;
+  const hiddenWayfarerControls = new Map();
+
+  function visibleElement(element) {
+    if (!element?.getBoundingClientRect) return false;
+    const rect = element.getBoundingClientRect();
+    if (rect.width <= 1 || rect.height <= 1 || rect.bottom <= 0 || rect.right <= 0) return false;
+    const style = window.getComputedStyle?.(element);
+    return style?.display !== 'none' && style?.visibility !== 'hidden';
+  }
+
+  function compactControlShell(element) {
+    if (!element?.getBoundingClientRect) return element;
+    let best = element;
+    let node = element.parentElement;
+    for (let depth = 0; depth < 4 && node; depth += 1, node = node.parentElement) {
+      const rect = node.getBoundingClientRect?.();
+      if (!rect) break;
+      if (rect.width > 680 || rect.height > 90) break;
+      if (rect.width >= 80 && rect.height >= 24 && rect.top < 340) best = node;
+    }
+    return best;
+  }
+
+  function findWayfarerDrawingObstructions() {
+    const found = [];
+
+    const searchInput = Array.from(document.querySelectorAll('input')).find(input => {
+      const placeholder = String(input.getAttribute?.('placeholder') || '').trim();
+      return visibleElement(input) && /位置を検索|search/i.test(placeholder);
+    });
+    if (searchInput) found.push(compactControlShell(searchInput));
+
+    const categoryLabels = new Set([
+      'ポケストップ',
+      'ジム',
+      'パワースポット',
+      'PokéStop',
+      'PokeStop',
+      'Gym',
+      'Power Spot',
+      'PowerSpot'
+    ]);
+    for (const element of document.querySelectorAll('button,[role="button"]')) {
+      if (!visibleElement(element)) continue;
+      const text = String(element.textContent || '').replace(/\s+/g, ' ').trim();
+      if (!categoryLabels.has(text)) continue;
+      found.push(element);
+    }
+
+    return [...new Set(found.filter(Boolean))];
+  }
+
+  function hideWayfarerControl(element) {
+    if (!element || hiddenWayfarerControls.has(element)) return;
+    hiddenWayfarerControls.set(element, {
+      visibility: element.style.visibility,
+      pointerEvents: element.style.pointerEvents
+    });
+    element.dataset.campsiteWm2Hidden = 'true';
+    element.style.visibility = 'hidden';
+    element.style.pointerEvents = 'none';
+  }
+
+  function restoreWayfarerDrawingControls() {
+    for (const [element, previous] of hiddenWayfarerControls.entries()) {
+      try {
+        element.style.visibility = previous.visibility;
+        element.style.pointerEvents = previous.pointerEvents;
+        delete element.dataset.campsiteWm2Hidden;
+      } catch (_) {}
+    }
+    hiddenWayfarerControls.clear();
+  }
+
+  function syncWayfarerDrawingControls() {
+    const drawing = state.active === true && state.completed !== true;
+    if (!drawing) {
+      restoreWayfarerDrawingControls();
+      return;
+    }
+    findWayfarerDrawingObstructions().forEach(hideWayfarerControl);
+  }
 
   function mapHost() {
     return document.querySelector('app-wf-base-map');
@@ -147,6 +229,7 @@
   function render() {
     const map = mapHost();
     if (!map) {
+      restoreWayfarerDrawingControls();
       if (host) host.style.display = 'none';
       if (crosshair) crosshair.hidden = true;
       return;
@@ -184,6 +267,7 @@
       complete.textContent = state.completed ? '確定済み' : '範囲を確定';
     }
 
+    syncWayfarerDrawingControls();
     positionCrosshair();
     askResumeDraft();
   }
@@ -209,6 +293,8 @@
 
   window.CampsiteWm2PolygonUi = Object.freeze({
     version: VERSION,
-    query() { send('query-state'); }
+    query() { send('query-state'); },
+    syncWayfarerDrawingControls,
+    restoreWayfarerDrawingControls
   });
 })();
