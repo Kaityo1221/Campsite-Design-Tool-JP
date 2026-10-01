@@ -18,6 +18,8 @@ const referenceLayer = fs.readFileSync('bridge-pc/poi-reference-layer.js', 'utf8
 const diagnostics = fs.readFileSync('bridge-pc/poi-diagnostics.js', 'utf8');
 const exporter = fs.readFileSync('bridge-pc/bridge-v1-exporter.js', 'utf8');
 const wm1LiveVerifier = fs.readFileSync('bridge-pc/wm1-live-verifier.js', 'utf8');
+const wm2PolygonController = fs.readFileSync('bridge-pc/wayfarer-polygon-controller.js', 'utf8');
+const wm2PolygonUi = fs.readFileSync('bridge-pc/polygon-ui.js', 'utf8');
 
 assert.equal(
   fs.existsSync('js/bridge-wayfarer-poi-colors.js'),
@@ -31,6 +33,7 @@ assert.deepEqual(mainEntry.js, [
   'wayfarer-map-adapter.js',
   'wayfarer-display-owner.js',
   'wayfarer-deck-compat.js',
+  'wayfarer-polygon-controller.js',
   'wayfarer-acquisition-engine.js',
   'poi-parser.js',
   'poi-classifier.js',
@@ -41,6 +44,11 @@ assert.deepEqual(mainEntry.js, [
   'wm1-live-verifier.js'
 ], 'PC MAIN-world architecture changed');
 assert.ok(!mainEntry.js.includes('wayfarer-poi-colors.js'), 'PC must never load a Bridge POI renderer');
+const isolatedEntry = manifest.content_scripts?.find(entry => entry.world === 'ISOLATED');
+assert.ok(isolatedEntry?.js?.includes('polygon-ui.js'), 'WM-2 polygon UI must stay isolated from the MAIN data/controller world');
+assert.ok(wm2PolygonController.includes('maps.Polygon'), 'WM-2 may render only the project polygon geometry on Wayfarer');
+assert.ok(!wm2PolygonController.includes('gameEntity'), 'WM-2 polygon controller must not become a POI renderer');
+assert.ok(!wm2PolygonUi.includes('gameEntity'), 'WM-2 polygon UI must not render POIs');
 
 const runtimeSources = {
   displayOwner,
@@ -52,7 +60,8 @@ const runtimeSources = {
   referenceLayer,
   diagnostics,
   exporter,
-  wm1LiveVerifier
+  wm1LiveVerifier,
+  wm2PolygonController
 };
 const forbiddenVisualTokens = [
   'CampsiteBridgePoiColors',
@@ -99,4 +108,4 @@ assert.ok(iphonePolicy.includes('bridgeColors: false'), 'iPhone Bridge colors mu
 assert.ok(iphonePolicy.includes('legacyDomScanning: false'), 'Legacy iPhone DOM scanning must stay disabled');
 assert.ok(iphonePolicy.includes('legacyCanvasSampling: false'), 'Legacy iPhone canvas sampling must stay disabled');
 
-console.log('Bridge display ownership architecture: Wayfarer/WFMM only, Bridge data-only: OK');
+console.log('Bridge display ownership architecture: POIs stay Wayfarer/WFMM; WM-2 project geometry overlay allowed: OK');
