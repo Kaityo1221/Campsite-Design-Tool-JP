@@ -11,6 +11,7 @@ on:
       - 'docs/bridge-poi-engine-spec-v1.md'
       - 'scripts/build-pc-bridge.mjs'
       - 'scripts/check-bridge-wayfarer-map-adapter.mjs'
+      - 'scripts/check-wayfarer-acquisition-engine.mjs'
       - 'scripts/check-bridge-wayfarer-display-owner.mjs'
       - 'scripts/check-bridge-wayfarer-deck-compat.mjs'
       - 'scripts/check-bridge-poi-parser.mjs'
@@ -47,6 +48,7 @@ on:
       - 'docs/bridge-poi-engine-spec-v1.md'
       - 'scripts/build-pc-bridge.mjs'
       - 'scripts/check-bridge-wayfarer-map-adapter.mjs'
+      - 'scripts/check-wayfarer-acquisition-engine.mjs'
       - 'scripts/check-bridge-wayfarer-display-owner.mjs'
       - 'scripts/check-bridge-wayfarer-deck-compat.mjs'
       - 'scripts/check-bridge-poi-parser.mjs'
@@ -100,6 +102,7 @@ jobs:
 
       - name: Syntax check
         run: |
+          node --check bridge-pc/wayfarer-acquisition-engine.js
           node --check bridge-pc/poi-parser.js
           node --check bridge-pc/poi-classifier.js
           node --check bridge-pc/poi-reference-layer.js
@@ -115,6 +118,7 @@ jobs:
           node --check js/bridge-next-flow.js
           node --check scripts/build-pc-bridge.mjs
           node --check scripts/check-bridge-wayfarer-map-adapter.mjs
+          node --check scripts/check-wayfarer-acquisition-engine.mjs
           node --check scripts/check-bridge-wayfarer-display-owner.mjs
           node --check scripts/check-bridge-wayfarer-deck-compat.mjs
           node --check scripts/check-bridge-poi-parser.mjs
