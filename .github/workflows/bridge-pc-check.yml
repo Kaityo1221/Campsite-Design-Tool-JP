@@ -18,6 +18,7 @@ on:
       - 'scripts/check-wm3-observation-zone.mjs'
       - 'scripts/check-wm3-observe-controller.mjs'
       - 'scripts/check-wm3b-tab-link.mjs'
+      - 'scripts/check-wm3b-creative-link.mjs'
       - 'scripts/check-bridge-wayfarer-display-owner.mjs'
       - 'scripts/check-bridge-wayfarer-deck-compat.mjs'
       - 'scripts/check-bridge-poi-parser.mjs'
@@ -44,6 +45,7 @@ on:
       - 'bridge-gateway.html'
       - 'creative/index.html'
       - 'creative/bridge-project-patch.js'
+      - 'creative/wayfarer-observe-link-patch.js'
       - 'package.json'
       - '.github/workflows/bridge-pc-check.yml'
   pull_request:
@@ -61,6 +63,7 @@ on:
       - 'scripts/check-wm3-observation-zone.mjs'
       - 'scripts/check-wm3-observe-controller.mjs'
       - 'scripts/check-wm3b-tab-link.mjs'
+      - 'scripts/check-wm3b-creative-link.mjs'
       - 'scripts/check-bridge-wayfarer-display-owner.mjs'
       - 'scripts/check-bridge-wayfarer-deck-compat.mjs'
       - 'scripts/check-bridge-poi-parser.mjs'
@@ -87,6 +90,7 @@ on:
       - 'bridge-gateway.html'
       - 'creative/index.html'
       - 'creative/bridge-project-patch.js'
+      - 'creative/wayfarer-observe-link-patch.js'
       - 'package.json'
       - '.github/workflows/bridge-pc-check.yml'
   workflow_dispatch:
@@ -106,11 +110,11 @@ jobs:
       - name: Final Bridge architecture check
         run: npm run check:bridge-architecture
 
-      - name: Upload WM-3B-0 PC Bridge test package
+      - name: Upload WM-3B-1 PC Bridge test package
         if: ${{ github.event_name == 'pull_request' }}
         uses: actions/upload-artifact@v4
         with:
-          name: wm3b0-bridge-pc-test
+          name: wm3b1-bridge-pc-test
           path: downloads/campsite-bridge-pc-0.1.0.zip
           if-no-files-found: error
 
@@ -151,6 +155,7 @@ jobs:
           node --check scripts/check-wm3-observation-zone.mjs
           node --check scripts/check-wm3-observe-controller.mjs
           node --check scripts/check-wm3b-tab-link.mjs
+          node --check scripts/check-wm3b-creative-link.mjs
           node --check scripts/check-bridge-wayfarer-display-owner.mjs
           node --check scripts/check-bridge-wayfarer-deck-compat.mjs
           node --check scripts/check-bridge-poi-parser.mjs
