@@ -53,8 +53,8 @@
       const state = linkState.status;
       view.status.dataset.state = state;
       view.status.textContent = linkState.message || '未接続';
-      if (view.check) view.check.disabled = state === 'checking' || state === 'sending';
-      if (view.open) view.open.disabled = state === 'checking' || state === 'sending';
+      if (view.check) view.check.disabled = state === 'checking' || state === 'sending' || state === 'observing';
+      if (view.open) view.open.disabled = state === 'checking' || state === 'sending' || state === 'observing';
       if (view.observe) view.observe.disabled = !linkState.connected || state === 'checking' || state === 'sending' || state === 'observing';
     }
 
