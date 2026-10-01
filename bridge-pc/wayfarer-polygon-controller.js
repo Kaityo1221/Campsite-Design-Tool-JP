@@ -461,7 +461,7 @@
     active = false;
     removeMapClickListener();
     clearOverlays();
-    dispatchState({ message: '範囲を確定しました。Wayfarer通常表示に戻りました。' });
+    dispatchState({ message: '範囲を確定しました。必要に応じて通常表示に戻れます。' });
     return true;
   }
 
