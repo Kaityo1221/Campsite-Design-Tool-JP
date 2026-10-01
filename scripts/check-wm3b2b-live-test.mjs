@@ -29,7 +29,7 @@ for (const token of [
   "CAMPSITE_WAYFARER_OBSERVE_ACCEPTED_V1",
   "CAMPSITE_WAYFARER_OBSERVE_RESULT_V1",
   "CampsiteWayfarerObserve",
-  "Wayfarerで観察を開始しました。",
+  "Wayfarerで観察中です…",
   "Production Creative未変更"
 ]) {
   assert.ok(source.includes(token), 'missing token: ' + token);
