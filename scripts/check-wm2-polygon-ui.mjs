@@ -19,5 +19,12 @@ assert.ok(source.includes('campsite-wm2-crosshair'));
 assert.ok(source.includes("state.mode === 'mobile'"));
 assert.ok(source.includes('state.selfIntersects'));
 assert.ok(source.includes('state.canComplete'));
+assert.ok(source.includes('findWayfarerDrawingObstructions'));
+assert.ok(source.includes('位置を検索'));
+assert.ok(source.includes('ポケストップ'));
+assert.ok(source.includes('パワースポット'));
+assert.ok(source.includes("state.active === true && state.completed !== true"));
+assert.ok(source.includes("element.style.visibility = 'hidden'"));
+assert.ok(source.includes('restoreWayfarerDrawingControls'));
 
 console.log('WM-2 Wayfarer polygon UI contract: OK');
