@@ -31,7 +31,7 @@ const fakeWindow = {
       assert.deepEqual(input, expectedPolygon);
       assert.equal(pois.length, 1);
       return {
-        polygon,
+        polygon: input,
         zones:{ interior:[{guid:'a'}], reference100:[{guid:'b'}], reserve200:[{guid:'c'}] },
         counts:{
           interior:{pokestop:1,gym:0,activePowerSpot:0,inactivePowerSpot:0,total:1},
