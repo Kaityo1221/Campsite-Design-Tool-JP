@@ -19,6 +19,7 @@ on:
       - 'scripts/check-wm3-observe-controller.mjs'
       - 'scripts/check-wm3b-tab-link.mjs'
       - 'scripts/check-wm3b-creative-link.mjs'
+      - 'scripts/check-wm3b2b-live-test.mjs'
       - 'scripts/check-bridge-wayfarer-display-owner.mjs'
       - 'scripts/check-bridge-wayfarer-deck-compat.mjs'
       - 'scripts/check-bridge-poi-parser.mjs'
@@ -64,6 +65,7 @@ on:
       - 'scripts/check-wm3-observe-controller.mjs'
       - 'scripts/check-wm3b-tab-link.mjs'
       - 'scripts/check-wm3b-creative-link.mjs'
+      - 'scripts/check-wm3b2b-live-test.mjs'
       - 'scripts/check-bridge-wayfarer-display-owner.mjs'
       - 'scripts/check-bridge-wayfarer-deck-compat.mjs'
       - 'scripts/check-bridge-poi-parser.mjs'
@@ -156,6 +158,8 @@ jobs:
           node --check scripts/check-wm3-observe-controller.mjs
           node --check scripts/check-wm3b-tab-link.mjs
           node --check scripts/check-wm3b-creative-link.mjs
+          node --check scripts/check-wm3b2b-live-test.mjs
+          node --check bridge-pc/creative-wm3b2b-test-injector.js
           node --check scripts/check-bridge-wayfarer-display-owner.mjs
           node --check scripts/check-bridge-wayfarer-deck-compat.mjs
           node --check scripts/check-bridge-poi-parser.mjs
