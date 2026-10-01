@@ -39,7 +39,7 @@ assert.ok(output.includes('postToWayfarer'));
 assert.ok(!output.includes("window.open(WAYFARER_URL, WINDOW_NAME)"), 'WM-3B-2 must reuse an existing Wayfarer tab via extension relay');
 assert.ok(output.includes('startObservation'));
 assert.ok(output.includes('normalizeProjectPolygon(project)'));
-assert.ok(output.includes("message: 'Wayfarerで観察を開始しました。'"));
+assert.ok(output.includes("message: 'Wayfarerで観察中です…'"));
 assert.ok(output.includes('この範囲を観察'));
 assert.ok(output.includes('project.wayfarerObservation = observation'));
 assert.ok(output.includes('saveObservationResult'));
