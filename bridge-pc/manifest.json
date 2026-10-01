@@ -6,8 +6,7 @@
   "permissions": [],
   "host_permissions": [
     "https://wayfarer.scopely.com/*",
-    "https://wayfarer.nianticlabs.com/*",
-    "https://kaityo1221.github.io/*"
+    "https://wayfarer.nianticlabs.com/*"
   ],
   "content_scripts": [
     {
