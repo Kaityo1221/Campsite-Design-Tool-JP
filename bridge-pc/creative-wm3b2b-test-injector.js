@@ -13,6 +13,8 @@
   const PONG_TYPE = 'CAMPSITE_WAYFARER_OBSERVE_PONG_V1';
   const OBSERVE_REQUEST_TYPE = 'CAMPSITE_WAYFARER_OBSERVE_REQUEST_V1';
   const OBSERVE_ACCEPTED_TYPE = 'CAMPSITE_WAYFARER_OBSERVE_ACCEPTED_V1';
+  const RELAY_FROM_MAIN_TYPE = 'CAMPSITE_CREATIVE_MAIN_TO_EXTENSION_V1';
+  const RELAY_TO_MAIN_TYPE = 'CAMPSITE_EXTENSION_TO_CREATIVE_MAIN_V1';
   const TIMEOUT_MS = 4500;
 
   if (window.__campsiteWm3b2bCreativeTestInstalled) return;
@@ -89,7 +91,7 @@
     }
     const busy = state.status === 'checking' || state.status === 'sending' || state.status === 'observing';
     if (view.open) view.open.disabled = busy;
-    if (view.check) view.check.disabled = busy || !wayfarerWindow;
+    if (view.check) view.check.disabled = busy;
     if (view.observe) view.observe.disabled = busy || !state.connected || !polygon.length;
   }
 
@@ -119,44 +121,31 @@
     if (!project || !polygon.length) {
       return fail('Bridge ProjectまたはPolygonを確認できませんでした。');
     }
-    let popup = null;
-    try {
-      popup = window.open(WAYFARER_URL, WINDOW_NAME);
-    } catch (_) {}
-    if (!popup) return fail('Wayfarer Mapを開けませんでした。ポップアップを許可してください。');
-    wayfarerWindow = popup;
-    try { popup.focus(); } catch (_) {}
+    wayfarerWindow = null;
     return setState({
       status: 'waiting',
       connected: false,
       duplicateMapTabs: false,
-      message: 'Wayfarer Mapを開きました。Map表示後にCreativeへ戻って「接続確認」を押してください。'
+      message: '既に開いているWayfarer Map 1タブを使用します。Mapを1タブだけ開いた状態で「接続確認」を押してください。'
     });
   }
 
   function postToWayfarer(message) {
-    if (!wayfarerWindow) return false;
-    let sent = false;
-    for (const origin of WAYFARER_ORIGINS) {
-      try {
-        wayfarerWindow.postMessage(message, origin);
-        sent = true;
-      } catch (_) {}
+    try {
+      window.postMessage({
+        type: RELAY_FROM_MAIN_TYPE,
+        relayId: String(message?.requestId || ''),
+        payload: message
+      }, location.origin);
+      return true;
+    } catch (_) {
+      return false;
     }
-    return sent;
   }
 
   function checkConnection() {
     ensureMessageListener();
     syncAndReadProject();
-    if (!wayfarerWindow) return Promise.resolve(fail('先にWayfarer Mapを開いてください。'));
-    try {
-      if (wayfarerWindow.closed) {
-        wayfarerWindow = null;
-        return Promise.resolve(fail('Wayfarer Mapが閉じています。もう一度開いてください。'));
-      }
-    } catch (_) {}
-
     clearPending();
     const requestId = createId('wm3b2b-connect');
     setState({ status:'checking', connected:false, message:'Wayfarer Mapへ接続確認中…' });
@@ -210,10 +199,27 @@
   }
 
   function onMessage(event) {
-    if (!WAYFARER_ORIGINS.has(event.origin)) return;
-    if (wayfarerWindow && event.source !== wayfarerWindow) return;
-    const data = event.data || {};
-    if (!pending || String(data.requestId || '') !== pending.requestId) return;
+    let data = event.data || {};
+
+    if (
+      event.source === window &&
+      event.origin === location.origin &&
+      data.type === RELAY_TO_MAIN_TYPE
+    ) {
+      const relayId = String(data.relayId || '');
+      if (!pending || relayId !== pending.requestId) return;
+      data = data.payload && typeof data.payload === 'object' ? data.payload : {};
+      if (data.relayError) {
+        const resolve = pending.resolve;
+        const next = fail(String(data.relayError), pending.kind === 'observe');
+        if (typeof resolve === 'function') resolve(next);
+        return;
+      }
+    } else {
+      if (!WAYFARER_ORIGINS.has(event.origin)) return;
+      if (wayfarerWindow && event.source !== wayfarerWindow) return;
+      if (!pending || String(data.requestId || '') !== pending.requestId) return;
+    }
 
     if (pending.kind === 'connect' && data.type === PONG_TYPE) {
       const resolve = pending.resolve;
@@ -308,7 +314,7 @@
       '<div id="campsiteWm3b2bTestMeta" style="margin-top:7px;font-size:10px;line-height:1.5;color:#716143"></div>' +
       '<div id="campsiteWm3b2bTestStatus" style="margin-top:8px;padding:9px 10px;border-radius:10px;background:#f0eadf;font-size:11px;line-height:1.55;font-weight:800"></div>' +
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px">' +
-        '<button id="campsiteWm3b2bTestOpen" type="button" style="min-height:40px;border:1px solid #5276a4;border-radius:10px;background:#e9f2ff;color:#24476f;font-weight:900">Wayfarerを開く</button>' +
+        '<button id="campsiteWm3b2bTestOpen" type="button" style="min-height:40px;border:1px solid #5276a4;border-radius:10px;background:#e9f2ff;color:#24476f;font-weight:900">Wayfarer Mapを確認</button>' +
         '<button id="campsiteWm3b2bTestCheck" type="button" style="min-height:40px;border:1px solid #5d7353;border-radius:10px;background:#edf7e8;color:#294227;font-weight:900">接続確認</button>' +
       '</div>' +
       '<button id="campsiteWm3b2bTestObserve" type="button" style="margin-top:7px;width:100%;min-height:42px;border:1px solid #8a6b31;border-radius:10px;background:#ffe9a8;color:#4b3715;font-weight:950">この範囲を観察</button>';
