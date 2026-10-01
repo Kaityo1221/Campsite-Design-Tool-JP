@@ -10,11 +10,16 @@
     const WINDOW_NAME = 'CampsiteWayfarerObserve';
     const PING_TYPE = 'CAMPSITE_WAYFARER_OBSERVE_PING_V1';
     const PONG_TYPE = 'CAMPSITE_WAYFARER_OBSERVE_PONG_V1';
+    const OBSERVE_REQUEST_TYPE = 'CAMPSITE_WAYFARER_OBSERVE_REQUEST_V1';
+    const OBSERVE_ACCEPTED_TYPE = 'CAMPSITE_WAYFARER_OBSERVE_ACCEPTED_V1';
     const CONNECT_TIMEOUT_MS = 4200;
 
     let wayfarerWindow = null;
     let pendingRequestId = '';
     let pendingTimer = null;
+    let pendingObserveRequestId = '';
+    let pendingObserveTimer = null;
+    let pendingObserveResolve = null;
     let linkState = {
       status: 'idle',
       connected: false,
@@ -37,7 +42,8 @@
         overlay: document.getElementById('campsiteWayfarerObserveOverlay'),
         status: document.getElementById('campsiteWayfarerObserveStatus'),
         open: document.getElementById('campsiteWayfarerObserveOpen'),
-        check: document.getElementById('campsiteWayfarerObserveCheck')
+        check: document.getElementById('campsiteWayfarerObserveCheck'),
+        observe: document.getElementById('campsiteWayfarerObserveRun')
       };
     }
 
@@ -47,8 +53,9 @@
       const state = linkState.status;
       view.status.dataset.state = state;
       view.status.textContent = linkState.message || '未接続';
-      if (view.check) view.check.disabled = state === 'checking';
-      if (view.open) view.open.disabled = state === 'checking';
+      if (view.check) view.check.disabled = state === 'checking' || state === 'sending';
+      if (view.open) view.open.disabled = state === 'checking' || state === 'sending';
+      if (view.observe) view.observe.disabled = !linkState.connected || state === 'checking' || state === 'sending' || state === 'observing';
     }
 
     function setState(next) {
@@ -158,6 +165,87 @@
       });
     }
 
+    function normalizeProjectPolygon(project) {
+      const polygon = Array.isArray(project?.polygon) ? project.polygon : [];
+      const normalized = polygon.map(point => {
+        if (!Array.isArray(point) || point.length < 2) return null;
+        const lat = Number(point[0]);
+        const lng = Number(point[1]);
+        return Number.isFinite(lat) && Number.isFinite(lng) ? [lat, lng] : null;
+      }).filter(Boolean);
+      return normalized.length >= 3 && normalized.length <= 30 ? normalized : [];
+    }
+
+    function clearObservePending() {
+      if (pendingObserveTimer) clearTimeout(pendingObserveTimer);
+      pendingObserveTimer = null;
+      pendingObserveRequestId = '';
+      pendingObserveResolve = null;
+    }
+
+    function failObservation(message) {
+      const connected = linkState.connected === true;
+      clearObservePending();
+      return setState({
+        status: 'error',
+        connected,
+        message
+      });
+    }
+
+    function startObservation(project) {
+      syncProject(project);
+      if (!linkState.connected || linkState.duplicateMapTabs) {
+        return Promise.resolve(failObservation('先にWayfarer Mapとの接続確認を完了してください。'));
+      }
+      if (!wayfarerWindow) {
+        return Promise.resolve(failObservation('観察用のWayfarer Mapを確認できませんでした。'));
+      }
+      try {
+        if (wayfarerWindow.closed) {
+          wayfarerWindow = null;
+          return Promise.resolve(failObservation('観察用のWayfarer Mapが閉じています。もう一度開いてください。'));
+        }
+      } catch (_) {}
+
+      const polygon = normalizeProjectPolygon(project);
+      if (!polygon.length) {
+        return Promise.resolve(failObservation('Creative Modeの設計範囲を確認できませんでした。'));
+      }
+
+      clearObservePending();
+      const requestId = createId('creative-observe');
+      pendingObserveRequestId = requestId;
+      setState({
+        status: 'sending',
+        connected: true,
+        message: '最新の設計範囲をWayfarerへ送信しています…'
+      });
+
+      return new Promise(resolve => {
+        pendingObserveResolve = resolve;
+        pendingObserveTimer = setTimeout(() => {
+          resolve(failObservation('Wayfarerが設計範囲を受信したことを確認できませんでした。'));
+        }, CONNECT_TIMEOUT_MS);
+
+        let sent = false;
+        for (const origin of WAYFARER_ORIGINS) {
+          try {
+            wayfarerWindow.postMessage({
+              type: OBSERVE_REQUEST_TYPE,
+              requestId,
+              sentAt: new Date().toISOString(),
+              polygon
+            }, origin);
+            sent = true;
+          } catch (_) {}
+        }
+        if (!sent) {
+          resolve(failObservation('Wayfarerへ設計範囲を送信できませんでした。'));
+        }
+      });
+    }
+
     function handlePong(event) {
       if (!WAYFARER_ORIGINS.has(event.origin)) return;
       if (wayfarerWindow && event.source !== wayfarerWindow) return;
@@ -217,6 +305,30 @@
       }
     }
 
+    function handleObserveAccepted(event) {
+      if (!WAYFARER_ORIGINS.has(event.origin)) return;
+      if (wayfarerWindow && event.source !== wayfarerWindow) return;
+      const data = event.data || {};
+      if (data.type !== OBSERVE_ACCEPTED_TYPE) return;
+      if (!pendingObserveRequestId || String(data.requestId || '') !== pendingObserveRequestId) return;
+
+      const resolve = pendingObserveResolve;
+      const accepted = data.accepted === true;
+      let next;
+      if (!accepted) {
+        next = failObservation(String(data.error || data.warning || 'Wayfarerが設計範囲を受け取れませんでした。'));
+      } else {
+        clearObservePending();
+        next = setState({
+          status: 'observing',
+          connected: true,
+          duplicateMapTabs: false,
+          message: 'Wayfarerで観察を開始しました。'
+        });
+      }
+      if (typeof resolve === 'function') resolve(next);
+    }
+
     function installUi(project) {
       if (document.getElementById('campsiteWayfarerObserveButton')) return;
 
@@ -248,6 +360,9 @@
         '<button id="campsiteWayfarerObserveCheck" type="button" style="margin-top:9px;width:100%;min-height:46px;' +
         'border:1px solid #5d7353;border-radius:13px;background:#edf7e8;color:#294227;font:900 13px/1 system-ui">' +
         '接続確認</button>' +
+        '<button id="campsiteWayfarerObserveRun" type="button" style="margin-top:9px;width:100%;min-height:46px;' +
+        'border:1px solid #8a6b31;border-radius:13px;background:#fff1c9;color:#4b3715;font:900 13px/1 system-ui">' +
+        'この範囲を観察</button>' +
         '<button id="campsiteWayfarerObserveClose" type="button" style="margin-top:8px;width:100%;min-height:40px;' +
         'border:0;background:transparent;color:#756a59;font:800 12px/1 system-ui">閉じる</button>' +
         '</div>';
@@ -256,6 +371,7 @@
 
       const openButton = document.getElementById('campsiteWayfarerObserveOpen');
       const checkButton = document.getElementById('campsiteWayfarerObserveCheck');
+      const observeButton = document.getElementById('campsiteWayfarerObserveRun');
       const closeButton = document.getElementById('campsiteWayfarerObserveClose');
 
       button.onclick = () => {
@@ -264,6 +380,7 @@
       };
       openButton.onclick = () => openWayfarer(project);
       checkButton.onclick = () => { void checkConnection(project); };
+      observeButton.onclick = () => { void startObservation(project); };
       closeButton.onclick = () => { overlay.style.display = 'none'; };
       overlay.addEventListener('click', event => {
         if (event.target === overlay) overlay.style.display = 'none';
@@ -273,12 +390,14 @@
     }
 
     window.addEventListener('message', handlePong);
+    window.addEventListener('message', handleObserveAccepted);
 
     window.installCampsiteWayfarerObserveLink = installUi;
     window.CampsiteCreativeWayfarerLink = Object.freeze({
-      version: '0.1.0',
+      version: '0.2.0',
       openWayfarer,
       checkConnection,
+      startObservation,
       getState() { return { ...linkState }; }
     });
   }
