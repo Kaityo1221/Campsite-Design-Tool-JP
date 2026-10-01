@@ -47,5 +47,12 @@ assert.ok(source.includes("z-index:2147483000"), 'TEST panel must stay above Cre
 assert.ok(source.includes("polygon.length >= 3 && polygon.length <= 30"));
 assert.ok(!source.includes("wayfarerObservation ="), 'Live gate must not save observation result yet');
 assert.ok(!source.includes("CAMPSITE_WAYFARER_OBSERVE_RESULT_V1"), 'WM-3B-2C must not leak into live gate');
+assert.ok(source.includes('CAMPSITE_CREATIVE_MAIN_TO_EXTENSION_V1'));
+assert.ok(source.includes('CAMPSITE_EXTENSION_TO_CREATIVE_MAIN_V1'));
+assert.ok(!source.includes('window.open(WAYFARER_URL, WINDOW_NAME)'), 'TEST must not create a second Wayfarer tab');
+assert.ok(background.includes('CAMPSITE_CREATIVE_RELAY_REQUEST_V1'));
+assert.ok(background.includes('tabs.length !== 1'));
+assert.ok(wayfarerRelay.includes('CAMPSITE_EXTENSION_TO_WAYFARER_MAIN_V1'));
+assert.ok(creativeRelay.includes('CAMPSITE_EXTENSION_TO_CREATIVE_MAIN_V1'));
 
 console.log('WM-3B-2 live Creative injector contract: OK');
