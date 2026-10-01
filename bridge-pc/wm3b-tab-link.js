@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '0.1.0';
+  const VERSION = '0.2.0';
   const CHANNEL_NAME = 'campsite-wayfarer-observe-tabs-v1';
   const PING_TYPE = 'CAMPSITE_WAYFARER_OBSERVE_PING_V1';
   const PONG_TYPE = 'CAMPSITE_WAYFARER_OBSERVE_PONG_V1';
