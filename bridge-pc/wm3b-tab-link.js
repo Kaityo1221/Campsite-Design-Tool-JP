@@ -24,6 +24,36 @@
   const TAB_ID = createId('wf-tab');
   const pending = new Map();
   let channel = null;
+  const DIAG_ID = 'campsiteWm3bDiagBadge';
+
+  function ensureDiagnosticBadge() {
+    try {
+      let badge = document.getElementById(DIAG_ID);
+      if (!badge) {
+        badge = document.createElement('div');
+        badge.id = DIAG_ID;
+        badge.style.cssText =
+          'position:fixed;right:12px;bottom:84px;z-index:2147483000;padding:9px 11px;' +
+          'border:2px solid #315f2f;border-radius:12px;background:rgba(238,247,231,.97);' +
+          'color:#244224;font:900 11px/1.35 system-ui;box-shadow:0 6px 18px rgba(0,0,0,.24);' +
+          'pointer-events:none';
+        document.documentElement.appendChild(badge);
+      }
+      badge.textContent = '🧪 Bridge ' + VERSION + ' / 接続待受中';
+      badge.dataset.state = 'listening';
+      return badge;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function setDiagnosticBadge(text, state = '') {
+    const badge = ensureDiagnosticBadge();
+    if (!badge) return;
+    badge.textContent = text;
+    badge.dataset.state = state;
+  }
+
 
   function mapPresent() {
     return Boolean(document.querySelector('app-wf-base-map'));
@@ -218,6 +248,7 @@
   }
 
   async function replyToCreative(event, data) {
+    setDiagnosticBadge('🧪 Bridge ' + VERSION + ' / PING受信', 'ping');
     if (!CREATIVE_ORIGINS.has(event.origin)) return false;
     if (!event.source || typeof event.source.postMessage !== 'function') return false;
 
@@ -242,8 +273,11 @@
         duplicateMapTabs: tabs.duplicateMapTabs,
         warning: duplicateMessage
       }, event.origin);
+      setDiagnosticBadge('🧪 Bridge ' + VERSION + ' / PONG送信済み', 'pong');
+      setTimeout(() => setDiagnosticBadge('🧪 Bridge ' + VERSION + ' / 接続待受中', 'listening'), 1600);
       return true;
     } catch (_) {
+      setDiagnosticBadge('🧪 Bridge ' + VERSION + ' / PONG送信失敗', 'error');
       return false;
     }
   }
@@ -261,6 +295,9 @@
   }
 
   installChannel();
+  ensureDiagnosticBadge();
+  setTimeout(ensureDiagnosticBadge, 800);
+  setTimeout(ensureDiagnosticBadge, 2500);
   window.addEventListener('message', event => {
     void onMessage(event);
   });
@@ -274,6 +311,7 @@
     observeAcceptedType: OBSERVE_ACCEPTED_TYPE,
     tabId: TAB_ID,
     mapPresent,
-    probeMapTabs
+    probeMapTabs,
+    ensureDiagnosticBadge
   });
 })();
