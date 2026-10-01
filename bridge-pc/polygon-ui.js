@@ -14,6 +14,7 @@
   let state = {
     active: false,
     completed: false,
+    paused: false,
     mode: 'pc',
     pointCount: 0,
     maxPoints: 30,
@@ -74,16 +75,51 @@
         continue;
       }
 
-      if (/^(コミュニティ|Community)$/.test(text)) {
+      const label = [
+        text,
+        String(element.getAttribute?.('aria-label') || ''),
+        String(element.getAttribute?.('title') || '')
+      ].join(' ').replace(/\s+/g, ' ').trim();
+
+      if (/(コミュニティ|Community)/i.test(label)) {
         const rect = element.getBoundingClientRect();
         const isMapTopControl =
           rect.top < 340 &&
           rect.left > 180 &&
-          rect.width >= 80 &&
-          rect.width <= 320 &&
-          rect.height <= 90;
+          rect.width >= 70 &&
+          rect.width <= 360 &&
+          rect.height <= 100;
         if (isMapTopControl) found.push(compactControlShell(element));
       }
+    }
+
+    if (!found.some(element => {
+      const text = String(element.textContent || '').replace(/\s+/g, ' ').trim();
+      return /(コミュニティ|Community)/i.test(text);
+    })) {
+      try {
+        const result = document.evaluate(
+          "//*[normalize-space(.)='コミュニティ' or normalize-space(.)='Community']",
+          document,
+          null,
+          XPathResult.ORDERED_NODE_SNAPSHOT_TYPE,
+          null
+        );
+        for (let i = 0; i < Math.min(result.snapshotLength, 24); i += 1) {
+          const element = result.snapshotItem(i);
+          if (!visibleElement(element)) continue;
+          const rect = element.getBoundingClientRect();
+          if (
+            rect.top < 340 &&
+            rect.left > 180 &&
+            rect.width >= 40 &&
+            rect.width <= 360 &&
+            rect.height <= 100
+          ) {
+            found.push(compactControlShell(element));
+          }
+        }
+      } catch (_) {}
     }
 
     return [...new Set(found.filter(Boolean))];
@@ -148,7 +184,7 @@
   }
 
   function askResumeDraft() {
-    if (draftPrompted || !state.draftAvailable || state.active) return;
+    if (draftPrompted || !state.draftAvailable || state.active || state.paused || state.completed) return;
     draftPrompted = true;
     window.setTimeout(() => {
       const resume = window.confirm('前回の作成途中があります。再開しますか？');
@@ -198,6 +234,7 @@
       '<div id="message" class="message" hidden></div>',
       '<div id="done" class="done" hidden>✅ 範囲を確定しました。</div>',
       '<button id="addCenter" class="add" type="button" hidden>＋ 頂点を追加</button>',
+      '<button id="exitDrawing" type="button">← Wayfarer通常表示に戻る</button>',
       '<div class="row">',
       '<button id="undo" type="button">↶ 1つ戻す</button>',
       '<button id="reset" type="button">最初からやり直す</button>',
@@ -208,6 +245,14 @@
     ].join('');
 
     shadow.getElementById('start').addEventListener('click', () => {
+      if (state.completed) {
+        send('edit-completed');
+        return;
+      }
+      if (state.paused && state.draftAvailable) {
+        send('resume-draft');
+        return;
+      }
       if (state.draftAvailable) {
         const resume = window.confirm('前回の作成途中があります。再開しますか？');
         draftPrompted = true;
@@ -218,6 +263,7 @@
     });
 
     shadow.getElementById('addCenter').addEventListener('click', () => send('add-center'));
+    shadow.getElementById('exitDrawing').addEventListener('click', () => send('exit-drawing'));
     shadow.getElementById('undo').addEventListener('click', () => send('undo'));
     shadow.getElementById('reset').addEventListener('click', () => {
       if (!window.confirm('範囲を最初からやり直しますか？')) return;
@@ -264,6 +310,7 @@
     const complete = shadow.getElementById('complete');
 
     start.hidden = state.active === true;
+    start.textContent = state.completed ? '📐 範囲を編集' : state.paused ? '📐 範囲選択を再開' : '📐 範囲を決める';
     activePanel.hidden = state.active !== true;
 
     if (state.active) {

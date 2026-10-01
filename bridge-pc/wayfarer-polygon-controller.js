@@ -14,6 +14,7 @@
   let points = [];
   let active = false;
   let completed = false;
+  let paused = false;
   let currentMap = null;
   let mapClickListener = null;
   let pollTimer = null;
@@ -182,6 +183,7 @@
       storageKey: STORAGE_KEY,
       active,
       completed,
+      paused,
       mode,
       pointCount: points.length,
       maxPoints: MAX_POINTS,
@@ -340,7 +342,8 @@
       removeMapClickListener();
     }
 
-    renderOverlays();
+    if (active) renderOverlays();
+    else clearOverlays();
     return true;
   }
 
@@ -354,6 +357,7 @@
 
   function startNew() {
     active = true;
+    paused = false;
     completed = false;
     points = [];
     clearDraftStorage();
@@ -367,6 +371,7 @@
     const draft = readDraft();
     if (!draft) return startNew();
     active = true;
+    paused = false;
     completed = draft.completed === true;
     points = clonePoints(draft.points);
     draftAvailable = true;
@@ -405,9 +410,35 @@
 
   function reset() {
     active = true;
+    paused = false;
     completed = false;
     points = [];
     clearDraftStorage();
+    bindMap();
+    ensurePolling();
+    dispatchState();
+    return getState();
+  }
+
+  function exitDrawing() {
+    if (!active) return getState();
+    saveDraft();
+    active = false;
+    paused = true;
+    removeMapClickListener();
+    clearOverlays();
+    dispatchState({ message: '範囲の途中経過を保存してWayfarer通常表示に戻りました。' });
+    return getState();
+  }
+
+  function editCompleted() {
+    const draft = readDraft();
+    if (!draft) return startNew();
+    points = clonePoints(draft.points);
+    active = true;
+    paused = false;
+    completed = false;
+    saveDraft();
     bindMap();
     ensurePolling();
     dispatchState();
@@ -425,9 +456,12 @@
       return false;
     }
     completed = true;
+    paused = false;
     saveDraft();
-    bindMap();
-    dispatchState();
+    active = false;
+    removeMapClickListener();
+    clearOverlays();
+    dispatchState({ message: '範囲を確定しました。Wayfarer通常表示に戻りました。' });
     return true;
   }
 
@@ -437,7 +471,10 @@
 
   function queryState() {
     const stored = readDraft();
-    if (!active) draftAvailable = Boolean(stored);
+    if (!active) {
+      draftAvailable = Boolean(stored);
+      if (stored) completed = stored.completed === true;
+    }
     bindMap();
     dispatchState();
     return getState();
@@ -454,6 +491,8 @@
     else if (action === 'undo') undo();
     else if (action === 'reset') reset();
     else if (action === 'complete') complete();
+    else if (action === 'exit-drawing') exitDrawing();
+    else if (action === 'edit-completed') editCompleted();
     else if (action === 'query-state') queryState();
   }
 
@@ -483,6 +522,8 @@
     undo,
     reset,
     complete,
+    exitDrawing,
+    editCompleted,
     queryState
   });
 

@@ -28,5 +28,12 @@ assert.ok(source.includes('isMapTopControl'));
 assert.ok(source.includes("state.active === true && state.completed !== true"));
 assert.ok(source.includes("element.style.visibility = 'hidden'"));
 assert.ok(source.includes('restoreWayfarerDrawingControls'));
+assert.ok(source.includes('← Wayfarer通常表示に戻る'));
+assert.ok(source.includes("'exit-drawing'"));
+assert.ok(source.includes("'edit-completed'"));
+assert.ok(source.includes('📐 範囲選択を再開'));
+assert.ok(source.includes('📐 範囲を編集'));
+assert.ok(source.includes('document.evaluate'));
+assert.ok(source.includes('XPathResult.ORDERED_NODE_SNAPSHOT_TYPE'));
 
 console.log('WM-2 Wayfarer polygon UI contract: OK');
