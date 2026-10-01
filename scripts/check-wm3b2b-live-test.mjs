@@ -8,7 +8,7 @@ const manifest = JSON.parse(fs.readFileSync('bridge-pc/manifest.json', 'utf8'));
 new vm.Script(source, { filename:'bridge-pc/creative-wm3b2b-test-injector.js' });
 
 assert.equal(manifest.name, 'Campsite Bridge - WM-3B-2 TEST');
-assert.ok(manifest.host_permissions.includes('https://kaityo1221.github.io/*'));
+assert.deepEqual([...manifest.host_permissions].sort(), ['https://wayfarer.nianticlabs.com/*','https://wayfarer.scopely.com/*']);
 
 const entry = manifest.content_scripts.find(item =>
   Array.isArray(item.js) && item.js.includes('creative-wm3b2b-test-injector.js')
