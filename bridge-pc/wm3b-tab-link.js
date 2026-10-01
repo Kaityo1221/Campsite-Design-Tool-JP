@@ -1,12 +1,13 @@
 (() => {
   'use strict';
 
-  const VERSION = '0.2.0';
+  const VERSION = '0.3.0';
   const CHANNEL_NAME = 'campsite-wayfarer-observe-tabs-v1';
   const PING_TYPE = 'CAMPSITE_WAYFARER_OBSERVE_PING_V1';
   const PONG_TYPE = 'CAMPSITE_WAYFARER_OBSERVE_PONG_V1';
   const OBSERVE_REQUEST_TYPE = 'CAMPSITE_WAYFARER_OBSERVE_REQUEST_V1';
   const OBSERVE_ACCEPTED_TYPE = 'CAMPSITE_WAYFARER_OBSERVE_ACCEPTED_V1';
+  const OBSERVE_RESULT_TYPE = 'CAMPSITE_WAYFARER_OBSERVE_RESULT_V1';
   const RELAY_TO_MAIN_TYPE = 'CAMPSITE_EXTENSION_TO_WAYFARER_MAIN_V1';
   const RELAY_FROM_MAIN_TYPE = 'CAMPSITE_WAYFARER_MAIN_TO_EXTENSION_V1';
   const CREATIVE_ORIGINS = new Set([
@@ -188,6 +189,20 @@
     }
   }
 
+  function postObserveResult(event, requestId, payload = {}) {
+    try {
+      event.source.postMessage({
+        type: OBSERVE_RESULT_TYPE,
+        requestId,
+        bridgeVersion: VERSION,
+        ...payload
+      }, event.origin);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   async function handleObserveRequest(event, data) {
     if (!CREATIVE_ORIGINS.has(event.origin)) return false;
     if (!event.source || typeof event.source.postMessage !== 'function') return false;
@@ -243,10 +258,26 @@
     });
     if (!acknowledged) return false;
 
-    void api.runPolygon(polygon).catch(error => {
+    setDiagnosticBadge('🧪 Bridge ' + VERSION + ' / 観察中', 'observing');
+    try {
+      const result = await api.runPolygon(polygon);
+      postObserveResult(event, requestId, {
+        ok: true,
+        result
+      });
+      setDiagnosticBadge('🧪 Bridge ' + VERSION + ' / RESULT送信済み', 'result');
+      setTimeout(() => setDiagnosticBadge('🧪 Bridge ' + VERSION + ' / 接続待受中', 'listening'), 1800);
+      return true;
+    } catch (error) {
+      const message = String(error?.message || error || 'Wayfarer観察に失敗しました。');
       console.error('[Campsite Wayfarer Observe] remote polygon observation failed', error);
-    });
-    return true;
+      postObserveResult(event, requestId, {
+        ok: false,
+        error: message
+      });
+      setDiagnosticBadge('🧪 Bridge ' + VERSION + ' / 観察失敗', 'error');
+      return false;
+    }
   }
 
   async function replyToCreative(event, data) {
@@ -346,6 +377,7 @@
     pongType: PONG_TYPE,
     observeRequestType: OBSERVE_REQUEST_TYPE,
     observeAcceptedType: OBSERVE_ACCEPTED_TYPE,
+    observeResultType: OBSERVE_RESULT_TYPE,
     relayToMainType: RELAY_TO_MAIN_TYPE,
     relayFromMainType: RELAY_FROM_MAIN_TYPE,
     tabId: TAB_ID,
