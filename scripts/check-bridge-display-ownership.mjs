@@ -17,6 +17,7 @@ const classifier = fs.readFileSync('bridge-pc/poi-classifier.js', 'utf8');
 const referenceLayer = fs.readFileSync('bridge-pc/poi-reference-layer.js', 'utf8');
 const diagnostics = fs.readFileSync('bridge-pc/poi-diagnostics.js', 'utf8');
 const exporter = fs.readFileSync('bridge-pc/bridge-v1-exporter.js', 'utf8');
+const wm1LiveVerifier = fs.readFileSync('bridge-pc/wm1-live-verifier.js', 'utf8');
 
 assert.equal(
   fs.existsSync('js/bridge-wayfarer-poi-colors.js'),
@@ -36,7 +37,8 @@ assert.deepEqual(mainEntry.js, [
   'poi-reference-layer.js',
   'poi-diagnostics.js',
   'bridge-v1-exporter.js',
-  'page-collector.js'
+  'page-collector.js',
+  'wm1-live-verifier.js'
 ], 'PC MAIN-world architecture changed');
 assert.ok(!mainEntry.js.includes('wayfarer-poi-colors.js'), 'PC must never load a Bridge POI renderer');
 
@@ -49,7 +51,8 @@ const runtimeSources = {
   classifier,
   referenceLayer,
   diagnostics,
-  exporter
+  exporter,
+  wm1LiveVerifier
 };
 const forbiddenVisualTokens = [
   'CampsiteBridgePoiColors',
