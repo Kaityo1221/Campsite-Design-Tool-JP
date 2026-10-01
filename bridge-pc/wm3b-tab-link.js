@@ -7,6 +7,8 @@
   const PONG_TYPE = 'CAMPSITE_WAYFARER_OBSERVE_PONG_V1';
   const OBSERVE_REQUEST_TYPE = 'CAMPSITE_WAYFARER_OBSERVE_REQUEST_V1';
   const OBSERVE_ACCEPTED_TYPE = 'CAMPSITE_WAYFARER_OBSERVE_ACCEPTED_V1';
+  const RELAY_TO_MAIN_TYPE = 'CAMPSITE_EXTENSION_TO_WAYFARER_MAIN_V1';
+  const RELAY_FROM_MAIN_TYPE = 'CAMPSITE_WAYFARER_MAIN_TO_EXTENSION_V1';
   const CREATIVE_ORIGINS = new Set([
     'https://kaityo1221.github.io'
   ]);
@@ -282,9 +284,44 @@
     }
   }
 
+  function relaySource(relayId) {
+    return {
+      postMessage(payload) {
+        window.postMessage({
+          type: RELAY_FROM_MAIN_TYPE,
+          relayId,
+          payload
+        }, location.origin);
+      }
+    };
+  }
+
   async function onMessage(event) {
-    if (!CREATIVE_ORIGINS.has(event.origin)) return;
     const data = event.data || {};
+
+    if (
+      event.source === window &&
+      event.origin === location.origin &&
+      data.type === RELAY_TO_MAIN_TYPE
+    ) {
+      const relayId = String(data.relayId || '');
+      const payload = data.payload && typeof data.payload === 'object' ? data.payload : {};
+      if (!relayId) return;
+      const relayedEvent = {
+        origin: 'https://kaityo1221.github.io',
+        source: relaySource(relayId)
+      };
+      if (payload.type === PING_TYPE) {
+        await replyToCreative(relayedEvent, payload);
+        return;
+      }
+      if (payload.type === OBSERVE_REQUEST_TYPE) {
+        await handleObserveRequest(relayedEvent, payload);
+      }
+      return;
+    }
+
+    if (!CREATIVE_ORIGINS.has(event.origin)) return;
     if (data.type === PING_TYPE) {
       await replyToCreative(event, data);
       return;
@@ -309,6 +346,8 @@
     pongType: PONG_TYPE,
     observeRequestType: OBSERVE_REQUEST_TYPE,
     observeAcceptedType: OBSERVE_ACCEPTED_TYPE,
+    relayToMainType: RELAY_TO_MAIN_TYPE,
+    relayFromMainType: RELAY_FROM_MAIN_TYPE,
     tabId: TAB_ID,
     mapPresent,
     probeMapTabs,
