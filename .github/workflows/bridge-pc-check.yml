@@ -135,6 +135,9 @@ jobs:
           node --check bridge-pc/wayfarer-observation-zone.js
           node --check bridge-pc/wm3-observe-controller.js
           node --check bridge-pc/wm3b-tab-link.js
+          node --check bridge-pc/tab-relay-background.js
+          node --check bridge-pc/wayfarer-tab-relay.js
+          node --check bridge-pc/creative-tab-relay.js
           node --check bridge-pc/poi-parser.js
           node --check bridge-pc/poi-classifier.js
           node --check bridge-pc/poi-reference-layer.js
