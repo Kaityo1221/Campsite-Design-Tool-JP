@@ -41,7 +41,8 @@
       ],
       "js": [
         "content.js",
-        "polygon-ui.js"
+        "polygon-ui.js",
+        "wayfarer-tab-relay.js"
       ],
       "run_at": "document_idle",
       "world": "ISOLATED"
@@ -55,6 +56,19 @@
       ],
       "run_at": "document_idle",
       "world": "MAIN"
+    },
+    {
+      "matches": [
+        "https://kaityo1221.github.io/Campsite-Design-Tool-JP/creative/*"
+      ],
+      "js": [
+        "creative-tab-relay.js"
+      ],
+      "run_at": "document_idle",
+      "world": "ISOLATED"
     }
-  ]
+  ],
+  "background": {
+    "service_worker": "tab-relay-background.js"
+  }
 }
