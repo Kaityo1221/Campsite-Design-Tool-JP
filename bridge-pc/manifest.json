@@ -28,7 +28,8 @@
         "page-collector.js",
         "wm1-live-verifier.js",
         "wayfarer-observation-zone.js",
-        "wm3-observe-controller.js"
+        "wm3-observe-controller.js",
+        "wm3b-tab-link.js"
       ],
       "run_at": "document_idle",
       "world": "MAIN"
