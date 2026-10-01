@@ -3,11 +3,15 @@ import vm from 'node:vm';
 import assert from 'node:assert/strict';
 
 const source = fs.readFileSync('bridge-pc/creative-wm3b2b-test-injector.js', 'utf8');
+const background = fs.readFileSync('bridge-pc/tab-relay-background.js', 'utf8');
+const wayfarerRelay = fs.readFileSync('bridge-pc/wayfarer-tab-relay.js', 'utf8');
+const creativeRelay = fs.readFileSync('bridge-pc/creative-tab-relay.js', 'utf8');
 const manifest = JSON.parse(fs.readFileSync('bridge-pc/manifest.json', 'utf8'));
 
 new vm.Script(source, { filename:'bridge-pc/creative-wm3b2b-test-injector.js' });
 
 assert.equal(manifest.name, 'Campsite Bridge - WM-3B-2 TEST');
+assert.equal(manifest.background?.service_worker, 'tab-relay-background.js');
 assert.deepEqual([...manifest.host_permissions].sort(), ['https://wayfarer.nianticlabs.com/*','https://wayfarer.scopely.com/*']);
 
 const entry = manifest.content_scripts.find(item =>
