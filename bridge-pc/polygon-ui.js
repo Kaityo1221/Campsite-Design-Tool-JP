@@ -4,6 +4,8 @@
   const VERSION = '0.1.0';
   const COMMAND_EVENT = 'campsite-bridge-pc:polygon-command';
   const STATE_EVENT = 'campsite-bridge-pc:polygon-state';
+  const OBSERVE_COMMAND_EVENT = 'campsite-bridge-pc:observe-command';
+  const OBSERVE_STATE_EVENT = 'campsite-bridge-pc:observe-state';
 
   if (window.__campsiteWm2PolygonUiInstalled) return;
   window.__campsiteWm2PolygonUiInstalled = true;
@@ -25,6 +27,13 @@
     instruction: ''
   };
   let draftPrompted = false;
+  let observeState = {
+    busy: false,
+    status: 'ready',
+    error: '',
+    summary: null,
+    message: ''
+  };
   const hiddenWayfarerControls = new Map();
 
   function visibleElement(element) {
@@ -166,6 +175,12 @@
     }));
   }
 
+  function sendObserve(action) {
+    window.dispatchEvent(new CustomEvent(OBSERVE_COMMAND_EVENT, {
+      detail: JSON.stringify({ action, sentAt: new Date().toISOString() })
+    }));
+  }
+
   function positionCrosshair() {
     if (!crosshair) return;
     const map = mapHost();
@@ -221,12 +236,16 @@
       '.primary{border-color:rgba(74,222,128,.6);background:rgba(20,83,45,.98);color:#dcfce7}',
       '.add{width:100%;border-color:rgba(56,189,248,.62);background:rgba(12,74,110,.98);color:#e0f2fe}',
       '.start{width:100%;min-height:46px;font-size:12px}',
+      '.observe{width:100%;min-height:46px;font-size:12px;border-color:rgba(96,165,250,.62);background:rgba(30,64,175,.95);color:#eff6ff}',
+      '.observeSummary{font:800 10.5px/1.5 system-ui;color:#dbeafe;background:rgba(30,41,59,.72);border-radius:9px;padding:7px 9px}',
       '.done{color:#bbf7d0;font:900 11px/1.4 system-ui}',
       '[hidden]{display:none!important}',
       '@media(max-width:620px){.row{grid-template-columns:1fr 1fr}.row .primary{grid-column:1 / -1}}',
       '</style>',
       '<div class="card">',
       '<button id="start" class="start primary" type="button">📐 範囲を決める</button>',
+      '<button id="observe" class="observe" type="button" hidden>🔭 拠点内を観察</button>',
+      '<div id="observeSummary" class="observeSummary" hidden></div>',
       '<div id="active" hidden>',
       '<div class="top"><div class="title">📐 設計範囲</div><div id="count" class="count">頂点 0 / 30</div></div>',
       '<div id="instruction" class="instruction"></div>',
@@ -262,6 +281,7 @@
       }
     });
 
+    shadow.getElementById('observe').addEventListener('click', () => sendObserve('run'));
     shadow.getElementById('addCenter').addEventListener('click', () => send('add-center'));
     shadow.getElementById('exitDrawing').addEventListener('click', () => send('exit-drawing'));
     shadow.getElementById('undo').addEventListener('click', () => send('undo'));
@@ -299,6 +319,8 @@
 
     const start = shadow.getElementById('start');
     const activePanel = shadow.getElementById('active');
+    const observe = shadow.getElementById('observe');
+    const observeSummary = shadow.getElementById('observeSummary');
     const count = shadow.getElementById('count');
     const instruction = shadow.getElementById('instruction');
     const warning = shadow.getElementById('warning');
@@ -312,6 +334,32 @@
     start.hidden = state.active === true;
     start.textContent = state.completed ? '📐 範囲を編集' : state.paused ? '📐 範囲選択を再開' : '📐 範囲を決める';
     activePanel.hidden = state.active !== true;
+
+    const observeReady = state.active !== true && state.completed === true;
+    observe.hidden = !observeReady;
+    observe.disabled = observeState.busy === true;
+    observe.textContent = observeState.busy
+      ? '🔭 観察中…'
+      : observeState.status === 'success'
+        ? '🔭 もう一度観察'
+        : '🔭 拠点内を観察';
+
+    const summary = observeState.summary;
+    if (observeReady && summary) {
+      const inside = summary.interior || {};
+      const outer = summary.reference100 || {};
+      observeSummary.textContent =
+        '設計範囲内 ' + Number(inside.total || 0) + '件' +
+        ' / 外周100m ' + Number(outer.total || 0) + '件' +
+        (observeState.message ? ' ・ ' + String(observeState.message) : '');
+      observeSummary.hidden = false;
+    } else if (observeReady && observeState.error) {
+      observeSummary.textContent = '⚠ ' + String(observeState.error);
+      observeSummary.hidden = false;
+    } else {
+      observeSummary.hidden = true;
+      observeSummary.textContent = '';
+    }
 
     if (state.active) {
       count.textContent = '頂点 ' + Number(state.pointCount || 0) + ' / ' + Number(state.maxPoints || 30);
@@ -332,6 +380,14 @@
     askResumeDraft();
   }
 
+  window.addEventListener(OBSERVE_STATE_EVENT, event => {
+    let next = null;
+    try { next = JSON.parse(String(event?.detail || '{}')); } catch (_) { return; }
+    if (!next || typeof next !== 'object') return;
+    observeState = { ...observeState, ...next };
+    render();
+  });
+
   window.addEventListener(STATE_EVENT, event => {
     let next = null;
     try { next = JSON.parse(String(event?.detail || '{}')); } catch (_) { return; }
@@ -350,6 +406,7 @@
   createUi();
   render();
   send('query-state');
+  sendObserve('query-state');
 
   window.CampsiteWm2PolygonUi = Object.freeze({
     version: VERSION,
