@@ -4,6 +4,11 @@ import assert from 'node:assert/strict';
 
 const source = fs.readFileSync('bridge-pc/wm3b-tab-link.js', 'utf8');
 new vm.Script(source, { filename: 'bridge-pc/wm3b-tab-link.js' });
+assert.ok(source.includes('campsiteWm3bDiagBadge'));
+assert.ok(source.includes('🧪 Bridge '));
+assert.ok(source.includes('/ 接続待受中'));
+assert.ok(source.includes('/ PING受信'));
+assert.ok(source.includes('/ PONG送信済み'));
 
 const bus = [];
 class FakeBroadcastChannel {
@@ -171,4 +176,4 @@ await new Promise(resolve => setTimeout(resolve, 20));
 assert.equal(pong, null, 'Untrusted origins must not receive a response');
 assert.equal(first.observedPolygons.length, 1);
 
-console.log('WM-3B-0 / WM-3B-2A / WM-3B-2B Wayfarer tab-link: OK');
+console.log('WM-3B-0 / WM-3B-2A / WM-3B-2B Wayfarer tab-link + live diagnostics: OK');
