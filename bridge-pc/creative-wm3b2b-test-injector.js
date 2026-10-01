@@ -285,7 +285,7 @@
     const root = document.createElement('div');
     root.id = 'campsiteWm3b2bTestPanel';
     root.style.cssText =
-      'position:fixed;right:12px;bottom:14px;z-index:5200;width:min(360px,calc(100vw - 24px));' +
+      'position:fixed;right:12px;bottom:14px;z-index:2147483000;width:min(360px,calc(100vw - 24px));' +
       'padding:14px;border:2px solid #9a6a18;border-radius:16px;background:rgba(255,249,229,.98);' +
       'box-shadow:0 12px 34px rgba(0,0,0,.28);font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;color:#3f3526';
     root.innerHTML =
@@ -310,11 +310,38 @@
   }
 
   window.addEventListener('message', onMessage);
+
+  // Creative boots by rewriting the whole document more than once.
+  // Re-install the TEST panel after each document.close() without touching
+  // Production Creative source files.
+  try {
+    const nativeClose = document.close.bind(document);
+    document.close = function(...args) {
+      const result = nativeClose(...args);
+      setTimeout(() => {
+        try { install(); render(); } catch (_) {}
+      }, 0);
+      setTimeout(() => {
+        try { install(); render(); } catch (_) {}
+      }, 250);
+      return result;
+    };
+  } catch (_) {}
+
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', install, { once:true });
   } else {
     setTimeout(install, 0);
   }
+
+  // Short-lived fallback for the nested runtime document rewrite.
+  // It stops automatically and exists only in this TEST extension.
+  let reinstallChecks = 0;
+  const reinstallTimer = setInterval(() => {
+    reinstallChecks += 1;
+    try { install(); render(); } catch (_) {}
+    if (reinstallChecks >= 40) clearInterval(reinstallTimer);
+  }, 500);
 
   window.CampsiteWm3b2bCreativeTest = Object.freeze({
     version: VERSION,
