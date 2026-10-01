@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '0.1.0';
+  const VERSION = '0.2.0';
   const PROJECT_KEY = 'campsiteProject.v1';
   const WAYFARER_URL = 'https://wayfarer.scopely.com/new/mapview';
   const WAYFARER_ORIGINS = new Set([
@@ -13,9 +13,11 @@
   const PONG_TYPE = 'CAMPSITE_WAYFARER_OBSERVE_PONG_V1';
   const OBSERVE_REQUEST_TYPE = 'CAMPSITE_WAYFARER_OBSERVE_REQUEST_V1';
   const OBSERVE_ACCEPTED_TYPE = 'CAMPSITE_WAYFARER_OBSERVE_ACCEPTED_V1';
+  const OBSERVE_RESULT_TYPE = 'CAMPSITE_WAYFARER_OBSERVE_RESULT_V1';
   const RELAY_FROM_MAIN_TYPE = 'CAMPSITE_CREATIVE_MAIN_TO_EXTENSION_V1';
   const RELAY_TO_MAIN_TYPE = 'CAMPSITE_EXTENSION_TO_CREATIVE_MAIN_V1';
   const TIMEOUT_MS = 4500;
+  const OBSERVE_RESULT_TIMEOUT_MS = 120000;
 
   if (window.__campsiteWm3b2bCreativeTestInstalled) return;
   window.__campsiteWm3b2bCreativeTestInstalled = true;
@@ -64,6 +66,65 @@
       return Number.isFinite(lat) && Number.isFinite(lng) ? [lat, lng] : null;
     }).filter(Boolean);
     return polygon.length >= 3 && polygon.length <= 30 ? polygon : [];
+  }
+
+  function cloneJson(value, fallback) {
+    try { return JSON.parse(JSON.stringify(value)); }
+    catch (_) { return fallback; }
+  }
+
+  function samePolygon(a, b) {
+    return JSON.stringify(normalizePolygon({ polygon:a })) ===
+      JSON.stringify(normalizePolygon({ polygon:b }));
+  }
+
+  function normalizeObservationResult(raw) {
+    if (!raw || typeof raw !== 'object') {
+      throw new Error('Wayfarer観察結果の形式が正しくありません。');
+    }
+    const polygon = normalizePolygon({ polygon:raw.polygon });
+    if (!polygon.length) throw new Error('Wayfarer観察結果のPolygonを確認できませんでした。');
+
+    const zones = raw.zones && typeof raw.zones === 'object' ? raw.zones : {};
+    if (
+      !Array.isArray(zones.interior) ||
+      !Array.isArray(zones.reference100) ||
+      !Array.isArray(zones.reserve200)
+    ) {
+      throw new Error('Wayfarer観察結果のゾーン情報を確認できませんでした。');
+    }
+
+    return {
+      version:String(raw.version || '0.1.0'),
+      observedAt:String(raw.observedAt || new Date().toISOString()),
+      polygon,
+      counts:cloneJson(raw.counts || {}, {}),
+      zones:{
+        interior:cloneJson(zones.interior, []),
+        reference100:cloneJson(zones.reference100, []),
+        reserve200:cloneJson(zones.reserve200, [])
+      },
+      visibleTotal:Number(raw.visibleTotal || 0),
+      retainedTotal:Number(raw.retainedTotal || 0),
+      excludedCount:Number(raw.excludedCount || 0),
+      outsideCount:Number(raw.outsideCount || 0),
+      canProceed:raw.canProceed === true,
+      acquisition:cloneJson(raw.acquisition || {}, {})
+    };
+  }
+
+  function saveObservationResult(raw) {
+    const project = readProject();
+    if (!project) throw new Error('campsiteProject.v1 を確認できませんでした。');
+
+    const observation = normalizeObservationResult(raw);
+    if (!samePolygon(project.polygon, observation.polygon)) {
+      throw new Error('観察中に設計範囲が変更されたため、古い観察結果は保存しませんでした。');
+    }
+
+    project.wayfarerObservation = observation;
+    sessionStorage.setItem(PROJECT_KEY, JSON.stringify(project));
+    return observation;
   }
 
   function ui() {
@@ -186,7 +247,7 @@
       const timer = setTimeout(() => {
         resolve(fail('WayfarerがPolygonを受信したことを確認できませんでした。', true));
       }, TIMEOUT_MS);
-      pending = { kind:'observe', requestId, resolve, timer };
+      pending = { kind:'observe', requestId, resolve, timer, stage:'await-accepted' };
 
       const sent = postToWayfarer({
         type: OBSERVE_REQUEST_TYPE,
@@ -263,26 +324,67 @@
       return;
     }
 
-    if (pending.kind === 'observe' && data.type === OBSERVE_ACCEPTED_TYPE) {
+    if (
+      pending.kind === 'observe' &&
+      pending.stage === 'await-accepted' &&
+      data.type === OBSERVE_ACCEPTED_TYPE
+    ) {
       const resolve = pending.resolve;
       const accepted = data.accepted === true;
-      clearPending();
-      let next;
       if (!accepted) {
-        next = setState({
-          status:'error',
-          connected:true,
-          message:String(data.error || data.warning || 'WayfarerがPolygonを受理できませんでした。')
-        });
-      } else {
-        next = setState({
-          status:'observing',
+        const next = fail(
+          String(data.error || data.warning || 'WayfarerがPolygonを受理できませんでした。'),
+          true
+        );
+        if (typeof resolve === 'function') resolve(next);
+        return;
+      }
+
+      if (pending.timer) clearTimeout(pending.timer);
+      pending.stage = 'await-result';
+      pending.timer = setTimeout(() => {
+        const finish = pending?.resolve;
+        const next = fail('Wayfarerの観察結果を受信できませんでした。', true);
+        if (typeof finish === 'function') finish(next);
+      }, OBSERVE_RESULT_TIMEOUT_MS);
+
+      setState({
+        status:'observing',
+        connected:true,
+        duplicateMapTabs:false,
+        message:'Wayfarerで観察中です…'
+      });
+      return;
+    }
+
+    if (
+      pending.kind === 'observe' &&
+      pending.stage === 'await-result' &&
+      data.type === OBSERVE_RESULT_TYPE
+    ) {
+      const resolve = pending.resolve;
+      if (data.ok !== true) {
+        const next = fail(String(data.error || 'Wayfarer観察に失敗しました。'), true);
+        if (typeof resolve === 'function') resolve(next);
+        return;
+      }
+
+      try {
+        const observation = saveObservationResult(data.result);
+        const inside = Number(observation.counts?.interior?.total || observation.zones.interior.length || 0);
+        const outer = Number(observation.counts?.reference100?.total || observation.zones.reference100.length || 0);
+        clearPending();
+        const next = setState({
+          status:'success',
           connected:true,
           duplicateMapTabs:false,
-          message:'Wayfarerで観察を開始しました。'
+          message:'観察結果をProjectへ保存しました。設計範囲内 ' + inside + '件 / 外周100m ' + outer + '件'
         });
+        if (typeof resolve === 'function') resolve(next);
+      } catch (error) {
+        const next = fail(String(error?.message || error || '観察結果を保存できませんでした。'), true);
+        if (typeof resolve === 'function') resolve(next);
       }
-      if (typeof resolve === 'function') resolve(next);
     }
   }
 
@@ -368,6 +470,7 @@
     openWayfarer,
     checkConnection,
     startObservation,
+    saveObservationResult,
     ensureMessageListener,
     getState() { return { ...state }; }
   });
