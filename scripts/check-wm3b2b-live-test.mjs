@@ -33,6 +33,11 @@ for (const token of [
 assert.ok(source.includes("window.syncCampsiteProjectFromCreative"));
 assert.ok(source.includes("sessionStorage.getItem(PROJECT_KEY)"));
 assert.ok(source.includes("document.close = function"), 'TEST panel must survive Creative document rewrites');
+assert.ok(source.includes("function ensureMessageListener()"), 'Creative must be able to restore the message listener');
+assert.ok(source.includes("window.removeEventListener('message', onMessage)"), 'Message listener restore must be idempotent');
+assert.ok(source.includes("window.addEventListener('message', onMessage)"), 'Message listener must be reattached after rewrite');
+assert.ok(source.includes("function checkConnection() {\n    ensureMessageListener();"), 'Connection check must restore the listener before PING');
+assert.ok(source.includes("function startObservation() {\n    ensureMessageListener();"), 'Observation must restore the listener before request');
 assert.ok(source.includes("setInterval(() =>"), 'TEST panel must have a short-lived reinstall fallback');
 assert.ok(source.includes("z-index:2147483000"), 'TEST panel must stay above Creative runtime overlays');
 assert.ok(source.includes("polygon.length >= 3 && polygon.length <= 30"));
