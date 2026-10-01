@@ -20,6 +20,8 @@ const exporter = fs.readFileSync('bridge-pc/bridge-v1-exporter.js', 'utf8');
 const wm1LiveVerifier = fs.readFileSync('bridge-pc/wm1-live-verifier.js', 'utf8');
 const wm2PolygonController = fs.readFileSync('bridge-pc/wayfarer-polygon-controller.js', 'utf8');
 const wm2PolygonUi = fs.readFileSync('bridge-pc/polygon-ui.js', 'utf8');
+const wm3ObservationZone = fs.readFileSync('bridge-pc/wayfarer-observation-zone.js', 'utf8');
+const wm3ObserveController = fs.readFileSync('bridge-pc/wm3-observe-controller.js', 'utf8');
 
 assert.equal(
   fs.existsSync('js/bridge-wayfarer-poi-colors.js'),
@@ -41,7 +43,9 @@ assert.deepEqual(mainEntry.js, [
   'poi-diagnostics.js',
   'bridge-v1-exporter.js',
   'page-collector.js',
-  'wm1-live-verifier.js'
+  'wm1-live-verifier.js',
+  'wayfarer-observation-zone.js',
+  'wm3-observe-controller.js'
 ], 'PC MAIN-world architecture changed');
 assert.ok(!mainEntry.js.includes('wayfarer-poi-colors.js'), 'PC must never load a Bridge POI renderer');
 const isolatedEntry = manifest.content_scripts?.find(entry => entry.world === 'ISOLATED');
@@ -61,7 +65,9 @@ const runtimeSources = {
   diagnostics,
   exporter,
   wm1LiveVerifier,
-  wm2PolygonController
+  wm2PolygonController,
+  wm3ObservationZone,
+  wm3ObserveController
 };
 const forbiddenVisualTokens = [
   'CampsiteBridgePoiColors',
