@@ -12,6 +12,7 @@ const referenceSource = fs.readFileSync('bridge-pc/poi-reference-layer.js', 'utf
 const diagnosticsSource = fs.readFileSync('bridge-pc/poi-diagnostics.js', 'utf8');
 const exporterSource = fs.readFileSync('bridge-pc/bridge-v1-exporter.js', 'utf8');
 const collector = fs.readFileSync('bridge-pc/page-collector.js', 'utf8');
+const wm1LiveVerifierSource = fs.readFileSync('bridge-pc/wm1-live-verifier.js', 'utf8');
 const content = fs.readFileSync('bridge-pc/content.js', 'utf8');
 const receiver = fs.readFileSync('bridge-receiver.html', 'utf8');
 
@@ -33,12 +34,14 @@ assert.ok(mainWorld?.js?.includes('poi-classifier.js'), 'MAIN classifier missing
 assert.ok(mainWorld?.js?.includes('poi-reference-layer.js'), 'MAIN reference layer missing');
 assert.ok(mainWorld?.js?.includes('bridge-v1-exporter.js'), 'MAIN Bridge V1 exporter missing');
 assert.ok(mainWorld?.js?.includes('page-collector.js'), 'MAIN collector missing');
+assert.ok(mainWorld?.js?.includes('wm1-live-verifier.js'), 'WM-1 live verifier missing');
 assert.ok(mainWorld.js.indexOf('wayfarer-map-adapter.js') < mainWorld.js.indexOf('page-collector.js'), 'Map adapter must load before collector');
 assert.ok(mainWorld.js.indexOf('wayfarer-acquisition-engine.js') < mainWorld.js.indexOf('page-collector.js'), 'Acquisition engine must load before collector');
 assert.ok(mainWorld.js.indexOf('poi-parser.js') < mainWorld.js.indexOf('poi-classifier.js'), 'Parser must load before classifier');
 assert.ok(mainWorld.js.indexOf('poi-classifier.js') < mainWorld.js.indexOf('poi-reference-layer.js'), 'Classifier must load before reference layer');
 assert.ok(mainWorld.js.indexOf('poi-reference-layer.js') < mainWorld.js.indexOf('bridge-v1-exporter.js'), 'Reference layer must load before exporter');
 assert.ok(mainWorld.js.indexOf('bridge-v1-exporter.js') < mainWorld.js.indexOf('page-collector.js'), 'Exporter must load before collector');
+assert.ok(mainWorld.js.indexOf('page-collector.js') < mainWorld.js.indexOf('wm1-live-verifier.js'), 'WM-1 live verifier must load after collector');
 assert.ok(isolatedWorld?.js?.includes('content.js'), 'ISOLATED UI missing');
 
 new vm.Script(mapAdapterSource, { filename: 'js/bridge-wayfarer-map-adapter.js' });
@@ -49,6 +52,7 @@ new vm.Script(referenceSource, { filename: 'bridge-pc/poi-reference-layer.js' })
 new vm.Script(diagnosticsSource, { filename: 'bridge-pc/poi-diagnostics.js' });
 new vm.Script(exporterSource, { filename: 'bridge-pc/bridge-v1-exporter.js' });
 new vm.Script(collector, { filename: 'bridge-pc/page-collector.js' });
+new vm.Script(wm1LiveVerifierSource, { filename: 'bridge-pc/wm1-live-verifier.js' });
 new vm.Script(content, { filename: 'bridge-pc/content.js' });
 
 const listeners = new Map();
@@ -92,6 +96,7 @@ vm.runInContext(referenceSource, context);
 vm.runInContext(diagnosticsSource, context);
 vm.runInContext(exporterSource, context);
 vm.runInContext(collector, context);
+vm.runInContext(wm1LiveVerifierSource, context);
 
 const api = fakeWindow.CampsiteBridgePcCollector;
 assert.ok(api, 'PC collector API missing');
@@ -106,6 +111,7 @@ assert.ok(fakeWindow.CampsiteBridgePoiDiagnostics, 'POI diagnostics API missing'
 assert.ok(fakeWindow.CampsiteBridgeV1Exporter, 'Bridge V1 exporter API missing');
 assert.equal(typeof api.classifyMapData, 'function', 'Collector must expose classification stage');
 assert.equal(typeof api.collectPolygon, 'function', 'Collector must expose polygon-driven WM-1 acquisition');
+assert.ok(fakeWindow.CampsiteWayfarerWm1LiveVerifier, 'WM-1 live verifier API missing');
 assert.equal(api.findMap(), null, 'Collector should fail quietly when Wayfarer map host is absent');
 
 context.fetch = async url => ({
@@ -300,5 +306,6 @@ assert.ok(zip.includes(Buffer.from('poi-reference-layer.js')), 'ZIP must contain
 assert.ok(zip.includes(Buffer.from('bridge-v1-exporter.js')), 'ZIP must contain bridge-v1-exporter.js');
 assert.ok(zip.includes(Buffer.from('page-collector.js')), 'ZIP must contain page-collector.js');
 assert.ok(zip.includes(Buffer.from('content.js')), 'ZIP must contain content.js');
+assert.ok(zip.includes(Buffer.from('wm1-live-verifier.js')), 'ZIP must contain WM-1 live verifier');
 
 console.log('Campsite Bridge PC 0.1.0 + POI Engine v1.1 routing + V1 export contract: OK');
