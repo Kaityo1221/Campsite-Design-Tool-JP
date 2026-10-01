@@ -147,7 +147,7 @@ assert.equal(savedObservation.retainedTotal, 4);
 const savedProject = JSON.parse(sessionStorage.getItem('campsiteProject.v1'));
 assert.equal(savedProject.schemaVersion, '1.0');
 assert.equal(savedProject.source, 'bridge');
-assert.deepEqual(savedProject.wayfarerObservation, savedObservation);
+assert.equal(JSON.stringify(savedProject.wayfarerObservation), JSON.stringify(savedObservation));
 assert.deepEqual({
   schemaVersion:savedProject.schemaVersion,
   sourcePois:savedProject.sourcePois,
@@ -162,7 +162,7 @@ assert.deepEqual({
   meta:savedProject.meta,
   futureField:savedProject.futureField
 }, protectedSnapshot);
-assert.deepEqual(context.records, records, 'Creative records must not be mutated by Project observation save');
+assert.equal(JSON.stringify(context.records), JSON.stringify(records), 'Creative records must not be mutated by Project observation save');
 
 const staleProject = JSON.parse(JSON.stringify(project));
 staleProject.polygon = [[36,140],[36,140.01],[36.01,140.01],[36.01,140]];
