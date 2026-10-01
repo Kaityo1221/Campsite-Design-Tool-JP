@@ -28,6 +28,7 @@ assert.ok(output.includes('CAMPSITE_WAYFARER_OBSERVE_PING_V1'));
 assert.ok(output.includes('CAMPSITE_WAYFARER_OBSERVE_PONG_V1'));
 assert.ok(output.includes('CAMPSITE_WAYFARER_OBSERVE_REQUEST_V1'));
 assert.ok(output.includes('CAMPSITE_WAYFARER_OBSERVE_ACCEPTED_V1'));
+assert.ok(output.includes('CAMPSITE_WAYFARER_OBSERVE_RESULT_V1'));
 assert.ok(output.includes('Wayfarer Mapが複数タブで開いています。1つだけ残してから再確認してください。'));
 assert.ok(output.includes('Wayfarer Mapに接続できました。'));
 assert.ok(output.includes("event.source !== wayfarerWindow"));
@@ -40,10 +41,13 @@ assert.ok(output.includes('startObservation'));
 assert.ok(output.includes('normalizeProjectPolygon(project)'));
 assert.ok(output.includes("message: 'Wayfarerで観察を開始しました。'"));
 assert.ok(output.includes('この範囲を観察'));
-assert.ok(!output.includes('wayfarerObservation ='), 'WM-3B-2 must not save observation results yet');
+assert.ok(output.includes('project.wayfarerObservation = observation'));
+assert.ok(output.includes('saveObservationResult'));
+assert.ok(output.includes("status: 'observing'"));
+assert.ok(output.includes("message: '観察結果をProjectへ保存しました。設計範囲内 '"));
 
 assert.ok(index.includes("fetch('./wayfarer-observe-link-patch.js'"));
 assert.ok(index.includes('applyCreativeWayfarerObserveLinkPatch'));
 assert.ok(index.includes('if(bridgeProject)'));
 
-console.log('WM-3B-1 / WM-3B-2A Creative Wayfarer extension relay + polygon sender: OK');
+console.log('WM-3B-1 / WM-3B-2A-D Creative relay + observation Project save: OK');
