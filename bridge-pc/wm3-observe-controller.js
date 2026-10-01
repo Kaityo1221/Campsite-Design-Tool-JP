@@ -65,17 +65,22 @@
     } catch (_) {}
   }
 
-  async function run() {
-    if (busy) return lastResult;
-    const polygon = polygonApi();
-    const polygonState = polygon.getState();
-    const points = polygon.getPolygon();
-
-    if (polygonState.active === true || polygonState.completed !== true || points.length < 3) {
-      lastError = '先に設計範囲を確定してください。';
-      dispatch();
-      throw new Error(lastError);
+  function normalizePolygonInput(input) {
+    const polygon = (Array.isArray(input) ? input : []).map(point => {
+      if (!Array.isArray(point) || point.length < 2) return null;
+      const lat = Number(point[0]);
+      const lng = Number(point[1]);
+      return Number.isFinite(lat) && Number.isFinite(lng) ? [lat, lng] : null;
+    }).filter(Boolean);
+    if (polygon.length < 3 || polygon.length > 30) {
+      throw new Error('観察する設計範囲を確認できませんでした。');
     }
+    return polygon;
+  }
+
+  async function runPolygon(pointsInput) {
+    if (busy) return lastResult;
+    const points = normalizePolygonInput(pointsInput);
 
     busy = true;
     lastError = '';
@@ -126,6 +131,20 @@
     }
   }
 
+  async function run() {
+    const polygon = polygonApi();
+    const polygonState = polygon.getState();
+    const points = polygon.getPolygon();
+
+    if (polygonState.active === true || polygonState.completed !== true || points.length < 3) {
+      lastError = '先に設計範囲を確定してください。';
+      dispatch();
+      throw new Error(lastError);
+    }
+
+    return runPolygon(points);
+  }
+
   function getState() {
     return state();
   }
@@ -149,6 +168,7 @@
     bufferMeters: BUFFER_METERS,
     maxTileMeters: MAX_TILE_METERS,
     run,
+    runPolygon,
     getState,
     getLastResult
   });
