@@ -32,7 +32,10 @@ assert.ok(output.includes('Wayfarer Mapが複数タブで開いています。1�
 assert.ok(output.includes('Wayfarer Mapに接続できました。'));
 assert.ok(output.includes("event.source !== wayfarerWindow"));
 assert.ok(output.includes("syncCampsiteProjectFromCreative(project)"));
-assert.ok(output.includes("window.open(WAYFARER_URL, WINDOW_NAME)"));
+assert.ok(output.includes('CAMPSITE_CREATIVE_MAIN_TO_EXTENSION_V1'));
+assert.ok(output.includes('CAMPSITE_EXTENSION_TO_CREATIVE_MAIN_V1'));
+assert.ok(output.includes('postToWayfarer'));
+assert.ok(!output.includes("window.open(WAYFARER_URL, WINDOW_NAME)"), 'WM-3B-2 must reuse an existing Wayfarer tab via extension relay');
 assert.ok(output.includes('startObservation'));
 assert.ok(output.includes('normalizeProjectPolygon(project)'));
 assert.ok(output.includes("message: 'Wayfarerで観察を開始しました。'"));
@@ -43,4 +46,4 @@ assert.ok(index.includes("fetch('./wayfarer-observe-link-patch.js'"));
 assert.ok(index.includes('applyCreativeWayfarerObserveLinkPatch'));
 assert.ok(index.includes('if(bridgeProject)'));
 
-console.log('WM-3B-1 / WM-3B-2A Creative Wayfarer connection + polygon sender: OK');
+console.log('WM-3B-1 / WM-3B-2A Creative Wayfarer extension relay + polygon sender: OK');
