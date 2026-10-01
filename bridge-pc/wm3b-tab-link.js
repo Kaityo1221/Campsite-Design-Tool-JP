@@ -5,6 +5,8 @@
   const CHANNEL_NAME = 'campsite-wayfarer-observe-tabs-v1';
   const PING_TYPE = 'CAMPSITE_WAYFARER_OBSERVE_PING_V1';
   const PONG_TYPE = 'CAMPSITE_WAYFARER_OBSERVE_PONG_V1';
+  const OBSERVE_REQUEST_TYPE = 'CAMPSITE_WAYFARER_OBSERVE_REQUEST_V1';
+  const OBSERVE_ACCEPTED_TYPE = 'CAMPSITE_WAYFARER_OBSERVE_ACCEPTED_V1';
   const CREATIVE_ORIGINS = new Set([
     'https://kaityo1221.github.io'
   ]);
@@ -125,6 +127,96 @@
     return channel;
   }
 
+  function normalizePolygon(input) {
+    const polygon = (Array.isArray(input) ? input : []).map(point => {
+      if (!Array.isArray(point) || point.length < 2) return null;
+      const lat = Number(point[0]);
+      const lng = Number(point[1]);
+      return Number.isFinite(lat) && Number.isFinite(lng) ? [lat, lng] : null;
+    }).filter(Boolean);
+    return polygon.length >= 3 && polygon.length <= 30 ? polygon : [];
+  }
+
+  function observationApi() {
+    const api = window.CampsiteWayfarerObserveController;
+    return api?.runPolygon ? api : null;
+  }
+
+  function postObserveAccepted(event, requestId, payload = {}) {
+    try {
+      event.source.postMessage({
+        type: OBSERVE_ACCEPTED_TYPE,
+        requestId,
+        bridgeVersion: VERSION,
+        ...payload
+      }, event.origin);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  async function handleObserveRequest(event, data) {
+    if (!CREATIVE_ORIGINS.has(event.origin)) return false;
+    if (!event.source || typeof event.source.postMessage !== 'function') return false;
+
+    const requestId = String(data?.requestId || '');
+    const polygon = normalizePolygon(data?.polygon);
+    if (!requestId) return false;
+    if (!polygon.length) {
+      return postObserveAccepted(event, requestId, {
+        accepted: false,
+        error: 'Creative Modeの設計範囲を確認できませんでした。'
+      });
+    }
+
+    const tabs = await probeMapTabs();
+    if (tabs.duplicateMapTabs) {
+      return postObserveAccepted(event, requestId, {
+        accepted: false,
+        warning: 'Wayfarer Mapが複数タブで開いています。1つだけ残してから再確認してください。'
+      });
+    }
+    if (!tabs.verified) {
+      return postObserveAccepted(event, requestId, {
+        accepted: false,
+        warning: 'Wayfarer Mapのタブ状態を確認できませんでした。'
+      });
+    }
+    if (!mapPresent()) {
+      return postObserveAccepted(event, requestId, {
+        accepted: false,
+        warning: 'Wayfarer Map画面を開いてから再確認してください。'
+      });
+    }
+
+    const api = observationApi();
+    if (!api) {
+      return postObserveAccepted(event, requestId, {
+        accepted: false,
+        error: 'Wayfarer観察Engineを確認できませんでした。'
+      });
+    }
+    if (api.getState?.().busy === true) {
+      return postObserveAccepted(event, requestId, {
+        accepted: false,
+        warning: 'Wayfarerで別の観察処理を実行中です。'
+      });
+    }
+
+    const acknowledged = postObserveAccepted(event, requestId, {
+      accepted: true,
+      observationStarted: true,
+      polygonVertexCount: polygon.length
+    });
+    if (!acknowledged) return false;
+
+    void api.runPolygon(polygon).catch(error => {
+      console.error('[Campsite Wayfarer Observe] remote polygon observation failed', error);
+    });
+    return true;
+  }
+
   async function replyToCreative(event, data) {
     if (!CREATIVE_ORIGINS.has(event.origin)) return false;
     if (!event.source || typeof event.source.postMessage !== 'function') return false;
@@ -159,8 +251,13 @@
   async function onMessage(event) {
     if (!CREATIVE_ORIGINS.has(event.origin)) return;
     const data = event.data || {};
-    if (data.type !== PING_TYPE) return;
-    await replyToCreative(event, data);
+    if (data.type === PING_TYPE) {
+      await replyToCreative(event, data);
+      return;
+    }
+    if (data.type === OBSERVE_REQUEST_TYPE) {
+      await handleObserveRequest(event, data);
+    }
   }
 
   installChannel();
@@ -173,6 +270,8 @@
     channelName: CHANNEL_NAME,
     pingType: PING_TYPE,
     pongType: PONG_TYPE,
+    observeRequestType: OBSERVE_REQUEST_TYPE,
+    observeAcceptedType: OBSERVE_ACCEPTED_TYPE,
     tabId: TAB_ID,
     mapPresent,
     probeMapTabs
