@@ -18,7 +18,7 @@ const fakeWindow = {
   },
   CampsiteBridgePcCollector: {
     async collectPolygon(input, options) {
-      assert.deepEqual(input, expectedPolygon);
+      assert.equal(JSON.stringify(input), JSON.stringify(expectedPolygon));
       collectOptions = options;
       return {
         enginePois: [{ guid:'a' }],
@@ -28,7 +28,7 @@ const fakeWindow = {
   },
   CampsiteWayfarerObservationZone: {
     classifyPois(input, pois) {
-      assert.deepEqual(input, expectedPolygon);
+      assert.equal(JSON.stringify(input), JSON.stringify(expectedPolygon));
       assert.equal(pois.length, 1);
       return {
         polygon: input,
@@ -74,7 +74,7 @@ const remotePolygon = [[35.02,139.02],[35.02,139.03],[35.03,139.03],[35.03,139.0
 expectedPolygon = remotePolygon;
 const remoteResult = await api.runPolygon(remotePolygon);
 assert.equal(remoteResult.visibleTotal, 2);
-assert.deepEqual(remoteResult.polygon, remotePolygon);
+assert.equal(JSON.stringify(remoteResult.polygon), JSON.stringify(remotePolygon));
 assert.equal(collectOptions.bufferMeters, 200);
 assert.equal(collectOptions.maxTileMeters, 500);
 
