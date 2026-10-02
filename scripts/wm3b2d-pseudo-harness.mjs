@@ -280,6 +280,28 @@ export function createHarness(options={}) {
         getState(){ return { busy:true }; },
         async runPolygon(){ throw new Error('must not run while busy'); }
       });
+    } else if (options.corruptResult) {
+      wf.win.CampsiteWayfarerObserveController = Object.freeze({
+        getState(){ return { busy:false }; },
+        async runPolygon(points) {
+          return {
+            version:'0.2.0',
+            observedAt:new Date().toISOString(),
+            polygon:JSON.parse(JSON.stringify(points)),
+            counts:{},
+            zones:{ interior:[], reference100:[] },
+            visibleTotal:0,
+            retainedTotal:0,
+            canProceed:false,
+            acquisition:{}
+          };
+        }
+      });
+    } else if (options.noResult) {
+      wf.win.CampsiteWayfarerObserveController = Object.freeze({
+        getState(){ return { busy:false }; },
+        async runPolygon(){ return new Promise(() => {}); }
+      });
     }
 
     vm.runInContext(tabLinkSource, wfContext);
