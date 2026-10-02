@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '1.1.1';
+  const VERSION = '1.1.2';
   const PROTOCOL = 'CAMPSITE_BRIDGE_POI_V1';
   const SCHEMA_VERSION = '1.2';
   const PLATFORM = 'pc';
@@ -160,13 +160,51 @@
     return result;
   }
 
+  function cloneJson(value, fallback) {
+    try { return JSON.parse(JSON.stringify(value)); }
+    catch (_) { return fallback; }
+  }
+
+  function normalizeObservation(raw) {
+    if (!raw || typeof raw !== 'object') return null;
+    const polygon = (Array.isArray(raw.polygon) ? raw.polygon : []).map(point => {
+      if (!Array.isArray(point) || point.length < 2) return null;
+      const lat = finite(point[0]);
+      const lng = finite(point[1]);
+      return Number.isFinite(lat) && Number.isFinite(lng) ? [lat, lng] : null;
+    }).filter(Boolean);
+    const zones = raw.zones && typeof raw.zones === 'object' ? raw.zones : {};
+    const observedAt = text(raw.observedAt).trim();
+    if (polygon.length < 3 || polygon.length > 30 || !observedAt) return null;
+    if (!Array.isArray(zones.interior) || !Array.isArray(zones.reference100) || !Array.isArray(zones.reserve200)) return null;
+    return {
+      version: text(raw.version || '0.1.0'),
+      snapshotId: text(raw.snapshotId || ('wm3:' + observedAt)),
+      observedAt,
+      polygon,
+      counts: cloneJson(raw.counts || {}, {}),
+      zones: {
+        interior: cloneJson(zones.interior, []),
+        reference100: cloneJson(zones.reference100, []),
+        reserve200: cloneJson(zones.reserve200, [])
+      },
+      visibleTotal: Number(raw.visibleTotal || 0),
+      retainedTotal: Number(raw.retainedTotal || 0),
+      excludedCount: Number(raw.excludedCount || 0),
+      outsideCount: Number(raw.outsideCount || 0),
+      canProceed: raw.canProceed === true,
+      acquisition: cloneJson(raw.acquisition || {}, {})
+    };
+  }
+
   function makePayload(snapshot, handshakeId, options = {}) {
     const id = text(handshakeId).trim();
     const pois = exportPois(snapshot);
     const activeGuids = new Set(pois.map(poi => poi.guid));
     const referencePois = exportReferencePois(snapshot).filter(poi => !activeGuids.has(poi.guid));
+    const wayfarerObservation = normalizeObservation(snapshot?.wayfarerObservation);
 
-    return {
+    const payload = {
       type: PROTOCOL,
       bridgeVersion: text(options.bridgeVersion || '0.1.0'),
       bridgePlatform: PLATFORM,
@@ -177,6 +215,8 @@
       pois,
       referencePois
     };
+    if (wayfarerObservation) payload.wayfarerObservation = wayfarerObservation;
+    return payload;
   }
 
   window.CampsiteBridgeV1Exporter = Object.freeze({
@@ -189,6 +229,7 @@
     normalizeBounds,
     exportPois,
     exportReferencePois,
+    normalizeObservation,
     makePayload
   });
 })();

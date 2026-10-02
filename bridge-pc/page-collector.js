@@ -315,6 +315,43 @@
     } catch (_) {}
   }
 
+  function samePolygon(a, b) {
+    const normalize = value => (Array.isArray(value) ? value : []).map(point => {
+      if (!Array.isArray(point) || point.length < 2) return null;
+      const lat = Number(point[0]);
+      const lng = Number(point[1]);
+      return Number.isFinite(lat) && Number.isFinite(lng) ? [lat, lng] : null;
+    }).filter(Boolean);
+    return JSON.stringify(normalize(a)) === JSON.stringify(normalize(b));
+  }
+
+  function currentWayfarerObservation() {
+    try {
+      const observation = window.CampsiteWayfarerObserveController?.getLastResult?.();
+      if (!observation || observation.canProceed !== true) return null;
+      const currentPolygon = window.CampsiteWayfarerPolygonController?.getPolygon?.();
+      if (Array.isArray(currentPolygon) && currentPolygon.length >= 3 &&
+          !samePolygon(currentPolygon, observation.polygon)) return null;
+      return observation;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function observationSnapshotForBridge(observation) {
+    if (!observation || typeof observation !== 'object') return null;
+    const zones = observation.zones || {};
+    if (!Array.isArray(zones.interior) ||
+        !Array.isArray(zones.reference100) ||
+        !Array.isArray(zones.reserve200)) return null;
+    return {
+      enginePois: [...zones.interior, ...zones.reference100, ...zones.reserve200],
+      selectedBounds: null,
+      wayfarerObservation: observation,
+      diagnosticReport: null
+    };
+  }
+
   function makePayload(snapshot, handshakeId) {
     return exporterApi().makePayload(snapshot, handshakeId, {
       bridgeVersion: VERSION,
@@ -413,7 +450,8 @@
     dispatchStatus({ state: 'busy', message: 'Wayfarer MapからPOIを取得しています…', diagnosticReport: null });
 
     try {
-      const snapshot = await collect();
+      const observation = currentWayfarerObservation();
+      const snapshot = observationSnapshotForBridge(observation) || await collect();
       diagnosticReport = snapshot.diagnosticReport;
       const payload = makePayload(snapshot, handshakeId);
       const pois = payload.pois;

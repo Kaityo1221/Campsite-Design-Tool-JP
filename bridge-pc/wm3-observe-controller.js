@@ -92,9 +92,11 @@
         maxTileMeters: MAX_TILE_METERS
       });
       const zoning = zoneApi().classifyPois(points, snapshot.enginePois);
+      const observedAt = new Date().toISOString();
       const result = {
         version: VERSION,
-        observedAt: new Date().toISOString(),
+        snapshotId: 'wm3:' + observedAt,
+        observedAt,
         polygon: zoning.polygon,
         counts: zoning.counts,
         zones: zoning.zones,
@@ -104,8 +106,16 @@
         outsideCount: zoning.outsideCount,
         canProceed: zoning.visibleTotal > 0,
         acquisition: {
+          engineVersion: String(snapshot?.acquisition?.engineVersion || ''),
           bufferMeters: Number(snapshot?.acquisition?.bufferMeters ?? BUFFER_METERS),
+          referenceMeters: 100,
+          reserveMeters: 200,
+          cellLevel: Number(snapshot?.acquisition?.cellLevel || 0),
+          acquisitionBounds: snapshot?.acquisition?.acquisitionBounds
+            ? JSON.parse(JSON.stringify(snapshot.acquisition.acquisitionBounds))
+            : null,
           tileCount: Number(snapshot?.acquisition?.tileCount || 0),
+          geometryCoverageComplete: snapshot?.acquisition?.geometryCoverageComplete === true,
           transportComplete: snapshot?.acquisition?.transportComplete === true,
           coverageComplete: snapshot?.acquisition?.coverageComplete === true,
           coverageStatus: String(snapshot?.acquisition?.coverageStatus || 'unverified'),
