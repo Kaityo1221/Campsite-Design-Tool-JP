@@ -337,9 +337,8 @@ test('WM-3C real Creative renders read-only Wayfarer references without entering
 test('WM-5C outside-reserve edit shows reacquisition CTA and sends latest Creative polygon', async ({ page }) => {
   const browserErrors = collectBrowserErrors(page);
   await installRoutes(page);
-  await installWm5cSelfRelay(page);
-
   await page.goto('/creative/index.html?campsiteProject=bridge');
+  await installWm5cSelfRelay(page);
   await expect.poll(() => page.evaluate(() => window.CampsiteCreativeProject?.count || 0), { timeout:15000 }).toBe(2);
   await expect.poll(() => page.evaluate(() => window.__cmWayfarerReference?.getState?.()?.ready === true), { timeout:15000 }).toBe(true);
 
