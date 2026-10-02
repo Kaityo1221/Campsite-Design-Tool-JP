@@ -6,6 +6,7 @@ on:
       - release/phase-5-d13-unified-renderer
     paths:
       - 'creative/index.html'
+      - 'creative/wayfarer-reference-layer-patch.js'
       - 'creative/runtime/creative-patches-v54-coordinate-memo-reason.js'
       - 'creative/runtime/creative-patches-v55-unified-visible.js'
       - 'creative/runtime/creative-patches-v56-unified-interaction.js'
@@ -21,6 +22,7 @@ on:
       - main
     paths:
       - 'creative/index.html'
+      - 'creative/wayfarer-reference-layer-patch.js'
       - 'creative/runtime/creative-patches-v54-coordinate-memo-reason.js'
       - 'creative/runtime/creative-patches-v55-unified-visible.js'
       - 'creative/runtime/creative-patches-v56-unified-interaction.js'
@@ -61,6 +63,10 @@ jobs:
           node --check creative/runtime/map-engine/scene-builder.js
           node --check creative/runtime/map-engine/candidate-scene-builder.js
           node --check creative/runtime/map-engine/map-renderer.js
+          node --check creative/runtime/map-engine/wayfarer-observation-adapter.js
+          node --check creative/runtime/map-engine/wayfarer-reference-geometry.js
+          node --check creative/runtime/map-engine/wayfarer-reference-scene-builder.js
+          node --check creative/wayfarer-reference-layer-patch.js
           node --check creative/runtime/creative-patches-v54-coordinate-memo-reason.js
           node --check creative/runtime/creative-patches-v55-unified-visible.js
           node --check creative/runtime/creative-patches-v56-unified-interaction.js
