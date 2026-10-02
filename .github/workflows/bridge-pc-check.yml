@@ -13,6 +13,8 @@ on:
       - 'scripts/build-wm3c-test-runtime.mjs'
       - 'scripts/check-wm3c-live-test-package.mjs'
       - 'scripts/check-wm4a-project-lifecycle.mjs'
+      - 'scripts/check-wm5a-reserve-coverage.mjs'
+      - 'creative/runtime/map-engine/wayfarer-reserve-coverage.js'
       - 'creative/wayfarer-reference-layer-patch.js'
       - 'creative/runtime/map-engine/**'
       - 'scripts/check-bridge-wayfarer-map-adapter.mjs'
@@ -177,6 +179,8 @@ jobs:
           node --check scripts/build-wm3c-test-runtime.mjs
           node --check scripts/check-wm3c-live-test-package.mjs
           node --check scripts/check-wm4a-project-lifecycle.mjs
+          node --check scripts/check-wm5a-reserve-coverage.mjs
+          node --check creative/runtime/map-engine/wayfarer-reserve-coverage.js
           node --check bridge-pc/creative-wm3c-test-runtime.js
           node --check scripts/check-bridge-wayfarer-map-adapter.mjs
           node --check scripts/check-wayfarer-acquisition-engine.mjs

@@ -130,3 +130,39 @@ RESERVE_200 visibility leak in the initial handoff normal POI channel before PAS
 
 No WM-5/6/7 behavior was implemented. No merge to `main` and no production
 publication was performed. PR #275 remains Draft.
+
+
+## WM-5 — Campsite polygon editing
+
+### WM-5A — reserve coverage evaluator (implementation)
+
+Scope is intentionally geometry-only. No Creative UI, no polygon mutation ownership
+change, no local POI reclassification and no Wayfarer reacquisition button are
+connected in this subphase.
+
+Input contract:
+
+- acquired polygon: `project.wayfarerObservation.polygon`;
+- acquired buffer: `project.wayfarerObservation.acquisition.bufferMeters`;
+- current polygon: latest Creative-owned `project.polygon`;
+- required visible reference range: fixed 100m.
+
+The evaluator answers whether `current polygon + 100m` is safely contained by the
+previous acquisition reserve. It uses conservative edge densification and a safety
+margin, preferring a false reacquisition request over a false "covered" result.
+`coverageComplete` is reported but is never promoted and does not alter the pure
+geometry result.
+
+Gate before PASS:
+
+1. unchanged and inward polygons are covered;
+2. a polygon shifted 80m with a 200m acquisition buffer is covered;
+3. a polygon shifted 120m is outside reserve;
+4. smaller acquisition buffers reduce the available expansion budget;
+5. missing/insufficient acquisition metadata fails closed;
+6. huge/invalid geometry fails closed instead of creating unbounded work;
+7. the evaluator is not wired into Creative UI or mutation flow;
+8. existing Bridge architecture regressions and diff review pass.
+
+WM-5B local reclassification and WM-5C reacquisition UX must not start until
+WM-5A passes.
