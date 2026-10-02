@@ -71,7 +71,7 @@ passed with its new two-autosave-tick assertions. Diff review found only the
 feature sync wrapper, tests/CI wiring and contract/acceptance documentation.
 Remote CI is checked separately after committing to PR #275.
 
-### WM-4B — acquisition metadata / initial Handoff audit (implementation)
+### WM-4B — acquisition metadata / initial Handoff audit: PASS
 
 Audit found one concrete contract gap: WM-3 already retained the polygon/zones and
 completeness result, but the first legacy Bridge payload carried only its normal
@@ -103,4 +103,30 @@ Gate before PASS:
 6. Diff review confirms no WM-5/6/7 behavior, schemaVersion change, main merge or
    public release.
 
-Remote CI and diff review are required before changing this section to PASS.
+WM-4B PASS was fixed on 2026-10-02 after implementation, regression and diff review.
+
+Evidence:
+
+- production/test head: `71b6765f772d32d95cbd2cc3cc7f30cbfecd4a13`;
+- Campsite Bridge PC Check #282: PASS, including WM-3 metadata, Bridge V1 export,
+  PC route, existing architecture and syntax gates;
+- Bridge Next Flow Check #217: PASS, including the strengthened three-device
+  Receiver -> Adapter -> Project handoff assertions;
+- Campsite Bridge Setup Check #195 and Distance Advice QA #151: PASS;
+- the strengthened E2E explicitly verifies acquisition polygon, snapshot ID/time,
+  GUID, POWERSPOT type, Active/Inactive state, REFERENCE_100/RESERVE_200,
+  100m/200m distances, acquisition bounds and explicit completeness;
+- `coverageComplete:false` remains false while transport can be true;
+- stale observations are rejected when the current Project polygon differs;
+- RESERVE_200 is carried only inside `wayfarerObservation`; it is excluded from
+  normal Bridge POI channels so the Gateway cannot render the hidden reserve band;
+- observation references/reserve remain outside `currentPois`;
+- `campsiteProject.v1` / schemaVersion `1.0` remain unchanged.
+
+During final review, the first strengthened E2E run (#215) failed only because
+Node's strict deep comparison crossed a VM realm while values were identical.
+That assertion was corrected. The same review then found and fixed a real
+RESERVE_200 visibility leak in the initial handoff normal POI channel before PASS.
+
+No WM-5/6/7 behavior was implemented. No merge to `main` and no production
+publication was performed. PR #275 remains Draft.
