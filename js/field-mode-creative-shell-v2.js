@@ -75,6 +75,9 @@
         opacity:.48!important;
       }
       .field-mode-entry-started .field-mode-launcher-label{display:none!important}
+      .field-mode-entry-started.field-creative-active.field-creative-tool-adjust .field-mode-creative-launcher{
+        display:none!important;
+      }
 
       .field-creative-add-flash{
         position:fixed;
