@@ -134,7 +134,7 @@ publication was performed. PR #275 remains Draft.
 
 ## WM-5 — Campsite polygon editing
 
-### WM-5A — reserve coverage evaluator (implementation)
+### WM-5A — reserve coverage evaluator: PASS
 
 Scope is intentionally geometry-only. No Creative UI, no polygon mutation ownership
 change, no local POI reclassification and no Wayfarer reacquisition button are
@@ -166,3 +166,24 @@ Gate before PASS:
 
 WM-5B local reclassification and WM-5C reacquisition UX must not start until
 WM-5A passes.
+
+WM-5A PASS was fixed on 2026-10-02 at code/test head
+`4396dbebcd76b22b03415bb6281b10bf758524c1`.
+
+Evidence:
+
+- Campsite Bridge PC Check #285: PASS; log includes
+  `WM-5A reserve coverage evaluator: PASS`;
+- Bridge Next Flow Check #220: PASS;
+- unchanged/inward, 80m covered, 120m uncovered and reduced-buffer cases pass;
+- missing buffer, insufficient buffer, sample-limit, self-intersection, zero-area
+  and invalid polygons all fail closed;
+- a repeated closing coordinate is normalized without changing the ring;
+- `coverageComplete` is only reported and is never promoted or used to claim
+  geometry completeness;
+- diff review from the WM-4B PASS head contains only the pure coverage module,
+  its test, CI wiring, package script and this gate document;
+- the new module is not loaded by Creative and does not change UI, polygon
+  mutations, local reclassification or Wayfarer reacquisition.
+
+WM-5B/5C remain unimplemented at this PASS boundary.
