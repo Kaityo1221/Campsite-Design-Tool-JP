@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '0.3.0';
+  const VERSION = '0.4.0';
   const PROJECT_KEY = 'campsiteProject.v1';
   const WAYFARER_URL = 'https://wayfarer.scopely.com/new/mapview';
   const WAYFARER_ORIGINS = new Set([
@@ -14,6 +14,7 @@
   const OBSERVE_REQUEST_TYPE = 'CAMPSITE_WAYFARER_OBSERVE_REQUEST_V1';
   const OBSERVE_ACCEPTED_TYPE = 'CAMPSITE_WAYFARER_OBSERVE_ACCEPTED_V1';
   const OBSERVE_RESULT_TYPE = 'CAMPSITE_WAYFARER_OBSERVE_RESULT_V1';
+  const OBSERVATION_SAVED_EVENT = 'campsite:wayfarer-observation-saved';
   const RELAY_FROM_MAIN_TYPE = 'CAMPSITE_CREATIVE_MAIN_TO_EXTENSION_V1';
   const RELAY_TO_MAIN_TYPE = 'CAMPSITE_EXTENSION_TO_CREATIVE_MAIN_V1';
   const TIMEOUT_MS = 4500;
@@ -28,13 +29,14 @@
     status: 'idle',
     connected: false,
     duplicateMapTabs: false,
-    message: 'WM-3B-2 TEST 準備完了',
+    message: 'WM-3C TEST 準備完了',
     diagnostics: {
       relay: 'wait',
       polygon: 'wait',
       gcs: 'wait',
       result: 'wait',
-      save: 'wait'
+      save: 'wait',
+      reference: 'wait'
     }
   };
 
@@ -131,6 +133,9 @@
 
     project.wayfarerObservation = observation;
     sessionStorage.setItem(PROJECT_KEY, JSON.stringify(project));
+    try {
+      window.dispatchEvent(new CustomEvent(OBSERVATION_SAVED_EVENT, { detail:{ observedAt:observation.observedAt } }));
+    } catch (_) {}
     return observation;
   }
 
@@ -164,7 +169,8 @@
         ['polygon', 'Polygon受信'],
         ['gcs', 'GCS開始'],
         ['result', 'RESULT返却'],
-        ['save', 'Project保存']
+        ['save', 'Project保存'],
+        ['reference', 'Reference表示']
       ];
       view.diagnostics.innerHTML = steps.map(([key, label]) => {
         const value = state.diagnostics?.[key] || 'wait';
@@ -190,13 +196,65 @@
     return { ...state };
   }
 
+  function readReferenceState() {
+    try {
+      return window.__cmWayfarerReference?.getState?.() || null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function verifyReferenceDisplay(observation, baseMessage) {
+    let checks = 0;
+    const expectedVisible = Number(observation?.zones?.interior?.length || 0) +
+      Number(observation?.zones?.reference100?.length || 0);
+    const timer = setInterval(() => {
+      checks += 1;
+      const reference = readReferenceState();
+      if (reference?.lastError) {
+        clearInterval(timer);
+        setState({
+          status:'error',
+          message:(baseMessage || '観察結果を保存しました。') + ' / Reference表示エラー: ' + reference.lastError,
+          diagnostics:{ reference:'wait' }
+        });
+        return;
+      }
+      if (reference?.ready) {
+        clearInterval(timer);
+        const display = Number(reference.display || 0);
+        const reserve = Number(reference.reserve || 0);
+        const suppressed = Number(reference.suppressed || 0);
+        setState({
+          status:'success',
+          message:(baseMessage || '観察結果を保存しました。') +
+            ' / Reference表示 ' + display + '件' +
+            ' / Reserve保持 ' + reserve + '件' +
+            (suppressed ? ' / 重複抑止 ' + suppressed + '件' : '') +
+            '（観察表示候補 ' + expectedVisible + '件）',
+          diagnostics:{ reference:'done' }
+        });
+        return;
+      }
+      if (checks >= 30) {
+        clearInterval(timer);
+        setState({
+          status:'warning',
+          message:(baseMessage || '観察結果を保存しました。') + ' / Reference表示の起動を確認できませんでした。',
+          diagnostics:{ reference:'wait' }
+        });
+      }
+    }, 100);
+  }
+
   function resetDiagnostics() {
     return {
       relay:'wait',
       polygon:'wait',
       gcs:'wait',
       result:'wait',
-      save:'wait'
+      save:'wait',
+      reference:'wait'
     };
   }
 
@@ -289,7 +347,8 @@
         polygon:'active',
         gcs:'wait',
         result:'wait',
-        save:'wait'
+        save:'wait',
+        reference:'wait'
       }
     });
 
@@ -436,13 +495,15 @@
         const inside = Number(observation.counts?.interior?.total || observation.zones.interior.length || 0);
         const outer = Number(observation.counts?.reference100?.total || observation.zones.reference100.length || 0);
         clearPending();
+        const baseMessage = '観察結果をProjectへ保存しました。設計範囲内 ' + inside + '件 / 外周100m ' + outer + '件';
         const next = setState({
           status:'success',
           connected:true,
           duplicateMapTabs:false,
-          message:'観察結果をProjectへ保存しました。設計範囲内 ' + inside + '件 / 外周100m ' + outer + '件',
-          diagnostics:{ save:'done' }
+          message:baseMessage,
+          diagnostics:{ save:'done', reference:'active' }
         });
+        verifyReferenceDisplay(observation, baseMessage);
         if (typeof resolve === 'function') resolve(next);
       } catch (error) {
         const next = fail(String(error?.message || error || '観察結果を保存できませんでした。'), true);
@@ -473,7 +534,7 @@
       'box-shadow:0 12px 34px rgba(0,0,0,.28);font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;color:#3f3526';
     root.innerHTML =
       '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">' +
-        '<div style="font-size:14px;font-weight:950">🧪 WM-3B-2 TEST</div>' +
+        '<div style="font-size:14px;font-weight:950">🧪 WM-3C TEST</div>' +
         '<div style="font-size:10px;font-weight:800;color:#8a6b31">Production Creative未変更</div>' +
       '</div>' +
       '<div id="campsiteWm3b2bTestMeta" style="margin-top:7px;font-size:10px;line-height:1.5;color:#716143"></div>' +
@@ -490,6 +551,11 @@
     document.getElementById('campsiteWm3b2bTestCheck').onclick = () => { void checkConnection(); };
     document.getElementById('campsiteWm3b2bTestObserve').onclick = () => { void startObservation(); };
     render();
+    const existingObservation = readProject()?.wayfarerObservation;
+    if (existingObservation) {
+      setState({ diagnostics:{ save:'done', reference:'active' } });
+      verifyReferenceDisplay(existingObservation, '保存済み観察結果を確認しました。');
+    }
     return true;
   }
 
@@ -538,4 +604,5 @@
     ensureMessageListener,
     getState() { return { ...state }; }
   });
+  window.CampsiteWm3cCreativeTest = window.CampsiteWm3b2bCreativeTest;
 })();
