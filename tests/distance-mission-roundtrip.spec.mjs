@@ -89,10 +89,10 @@ test('CREATIVE往復で実編集→stale→再チェック→セーブ→提出�
   const finalProject=await page.evaluate(()=>JSON.parse(sessionStorage.getItem('campsiteProject.v1')||'null'));expect(finalProject.projectId).toBe(original.projectId);expect(finalProject.workspaceId).toBe(original.workspaceId);expect(finalProject.preSubmit?.source).toBe('campsiteProject.v1');
 });
 
-test('BridgeのPOWER_SPOTをCREATIVEのPowerSpotレイヤーへ受け入れ、端末幅でトップ画像だけを切り替える',async({page})=>{
+test('BridgeのPOWER_SPOTをCREATIVEのPowerSpotレイヤーへ受け入れ、現行オープニングを端末幅で維持する',async({page})=>{
   const project=powerSpotProject();await seed(page,project);await page.goto('/creative/index.html?campsiteProject=bridge');await expect.poll(()=>page.evaluate(()=>window.CampsiteCreativeProject?.projectId||''),{timeout:20000}).toBe(project.projectId);
   const normalized=await page.evaluate(()=>JSON.parse(sessionStorage.getItem('campsiteProject.v1')||'null'));expect(normalized.currentPois[0].gameEntity).toBe('POWERSPOT');expect(normalized.selectedPois[0].gameEntity).toBe('POWERSPOT');
   const layers=page.getByRole('button',{name:/レイヤー/});await layers.click();const row=page.locator('.layer-row').filter({hasText:'既存 PowerSpot'}).first();await expect(row).toBeVisible();const button=row.locator('button').first();
   await expect(button).toHaveAttribute('aria-pressed','true');await button.click();await expect(button).toHaveAttribute('aria-pressed','false');await button.click();await expect(button).toHaveAttribute('aria-pressed','true');await layers.click();await openPoi(page,'Bridge PowerSpot');
-  const bg=()=>page.locator('.entry').evaluate(el=>getComputedStyle(el).backgroundImage);await page.setViewportSize({width:393,height:852});await expect.poll(bg).toContain('campsite-top-mobile.png');await page.setViewportSize({width:412,height:915});await expect.poll(bg).toContain('campsite-top-mobile.png');await page.setViewportSize({width:1280,height:800});await expect.poll(bg).toContain('campsite-top-desktop.png');
+  const bg=()=>page.locator('.entry').evaluate(el=>getComputedStyle(el).backgroundImage);for(const size of [{width:393,height:852},{width:412,height:915},{width:1280,height:800}]){await page.setViewportSize(size);await expect.poll(bg).toContain('creative-mode-opening.png');}const background=await bg();expect(background).not.toContain('campsite-top-mobile.png');expect(background).not.toContain('campsite-top-desktop.png');
 });
