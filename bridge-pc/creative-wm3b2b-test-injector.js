@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '0.2.0';
+  const VERSION = '0.3.0';
   const PROJECT_KEY = 'campsiteProject.v1';
   const WAYFARER_URL = 'https://wayfarer.scopely.com/new/mapview';
   const WAYFARER_ORIGINS = new Set([
@@ -28,7 +28,14 @@
     status: 'idle',
     connected: false,
     duplicateMapTabs: false,
-    message: 'WM-3B-2 TEST 準備完了'
+    message: 'WM-3B-2 TEST 準備完了',
+    diagnostics: {
+      relay: 'wait',
+      polygon: 'wait',
+      gcs: 'wait',
+      result: 'wait',
+      save: 'wait'
+    }
   };
 
   function createId(prefix) {
@@ -132,6 +139,7 @@
       root: document.getElementById('campsiteWm3b2bTestPanel'),
       status: document.getElementById('campsiteWm3b2bTestStatus'),
       meta: document.getElementById('campsiteWm3b2bTestMeta'),
+      diagnostics: document.getElementById('campsiteWm3b2bTestDiagnostics'),
       open: document.getElementById('campsiteWm3b2bTestOpen'),
       check: document.getElementById('campsiteWm3b2bTestCheck'),
       observe: document.getElementById('campsiteWm3b2bTestObserve')
@@ -150,6 +158,22 @@
         ? 'Project: ' + String(project.projectId || 'unknown') + ' / Polygon: ' + polygon.length + '頂点'
         : 'campsiteProject.v1 を確認できません';
     }
+    if (view.diagnostics) {
+      const steps = [
+        ['relay', 'Relay接続'],
+        ['polygon', 'Polygon受信'],
+        ['gcs', 'GCS開始'],
+        ['result', 'RESULT返却'],
+        ['save', 'Project保存']
+      ];
+      view.diagnostics.innerHTML = steps.map(([key, label]) => {
+        const value = state.diagnostics?.[key] || 'wait';
+        const icon = value === 'done' ? '✅' : value === 'active' ? '🟡' : '⬜';
+        const weight = value === 'active' ? '950' : '800';
+        return '<div data-diag-step="' + key + '" data-diag-state="' + value + '" style="display:flex;gap:7px;align-items:center;font-weight:' + weight + '">' +
+          '<span>' + icon + '</span><span>' + label + '</span></div>';
+      }).join('');
+    }
     const busy = state.status === 'checking' || state.status === 'sending' || state.status === 'observing';
     if (view.open) view.open.disabled = busy;
     if (view.check) view.check.disabled = busy;
@@ -157,9 +181,23 @@
   }
 
   function setState(next) {
-    state = { ...state, ...next };
+    state = {
+      ...state,
+      ...next,
+      diagnostics: next?.diagnostics ? { ...state.diagnostics, ...next.diagnostics } : state.diagnostics
+    };
     render();
     return { ...state };
+  }
+
+  function resetDiagnostics() {
+    return {
+      relay:'wait',
+      polygon:'wait',
+      gcs:'wait',
+      result:'wait',
+      save:'wait'
+    };
   }
 
   function clearPending() {
@@ -209,7 +247,12 @@
     syncAndReadProject();
     clearPending();
     const requestId = createId('wm3b2b-connect');
-    setState({ status:'checking', connected:false, message:'Wayfarer Mapへ接続確認中…' });
+    setState({
+      status:'checking',
+      connected:false,
+      message:'Wayfarer Mapへ接続確認中…',
+      diagnostics:resetDiagnostics()
+    });
 
     return new Promise(resolve => {
       const timer = setTimeout(() => {
@@ -240,7 +283,14 @@
     setState({
       status:'sending',
       connected:true,
-      message:'Creativeの最新Polygon ' + polygon.length + '頂点をWayfarerへ送信中…'
+      message:'Creativeの最新Polygon ' + polygon.length + '頂点をWayfarerへ送信中…',
+      diagnostics:{
+        relay:'done',
+        polygon:'active',
+        gcs:'wait',
+        result:'wait',
+        save:'wait'
+      }
     });
 
     return new Promise(resolve => {
@@ -317,7 +367,8 @@
           status:'success',
           connected:true,
           duplicateMapTabs:false,
-          message:'接続OK。CreativeのPolygonを送信できます。'
+          message:'接続OK。CreativeのPolygonを送信できます。',
+          diagnostics:{ relay:'done' }
         });
       }
       if (typeof resolve === 'function') resolve(next);
@@ -352,7 +403,11 @@
         status:'observing',
         connected:true,
         duplicateMapTabs:false,
-        message:'Wayfarerで観察中です…'
+        message:'Wayfarerで観察中です…',
+        diagnostics:{
+          polygon:'done',
+          gcs:'active'
+        }
       });
       return;
     }
@@ -369,6 +424,13 @@
         return;
       }
 
+      setState({
+        diagnostics:{
+          gcs:'done',
+          result:'done',
+          save:'active'
+        }
+      });
       try {
         const observation = saveObservationResult(data.result);
         const inside = Number(observation.counts?.interior?.total || observation.zones.interior.length || 0);
@@ -378,7 +440,8 @@
           status:'success',
           connected:true,
           duplicateMapTabs:false,
-          message:'観察結果をProjectへ保存しました。設計範囲内 ' + inside + '件 / 外周100m ' + outer + '件'
+          message:'観察結果をProjectへ保存しました。設計範囲内 ' + inside + '件 / 外周100m ' + outer + '件',
+          diagnostics:{ save:'done' }
         });
         if (typeof resolve === 'function') resolve(next);
       } catch (error) {
@@ -415,6 +478,7 @@
       '</div>' +
       '<div id="campsiteWm3b2bTestMeta" style="margin-top:7px;font-size:10px;line-height:1.5;color:#716143"></div>' +
       '<div id="campsiteWm3b2bTestStatus" style="margin-top:8px;padding:9px 10px;border-radius:10px;background:#f0eadf;font-size:11px;line-height:1.55;font-weight:800"></div>' +
+      '<div id="campsiteWm3b2bTestDiagnostics" style="margin-top:8px;padding:9px 10px;border:1px solid rgba(138,107,49,.25);border-radius:10px;background:rgba(255,255,255,.58);display:grid;grid-template-columns:1fr 1fr;gap:5px 10px;font-size:10px;line-height:1.35;color:#5c4c31"></div>' +
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px">' +
         '<button id="campsiteWm3b2bTestOpen" type="button" style="min-height:40px;border:1px solid #5276a4;border-radius:10px;background:#e9f2ff;color:#24476f;font-weight:900">Wayfarer Mapを確認</button>' +
         '<button id="campsiteWm3b2bTestCheck" type="button" style="min-height:40px;border:1px solid #5d7353;border-radius:10px;background:#edf7e8;color:#294227;font-weight:900">接続確認</button>' +
