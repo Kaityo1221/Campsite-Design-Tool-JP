@@ -152,7 +152,7 @@ test('位置調整から完成KMZ出力へ迷わず戻れる',async({page})=>{
   await expect(page.locator('#fieldModeCreativeButton')).toBeHidden();
   const adjustBox=await adjustPanel.boundingBox();
   const historyBox=await page.locator('.field-mode-toolbar').boundingBox();
-  expect(adjustBox.bottom).toBeLessThanOrEqual(historyBox.top);
+  expect(adjustBox.y+adjustBox.height).toBeLessThanOrEqual(historyBox.y);
 
   await page.locator('#fieldModeRelocateButton').click();
   await expect(page.locator('#fieldModeSaveButton')).toBeEnabled();
