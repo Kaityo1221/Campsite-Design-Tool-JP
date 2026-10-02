@@ -32,12 +32,12 @@ jobs:
           from pathlib import Path
           p = Path('js/poi-spacing-config.js')
           s = p.read_text()
-          needle = r"/\\/(field-mode|field-prep)\\.html$/i.test(window.location.pathname) &&"
+          needle = r"/\/(field-mode|field-prep)\.html$/i.test(window.location.pathname) &&"
           if needle in s:
               p.write_text(s.replace(needle, 'false &&', 1))
               print('CA access gate disabled for baseline QA')
           else:
-              print('main baseline has no matching CA access gate; continuing without rewrite')
+              raise AssertionError('CA access gate condition not found in main baseline')
           PY
       - name: Run main Field E2E
         run: npm run test:field-e2e
@@ -87,12 +87,12 @@ jobs:
           from pathlib import Path
           p = Path('js/poi-spacing-config.js')
           s = p.read_text()
-          needle = r"/\\/(field-mode|field-prep)\\.html$/i.test(window.location.pathname) &&"
+          needle = r"/\/(field-mode|field-prep)\.html$/i.test(window.location.pathname) &&"
           if needle in s:
               p.write_text(s.replace(needle, 'false &&', 1))
               print('CA access gate disabled for baseline QA')
           else:
-              print('main baseline has no matching CA access gate; continuing without rewrite')
+              raise AssertionError('CA access gate condition not found in main baseline')
           PY
       - name: Run main Field Mode
         run: npm run test:field-mode
