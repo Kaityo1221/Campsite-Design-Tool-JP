@@ -7,6 +7,7 @@ const indexSource = fs.readFileSync(new URL('../creative/index.html', import.met
 const observeSource = fs.readFileSync(new URL('../creative/wayfarer-observe-link-patch.js', import.meta.url), 'utf8');
 
 assert.ok(indexSource.includes("fetch('./wayfarer-reference-layer-patch.js'"), 'Creative loader must fetch WM-3C patch');
+assert.ok(indexSource.includes("Function(await extras[4].text())();"), 'Creative loader must execute WM-3C patch source');
 assert.ok(indexSource.includes('applyCreativeWayfarerReferenceLayerPatch'), 'Creative loader must apply WM-3C patch for Bridge Project');
 assert.ok(observeSource.includes("campsite:wayfarer-observation-saved"), 'Observation save must publish Reference refresh event');
 
