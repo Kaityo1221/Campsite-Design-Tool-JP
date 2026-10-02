@@ -69,5 +69,11 @@ assert.ok(background.includes('CAMPSITE_CREATIVE_RELAY_REQUEST_V1'));
 assert.ok(background.includes('tabs.length !== 1'));
 assert.ok(wayfarerRelay.includes('CAMPSITE_EXTENSION_TO_WAYFARER_MAIN_V1'));
 assert.ok(creativeRelay.includes('CAMPSITE_EXTENSION_TO_CREATIVE_MAIN_V1'));
+assert.ok(creativeRelay.includes('function ensureWindowListener()'), 'Creative isolated relay must be able to restore its window listener');
+assert.ok(creativeRelay.includes("window.removeEventListener('message', forwardFromMain)"), 'Creative isolated relay restore must be idempotent');
+assert.ok(creativeRelay.includes("window.addEventListener('message', forwardFromMain)"), 'Creative isolated relay listener must be reattached after Creative document rewrite');
+assert.ok(creativeRelay.includes('setInterval(() =>'), 'Creative isolated relay must retry listener attachment during Creative boot rewrites');
+assert.ok(creativeRelay.includes("window.addEventListener('pageshow', ensureWindowListener)"), 'Creative isolated relay must restore on pageshow');
+
 
 console.log('WM-3B-2C/2D live Creative result + Project save contract: OK');
