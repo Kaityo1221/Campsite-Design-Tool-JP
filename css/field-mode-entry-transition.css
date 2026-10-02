@@ -9,12 +9,12 @@
   animation:fieldEntryStartLong 1.55s cubic-bezier(.22,.7,.2,1) forwards;
 }
 @keyframes fieldEntryStartLong{
-  0%{opacity:0;transform:scale(.88);filter:blur(7px)}
-  16%{opacity:1;transform:scale(.97);filter:blur(0)}
+  0%{opacity:0;transform:scale(.985)}
+  16%{opacity:1;transform:scale(.995)}
   28%{opacity:1;transform:scale(1)}
-  70%{opacity:1;transform:scale(1.025)}
-  86%{opacity:.92;transform:scale(1.04)}
-  100%{opacity:0;transform:scale(1.085);filter:blur(2px)}
+  70%{opacity:1;transform:scale(1.006)}
+  86%{opacity:.96;transform:scale(1.01)}
+  100%{opacity:0;transform:scale(1.015)}
 }
 @media(prefers-reduced-motion:reduce){
   .field-mode-entry-shell.is-starting .field-mode-entry-transition{animation:none;opacity:1;transform:none;filter:none}
