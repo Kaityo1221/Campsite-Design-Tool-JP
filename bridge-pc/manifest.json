@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Campsite Bridge - WM-3B-2 TEST",
+  "name": "Campsite Bridge - WM-3C TEST",
   "version": "0.1.0",
-  "description": "WM-3B-2実機確認用。Wayfarer Mapと公開CreativeのPolygon観察通信を検証します。",
+  "description": "WM-3C実機確認用。公開Creativeへ一時的にWayfarer Reference Layerを注入して観察結果表示を検証します。",
   "permissions": [],
   "host_permissions": [
     "https://wayfarer.scopely.com/*",
@@ -46,6 +46,16 @@
       ],
       "run_at": "document_idle",
       "world": "ISOLATED"
+    },
+    {
+      "matches": [
+        "https://kaityo1221.github.io/Campsite-Design-Tool-JP/creative/*"
+      ],
+      "js": [
+        "creative-wm3c-test-runtime.js"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN"
     },
     {
       "matches": [
