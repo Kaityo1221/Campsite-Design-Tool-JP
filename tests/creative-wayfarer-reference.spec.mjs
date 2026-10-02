@@ -137,81 +137,75 @@ async function workspaceSnapshot(page) {
 async function installWm5cSelfRelay(page) {
   await page.evaluate(() => {
     window.__wm5cOutbound = [];
-    window.addEventListener('message', event => {
-      const data = event.data || {};
-      if (
-        event.source !== window ||
-        event.origin !== location.origin ||
-        data.type !== 'CAMPSITE_CREATIVE_MAIN_TO_EXTENSION_V1'
-      ) return;
+    const nativePostMessage = window.postMessage.bind(window);
 
-      const payload = data.payload && typeof data.payload === 'object' ? data.payload : {};
-      window.__wm5cOutbound.push(JSON.parse(JSON.stringify(payload)));
-      const relayId = String(data.relayId || '');
-      const reply = nextPayload => {
-        window.postMessage({
+    window.postMessage = function(message, targetOrigin, ...rest) {
+      const data = message && typeof message === 'object' ? message : {};
+      if (data.type === 'CAMPSITE_CREATIVE_MAIN_TO_EXTENSION_V1') {
+        const payload = data.payload && typeof data.payload === 'object' ? data.payload : {};
+        window.__wm5cOutbound.push(JSON.parse(JSON.stringify(payload)));
+        const relayId = String(data.relayId || '');
+        const reply = nextPayload => nativePostMessage({
           type:'CAMPSITE_EXTENSION_TO_CREATIVE_MAIN_V1',
           relayId,
           payload:nextPayload
         }, location.origin);
-      };
 
-      if (payload.type === 'CAMPSITE_WAYFARER_OBSERVE_PING_V1') {
-        setTimeout(() => reply({
-          type:'CAMPSITE_WAYFARER_OBSERVE_PONG_V1',
-          requestId:String(payload.requestId || ''),
-          mapPresent:true,
-          mapTabCount:1,
-          duplicateMapTabs:false,
-          tabCountVerified:true
-        }), 0);
-        return;
-      }
-
-      if (payload.type === 'CAMPSITE_WAYFARER_OBSERVE_REQUEST_V1') {
-        const polygon = (payload.polygon || []).map(point => [Number(point[0]), Number(point[1])]);
-        const requestId = String(payload.requestId || '');
-        setTimeout(() => reply({
-          type:'CAMPSITE_WAYFARER_OBSERVE_ACCEPTED_V1',
-          requestId,
-          accepted:true,
-          observationStarted:true,
-          polygonVertexCount:polygon.length
-        }), 0);
-        setTimeout(() => reply({
-          type:'CAMPSITE_WAYFARER_OBSERVE_RESULT_V1',
-          requestId,
-          ok:true,
-          result:{
-            version:'0.3.0',
-            snapshotId:'wm5c-browser-relay',
-            observedAt:new Date().toISOString(),
-            polygon,
-            counts:{interior:{total:0},reference100:{total:0},reserve200:{total:0}},
-            zones:{interior:[],reference100:[],reserve200:[]},
-            visibleTotal:0,
-            retainedTotal:0,
-            excludedCount:0,
-            outsideCount:0,
-            canProceed:false,
-            acquisition:{
-              engineVersion:'wm5c-browser-relay',
-              bufferMeters:200,
-              referenceMeters:100,
-              reserveMeters:200,
-              cellLevel:14,
-              acquisitionBounds:null,
-              tileCount:1,
-              geometryCoverageComplete:true,
-              transportComplete:true,
-              coverageComplete:true,
-              coverageStatus:'complete',
-              sourceComplete:true
+        if (payload.type === 'CAMPSITE_WAYFARER_OBSERVE_PING_V1') {
+          setTimeout(() => reply({
+            type:'CAMPSITE_WAYFARER_OBSERVE_PONG_V1',
+            requestId:String(payload.requestId || ''),
+            mapPresent:true,
+            mapTabCount:1,
+            duplicateMapTabs:false,
+            tabCountVerified:true
+          }), 0);
+        } else if (payload.type === 'CAMPSITE_WAYFARER_OBSERVE_REQUEST_V1') {
+          const polygon = (payload.polygon || []).map(point => [Number(point[0]), Number(point[1])]);
+          const requestId = String(payload.requestId || '');
+          setTimeout(() => reply({
+            type:'CAMPSITE_WAYFARER_OBSERVE_ACCEPTED_V1',
+            requestId,
+            accepted:true,
+            observationStarted:true,
+            polygonVertexCount:polygon.length
+          }), 0);
+          setTimeout(() => reply({
+            type:'CAMPSITE_WAYFARER_OBSERVE_RESULT_V1',
+            requestId,
+            ok:true,
+            result:{
+              version:'0.4.0',
+              snapshotId:'wm5c-browser-relay',
+              observedAt:new Date().toISOString(),
+              polygon,
+              counts:{interior:{total:0},reference100:{total:0},reserve200:{total:0}},
+              zones:{interior:[],reference100:[],reserve200:[]},
+              visibleTotal:0,
+              retainedTotal:0,
+              excludedCount:0,
+              outsideCount:0,
+              canProceed:false,
+              acquisition:{
+                engineVersion:'wm5c-browser-relay',
+                bufferMeters:200,
+                referenceMeters:100,
+                reserveMeters:200,
+                cellLevel:14,
+                acquisitionBounds:null,
+                tileCount:1,
+                geometryCoverageComplete:true,
+                transportComplete:true,
+                coverageComplete:true,
+                coverageStatus:'complete',
+                sourceComplete:true
+              }
             }
-          }
-        }), 24);
+          }), 24);
+        }
       }
-    });
+      return nativePostMessage(message, targetOrigin, ...rest);
+    };
   });
 }
 
