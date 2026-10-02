@@ -10,6 +10,10 @@ on:
       - 'docs/bridge-pc-minimum-spec-v1.md'
       - 'docs/bridge-poi-engine-spec-v1.md'
       - 'scripts/build-pc-bridge.mjs'
+      - 'scripts/build-wm3c-test-runtime.mjs'
+      - 'scripts/check-wm3c-live-test-package.mjs'
+      - 'creative/wayfarer-reference-layer-patch.js'
+      - 'creative/runtime/map-engine/**'
       - 'scripts/check-bridge-wayfarer-map-adapter.mjs'
       - 'scripts/check-wayfarer-acquisition-engine.mjs'
       - 'scripts/check-wm1-live-verifier.mjs'
@@ -62,6 +66,10 @@ on:
       - 'docs/bridge-pc-minimum-spec-v1.md'
       - 'docs/bridge-poi-engine-spec-v1.md'
       - 'scripts/build-pc-bridge.mjs'
+      - 'scripts/build-wm3c-test-runtime.mjs'
+      - 'scripts/check-wm3c-live-test-package.mjs'
+      - 'creative/wayfarer-reference-layer-patch.js'
+      - 'creative/runtime/map-engine/**'
       - 'scripts/check-bridge-wayfarer-map-adapter.mjs'
       - 'scripts/check-wayfarer-acquisition-engine.mjs'
       - 'scripts/check-wm1-live-verifier.mjs'
@@ -124,11 +132,11 @@ jobs:
       - name: Final Bridge architecture check
         run: npm run check:bridge-architecture
 
-      - name: Upload WM-3B-2D PC Bridge test package
+      - name: Upload WM-3C PC Bridge test package
         if: ${{ github.event_name == 'pull_request' }}
         uses: actions/upload-artifact@v4
         with:
-          name: wm3b2d-bridge-pc-test
+          name: wm3c-bridge-pc-test
           path: downloads/campsite-bridge-pc-0.1.0.zip
           if-no-files-found: error
 
@@ -164,6 +172,9 @@ jobs:
           node --check js/bridge-inactive-review.js
           node --check js/bridge-next-flow.js
           node --check scripts/build-pc-bridge.mjs
+          node --check scripts/build-wm3c-test-runtime.mjs
+          node --check scripts/check-wm3c-live-test-package.mjs
+          node --check bridge-pc/creative-wm3c-test-runtime.js
           node --check scripts/check-bridge-wayfarer-map-adapter.mjs
           node --check scripts/check-wayfarer-acquisition-engine.mjs
           node --check scripts/check-wm1-live-verifier.mjs
@@ -196,3 +207,7 @@ jobs:
           node --check scripts/check-pc-bridge.mjs
           node --check scripts/check-pc-next-route.mjs
           node --check creative/wayfarer-observe-link-patch.js
+          node --check creative/wayfarer-reference-layer-patch.js
+          node --check creative/runtime/map-engine/wayfarer-observation-adapter.js
+          node --check creative/runtime/map-engine/wayfarer-reference-geometry.js
+          node --check creative/runtime/map-engine/wayfarer-reference-scene-builder.js
