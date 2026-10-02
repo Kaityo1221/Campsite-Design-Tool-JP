@@ -57,6 +57,7 @@ test('距離ツールは始点から十字までをリアルタイム計測し�
   await expect(page.locator('#fieldModeMeasureBadge')).toBeHidden();
   await expect(page.locator('#fieldModeCrosshair')).toBeHidden();
   expect(await page.evaluate(()=>window.FieldCreative.activeTool())).toBe(null);
+  await expect(page.locator('#fieldModeCreativeButton')).toBeVisible();
   expect(pageErrors).toEqual([]);
 });
 
@@ -116,6 +117,7 @@ test('位置調整をやめると微調整状態も解除して道具箱へ戻�
   const adjust=page.locator('#fieldModeCreativeHotbar [data-tool="adjust"]');
   await expect(adjust).toBeEnabled();
   await adjust.click();
+  await expect(page.locator('#fieldModeCreativeButton')).toBeHidden();
   await page.locator('#fieldModeFineTuneButton').click();
   expect(await page.evaluate(()=>fineTuneMode)).toBe(true);
   await expect(page.locator('#fieldModeAdjustCancel')).toHaveText('× 位置調整をやめる');
