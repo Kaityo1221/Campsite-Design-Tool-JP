@@ -64,7 +64,9 @@ test('表示した運用ヒントの根拠をProjectへ保存し、stale時は�
     return project?.distanceAdviceResult?.status || null;
   }), { timeout: 12000 }).toBe('ready');
 
-  const trace = await page.evaluate(() => JSON.parse(sessionStorage.getItem('campsiteProject.v1') || 'null').distanceAdviceResult);
+  const projectAfterAdvice = await page.evaluate(() => JSON.parse(sessionStorage.getItem('campsiteProject.v1') || 'null'));
+  expect(projectAfterAdvice.distanceResult?.stale).toBe(false);
+  const trace = projectAfterAdvice.distanceAdviceResult;
   expect(trace.schemaVersion).toBe('0.1.0');
   expect(trace.rulesetId).toBe('campsite-distance-advice-v0.1');
   expect(trace.stale).toBe(false);
