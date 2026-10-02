@@ -22,6 +22,21 @@
       const coreEnd = coreStart >= 0 ? out.indexOf('})();\n</script>', coreStart) : -1;
       if (coreEnd >= 0) {
         const augment = `\n/* cmWm3cReferenceRuntime */
+/* WM-4A: RESULT saves a fresh Project; Creative callbacks retain the loaded object. */
+if(typeof syncCampsiteProjectFromCreative==='function'){
+  const cmWm4aBaseSync=syncCampsiteProjectFromCreative;
+  syncCampsiteProjectFromCreative=function(project){
+    let latest;
+    try{latest=JSON.parse(sessionStorage.getItem('campsiteProject.v1')||'null')}catch(_){return null}
+    if(!project||!latest||latest.source!=='bridge'||project.source!=='bridge')return null;
+    if(!project.projectId||String(latest.projectId||'')!==String(project.projectId))return null;
+    if(String(latest.meta?.bridgeHandoffId||'')!==String(project.meta?.bridgeHandoffId||''))return null;
+    // Observation is storage-owned; editable arrays and current polygon stay Creative-owned.
+    if(Object.prototype.hasOwnProperty.call(latest,'wayfarerObservation'))project.wayfarerObservation=latest.wayfarerObservation;
+    else delete project.wayfarerObservation;
+    return cmWm4aBaseSync(project);
+  };
+}
 const cmWm3cBaseScene=cmCandidateShadowScene;
 let cmWm3cReferenceState={ready:false,display:0,reserve:0,suppressed:0,invalid:0,lastError:''};
 function cmWm3cReadProject(){try{const project=JSON.parse(sessionStorage.getItem('campsiteProject.v1')||'null');return project&&project.source==='bridge'?project:null}catch(_){return null}}

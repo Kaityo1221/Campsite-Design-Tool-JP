@@ -67,6 +67,10 @@ async function installRoutes(page) {
   await page.route('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js', route => route.fulfill({ status:200, contentType:'application/javascript', body:jszipJs }));
   await page.route(/https:\/\/[^/]+\.tile\.openstreetmap\.org\/.*/, route => route.fulfill({ status:204, body:'' }));
   await page.route(/https:\/\/server\.arcgisonline\.com\/.*/, route => route.fulfill({ status:204, body:'' }));
+  await page.route('https://maps.google.com/mapfiles/ms/icons/blue-dot.png', route => route.fulfill({
+    status:200, contentType:'image/svg+xml',
+    body:'<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"><circle cx="16" cy="16" r="8" fill="#3b82f6"/></svg>'
+  }));
   await page.route(/https:\/\/(?:raw|media)\.githubusercontent\.com\/.*/, route => route.fulfill({ status:204, body:'' }));
   await page.route('**/js/ca-access-bootstrap.js*', route => route.fulfill({
     status: 200,
@@ -153,6 +157,23 @@ test('WM-3C real Creative renders read-only Wayfarer references without entering
   await expect.poll(() => page.evaluate(() => window.__cmCandidateShadow.getState().rendered.markers)).toBe(5);
   const afterRefreshRecords = await workspaceSnapshot(page);
   expect(afterRefreshRecords).toEqual(beforeRecords);
+
+  // Cross two real 2500ms autosave ticks after asynchronous observation save.
+  const savedAfterRefresh = await page.evaluate(() => JSON.parse(sessionStorage.getItem('campsiteProject.v1')));
+  await expect.poll(() => page.evaluate(previous => {
+    const saved = JSON.parse(sessionStorage.getItem('campsiteProject.v1'));
+    return saved.updatedAt !== previous;
+  }, savedAfterRefresh.updatedAt), { timeout:6000 }).toBe(true);
+  const firstTick = await page.evaluate(() => JSON.parse(sessionStorage.getItem('campsiteProject.v1')));
+  expect(firstTick.wayfarerObservation).toEqual(savedAfterRefresh.wayfarerObservation);
+  await expect.poll(() => page.evaluate(previous => {
+    const saved = JSON.parse(sessionStorage.getItem('campsiteProject.v1'));
+    return saved.updatedAt !== previous;
+  }, firstTick.updatedAt), { timeout:6000 }).toBe(true);
+  const secondTick = await page.evaluate(() => JSON.parse(sessionStorage.getItem('campsiteProject.v1')));
+  expect(secondTick.wayfarerObservation).toEqual(savedAfterRefresh.wayfarerObservation);
+  await expect(referenceIcons).toHaveCount(3);
+  expect(await workspaceSnapshot(page)).toEqual(beforeRecords);
 
   expect(browserErrors).toEqual([]);
 });
