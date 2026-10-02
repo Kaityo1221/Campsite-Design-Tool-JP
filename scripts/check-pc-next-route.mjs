@@ -35,6 +35,15 @@ assert.ok(
   'Initial PC Handoff must prefer the accepted polygon observation snapshot'
 );
 assert.ok(
+  collector.includes('enginePois: [...zones.interior, ...zones.reference100]'),
+  'Initial Handoff normal Bridge channels must include only INTERIOR + REFERENCE_100'
+);
+assert.equal(
+  collector.includes('enginePois: [...zones.interior, ...zones.reference100, ...zones.reserve200]'),
+  false,
+  'RESERVE_200 must remain retained only in wayfarerObservation and hidden from Gateway POI channels'
+);
+assert.ok(
   receiver.includes("bridgePlatform: String(data.bridgePlatform || '').trim().toLowerCase()"),
   'Receiver must retain bridgePlatform from payload'
 );

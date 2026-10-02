@@ -345,7 +345,9 @@
         !Array.isArray(zones.reference100) ||
         !Array.isArray(zones.reserve200)) return null;
     return {
-      enginePois: [...zones.interior, ...zones.reference100, ...zones.reserve200],
+      // RESERVE_200 stays only inside wayfarerObservation. Do not feed it
+      // into the normal Bridge POI channels or the Gateway can render it.
+      enginePois: [...zones.interior, ...zones.reference100],
       selectedBounds: null,
       wayfarerObservation: observation,
       diagnosticReport: null
