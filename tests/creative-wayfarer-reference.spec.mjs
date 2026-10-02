@@ -90,11 +90,9 @@ async function replaceCreativePolygon(page, points) {
   await expect(deleteButton).toBeVisible();
   await deleteButton.click();
 
-  const target = await page.evaluate(() => {
-    const point = map.latLngToContainerPoint([35.6822, 139.7673]);
-    return { x:point.x, y:point.y };
-  });
-  await page.mouse.click(target.x, target.y);
+  const deleteOverlay = page.locator('.leaflet-polygon-pane path.leaflet-interactive').last();
+  await expect(deleteOverlay).toBeVisible();
+  await deleteOverlay.click({ force:true });
   const confirmDelete = page.getByRole('button', { name:'ポリゴンを削除' });
   await expect(confirmDelete).toBeVisible();
   await confirmDelete.click();
@@ -107,13 +105,13 @@ async function replaceCreativePolygon(page, points) {
   await expect(action).toBeVisible();
 
   for (const point of points) {
-    await page.evaluate(([lat,lng]) => map.setView([lat,lng], 18, { animate:false }), point);
+    await page.evaluate(([lat,lng]) => window.CampsiteCreativeCoordinateJump.moveTo(lat,lng), point);
     action = page.getByRole('button', { name:'点を打つ' });
     await expect(action).toBeVisible();
     await action.click();
   }
 
-  await page.evaluate(([lat,lng]) => map.setView([lat,lng], 18, { animate:false }), points[0]);
+  await page.evaluate(([lat,lng]) => window.CampsiteCreativeCoordinateJump.moveTo(lat,lng), points[0]);
   const finish = page.getByRole('button', { name:'ポリゴン作成！' });
   await expect(finish).toBeVisible();
   await finish.click();
