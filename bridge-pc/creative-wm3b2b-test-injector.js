@@ -220,17 +220,26 @@
         });
         return;
       }
-      if (reference?.ready) {
+
+      const display = Number(reference?.display || 0);
+      const reserve = Number(reference?.reserve || 0);
+      const suppressed = Number(reference?.suppressed || 0);
+      const invalid = Number(reference?.invalid || 0);
+      const rendered = document.querySelectorAll('.cm-engine-reference-icon').length;
+      const accounted = display + suppressed + invalid;
+      const referenceReady = reference?.ready === true &&
+        accounted === expectedVisible &&
+        rendered === display;
+
+      if (referenceReady) {
         clearInterval(timer);
-        const display = Number(reference.display || 0);
-        const reserve = Number(reference.reserve || 0);
-        const suppressed = Number(reference.suppressed || 0);
         setState({
           status:'success',
           message:(baseMessage || '観察結果を保存しました。') +
             ' / Reference表示 ' + display + '件' +
             ' / Reserve保持 ' + reserve + '件' +
             (suppressed ? ' / 重複抑止 ' + suppressed + '件' : '') +
+            (invalid ? ' / 無効 ' + invalid + '件' : '') +
             '（観察表示候補 ' + expectedVisible + '件）',
           diagnostics:{ reference:'done' }
         });
@@ -240,7 +249,12 @@
         clearInterval(timer);
         setState({
           status:'warning',
-          message:(baseMessage || '観察結果を保存しました。') + ' / Reference表示の起動を確認できませんでした。',
+          message:(baseMessage || '観察結果を保存しました。') +
+            ' / Reference表示を確認できませんでした。候補 ' + expectedVisible +
+            ' / display ' + display +
+            ' / DOM ' + rendered +
+            ' / 重複抑止 ' + suppressed +
+            ' / 無効 ' + invalid,
           diagnostics:{ reference:'wait' }
         });
       }
