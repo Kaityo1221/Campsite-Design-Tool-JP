@@ -187,3 +187,35 @@ Evidence:
   mutations, local reclassification or Wayfarer reacquisition.
 
 WM-5B/5C remain unimplemented at this PASS boundary.
+
+
+### WM-5B-1 — local observation reclassification (implementation)
+
+Scope is still pure data derivation. This subphase does not load the module in
+Creative, mutate `records`, replace the stored observation snapshot, or add the
+Wayfarer reacquisition UI.
+
+When WM-5A says the current polygon +100m is covered, the reclassifier derives a
+current view from all retained snapshot POIs:
+
+- inside current polygon -> INTERIOR;
+- outside polygon but within 100m -> REFERENCE_100;
+- all other retained POIs -> hidden RESERVE_200 remainder.
+
+The stored acquisition polygon, snapshot identity/time and original
+`wayfarerObservation.zones` remain unchanged. Derived RESERVE_200 is only the
+hidden retained remainder; it does not claim that current polygon +200m was
+freshly acquired.
+
+Gate before PASS:
+
+1. unchanged polygon preserves expected zone counts;
+2. an 80m covered edit moves retained POIs across zone boundaries locally;
+3. GUID/type/Active-Inactive state is preserved;
+4. source observation stays byte-equivalent;
+5. outside-reserve edits return reacquisition-required with no stale derived zones;
+6. duplicate/invalid retained POIs are diagnosed without double classification;
+7. module is not connected to Creative UI or `records`;
+8. existing Bridge architecture regressions and diff review pass.
+
+WM-5B-2 Creative Reference-layer integration must not start until WM-5B-1 passes.

@@ -15,6 +15,8 @@ on:
       - 'scripts/check-wm4a-project-lifecycle.mjs'
       - 'scripts/check-wm5a-reserve-coverage.mjs'
       - 'creative/runtime/map-engine/wayfarer-reserve-coverage.js'
+      - 'scripts/check-wm5b-local-reclassification.mjs'
+      - 'creative/runtime/map-engine/wayfarer-local-reclassification.js'
       - 'creative/wayfarer-reference-layer-patch.js'
       - 'creative/runtime/map-engine/**'
       - 'scripts/check-bridge-wayfarer-map-adapter.mjs'
@@ -181,6 +183,8 @@ jobs:
           node --check scripts/check-wm4a-project-lifecycle.mjs
           node --check scripts/check-wm5a-reserve-coverage.mjs
           node --check creative/runtime/map-engine/wayfarer-reserve-coverage.js
+          node --check scripts/check-wm5b-local-reclassification.mjs
+          node --check creative/runtime/map-engine/wayfarer-local-reclassification.js
           node --check bridge-pc/creative-wm3c-test-runtime.js
           node --check scripts/check-bridge-wayfarer-map-adapter.mjs
           node --check scripts/check-wayfarer-acquisition-engine.mjs
