@@ -153,8 +153,9 @@ test('320x568でもトップと主要操作が重ならない',async({page})=>{
   await expect(page.locator('#fieldModeEntryStart')).toBeVisible();
   await loadAndStart(page,'narrow-field.kml');
   await page.locator('#fieldModeDistanceBadge').evaluate(element=>{element.innerHTML='⚠ 50m未満<br>既存POI 12.3m';});
-  const mapUi=await boxes(page,['#fieldModeDistanceBadge','#fieldModeCreativeClose','#fieldCreativeCurrentFab','.leaflet-control-attribution']);
+  const mapUi=await boxes(page,['#fieldModeDistanceBadge','#fieldModeCreativeClose','#fieldCreativeCurrentFab','.leaflet-control-layers','.leaflet-control-attribution']);
   expect(overlaps(mapUi['#fieldModeDistanceBadge'],mapUi['#fieldModeCreativeClose'])).toBe(false);
   expect(overlaps(mapUi['#fieldModeDistanceBadge'],mapUi['#fieldCreativeCurrentFab'])).toBe(false);
+  expect(overlaps(mapUi['#fieldCreativeCurrentFab'],mapUi['.leaflet-control-layers'])).toBe(false);
   expect(overlaps(mapUi['#fieldCreativeCurrentFab'],mapUi['.leaflet-control-attribution'])).toBe(false);
 });
