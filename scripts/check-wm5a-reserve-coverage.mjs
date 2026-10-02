@@ -85,6 +85,17 @@ const badCurrent = evaluate(observation(), [[35,139],[35,139.001]]);
 assert.equal(badCurrent.covered, false);
 assert.equal(badCurrent.reason, 'INVALID_CURRENT_POLYGON');
 
+const bowTie = evaluate(observation(), [point(0,0),point(200,200),point(0,200),point(200,0)]);
+assert.equal(bowTie.covered, false);
+assert.equal(bowTie.reason, 'INVALID_CURRENT_POLYGON', 'self-intersection must fail closed');
+
+const collinear = evaluate(observation(), [point(0,0),point(100,0),point(200,0)]);
+assert.equal(collinear.covered, false);
+assert.equal(collinear.reason, 'INVALID_CURRENT_POLYGON', 'zero-area polygon must fail closed');
+
+const closedRing = evaluate(observation(), [...rect(0,0,200,200), rect(0,0,200,200)[0]]);
+assert.equal(closedRing.covered, true, 'a repeated closing point should normalize to the same valid ring');
+
 const huge = evaluate(observation(), [point(0,0),point(200000,0),point(200000,200000),point(0,200000)], { maxSamples:500 });
 assert.equal(huge.covered, false);
 assert.equal(huge.reason, 'SAMPLE_LIMIT');

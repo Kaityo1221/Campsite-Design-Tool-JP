@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '0.1.0';
+  const VERSION = '0.1.1';
   const EARTH_RADIUS_METERS = 6378137;
   const REQUIRED_REFERENCE_METERS = 100;
   const DEFAULT_SAMPLE_SPACING_METERS = 2;
@@ -23,7 +23,15 @@
 
   function normalizePolygon(values) {
     const polygon = (Array.isArray(values) ? values : []).map(normalizePoint).filter(Boolean);
-    return polygon.length >= 3 && polygon.length <= 30 ? polygon : [];
+    if (polygon.length >= 4) {
+      const first = polygon[0];
+      const last = polygon[polygon.length - 1];
+      if (Math.abs(first[0] - last[0]) < 1e-12 && Math.abs(first[1] - last[1]) < 1e-12) {
+        polygon.pop();
+      }
+    }
+    if (polygon.length < 3 || polygon.length > 30) return [];
+    return isSimplePolygon(polygon) ? polygon : [];
   }
 
   function metersPerDegreeLat() {
@@ -94,6 +102,61 @@
   function segmentLengthMeters(a, b) {
     const projected = projectRelative(b, a);
     return Math.hypot(projected.x, projected.y);
+  }
+
+  function localPolygon(polygon) {
+    const origin = polygon[0];
+    return polygon.map(point => projectRelative(point, origin));
+  }
+
+  function cross(a, b, c) {
+    return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+  }
+
+  function onSegment(a, b, p, epsilon = 1e-7) {
+    return Math.abs(cross(a, b, p)) <= epsilon &&
+      p.x >= Math.min(a.x, b.x) - epsilon &&
+      p.x <= Math.max(a.x, b.x) + epsilon &&
+      p.y >= Math.min(a.y, b.y) - epsilon &&
+      p.y <= Math.max(a.y, b.y) + epsilon;
+  }
+
+  function segmentsIntersect(a, b, c, d) {
+    const abC = cross(a, b, c);
+    const abD = cross(a, b, d);
+    const cdA = cross(c, d, a);
+    const cdB = cross(c, d, b);
+    if (((abC > 0 && abD < 0) || (abC < 0 && abD > 0)) &&
+        ((cdA > 0 && cdB < 0) || (cdA < 0 && cdB > 0))) return true;
+    return onSegment(a,b,c) || onSegment(a,b,d) || onSegment(c,d,a) || onSegment(c,d,b);
+  }
+
+  function isSimplePolygon(polygon) {
+    const local = localPolygon(polygon);
+    let twiceArea = 0;
+    for (let i = 0; i < local.length; i += 1) {
+      const a = local[i];
+      const b = local[(i + 1) % local.length];
+      twiceArea += a.x * b.y - b.x * a.y;
+      if (Math.hypot(b.x - a.x, b.y - a.y) < 0.05) return false;
+    }
+    if (Math.abs(twiceArea) < 0.02) return false;
+
+    for (let i = 0; i < local.length; i += 1) {
+      const a = local[i];
+      const b = local[(i + 1) % local.length];
+      for (let j = i + 1; j < local.length; j += 1) {
+        const adjacent =
+          j === i ||
+          j === i + 1 ||
+          (i === 0 && j === local.length - 1);
+        if (adjacent) continue;
+        const c = local[j];
+        const d = local[(j + 1) % local.length];
+        if (segmentsIntersect(a,b,c,d)) return false;
+      }
+    }
+    return true;
   }
 
   function resultBase(observation, acquiredBufferMeters, availableExpansionMeters, sampleSpacingMeters) {
@@ -197,6 +260,7 @@
     version: VERSION,
     requiredReferenceMeters: REQUIRED_REFERENCE_METERS,
     normalizePolygon,
+    isSimplePolygon,
     distanceToPolygonMeters,
     evaluate
   });
