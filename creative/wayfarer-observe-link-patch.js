@@ -13,6 +13,7 @@
     const OBSERVE_REQUEST_TYPE = 'CAMPSITE_WAYFARER_OBSERVE_REQUEST_V1';
     const OBSERVE_ACCEPTED_TYPE = 'CAMPSITE_WAYFARER_OBSERVE_ACCEPTED_V1';
     const OBSERVE_RESULT_TYPE = 'CAMPSITE_WAYFARER_OBSERVE_RESULT_V1';
+    const OBSERVATION_SAVED_EVENT = 'campsite:wayfarer-observation-saved';
     const PROJECT_KEY = 'campsiteProject.v1';
     const RELAY_FROM_MAIN_TYPE = 'CAMPSITE_CREATIVE_MAIN_TO_EXTENSION_V1';
     const RELAY_TO_MAIN_TYPE = 'CAMPSITE_EXTENSION_TO_CREATIVE_MAIN_V1';
@@ -233,6 +234,9 @@
 
       project.wayfarerObservation = observation;
       sessionStorage.setItem(PROJECT_KEY, JSON.stringify(project));
+      try {
+        window.dispatchEvent(new CustomEvent(OBSERVATION_SAVED_EVENT, { detail: { observedAt: observation.observedAt } }));
+      } catch (_) {}
       return observation;
     }
 
