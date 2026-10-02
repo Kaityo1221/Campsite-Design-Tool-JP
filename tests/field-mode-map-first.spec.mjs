@@ -134,6 +134,38 @@ test('開始後は現在地FABと戻る・やり直しを維持する',async({pa
   await expect.poll(()=>page.evaluate(()=>map.distance(map.getCenter(),currentPosition))).toBeLessThan(1);
 });
 
+test('位置調整から完成KMZ出力へ迷わず戻れる',async({page})=>{
+  await page.goto('/field-mode.html');
+  await loadAndStart(page,'operation-finish.kml');
+
+  await page.evaluate(()=>{
+    selectAddedPoi(poiRecords.find(record=>record.added));
+    setCurrentPosition(35.6820,139.7684,5,false);
+  });
+  await openLegacyTools(page);
+  const adjust=page.locator('#fieldModeCreativeHotbar [data-tool="adjust"]');
+  await expect(adjust).toBeEnabled();
+  await adjust.click();
+
+  const adjustPanel=page.locator('.field-mode-adjust-actions');
+  await expect(adjustPanel).toBeVisible();
+  await expect(page.locator('#fieldModeCreativeButton')).toBeHidden();
+  const adjustBox=await adjustPanel.boundingBox();
+  const historyBox=await page.locator('.field-mode-toolbar').boundingBox();
+  expect(adjustBox.y+adjustBox.height).toBeLessThanOrEqual(historyBox.y);
+
+  await page.locator('#fieldModeRelocateButton').click();
+  await expect(page.locator('#fieldModeSaveButton')).toBeEnabled();
+  await page.locator('#fieldModeCreativeClose').click();
+  await expect(page.locator('body')).not.toHaveClass(/field-creative-active/);
+
+  const save=page.locator('#fieldModeSaveButton');
+  await expect(save).toBeVisible();
+  await expect(save).toBeEnabled();
+  await expect(save).toHaveText('設計完成：KMZ＋但し書きを出力');
+  await expect(save).toHaveAttribute('aria-label','完成KMZと必要な50m未満但し書きを端末へ出力');
+});
+
 test('編集時の中央十字は細い1px表示になる',async({page})=>{
   await page.goto('/field-mode.html');
   await loadAndStart(page);
