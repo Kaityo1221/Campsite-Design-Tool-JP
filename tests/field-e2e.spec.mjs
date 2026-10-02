@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { openLegacyTools, startPoiAdd } from './helpers/field-creative-v2.mjs';
 import fs from 'node:fs';
 import JSZip from 'jszip';
 
@@ -85,14 +86,7 @@ async function selectPoiType(page, typeLabel) {
 }
 
 async function addNewPoi(page, typeLabel) {
-  const hotbar = page.locator('#fieldModeCreativeHotbar');
-  if (!(await hotbar.evaluate(element => element.classList.contains('is-open')))) {
-    await page.locator('#fieldModeCreativeButton').click();
-  }
-  await expect(hotbar).toHaveClass(/is-open/);
-  const poiTool = hotbar.locator('[data-tool="poi"]');
-  await expect(poiTool).toBeEnabled();
-  await poiTool.click();
+  await startPoiAdd(page);
 
   await selectPoiType(page, typeLabel);
   const confirmButton = page.locator('#fieldModeNewPoiButton');
@@ -103,7 +97,7 @@ async function addNewPoi(page, typeLabel) {
 }
 
 async function createThreePointArea(page) {
-  await page.locator('#fieldModeCreativeButton').click();
+  await openLegacyTools(page);
   const areaTool = page.locator('#fieldModeCreativeHotbar [data-tool="area"]');
   await expect.poll(() => areaTool.isEnabled()).toBe(true);
   await areaTool.click();

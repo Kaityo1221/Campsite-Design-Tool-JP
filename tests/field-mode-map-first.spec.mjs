@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { openLegacyTools } from './helpers/field-creative-v2.mjs';
 import fs from 'node:fs';
 
 const leafletJs=fs.readFileSync('node_modules/leaflet/dist/leaflet.js','utf8');
@@ -50,23 +51,42 @@ test('初期表示はCREATIVE MODEトップで、読込後に明示開始する'
   await expect(page.locator('body')).toHaveClass(/field-creative-active/);
   await expect(page.locator('.field-mode-stage')).toBeVisible();
   await expect.poll(()=>page.locator('.field-mode-stage').evaluate(el=>el.getBoundingClientRect().height)).toBeGreaterThan(500);
-  await expect(page.locator('#fieldModeCreativeButton')).toContainText('道具');
+  await expect(page.locator('#fieldModeCreativeButton')).toHaveText('＋');
+  await expect(page.locator('#fieldModeCreativeButton')).toHaveAttribute('aria-label','候補地を追加');
 });
 
-test('開始後は現在地再取得と元に戻す・やり直すを維持する',async({page})=>{
+test('開始後は現在地FABと戻る・やり直しを維持する',async({page})=>{
   await page.goto('/field-mode.html');
   await loadAndStart(page);
   await expect(page.locator('#fieldModeScanButton')).toBeHidden();
-  await expect(page.locator('#fieldModeLocationBadge')).toHaveAttribute('role','button');
-  await expect(page.locator('#fieldModeUndoButton')).toHaveText('↶ 元に戻す');
-  await expect(page.locator('#fieldModeRedoButton')).toHaveText('やり直す ↷');
+  const current=page.locator('#fieldCreativeCurrentFab');
+  await expect(current).toBeVisible();
+  await expect(current).toHaveAttribute('aria-label','現在地へ移動');
+  await expect(current).toHaveText('◎現在地');
+  await expect(current).toBeEnabled();
+  await expect(page.locator('#fieldModeUndoButton')).toHaveText('← 戻る');
+  await expect(page.locator('#fieldModeUndoButton')).toHaveAttribute('aria-label','戻る');
+  await expect(page.locator('#fieldModeRedoButton')).toHaveText('↻ やり直し');
+  await expect(page.locator('#fieldModeRedoButton')).toHaveAttribute('aria-label','やり直し');
   await expect(page.locator('#fieldModeNewPoiButton')).toBeHidden();
+  await expect(page.locator('#fieldModeScanButton')).toBeEnabled();
+  // Supply a deterministic fresh GPS fix on every WebKit platform.
+  await page.evaluate(()=>{
+    navigator.geolocation.getCurrentPosition=success=>queueMicrotask(()=>success({
+      coords:{latitude:35.6812,longitude:139.7671,accuracy:5}
+    }));
+  });
+  await page.evaluate(()=>map.panBy([120,80],{animate:false}));
+  expect(await page.evaluate(()=>map.distance(map.getCenter(),currentPosition))).toBeGreaterThan(1);
+  await current.click();
+  await expect(page.locator('#fieldModeStatus')).toHaveText('SCAN完了');
+  await expect.poll(()=>page.evaluate(()=>map.distance(map.getCenter(),currentPosition))).toBeLessThan(1);
 });
 
 test('編集時の中央十字は細い1px表示になる',async({page})=>{
   await page.goto('/field-mode.html');
   await loadAndStart(page);
-  await page.locator('#fieldModeCreativeButton').click();
+  await openLegacyTools(page);
   const area=page.locator('#fieldModeCreativeHotbar [data-tool="area"]');
   await expect.poll(()=>area.isEnabled()).toBe(true);
   await area.click();
@@ -82,7 +102,7 @@ test('320x568でもトップと主要操作が重ならない',async({page})=>{
   await expect(page.locator('#fieldModeEntryStart')).toBeVisible();
   await loadAndStart(page,'narrow-field.kml');
   await page.locator('#fieldModeDistanceBadge').evaluate(element=>{element.innerHTML='⚠ 50m未満<br>既存POI 12.3m';});
-  const mapUi=await boxes(page,['#fieldModeDistanceBadge','#fieldModeCreativeClose','#fieldModeLocationBadge','.leaflet-control-attribution']);
+  const mapUi=await boxes(page,['#fieldModeDistanceBadge','#fieldModeCreativeClose','#fieldCreativeCurrentFab','.leaflet-control-attribution']);
   expect(overlaps(mapUi['#fieldModeDistanceBadge'],mapUi['#fieldModeCreativeClose'])).toBe(false);
-  expect(overlaps(mapUi['#fieldModeLocationBadge'],mapUi['.leaflet-control-attribution'])).toBe(false);
+  expect(overlaps(mapUi['#fieldCreativeCurrentFab'],mapUi['.leaflet-control-attribution'])).toBe(false);
 });
