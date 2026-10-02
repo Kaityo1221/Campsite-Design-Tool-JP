@@ -227,8 +227,11 @@
     if(label)label.textContent='ゲームスポット元データを選択';
   }
   if(filename&&!filename.textContent.trim())filename.textContent='未選択';
-  if(state&&/編集するCSV \/ KMZを選択してください。|ファイルを選択してください。/.test(state.textContent||'')){
-    state.textContent='先にCSV / KMZを選択してください';
+  if(state){
+    const current=String(state.textContent||'');
+    if(current==='編集するCSV / KMZを選択してください。'||current==='ファイルを選択してください。'){
+      state.textContent='先にCSV / KMZを選択してください';
+    }
   }
   if(resume)resume.textContent='前回のデータから再開';
 
