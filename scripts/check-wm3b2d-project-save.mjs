@@ -140,6 +140,7 @@ const result = {
   }
 };
 
+const fullBefore = JSON.parse(JSON.stringify(project));
 const savedObservation = api.saveObservationResult(result);
 assert.equal(savedObservation.visibleTotal, 3);
 assert.equal(savedObservation.retainedTotal, 4);
@@ -163,6 +164,24 @@ assert.deepEqual({
   futureField:savedProject.futureField
 }, protectedSnapshot);
 assert.equal(JSON.stringify(context.records), JSON.stringify(records), 'Creative records must not be mutated by Project observation save');
+
+const savedWithoutObservation = JSON.parse(JSON.stringify(savedProject));
+delete savedWithoutObservation.wayfarerObservation;
+assert.deepEqual(savedWithoutObservation, fullBefore, 'only wayfarerObservation may change on first observation save');
+
+const secondResult = JSON.parse(JSON.stringify(result));
+secondResult.observedAt = '2026-10-02T00:02:00.000Z';
+secondResult.zones.interior.push({ guid:'inside-3', observationZone:'INTERIOR' });
+secondResult.counts.interior.total = 3;
+secondResult.visibleTotal = 4;
+secondResult.retainedTotal = 5;
+const secondSaved = api.saveObservationResult(secondResult);
+const projectAfterSecondSave = JSON.parse(sessionStorage.getItem('campsiteProject.v1'));
+const secondWithoutObservation = JSON.parse(JSON.stringify(projectAfterSecondSave));
+delete secondWithoutObservation.wayfarerObservation;
+assert.deepEqual(secondWithoutObservation, fullBefore, 're-observation must replace only wayfarerObservation');
+assert.equal(secondSaved.observedAt, '2026-10-02T00:02:00.000Z');
+assert.equal(secondSaved.zones.interior.length, 3);
 
 const staleProject = JSON.parse(JSON.stringify(project));
 staleProject.polygon = [[36,140],[36,140.01],[36.01,140.01],[36.01,140]];
