@@ -90,9 +90,11 @@ async function replaceCreativePolygon(page, points) {
   await expect(deleteButton).toBeVisible();
   await deleteButton.click();
 
-  const deleteOverlay = page.locator('.leaflet-polygon-pane path.leaflet-interactive').last();
+  const deleteOverlay = page.locator('.leaflet-polygon-pane path[stroke="#d6453d"].leaflet-interactive').last();
   await expect(deleteOverlay).toBeVisible();
-  await deleteOverlay.click({ force:true });
+  await deleteOverlay.evaluate(element => {
+    element.dispatchEvent(new MouseEvent('click', { bubbles:true, cancelable:true, view:window }));
+  });
   const confirmDelete = page.getByRole('button', { name:'ポリゴンを削除' });
   await expect(confirmDelete).toBeVisible();
   await confirmDelete.click();
