@@ -14,6 +14,7 @@
     const OBSERVE_ACCEPTED_TYPE = 'CAMPSITE_WAYFARER_OBSERVE_ACCEPTED_V1';
     const OBSERVE_RESULT_TYPE = 'CAMPSITE_WAYFARER_OBSERVE_RESULT_V1';
     const OBSERVATION_SAVED_EVENT = 'campsite:wayfarer-observation-saved';
+    const REFERENCE_STATE_EVENT = 'campsite:wayfarer-reference-state';
     const PROJECT_KEY = 'campsiteProject.v1';
     const RELAY_FROM_MAIN_TYPE = 'CAMPSITE_CREATIVE_MAIN_TO_EXTENSION_V1';
     const RELAY_TO_MAIN_TYPE = 'CAMPSITE_EXTENSION_TO_CREATIVE_MAIN_V1';
@@ -33,6 +34,7 @@
       duplicateMapTabs: false,
       mapTabCount: 0,
       tabCountVerified: false,
+      reacquireRequired: false,
       message: '未接続'
     };
 
@@ -60,15 +62,47 @@
       const state = linkState.status;
       view.status.dataset.state = state;
       view.status.textContent = linkState.message || '未接続';
+      const reacquire = linkState.reacquireRequired === true;
+      if (view.button) {
+        view.button.dataset.reacquire = reacquire ? '1' : '0';
+        view.button.textContent = reacquire ? 'Wayfarerで再取得' : '🔭 Wayfarer観察';
+        view.button.style.background = reacquire ? 'rgba(255,241,201,.98)' : 'rgba(238,247,231,.96)';
+        view.button.style.borderColor = reacquire ? '#a9791f' : '#5d7353';
+        view.button.style.color = reacquire ? '#4b3715' : '#294227';
+        view.button.title = reacquire ? '現在の設計範囲は前回のWayfarer取得範囲を超えています' : '';
+      }
       if (view.check) view.check.disabled = state === 'checking' || state === 'sending' || state === 'observing';
       if (view.open) view.open.disabled = state === 'checking' || state === 'sending' || state === 'observing';
-      if (view.observe) view.observe.disabled = !linkState.connected || state === 'checking' || state === 'sending' || state === 'observing';
+      if (view.observe) {
+        view.observe.disabled = !linkState.connected || state === 'checking' || state === 'sending' || state === 'observing';
+        view.observe.textContent = reacquire ? 'Wayfarerで再取得' : 'この範囲を観察';
+      }
     }
 
     function setState(next) {
       linkState = { ...linkState, ...next };
       renderState();
       return { ...linkState };
+    }
+
+    function syncReacquireState(detail) {
+      let referenceState = detail && typeof detail === 'object' ? detail : null;
+      if (!referenceState) {
+        try { referenceState = window.__cmWayfarerReference?.getState?.() || null; } catch (_) {}
+      }
+      const required = referenceState?.localCanUse === false &&
+        String(referenceState?.localReason || '') === 'REACQUIRE_REQUIRED';
+      const wasRequired = linkState.reacquireRequired === true;
+      linkState = { ...linkState, reacquireRequired: required };
+      if (required && !wasRequired && linkState.status === 'idle') {
+        linkState.message = '設計範囲が前回の取得範囲を超えています。Wayfarerで再取得してください。';
+      } else if (!required && wasRequired &&
+                 linkState.status === 'idle' &&
+                 String(linkState.message || '').includes('Wayfarerで再取得')) {
+        linkState.message = '未接続';
+      }
+      renderState();
+      return required;
     }
 
     function syncProject(project) {
@@ -519,20 +553,23 @@
         if (event.target === overlay) overlay.style.display = 'none';
       });
 
+      syncReacquireState();
       renderState();
     }
 
+    window.addEventListener(REFERENCE_STATE_EVENT, event => syncReacquireState(event?.detail));
     window.addEventListener('message', handlePong);
     window.addEventListener('message', handleObserveAccepted);
     window.addEventListener('message', handleObserveResult);
 
     window.installCampsiteWayfarerObserveLink = installUi;
     window.CampsiteCreativeWayfarerLink = Object.freeze({
-      version: '0.3.0',
+      version: '0.4.0',
       openWayfarer,
       checkConnection,
       startObservation,
       saveObservationResult,
+      syncReacquireState,
       getState() { return { ...linkState }; }
     });
   }

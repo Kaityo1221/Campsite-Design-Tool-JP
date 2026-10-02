@@ -134,6 +134,87 @@ async function workspaceSnapshot(page) {
   });
 }
 
+async function installWm5cSelfRelay(page) {
+  await page.evaluate(() => {
+    window.__wm5cOutbound = [];
+    window.addEventListener('message', event => {
+      const data = event.data || {};
+      if (
+        event.source !== window ||
+        event.origin !== location.origin ||
+        data.type !== 'CAMPSITE_CREATIVE_MAIN_TO_EXTENSION_V1'
+      ) return;
+
+      const payload = data.payload && typeof data.payload === 'object' ? data.payload : {};
+      window.__wm5cOutbound.push(JSON.parse(JSON.stringify(payload)));
+      const relayId = String(data.relayId || '');
+      const reply = nextPayload => {
+        window.postMessage({
+          type:'CAMPSITE_EXTENSION_TO_CREATIVE_MAIN_V1',
+          relayId,
+          payload:nextPayload
+        }, location.origin);
+      };
+
+      if (payload.type === 'CAMPSITE_WAYFARER_OBSERVE_PING_V1') {
+        setTimeout(() => reply({
+          type:'CAMPSITE_WAYFARER_OBSERVE_PONG_V1',
+          requestId:String(payload.requestId || ''),
+          mapPresent:true,
+          mapTabCount:1,
+          duplicateMapTabs:false,
+          tabCountVerified:true
+        }), 0);
+        return;
+      }
+
+      if (payload.type === 'CAMPSITE_WAYFARER_OBSERVE_REQUEST_V1') {
+        const polygon = (payload.polygon || []).map(point => [Number(point[0]), Number(point[1])]);
+        const requestId = String(payload.requestId || '');
+        setTimeout(() => reply({
+          type:'CAMPSITE_WAYFARER_OBSERVE_ACCEPTED_V1',
+          requestId,
+          accepted:true,
+          observationStarted:true,
+          polygonVertexCount:polygon.length
+        }), 0);
+        setTimeout(() => reply({
+          type:'CAMPSITE_WAYFARER_OBSERVE_RESULT_V1',
+          requestId,
+          ok:true,
+          result:{
+            version:'0.3.0',
+            snapshotId:'wm5c-browser-relay',
+            observedAt:new Date().toISOString(),
+            polygon,
+            counts:{interior:{total:0},reference100:{total:0},reserve200:{total:0}},
+            zones:{interior:[],reference100:[],reserve200:[]},
+            visibleTotal:0,
+            retainedTotal:0,
+            excludedCount:0,
+            outsideCount:0,
+            canProceed:false,
+            acquisition:{
+              engineVersion:'wm5c-browser-relay',
+              bufferMeters:200,
+              referenceMeters:100,
+              reserveMeters:200,
+              cellLevel:14,
+              acquisitionBounds:null,
+              tileCount:1,
+              geometryCoverageComplete:true,
+              transportComplete:true,
+              coverageComplete:true,
+              coverageStatus:'complete',
+              sourceComplete:true
+            }
+          }
+        }), 24);
+      }
+    });
+  });
+}
+
 test('WM-3C real Creative renders read-only Wayfarer references without entering records', async ({ page }) => {
   const browserErrors = collectBrowserErrors(page);
   await installRoutes(page);
@@ -252,3 +333,64 @@ test('WM-3C real Creative renders read-only Wayfarer references without entering
 
   expect(browserErrors).toEqual([]);
 });
+
+test('WM-5C outside-reserve edit shows reacquisition CTA and sends latest Creative polygon', async ({ page }) => {
+  const browserErrors = collectBrowserErrors(page);
+  await installRoutes(page);
+  await installWm5cSelfRelay(page);
+
+  await page.goto('/creative/index.html?campsiteProject=bridge');
+  await expect.poll(() => page.evaluate(() => window.CampsiteCreativeProject?.count || 0), { timeout:15000 }).toBe(2);
+  await expect.poll(() => page.evaluate(() => window.__cmWayfarerReference?.getState?.()?.ready === true), { timeout:15000 }).toBe(true);
+
+  const beforeRecords = await workspaceSnapshot(page);
+  const outsidePolygon = [
+    [35.6822, 139.7670],
+    [35.6822, 139.7690],
+    [35.6842, 139.7690],
+    [35.6842, 139.7670]
+  ];
+  await replaceCreativePolygon(page, outsidePolygon);
+
+  await expect.poll(() => page.evaluate(() => window.__cmWayfarerReference.getState().localReason)).toBe('REACQUIRE_REQUIRED');
+  await expect.poll(() => page.evaluate(() => window.CampsiteCreativeWayfarerLink.getState().reacquireRequired)).toBe(true);
+  await expect(page.locator('.cm-engine-reference-icon')).toHaveCount(0);
+
+  const reacquireButton = page.locator('#campsiteWayfarerObserveButton');
+  await expect(reacquireButton).toHaveText('Wayfarerで再取得');
+  await expect(reacquireButton).toHaveAttribute('data-reacquire', '1');
+  await reacquireButton.evaluate(element => element.click());
+  await expect(page.locator('#campsiteWayfarerObserveOverlay')).toBeVisible();
+  await expect(page.locator('#campsiteWayfarerObserveRun')).toHaveText('Wayfarerで再取得');
+
+  const connection = await page.evaluate(async () => {
+    const current = JSON.parse(sessionStorage.getItem('campsiteProject.v1') || 'null');
+    return window.CampsiteCreativeWayfarerLink.checkConnection(current);
+  });
+  expect(connection.connected).toBe(true);
+
+  const latestPolygon = await page.evaluate(() => window.__cmWayfarerReference.getCurrentPolygon());
+  const observationState = await page.evaluate(async () => {
+    const current = JSON.parse(sessionStorage.getItem('campsiteProject.v1') || 'null');
+    return window.CampsiteCreativeWayfarerLink.startObservation(current);
+  });
+  expect(observationState.status).toBe('success');
+
+  const observeRequest = await page.evaluate(() =>
+    (window.__wm5cOutbound || []).find(item => item?.type === 'CAMPSITE_WAYFARER_OBSERVE_REQUEST_V1') || null
+  );
+  expect(observeRequest).toBeTruthy();
+  expect(observeRequest.polygon).toEqual(latestPolygon);
+
+  await expect.poll(() => page.evaluate(() => window.__cmWayfarerReference.getState().localCanUse)).toBe(true);
+  await expect.poll(() => page.evaluate(() => window.CampsiteCreativeWayfarerLink.getState().reacquireRequired)).toBe(false);
+  await expect(reacquireButton).toHaveAttribute('data-reacquire', '0');
+  await expect(reacquireButton).toHaveText('🔭 Wayfarer観察');
+
+  const saved = await page.evaluate(() => JSON.parse(sessionStorage.getItem('campsiteProject.v1') || 'null'));
+  expect(saved.wayfarerObservation.snapshotId).toBe('wm5c-browser-relay');
+  expect(saved.wayfarerObservation.polygon).toEqual(latestPolygon);
+  expect(await workspaceSnapshot(page)).toEqual(beforeRecords);
+  expect(browserErrors).toEqual([]);
+});
+

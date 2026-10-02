@@ -45,6 +45,12 @@ assert.ok(output.includes('project.wayfarerObservation = observation'));
 assert.ok(output.includes('saveObservationResult'));
 assert.ok(output.includes("status: 'observing'"));
 assert.ok(output.includes("message: '観察結果をProjectへ保存しました。設計範囲内 '"));
+assert.ok(output.includes("campsite:wayfarer-reference-state"), 'WM-5C must listen for Reference coverage state');
+assert.ok(output.includes("reacquireRequired"), 'WM-5C reacquisition-required state missing');
+assert.ok(output.includes("Wayfarerで再取得"), 'WM-5C reacquisition CTA missing');
+assert.ok(output.includes("syncReacquireState"), 'WM-5C Reference-to-CTA sync missing');
+assert.ok(output.includes("version: '0.4.0'"), 'WM-5C Creative link version must advance');
+
 
 assert.ok(index.includes("fetch('./wayfarer-observe-link-patch.js'"));
 assert.ok(index.includes('applyCreativeWayfarerObserveLinkPatch'));

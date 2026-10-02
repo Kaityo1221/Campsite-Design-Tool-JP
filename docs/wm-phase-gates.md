@@ -322,3 +322,47 @@ publication, no WM-5C reacquisition UI, and no WM-6 / WM-7 implementation.
 
 WM-5C reacquisition UX may start only after this PASS.
 
+
+
+### WM-5C-1 — reacquisition-required CTA + existing observation roundtrip (implementation)
+
+Scope is the minimum UI/action needed when WM-5A/5B determine that the current
+Creative polygon +100m is outside the retained acquisition reserve.
+
+No second transport or project schema is introduced. The existing Creative
+Wayfarer observation relay is reused because it already:
+
+- syncs the latest Creative-owned Project before sending;
+- reads the current Project polygon;
+- sends that polygon in `CAMPSITE_WAYFARER_OBSERVE_REQUEST_V1`;
+- causes Wayfarer to call observation `runPolygon(polygon)` directly;
+- returns the RESULT to Creative and saves only the observation snapshot.
+
+This subphase adds:
+
+- a small Reference-state event when local coverage/reclassification state
+  changes;
+- conditional persistent CTA text `Wayfarerで再取得` when the Reference state is
+  `REACQUIRE_REQUIRED`;
+- the same reacquisition label on the existing observation action inside the
+  Wayfarer connection overlay;
+- automatic return to the normal `🔭 Wayfarer観察` label after a fresh matching
+  observation is accepted.
+
+Gate before PASS:
+
+1. an outside-reserve Creative polygon removes stale Reference display and
+   immediately exposes `Wayfarerで再取得`;
+2. the CTA does not appear for covered polygons;
+3. the existing observation relay sends the latest Creative polygon rather than
+   the old acquisition polygon;
+4. Wayfarer uses observation-only `runPolygon()`; no Wayfarer polygon editor is
+   activated in the return path;
+5. a successful RESULT replaces the observation snapshot, clears
+   reacquisition-required state and restores the normal observation label;
+6. editable Creative records remain unchanged through the roundtrip;
+7. WM-3/4/5A/5B regressions and the real Creative WebKit gate pass;
+8. diff review confirms no WM-6 distance-warning work, WM-7 diff/merge work,
+   schema fork, main merge or production publication.
+
+WM-5C-2 / WM-6 must not start until WM-5C-1 passes.
