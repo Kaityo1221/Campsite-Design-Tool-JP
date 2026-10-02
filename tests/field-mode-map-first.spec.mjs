@@ -88,6 +88,7 @@ test('候補地マーカーはオレンジで既存POIと区別する',async({pa
   await page.goto('/field-mode.html');
   await loadAndStart(page);
   const normal=await page.evaluate(()=>{
+    resetPoiSelection();
     const record=poiRecords.find(item=>item.added);
     return record?{radius:record.marker.options.radius,color:record.marker.options.color,fillColor:record.marker.options.fillColor,fillOpacity:record.marker.options.fillOpacity,className:record.marker.options.className}:null;
   });
