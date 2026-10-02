@@ -1,8 +1,9 @@
 /* CREATIVE MODE start transition: slower, deeper, and easier to read. */
 .field-mode-entry-transition{
-  background:
-    radial-gradient(circle at 50% 46%,rgba(255,244,190,.98) 0%,rgba(242,196,86,.90) 18%,rgba(166,112,30,.78) 38%,rgba(49,37,23,.98) 76%);
-  text-shadow:0 3px 12px rgba(0,0,0,.72),0 0 24px rgba(255,235,151,.68);
+  background:#17130f url('../assets/creative-mode-start-transition.webp') center center / cover no-repeat;
+  color:transparent;
+  font-size:0;
+  text-shadow:none;
 }
 .field-mode-entry-shell.is-starting .field-mode-entry-transition{
   animation:fieldEntryStartLong 1.55s cubic-bezier(.22,.7,.2,1) forwards;
