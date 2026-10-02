@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { startPoiAdd } from './helpers/field-creative-v2.mjs';
 import fs from 'node:fs';
 import JSZip from 'jszip';
 
@@ -156,7 +157,7 @@ test('閲覧中は種類操作を隠し、集中配置時だけ表示して主�
   const clearLayout=await page.evaluate(()=>{
     const zoom=document.querySelector('.leaflet-control-zoom')?.getBoundingClientRect();
     const toolbox=document.getElementById('fieldModeCreativeButton')?.getBoundingClientRect();
-    const location=document.getElementById('fieldModeLocationBadge')?.getBoundingClientRect();
+    const location=document.getElementById('fieldCreativeCurrentFab')?.getBoundingClientRect();
     const toolbar=document.querySelector('.field-mode-toolbar')?.getBoundingClientRect();
     return {
       toolboxBelowZoom:!!zoom&&!!toolbox&&toolbox.top>=zoom.bottom+8,
@@ -166,10 +167,7 @@ test('閲覧中は種類操作を隠し、集中配置時だけ表示して主�
   expect(clearLayout.toolboxBelowZoom).toBe(true);
   expect(clearLayout.locationAboveToolbar).toBe(true);
 
-  await page.locator('#fieldModeCreativeButton').click();
-  const poiTool=page.locator('#fieldModeCreativeHotbar [data-tool="poi"]');
-  await expect(poiTool).toBeVisible();
-  await poiTool.click();
+  await startPoiAdd(page);
 
   await expect(page.locator('#fieldPoiTypeButton')).toBeVisible();
   await expect(page.locator('#fieldModeNewPoiButton')).toBeVisible();

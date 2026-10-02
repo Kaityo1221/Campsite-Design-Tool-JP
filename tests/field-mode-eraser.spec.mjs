@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { openLegacyTools } from './helpers/field-creative-v2.mjs';
 import fs from 'node:fs';
 
 const leafletJs=fs.readFileSync('node_modules/leaflet/dist/leaflet.js','utf8');
@@ -34,7 +35,7 @@ async function openFieldMode(page){
 }
 
 async function openEraser(page){
-  await page.locator('#fieldModeCreativeButton').click();
+  await openLegacyTools(page);
   const eraser=page.locator('#fieldModeCreativeHotbar [data-tool="eraser"]');
   await expect(eraser).toBeVisible();
   await expect(eraser).toBeEnabled();
@@ -64,7 +65,7 @@ test('共通消しゴムで追加予定POIを選択・削除しUndo/Redoでき�
 test('共通消しゴムで現地作成した活動範囲を削除しUndo/Redoできる',async({page})=>{
   const pageErrors=await openFieldMode(page);
 
-  await page.locator('#fieldModeCreativeButton').click();
+  await openLegacyTools(page);
   const area=page.locator('#fieldModeCreativeHotbar [data-tool="area"]');
   await expect(area).toBeEnabled();
   await area.click();
