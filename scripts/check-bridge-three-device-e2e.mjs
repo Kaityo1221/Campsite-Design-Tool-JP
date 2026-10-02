@@ -286,7 +286,7 @@ for (const profile of profiles) {
   if (profile.payload.wayfarerObservation) {
     assert.equal(project.wayfarerObservation.snapshotId, profile.payload.wayfarerObservation.snapshotId, profile.name + ': Project observation id');
     assert.equal(project.wayfarerObservation.observedAt, profile.payload.wayfarerObservation.observedAt, profile.name + ': Project observedAt');
-    assert.deepEqual(project.wayfarerObservation.polygon, profile.payload.wayfarerObservation.polygon, profile.name + ': acquisition polygon must survive Handoff');
+    assert.equal(JSON.stringify(project.wayfarerObservation.polygon), JSON.stringify(profile.payload.wayfarerObservation.polygon), profile.name + ': acquisition polygon must survive Handoff');
     assert.equal(project.wayfarerObservation.zones.reference100[0].guid, 'pc-ref', profile.name + ': reference GUID must survive Handoff');
     assert.equal(project.wayfarerObservation.zones.reference100[0].gameEntity, 'POWERSPOT', profile.name + ': reference type must survive Handoff');
     assert.equal(project.wayfarerObservation.zones.reference100[0].gameStatus, 'INACTIVE', profile.name + ': inactive state must survive Handoff');
@@ -299,7 +299,7 @@ for (const profile of profiles) {
     assert.equal(project.wayfarerObservation.acquisition.geometryCoverageComplete, true, profile.name + ': geometry completeness must survive Handoff');
     assert.equal(project.wayfarerObservation.acquisition.transportComplete, true, profile.name + ': transport completeness must survive Handoff');
     assert.equal(project.wayfarerObservation.acquisition.coverageComplete, false, profile.name + ': Project must not promote completeness');
-    assert.deepEqual(project.wayfarerObservation.acquisition.acquisitionBounds, profile.payload.wayfarerObservation.acquisition.acquisitionBounds, profile.name + ': acquisition bounds must survive Handoff');
+    assert.equal(JSON.stringify(project.wayfarerObservation.acquisition.acquisitionBounds), JSON.stringify(profile.payload.wayfarerObservation.acquisition.acquisitionBounds), profile.name + ': acquisition bounds must survive Handoff');
     assert.equal(project.currentPois.some(poi => poi.guid === 'pc-ref' || poi.guid === 'pc-reserve'), false, profile.name + ': observation references/reserve must stay out of currentPois');
 
     const mismatched = JSON.parse(JSON.stringify(selection));
