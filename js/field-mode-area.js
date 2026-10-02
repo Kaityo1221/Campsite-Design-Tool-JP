@@ -199,7 +199,7 @@
     if(exit)window.FieldCreative?.exit({cancel:false});
     modeStatus.textContent='範囲作成を取消';
     selectionTitle.textContent='追加予定POIを選択してください';
-    selectionDetail.textContent='地図上の黄色い追加予定POIをタップしてください。';
+    selectionDetail.textContent='地図上のオレンジ色の追加予定POIをタップしてください。';
   }
 
   function confirmArea(){
