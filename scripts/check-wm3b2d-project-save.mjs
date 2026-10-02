@@ -59,7 +59,7 @@ vm.runInContext(runtimeSource, context);
 
 const api = runtimeWindow.CampsiteCreativeWayfarerLink;
 assert.ok(api);
-assert.equal(api.version, '0.3.0');
+assert.equal(api.version, '0.4.0');
 assert.equal(typeof api.saveObservationResult, 'function');
 
 const polygon = [[35,139],[35,139.01],[35.01,139.01],[35.01,139]];
