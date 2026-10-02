@@ -21,6 +21,10 @@ on:
       - 'scripts/check-wm3b-creative-link.mjs'
       - 'scripts/check-wm3b2b-live-test.mjs'
       - 'scripts/check-wm3b2d-project-save.mjs'
+      - 'scripts/check-wm3b2d-package.mjs'
+      - 'scripts/check-wm3b2d-abnormal-matrix.mjs'
+      - 'scripts/check-wm3b2d-pseudo-e2e.mjs'
+      - 'scripts/wm3b2d-pseudo-harness.mjs'
       - 'scripts/check-bridge-wayfarer-display-owner.mjs'
       - 'scripts/check-bridge-wayfarer-deck-compat.mjs'
       - 'scripts/check-bridge-poi-parser.mjs'
@@ -68,6 +72,10 @@ on:
       - 'scripts/check-wm3b-creative-link.mjs'
       - 'scripts/check-wm3b2b-live-test.mjs'
       - 'scripts/check-wm3b2d-project-save.mjs'
+      - 'scripts/check-wm3b2d-package.mjs'
+      - 'scripts/check-wm3b2d-abnormal-matrix.mjs'
+      - 'scripts/check-wm3b2d-pseudo-e2e.mjs'
+      - 'scripts/wm3b2d-pseudo-harness.mjs'
       - 'scripts/check-bridge-wayfarer-display-owner.mjs'
       - 'scripts/check-bridge-wayfarer-deck-compat.mjs'
       - 'scripts/check-bridge-poi-parser.mjs'
@@ -165,6 +173,10 @@ jobs:
           node --check scripts/check-wm3b-creative-link.mjs
           node --check scripts/check-wm3b2b-live-test.mjs
           node --check scripts/check-wm3b2d-project-save.mjs
+          node --check scripts/wm3b2d-pseudo-harness.mjs
+          node --check scripts/check-wm3b2d-pseudo-e2e.mjs
+          node --check scripts/check-wm3b2d-abnormal-matrix.mjs
+          node --check scripts/check-wm3b2d-package.mjs
           node --check bridge-pc/creative-wm3b2b-test-injector.js
           node --check scripts/check-bridge-wayfarer-display-owner.mjs
           node --check scripts/check-bridge-wayfarer-deck-compat.mjs
