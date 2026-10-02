@@ -65,6 +65,9 @@ assert.ok(injector.includes("const VERSION = '0.4.0'"));
 assert.ok(injector.includes("OBSERVATION_SAVED_EVENT = 'campsite:wayfarer-observation-saved'"));
 assert.ok(injector.includes("['reference', 'Reference表示']"));
 assert.ok(injector.includes('verifyReferenceDisplay'));
+assert.ok(injector.includes("document.querySelectorAll('.cm-engine-reference-icon').length"), 'LIVE TEST must verify actual Reference DOM count');
+assert.ok(injector.includes('accounted === expectedVisible'), 'LIVE TEST must reconcile display/suppressed/invalid totals');
+assert.ok(injector.includes('rendered === display'), 'LIVE TEST must require rendered Reference count to match Adapter display count');
 assert.ok(injector.includes('window.CampsiteWm3cCreativeTest'));
 
 const zip = fs.readFileSync('downloads/campsite-bridge-pc-0.1.0.zip');
