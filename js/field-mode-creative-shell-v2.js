@@ -131,6 +131,12 @@
       #${CURRENT_ID} small{font-size:9px;line-height:1.15;font-weight:900}
       .field-mode-entry-started #${CURRENT_ID}{display:grid}
       .field-mode-entry-started.field-creative-active .field-location-badge{display:none!important}
+      .field-mode-entry-started.field-creative-active .field-distance-badge{
+        left:12px!important;
+        right:auto!important;
+        top:62px!important;
+        max-width:min(320px,calc(100% - 104px))!important;
+      }
 
       .field-mode-entry-started.field-creative-active .field-mode-stage{
         bottom:calc(57px + env(safe-area-inset-bottom))!important;
@@ -168,6 +174,11 @@
         }
         .field-creative-add-flash{right:16px}
         #${CURRENT_ID}{right:14px;top:calc(70px + env(safe-area-inset-top))}
+        .field-mode-entry-started.field-creative-active .field-distance-badge{
+          left:10px!important;
+          top:60px!important;
+          max-width:calc(100% - 92px)!important;
+        }
       }
       @media(prefers-reduced-motion:reduce){
         .field-creative-add-flash.is-visible{animation:none;opacity:1}
