@@ -216,7 +216,19 @@ const profiles = [
         excludedCount:0,
         outsideCount:0,
         canProceed:true,
-        acquisition:{ bufferMeters:200, referenceMeters:100, reserveMeters:200, tileCount:4, transportComplete:true, coverageComplete:false, coverageStatus:'unverified', sourceComplete:null }
+        acquisition:{
+          bufferMeters:200,
+          referenceMeters:100,
+          reserveMeters:200,
+          cellLevel:14,
+          acquisitionBounds:{ south:34.998, west:138.998, north:35.006, east:139.006 },
+          tileCount:4,
+          geometryCoverageComplete:true,
+          transportComplete:true,
+          coverageComplete:false,
+          coverageStatus:'unverified',
+          sourceComplete:null
+        }
       },
       pois: basePois('pc')
     }
@@ -274,8 +286,21 @@ for (const profile of profiles) {
   if (profile.payload.wayfarerObservation) {
     assert.equal(project.wayfarerObservation.snapshotId, profile.payload.wayfarerObservation.snapshotId, profile.name + ': Project observation id');
     assert.equal(project.wayfarerObservation.observedAt, profile.payload.wayfarerObservation.observedAt, profile.name + ': Project observedAt');
-    assert.equal(project.wayfarerObservation.zones.reserve200.length, 1, profile.name + ': reserve must survive Handoff');
+    assert.deepEqual(project.wayfarerObservation.polygon, profile.payload.wayfarerObservation.polygon, profile.name + ': acquisition polygon must survive Handoff');
+    assert.equal(project.wayfarerObservation.zones.reference100[0].guid, 'pc-ref', profile.name + ': reference GUID must survive Handoff');
+    assert.equal(project.wayfarerObservation.zones.reference100[0].gameEntity, 'POWERSPOT', profile.name + ': reference type must survive Handoff');
+    assert.equal(project.wayfarerObservation.zones.reference100[0].gameStatus, 'INACTIVE', profile.name + ': inactive state must survive Handoff');
+    assert.equal(project.wayfarerObservation.zones.reference100[0].observationZone, 'REFERENCE_100', profile.name + ': reference zone must survive Handoff');
+    assert.equal(project.wayfarerObservation.zones.reserve200[0].guid, 'pc-reserve', profile.name + ': reserve GUID must survive Handoff');
+    assert.equal(project.wayfarerObservation.zones.reserve200[0].gameStatus, 'ACTIVE', profile.name + ': reserve Active state must survive Handoff');
+    assert.equal(project.wayfarerObservation.zones.reserve200[0].observationZone, 'RESERVE_200', profile.name + ': reserve zone must survive Handoff');
+    assert.equal(project.wayfarerObservation.acquisition.referenceMeters, 100, profile.name + ': reference distance must survive Handoff');
+    assert.equal(project.wayfarerObservation.acquisition.reserveMeters, 200, profile.name + ': reserve distance must survive Handoff');
+    assert.equal(project.wayfarerObservation.acquisition.geometryCoverageComplete, true, profile.name + ': geometry completeness must survive Handoff');
+    assert.equal(project.wayfarerObservation.acquisition.transportComplete, true, profile.name + ': transport completeness must survive Handoff');
     assert.equal(project.wayfarerObservation.acquisition.coverageComplete, false, profile.name + ': Project must not promote completeness');
+    assert.deepEqual(project.wayfarerObservation.acquisition.acquisitionBounds, profile.payload.wayfarerObservation.acquisition.acquisitionBounds, profile.name + ': acquisition bounds must survive Handoff');
+    assert.equal(project.currentPois.some(poi => poi.guid === 'pc-ref' || poi.guid === 'pc-reserve'), false, profile.name + ': observation references/reserve must stay out of currentPois');
 
     const mismatched = JSON.parse(JSON.stringify(selection));
     mismatched.polygon = [[36,140],[36.01,140],[36.01,140.01],[36,140.01]];
