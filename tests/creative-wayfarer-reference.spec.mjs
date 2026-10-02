@@ -24,7 +24,9 @@ const project = {
   ],
   wayfarerObservation: {
     version: '0.2.0',
+    snapshotId: 'wm5b2a-browser-gate',
     observedAt: '2026-10-02T06:09:00.000Z',
+    acquisition: { bufferMeters:200, coverageComplete:false },
     polygon: [
       [35.6810, 139.7670],
       [35.6810, 139.7690],
@@ -82,6 +84,44 @@ async function installRoutes(page) {
   }, project);
 }
 
+async function replaceCreativePolygon(page, points) {
+  await page.locator('#toolbox').click();
+  await page.locator('#toolMenu [data-tool="polygon"]').click();
+  const deleteButton = page.getByRole('button', { name:'削除する' });
+  await expect(deleteButton).toBeVisible();
+  await deleteButton.click();
+
+  const target = await page.evaluate(() => {
+    const point = map.latLngToContainerPoint([35.6822, 139.7673]);
+    return { x:point.x, y:point.y };
+  });
+  await page.mouse.click(target.x, target.y);
+  const confirmDelete = page.getByRole('button', { name:'ポリゴンを削除' });
+  await expect(confirmDelete).toBeVisible();
+  await confirmDelete.click();
+
+  await expect.poll(() => page.evaluate(() => window.__cmWayfarerReference.getCurrentPolygon().length)).toBe(0);
+  await expect.poll(() => page.evaluate(() => window.__cmWayfarerReference.getState().display)).toBe(0);
+
+  await page.locator('#toolbox').click();
+  await page.locator('#toolMenu [data-tool="polygon"]').click();
+  let action = page.getByRole('button', { name:'点を打つ' });
+  await expect(action).toBeVisible();
+
+  for (const point of points) {
+    await page.evaluate(([lat,lng]) => map.setView([lat,lng], 18, { animate:false }), point);
+    action = page.getByRole('button', { name:'点を打つ' });
+    await expect(action).toBeVisible();
+    await action.click();
+  }
+
+  await page.evaluate(([lat,lng]) => map.setView([lat,lng], 18, { animate:false }), points[0]);
+  const finish = page.getByRole('button', { name:'ポリゴン作成！' });
+  await expect(finish).toBeVisible();
+  await finish.click();
+  await expect.poll(() => page.evaluate(() => window.__cmWayfarerReference.getCurrentPolygon().length)).toBe(points.length);
+}
+
 async function workspaceSnapshot(page) {
   return page.evaluate(() => {
     const snapshot = window.CampsiteCreativeWorkspace?.getSnapshot?.();
@@ -109,7 +149,17 @@ test('WM-3C real Creative renders read-only Wayfarer references without entering
   expect(beforeRecords).toHaveLength(2);
 
   const refState = await page.evaluate(() => window.__cmWayfarerReference.getState());
-  expect(refState).toMatchObject({ ready:true, display:2, reserve:1, suppressed:1, invalid:0, lastError:'' });
+  expect(refState).toMatchObject({
+    ready:true,
+    display:2,
+    reserve:1,
+    suppressed:1,
+    invalid:0,
+    lastError:'',
+    localCanUse:true,
+    localReason:'LOCAL_RECLASSIFICATION_AVAILABLE',
+    coverageReason:'COVERED'
+  });
 
   const rendererState = await page.evaluate(() => window.__cmCandidateShadow.getState());
   expect(rendererState.rendered).toEqual({ markers:4, circles50:4, circles40:2, circles30:2 });
@@ -137,6 +187,29 @@ test('WM-3C real Creative renders read-only Wayfarer references without entering
   const afterInitialRender = await workspaceSnapshot(page);
   expect(afterInitialRender).toEqual(beforeRecords);
 
+  const observationBeforePolygonEdit = await page.evaluate(() =>
+    JSON.stringify(JSON.parse(sessionStorage.getItem('campsiteProject.v1') || 'null').wayfarerObservation)
+  );
+  const shiftedPolygon = [
+    [35.6817, 139.7670],
+    [35.6817, 139.7690],
+    [35.6837, 139.7690],
+    [35.6837, 139.7670]
+  ];
+  await replaceCreativePolygon(page, shiftedPolygon);
+  await expect(referenceIcons).toHaveCount(3);
+  await expect.poll(() => page.evaluate(() => window.__cmWayfarerReference.getState().display)).toBe(3);
+  await expect.poll(() => page.evaluate(() => window.__cmWayfarerReference.getState().reserve)).toBe(0);
+  const shiftedState = await page.evaluate(() => window.__cmWayfarerReference.getState());
+  expect(shiftedState.localCanUse).toBe(true);
+  expect(shiftedState.coverageReason).toBe('COVERED');
+  expect(shiftedState.currentPolygon).toEqual(shiftedPolygon);
+  expect(await workspaceSnapshot(page)).toEqual(beforeRecords);
+  const observationAfterPolygonEdit = await page.evaluate(() =>
+    JSON.stringify(JSON.parse(sessionStorage.getItem('campsiteProject.v1') || 'null').wayfarerObservation)
+  );
+  expect(observationAfterPolygonEdit).toBe(observationBeforePolygonEdit);
+
   await page.evaluate(() => {
     const current = JSON.parse(sessionStorage.getItem('campsiteProject.v1') || 'null');
     current.wayfarerObservation.zones.reference100.push({
@@ -152,9 +225,9 @@ test('WM-3C real Creative renders read-only Wayfarer references without entering
     window.dispatchEvent(new CustomEvent('campsite:wayfarer-observation-saved', { detail:{ observedAt:'2026-10-02T06:12:00.000Z' } }));
   });
 
-  await expect(referenceIcons).toHaveCount(3);
-  await expect.poll(() => page.evaluate(() => window.__cmWayfarerReference.getState().display)).toBe(3);
-  await expect.poll(() => page.evaluate(() => window.__cmCandidateShadow.getState().rendered.markers)).toBe(5);
+  await expect(referenceIcons).toHaveCount(4);
+  await expect.poll(() => page.evaluate(() => window.__cmWayfarerReference.getState().display)).toBe(4);
+  await expect.poll(() => page.evaluate(() => window.__cmCandidateShadow.getState().rendered.markers)).toBe(6);
   const afterRefreshRecords = await workspaceSnapshot(page);
   expect(afterRefreshRecords).toEqual(beforeRecords);
 
@@ -172,7 +245,7 @@ test('WM-3C real Creative renders read-only Wayfarer references without entering
   }, firstTick.updatedAt), { timeout:6000 }).toBe(true);
   const secondTick = await page.evaluate(() => JSON.parse(sessionStorage.getItem('campsiteProject.v1')));
   expect(secondTick.wayfarerObservation).toEqual(savedAfterRefresh.wayfarerObservation);
-  await expect(referenceIcons).toHaveCount(3);
+  await expect(referenceIcons).toHaveCount(4);
   expect(await workspaceSnapshot(page)).toEqual(beforeRecords);
 
   expect(browserErrors).toEqual([]);

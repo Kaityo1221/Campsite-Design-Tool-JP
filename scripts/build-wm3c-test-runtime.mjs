@@ -3,6 +3,8 @@ import vm from 'node:vm';
 
 const OUTPUT = 'bridge-pc/creative-wm3c-test-runtime.js';
 const SOURCE_FILES = [
+  'creative/runtime/map-engine/wayfarer-reserve-coverage.js',
+  'creative/runtime/map-engine/wayfarer-local-reclassification.js',
   'creative/runtime/map-engine/wayfarer-observation-adapter.js',
   'creative/runtime/map-engine/wayfarer-reference-geometry.js',
   'creative/runtime/map-engine/wayfarer-reference-scene-builder.js',

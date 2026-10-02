@@ -249,3 +249,43 @@ newer Project state.
 
 WM-5B-2 Creative Reference-layer integration may start only after this PASS.
 WM-5C reacquisition UX remains out of scope.
+
+
+### WM-5B-2A — Creative Reference local reclassification integration (implementation)
+
+Scope is Reference display integration only. Creative editable data remains authoritative
+and unchanged.
+
+The integration:
+
+- loads the WM-5A reserve coverage evaluator and WM-5B-1 reclassifier into the
+  Creative Bridge Project runtime;
+- reads the active in-memory Creative polygon as the current geometry source;
+- derives INTERIOR / REFERENCE_100 / hidden RESERVE_200 from the immutable
+  acquisition snapshot;
+- feeds only that derived view into the existing read-only Reference Adapter /
+  Geometry / Scene path;
+- includes current polygon + observation identity in the renderer signature so a
+  polygon change immediately refreshes Reference display;
+- fails closed outside the acquired reserve: stale Reference items are removed,
+  while the stored acquisition snapshot is preserved for the later WM-5C
+  reacquisition flow.
+
+This subphase does not write `records`, `currentPois`, or
+`wayfarerObservation`, and it does not add the `Wayfarerで再取得` UI.
+
+Gate before PASS:
+
+1. unchanged polygon keeps the accepted WM-3C Reference behavior;
+2. a covered Creative polygon replacement locally moves retained POIs across
+   INTERIOR / REFERENCE_100 / RESERVE_200 without Wayfarer access;
+3. editable GUID suppression and read-only Reference rendering remain intact;
+4. source observation stays byte-equivalent across polygon replacement and
+   autosave;
+5. outside-reserve geometry removes stale Reference display and reports
+   reacquisition-required;
+6. generated WM-3C TEST runtime contains the same coverage/reclassification path;
+7. real Creative WebKit gate and Bridge architecture regressions pass;
+8. diff review confirms no WM-5C UI, WM-6, WM-7, main merge or production release.
+
+WM-5C reacquisition UX must not start until WM-5B-2A passes.
