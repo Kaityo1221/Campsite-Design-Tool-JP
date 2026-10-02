@@ -58,17 +58,17 @@
 
   installCreativeLayoutFix();
 
-  loadOnce('js/field-mode-area.js?v=4', 'data-field-area-loader');
-  loadOnce('js/field-mode-eraser.js?v=2', 'data-field-eraser-loader');
+  loadOnce('js/field-mode-area.js?v=5', 'data-field-area-loader');
+  loadOnce('js/field-mode-eraser.js?v=3', 'data-field-eraser-loader');
   loadOnce('js/field-mode-tool-return.js?v=3', 'data-field-tool-return-loader');
-  loadOnce('js/field-mode-distance-tool.js?v=3', 'data-field-distance-tool-loader');
+  loadOnce('js/field-mode-distance-tool.js?v=4', 'data-field-distance-tool-loader');
   loadOnce('js/field-mode-circle-options.js?v=5', 'data-field-circle-options-loader');
   loadOnce('js/field-mode-session-30m.js?v=2', 'data-field-session-circles-loader');
   loadOnce('js/field-mode-map-first.js?v=1', 'data-field-map-first-loader');
   loadOnce('js/field-mode-basemap-switch.js?v=1', 'data-field-basemap-switch-loader');
-  loadOnce('js/field-mode-apac-v4.js?v=1', 'data-field-apac-v4-loader');
+  loadOnce('js/field-mode-apac-v4.js?v=2', 'data-field-apac-v4-loader');
   loadOnce('js/field-mode-creative-shell-v2.js?v=1', 'data-field-creative-shell-v2-loader');
-  loadOnce('js/field-mode-poi-visuals-v2.js?v=1', 'data-field-poi-visuals-v2-loader');
+  loadOnce('js/field-mode-poi-visuals-v2.js?v=2', 'data-field-poi-visuals-v2-loader');
 
   function syncFinishLabel() {
     const button = document.getElementById('fieldModeSaveButton');
