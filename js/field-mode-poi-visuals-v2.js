@@ -21,6 +21,9 @@
         filter:drop-shadow(0 2px 3px rgba(0,0,0,.28));
         pointer-events:none;
       }
+      .field-poi-v2-candidate{
+        filter:drop-shadow(0 2px 4px rgba(116,53,0,.42));
+      }
       .field-poi-v2-stop{
         width:19px;
         height:19px;
