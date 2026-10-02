@@ -241,6 +241,9 @@ export function createHarness(options={}) {
 
     const collector = {
       async collectPolygon(points) {
+        if (options.gcsDelay) {
+          await new Promise(resolve => setTimeout(resolve, Number(options.gcsDelay)));
+        }
         if (options.gcsFailure) throw new Error('simulated GCS failure');
         const [a,b,c] = points;
         return {
