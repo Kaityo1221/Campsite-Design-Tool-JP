@@ -71,12 +71,36 @@ passed with its new two-autosave-tick assertions. Diff review found only the
 feature sync wrapper, tests/CI wiring and contract/acceptance documentation.
 Remote CI is checked separately after committing to PR #275.
 
-### WM-4B — acquisition metadata / initial Handoff audit (pending)
+### WM-4B — acquisition metadata / initial Handoff audit (implementation)
 
-Audit the initial Wayfarer-to-Creative handoff and persisted acquired geometry:
-current polygon, snapshot identity/time, reserve description, stable GUID/type/status,
-and explicit completeness. Keep `coverageComplete:false` or unknown state intact;
-never infer complete coverage from successful HTTP transport.
+Audit found one concrete contract gap: WM-3 already retained the polygon/zones and
+completeness result, but the first legacy Bridge payload carried only its normal
+POIs/reference data and did not transport the accepted observation snapshot.
 
-Implement only the smallest confirmed contract gap, then test and review before
-advancing. WM-5/6/7 and a production release remain behind their own gates.
+The narrow implementation therefore:
+
+- gives each observation an explicit `snapshotId` while retaining `observedAt`;
+- retains acquisition bounds, cell/tile geometry diagnostics and explicit
+  geometry/transport/source/completeness state;
+- when a current accepted Wayfarer observation exists, the initial PC Bridge
+  handoff reuses that exact polygon+200m zone snapshot instead of re-fetching the
+  current viewport;
+- carries the same optional `wayfarerObservation` through exporter -> Receiver
+  Adapter -> `campsiteProject.v1`;
+- initializes the Gateway polygon from that observation;
+- attaches the observation to the Project only while Project polygon and
+  acquisition polygon still match;
+- never promotes `coverageComplete:false` because transport succeeded.
+
+Gate before PASS:
+
+1. WM-3 controller metadata regression passes.
+2. Bridge exporter retains one observation snapshot without exposing diagnostics.
+3. Receiver -> Adapter -> Project E2E retains snapshot identity/time, reserve
+   zone, stable POI state and incomplete completeness.
+4. A changed polygon rejects the stale observation.
+5. Existing Bridge architecture/Next regressions pass.
+6. Diff review confirms no WM-5/6/7 behavior, schemaVersion change, main merge or
+   public release.
+
+Remote CI and diff review are required before changing this section to PASS.
