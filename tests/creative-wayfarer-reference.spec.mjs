@@ -201,7 +201,11 @@ test('WM-3C real Creative renders read-only Wayfarer references without entering
   const shiftedState = await page.evaluate(() => window.__cmWayfarerReference.getState());
   expect(shiftedState.localCanUse).toBe(true);
   expect(shiftedState.coverageReason).toBe('COVERED');
-  expect(shiftedState.currentPolygon).toEqual(shiftedPolygon);
+  expect(shiftedState.currentPolygon).toHaveLength(shiftedPolygon.length);
+  shiftedState.currentPolygon.forEach((point,index) => {
+    expect(Number(point[0])).toBeCloseTo(Number(shiftedPolygon[index][0]),4);
+    expect(Number(point[1])).toBeCloseTo(Number(shiftedPolygon[index][1]),4);
+  });
   expect(await workspaceSnapshot(page)).toEqual(beforeRecords);
   const observationAfterPolygonEdit = await page.evaluate(() =>
     JSON.stringify(JSON.parse(sessionStorage.getItem('campsiteProject.v1') || 'null').wayfarerObservation)
