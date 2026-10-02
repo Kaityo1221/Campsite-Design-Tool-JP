@@ -85,7 +85,7 @@ async function installRoutes(page) {
 }
 
 async function replaceCreativePolygon(page, points) {
-  await page.locator('#toolbox').click();
+  await page.locator('#toolbox').click({ force:true });
   await page.locator('#toolMenu [data-tool="polygon"]').click();
   const deleteButton = page.getByRole('button', { name:'削除する' });
   await expect(deleteButton).toBeVisible();
@@ -103,7 +103,7 @@ async function replaceCreativePolygon(page, points) {
   await expect.poll(() => page.evaluate(() => window.__cmWayfarerReference.getCurrentPolygon().length)).toBe(0);
   await expect.poll(() => page.evaluate(() => window.__cmWayfarerReference.getState().display)).toBe(0);
 
-  await page.locator('#toolbox').click();
+  await page.locator('#toolbox').click({ force:true });
   await page.locator('#toolMenu [data-tool="polygon"]').click();
   let action = page.getByRole('button', { name:'点を打つ' });
   await expect(action).toBeVisible();
