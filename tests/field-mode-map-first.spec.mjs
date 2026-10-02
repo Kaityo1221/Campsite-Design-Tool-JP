@@ -55,6 +55,35 @@ test('初期表示はCREATIVE MODEトップで、読込後に明示開始する'
   await expect(page.locator('#fieldModeCreativeButton')).toHaveAttribute('aria-label','候補地を追加');
 });
 
+test('START画像を表示してからMap Firstへ正常に引き継ぐ',async({page})=>{
+  const pageErrors=[];
+  page.on('pageerror',error=>pageErrors.push(error.message));
+  await page.goto('/field-mode.html');
+  await page.locator('#fieldModeFile').setInputFiles({name:'start-handoff.kml',mimeType:'application/vnd.google-earth.kml+xml',buffer:Buffer.from(sampleKml)});
+  await expect(page.locator('#fieldModeFileStatus')).toContainText('件を読み込み');
+  await expect(page.locator('#fieldModeEntryStart')).toBeEnabled();
+
+  const startedAt=Date.now();
+  await page.locator('#fieldModeEntryStart').click();
+  await expect(page.locator('#fieldModeEntry')).toHaveClass(/is-starting/);
+  const transition=page.locator('.field-mode-entry-transition');
+  await expect(transition).toBeVisible();
+  await expect.poll(()=>transition.evaluate(el=>getComputedStyle(el).backgroundImage)).toContain('creative-mode-start-transition.webp');
+
+  await page.waitForTimeout(500);
+  await expect(page.locator('#fieldModeEntry')).toBeVisible();
+  await expect(transition).toBeVisible();
+
+  await expect(page.locator('#fieldModeEntry')).toBeHidden({timeout:3000});
+  expect(Date.now()-startedAt).toBeGreaterThanOrEqual(1400);
+  await expect(page.locator('.field-mode-stage')).toBeVisible();
+  await expect(page.locator('#fieldModeCreativeButton')).toHaveText('＋');
+  await expect(page.locator('#fieldCreativeCurrentFab')).toBeVisible();
+  await expect(page.locator('#fieldModeUndoButton')).toHaveText('← 戻る');
+  await expect(page.locator('#fieldModeRedoButton')).toHaveText('↻ やり直し');
+  expect(pageErrors).toEqual([]);
+});
+
 test('開始後は現在地FABと戻る・やり直しを維持する',async({page})=>{
   await page.goto('/field-mode.html');
   await loadAndStart(page);
