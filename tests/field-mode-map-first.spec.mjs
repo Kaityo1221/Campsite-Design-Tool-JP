@@ -179,6 +179,72 @@ test('編集時の中央十字は細い1px表示になる',async({page})=>{
   expect(metrics).toEqual({width:'22px',height:'22px',beforeWidth:'1px',beforeHeight:'18px',afterWidth:'18px',afterHeight:'1px',dot:'none'});
 });
 
+test('最終受入：起動から編集・履歴・復元・完成出力まで一気通しできる',async({page})=>{
+  const pageErrors=[];
+  page.on('pageerror',error=>pageErrors.push(error.message));
+  await page.goto('/field-mode.html');
+
+  const entry=page.locator('#fieldModeEntry');
+  await expect(entry).toBeVisible();
+  await expect.poll(()=>entry.evaluate(el=>getComputedStyle(el).backgroundImage)).toContain('creative-mode-opening-final.webp');
+  await page.locator('#fieldModeFile').setInputFiles({name:'final-acceptance.kml',mimeType:'application/vnd.google-earth.kml+xml',buffer:Buffer.from(sampleKml)});
+  await expect(page.locator('#fieldModeEntryStart')).toBeEnabled();
+
+  await page.locator('#fieldModeEntryStart').click();
+  await expect(entry).toHaveClass(/is-starting/);
+  await expect.poll(()=>page.locator('.field-mode-entry-transition').evaluate(el=>getComputedStyle(el).backgroundImage)).toContain('creative-mode-start-transition.webp');
+  await expect(entry).toBeHidden({timeout:3000});
+  await expect(page.locator('body')).toHaveClass(/field-creative-active/);
+  await expect(page.locator('#fieldModeCreativeButton')).toBeVisible();
+  await expect(page.locator('#fieldCreativeCurrentFab')).toBeVisible();
+
+  await page.evaluate(()=>{
+    const record=poiRecords.find(item=>item.added);
+    selectAddedPoi(record);
+    setCurrentPosition(35.6820,139.7684,5,false);
+  });
+  const before=await page.evaluate(()=>[...poiRecords.find(item=>item.added).latlng]);
+
+  await openLegacyTools(page);
+  const adjust=page.locator('#fieldModeCreativeHotbar [data-tool="adjust"]');
+  await expect(adjust).toBeEnabled();
+  await adjust.click();
+  await expect(page.locator('#fieldModeCreativeButton')).toBeHidden();
+  await page.locator('#fieldModeRelocateButton').click();
+  const moved=await page.evaluate(()=>[...poiRecords.find(item=>item.added).latlng]);
+  expect(moved).not.toEqual(before);
+
+  const undo=page.locator('#fieldModeUndoButton');
+  const redo=page.locator('#fieldModeRedoButton');
+  await expect(undo).toBeEnabled();
+  await undo.click();
+  await expect(redo).toBeEnabled();
+  expect(await page.evaluate(()=>[...poiRecords.find(item=>item.added).latlng])).toEqual(before);
+  await redo.click();
+  expect(await page.evaluate(()=>[...poiRecords.find(item=>item.added).latlng])).toEqual(moved);
+  await expect(page.locator('#fieldModeSaveButton')).toBeEnabled();
+
+  await page.evaluate(async()=>{await window.FieldModeSession.saveNow();});
+  await expect(page.locator('#fieldModeSessionStatus')).toContainText('自動保存済み');
+  await page.reload();
+  await expect(page.locator('#fieldModeResumePanel')).toHaveClass(/active/);
+  await page.locator('#fieldModeResumeButton').click();
+  await expect(page.locator('#fieldModeEntryStart')).toBeEnabled({timeout:5000});
+  await page.locator('#fieldModeEntryStart').click();
+  await expect(page.locator('#fieldModeEntry')).toBeHidden({timeout:3000});
+  await expect.poll(()=>page.evaluate(()=>window.FieldModeSession?.hasSource?.()||false)).toBe(true);
+  expect(await page.evaluate(()=>[...poiRecords.find(item=>item.added).latlng])).toEqual(moved);
+  await expect(page.locator('#fieldModeUndoButton')).toBeEnabled();
+
+  await page.locator('#fieldModeCreativeClose').click();
+  await expect(page.locator('body')).not.toHaveClass(/field-creative-active/);
+  const save=page.locator('#fieldModeSaveButton');
+  await expect(save).toBeVisible();
+  await expect(save).toBeEnabled();
+  await expect(save).toHaveText('設計完成：KMZ＋但し書きを出力');
+  expect(pageErrors).toEqual([]);
+});
+
 test('320x568でもトップと主要操作が重ならない',async({page})=>{
   await page.setViewportSize({width:320,height:568});
   await page.goto('/field-mode.html');
