@@ -58,16 +58,18 @@ function cmWm5bDerivedObservation(observation,currentPolygon){
     reserve200:Array.from(local.zones?.reserve200||[])
   }}};
 }
-const cmWm5bBaseSignature=cmCandidateShadowSignature;
-cmCandidateShadowSignature=function(){
-  const project=cmWm3cReadProject();
-  return JSON.stringify({
-    base:cmWm5bBaseSignature(),
-    referencePolygon:cmWm5bCurrentCreativePolygon(),
-    observationSnapshotId:String(project?.wayfarerObservation?.snapshotId||''),
-    observationObservedAt:String(project?.wayfarerObservation?.observedAt||'')
-  });
-};
+const cmWm5bBaseSignature=typeof cmCandidateShadowSignature==='function'?cmCandidateShadowSignature:null;
+if(cmWm5bBaseSignature){
+  cmCandidateShadowSignature=function(){
+    const project=cmWm3cReadProject();
+    return JSON.stringify({
+      base:cmWm5bBaseSignature(),
+      referencePolygon:cmWm5bCurrentCreativePolygon(),
+      observationSnapshotId:String(project?.wayfarerObservation?.snapshotId||''),
+      observationObservedAt:String(project?.wayfarerObservation?.observedAt||'')
+    });
+  };
+}
 function cmWm3cReferenceScene(){
   const project=cmWm3cReadProject();
   const observation=project?.wayfarerObservation;
