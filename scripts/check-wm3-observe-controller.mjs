@@ -22,7 +22,18 @@ const fakeWindow = {
       collectOptions = options;
       return {
         enginePois: [{ guid:'a' }],
-        acquisition: { bufferMeters:200, tileCount:4, transportComplete:true, coverageComplete:false, coverageStatus:'unverified', sourceComplete:null }
+        acquisition: {
+          engineVersion:'wm1-test',
+          bufferMeters:200,
+          cellLevel:14,
+          acquisitionBounds:{ south:34.99, west:138.99, north:35.02, east:139.02 },
+          tileCount:4,
+          geometryCoverageComplete:true,
+          transportComplete:true,
+          coverageComplete:false,
+          coverageStatus:'unverified',
+          sourceComplete:null
+        }
       };
     }
   },
@@ -65,7 +76,17 @@ assert.equal(collectOptions.maxTileMeters, 500);
 assert.equal(result.visibleTotal, 2);
 assert.equal(result.retainedTotal, 3);
 assert.equal(result.canProceed, true);
+assert.ok(String(result.snapshotId).startsWith('wm3:'), 'snapshot identity must be explicit');
+assert.equal(result.acquisition.engineVersion, 'wm1-test');
+assert.equal(result.acquisition.referenceMeters, 100);
+assert.equal(result.acquisition.reserveMeters, 200);
+assert.equal(result.acquisition.cellLevel, 14);
+assert.equal(result.acquisition.tileCount, 4);
+assert.equal(result.acquisition.geometryCoverageComplete, true);
+assert.equal(result.acquisition.transportComplete, true);
+assert.equal(result.acquisition.coverageComplete, false, 'transport success must not promote completeness');
 assert.equal(result.acquisition.coverageStatus, 'unverified');
+assert.deepEqual(JSON.parse(JSON.stringify(result.acquisition.acquisitionBounds)), { south:34.99, west:138.99, north:35.02, east:139.02 });
 assert.equal(api.getState().status, 'success');
 assert.equal(api.getState().summary.reference100.gym, 1);
 assert.ok(events.some(event => event.type === 'campsite-bridge-pc:observe-state'));

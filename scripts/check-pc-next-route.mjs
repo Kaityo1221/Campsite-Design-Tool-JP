@@ -31,6 +31,10 @@ assert.ok(
   'PC Collector must route payload creation through the Bridge V1 exporter'
 );
 assert.ok(
+  collector.includes('observationSnapshotForBridge(observation) || await collect()'),
+  'Initial PC Handoff must prefer the accepted polygon observation snapshot'
+);
+assert.ok(
   receiver.includes("bridgePlatform: String(data.bridgePlatform || '').trim().toLowerCase()"),
   'Receiver must retain bridgePlatform from payload'
 );
@@ -57,8 +61,16 @@ assert.ok(
   'Selection must keep the hidden legacy fallback'
 );
 assert.ok(
+  selection.includes('adapter?.wayfarerObservation?.polygon'),
+  'Gateway must prefill the initial polygon from the accepted Wayfarer observation'
+);
+assert.ok(
   nextFlow.includes("const LEGACY_FALLBACK_KEY = 'campsiteBridgeLegacyFlow.v1'"),
   'Next flow must keep the hidden legacy fallback'
+);
+assert.ok(
+  nextFlow.includes('project.wayfarerObservation = observation'),
+  'Project Handoff must retain a matching observation snapshot'
 );
 
 const sessionStorage = storage();
