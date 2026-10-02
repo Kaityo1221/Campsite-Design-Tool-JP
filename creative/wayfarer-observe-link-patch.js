@@ -203,9 +203,11 @@
         throw new Error('Wayfarer観察結果のゾーン情報を確認できませんでした。');
       }
 
+      const observedAt = String(raw.observedAt || new Date().toISOString());
       return {
         version: String(raw.version || '0.1.0'),
-        observedAt: String(raw.observedAt || new Date().toISOString()),
+        snapshotId: String(raw.snapshotId || ('wm3:' + observedAt)),
+        observedAt,
         polygon,
         counts: cloneJson(raw.counts || {}, {}),
         zones: {
