@@ -14,6 +14,7 @@ on:
       - 'scripts/check-creative-runtime-build.mjs'
       - 'tests/creative-unified-interaction.spec.mjs'
       - 'tests/creative-dev-default-renderer.spec.mjs'
+      - 'tests/creative-wayfarer-reference.spec.mjs'
       - '.github/workflows/phase5-unified-renderer-release-gate.yml'
   pull_request:
     branches:
@@ -28,6 +29,7 @@ on:
       - 'scripts/check-creative-runtime-build.mjs'
       - 'tests/creative-unified-interaction.spec.mjs'
       - 'tests/creative-dev-default-renderer.spec.mjs'
+      - 'tests/creative-wayfarer-reference.spec.mjs'
       - '.github/workflows/phase5-unified-renderer-release-gate.yml'
 
 permissions:
@@ -65,6 +67,7 @@ jobs:
           node --check creative/runtime/creative-patches-v57-dev-default-unified.js
           node --check tests/creative-unified-interaction.spec.mjs
           node --check tests/creative-dev-default-renderer.spec.mjs
+          node --check tests/creative-wayfarer-reference.spec.mjs
 
       - name: Verify generated Creative runtime
         run: node scripts/check-creative-runtime-build.mjs
@@ -73,7 +76,7 @@ jobs:
         run: npx playwright install --with-deps webkit
 
       - name: Run real Creative Mode iPhone WebKit gate
-        run: npx playwright test tests/creative-unified-interaction.spec.mjs tests/creative-dev-default-renderer.spec.mjs
+        run: npx playwright test tests/creative-unified-interaction.spec.mjs tests/creative-dev-default-renderer.spec.mjs tests/creative-wayfarer-reference.spec.mjs
 
       - name: Upload Playwright traces on failure
         if: failure()
