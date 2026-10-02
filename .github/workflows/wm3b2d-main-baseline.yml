@@ -1,0 +1,92 @@
+name: WM-3B-2D Main Baseline Compare
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/wm3b2d-main-baseline.yml'
+  workflow_dispatch:
+
+jobs:
+  main-field-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Show baseline SHA
+        run: git rev-parse HEAD
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Static field checks
+        run: npm run check:field-mode && npm run check:field-prep
+      - name: Install WebKit
+        run: npx playwright install --with-deps webkit
+      - name: Disable CA access gate for isolated Field QA
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('js/poi-spacing-config.js')
+          s = p.read_text()
+          needle = r"/\\/(field-mode|field-prep)\\.html$/i.test(window.location.pathname) &&"
+          assert needle in s, 'CA access gate injection condition not found'
+          p.write_text(s.replace(needle, 'false &&', 1))
+          PY
+      - name: Run main Field E2E
+        run: npm run test:field-e2e
+
+  main-distance-mission:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Show baseline SHA
+        run: git rev-parse HEAD
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Static distance checks
+        run: npm run check:distance-advice
+      - name: Install WebKit
+        run: npx playwright install --with-deps webkit
+      - name: Run main Distance Mission
+        run: npm run test:distance-mission
+
+  main-field-mode:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Show baseline SHA
+        run: git rev-parse HEAD
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Static field checks
+        run: npm run check:field-mode
+      - name: Install WebKit
+        run: npx playwright install --with-deps webkit
+      - name: Disable CA access gate for isolated Field QA
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('js/poi-spacing-config.js')
+          s = p.read_text()
+          needle = r"/\\/(field-mode|field-prep)\\.html$/i.test(window.location.pathname) &&"
+          assert needle in s, 'CA access gate injection condition not found'
+          p.write_text(s.replace(needle, 'false &&', 1))
+          PY
+      - name: Run main Field Mode
+        run: npm run test:field-mode
