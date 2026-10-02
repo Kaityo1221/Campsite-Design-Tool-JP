@@ -84,6 +84,23 @@ test('START画像を表示してからMap Firstへ正常に引き継ぐ',async({
   expect(pageErrors).toEqual([]);
 });
 
+test('候補地マーカーはオレンジで既存POIと区別する',async({page})=>{
+  await page.goto('/field-mode.html');
+  await loadAndStart(page);
+  const normal=await page.evaluate(()=>{
+    resetPoiSelection();
+    const record=poiRecords.find(item=>item.added);
+    return record?{radius:record.marker.options.radius,color:record.marker.options.color,fillColor:record.marker.options.fillColor,fillOpacity:record.marker.options.fillOpacity,className:record.marker.options.className}:null;
+  });
+  expect(normal).toEqual({radius:10,color:'#fff',fillColor:'#ff8418',fillOpacity:1,className:'field-poi-v2-candidate'});
+  await page.evaluate(()=>poiRecords.find(item=>item.added)?.marker.fire('click'));
+  const selected=await page.evaluate(()=>{
+    const record=poiRecords.find(item=>item.added);
+    return record?{radius:record.marker.options.radius,color:record.marker.options.color,fillColor:record.marker.options.fillColor,fillOpacity:record.marker.options.fillOpacity}:null;
+  });
+  expect(selected).toEqual({radius:13,color:'#7a3d00',fillColor:'#ff9a2e',fillOpacity:1});
+});
+
 test('開始後は現在地FABと戻る・やり直しを維持する',async({page})=>{
   await page.goto('/field-mode.html');
   await loadAndStart(page);

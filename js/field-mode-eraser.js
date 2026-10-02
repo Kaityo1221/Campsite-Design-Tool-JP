@@ -20,7 +20,7 @@
     if(!record?.marker?.setStyle)return;
     record.marker.setStyle(selected
       ? {radius:13,weight:5,color:'#a52222',fillColor:'#ff8a7d',fillOpacity:1}
-      : {radius:9,weight:3,color:'#d58b00',fillColor:'#ffd35c',fillOpacity:.9});
+      : {radius:10,weight:3,color:'#fff',fillColor:'#ff8418',fillOpacity:1});
   }
 
   function setAreaStyle(record,selected){

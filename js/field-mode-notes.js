@@ -203,7 +203,7 @@
     relocateButton.textContent = '📍 ここに置く';
     fineTuneButton.textContent = '地図で微調整';
     selectionTitle.textContent = '近くの候補を選びます';
-    selectionDetail.textContent = '黄色いPOIをタップするか、現在地の近くなら自動で選びます。';
+    selectionDetail.textContent = 'オレンジ色のPOIをタップするか、現在地の近くなら自動で選びます。';
     renderMeta();
   };
 

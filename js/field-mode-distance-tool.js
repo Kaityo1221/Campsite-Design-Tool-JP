@@ -151,7 +151,7 @@
     if(badge)badge.style.display='none';
     crosshair.style.display='none';
     selectionTitle.textContent='追加予定POIを選択してください';
-    selectionDetail.textContent='地図上の黄色い追加予定POIをタップしてください。';
+    selectionDetail.textContent='地図上のオレンジ色の追加予定POIをタップしてください。';
   }
 
   function init(){
