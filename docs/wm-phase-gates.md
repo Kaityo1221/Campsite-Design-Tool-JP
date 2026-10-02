@@ -251,7 +251,7 @@ WM-5B-2 Creative Reference-layer integration may start only after this PASS.
 WM-5C reacquisition UX remains out of scope.
 
 
-### WM-5B-2A — Creative Reference local reclassification integration (implementation)
+### WM-5B-2A — Creative Reference local reclassification integration: PASS
 
 Scope is Reference display integration only. Creative editable data remains authoritative
 and unchanged.
@@ -288,4 +288,37 @@ Gate before PASS:
 7. real Creative WebKit gate and Bridge architecture regressions pass;
 8. diff review confirms no WM-5C UI, WM-6, WM-7, main merge or production release.
 
-WM-5C reacquisition UX must not start until WM-5B-2A passes.
+WM-5B-2A PASS was fixed on 2026-10-03 JST at code/test head
+`d45fb3a1ae3f39b586760ba2fdee0b007322fafd`.
+
+Evidence:
+
+- Phase 5 Unified Renderer Release Gate #115: PASS;
+- the real Creative iPhone/WebKit gate passed all five renderer tests, including
+  the Wayfarer Reference case after deleting the original Creative polygon and
+  creating a shifted replacement polygon;
+- Campsite Bridge PC Check #298: PASS, covering the generated TEST runtime plus
+  WM-3C / WM-4A / WM-5A / WM-5B-1 architecture regressions;
+- Bridge Next Flow Check #233, Campsite Bridge iPhone Check #166, Setup Check
+  #211, Distance Advice QA #167, Workflow Resume #206, Field End-to-End #262 and
+  Field Prep Safety #285: PASS at this code/test head;
+- covered polygon replacement reclassifies retained snapshot POIs locally and
+  keeps Reference rendering read-only;
+- the stored `wayfarerObservation` remains byte-equivalent across polygon
+  replacement and subsequent Creative autosave ticks;
+- outside-reserve geometry fails closed with `REACQUIRE_REQUIRED` and removes
+  stale Reference display;
+- editable `records` / `currentPois` remain Creative-owned and are not
+  populated by Reference or reserve POIs;
+- diff review from the WM-5B-1 PASS head contains only the Reference integration,
+  TEST-runtime wiring, regression tests and this gate documentation;
+- the intermediate Renderer reds were test-harness issues only: legacy signature
+  availability, UI hit-target selection, lexical `map` access, Leaflet delete
+  overlay targeting, and sub-meter Leaflet pixel rounding. No product behavior
+  was weakened to make the gate pass.
+
+PR #275 remains Draft and mergeable. No merge to `main`, no production
+publication, no WM-5C reacquisition UI, and no WM-6 / WM-7 implementation.
+
+WM-5C reacquisition UX may start only after this PASS.
+
