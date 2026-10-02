@@ -55,10 +55,10 @@ function renderKml(kmlText){const xml=new DOMParser().parseFromString(kmlText,'a
 async function readKmlText(file){const lower=file.name.toLowerCase();if(!/\.(kml|kmz|zip)$/.test(lower))throw new Error('KMZ / KML / ZIP ファイルを選択してください。');if(lower.endsWith('.kml'))return await file.text();if(!window.JSZip)throw new Error('KMZ展開ライブラリを読み込めませんでした。');const zip=await JSZip.loadAsync(await file.arrayBuffer()),names=Object.keys(zip.files).filter(n=>n.toLowerCase().endsWith('.kml')&&!zip.files[n].dir);if(!names.length)throw new Error('KMZ内にKMLがありません。');const preferred=names.find(n=>/(^|\/)doc\.kml$/i.test(n))||names[0];return await zip.files[preferred].async('string');}
 fileInput.addEventListener('change',async()=>{const file=fileInput.files&&fileInput.files[0];if(!file)return;fileLoaded=false;updateNewPoiButton();sourceFileName=file.name;fileStatus.textContent=`読込中：${file.name}`;modeStatus.textContent='読込中';try{const kmlText=await readKmlText(file);fileStatus.textContent=`選択中：${file.name}`;renderKml(kmlText);}catch(error){console.error(error);dataLayer.clearLayers();resetPoiSelection();placeholder.style.display='';modeStatus.textContent='読込失敗';fileStatus.textContent=`⚠ ${error.message||'ファイルを読み込めませんでした。'}`;}});updateSaveButton();updateNewPoiButton();startGps();
 </script>
-<script src="js/field-mode-notes.js?v=1"></script>
-<script src="js/field-mode-line.js?v=6"></script>
+<script src="js/field-mode-notes.js?v=2"></script>
+<script src="js/field-mode-line.js?v=7"></script>
 <script src="js/poi-layer-names.js?v=1"></script>
 <script src="js/field-mode-export.js?v=10"></script>
-<script src="js/field-mode-creative.js?v=7"></script>
-<script src="js/field-mode-session.js?v=4"></script>
+<script src="js/field-mode-creative.js?v=8"></script>
+<script src="js/field-mode-session.js?v=5"></script>
 </body></html>
