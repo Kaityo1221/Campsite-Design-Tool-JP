@@ -189,7 +189,7 @@ Evidence:
 WM-5B/5C remain unimplemented at this PASS boundary.
 
 
-### WM-5B-1 — local observation reclassification (implementation)
+### WM-5B-1 — local observation reclassification: PASS
 
 Scope is still pure data derivation. This subphase does not load the module in
 Creative, mutate `records`, replace the stored observation snapshot, or add the
@@ -218,4 +218,34 @@ Gate before PASS:
 7. module is not connected to Creative UI or `records`;
 8. existing Bridge architecture regressions and diff review pass.
 
-WM-5B-2 Creative Reference-layer integration must not start until WM-5B-1 passes.
+WM-5B-1 PASS was fixed on 2026-10-02.
+
+Evidence:
+
+- implementation/test head: `710bd1dc909b3808f13a3675f87d33086ea60cea`;
+- acceptance/regression-cleanup head: `55a7c95e2122823f3b22a96067580ff99bff36a1`;
+- Campsite Bridge PC Check #290: PASS, including
+  `WM-5B-1 local observation reclassification: PASS`;
+- Bridge Next Flow Check #225: PASS;
+- Phase 5 Unified Renderer Release Gate #107: PASS;
+- Campsite Bridge iPhone Check #158 and Setup Check #203: PASS;
+- Distance Advice QA #159 and Distance Mission E2E #193: PASS;
+- Field End-to-End #254, Field Mode Safety #311 and Field Prep Safety #277:
+  PASS after bringing the feature branch's Field tests in line with the already
+  adopted Creative Mode v2 interaction contract;
+- diff review from the WM-5A PASS head to the WM-5B-1 implementation head contains
+  only the pure reclassification module, its regression, package/CI wiring and
+  this gate document;
+- the source observation remains byte-equivalent; GUID/type/Active-Inactive state
+  is preserved; outside-reserve edits return reacquisition-required without
+  exposing stale derived zones;
+- the WM-5B-1 module is still not loaded by Creative at this PASS boundary and
+  does not write `records`, `currentPois`, the acquisition snapshot, or any UI.
+
+The post-implementation CI cleanup did not change WM-5B-1 behavior. It updated
+stale Field/Distance regression expectations and hardened asynchronous Distance
+advice persistence so it merges into the latest Project instead of overwriting
+newer Project state.
+
+WM-5B-2 Creative Reference-layer integration may start only after this PASS.
+WM-5C reacquisition UX remains out of scope.
