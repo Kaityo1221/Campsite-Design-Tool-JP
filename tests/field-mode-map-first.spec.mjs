@@ -110,6 +110,11 @@ test('開始後は現在地FABと戻る・やり直しを維持する',async({pa
   await expect(current).toHaveAttribute('aria-label','現在地へ移動');
   await expect(current).toHaveText('◎現在地');
   await expect(current).toBeEnabled();
+  const currentBox=await current.boundingBox();
+  expect(currentBox.width).toBeGreaterThan(48);
+  expect(currentBox.width).toBeLessThan(49.5);
+  expect(currentBox.height).toBeGreaterThan(52);
+  expect(currentBox.height).toBeLessThan(53);
   await expect(page.locator('#fieldModeUndoButton')).toHaveText('← 戻る');
   await expect(page.locator('#fieldModeUndoButton')).toHaveAttribute('aria-label','戻る');
   await expect(page.locator('#fieldModeRedoButton')).toHaveText('↻ やり直し');

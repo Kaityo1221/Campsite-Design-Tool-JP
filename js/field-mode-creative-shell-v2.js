@@ -123,6 +123,8 @@
         box-shadow:0 4px 13px rgba(22,41,60,.16);
         font:inherit;
         font-weight:900;
+        transform:scale(.9);
+        transform-origin:top right;
         -webkit-tap-highlight-color:transparent;
       }
       #${CURRENT_ID} .field-current-icon{font-size:23px;line-height:1}
