@@ -324,7 +324,7 @@ WM-5C reacquisition UX may start only after this PASS.
 
 
 
-### WM-5C-1 — reacquisition-required CTA + existing observation roundtrip (implementation)
+### WM-5C-1 — reacquisition-required CTA + existing observation roundtrip: PASS
 
 Scope is the minimum UI/action needed when WM-5A/5B determine that the current
 Creative polygon +100m is outside the retained acquisition reserve.
@@ -365,4 +365,39 @@ Gate before PASS:
 8. diff review confirms no WM-6 distance-warning work, WM-7 diff/merge work,
    schema fork, main merge or production publication.
 
-WM-5C-2 / WM-6 must not start until WM-5C-1 passes.
+WM-5C-1 PASS was fixed on 2026-10-03 JST at code/test head
+`53a14dd4fdf6fc518ea807f1c875be38eb9110bd`.
+
+Evidence:
+
+- Phase 5 Unified Renderer Release Gate #120: PASS;
+- the real Creative iPhone/WebKit suite passed 6/6, including
+  `WM-5C outside-reserve edit shows reacquisition CTA and sends latest Creative polygon`;
+- Campsite Bridge PC Check #303: PASS;
+- Bridge Next Flow #238, Campsite Bridge iPhone #171, Setup #216,
+  Distance Advice #172, Workflow Resume #211, Field End-to-End #267 and
+  Field Prep Safety #290: PASS at this code/test head;
+- an outside-reserve polygon removes stale Reference markers and changes the
+  persistent action plus the overlay action to `Wayfarerで再取得`;
+- the existing observation relay sends the latest Creative-owned polygon in
+  `CAMPSITE_WAYFARER_OBSERVE_REQUEST_V1`;
+- the Wayfarer return path remains observation-only and calls
+  `CampsiteWayfarerObserveController.runPolygon(polygon)` directly;
+- a fresh matching RESULT replaces only `wayfarerObservation`, clears
+  reacquisition-required state and restores `🔭 Wayfarer観察`;
+- editable Creative workspace records are unchanged across the reacquisition
+  roundtrip;
+- diff review from the WM-5B-2A PASS documentation head contains only the
+  Reference-state notification, conditional reacquisition CTA, existing relay
+  regression updates, browser regression and this gate documentation;
+- the first PC red was a stale regression assertion pinned to Creative link
+  version `0.3.0`; the first WM-5C browser red was test-relay simulation only.
+  Both were corrected without adding a second transport or weakening product
+  behavior.
+
+PR #275 remains Draft. No merge to `main`, no production publication, no
+parallel project schema, and no WM-6 / WM-7 implementation.
+
+WM-5C is functionally complete for the section 10.2 return path at this gate.
+WM-6 must not start until the project owner explicitly continues from this PASS.
+
