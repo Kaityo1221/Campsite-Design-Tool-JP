@@ -47,6 +47,16 @@ assert.ok(source.includes("setInterval(() =>"), 'TEST panel must have a short-li
 assert.ok(source.includes("z-index:2147483000"), 'TEST panel must stay above Creative runtime overlays');
 assert.ok(source.includes("polygon.length >= 3 && polygon.length <= 30"));
 assert.ok(source.includes("project.wayfarerObservation = observation"), 'WM-3B-2D must save only the observation field');
+assert.ok(source.includes("campsiteWm3b2bTestDiagnostics"), 'five-stage diagnostic panel missing');
+assert.ok(source.includes("Relay接続"));
+assert.ok(source.includes("Polygon受信"));
+assert.ok(source.includes("GCS開始"));
+assert.ok(source.includes("RESULT返却"));
+assert.ok(source.includes("Project保存"));
+assert.ok(source.includes("diagnostics:{ relay:'done' }"));
+assert.ok(source.includes("gcs:'active'"));
+assert.ok(source.includes("result:'done'"));
+assert.ok(source.includes("save:'done'"));
 assert.ok(source.includes("OBSERVE_RESULT_TIMEOUT_MS"));
 assert.ok(source.includes("pending.stage = 'await-result'"));
 assert.ok(source.includes("saveObservationResult(data.result)"));
