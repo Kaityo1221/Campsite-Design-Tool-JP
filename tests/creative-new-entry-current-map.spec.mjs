@@ -114,7 +114,8 @@ test('新トップからSTART演出を経て現行Creative Mode地図UIへ入る
   await expect(page.locator('#toolbox')).toBeVisible();
   await expect(page.locator('#undo')).toHaveText('← 戻る');
   await expect(page.locator('#redo')).toHaveText('↻ やり直し');
-  await expect(page.locator('#cmV45LocateFab')).toBeVisible();
+  await expect(page.locator('#cmV45LocateFab')).toHaveCount(0);
+  await expect(page.locator('#locate')).toBeHidden();
 
   await page.locator('#back').click();
   await expect(entry).toBeVisible();
