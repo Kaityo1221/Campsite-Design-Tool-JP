@@ -25,7 +25,8 @@ const livePostManifestPatches=[
   'creative-patches-v59-help-button.js',
   'creative-patches-v60-rules-carousel.js',
   'creative-patches-v61-saved-session-hint.js',
-  'creative-patches-v62-remove-locate.js'
+  'creative-patches-v62-remove-locate.js',
+  'creative-patches-v63-remove-workspace-save.js'
 ];
 
 function gitBlobShaBuffer(body){
