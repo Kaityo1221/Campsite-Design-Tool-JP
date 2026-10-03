@@ -86,8 +86,6 @@ test('新トップからSTART演出を経て現行Creative Mode地図UIへ入る
   await expect(coordView.locator('.cm-view-head')).toContainText('座標一覧（Googleフォーム用）');
   await coordView.locator('.cm-view-head button').click();
   await expect(coordView).toHaveCount(0);
-  await page.locator('#cmStandaloneSaveButton').click();
-  await page.locator('#cmStandaloneSaveMenu #cmStandaloneClose').click();
   await expect(page.locator('#cmStandaloneSaveMenu')).toHaveCount(0);
   const helpButton=page.locator('#cmV59HelpButton');
   await expect(helpButton).toBeVisible();
