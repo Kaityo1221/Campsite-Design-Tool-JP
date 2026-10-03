@@ -10,10 +10,12 @@ on:
       - 'creative/runtime/creative-patches-v55-unified-visible.js'
       - 'creative/runtime/creative-patches-v56-unified-interaction.js'
       - 'creative/runtime/creative-patches-v57-dev-default-unified.js'
+      - 'creative/runtime/creative-patches-v58-new-entry-current-map.js'
       - 'creative/runtime/map-engine/**'
       - 'scripts/check-creative-runtime-build.mjs'
       - 'tests/creative-unified-interaction.spec.mjs'
       - 'tests/creative-dev-default-renderer.spec.mjs'
+      - 'tests/creative-new-entry-current-map.spec.mjs'
       - '.github/workflows/phase5-unified-renderer-release-gate.yml'
   pull_request:
     branches:
@@ -63,8 +65,10 @@ jobs:
           node --check creative/runtime/creative-patches-v55-unified-visible.js
           node --check creative/runtime/creative-patches-v56-unified-interaction.js
           node --check creative/runtime/creative-patches-v57-dev-default-unified.js
+          node --check creative/runtime/creative-patches-v58-new-entry-current-map.js
           node --check tests/creative-unified-interaction.spec.mjs
           node --check tests/creative-dev-default-renderer.spec.mjs
+          node --check tests/creative-new-entry-current-map.spec.mjs
 
       - name: Verify generated Creative runtime
         run: node scripts/check-creative-runtime-build.mjs
@@ -73,7 +77,7 @@ jobs:
         run: npx playwright install --with-deps webkit
 
       - name: Run real Creative Mode iPhone WebKit gate
-        run: npx playwright test tests/creative-unified-interaction.spec.mjs tests/creative-dev-default-renderer.spec.mjs
+        run: npx playwright test tests/creative-unified-interaction.spec.mjs tests/creative-dev-default-renderer.spec.mjs tests/creative-new-entry-current-map.spec.mjs
 
       - name: Upload Playwright traces on failure
         if: failure()

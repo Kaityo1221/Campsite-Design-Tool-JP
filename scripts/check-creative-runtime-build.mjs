@@ -20,7 +20,8 @@ const livePostManifestPatches=[
   'creative-patches-v54-coordinate-memo-reason.js',
   'creative-patches-v55-unified-visible.js',
   'creative-patches-v56-unified-interaction.js',
-  'creative-patches-v57-dev-default-unified.js'
+  'creative-patches-v57-dev-default-unified.js',
+  'creative-patches-v58-new-entry-current-map.js'
 ];
 
 function gitBlobShaBuffer(body){
@@ -60,6 +61,10 @@ html=context.window.applyCreativeBridgeProjectPatch(html);
 
 assert.ok(html.includes('id="locate"'),'Canonical Next-Lab current-location control missing');
 assert.ok(html.includes('cmStandaloneSaveButton'),'Canonical Next-Lab standalone save UI missing');
+assert.ok(html.includes('cmV58NewEntryStyle'),'New Creative entry style missing');
+assert.ok(html.includes('creative-mode-opening-final.webp'),'New Creative opening artwork missing');
+assert.ok(html.includes('creative-mode-start-transition.webp'),'New Creative START artwork missing');
+assert.ok(html.includes('cmV45UnifiedMapUiStyle'),'Current Creative map UI must remain loaded');
 assert.ok(html.includes('cmV37BottomDockStyle'),'Canonical Next-Lab bottom dock missing');
 assert.ok(html.includes('cmLayerPanelTopStyle'),'Canonical Next-Lab layer panel position patch missing');
 assert.ok(html.includes('campsiteProjectNext'),'Bridge next action missing from final Creative HTML');
