@@ -203,6 +203,11 @@
       "resume.onclick=()=>{if(restore()){cmV58NewEntryTransition(beginEditor);msg('前回作業を復元しました')}};"
     );
 
+    src=src.replace(
+      "$('back').onclick=()=>{snapshot();closeMenus();entry.classList.remove('hidden')};",
+      "$('back').onclick=()=>{snapshot();closeMenus();entry.classList.remove('hidden');if(start.classList.contains('ready'))start.disabled=false};"
+    );
+
     const runtime=`<script id="cmV58NewEntryRuntime">
 (()=>{
   const entry=document.getElementById('entry');
