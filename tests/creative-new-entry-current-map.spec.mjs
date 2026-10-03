@@ -182,3 +182,37 @@ test('保存セッションがある時だけ前回データ案内を表示す�
   expect(hint.animationName).toBe('cmV61SavedDataNudge');
   expect(hint.marginTop).toBeGreaterThanOrEqual(40);
 });
+
+
+test('KMZ保存先パネルのダウンロード操作を文字で表示する',async({page})=>{
+  await page.goto('/creative/index.html');
+  const entry=page.locator('#entry');
+  await expect(entry).toBeVisible({timeout:15000});
+  await page.locator('#entryFile').setInputFiles({
+    name:'creative-download.csv',
+    mimeType:'text/csv',
+    buffer:Buffer.from(csv)
+  });
+  const startButton=page.locator('#startButton');
+  await expect(startButton).toBeEnabled();
+  await startButton.click();
+  await expect(entry).toBeHidden({timeout:4000});
+
+  await page.locator('#cmStandaloneSaveButton').click();
+  const saveMenu=page.locator('#cmStandaloneSaveMenu');
+  await expect(saveMenu).toBeVisible();
+  await saveMenu.locator('#cmStandaloneKmz').click();
+
+  const choose=page.getByRole('button',{name:'保存先を選ぶ'});
+  const download=page.getByRole('button',{name:'ダウンロード',exact:true});
+  await expect(choose).toBeVisible({timeout:10000});
+  await expect(download).toBeVisible();
+  await expect(download).toHaveText('ダウンロード');
+  const box=await download.boundingBox();
+  expect(box).not.toBeNull();
+  expect(box.width).toBeGreaterThanOrEqual(100);
+
+  const close=page.getByRole('button',{name:'×'});
+  await expect(close).toBeVisible();
+  await close.click();
+});
