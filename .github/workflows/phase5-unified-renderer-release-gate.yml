@@ -26,10 +26,12 @@ on:
       - 'creative/runtime/creative-patches-v55-unified-visible.js'
       - 'creative/runtime/creative-patches-v56-unified-interaction.js'
       - 'creative/runtime/creative-patches-v57-dev-default-unified.js'
+      - 'creative/runtime/creative-patches-v58-new-entry-current-map.js'
       - 'creative/runtime/map-engine/**'
       - 'scripts/check-creative-runtime-build.mjs'
       - 'tests/creative-unified-interaction.spec.mjs'
       - 'tests/creative-dev-default-renderer.spec.mjs'
+      - 'tests/creative-new-entry-current-map.spec.mjs'
       - '.github/workflows/phase5-unified-renderer-release-gate.yml'
 
 permissions:
