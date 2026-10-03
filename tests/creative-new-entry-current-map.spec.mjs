@@ -40,6 +40,7 @@ test('新トップからSTART演出を経て現行Creative Mode地図UIへ入る
   await expect(startButton).toHaveCSS('order','2');
   await expect(startButton).toBeDisabled();
   await expect(entry.locator('.handed')).toBeHidden();
+  await expect(page.locator('#resumeButton')).toBeHidden();
   await expect(page.locator('#labPill')).toBeHidden();
 
   await expect.poll(()=>entry.evaluate(el=>getComputedStyle(el).backgroundImage)).toContain('creative-mode-opening-final.webp');
@@ -116,4 +117,43 @@ test('新トップからSTART演出を経て現行Creative Mode地図UIへ入る
   await expect(page.locator('#cmV45LocateFab')).toBeVisible();
 
   expect(pageErrors).toEqual([]);
+});
+
+
+test('保存セッションがある時だけ前回データ案内を表示する',async({page})=>{
+  await page.addInitScript(()=>{
+    localStorage.setItem('next-lab-creative-v7',JSON.stringify({
+      sourceName:'saved-session',
+      records:[],
+      polygons:[],
+      activeLayer:'new-pokestop',
+      circleExtras:[],
+      polygonVisible:false,
+      center:[35.6812,139.7671],
+      zoom:16
+    }));
+  });
+
+  await page.goto('/creative/index.html');
+
+  const entry=page.locator('#entry');
+  await expect(entry).toBeVisible({timeout:15000});
+  const resume=page.locator('#resumeButton');
+  await expect(resume).toBeVisible();
+  await expect(resume).toHaveClass(/show/);
+  await expect(resume).toHaveText('前回のデータから再開');
+
+  const hint=await resume.evaluate(el=>{
+    const style=getComputedStyle(el,'::before');
+    const own=getComputedStyle(el);
+    return {
+      content:style.content,
+      animationName:style.animationName,
+      color:style.color,
+      marginTop:parseFloat(own.marginTop||'0')
+    };
+  });
+  expect(hint.content).toContain('↓ 前回のデータがあるみたい');
+  expect(hint.animationName).toBe('cmV61SavedDataNudge');
+  expect(hint.marginTop).toBeGreaterThanOrEqual(40);
 });
