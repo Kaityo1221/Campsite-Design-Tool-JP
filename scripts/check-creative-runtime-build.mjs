@@ -65,6 +65,7 @@ html=context.window.applyCreativeBridgeProjectPatch(html);
 assert.ok(html.includes('id="locate"'),'Canonical Next-Lab current-location control missing');
 assert.ok(html.includes('cmStandaloneSaveButton'),'Canonical Next-Lab standalone save UI missing');
 assert.ok(html.includes('cmV58NewEntryStyle'),'New Creative entry style missing');
+assert.ok(html.includes("if(start.classList.contains('ready'))start.disabled=false"),'Creative START must re-enable when returning to entry with a ready file');
 assert.ok(html.includes('cmV59HelpButton'),'Creative help button missing');
 assert.ok(html.includes('cmV60RulesPanel'),'Creative rules carousel missing');
 assert.ok(html.includes('cmV61SavedSessionHintStyle'),'Creative saved-session hint missing');
