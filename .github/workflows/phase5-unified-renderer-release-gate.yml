@@ -12,6 +12,7 @@ on:
       - 'creative/runtime/creative-patches-v57-dev-default-unified.js'
       - 'creative/runtime/creative-patches-v58-new-entry-current-map.js'
       - 'creative/runtime/creative-patches-v59-help-button.js'
+      - 'creative/runtime/creative-patches-v60-rules-carousel.js'
       - 'creative/runtime/map-engine/**'
       - 'scripts/check-creative-runtime-build.mjs'
       - 'tests/creative-unified-interaction.spec.mjs'
@@ -29,6 +30,7 @@ on:
       - 'creative/runtime/creative-patches-v57-dev-default-unified.js'
       - 'creative/runtime/creative-patches-v58-new-entry-current-map.js'
       - 'creative/runtime/creative-patches-v59-help-button.js'
+      - 'creative/runtime/creative-patches-v60-rules-carousel.js'
       - 'creative/runtime/map-engine/**'
       - 'scripts/check-creative-runtime-build.mjs'
       - 'tests/creative-unified-interaction.spec.mjs'
@@ -71,6 +73,7 @@ jobs:
           node --check creative/runtime/creative-patches-v57-dev-default-unified.js
           node --check creative/runtime/creative-patches-v58-new-entry-current-map.js
           node --check creative/runtime/creative-patches-v59-help-button.js
+          node --check creative/runtime/creative-patches-v60-rules-carousel.js
           node --check tests/creative-unified-interaction.spec.mjs
           node --check tests/creative-dev-default-renderer.spec.mjs
           node --check tests/creative-new-entry-current-map.spec.mjs
