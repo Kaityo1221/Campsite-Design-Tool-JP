@@ -15,6 +15,7 @@ on:
       - 'creative/runtime/creative-patches-v60-rules-carousel.js'
       - 'creative/runtime/creative-patches-v61-saved-session-hint.js'
       - 'creative/runtime/creative-patches-v62-remove-locate.js'
+      - 'creative/runtime/creative-patches-v63-remove-workspace-save.js'
       - 'creative/runtime/map-engine/**'
       - 'scripts/check-creative-runtime-build.mjs'
       - 'tests/creative-unified-interaction.spec.mjs'
@@ -35,6 +36,7 @@ on:
       - 'creative/runtime/creative-patches-v60-rules-carousel.js'
       - 'creative/runtime/creative-patches-v61-saved-session-hint.js'
       - 'creative/runtime/creative-patches-v62-remove-locate.js'
+      - 'creative/runtime/creative-patches-v63-remove-workspace-save.js'
       - 'creative/runtime/map-engine/**'
       - 'scripts/check-creative-runtime-build.mjs'
       - 'tests/creative-unified-interaction.spec.mjs'
@@ -80,6 +82,7 @@ jobs:
           node --check creative/runtime/creative-patches-v60-rules-carousel.js
           node --check creative/runtime/creative-patches-v61-saved-session-hint.js
           node --check creative/runtime/creative-patches-v62-remove-locate.js
+          node --check creative/runtime/creative-patches-v63-remove-workspace-save.js
           node --check tests/creative-unified-interaction.spec.mjs
           node --check tests/creative-dev-default-renderer.spec.mjs
           node --check tests/creative-new-entry-current-map.spec.mjs
