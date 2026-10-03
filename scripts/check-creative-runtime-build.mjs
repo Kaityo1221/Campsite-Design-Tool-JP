@@ -27,7 +27,8 @@ const livePostManifestPatches=[
   'creative-patches-v61-saved-session-hint.js',
   'creative-patches-v62-remove-locate.js',
   'creative-patches-v63-remove-workspace-save.js',
-  'creative-patches-v64-google-form-coordinates.js'
+  'creative-patches-v64-google-form-coordinates.js',
+  'creative-patches-v65-download-label.js'
 ];
 
 function gitBlobShaBuffer(body){
@@ -71,6 +72,9 @@ assert.ok(html.includes('cmV63RemoveWorkspaceSaveRuntime'),'Creative manual work
 assert.ok(html.includes('#cmStandaloneWorkspaceSave{display:none!important}'),'Creative manual workspace-save hide guard missing');
 assert.ok(html.includes('座標一覧（Googleフォーム用）'),'Creative Google Form coordinate label missing');
 assert.ok(!html.includes('座標一覧（旧提出フォーム用）'),'Legacy coordinate-list wording must stay removed');
+assert.ok(html.includes("download.textContent='ダウンロード'"),'Creative download action label missing');
+assert.ok(html.includes("download.title='ダウンロード'"),'Creative download action title missing');
+assert.ok(html.includes("width:'112px',height:'46px'"),'Creative download action width missing');
 assert.ok(html.includes('cmV58NewEntryStyle'),'New Creative entry style missing');
 assert.ok(html.includes("if(start.classList.contains('ready'))start.disabled=false"),'Creative START must re-enable when returning to entry with a ready file');
 assert.ok(!html.includes("location.href=location.origin+location.pathname"),'Creative back must not reload the page');
