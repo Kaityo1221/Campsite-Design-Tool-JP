@@ -101,6 +101,7 @@ test('新トップからSTART演出を経て現行Creative Mode地図UIへ入る
   await expect(rulesPanel.locator('[data-card="2"]')).toContainText('50m未満だから自動的に不合格ではない');
   await expect(rulesPanel.locator('[data-card="2"]')).toContainText('ここに設置したい理由を書く');
   await expect(rulesPanel.locator('[data-card="3"]')).toContainText('完成時はKMZとして保存');
+  await expect(rulesPanel.locator('[data-card="3"] b br')).toHaveCount(1);
   const dots=rulesPanel.locator('#cmV60RulesDots button');
   await expect(dots).toHaveCount(3);
   await dots.nth(1).click();
