@@ -12,16 +12,12 @@
 
     const runtime=`<script id="cmV63RemoveWorkspaceSaveRuntime">
 (()=>{
-  if(typeof cmOpenStandaloneSave!=='function'||cmOpenStandaloneSave.cmV63Wrapped)return;
-  const original=cmOpenStandaloneSave;
-  const wrapped=function(){
-    const result=original.apply(this,arguments);
+  const removeManualSave=()=>{
     const manual=document.getElementById('cmStandaloneWorkspaceSave');
     if(manual)manual.remove();
-    return result;
   };
-  wrapped.cmV63Wrapped=true;
-  cmOpenStandaloneSave=wrapped;
+  removeManualSave();
+  new MutationObserver(removeManualSave).observe(document.body,{childList:true,subtree:true});
 })();
 </script>`;
     if(!src.includes('id="cmV63RemoveWorkspaceSaveRuntime"'))src=src.replace('</body>',runtime+'</body>');
