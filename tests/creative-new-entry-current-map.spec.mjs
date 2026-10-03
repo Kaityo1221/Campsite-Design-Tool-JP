@@ -116,6 +116,16 @@ test('新トップからSTART演出を経て現行Creative Mode地図UIへ入る
   await expect(page.locator('#redo')).toHaveText('↻ やり直し');
   await expect(page.locator('#cmV45LocateFab')).toBeVisible();
 
+  await page.locator('#back').click();
+  await expect(entry).toBeVisible();
+  await expect(startButton).toBeEnabled();
+  await expect(startButton).toHaveClass(/ready/);
+
+  await startButton.click();
+  await expect(entry).toHaveClass(/cm-v58-starting/);
+  await expect(transition).toBeVisible();
+  await expect(entry).toBeHidden({timeout:4000});
+
   expect(pageErrors).toEqual([]);
 });
 
