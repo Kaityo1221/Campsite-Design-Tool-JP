@@ -86,7 +86,7 @@
     '<div id="cmV60RulesTrack">'+
       '<article class="cm-v60-card" data-card="1"><div class="cm-v60-kicker">GAME SPOTS</div><h3>キャンプサイトに置けるゲームスポット</h3><div class="cm-v60-big">25個</div><div class="cm-v60-counts"><div><span>ポケストップ</span><b>12</b></div><div><span>ジム</span><b>8</b></div><div><span>パワースポット</span><b>5</b></div></div></article>'+
       '<article class="cm-v60-card" data-card="2"><div class="cm-v60-kicker">DISTANCE</div><h3>距離のルール</h3><ul class="cm-v60-rules"><li>POI間隔は原則50m</li><li>30m / 40mは参考距離</li><li>50m未満だから自動的に不合格ではない</li><li>50m未満となる場合、動線を確保するため、景色を見てほしいなど、ここに設置したい理由を書く</li></ul></article>'+
-      '<article class="cm-v60-card" data-card="3"><div class="cm-v60-kicker">FINISH</div><h3>完成</h3><div class="cm-v60-finish"><div><b>完成時はKMZとして保存</b><span>💾</span></div></div></article>'+
+      '<article class="cm-v60-card" data-card="3"><div class="cm-v60-kicker">FINISH</div><h3>完成</h3><div class="cm-v60-finish"><div><b>完成時はKMZとして<br>保存</b><span>💾</span></div></div></article>'+
     '</div><div id="cmV60RulesDots" aria-label="カード位置"><button type="button" class="is-active" aria-label="1枚目" aria-current="true"></button><button type="button" aria-label="2枚目"></button><button type="button" aria-label="3枚目"></button></div>';
   document.body.appendChild(panel);
 
