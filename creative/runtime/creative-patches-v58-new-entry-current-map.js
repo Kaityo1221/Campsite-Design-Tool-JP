@@ -203,9 +203,14 @@
       "resume.onclick=()=>{if(restore()){cmV58NewEntryTransition(beginEditor);msg('前回作業を復元しました')}};"
     );
 
+    const cmV58BackToEntry="$('back').onclick=()=>{snapshot();cmPersistCurrent();closeMenus();entry.classList.remove('hidden');if(start.classList.contains('ready'))start.disabled=false};";
+    src=src.replace(
+      "$('back').onclick=()=>{snapshot();cmPersistCurrent();location.href=location.origin+location.pathname};",
+      cmV58BackToEntry
+    );
     src=src.replace(
       "$('back').onclick=()=>{snapshot();closeMenus();entry.classList.remove('hidden')};",
-      "$('back').onclick=()=>{snapshot();closeMenus();entry.classList.remove('hidden');if(start.classList.contains('ready'))start.disabled=false};"
+      cmV58BackToEntry
     );
 
     const runtime=`<script id="cmV58NewEntryRuntime">
