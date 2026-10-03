@@ -73,6 +73,15 @@ test('新トップからSTART演出を経て現行Creative Mode地図UIへ入る
   await expect(page.locator('#layerButton')).toBeVisible();
   await expect(page.locator('#layerButton')).toContainText('レイヤー');
   await expect(page.locator('#cmStandaloneSaveButton')).toBeVisible();
+  await page.locator('#cmStandaloneSaveButton').click();
+  const saveMenu=page.locator('#cmStandaloneSaveMenu');
+  await expect(saveMenu).toBeVisible();
+  await expect(saveMenu.locator('#cmStandaloneWorkspaceSave')).toHaveCount(0);
+  await expect(saveMenu.locator('#cmStandaloneKmz')).toHaveText('KMZで出力');
+  await expect(saveMenu.locator('#cmStandaloneCoords')).toHaveText('座標一覧');
+  await expect(saveMenu.locator('#cmStandaloneClose')).toHaveText('×');
+  await saveMenu.locator('#cmStandaloneClose').click();
+  await expect(saveMenu).toHaveCount(0);
   const helpButton=page.locator('#cmV59HelpButton');
   await expect(helpButton).toBeVisible();
   await expect(helpButton).toHaveText('?');
