@@ -68,7 +68,7 @@
         display:none!important;
       }
       .entry .start{
-        order:1;
+        order:2;
         width:100%!important;
         min-height:58px!important;
         margin:0!important;
@@ -100,7 +100,7 @@
         50%{box-shadow:0 0 0 1px rgba(255,244,197,.76),0 0 46px rgba(237,190,73,.96),0 12px 28px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.55)!important}
       }
       .entry .filebar{
-        order:2;
+        order:1;
         position:relative!important;
         display:grid!important;
         grid-template-columns:auto 1fr auto!important;
@@ -224,7 +224,7 @@
     const icon=filebar.querySelector(':scope > span:first-child');
     const label=filebar.querySelector('strong');
     if(icon)icon.textContent='▱';
-    if(label)label.textContent='ゲームスポット元データを選択';
+    if(label)label.textContent='地図データ（KMZ）を選択';
   }
   if(filename&&!filename.textContent.trim())filename.textContent='未選択';
   if(state){
