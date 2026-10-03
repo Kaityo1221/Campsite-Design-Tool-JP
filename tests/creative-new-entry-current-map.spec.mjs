@@ -65,7 +65,7 @@ test('新トップからSTART演出を経て現行Creative Mode地図UIへ入る
   await expect(page.locator('#mapToggle')).toContainText('地図切り替え');
   await expect(page.locator('#layerButton')).toBeVisible();
   await expect(page.locator('#layerButton')).toContainText('レイヤー');
-  await expect(page.locator('#save')).toBeVisible();
+  await expect(page.locator('#cmStandaloneSaveButton')).toBeVisible();
   await expect(page.locator('#toolbox')).toBeVisible();
   await expect(page.locator('#undo')).toHaveText('← 戻る');
   await expect(page.locator('#redo')).toHaveText('↻ やり直し');
