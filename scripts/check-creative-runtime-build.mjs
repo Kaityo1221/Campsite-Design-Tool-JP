@@ -65,6 +65,8 @@ html=context.window.applyCreativeBridgeProjectPatch(html);
 
 assert.ok(html.includes('id="locate"'),'Canonical Next-Lab current-location control missing');
 assert.ok(html.includes('cmStandaloneSaveButton'),'Canonical Next-Lab standalone save UI missing');
+assert.ok(!html.includes('cmStandaloneWorkspaceSave'),'Manual workspace-save menu item must stay removed');
+assert.ok(!html.includes('💾 作業を保存'),'Manual workspace-save copy must stay removed');
 assert.ok(html.includes('cmV58NewEntryStyle'),'New Creative entry style missing');
 assert.ok(html.includes("if(start.classList.contains('ready'))start.disabled=false"),'Creative START must re-enable when returning to entry with a ready file');
 assert.ok(!html.includes("location.href=location.origin+location.pathname"),'Creative back must not reload the page');
