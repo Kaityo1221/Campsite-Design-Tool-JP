@@ -24,7 +24,8 @@ const livePostManifestPatches=[
   'creative-patches-v58-new-entry-current-map.js',
   'creative-patches-v59-help-button.js',
   'creative-patches-v60-rules-carousel.js',
-  'creative-patches-v61-saved-session-hint.js'
+  'creative-patches-v61-saved-session-hint.js',
+  'creative-patches-v62-remove-locate.js'
 ];
 
 function gitBlobShaBuffer(body){
@@ -70,6 +71,7 @@ assert.ok(!html.includes("location.href=location.origin+location.pathname"),'Cre
 assert.ok(html.includes('cmV59HelpButton'),'Creative help button missing');
 assert.ok(html.includes('cmV60RulesPanel'),'Creative rules carousel missing');
 assert.ok(html.includes('cmV61SavedSessionHintStyle'),'Creative saved-session hint missing');
+assert.ok(html.includes('cmV62RemoveLocateStyle'),'Creative locate-removal patch missing');
 assert.ok(html.includes('creative-mode-opening-final.webp'),'New Creative opening artwork missing');
 assert.ok(html.includes('creative-mode-start-transition.webp'),'New Creative START artwork missing');
 assert.ok(html.includes('cmV45UnifiedMapUiStyle'),'Current Creative map UI must remain loaded');
