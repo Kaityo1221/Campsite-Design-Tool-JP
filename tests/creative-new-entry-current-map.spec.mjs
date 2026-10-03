@@ -126,6 +126,12 @@ test('新トップからSTART演出を経て現行Creative Mode地図UIへ入る
   await expect(rulesPanel).toBeHidden();
   await expect(helpButton).toBeVisible();
   await expect(page.locator('#toolbox')).toBeVisible();
+  await page.locator('#toolbox').click();
+  const toolMenu=page.locator('#toolMenu');
+  await expect(toolMenu).toHaveClass(/open/);
+  await expect(toolMenu.locator('[data-tool="polygon"]')).toHaveText('活動範囲');
+  await expect(toolMenu.locator('[data-tool="ruler"]')).toHaveText('物差し');
+  await page.locator('#toolbox').click();
   await expect(page.locator('#undo')).toHaveText('← 戻る');
   await expect(page.locator('#redo')).toHaveText('↻ やり直し');
   await expect(page.locator('#cmV45LocateFab')).toHaveCount(0);
