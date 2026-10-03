@@ -32,7 +32,13 @@ test('新トップからSTART演出を経て現行Creative Mode地図UIへ入る
   await expect(entry).toBeVisible({timeout:15000});
   await expect(entry.locator('.entry-title')).toHaveText('CREATIVE MODE');
   await expect(entry.locator('.entry-copy')).toHaveText('新しい世界の幕開けへ。');
-  await expect(page.locator('#startButton')).toHaveText('創作をはじめる');
+  const filebar=entry.locator('.filebar');
+  const startButton=startButton;
+  await expect(filebar.locator('strong')).toHaveText('地図データ（KMZ）を選択');
+  await expect(startButton).toHaveText('創作をはじめる');
+  await expect(filebar).toHaveCSS('order','1');
+  await expect(startButton).toHaveCSS('order','2');
+  await expect(startButton).toBeDisabled();
   await expect(entry.locator('.handed')).toBeHidden();
   await expect(page.locator('#labPill')).toBeHidden();
 
@@ -43,11 +49,11 @@ test('新トップからSTART演出を経て現行Creative Mode地図UIへ入る
     mimeType:'text/csv',
     buffer:Buffer.from(csv)
   });
-  await expect(page.locator('#startButton')).toBeEnabled();
-  await expect(page.locator('#startButton')).toHaveClass(/ready/);
+  await expect(startButton).toBeEnabled();
+  await expect(startButton).toHaveClass(/ready/);
 
   const startedAt=Date.now();
-  await page.locator('#startButton').click();
+  await startButton.click();
   await expect(entry).toHaveClass(/cm-v58-starting/);
   const transition=page.locator('#cmV58StartTransition');
   await expect(transition).toBeVisible();
