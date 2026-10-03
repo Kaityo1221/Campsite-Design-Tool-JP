@@ -7,6 +7,7 @@
 
     const style=`<style id="cmV61SavedSessionHintStyle">
       .entry .resume.show{
+        display:block!important;
         position:relative!important;
         margin-top:44px!important;
       }
