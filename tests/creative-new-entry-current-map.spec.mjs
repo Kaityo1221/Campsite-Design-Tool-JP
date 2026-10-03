@@ -33,7 +33,7 @@ test('新トップからSTART演出を経て現行Creative Mode地図UIへ入る
   await expect(entry.locator('.entry-title')).toHaveText('CREATIVE MODE');
   await expect(entry.locator('.entry-copy')).toHaveText('新しい世界の幕開けへ。');
   const filebar=entry.locator('.filebar');
-  const startButton=startButton;
+  const startButton=page.locator('#startButton');
   await expect(filebar.locator('strong')).toHaveText('地図データ（KMZ）を選択');
   await expect(startButton).toHaveText('創作をはじめる');
   await expect(filebar).toHaveCSS('order','1');
