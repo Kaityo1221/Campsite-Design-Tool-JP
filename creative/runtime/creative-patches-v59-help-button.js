@@ -31,6 +31,7 @@
       body.cm-placement-docked #cmV59HelpButton{display:none!important}
       body:has(.cm-sheet) #cmV59HelpButton{display:none!important}
       body:has(#cmStandaloneSaveMenu) #cmV59HelpButton{display:none!important}
+      body:has(.entry:not(.hidden)) #cmV59HelpButton{display:none!important}
     </style>`;
     if(!src.includes('id="cmV59HelpButtonStyle"'))src=src.replace('</head>',style+'</head>');
 
