@@ -72,6 +72,16 @@ test('新トップからSTART演出を経て現行Creative Mode地図UIへ入る
   await expect(page.locator('#layerButton')).toBeVisible();
   await expect(page.locator('#layerButton')).toContainText('レイヤー');
   await expect(page.locator('#cmStandaloneSaveButton')).toBeVisible();
+  const helpButton=page.locator('#cmV59HelpButton');
+  await expect(helpButton).toBeVisible();
+  await expect(helpButton).toHaveText('?');
+  await expect(helpButton).toHaveAttribute('aria-label','設計ルール');
+  const saveBox=await page.locator('#cmStandaloneSaveButton').boundingBox();
+  const helpBox=await helpButton.boundingBox();
+  expect(saveBox).not.toBeNull();
+  expect(helpBox).not.toBeNull();
+  expect(Math.round(helpBox.x-saveBox.x)).toBe(0);
+  expect(Math.round(saveBox.y-(helpBox.y+helpBox.height))).toBe(8);
   await expect(page.locator('#toolbox')).toBeVisible();
   await expect(page.locator('#undo')).toHaveText('← 戻る');
   await expect(page.locator('#redo')).toHaveText('↻ やり直し');
