@@ -417,7 +417,20 @@ test('50m未満候補の設置理由を編集シートから入力しBridge判�
     applicationCommentNeedsReview:false
   });
 
-  await expect(page.locator('#jpCreativeReview')).toHaveText('0');
+  const finalReviewState=await page.evaluate(()=>{
+    const snapshot=window.CampsiteCreativeWorkspace?.getSnapshot?.();
+    const record=snapshot?.records?.find(item=>item?.id==='candidate-1');
+    return record?{
+      reason:String(record.applicationComment||''),
+      signature:String(record.applicationCommentSignature||''),
+      needsReview:record.applicationCommentNeedsReview===true
+    }:null;
+  });
+  expect(finalReviewState).toEqual({
+    reason:'景色を見てもらいながら動線を分散できる場所のため',
+    signature,
+    needsReview:false
+  });
 });
 
 
