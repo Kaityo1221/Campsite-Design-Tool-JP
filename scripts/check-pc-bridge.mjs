@@ -38,7 +38,7 @@ assert.ok(mainWorld?.js?.includes('bridge-v1-exporter.js'), 'MAIN Bridge V1 expo
 assert.ok(mainWorld?.js?.includes('page-collector.js'), 'MAIN collector missing');
 assert.ok(mainWorld?.js?.includes('wm1-live-verifier.js'), 'WM-1 live verifier missing');
 assert.ok(mainWorld?.js?.includes('wayfarer-observation-zone.js'), 'WM-3 observation zone missing');
-assert.ok(mainWorld?.js?.includes('wm3b-tab-link.js'), 'WM-3B-0 tab link missing');
+assert.equal(mainWorld?.js?.includes('wm3b-tab-link.js'), false, 'Obsolete Wayfarer observation relay must not ship');
 assert.ok(mainWorld.js.indexOf('wayfarer-map-adapter.js') < mainWorld.js.indexOf('page-collector.js'), 'Map adapter must load before collector');
 assert.ok(mainWorld.js.indexOf('wayfarer-acquisition-engine.js') < mainWorld.js.indexOf('page-collector.js'), 'Acquisition engine must load before collector');
 assert.ok(mainWorld.js.indexOf('poi-parser.js') < mainWorld.js.indexOf('poi-classifier.js'), 'Parser must load before classifier');
@@ -47,6 +47,11 @@ assert.ok(mainWorld.js.indexOf('poi-reference-layer.js') < mainWorld.js.indexOf(
 assert.ok(mainWorld.js.indexOf('bridge-v1-exporter.js') < mainWorld.js.indexOf('page-collector.js'), 'Exporter must load before collector');
 assert.ok(mainWorld.js.indexOf('page-collector.js') < mainWorld.js.indexOf('wm1-live-verifier.js'), 'WM-1 live verifier must load after collector');
 assert.ok(isolatedWorld?.js?.includes('content.js'), 'ISOLATED UI missing');
+
+assert.equal(Boolean(manifest.background), false, 'Obsolete observation relay service worker must not ship');
+assert.equal(isolatedWorld?.js?.includes('wayfarer-tab-relay.js'), false, 'Obsolete Wayfarer tab relay must not ship');
+assert.equal(manifest.content_scripts.some(item => item.js?.includes('creative-wm3b2b-test-injector.js')), false, 'Obsolete Creative observation test panel must not ship');
+assert.equal(manifest.content_scripts.some(item => item.js?.includes('creative-tab-relay.js')), false, 'Obsolete Creative observation relay must not ship');
 
 new vm.Script(mapAdapterSource, { filename: 'js/bridge-wayfarer-map-adapter.js' });
 new vm.Script(acquisitionSource, { filename: 'bridge-pc/wayfarer-acquisition-engine.js' });
@@ -322,3 +327,6 @@ assert.equal(mainWorld?.js?.includes('wm3-observe-controller.js'), false, 'User-
 assert.ok(collector.includes('currentCompletedPolygon'), 'Bridge must prefer the confirmed design polygon');
 assert.ok(collector.includes('confirmedPolygonSnapshotForBridge'), 'Bridge must build the handoff directly from the confirmed polygon');
 assert.ok(collector.includes('zoning.zones.interior'), 'Bridge must send only POIs inside the confirmed polygon');
+
+assert.ok(collector.includes("code: 'polygon-required'"), 'Bridge must fail closed when no confirmed polygon exists');
+assert.equal(collector.includes('polygon\n        ? await confirmedPolygonSnapshotForBridge(polygon)\n        : await collect()'), false, 'Bridge must not fall back to viewport collection');
