@@ -296,6 +296,10 @@ assert.ok(receiver.includes("setTimeout(goToCampsite, 450)"), 'Receiver must pre
 assert.ok(receiver.includes("setTimeout(showReceiverDetail, 2500)"), 'Receiver detail should be fallback-only');
 assert.ok(receiver.includes('bridge-receiver-detail'), 'Receiver must support diagnostic detail mode');
 assert.ok(gateway.includes('#loginScreen,#splashScreen,#openingScreen{display:none!important}'), 'Gateway must suppress legacy login/splash flash');
+assert.ok(gateway.includes('campsite-bridge-auth-pending'), 'Gateway must hide the main app while handoff authentication is unresolved');
+assert.ok(gateway.includes('bridgeAuthPendingScreen'), 'Gateway must keep a stable auth-pending shell instead of flashing the main app');
+assert.ok(gateway.includes('window.addEventListener("campsite:ca-access-ready",finish'), 'Gateway auth-pending shell must release on approved handoff');
+assert.ok(gateway.includes('!gate.classList.contains("ca-gate-handoff-pending")'), 'Gateway auth-pending shell must release when the login gate becomes visible');
 
 const creativeManifest = JSON.parse(fs.readFileSync('creative/runtime/next-lab-manifest.json', 'utf8'));
 assert.equal(creativeManifest.sourceRepo, 'Kaityo1221/Campsite-Design-Tool-Next-Lab');
