@@ -230,7 +230,7 @@ assert.equal(fixedSnapshot.wayfarerObservation.polygon.length, 4);
 assert.ok(Array.isArray(fixedSnapshot.wayfarerObservation.zones.interior));
 assert.ok(Array.isArray(fixedSnapshot.wayfarerObservation.zones.reference100));
 assert.ok(Array.isArray(fixedSnapshot.wayfarerObservation.zones.reserve200));
-assert.deepEqual(fixedSnapshot.referencePois, [], 'Reference bands must travel only in wayfarerObservation');
+assert.equal(fixedSnapshot.referencePois.length, 0, 'Reference bands must travel only in wayfarerObservation');
 const fixedPayload = api.makePayload(fixedSnapshot, 'pc-fixed-reference');
 assert.equal(fixedPayload.wayfarerObservation.snapshotId, fixedSnapshot.wayfarerObservation.snapshotId);
 assert.equal(fixedPayload.wayfarerObservation.acquisition.referenceMeters, 100);
