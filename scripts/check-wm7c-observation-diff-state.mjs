@@ -22,6 +22,7 @@ const project = {
   polygon:[[35,139],[35.01,139],[35,139.01]],
   currentPois:[{guid:'editable',title:'Editable'}],
   wayfarerObservation:{snapshotId:'base-1',future:{keep:true}},
+  wayfarerObservationDiffState:{futureState:{keep:'yes'}},
   futureTopLevel:{keep:'yes'}
 };
 const before = JSON.stringify(project);
@@ -41,6 +42,7 @@ assert.equal(saved.project.wayfarerObservation, project.wayfarerObservation);
 assert.equal(saved.project.currentPois, project.currentPois);
 assert.equal(saved.project.polygon, project.polygon);
 assert.equal(saved.project.futureTopLevel, project.futureTopLevel);
+assert.deepEqual(JSON.parse(JSON.stringify(saved.state.futureState)), {keep:'yes'});
 assert.equal(saved.state.baseSnapshotId, 'base-1');
 assert.equal(saved.state.lastRemoteSnapshotId, 'remote-1');
 assert.deepEqual(JSON.parse(JSON.stringify(saved.state.absenceCounts)), {missing:1});
