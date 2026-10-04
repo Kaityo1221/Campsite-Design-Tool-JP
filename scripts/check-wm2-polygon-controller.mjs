@@ -132,3 +132,4 @@ assert.equal(api.addCenter(), true);
 assert.deepEqual([...api.getPolygon()[0]], [35.1, 139.1]);
 
 console.log('WM-2 Wayfarer polygon controller: OK');
+assert.equal(api.getState().message, '', 'Normal polygon state must clear stale transient messages');
