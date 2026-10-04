@@ -38,7 +38,7 @@ assert.ok(entries.has('manifest.json'),'manifest.json missing from ZIP');
 
 const manifest=JSON.parse(entries.get('manifest.json').toString('utf8'));
 assert.equal(manifest.manifest_version,3);
-assert.equal(manifest.name,'Campsite Bridge PC');
+assert.equal(manifest.name,'Campsite Bridge - PC TEST');
 assert.deepEqual(manifest.permissions,[]);
 assert.deepEqual([...manifest.host_permissions].sort(),[
   'https://wayfarer.nianticlabs.com/*',
