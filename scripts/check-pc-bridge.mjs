@@ -5,7 +5,6 @@ import { execFileSync } from 'node:child_process';
 
 const manifest = JSON.parse(fs.readFileSync('bridge-pc/manifest.json', 'utf8'));
 const mapAdapterSource = fs.readFileSync('js/bridge-wayfarer-map-adapter.js', 'utf8');
-const visibilitySource = fs.readFileSync('bridge-pc/wayfarer-poi-visibility.js', 'utf8');
 const acquisitionSource = fs.readFileSync('bridge-pc/wayfarer-acquisition-engine.js', 'utf8');
 const parserSource = fs.readFileSync('bridge-pc/poi-parser.js', 'utf8');
 const classifierSource = fs.readFileSync('bridge-pc/poi-classifier.js', 'utf8');
@@ -28,15 +27,8 @@ assert.deepEqual(manifest.host_permissions.sort(), [
 ]);
 assert.equal(manifest.host_permissions.some(value => value.includes('<all_urls>')), false);
 
-const visibilityWorld = manifest.content_scripts.find(item =>
-  item.world === 'MAIN' &&
-  item.run_at === 'document_start' &&
-  item.js?.includes('wayfarer-poi-visibility.js')
-);
-const mainWorld = manifest.content_scripts.find(item => item.world === 'MAIN' && item.js?.includes('page-collector.js'));
+const mainWorld = manifest.content_scripts.find(item => item.world === 'MAIN');
 const isolatedWorld = manifest.content_scripts.find(item => item.world === 'ISOLATED');
-assert.ok(visibilityWorld, 'Wayfarer POI visibility filter must load in MAIN world at document_start');
-assert.deepEqual(visibilityWorld.js, ['wayfarer-poi-visibility.js']);
 assert.ok(mainWorld?.js?.includes('wayfarer-map-adapter.js'), 'MAIN Wayfarer map adapter missing');
 assert.ok(mainWorld?.js?.includes('wayfarer-acquisition-engine.js'), 'MAIN acquisition engine missing');
 assert.ok(mainWorld?.js?.includes('poi-parser.js'), 'MAIN parser missing');
@@ -62,7 +54,6 @@ assert.equal(manifest.content_scripts.some(item => item.js?.includes('creative-w
 assert.equal(manifest.content_scripts.some(item => item.js?.includes('creative-tab-relay.js')), false, 'Obsolete Creative observation relay must not ship');
 
 new vm.Script(mapAdapterSource, { filename: 'js/bridge-wayfarer-map-adapter.js' });
-new vm.Script(visibilitySource, { filename: 'bridge-pc/wayfarer-poi-visibility.js' });
 new vm.Script(acquisitionSource, { filename: 'bridge-pc/wayfarer-acquisition-engine.js' });
 new vm.Script(parserSource, { filename: 'bridge-pc/poi-parser.js' });
 new vm.Script(classifierSource, { filename: 'bridge-pc/poi-classifier.js' });
@@ -74,60 +65,6 @@ new vm.Script(wm1LiveVerifierSource, { filename: 'bridge-pc/wm1-live-verifier.js
 new vm.Script(wm3ObservationZoneSource, { filename: 'bridge-pc/wayfarer-observation-zone.js' });
 new vm.Script(wm3bTabLinkSource, { filename: 'bridge-pc/wm3b-tab-link.js' });
 new vm.Script(content, { filename: 'bridge-pc/content.js' });
-
-const visibilitySample = {
-  result: {
-    data: [{
-      pois: [
-        { poiId:'visible-stop', gmo:[{ gameBrand:'HOLOHOLO', entity:'POKESTOP', status:'ACTIVE' }] },
-        { poiId:'visible-gym', gmo:[{ gameBrand:'HOLOHOLO', entity:'GYM', status:'ACTIVE' }] },
-        { poiId:'visible-power', gmo:[{ gameBrand:'', entity:'POWERSPOT', status:'ACTIVE' }] },
-        { poiId:'hidden-portal', gmo:[] },
-        { poiId:'hidden-inactive', gmo:[{ gameBrand:'HOLOHOLO', entity:'POKESTOP', status:'INACTIVE' }] },
-        { poiId:'hidden-other-game', gmo:[{ gameBrand:'OTHER', entity:'POKESTOP', status:'ACTIVE' }] }
-      ]
-    }]
-  }
-};
-const visibilityWindow = {
-  location: { href:'https://wayfarer.scopely.com/new/mapview' },
-  fetch: async () => new Response(JSON.stringify(visibilitySample), {
-    status:200,
-    headers:{ 'content-type':'application/json' }
-  })
-};
-const visibilityContext = {
-  window: visibilityWindow,
-  URL,
-  Response,
-  Headers,
-  Request,
-  console,
-  Set,
-  Object,
-  Array,
-  String,
-  Number,
-  JSON,
-  Promise,
-  Error
-};
-vm.createContext(visibilityContext);
-vm.runInContext(visibilitySource, visibilityContext);
-assert.ok(visibilityWindow.CampsiteBridgeWayfarerPoiVisibility, 'POI visibility API missing');
-const filteredResponse = await visibilityWindow.fetch('/api/v1/vault/mapview/gcs?cellLevel=14');
-const filteredPayload = await filteredResponse.json();
-assert.deepEqual(
-  filteredPayload.result.data[0].pois.map(poi => poi.poiId),
-  ['visible-stop','visible-gym','visible-power'],
-  'Wayfarer display must keep only active Pokémon GO POIs'
-);
-const rawResponse = await visibilityWindow.CampsiteBridgeWayfarerPoiVisibility.rawFetch('/api/v1/vault/mapview/gcs?cellLevel=14');
-const rawPayload = await rawResponse.json();
-assert.equal(rawPayload.result.data[0].pois.length, 6, 'Bridge raw fetch must preserve non-game/reference POIs');
-const otherResponse = await visibilityWindow.fetch('/api/v1/other');
-const otherPayload = await otherResponse.json();
-assert.equal(otherPayload.result.data[0].pois.length, 6, 'Non-map responses must remain untouched');
 
 const listeners = new Map();
 const fakeWindow = {
@@ -359,7 +296,6 @@ assert.ok(bridgePayload.pois.every(p => p.gameStatus === 'ACTIVE'));
 assert.ok(collector.includes('/api/v1/vault/mapview/gcs'));
 assert.ok(collector.includes('credentials: \'include\''));
 assert.ok(collector.includes('CampsiteBridgeWayfarerMapAdapter'), 'Collector must use the shared Wayfarer map adapter');
-assert.ok(collector.includes('CampsiteBridgeWayfarerPoiVisibility'), 'Collector must bypass the display filter for full Bridge acquisition');
 assert.ok(collector.includes('CampsiteWayfarerAcquisitionEngine'), 'Collector must use the polygon acquisition engine');
 assert.ok(collector.includes('collectPolygon'), 'Collector must expose polygon acquisition without replacing the legacy viewport path');
 assert.equal(collector.includes("document.querySelector('app-wf-base-map')"), false, 'Collector must not scan Wayfarer Angular context directly');
@@ -415,7 +351,6 @@ assert.ok(zip.length > 1000, 'PC Bridge ZIP is unexpectedly small');
 assert.equal(zip.readUInt32LE(0), 0x04034b50, 'PC Bridge output is not a ZIP');
 assert.ok(zip.includes(Buffer.from('manifest.json')), 'ZIP must contain manifest.json');
 assert.ok(zip.includes(Buffer.from('wayfarer-map-adapter.js')), 'ZIP must contain Wayfarer map adapter');
-assert.ok(zip.includes(Buffer.from('wayfarer-poi-visibility.js')), 'ZIP must contain Wayfarer POI visibility filter');
 assert.ok(zip.includes(Buffer.from('wayfarer-acquisition-engine.js')), 'ZIP must contain WM-1 acquisition engine');
 assert.ok(zip.includes(Buffer.from('poi-parser.js')), 'ZIP must contain poi-parser.js');
 assert.ok(zip.includes(Buffer.from('poi-classifier.js')), 'ZIP must contain poi-classifier.js');
