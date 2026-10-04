@@ -440,6 +440,7 @@
           cleanup();
           resolve({
             count: Number(data.count || 0),
+            activeCount: Number(data.activeCount ?? data.count ?? 0),
             sourceCount: Number(data.sourceCount || payload.pois.length || 0)
           });
         }
@@ -512,10 +513,10 @@
 
       dispatchStatus({
         state: 'success',
-        count: result.count,
+        count: result.activeCount,
         sourceCount: result.sourceCount,
         diagnosticReport,
-        message: result.count.toLocaleString('ja-JP') + '件をCampsiteへ渡しました。Wayfarerはこのまま使えます。'
+        message: result.activeCount.toLocaleString('ja-JP') + '件をCampsiteへ渡しました。Wayfarerはこのまま使えます。'
       });
     } catch (error) {
       dispatchStatus({
