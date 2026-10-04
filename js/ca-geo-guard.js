@@ -119,7 +119,7 @@
     title.textContent = result?.testScenario
       ? '🧪 テスト判定'
       : result?.blockReason === 'location_permission_denied'
-        ? '📍 位置情報をONにしてください'
+        ? '📍 このサイトへの位置情報アクセスを許可してください'
         : '📍 利用地域を確認できません';
     title.style.cssText = 'font-weight:800;color:#f8fafc;margin-bottom:9px;';
     panel.appendChild(title);
