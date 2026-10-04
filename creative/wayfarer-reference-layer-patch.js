@@ -154,14 +154,16 @@ function cmWm6Schedule(task){
   try{if(typeof setTimeout==='function')setTimeout(task,0);else task()}catch(_){try{task()}catch(__){}}
 }
 function cmWm6EnsureDistanceWarning(){
-  let warning=document.getElementById('cmWm6DistanceWarning');
+  const doc=typeof document!=='undefined'?document:null;
+  if(!doc)return null;
+  let warning=doc.getElementById('cmWm6DistanceWarning');
   if(warning)return warning;
-  warning=document.createElement('div');
+  warning=doc.createElement('div');
   warning.id='cmWm6DistanceWarning';
   warning.hidden=true;
   warning.setAttribute('role','status');
   warning.setAttribute('aria-live','polite');
-  document.body.appendChild(warning);
+  doc.body?.appendChild(warning);
   return warning;
 }
 function cmWm6DistanceText(nearest){
@@ -191,10 +193,11 @@ function cmWm6ReferenceDistanceItems(){
   try{return cmWm3cReferenceScene().items.filter(item=>item?.origin==='reference'&&item?.layerKey==='marker'&&item?.observationZone==='REFERENCE_100')}catch(_){return[]}
 }
 function cmWm6HideDistanceWarning(){
-  const warning=document.getElementById('cmWm6DistanceWarning');
+  const doc=typeof document!=='undefined'?document:null;
+  const warning=doc?.getElementById?.('cmWm6DistanceWarning');
   if(warning)warning.hidden=true;
   cmWm6DistanceState={visible:false,sourceType:'',distanceMeters:null,text:''};
-  const move=document.getElementById('cmMoveNearest');
+  const move=doc?.getElementById?.('cmMoveNearest');
   if(move){move.textContent='最短POI --';move.classList.remove('danger','safe')}
 }
 function cmWm6RefreshDistanceWarning(){
@@ -206,10 +209,8 @@ function cmWm6RefreshDistanceWarning(){
     if(!nearest||!Number.isFinite(Number(nearest.distanceMeters))||Number(nearest.distanceMeters)>=50){cmWm6HideDistanceWarning();return nearest||null}
     const text=cmWm6DistanceText(nearest);
     const warning=cmWm6EnsureDistanceWarning();
-    warning.textContent=text;
-    warning.hidden=false;
-    warning.dataset.sourceType=String(nearest.sourceType||'');
-    const move=document.getElementById('cmMoveNearest');
+    if(warning){warning.textContent=text;warning.hidden=false;warning.dataset.sourceType=String(nearest.sourceType||'')}
+    const move=(typeof document!=='undefined')?document.getElementById('cmMoveNearest'):null;
     if(move){move.textContent=text.replace(/^⚠\s*/,'⚠ ');move.classList.add('danger');move.classList.remove('safe')}
     cmWm6DistanceState={visible:true,sourceType:String(nearest.sourceType||''),distanceMeters:Number(nearest.distanceMeters),text};
     return nearest;
