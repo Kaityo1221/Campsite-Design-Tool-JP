@@ -172,11 +172,13 @@ function cmWm6DistanceText(nearest){
   return '⚠ '+distance+'m / 既存POI';
 }
 function cmWm6DistanceTarget(){
-  if(cmMoveSession?.r&&!cmMoveSession.r.deleted){
+  const moveSession=typeof cmMoveSession!=='undefined'?cmMoveSession:null;
+  const addMode=typeof cmAddMode!=='undefined'&&cmAddMode===true;
+  if(moveSession?.r&&!moveSession.r.deleted){
     const c=map.getCenter();
-    return{latlng:[c.lat,c.lng],excludeId:String(cmMoveSession.r.id||'')};
+    return{latlng:[c.lat,c.lng],excludeId:String(moveSession.r.id||'')};
   }
-  if(cmAddMode){
+  if(addMode){
     const c=map.getCenter();
     return{latlng:[c.lat,c.lng],excludeId:''};
   }
@@ -270,7 +272,7 @@ if(typeof drawAll==='function'){
     return result;
   };
 }
-try{map.on('move',()=>{if(cmAddMode||cmMoveSession)cmWm6RefreshDistanceWarning()})}catch(_){}
+try{map.on('move',()=>{const addMode=typeof cmAddMode!=='undefined'&&cmAddMode===true;const moveSession=typeof cmMoveSession!=='undefined'?cmMoveSession:null;if(addMode||moveSession)cmWm6RefreshDistanceWarning()})}catch(_){}
 window.addEventListener('campsite:wayfarer-reference-state',()=>cmWm6Schedule(cmWm6RefreshDistanceWarning));
 window.__cmWayfarerReferenceDistance=Object.freeze({refresh:cmWm6RefreshDistanceWarning,getState:()=>({...cmWm6DistanceState}),getNearest:()=>cmWm6RefreshDistanceWarning()});
 window.__cmWayfarerReference=Object.freeze({getState:()=>({...cmWm3cReferenceState,currentPolygon:cmWm3cReferenceState.currentPolygon.map(point=>point.slice())}),getCurrentPolygon:()=>cmWm5bCurrentCreativePolygon().map(point=>point.slice()),getScene:()=>cmCandidateShadowScene(),refresh:cmWm3cReferenceRefresh});
