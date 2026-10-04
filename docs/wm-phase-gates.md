@@ -642,3 +642,45 @@ Evidence:
 
 WM-7B re-observation diff may now start.
 
+
+
+### WM-7B — pure re-observation diff engine (implementation)
+
+Scope is data-only. No Creative review UI, Project persistence, remote apply,
+absence metadata save, or Base/Local/Remote merge is connected in this subphase.
+
+The pure engine compares the previous accepted Wayfarer snapshot (Base) with a
+later complete remote snapshot by stable GUID / poiId identity.
+
+Rules:
+
+- Remote is eligible only when `acquisition.coverageComplete === true`.
+- Incomplete Remote returns `REMOTE_INCOMPLETE`, produces no additions,
+  changes or disappearance transitions, and does not increment prior absence
+  counts.
+- New GUID -> `NEW_POI`.
+- Same GUID can report title, type, Active/Inactive status and coordinate changes.
+- A missing Base GUID increments caller-supplied consecutive absence count.
+- First complete-snapshot absence -> `UNCONFIRMED` (未確認).
+- Second or later consecutive complete-snapshot absence ->
+  `DELETE_CANDIDATE` (削除候補).
+- A GUID present again in Remote clears its prior absence count.
+- INTERIOR / REFERENCE_100 / RESERVE_200 all participate in snapshot diff.
+- Coordinates never define deletion identity.
+- Source Base/Remote observations and unknown future POI fields are not mutated.
+
+Gate before PASS:
+
+1. GUID identity drives comparison.
+2. New POI is detected.
+3. title/type/status/coordinate changes for the same GUID are detected.
+4. first complete absence is UNCONFIRMED.
+5. second consecutive complete absence is DELETE_CANDIDATE.
+6. reappearance clears prior absence tracking.
+7. incomplete Remote produces no diff and does not increment absence state.
+8. Base and Remote remain byte-equivalent.
+9. module is not loaded into Creative runtime and does not change
+   `campsiteProject.v1`, `records/currentPois`, or `wayfarerObservation`.
+10. WM-3 through WM-7A and current production Creative regressions remain green.
+
+WM-7C persistence / review UI / apply flow must not start until WM-7B passes.
