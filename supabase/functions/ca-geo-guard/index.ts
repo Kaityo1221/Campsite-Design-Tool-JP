@@ -502,7 +502,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       ok: true,
       status: "blocked",
       blockReason: "location_permission_denied",
-      message: "位置情報をONにしてください。Campsite Design Toolは日本国内での現地利用を確認するため位置情報を使用します。ブラウザ／端末の設定で位置情報を許可してから、もう一度確認してください。",
+      message: "このサイトへの位置情報アクセスを許可してください。Campsite Design Toolは日本国内での現地利用を確認するため位置情報を使用します。ブラウザ／端末の設定で位置情報を許可してから、もう一度確認してください。",
       ipCountry: ipCountry || null,
       gpsResult: "permission_denied",
       isAdmin: context.isAdmin,
