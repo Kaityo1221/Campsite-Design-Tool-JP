@@ -95,9 +95,11 @@ if(typeof syncCampsiteProjectFromCreative==='function'){
     if(!project||!latest||latest.source!=='bridge'||project.source!=='bridge')return null;
     if(!project.projectId||String(latest.projectId||'')!==String(project.projectId))return null;
     if(String(latest.meta?.bridgeHandoffId||'')!==String(project.meta?.bridgeHandoffId||''))return null;
-    // Observation is storage-owned; editable arrays and current polygon stay Creative-owned.
-    if(Object.prototype.hasOwnProperty.call(latest,'wayfarerObservation'))project.wayfarerObservation=latest.wayfarerObservation;
-    else delete project.wayfarerObservation;
+    // Wayfarer snapshots/state are storage-owned; editable arrays and current polygon stay Creative-owned.
+    for(const key of ['wayfarerObservation','wayfarerObservationDiffState']){
+      if(Object.prototype.hasOwnProperty.call(latest,key))project[key]=latest[key];
+      else delete project[key];
+    }
     return cmWm4aBaseSync(project);
   };
 }
