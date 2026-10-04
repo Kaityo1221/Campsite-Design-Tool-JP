@@ -24,7 +24,9 @@
       .filter(poi => poi?.role === 'added' || String(poi?.layer || '').startsWith('new-'))
       .map(poi => ({
         name: String(poi?.title || poi?.name || '').trim(),
-        comment: String(poi?.description || poi?.memo || '').trim()
+        comment: (Object.prototype.hasOwnProperty.call(poi || {}, 'applicationComment')
+          ? String(poi?.applicationComment || '')
+          : String(poi?.description || poi?.memo || '')).trim()
       }))
       .filter(item => item.name);
   }
