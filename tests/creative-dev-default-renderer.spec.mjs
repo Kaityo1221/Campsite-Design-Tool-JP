@@ -225,6 +225,7 @@ test('Phase 5-D12 normal dev URL survives the complete legacy mutation flow', as
   await page.locator('#cmMove').click();
   await expect(page.locator('#cmMoveCrosshair')).toBeVisible();
   await expect(page.locator('#cmMoveBar')).toBeVisible();
+  await expect.poll(async () => Number(await engineCandidate.evaluate(el => getComputedStyle(el).opacity))).toBeCloseTo(0.34, 2);
 
   const mapSurface = page.locator('.leaflet-container').first();
   const box = await mapSurface.boundingBox();
@@ -238,6 +239,7 @@ test('Phase 5-D12 normal dev URL survives the complete legacy mutation flow', as
   await page.locator('#cmMoveConfirm').click();
 
   await expect(page.locator('#cmMoveBar')).toHaveCount(0);
+  await expect.poll(async () => Number(await engineCandidate.evaluate(el => getComputedStyle(el).opacity))).toBeCloseTo(1, 2);
   const movedCandidate = await workspaceRecord(page, 'c-stop');
   expect(movedCandidate.latlng).not.toEqual(initialPosition);
   const movedPosition = movedCandidate.latlng;
