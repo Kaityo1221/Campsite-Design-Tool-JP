@@ -95,8 +95,8 @@ if(typeof syncCampsiteProjectFromCreative==='function'){
     if(!project||!latest||latest.source!=='bridge'||project.source!=='bridge')return null;
     if(!project.projectId||String(latest.projectId||'')!==String(project.projectId))return null;
     if(String(latest.meta?.bridgeHandoffId||'')!==String(project.meta?.bridgeHandoffId||''))return null;
-    // Wayfarer snapshots/state are storage-owned; editable arrays and current polygon stay Creative-owned.
-    for(const key of ['wayfarerObservation','wayfarerObservationDiffState']){
+    // Accepted Wayfarer snapshot is storage-owned; editable arrays and current polygon stay Creative-owned.
+    for(const key of ['wayfarerObservation']){
       if(Object.prototype.hasOwnProperty.call(latest,key))project[key]=latest[key];
       else delete project[key];
     }
@@ -105,22 +105,7 @@ if(typeof syncCampsiteProjectFromCreative==='function'){
 }
 const cmWm3cBaseScene=cmCandidateShadowScene;
 let cmWm3cReferenceState={ready:false,display:0,reserve:0,suppressed:0,invalid:0,lastError:'',localCanUse:false,localReason:'',coverageReason:'',currentPolygon:[]};
-let cmWm5cReferenceStateSignature='';
-function cmWm5cPublishReferenceState(){
-  const detail={
-    ready:cmWm3cReferenceState.ready===true,
-    display:Number(cmWm3cReferenceState.display||0),
-    reserve:Number(cmWm3cReferenceState.reserve||0),
-    localCanUse:cmWm3cReferenceState.localCanUse===true,
-    localReason:String(cmWm3cReferenceState.localReason||''),
-    coverageReason:String(cmWm3cReferenceState.coverageReason||'')
-  };
-  const signature=JSON.stringify(detail);
-  if(signature===cmWm5cReferenceStateSignature)return;
-  cmWm5cReferenceStateSignature=signature;
-  try{window.dispatchEvent(new CustomEvent('campsite:wayfarer-reference-state',{detail}))}catch(_){}
-}
-function cmWm5cSetReferenceState(next){cmWm3cReferenceState=next;cmWm5cPublishReferenceState();return next}
+function cmWm3cSetReferenceState(next){cmWm3cReferenceState=next;return next}
 function cmWm3cReadProject(){try{const project=JSON.parse(sessionStorage.getItem('campsiteProject.v1')||'null');return project&&project.source==='bridge'?project:null}catch(_){return null}}
 function cmWm5bCurrentCreativePolygon(){
   try{
@@ -221,20 +206,20 @@ function cmWm6RefreshDistanceWarning(){
 function cmWm3cReferenceScene(){
   const project=cmWm3cReadProject();
   const observation=project?.wayfarerObservation;
-  if(!observation){cmWm5cSetReferenceState({ready:true,display:0,reserve:0,suppressed:0,invalid:0,lastError:'',localCanUse:false,localReason:'NO_OBSERVATION',coverageReason:'',currentPolygon:cmWm5bCurrentCreativePolygon()});return Object.freeze({items:Object.freeze([])})}
+  if(!observation){cmWm3cSetReferenceState({ready:true,display:0,reserve:0,suppressed:0,invalid:0,lastError:'',localCanUse:false,localReason:'NO_OBSERVATION',coverageReason:'',currentPolygon:cmWm5bCurrentCreativePolygon()});return Object.freeze({items:Object.freeze([])})}
   const required=['bridgeMapLab_evaluateWayfarerReserveCoverage','bridgeMapLab_reclassifyWayfarerObservation','bridgeMapLab_adaptWayfarerObservation','bridgeMapLab_buildWayfarerReferenceGeometry','bridgeMapLab_buildWayfarerReferenceScene','bridgeMapLab_findNearestCreativePoi'];
   const missing=required.filter(name=>typeof window[name]!=='function');
   if(missing.length)throw new Error('Wayfarer Reference modules unavailable: '+missing.join(', '));
   const currentPolygon=cmWm5bCurrentCreativePolygon();
   const derived=cmWm5bDerivedObservation(observation,currentPolygon);
   if(!derived.local?.canUseLocal){
-    cmWm5cSetReferenceState({ready:true,display:0,reserve:0,suppressed:0,invalid:0,lastError:'',localCanUse:false,localReason:String(derived.local?.reason||'RECLASSIFICATION_UNAVAILABLE'),coverageReason:String(derived.local?.coverage?.reason||''),currentPolygon});
+    cmWm3cSetReferenceState({ready:true,display:0,reserve:0,suppressed:0,invalid:0,lastError:'',localCanUse:false,localReason:String(derived.local?.reason||'RECLASSIFICATION_UNAVAILABLE'),coverageReason:String(derived.local?.coverage?.reason||''),currentPolygon});
     return Object.freeze({items:Object.freeze([])});
   }
   const adapted=window.bridgeMapLab_adaptWayfarerObservation(derived.observation,records||[]);
   const geometry=window.bridgeMapLab_buildWayfarerReferenceGeometry(adapted.displayPois);
   const scene=window.bridgeMapLab_buildWayfarerReferenceScene(geometry);
-  cmWm5cSetReferenceState({ready:true,display:adapted.counts.display,reserve:adapted.counts.reserve200,suppressed:adapted.counts.suppressedByEditableGuid,invalid:adapted.counts.invalid,lastError:'',localCanUse:true,localReason:String(derived.local.reason||''),coverageReason:String(derived.local.coverage?.reason||''),currentPolygon});
+  cmWm3cSetReferenceState({ready:true,display:adapted.counts.display,reserve:adapted.counts.reserve200,suppressed:adapted.counts.suppressedByEditableGuid,invalid:adapted.counts.invalid,lastError:'',localCanUse:true,localReason:String(derived.local.reason||''),coverageReason:String(derived.local.coverage?.reason||''),currentPolygon});
   return scene;
 }
 cmCandidateShadowScene=function(){
@@ -242,7 +227,7 @@ cmCandidateShadowScene=function(){
   try{
     if(typeof window.bridgeMapLab_mergeSceneWithWayfarerReferences!=='function')return baseScene;
     return window.bridgeMapLab_mergeSceneWithWayfarerReferences(baseScene,cmWm3cReferenceScene());
-  }catch(error){cmWm5cSetReferenceState({...cmWm3cReferenceState,lastError:String(error?.message||error||'Reference Layer error')});console.warn('[WM-3C Reference] scene skipped',error);return baseScene}
+  }catch(error){cmWm3cSetReferenceState({...cmWm3cReferenceState,lastError:String(error?.message||error||'Reference Layer error')});console.warn('[WM-3C Reference] scene skipped',error);return baseScene}
 };
 function cmWm3cReferenceRefresh(){try{window.__cmCandidateShadow?.refresh?.()}catch(error){console.warn('[WM-3C Reference] refresh failed',error)}cmWm6Schedule(()=>{try{cmWm6RefreshDistanceWarning()}catch(_){}})}
 window.addEventListener('campsite:wayfarer-observation-saved',cmWm3cReferenceRefresh);
@@ -276,7 +261,6 @@ if(typeof drawAll==='function'){
   };
 }
 try{map.on('move',()=>{const addMode=typeof cmAddMode!=='undefined'&&cmAddMode===true;const moveSession=typeof cmMoveSession!=='undefined'?cmMoveSession:null;if(addMode||moveSession)cmWm6RefreshDistanceWarning()})}catch(_){}
-window.addEventListener('campsite:wayfarer-reference-state',()=>cmWm6Schedule(cmWm6RefreshDistanceWarning));
 window.__cmWayfarerReferenceDistance=Object.freeze({refresh:cmWm6RefreshDistanceWarning,getState:()=>({...cmWm6DistanceState}),getNearest:()=>cmWm6RefreshDistanceWarning()});
 window.__cmWayfarerReference=Object.freeze({getState:()=>({...cmWm3cReferenceState,currentPolygon:cmWm3cReferenceState.currentPolygon.map(point=>point.slice())}),getCurrentPolygon:()=>cmWm5bCurrentCreativePolygon().map(point=>point.slice()),getScene:()=>cmCandidateShadowScene(),refresh:cmWm3cReferenceRefresh});
 `;
