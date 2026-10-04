@@ -42,3 +42,8 @@ assert.ok(source.includes('document.evaluate'));
 assert.ok(source.includes('XPathResult.ORDERED_NODE_SNAPSHOT_TYPE'));
 
 console.log('WM-2 Wayfarer polygon UI contract: OK');
+assert.ok(source.includes('findWayfarerPoiInteractionLayers'));
+assert.ok(source.includes("canvas#deckgl-overlay"));
+assert.ok(source.includes('suppressWayfarerPoiInteraction'));
+assert.ok(source.includes('restoreWayfarerPoiInteraction'));
+assert.ok(source.includes("layer.style.pointerEvents = 'none'"));
