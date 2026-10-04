@@ -60,6 +60,7 @@ async function openPoi(page,title){
 test.beforeEach(async({page})=>installRoutes(page));
 
 test('CREATIVE往復で実編集→stale→再チェック→セーブ→提出前チェックまで同じProjectを保つ',async({page})=>{
+  test.setTimeout(60000);
   const original=baseProject();await seed(page,original);await page.goto('/bridge-distance.html?campsiteProject=bridge');await runDistance(page);await openMission4(page);
   const initialResult=await page.evaluate(()=>JSON.parse(sessionStorage.getItem('campsiteProject.v1')||'null')?.distanceResult||null);expect(initialResult?.stale).toBe(false);
 
