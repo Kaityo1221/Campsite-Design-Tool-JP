@@ -687,8 +687,15 @@
     else if (action === 'query-state') queryState();
   }
 
-  const stored = readDraft();
-  draftAvailable = Boolean(stored);
+  // Wayfarer-side polygon work is intentionally ephemeral.
+  // A fresh page load always starts clean so Bridge never offers a stale resume/send state.
+  clearDraftStorage();
+  points = [];
+  active = false;
+  completed = false;
+  paused = false;
+  draftAvailable = false;
+
   window.addEventListener(COMMAND_EVENT, handleCommand);
   window.addEventListener('resize', () => {
     if (!active) return;
