@@ -342,14 +342,45 @@
       maxTileMeters: 500
     });
     const zoning = polygonZoneApi().classifyPois(polygon, collected.enginePois);
+    const observedAt = new Date().toISOString();
+    const wayfarerObservation = {
+      version: '0.2.0',
+      snapshotId: 'wm3:' + observedAt,
+      observedAt,
+      polygon: zoning.polygon,
+      counts: zoning.counts,
+      zones: zoning.zones,
+      visibleTotal: zoning.visibleTotal,
+      retainedTotal: zoning.retainedTotal,
+      excludedCount: zoning.excludedCount,
+      outsideCount: zoning.outsideCount,
+      canProceed: zoning.visibleTotal > 0,
+      acquisition: {
+        engineVersion: String(collected?.acquisition?.engineVersion || ''),
+        bufferMeters: Number(collected?.acquisition?.bufferMeters ?? 200),
+        referenceMeters: 100,
+        reserveMeters: 200,
+        cellLevel: Number(collected?.acquisition?.cellLevel || 0),
+        acquisitionBounds: collected?.acquisition?.acquisitionBounds
+          ? JSON.parse(JSON.stringify(collected.acquisition.acquisitionBounds))
+          : null,
+        tileCount: Number(collected?.acquisition?.tileCount || 0),
+        geometryCoverageComplete: collected?.acquisition?.geometryCoverageComplete === true,
+        transportComplete: collected?.acquisition?.transportComplete === true,
+        coverageComplete: collected?.acquisition?.coverageComplete === true,
+        coverageStatus: String(collected?.acquisition?.coverageStatus || 'unverified'),
+        sourceComplete: collected?.acquisition?.sourceComplete ?? null
+      }
+    };
     return {
-      // The public flow sends only POIs inside the confirmed design polygon.
-      // Outer acquisition is transport coverage only, not a user-facing observation step.
+      // Editable Bridge POIs stay limited to the confirmed design polygon.
+      // REFERENCE_100 / RESERVE_200 travel only inside the immutable observation.
       enginePois: zoning.zones.interior,
       referencePois: [],
       selectedBounds: null,
       diagnosticReport: collected.diagnosticReport,
-      acquisition: collected.acquisition
+      acquisition: collected.acquisition,
+      wayfarerObservation
     };
   }
 
@@ -458,7 +489,7 @@
     }
 
     writePreparingPage(popup);
-    dispatchStatus({ state: 'busy', message: 'Wayfarer MapからPOIを取得しています…', diagnosticReport: null });
+    dispatchStatus({ state: 'busy', message: '設計範囲と外周200mを確認しています…', diagnosticReport: null });
 
     try {
       const snapshot = await confirmedPolygonSnapshotForBridge(polygon);
