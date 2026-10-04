@@ -43,7 +43,7 @@ for (const token of [
 assert.equal(api.transformCreativeHtml(transformed), transformed, 'WM-3C runtime injection must be idempotent');
 
 const manifest = JSON.parse(fs.readFileSync('bridge-pc/manifest.json', 'utf8'));
-assert.equal(manifest.name, 'Campsite Bridge - PC TEST');
+assert.equal(manifest.name, 'Campsite Bridge PC');
 assert.deepEqual(manifest.permissions, []);
 assert.deepEqual([...manifest.host_permissions].sort(), [
   'https://wayfarer.nianticlabs.com/*',
