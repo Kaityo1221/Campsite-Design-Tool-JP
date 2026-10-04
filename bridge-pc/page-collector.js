@@ -69,6 +69,14 @@
     return engine;
   }
 
+  function polygonZoneApi() {
+    const zone = window.CampsiteWayfarerObservationZone;
+    if (!zone?.classifyPois) {
+      throw new Error('設計範囲のPOI判定Engineを読み込めませんでした。拡張機能を再読み込みしてください。');
+    }
+    return zone;
+  }
+
   function numberFrom(value) {
     const num = Number(value);
     return Number.isFinite(num) ? num : null;
@@ -315,42 +323,33 @@
     } catch (_) {}
   }
 
-  function samePolygon(a, b) {
-    const normalize = value => (Array.isArray(value) ? value : []).map(point => {
-      if (!Array.isArray(point) || point.length < 2) return null;
-      const lat = Number(point[0]);
-      const lng = Number(point[1]);
-      return Number.isFinite(lat) && Number.isFinite(lng) ? [lat, lng] : null;
-    }).filter(Boolean);
-    return JSON.stringify(normalize(a)) === JSON.stringify(normalize(b));
-  }
-
-  function currentWayfarerObservation() {
+  function currentCompletedPolygon() {
     try {
-      const observation = window.CampsiteWayfarerObserveController?.getLastResult?.();
-      if (!observation || observation.canProceed !== true) return null;
-      const currentPolygon = window.CampsiteWayfarerPolygonController?.getPolygon?.();
-      if (Array.isArray(currentPolygon) && currentPolygon.length >= 3 &&
-          !samePolygon(currentPolygon, observation.polygon)) return null;
-      return observation;
+      const api = window.CampsiteWayfarerPolygonController;
+      const state = api?.getState?.();
+      const polygon = api?.getPolygon?.();
+      if (state?.active === true || state?.completed !== true) return null;
+      if (!Array.isArray(polygon) || polygon.length < 3 || polygon.length > 30) return null;
+      return polygon;
     } catch (_) {
       return null;
     }
   }
 
-  function observationSnapshotForBridge(observation) {
-    if (!observation || typeof observation !== 'object') return null;
-    const zones = observation.zones || {};
-    if (!Array.isArray(zones.interior) ||
-        !Array.isArray(zones.reference100) ||
-        !Array.isArray(zones.reserve200)) return null;
+  async function confirmedPolygonSnapshotForBridge(polygon) {
+    const collected = await collectPolygon(polygon, {
+      bufferMeters: 200,
+      maxTileMeters: 500
+    });
+    const zoning = polygonZoneApi().classifyPois(polygon, collected.enginePois);
     return {
-      // RESERVE_200 stays only inside wayfarerObservation. Do not feed it
-      // into the normal Bridge POI channels or the Gateway can render it.
-      enginePois: [...zones.interior, ...zones.reference100],
+      // The public flow sends only POIs inside the confirmed design polygon.
+      // Outer acquisition is transport coverage only, not a user-facing observation step.
+      enginePois: zoning.zones.interior,
+      referencePois: [],
       selectedBounds: null,
-      wayfarerObservation: observation,
-      diagnosticReport: null
+      diagnosticReport: collected.diagnosticReport,
+      acquisition: collected.acquisition
     };
   }
 
@@ -452,8 +451,10 @@
     dispatchStatus({ state: 'busy', message: 'Wayfarer MapからPOIを取得しています…', diagnosticReport: null });
 
     try {
-      const observation = currentWayfarerObservation();
-      const snapshot = observationSnapshotForBridge(observation) || await collect();
+      const polygon = currentCompletedPolygon();
+      const snapshot = polygon
+        ? await confirmedPolygonSnapshotForBridge(polygon)
+        : await collect();
       diagnosticReport = snapshot.diagnosticReport;
       const payload = makePayload(snapshot, handshakeId);
       const pois = payload.pois;
@@ -523,6 +524,8 @@
     buildDiagnosticReport,
     makePayload,
     collectPolygon,
+    currentCompletedPolygon,
+    confirmedPolygonSnapshotForBridge,
     collect,
     startBridge
   });
