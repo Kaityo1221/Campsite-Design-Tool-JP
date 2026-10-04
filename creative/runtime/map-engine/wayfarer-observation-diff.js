@@ -18,7 +18,7 @@
     return Number.isFinite(n) ? n : null;
   }
   function identity(poi) {
-    return String(poi?.guid || poi?.poiId || poi?.id || '').trim();
+    return String(poi?.guid || poi?.poiId || '').trim();
   }
   function normalizedPoi(poi, zone) {
     const guid = identity(poi);
