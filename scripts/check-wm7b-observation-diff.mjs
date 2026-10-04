@@ -62,6 +62,18 @@ assert.deepEqual(
 );
 assert.equal(first.nextAbsenceCounts.missing, 1);
 
+const tinyBase = {
+  snapshotId:'tiny-base',
+  acquisition:{coverageComplete:true},
+  zones:{interior:[{guid:'tiny',title:'Tiny',lat:35,lng:139,gameEntity:'POKESTOP',gameStatus:'ACTIVE'}],reference100:[],reserve200:[]}
+};
+const tinyRemote = structuredClone(tinyBase);
+tinyRemote.snapshotId = 'tiny-remote';
+tinyRemote.zones.interior[0].lat = 35.000000001;
+const tiny = diff(tinyBase, tinyRemote);
+assert.equal(tiny.changes.length, 1);
+assert.deepEqual([...tiny.changes[0].categories], ['COORDINATE_CHANGED']);
+
 const second = diff(base, remote, {absenceCounts:first.nextAbsenceCounts});
 assert.equal(second.absences[0].count, 2);
 assert.equal(second.absences[0].state, 'DELETE_CANDIDATE');
@@ -88,4 +100,4 @@ assert.equal(blocked.nextAbsenceCounts.missing, 1, 'Incomplete remote must not i
 assert.equal(JSON.stringify(base), baseBefore, 'Base observation must remain byte-equivalent');
 assert.equal(JSON.stringify(remote), remoteBefore, 'Remote observation must remain byte-equivalent');
 
-console.log('WM-7A Wayfarer observation diff: PASS');
+console.log('WM-7B Wayfarer observation diff: PASS');
