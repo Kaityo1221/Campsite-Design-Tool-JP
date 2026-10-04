@@ -106,7 +106,9 @@ fs.rmSync(retiredPoiOverlay, { force: true });
 const manifest = JSON.parse(fs.readFileSync(path.join(sourceDir, 'manifest.json'), 'utf8'));
 if (manifest.manifest_version !== 3) throw new Error('PC Bridge must use Manifest V3');
 if (manifest.version !== '0.1.0') throw new Error('PC Bridge manifest version must be 0.1.0');
-const mainScripts = manifest.content_scripts?.find(entry => entry.world === 'MAIN')?.js || [];
+const mainScripts = manifest.content_scripts?.find(entry =>
+  entry.world === 'MAIN' && (entry.js || []).includes('page-collector.js')
+)?.js || [];
 if (!mainScripts.includes('wayfarer-map-adapter.js')) throw new Error('PC Bridge manifest must load wayfarer-map-adapter.js in MAIN world');
 if (!mainScripts.includes('wayfarer-display-owner.js')) throw new Error('PC Bridge manifest must load wayfarer-display-owner.js in MAIN world');
 if (!mainScripts.includes('wayfarer-deck-compat.js')) throw new Error('PC Bridge manifest must load wayfarer-deck-compat.js in MAIN world');
