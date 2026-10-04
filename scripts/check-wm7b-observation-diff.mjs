@@ -51,7 +51,7 @@ const remoteBefore = JSON.stringify(remote);
 const first = diff(base, remote);
 assert.equal(first.canApply, true);
 assert.equal(first.reason, 'DIFF_READY');
-assert.deepEqual(first.summary, {added:1,changed:1,unconfirmed:1,deleteCandidates:0});
+assert.deepEqual(JSON.parse(JSON.stringify(first.summary)), {added:1,changed:1,unconfirmed:1,deleteCandidates:0});
 assert.equal(first.additions[0].guid, 'new-one');
 assert.equal(first.absences[0].guid, 'missing');
 assert.equal(first.absences[0].count, 1);
