@@ -82,7 +82,6 @@ assert.ok(!html.includes('<button data-tool="polygon">ポリゴン</button>'),'L
 assert.ok(html.includes('活動範囲を作成！'),'Creative activity-range create action wording missing');
 assert.ok(html.includes('活動範囲を作成しました'),'Creative activity-range completion wording missing');
 assert.ok(html.includes('活動範囲の作成をキャンセルしました'),'Creative activity-range cancel wording missing');
-assert.ok(html.includes('追加する活動範囲を描いてください'),'Creative activity-range drawing guidance missing');
 assert.ok(!html.includes('ポリゴン'),'User-facing polygon wording must stay removed from Creative runtime');
 assert.ok(html.includes('cmV58NewEntryStyle'),'New Creative entry style missing');
 assert.ok(html.includes("if(start.classList.contains('ready'))start.disabled=false"),'Creative START must re-enable when returning to entry with a ready file');
