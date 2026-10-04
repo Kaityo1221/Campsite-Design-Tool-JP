@@ -428,6 +428,53 @@ test('WM-6B selected candidate keeps Reference warning outside editable records'
   expect(browserErrors).toEqual([]);
 });
 
+test('WM-7A observation age shows a 90-day update hint without auto-opening UI', async ({ page }) => {
+  const browserErrors = collectBrowserErrors(page);
+  const staleProject = JSON.parse(JSON.stringify(project));
+  staleProject.wayfarerObservation.observedAt = new Date(Date.now() - 91 * 24 * 60 * 60 * 1000).toISOString();
+
+  await installRoutes(page, staleProject);
+  await page.goto('/creative/index.html?campsiteProject=bridge');
+  await expect.poll(() => page.evaluate(() => typeof window.CampsiteCreativeWayfarerLink?.syncRefreshAgeState === 'function'), { timeout:15000 }).toBe(true);
+
+  const button = page.locator('#campsiteWayfarerObserveButton');
+  const overlay = page.locator('#campsiteWayfarerObserveOverlay');
+  await expect(button).toHaveAttribute('data-refresh-stale', '1');
+  await expect(button).toContainText('更新推奨');
+  await expect(overlay).toBeHidden();
+
+  const staleState = await page.evaluate(() => window.CampsiteCreativeWayfarerLink.getState());
+  expect(staleState.refreshStale).toBe(true);
+  expect(Number(staleState.refreshAgeDays)).toBeGreaterThanOrEqual(90);
+
+  await page.evaluate(() => {
+    const current = JSON.parse(sessionStorage.getItem('campsiteProject.v1') || 'null');
+    current.wayfarerObservation.observedAt = new Date().toISOString();
+    sessionStorage.setItem('campsiteProject.v1', JSON.stringify(current));
+    window.CampsiteCreativeWayfarerLink.syncRefreshAgeState(current);
+  });
+  await expect(button).toHaveAttribute('data-refresh-stale', '0');
+  await expect(button).toHaveText('🔭 Wayfarer観察');
+
+  await page.evaluate(() => {
+    const current = JSON.parse(sessionStorage.getItem('campsiteProject.v1') || 'null');
+    current.wayfarerObservation.observedAt = new Date(Date.now() - 91 * 24 * 60 * 60 * 1000).toISOString();
+    sessionStorage.setItem('campsiteProject.v1', JSON.stringify(current));
+    window.CampsiteCreativeWayfarerLink.syncRefreshAgeState(current);
+    window.CampsiteCreativeWayfarerLink.syncReacquireState({
+      localCanUse:false,
+      localReason:'REACQUIRE_REQUIRED'
+    });
+  });
+  await expect(button).toHaveAttribute('data-refresh-stale', '1');
+  await expect(button).toHaveAttribute('data-reacquire', '1');
+  await expect(button).toHaveText('Wayfarerで再取得');
+  await expect(overlay).toBeHidden();
+
+  expect(await workspaceSnapshot(page)).toHaveLength(2);
+  expect(browserErrors).toEqual([]);
+});
+
 test('WM-5C outside-reserve edit shows reacquisition CTA and sends latest Creative polygon', async ({ page }) => {
   const browserErrors = collectBrowserErrors(page);
   await installRoutes(page);

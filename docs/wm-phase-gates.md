@@ -581,3 +581,39 @@ The WM-6 implementation preserves the core ownership contract:
 WM-7 re-observation / diff / disappearance / merge is the next roadmap phase and
 must start from this accepted WM-6 boundary.
 
+
+
+## WM-7 — Re-observation / diff / disappearance / merge
+
+### WM-7A — 90-day refresh-age hint (implementation)
+
+Scope is intentionally limited to specification section 15. Re-observation diff,
+absence counting and Base/Local/Remote merge are not implemented in this subphase.
+
+Behavior:
+
+- the existing accepted `wayfarerObservation.observedAt` is evaluated against a
+  fixed 90-day threshold;
+- below 90 days the persistent action remains `🔭 Wayfarer観察`;
+- at 90 days or more the same action shows `更新推奨`;
+- no modal or overlay opens automatically;
+- when WM-5C also requires reacquisition because the polygon is outside reserve,
+  `Wayfarerで再取得` has visual/action priority over the age hint;
+- a newly saved observation immediately clears the stale-age state;
+- missing or invalid `observedAt` does not invent a stale claim;
+- this adds no new Project schema field and does not rewrite the accepted
+  observation snapshot.
+
+Gate before PASS:
+
+1. pure age evaluation is fresh at 89 days and stale at 90 days;
+2. invalid/missing observation time does not show a stale hint;
+3. real Creative shows `更新推奨` for a >90-day observation without auto-opening
+   the Wayfarer overlay;
+4. refreshing `observedAt` clears the hint immediately;
+5. WM-5C `Wayfarerで再取得` remains higher priority when both conditions apply;
+6. editable Creative records stay unchanged;
+7. WM-3C through WM-6 and current production Creative regressions remain green;
+8. diff/disappearance/merge behavior is still absent.
+
+WM-7B re-observation diff must not start until WM-7A passes.

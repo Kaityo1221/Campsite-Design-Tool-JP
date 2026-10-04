@@ -59,8 +59,25 @@ vm.runInContext(runtimeSource, context);
 
 const api = runtimeWindow.CampsiteCreativeWayfarerLink;
 assert.ok(api);
-assert.equal(api.version, '0.4.0');
+assert.equal(api.version, '0.5.0');
 assert.equal(typeof api.saveObservationResult, 'function');
+assert.equal(typeof api.evaluateRefreshAge, 'function');
+assert.equal(typeof api.syncRefreshAgeState, 'function');
+
+const refreshNow = Date.parse('2026-10-04T00:00:00.000Z');
+const refreshDay = 24 * 60 * 60 * 1000;
+const age89 = api.evaluateRefreshAge(new Date(refreshNow - 89 * refreshDay).toISOString(), refreshNow);
+assert.equal(age89.valid, true);
+assert.equal(age89.stale, false);
+assert.equal(age89.ageDays, 89);
+const age90 = api.evaluateRefreshAge(new Date(refreshNow - 90 * refreshDay).toISOString(), refreshNow);
+assert.equal(age90.valid, true);
+assert.equal(age90.stale, true);
+assert.equal(age90.ageDays, 90);
+const ageInvalid = api.evaluateRefreshAge('not-a-date', refreshNow);
+assert.equal(ageInvalid.valid, false);
+assert.equal(ageInvalid.stale, false);
+
 
 const polygon = [[35,139],[35,139.01],[35.01,139.01],[35.01,139]];
 const project = {

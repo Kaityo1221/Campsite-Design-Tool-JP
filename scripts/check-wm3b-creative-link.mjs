@@ -49,7 +49,11 @@ assert.ok(output.includes("campsite:wayfarer-reference-state"), 'WM-5C must list
 assert.ok(output.includes("reacquireRequired"), 'WM-5C reacquisition-required state missing');
 assert.ok(output.includes("Wayfarerで再取得"), 'WM-5C reacquisition CTA missing');
 assert.ok(output.includes("syncReacquireState"), 'WM-5C Reference-to-CTA sync missing');
-assert.ok(output.includes("version: '0.4.0'"), 'WM-5C Creative link version must advance');
+assert.ok(output.includes("REFRESH_AGE_DAYS = 90"), 'WM-7A refresh age threshold must stay 90 days');
+assert.ok(output.includes("更新推奨"), 'WM-7A stale observation hint missing');
+assert.ok(output.includes("syncRefreshAgeState"), 'WM-7A refresh-age state sync missing');
+assert.ok(output.includes("evaluateRefreshAge"), 'WM-7A refresh-age evaluator missing');
+assert.ok(output.includes("version: '0.5.0'"), 'WM-7A Creative link version must advance');
 
 
 assert.ok(index.includes("fetch('./wayfarer-observe-link-patch.js'"));
