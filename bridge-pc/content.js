@@ -246,7 +246,7 @@
     if (storedCompleted) {
       stateText.textContent = '📐 設計範囲を決めてください';
       helperText.textContent = '前回の設計範囲があります。確認・調整してから範囲を確定してください。';
-      primaryButton.textContent = '📐 設計範囲を決める';
+      primaryButton.textContent = '📍 POIを集める！';
       primaryButton.disabled = false;
       primaryButton.onclick = editRange;
 
@@ -273,7 +273,7 @@
 
     stateText.textContent = '設計範囲はまだありません';
     helperText.textContent = 'Campsiteで設計する範囲をWayfarer上で決めます。';
-    primaryButton.textContent = '📐 設計範囲を決める';
+    primaryButton.textContent = '📍 POIを集める！';
     primaryButton.disabled = false;
     primaryButton.onclick = startNewRange;
   }
