@@ -128,8 +128,6 @@ on:
 jobs:
   pc-bridge:
     runs-on: ubuntu-latest
-    env:
-      CAMPSITE_BRIDGE_RECEIVER_BASE: ${{ github.event_name == 'pull_request' && 'https://kaityo1221.github.io/campsite-design-tool-adv-lab/bridge-preview/bridge-receiver.html' || '' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
