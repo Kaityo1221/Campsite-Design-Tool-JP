@@ -311,6 +311,8 @@ assert.ok(collector.includes("event.origin !== RECEIVER_ORIGIN"));
 assert.ok(collector.includes("event.source !== popup"));
 assert.ok(collector.includes("String(data.handshakeId || '') !== handshakeId"));
 assert.ok(collector.includes("window.open('about:blank'"));
+assert.ok(collector.includes('Campsiteを準備しています…'), 'Initial popup must use the shared stable Bridge loading shell');
+assert.equal(collector.includes('WayfarerからPOIを準備しています…'), false, 'Old transient POI-preparing screen must not remain');
 assert.ok(collector.includes('Wayfarer Mapを表示してからもう一度お試しください'));
 assert.ok(collector.includes('Wayfarerはこのまま使えます'));
 assert.ok(collector.includes("'campsite-bridge-pc:start'"), 'MAIN collector must own the start event');
