@@ -17,6 +17,8 @@
   let paused = false;
   let currentMap = null;
   let mapClickListener = null;
+  let mapDomClickHandler = null;
+  let mapDomClickTarget = null;
   let pollTimer = null;
   let overlays = [];
   let draftAvailable = false;
@@ -207,6 +209,12 @@
   }
 
   function removeMapClickListener() {
+    if (mapDomClickHandler && mapDomClickTarget) {
+      try { mapDomClickTarget.removeEventListener?.('click', mapDomClickHandler, true); } catch (_) {}
+    }
+    mapDomClickHandler = null;
+    mapDomClickTarget = null;
+
     if (!mapClickListener) return;
     try {
       if (typeof mapClickListener.remove === 'function') mapClickListener.remove();
@@ -326,6 +334,103 @@
     addPoint([lat, lng]);
   }
 
+  function coordinateValue(point, key) {
+    try {
+      const value = point?.[key];
+      const number = Number(typeof value === 'function' ? value.call(point) : value);
+      return Number.isFinite(number) ? number : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function mercatorY(lat) {
+    const safeLat = Math.max(-85.05112878, Math.min(85.05112878, Number(lat)));
+    const sin = Math.sin(safeLat * Math.PI / 180);
+    return 0.5 - Math.log((1 + sin) / (1 - sin)) / (4 * Math.PI);
+  }
+
+  function latitudeFromMercatorY(y) {
+    const n = Math.PI - 2 * Math.PI * Number(y);
+    return 180 / Math.PI * Math.atan(Math.sinh(n));
+  }
+
+  function pointFromClientPosition(map, clientX, clientY) {
+    let mapDiv = null;
+    let bounds = null;
+    try {
+      mapDiv = map?.getDiv?.() || null;
+      bounds = map?.getBounds?.() || null;
+    } catch (_) {
+      return null;
+    }
+    if (!mapDiv?.getBoundingClientRect || !bounds) return null;
+
+    const rect = mapDiv.getBoundingClientRect();
+    if (!(rect.width > 0) || !(rect.height > 0)) return null;
+
+    const sw = bounds.getSouthWest?.();
+    const ne = bounds.getNorthEast?.();
+    const south = coordinateValue(sw, 'lat');
+    const west = coordinateValue(sw, 'lng');
+    const north = coordinateValue(ne, 'lat');
+    const east = coordinateValue(ne, 'lng');
+    if (![south, west, north, east].every(Number.isFinite)) return null;
+
+    const x = Math.max(0, Math.min(1, (Number(clientX) - rect.left) / rect.width));
+    const y = Math.max(0, Math.min(1, (Number(clientY) - rect.top) / rect.height));
+
+    let lngSpan = east - west;
+    if (lngSpan < 0) lngSpan += 360;
+    let lng = west + lngSpan * x;
+    if (lng > 180) lng -= 360;
+
+    const northY = mercatorY(north);
+    const southY = mercatorY(south);
+    const lat = latitudeFromMercatorY(northY + (southY - northY) * y);
+    return pointFrom([lat, lng]);
+  }
+
+  function isMapControlTarget(target) {
+    try {
+      return Boolean(target?.closest?.(
+        '.gm-control-active,.gm-fullscreen-control,.gm-bundled-control,.gmnoprint button'
+      ));
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function installPcMapClickCapture() {
+    let mapDiv = null;
+    try { mapDiv = currentMap?.getDiv?.() || null; } catch (_) { mapDiv = null; }
+    if (!mapDiv?.contains || typeof window.addEventListener !== 'function') return false;
+
+    const handler = event => {
+      if (!active || completed || interactionMode() !== 'pc') return;
+      if (event?.button != null && Number(event.button) !== 0) return;
+      if (!mapDiv.contains(event?.target)) return;
+      if (isMapControlTarget(event?.target)) return;
+
+      try { event.preventDefault?.(); } catch (_) {}
+      try { event.stopPropagation?.(); } catch (_) {}
+      try { event.stopImmediatePropagation?.(); } catch (_) {}
+
+      const point = pointFromClientPosition(currentMap, event?.clientX, event?.clientY);
+      if (!point) {
+        dispatchState({ message: 'クリック位置の座標を取得できませんでした。' });
+        return;
+      }
+      addPoint(point);
+    };
+
+    window.addEventListener('click', handler, true);
+    mapDomClickHandler = handler;
+    mapDomClickTarget = window;
+    mapClickListener = { remove() {} };
+    return true;
+  }
+
   function bindMap() {
     const nextMap = resolveMap();
     if (nextMap !== currentMap) {
@@ -337,8 +442,11 @@
 
     const shouldListen = active && !completed && interactionMode() === 'pc';
     if (shouldListen && !mapClickListener) {
-      try { mapClickListener = currentMap.addListener('click', handleMapClick); }
-      catch (_) { mapClickListener = null; }
+      const captured = installPcMapClickCapture();
+      if (!captured) {
+        try { mapClickListener = currentMap.addListener('click', handleMapClick); }
+        catch (_) { mapClickListener = null; }
+      }
     } else if (!shouldListen && mapClickListener) {
       removeMapClickListener();
     }
@@ -520,6 +628,7 @@
     resumeDraft,
     addPoint,
     addCenter,
+    pointFromClientPosition,
     undo,
     reset,
     complete,
