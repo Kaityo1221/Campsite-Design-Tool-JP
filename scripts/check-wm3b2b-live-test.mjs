@@ -12,7 +12,7 @@ const legacySources = [
   'bridge-pc/wm3-observe-controller.js'
 ];
 
-assert.equal(manifest.name, 'Campsite Bridge PC');
+assert.equal(manifest.name, 'Campsite Bridge - PC TEST');
 assert.equal(Boolean(manifest.background), false, 'Retired observation relay service worker must not ship');
 assert.deepEqual([...manifest.host_permissions].sort(), [
   'https://wayfarer.nianticlabs.com/*',
