@@ -1,0 +1,44 @@
+import fs from 'node:fs';
+import vm from 'node:vm';
+import assert from 'node:assert/strict';
+
+const source = fs.readFileSync('bridge-pc/polygon-ui.js', 'utf8');
+new vm.Script(source, { filename: 'bridge-pc/polygon-ui.js' });
+
+assert.ok(source.includes("'campsite-bridge-pc:polygon-command'"));
+assert.ok(source.includes("'campsite-bridge-pc:polygon-state'"));
+assert.ok(source.includes('📐 範囲を決める'));
+assert.ok(source.includes('地図上をクリック') === false, 'PC instruction belongs to controller state, not duplicated UI copy');
+assert.ok(source.includes('＋ 頂点を追加'));
+assert.ok(source.includes('↶ 1つ戻す'));
+assert.ok(source.includes('最初からやり直す'));
+assert.ok(source.includes('範囲を確定'));
+assert.ok(source.includes('前回の作成途中があります。再開しますか？'));
+assert.ok(source.includes('範囲を最初からやり直しますか？'));
+assert.ok(source.includes('campsite-wm2-crosshair'));
+assert.ok(source.includes("state.mode === 'mobile'"));
+assert.ok(source.includes('state.selfIntersects'));
+assert.ok(source.includes('state.canComplete'));
+assert.ok(source.includes('findWayfarerDrawingObstructions'));
+assert.ok(source.includes('位置を検索'));
+assert.ok(source.includes('ポケストップ'));
+assert.ok(source.includes('パワースポット'));
+assert.ok(source.includes('コミュニティ'));
+assert.ok(source.includes('isMapTopControl'));
+assert.ok(source.includes("state.active === true && state.completed !== true"));
+assert.ok(source.includes("element.style.visibility = 'hidden'"));
+assert.ok(source.includes('restoreWayfarerDrawingControls'));
+assert.ok(source.includes("'campsite-bridge-pc:observe-command'"));
+assert.ok(source.includes("'campsite-bridge-pc:observe-state'"));
+assert.ok(source.includes('🔭 拠点内を観察'));
+assert.ok(source.includes('設計範囲内 '));
+assert.ok(source.includes('外周100m '));
+assert.ok(source.includes('← Wayfarer通常表示に戻る'));
+assert.ok(source.includes("'exit-drawing'"));
+assert.ok(source.includes("'edit-completed'"));
+assert.ok(source.includes('📐 範囲選択を再開'));
+assert.ok(source.includes('📐 範囲を編集'));
+assert.ok(source.includes('document.evaluate'));
+assert.ok(source.includes('XPathResult.ORDERED_NODE_SNAPSHOT_TYPE'));
+
+console.log('WM-2 Wayfarer polygon UI contract: OK');

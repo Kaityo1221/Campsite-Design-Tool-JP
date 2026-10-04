@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { buildWm3cCreativeTestRuntime } from './build-wm3c-test-runtime.mjs';
 
 const sourceDir = 'bridge-pc';
 const output = 'downloads/campsite-bridge-pc-0.1.0.zip';
@@ -86,6 +87,8 @@ if (!fs.existsSync(sharedDisplayOwner)) throw new Error(`Shared Wayfarer display
 fs.copyFileSync(sharedDisplayOwner, pcDisplayOwner);
 if (!fs.existsSync(sharedDeckCompat)) throw new Error(`Shared Wayfarer deck compatibility layer missing: ${sharedDeckCompat}`);
 fs.copyFileSync(sharedDeckCompat, pcDeckCompat);
+
+buildWm3cCreativeTestRuntime();
 
 // Stage 6: Bridge no longer owns a colored POI renderer. Remove a stale generated
 // copy before packaging so local rebuilds cannot accidentally ship the retired overlay.

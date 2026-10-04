@@ -177,6 +177,11 @@
     return { pois:[...byGuid.values()], duplicateCount };
   }
 
+  function cloneJson(value, fallback) {
+    try { return JSON.parse(JSON.stringify(value)); }
+    catch (_) { return fallback; }
+  }
+
   function counts(pois) {
     const result = { total:pois.length,pokestop:0,gym:0,powerspot:0,sponsored:0,smr:0 };
     for (const poi of pois) {
@@ -334,7 +339,8 @@
       duplicateCount: adapter.duplicateCount,
       integrity,
       pois: adapter.pois,
-      referencePois
+      referencePois,
+      wayfarerObservation: cloneJson(payload?.wayfarerObservation, null)
     }));
 
     window.CampsiteBridgeAdapter = Object.freeze({
@@ -343,7 +349,8 @@
       result: adapter,
       integrity,
       pois: adapter.pois,
-      referencePois
+      referencePois,
+      wayfarerObservation: cloneJson(payload?.wayfarerObservation, null)
     });
 
     return { ...adapter, integrity };
@@ -356,6 +363,7 @@
       payload,
       pois: payload.pois,
       referencePois: payload.referencePois || [],
+      wayfarerObservation: cloneJson(payload.wayfarerObservation, null),
       integrity: payload.integrity || {},
       counts: counts(payload.pois),
       referenceCounts: referenceCounts(payload.referencePois || [])
@@ -405,7 +413,8 @@
       handshakeId: String(data.handshakeId || ''),
       integrity,
       referencePois,
-      pois: activeDeduped.pois
+      pois: activeDeduped.pois,
+      wayfarerObservation: cloneJson(data.wayfarerObservation, null)
     };
     const adapter = savePayload(payload);
     const requiresReview = adapter.integrity?.requiresReview === true;

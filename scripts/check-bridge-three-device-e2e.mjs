@@ -200,6 +200,36 @@ const profiles = [
         center: { lat: 35.001, lng: 139.001 },
         zoom: 17
       },
+      wayfarerObservation: {
+        version:'0.2.0',
+        snapshotId:'wm3:2026-10-02T07:25:00.000Z',
+        observedAt:'2026-10-02T07:25:00.000Z',
+        polygon:[[34.999,138.999],[35.004,138.999],[35.004,139.004],[34.999,139.004]],
+        counts:{ interior:{total:3}, reference100:{total:1}, reserve200:{total:1} },
+        zones:{
+          interior:basePois('pc'),
+          reference100:[{ guid:'pc-ref', title:'Ref', lat:35.0035, lng:139.0035, gameEntity:'POWERSPOT', gameStatus:'INACTIVE', referenceKind:'INACTIVE_POWERSPOT', observationZone:'REFERENCE_100' }],
+          reserve200:[{ guid:'pc-reserve', title:'Reserve', lat:35.0045, lng:139.0045, gameEntity:'POKESTOP', gameStatus:'ACTIVE', observationZone:'RESERVE_200' }]
+        },
+        visibleTotal:4,
+        retainedTotal:5,
+        excludedCount:0,
+        outsideCount:0,
+        canProceed:true,
+        acquisition:{
+          bufferMeters:200,
+          referenceMeters:100,
+          reserveMeters:200,
+          cellLevel:14,
+          acquisitionBounds:{ south:34.998, west:138.998, north:35.006, east:139.006 },
+          tileCount:4,
+          geometryCoverageComplete:true,
+          transportComplete:true,
+          coverageComplete:false,
+          coverageStatus:'unverified',
+          sourceComplete:null
+        }
+      },
       pois: basePois('pc')
     }
   }
@@ -217,6 +247,10 @@ for (const profile of profiles) {
   assert.equal(adapter.pois.length, 3, profile.name + ': Adapter POI count');
   assert.equal(adapter.bridgePlatform, profile.expectedPlatform, profile.name + ': platform compatibility');
   assert.equal(adapter.handoffId, 'handshake:' + profile.payload.handshakeId, profile.name + ': handoff id');
+  if (profile.payload.wayfarerObservation) {
+    assert.equal(adapter.wayfarerObservation.snapshotId, profile.payload.wayfarerObservation.snapshotId, profile.name + ': observation snapshot id');
+    assert.equal(adapter.wayfarerObservation.acquisition.coverageComplete, false, profile.name + ': incomplete coverage must stay false');
+  }
 
   assert.equal(receiver.window.CampsiteBridgeGatewayUrl(), './bridge-gateway.html?campsiteBridgeImport=1');
 
@@ -229,7 +263,7 @@ for (const profile of profiles) {
     handoffId: adapter.handoffId,
     sourceCount: 3,
     selectedCount: 3,
-    polygon: [
+    polygon: profile.payload.wayfarerObservation?.polygon || [
       [34.999, 138.999],
       [35.004, 138.999],
       [35.004, 139.004],
@@ -249,6 +283,30 @@ for (const profile of profiles) {
   assert.equal(project.meta.preview, false);
   assert.deepEqual([...project.circleRadii], [50, 40, 30]);
   assert.ok(project.currentPois.every(poi => poi.role === 'existing'));
+  if (profile.payload.wayfarerObservation) {
+    assert.equal(project.wayfarerObservation.snapshotId, profile.payload.wayfarerObservation.snapshotId, profile.name + ': Project observation id');
+    assert.equal(project.wayfarerObservation.observedAt, profile.payload.wayfarerObservation.observedAt, profile.name + ': Project observedAt');
+    assert.equal(JSON.stringify(project.wayfarerObservation.polygon), JSON.stringify(profile.payload.wayfarerObservation.polygon), profile.name + ': acquisition polygon must survive Handoff');
+    assert.equal(project.wayfarerObservation.zones.reference100[0].guid, 'pc-ref', profile.name + ': reference GUID must survive Handoff');
+    assert.equal(project.wayfarerObservation.zones.reference100[0].gameEntity, 'POWERSPOT', profile.name + ': reference type must survive Handoff');
+    assert.equal(project.wayfarerObservation.zones.reference100[0].gameStatus, 'INACTIVE', profile.name + ': inactive state must survive Handoff');
+    assert.equal(project.wayfarerObservation.zones.reference100[0].observationZone, 'REFERENCE_100', profile.name + ': reference zone must survive Handoff');
+    assert.equal(project.wayfarerObservation.zones.reserve200[0].guid, 'pc-reserve', profile.name + ': reserve GUID must survive Handoff');
+    assert.equal(project.wayfarerObservation.zones.reserve200[0].gameStatus, 'ACTIVE', profile.name + ': reserve Active state must survive Handoff');
+    assert.equal(project.wayfarerObservation.zones.reserve200[0].observationZone, 'RESERVE_200', profile.name + ': reserve zone must survive Handoff');
+    assert.equal(project.wayfarerObservation.acquisition.referenceMeters, 100, profile.name + ': reference distance must survive Handoff');
+    assert.equal(project.wayfarerObservation.acquisition.reserveMeters, 200, profile.name + ': reserve distance must survive Handoff');
+    assert.equal(project.wayfarerObservation.acquisition.geometryCoverageComplete, true, profile.name + ': geometry completeness must survive Handoff');
+    assert.equal(project.wayfarerObservation.acquisition.transportComplete, true, profile.name + ': transport completeness must survive Handoff');
+    assert.equal(project.wayfarerObservation.acquisition.coverageComplete, false, profile.name + ': Project must not promote completeness');
+    assert.equal(JSON.stringify(project.wayfarerObservation.acquisition.acquisitionBounds), JSON.stringify(profile.payload.wayfarerObservation.acquisition.acquisitionBounds), profile.name + ': acquisition bounds must survive Handoff');
+    assert.equal(project.currentPois.some(poi => poi.guid === 'pc-ref' || poi.guid === 'pc-reserve'), false, profile.name + ': observation references/reserve must stay out of currentPois');
+
+    const mismatched = JSON.parse(JSON.stringify(selection));
+    mismatched.polygon = [[36,140],[36.01,140],[36.01,140.01],[36,140.01]];
+    const mismatchedProject = api.buildProject(mismatched, adapter);
+    assert.equal(mismatchedProject.wayfarerObservation, undefined, profile.name + ': stale polygon observation must not attach');
+  }
 
   console.log('✓ ' + profile.name + ': Receiver -> Adapter -> Project');
 }

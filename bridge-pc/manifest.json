@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Campsite Bridge",
+  "name": "Campsite Bridge - WM-3C TEST",
   "version": "0.1.0",
-  "description": "Wayfarer MapのPOIをCampsite Design Toolへ安全に受け渡します。",
+  "description": "WM-3C実機確認用。公開Creativeへ一時的にWayfarer Reference Layerを注入して観察結果表示を検証します。",
   "permissions": [],
   "host_permissions": [
     "https://wayfarer.scopely.com/*",
@@ -14,7 +14,23 @@
         "https://wayfarer.scopely.com/*",
         "https://wayfarer.nianticlabs.com/*"
       ],
-      "js": ["wayfarer-map-adapter.js", "wayfarer-display-owner.js", "wayfarer-deck-compat.js", "poi-parser.js", "poi-classifier.js", "poi-reference-layer.js", "poi-diagnostics.js", "bridge-v1-exporter.js", "page-collector.js"],
+      "js": [
+        "wayfarer-map-adapter.js",
+        "wayfarer-display-owner.js",
+        "wayfarer-deck-compat.js",
+        "wayfarer-polygon-controller.js",
+        "wayfarer-acquisition-engine.js",
+        "poi-parser.js",
+        "poi-classifier.js",
+        "poi-reference-layer.js",
+        "poi-diagnostics.js",
+        "bridge-v1-exporter.js",
+        "page-collector.js",
+        "wm1-live-verifier.js",
+        "wayfarer-observation-zone.js",
+        "wm3-observe-controller.js",
+        "wm3b-tab-link.js"
+      ],
       "run_at": "document_idle",
       "world": "MAIN"
     },
@@ -23,9 +39,46 @@
         "https://wayfarer.scopely.com/*",
         "https://wayfarer.nianticlabs.com/*"
       ],
-      "js": ["content.js"],
+      "js": [
+        "content.js",
+        "polygon-ui.js",
+        "wayfarer-tab-relay.js"
+      ],
+      "run_at": "document_idle",
+      "world": "ISOLATED"
+    },
+    {
+      "matches": [
+        "https://kaityo1221.github.io/Campsite-Design-Tool-JP/creative/*"
+      ],
+      "js": [
+        "creative-wm3c-test-runtime.js"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": [
+        "https://kaityo1221.github.io/Campsite-Design-Tool-JP/creative/*"
+      ],
+      "js": [
+        "creative-wm3b2b-test-injector.js"
+      ],
+      "run_at": "document_idle",
+      "world": "MAIN"
+    },
+    {
+      "matches": [
+        "https://kaityo1221.github.io/Campsite-Design-Tool-JP/creative/*"
+      ],
+      "js": [
+        "creative-tab-relay.js"
+      ],
       "run_at": "document_idle",
       "world": "ISOLATED"
     }
-  ]
+  ],
+  "background": {
+    "service_worker": "tab-relay-background.js"
+  }
 }

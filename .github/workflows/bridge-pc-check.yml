@@ -10,7 +10,31 @@ on:
       - 'docs/bridge-pc-minimum-spec-v1.md'
       - 'docs/bridge-poi-engine-spec-v1.md'
       - 'scripts/build-pc-bridge.mjs'
+      - 'scripts/build-wm3c-test-runtime.mjs'
+      - 'scripts/check-wm3c-live-test-package.mjs'
+      - 'scripts/check-wm4a-project-lifecycle.mjs'
+      - 'scripts/check-wm5a-reserve-coverage.mjs'
+      - 'creative/runtime/map-engine/wayfarer-reserve-coverage.js'
+      - 'scripts/check-wm5b-local-reclassification.mjs'
+      - 'creative/runtime/map-engine/wayfarer-local-reclassification.js'
+      - 'creative/wayfarer-reference-layer-patch.js'
+      - 'creative/runtime/map-engine/**'
       - 'scripts/check-bridge-wayfarer-map-adapter.mjs'
+      - 'scripts/check-wayfarer-acquisition-engine.mjs'
+      - 'scripts/check-wm1-live-verifier.mjs'
+      - 'scripts/check-wm2-polygon-controller.mjs'
+      - 'scripts/check-wm2-polygon-ui.mjs'
+      - 'scripts/check-wm3-observation-zone.mjs'
+      - 'scripts/check-wm3-observe-controller.mjs'
+      - 'scripts/check-wm3b-tab-link.mjs'
+      - 'scripts/check-wm3b-creative-link.mjs'
+      - 'scripts/check-wm3b2b-live-test.mjs'
+      - 'scripts/check-wm3b2d-project-save.mjs'
+      - 'scripts/check-wm3b2d-package.mjs'
+      - 'scripts/check-wm3b2d-diagnostics.mjs'
+      - 'scripts/check-wm3b2d-abnormal-matrix.mjs'
+      - 'scripts/check-wm3b2d-pseudo-e2e.mjs'
+      - 'scripts/wm3b2d-pseudo-harness.mjs'
       - 'scripts/check-bridge-wayfarer-display-owner.mjs'
       - 'scripts/check-bridge-wayfarer-deck-compat.mjs'
       - 'scripts/check-bridge-poi-parser.mjs'
@@ -37,6 +61,7 @@ on:
       - 'bridge-gateway.html'
       - 'creative/index.html'
       - 'creative/bridge-project-patch.js'
+      - 'creative/wayfarer-observe-link-patch.js'
       - 'package.json'
       - '.github/workflows/bridge-pc-check.yml'
   pull_request:
@@ -46,7 +71,27 @@ on:
       - 'docs/bridge-pc-minimum-spec-v1.md'
       - 'docs/bridge-poi-engine-spec-v1.md'
       - 'scripts/build-pc-bridge.mjs'
+      - 'scripts/build-wm3c-test-runtime.mjs'
+      - 'scripts/check-wm3c-live-test-package.mjs'
+      - 'scripts/check-wm4a-project-lifecycle.mjs'
+      - 'creative/wayfarer-reference-layer-patch.js'
+      - 'creative/runtime/map-engine/**'
       - 'scripts/check-bridge-wayfarer-map-adapter.mjs'
+      - 'scripts/check-wayfarer-acquisition-engine.mjs'
+      - 'scripts/check-wm1-live-verifier.mjs'
+      - 'scripts/check-wm2-polygon-controller.mjs'
+      - 'scripts/check-wm2-polygon-ui.mjs'
+      - 'scripts/check-wm3-observation-zone.mjs'
+      - 'scripts/check-wm3-observe-controller.mjs'
+      - 'scripts/check-wm3b-tab-link.mjs'
+      - 'scripts/check-wm3b-creative-link.mjs'
+      - 'scripts/check-wm3b2b-live-test.mjs'
+      - 'scripts/check-wm3b2d-project-save.mjs'
+      - 'scripts/check-wm3b2d-package.mjs'
+      - 'scripts/check-wm3b2d-diagnostics.mjs'
+      - 'scripts/check-wm3b2d-abnormal-matrix.mjs'
+      - 'scripts/check-wm3b2d-pseudo-e2e.mjs'
+      - 'scripts/wm3b2d-pseudo-harness.mjs'
       - 'scripts/check-bridge-wayfarer-display-owner.mjs'
       - 'scripts/check-bridge-wayfarer-deck-compat.mjs'
       - 'scripts/check-bridge-poi-parser.mjs'
@@ -73,6 +118,7 @@ on:
       - 'bridge-gateway.html'
       - 'creative/index.html'
       - 'creative/bridge-project-patch.js'
+      - 'creative/wayfarer-observe-link-patch.js'
       - 'package.json'
       - '.github/workflows/bridge-pc-check.yml'
   workflow_dispatch:
@@ -92,6 +138,14 @@ jobs:
       - name: Final Bridge architecture check
         run: npm run check:bridge-architecture
 
+      - name: Upload WM-3C PC Bridge test package
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: wm3c-bridge-pc-test
+          path: downloads/campsite-bridge-pc-0.1.0.zip
+          if-no-files-found: error
+
       - name: POI v1.1 regression locks
         run: |
           node scripts/check-bridge-kwajalein-regression.mjs
@@ -100,6 +154,16 @@ jobs:
 
       - name: Syntax check
         run: |
+          node --check bridge-pc/wayfarer-acquisition-engine.js
+          node --check bridge-pc/wm1-live-verifier.js
+          node --check bridge-pc/wayfarer-polygon-controller.js
+          node --check bridge-pc/polygon-ui.js
+          node --check bridge-pc/wayfarer-observation-zone.js
+          node --check bridge-pc/wm3-observe-controller.js
+          node --check bridge-pc/wm3b-tab-link.js
+          node --check bridge-pc/tab-relay-background.js
+          node --check bridge-pc/wayfarer-tab-relay.js
+          node --check bridge-pc/creative-tab-relay.js
           node --check bridge-pc/poi-parser.js
           node --check bridge-pc/poi-classifier.js
           node --check bridge-pc/poi-reference-layer.js
@@ -114,7 +178,31 @@ jobs:
           node --check js/bridge-inactive-review.js
           node --check js/bridge-next-flow.js
           node --check scripts/build-pc-bridge.mjs
+          node --check scripts/build-wm3c-test-runtime.mjs
+          node --check scripts/check-wm3c-live-test-package.mjs
+          node --check scripts/check-wm4a-project-lifecycle.mjs
+          node --check scripts/check-wm5a-reserve-coverage.mjs
+          node --check creative/runtime/map-engine/wayfarer-reserve-coverage.js
+          node --check scripts/check-wm5b-local-reclassification.mjs
+          node --check creative/runtime/map-engine/wayfarer-local-reclassification.js
+          node --check bridge-pc/creative-wm3c-test-runtime.js
           node --check scripts/check-bridge-wayfarer-map-adapter.mjs
+          node --check scripts/check-wayfarer-acquisition-engine.mjs
+          node --check scripts/check-wm1-live-verifier.mjs
+          node --check scripts/check-wm2-polygon-controller.mjs
+          node --check scripts/check-wm2-polygon-ui.mjs
+          node --check scripts/check-wm3-observation-zone.mjs
+          node --check scripts/check-wm3-observe-controller.mjs
+          node --check scripts/check-wm3b-tab-link.mjs
+          node --check scripts/check-wm3b-creative-link.mjs
+          node --check scripts/check-wm3b2b-live-test.mjs
+          node --check scripts/check-wm3b2d-project-save.mjs
+          node --check scripts/wm3b2d-pseudo-harness.mjs
+          node --check scripts/check-wm3b2d-pseudo-e2e.mjs
+          node --check scripts/check-wm3b2d-abnormal-matrix.mjs
+          node --check scripts/check-wm3b2d-package.mjs
+          node --check scripts/check-wm3b2d-diagnostics.mjs
+          node --check bridge-pc/creative-wm3b2b-test-injector.js
           node --check scripts/check-bridge-wayfarer-display-owner.mjs
           node --check scripts/check-bridge-wayfarer-deck-compat.mjs
           node --check scripts/check-bridge-poi-parser.mjs
@@ -129,3 +217,8 @@ jobs:
           node --check scripts/check-bridge-receiver-routing.mjs
           node --check scripts/check-pc-bridge.mjs
           node --check scripts/check-pc-next-route.mjs
+          node --check creative/wayfarer-observe-link-patch.js
+          node --check creative/wayfarer-reference-layer-patch.js
+          node --check creative/runtime/map-engine/wayfarer-observation-adapter.js
+          node --check creative/runtime/map-engine/wayfarer-reference-geometry.js
+          node --check creative/runtime/map-engine/wayfarer-reference-scene-builder.js

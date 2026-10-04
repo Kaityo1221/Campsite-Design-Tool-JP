@@ -6,6 +6,8 @@ on:
       - release/phase-5-d13-unified-renderer
     paths:
       - 'creative/index.html'
+      - 'creative/wayfarer-observe-link-patch.js'
+      - 'creative/wayfarer-reference-layer-patch.js'
       - 'creative/runtime/creative-patches-v54-coordinate-memo-reason.js'
       - 'creative/runtime/creative-patches-v55-unified-visible.js'
       - 'creative/runtime/creative-patches-v56-unified-interaction.js'
@@ -28,6 +30,7 @@ on:
       - 'scripts/check-creative-runtime-build.mjs'
       - 'tests/creative-unified-interaction.spec.mjs'
       - 'tests/creative-dev-default-renderer.spec.mjs'
+      - 'tests/creative-wayfarer-reference.spec.mjs'
       - 'tests/creative-new-entry-current-map.spec.mjs'
       - '.github/workflows/phase5-unified-renderer-release-gate.yml'
   pull_request:
@@ -35,6 +38,8 @@ on:
       - main
     paths:
       - 'creative/index.html'
+      - 'creative/wayfarer-observe-link-patch.js'
+      - 'creative/wayfarer-reference-layer-patch.js'
       - 'creative/runtime/creative-patches-v54-coordinate-memo-reason.js'
       - 'creative/runtime/creative-patches-v55-unified-visible.js'
       - 'creative/runtime/creative-patches-v56-unified-interaction.js'
@@ -57,6 +62,7 @@ on:
       - 'scripts/check-creative-runtime-build.mjs'
       - 'tests/creative-unified-interaction.spec.mjs'
       - 'tests/creative-dev-default-renderer.spec.mjs'
+      - 'tests/creative-wayfarer-reference.spec.mjs'
       - 'tests/creative-new-entry-current-map.spec.mjs'
       - '.github/workflows/phase5-unified-renderer-release-gate.yml'
 
@@ -89,6 +95,13 @@ jobs:
           node --check creative/runtime/map-engine/scene-builder.js
           node --check creative/runtime/map-engine/candidate-scene-builder.js
           node --check creative/runtime/map-engine/map-renderer.js
+          node --check creative/runtime/map-engine/wayfarer-reserve-coverage.js
+          node --check creative/runtime/map-engine/wayfarer-local-reclassification.js
+          node --check creative/runtime/map-engine/wayfarer-observation-adapter.js
+          node --check creative/runtime/map-engine/wayfarer-reference-geometry.js
+          node --check creative/runtime/map-engine/wayfarer-reference-scene-builder.js
+          node --check creative/wayfarer-observe-link-patch.js
+          node --check creative/wayfarer-reference-layer-patch.js
           node --check creative/runtime/creative-patches-v54-coordinate-memo-reason.js
           node --check creative/runtime/creative-patches-v55-unified-visible.js
           node --check creative/runtime/creative-patches-v56-unified-interaction.js
@@ -118,7 +131,7 @@ jobs:
         run: npx playwright install --with-deps webkit
 
       - name: Run real Creative Mode iPhone WebKit gate
-        run: npx playwright test tests/creative-unified-interaction.spec.mjs tests/creative-dev-default-renderer.spec.mjs tests/creative-new-entry-current-map.spec.mjs
+        run: npx playwright test tests/creative-unified-interaction.spec.mjs tests/creative-dev-default-renderer.spec.mjs tests/creative-new-entry-current-map.spec.mjs tests/creative-wayfarer-reference.spec.mjs
 
       - name: Upload Playwright traces on failure
         if: failure()

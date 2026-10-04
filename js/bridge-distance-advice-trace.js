@@ -16,6 +16,29 @@
     sessionStorage.setItem(PROJECT_KEY, JSON.stringify(project));
   }
 
+  function sameProject(a, b) {
+    return Boolean(
+      a &&
+      b &&
+      a.source === 'bridge' &&
+      b.source === 'bridge' &&
+      String(a.projectId || '') &&
+      String(a.projectId || '') === String(b.projectId || '')
+    );
+  }
+
+  function latestProjectFor(project) {
+    const latest = readProject();
+    return sameProject(latest, project) ? latest : project;
+  }
+
+  function writeAdviceResult(project, distanceAdviceResult) {
+    const target = latestProjectFor(project);
+    target.distanceAdviceResult = distanceAdviceResult;
+    writeProject(target);
+    return target;
+  }
+
   function roleOf(poi) {
     if (poi?.role === 'added' || String(poi?.layer || '').startsWith('new-')) return 'added';
     return 'existing';
@@ -107,15 +130,15 @@
   }
 
   function markStale(project) {
-    const existing = project?.distanceAdviceResult;
+    const latest = latestProjectFor(project);
+    const existing = latest?.distanceAdviceResult;
     if (!existing || existing.stale === true) return false;
-    project.distanceAdviceResult = {
+    writeAdviceResult(latest, {
       ...existing,
       status: 'stale',
       stale: true,
       staleAt: new Date().toISOString(),
-    };
-    writeProject(project);
+    });
     return true;
   }
 
@@ -167,10 +190,14 @@
         },
       };
 
-      const current = project.distanceAdviceResult;
+      const latest = latestProjectFor(project);
+      if (latest?.distanceResult?.stale === true) {
+        markStale(latest);
+        return;
+      }
+      const current = latest?.distanceAdviceResult;
       if (current && stablePayload(current) === stablePayload(trace) && current.stale !== true) return;
-      project.distanceAdviceResult = trace;
-      writeProject(project);
+      writeAdviceResult(latest, trace);
     } catch (error) {
       console.warn('[Campsite Distance Advice Trace] sync failed', error);
     } finally {

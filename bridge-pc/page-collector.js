@@ -61,6 +61,14 @@
     return adapter;
   }
 
+  function acquisitionEngineApi() {
+    const engine = window.CampsiteWayfarerAcquisitionEngine;
+    if (!engine?.createPlan || !engine?.executePlan) {
+      throw new Error('Wayfarer取得Engineを読み込めませんでした。拡張機能を再読み込みしてください。');
+    }
+    return engine;
+  }
+
   function numberFrom(value) {
     const num = Number(value);
     return Number.isFinite(num) ? num : null;
@@ -161,6 +169,74 @@
     };
   }
 
+  async function fetchGcsTile(tile) {
+    const response = await fetch(MAP_DATA_PATH + '?' + tile.query, {
+      credentials: 'include',
+      cache: 'no-store'
+    });
+    if (!response.ok) {
+      throw new Error('Wayfarer Mapデータ取得に失敗しました (' + response.status + ')');
+    }
+    return response.json();
+  }
+
+  async function collectPolygon(polygon, options = {}) {
+    const acquisitionEngine = acquisitionEngineApi();
+    const plan = acquisitionEngine.createPlan(polygon, {
+      bufferMeters: Number(options.bufferMeters ?? acquisitionEngine.defaultBufferMeters ?? 200),
+      maxTileMeters: options.maxTileMeters,
+      cellLevel: 14
+    });
+
+    const executionOptions = {};
+    if (typeof options.responseVerifier === 'function') {
+      executionOptions.responseVerifier = options.responseVerifier;
+    }
+
+    const acquisition = await acquisitionEngine.executePlan(
+      plan,
+      fetchGcsTile,
+      executionOptions
+    );
+
+    const parsed = parseMapData(acquisition.mergedPayload);
+    const classified = classifierApi().run(parsed);
+    const routed = referenceLayerApi().splitClassified(classified.pois);
+    const activePois = exporterApi().exportPois({ enginePois: routed.activeEnginePois });
+    const diagnosticReport = buildDiagnosticReport(parsed, classified);
+
+    return {
+      pois: activePois,
+      referencePois: routed.referencePois,
+      enginePois: classified.pois,
+      diagnostics: parsed.diagnostics,
+      classificationDiagnostics: classified.classificationDiagnostics,
+      diagnosticReport,
+      engineStats: classified.diagnostics,
+      parserStats: {
+        sourceCount: parsed.sourceCount,
+        parsedCount: parsed.parsedCount,
+        duplicateCount: parsed.duplicateCount,
+        failedCount: parsed.failedCount
+      },
+      selectedBounds: null,
+      acquisition: {
+        engineVersion: acquisition.version,
+        bufferMeters: plan.bufferMeters,
+        cellLevel: plan.cellLevel,
+        acquisitionBounds: plan.acquisitionBounds,
+        tileCount: plan.tiles.length,
+        geometryCoverageComplete: acquisition.geometryCoverageComplete,
+        transportComplete: acquisition.transportComplete,
+        sourceComplete: acquisition.sourceComplete,
+        coverageComplete: acquisition.coverageComplete,
+        coverageStatus: acquisition.coverageStatus,
+        requests: acquisition.results
+      },
+      sourcePath: MAP_DATA_PATH
+    };
+  }
+
   async function collect() {
     const map = findMap();
     if (!map) throw new Error('Wayfarer Mapを確認できませんでした。');
@@ -237,6 +313,45 @@
       );
       popup.document.close();
     } catch (_) {}
+  }
+
+  function samePolygon(a, b) {
+    const normalize = value => (Array.isArray(value) ? value : []).map(point => {
+      if (!Array.isArray(point) || point.length < 2) return null;
+      const lat = Number(point[0]);
+      const lng = Number(point[1]);
+      return Number.isFinite(lat) && Number.isFinite(lng) ? [lat, lng] : null;
+    }).filter(Boolean);
+    return JSON.stringify(normalize(a)) === JSON.stringify(normalize(b));
+  }
+
+  function currentWayfarerObservation() {
+    try {
+      const observation = window.CampsiteWayfarerObserveController?.getLastResult?.();
+      if (!observation || observation.canProceed !== true) return null;
+      const currentPolygon = window.CampsiteWayfarerPolygonController?.getPolygon?.();
+      if (Array.isArray(currentPolygon) && currentPolygon.length >= 3 &&
+          !samePolygon(currentPolygon, observation.polygon)) return null;
+      return observation;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function observationSnapshotForBridge(observation) {
+    if (!observation || typeof observation !== 'object') return null;
+    const zones = observation.zones || {};
+    if (!Array.isArray(zones.interior) ||
+        !Array.isArray(zones.reference100) ||
+        !Array.isArray(zones.reserve200)) return null;
+    return {
+      // RESERVE_200 stays only inside wayfarerObservation. Do not feed it
+      // into the normal Bridge POI channels or the Gateway can render it.
+      enginePois: [...zones.interior, ...zones.reference100],
+      selectedBounds: null,
+      wayfarerObservation: observation,
+      diagnosticReport: null
+    };
   }
 
   function makePayload(snapshot, handshakeId) {
@@ -337,7 +452,8 @@
     dispatchStatus({ state: 'busy', message: 'Wayfarer MapからPOIを取得しています…', diagnosticReport: null });
 
     try {
-      const snapshot = await collect();
+      const observation = currentWayfarerObservation();
+      const snapshot = observationSnapshotForBridge(observation) || await collect();
       diagnosticReport = snapshot.diagnosticReport;
       const payload = makePayload(snapshot, handshakeId);
       const pois = payload.pois;
@@ -406,6 +522,7 @@
     classifyMapData,
     buildDiagnosticReport,
     makePayload,
+    collectPolygon,
     collect,
     startBridge
   });
