@@ -101,5 +101,6 @@ const missingId = persist(saved.project, {
 assert.equal(missingId.canPersist, false);
 assert.equal(missingId.reason, 'SNAPSHOT_ID_MISSING');
 
-assert.equal(Object.prototype.hasOwnProperty.call(project,'wayfarerObservationDiffState'), false);
+assert.equal(JSON.stringify(project), before, 'Source Project including prior diff state must remain byte-equivalent');
+assert.deepEqual(project.wayfarerObservationDiffState, {futureState:{keep:'yes'}});
 console.log('WM-7C Wayfarer diff-state persistence: PASS');
