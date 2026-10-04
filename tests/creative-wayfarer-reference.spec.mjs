@@ -241,7 +241,7 @@ test('WM-3C real Creative renders read-only Wayfarer references without entering
   await expect(referenceIcons).toHaveCount(2);
   await expect(page.locator('.cm-engine-existing-icon')).toHaveCount(1);
   await expect(page.locator('.cm-engine-candidate-icon')).toHaveCount(1);
-  await expect(page.locator('.cm-engine-reference-icon.leaflet-interactive')).toHaveCount(0);
+  await expect(page.locator('.cm-engine-reference-icon.leaflet-interactive')).toHaveCount(1);
 
   const referenceScene = await page.evaluate(() => window.__cmWayfarerReference.getScene());
   const referenceItems = referenceScene.items.filter(item => item.origin === 'reference');
@@ -256,6 +256,27 @@ test('WM-3C real Creative renders read-only Wayfarer references without entering
   expect(insideMarker).toBeTruthy();
   expect(outerMarker).toBeTruthy();
   expect(Number(outerMarker.style.opacity)).toBeLessThan(Number(insideMarker.style.opacity));
+  expect(insideMarker.inspectable).toBe(false);
+  expect(outerMarker.inspectable).toBe(true);
+  expect(outerMarker.title).toBe('Observed Outer Stop');
+
+  const outerReferenceIcon = page.locator('.cm-engine-reference-icon.leaflet-interactive').first();
+  await outerReferenceIcon.click({ force:true });
+  const referencePanel = page.locator('#cmWm6ReferencePanel');
+  await expect(referencePanel).toBeVisible();
+  await expect(page.locator('#cmWm6ReferenceTitle')).toHaveText('Observed Outer Stop');
+  await expect(page.locator('#cmWm6ReferenceType')).toHaveText('PokéStop');
+  const panelText = await referencePanel.textContent();
+  expect(panelText).not.toContain('35.6834');
+  expect(panelText).not.toContain('139.7686');
+  expect(await workspaceSnapshot(page)).toEqual(beforeRecords);
+
+  await page.locator('#cmWm6ReferenceClose').click();
+  await expect(referencePanel).toBeHidden();
+  await outerReferenceIcon.click({ force:true });
+  await expect(referencePanel).toBeVisible();
+  await page.locator('.leaflet-container').click({ position:{ x:28, y:28 }, force:true });
+  await expect(referencePanel).toBeHidden();
 
   const afterInitialRender = await workspaceSnapshot(page);
   expect(afterInitialRender).toEqual(beforeRecords);

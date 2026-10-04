@@ -35,6 +35,7 @@ assert.equal(geometry.entries.length, 2);
 assert.ok(geometry.entries.every(entry => entry.circle50Geometry?.radiusMeters === 50));
 assert.ok(geometry.entries.every(entry => !('circle40Geometry' in entry) && !('circle30Geometry' in entry)), 'Reference Geometry must not create 40m/30m circles');
 assert.ok(geometry.entries.every(entry => entry.readOnly === true));
+assert.equal(geometry.entries.find(entry => entry.guid === 'outer-gym')?.title, 'Outer');
 
 const scene = window.bridgeMapLab_buildWayfarerReferenceScene(geometry);
 assert.equal(scene.items.length, 4, 'Each visible reference POI should produce marker + 50m circle only');
@@ -45,7 +46,10 @@ assert.ok(scene.items.every(item => !String(item.ownerKey).includes('reserve-pow
 const insideMarker = scene.items.find(item => item.key === 'marker:reference:inside-stop');
 const outerMarker = scene.items.find(item => item.key === 'marker:reference:outer-gym');
 assert.equal(insideMarker?.observationZone, 'INTERIOR');
+assert.equal(insideMarker?.inspectable, false);
 assert.equal(outerMarker?.observationZone, 'REFERENCE_100');
+assert.equal(outerMarker?.inspectable, true);
+assert.equal(outerMarker?.title, 'Outer');
 assert.ok(Number(outerMarker?.style?.opacity) < Number(insideMarker?.style?.opacity), 'REFERENCE_100 marker must be lighter than INTERIOR');
 assert.ok(scene.items.some(item => item.key === 'circle50:reference:inside-stop'));
 assert.ok(scene.items.some(item => item.key === 'circle50:reference:outer-gym'));

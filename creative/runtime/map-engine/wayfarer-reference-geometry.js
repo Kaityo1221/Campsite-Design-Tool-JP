@@ -28,6 +28,7 @@
       const ownerKey = `reference:${poi.guid}`;
       return Object.freeze({
         guid: poi.guid,
+        title: String(poi.title || ''),
         ownerKey,
         renderKind: poi.renderKind,
         observationZone: poi.observationZone,

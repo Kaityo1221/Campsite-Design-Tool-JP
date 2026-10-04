@@ -163,18 +163,20 @@
       const kind = bridgeMapLab_markerKind(renderItem);
       if (kind === 'candidate-pin' || kind === 'existing-icon' || kind === 'reference-icon') {
         const readOnlyReference = kind === 'reference-icon';
+        const referenceInspectable = readOnlyReference && renderItem?.inspectable === true;
+        const interactive = readOnlyReference ? (markerActivationEnabled && referenceInspectable) : markerActivationEnabled;
         const layer = L.marker(latLng, {
           icon: kind === 'candidate-pin'
             ? bridgeMapLab_candidateIcon(renderItem.renderKind)
             : readOnlyReference
               ? bridgeMapLab_referenceIcon(renderItem.renderKind)
               : bridgeMapLab_existingIcon(renderItem.renderKind),
-          interactive: readOnlyReference ? false : markerActivationEnabled,
-          keyboard: readOnlyReference ? false : markerActivationEnabled,
+          interactive,
+          keyboard: interactive,
           opacity: bridgeMapLab_markerOpacity(renderItem),
           zIndexOffset: kind === 'candidate-pin' ? 20 : readOnlyReference ? -10 : 0
         }).addTo(markerLayer);
-        if (!readOnlyReference) bridgeMapLab_bindMarkerActivation(layer, renderItem.key, renderItem);
+        if (interactive) bridgeMapLab_bindMarkerActivation(layer, renderItem.key, renderItem);
         return { kind, layer };
       }
 

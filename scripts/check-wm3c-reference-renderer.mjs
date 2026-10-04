@@ -5,6 +5,7 @@ import vm from 'node:vm';
 const source = fs.readFileSync(new URL('../creative/runtime/map-engine/map-renderer.js', import.meta.url), 'utf8');
 
 let stampSeq = 1;
+const markerInstances = [];
 function layerGroup() {
   return {
     layers: [],
@@ -14,7 +15,7 @@ function layerGroup() {
   };
 }
 function marker(latlng, options = {}) {
-  return {
+  const instance = {
     options: { ...options },
     _latlng: { lat: latlng[0], lng: latlng[1] },
     _events: {},
@@ -25,6 +26,8 @@ function marker(latlng, options = {}) {
     setOpacity(value) { this.options.opacity = value; },
     on(name, callback) { this._events[name] = callback; return this; }
   };
+  markerInstances.push(instance);
+  return instance;
 }
 function circle(latlng, options = {}) {
   return {
@@ -66,6 +69,7 @@ renderer.render({ items: [
     renderKind: 'GYM',
     observationZone: 'REFERENCE_100',
     readOnly: true,
+    inspectable: true,
     layerKey: 'marker',
     style: { opacity: 0.58 },
     geometry: { type: 'point', lat: 35, lng: 139 }
@@ -86,7 +90,7 @@ renderer.render({ items: [
 const markerDiagnostic = renderer.getDiagnostics()[0];
 assert.equal(markerDiagnostic.markerKind, 'reference-icon');
 assert.equal(markerDiagnostic.origin, 'reference');
-assert.equal(markerDiagnostic.interactive, false, 'Reference marker must stay read-only even when renderer has activation callback');
+assert.equal(markerDiagnostic.interactive, true, 'Inspectable Reference marker must accept inspection activation while remaining read-only');
 assert.equal(markerDiagnostic.opacity, 0.58);
 assert.deepEqual(JSON.parse(JSON.stringify(renderer.getRenderedCounts())), {
   markers: 1,
@@ -95,6 +99,8 @@ assert.deepEqual(JSON.parse(JSON.stringify(renderer.getRenderedCounts())), {
   circles30: 0
 });
 assert.equal(activated, 0);
+markerInstances[0]._events.click?.({ originalEvent:null });
+assert.equal(activated, 1, 'Inspectable Reference marker must call the renderer inspection activation callback');
 
 renderer.render({ items: [
   {
@@ -104,6 +110,7 @@ renderer.render({ items: [
     renderKind: 'POKESTOP',
     observationZone: 'REFERENCE_100',
     readOnly: true,
+    inspectable: true,
     layerKey: 'marker',
     style: { opacity: 0.5 },
     geometry: { type: 'point', lat: 35.0001, lng: 139.0001 }

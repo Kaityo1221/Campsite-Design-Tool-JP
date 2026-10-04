@@ -11,12 +11,71 @@
       '<script src="./runtime/map-engine/wayfarer-reserve-coverage.js?v=wm5a1"></script>',
       '<script src="./runtime/map-engine/wayfarer-local-reclassification.js?v=wm5b1"></script>',
       '<script src="./runtime/map-engine/wayfarer-observation-adapter.js?v=wm3c4"></script>',
-      '<script src="./runtime/map-engine/wayfarer-reference-geometry.js?v=wm3c4"></script>',
-      '<script src="./runtime/map-engine/wayfarer-reference-scene-builder.js?v=wm3c4"></script>'
+      '<script src="./runtime/map-engine/wayfarer-reference-geometry.js?v=wm6a1"></script>',
+      '<script src="./runtime/map-engine/wayfarer-reference-scene-builder.js?v=wm6a1"></script>'
     ].join('');
     const coreNeedle = "<script>\n(()=>{'use strict';";
     if (out.includes(coreNeedle) && !out.includes('wayfarer-observation-adapter.js?v=wm3c4')) {
       out = out.replace(coreNeedle, engineTags + coreNeedle);
+    }
+
+    const wm6Style = `<style id="cmWm6ReferenceInspectStyle">
+      #cmWm6ReferencePanel[hidden]{display:none!important}
+      #cmWm6ReferencePanel{position:fixed;left:12px;right:12px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:1880;display:block;max-width:520px;margin:0 auto;padding:14px 16px;border:1px solid rgba(103,84,48,.24);border-radius:18px;background:rgba(255,253,248,.97);color:#342d22;box-shadow:0 12px 34px rgba(31,25,17,.20);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+      #cmWm6ReferencePanel .cm-wm6-head{display:flex;align-items:flex-start;gap:12px}
+      #cmWm6ReferencePanel .cm-wm6-copy{min-width:0;flex:1}
+      #cmWm6ReferenceTitle{display:block;font-size:16px;line-height:1.35;font-weight:900;overflow-wrap:anywhere}
+      #cmWm6ReferenceType{display:block;margin-top:5px;font-size:12px;line-height:1.4;font-weight:800;color:#77684f}
+      #cmWm6ReferenceClose{flex:0 0 34px;width:34px;height:34px;border:1px solid rgba(86,72,45,.18);border-radius:999px;background:#fff;color:#4c4030;font-size:21px;line-height:1;display:grid;place-items:center}
+      body.cm-unified-renderer-interactive .cm-engine-reference-icon.leaflet-interactive{pointer-events:auto!important}
+    </style>`;
+    if (!out.includes('id="cmWm6ReferenceInspectStyle"')) out = out.replace('</head>', wm6Style + '</head>');
+
+    const wm6ActivationNeedle = "function cmUnifiedRendererActivate(renderItem,event){";
+    if (out.includes(wm6ActivationNeedle) && !out.includes('function cmWm6OpenReferencePanel(')) {
+      const wm6Helper = `function cmWm6ReferenceTypeLabel(kind){
+  const value=String(kind||'').toUpperCase();
+  if(value==='POKESTOP')return 'PokéStop';
+  if(value==='GYM')return 'Gym';
+  if(value==='POWERSPOT'||value==='INACTIVE_POWERSPOT')return 'PowerSpot';
+  return 'POI';
+}
+let cmWm6ReferencePanel=null;
+function cmWm6EnsureReferencePanel(){
+  if(cmWm6ReferencePanel?.isConnected)return cmWm6ReferencePanel;
+  const panel=document.createElement('section');
+  panel.id='cmWm6ReferencePanel';
+  panel.hidden=true;
+  panel.setAttribute('role','dialog');
+  panel.setAttribute('aria-label','設計範囲外の参照POI');
+  panel.innerHTML='<div class="cm-wm6-head"><div class="cm-wm6-copy"><strong id="cmWm6ReferenceTitle"></strong><span id="cmWm6ReferenceType"></span></div><button id="cmWm6ReferenceClose" type="button" aria-label="閉じる">×</button></div>';
+  document.body.appendChild(panel);
+  panel.querySelector('#cmWm6ReferenceClose')?.addEventListener('click',cmWm6CloseReferencePanel);
+  cmWm6ReferencePanel=panel;
+  return panel;
+}
+function cmWm6CloseReferencePanel(){
+  const panel=cmWm6ReferencePanel;
+  if(panel?.isConnected){panel.hidden=true;panel.setAttribute('aria-hidden','true')}
+}
+function cmWm6OpenReferencePanel(renderItem){
+  if(renderItem?.origin!=='reference'||renderItem?.observationZone!=='REFERENCE_100'||renderItem?.inspectable!==true)return false;
+  const panel=cmWm6EnsureReferencePanel();
+  const title=panel.querySelector('#cmWm6ReferenceTitle');
+  const type=panel.querySelector('#cmWm6ReferenceType');
+  if(title)title.textContent=String(renderItem?.title||'').trim()||'名称不明';
+  if(type)type.textContent=cmWm6ReferenceTypeLabel(renderItem?.renderKind);
+  panel.hidden=false;
+  panel.setAttribute('aria-hidden','false');
+  return true;
+}
+setTimeout(()=>{try{map.on('click',cmWm6CloseReferencePanel)}catch(_){}},0);
+`;
+      out = out.replace(wm6ActivationNeedle, wm6Helper + wm6ActivationNeedle);
+      const wm6ActivationBody = "  try{if(event?.originalEvent)L.DomEvent.stopPropagation(event.originalEvent)}catch(_){}\n  const record=cmUnifiedRendererFindRecord(renderItem);";
+      const wm6ActivationReplacement = "  try{if(event?.originalEvent)L.DomEvent.stopPropagation(event.originalEvent)}catch(_){}\n  if(renderItem?.origin==='reference'){cmWm6OpenReferencePanel(renderItem);return}\n  const record=cmUnifiedRendererFindRecord(renderItem);";
+      if (!out.includes(wm6ActivationBody)) throw new Error('WM-6A unified activation target not found');
+      out = out.replace(wm6ActivationBody, wm6ActivationReplacement);
     }
 
     if (!out.includes('cmWm3cReferenceRuntime')) {

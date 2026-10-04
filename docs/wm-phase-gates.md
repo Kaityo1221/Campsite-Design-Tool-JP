@@ -401,3 +401,47 @@ parallel project schema, and no WM-6 / WM-7 implementation.
 WM-5C is functionally complete for the section 10.2 return path at this gate.
 WM-6 must not start until the project owner explicitly continues from this PASS.
 
+
+
+## WM-6 — Creative reference POIs / distance warning
+
+### WM-6A — exterior Reference inspection + 50m-only circle (implementation)
+
+This subphase is intentionally limited to the first half of specification sections
+12 and 13. It does not implement the new-candidate distance-warning calculation yet.
+
+Existing WM-3C / WM-5 behavior already provides:
+
+- REFERENCE_100 lighter than interior;
+- read-only Reference POIs outside editable `records/currentPois`;
+- continuous Reference 50m circles;
+- no Reference 40m / 30m circles;
+- RESERVE_200 hidden.
+
+WM-6A closes the remaining inspection gap:
+
+- only exterior `REFERENCE_100` markers become tappable for inspection;
+- inspection does not route through Creative record editing and therefore cannot
+  move, delete, rename or type-change a Reference POI;
+- one bottom information panel shows only title and POI type;
+- coordinates are not displayed;
+- `×` and map tap close the panel;
+- the panel is a singleton and switching Reference POIs reuses it;
+- the existing 50m-only Reference circle contract remains unchanged.
+
+Gate before PASS:
+
+1. REFERENCE_100 marker is interactive for inspection while `readOnly:true`;
+2. INTERIOR observation-only fallback marker is not exposed as an exterior
+   inspection target;
+3. tapping an exterior Reference opens title + POI type only;
+4. no coordinates are shown;
+5. Reference inspection leaves Creative records byte-equivalent;
+6. Reference Scene still emits only marker + 50m circle, never 40m / 30m;
+7. RESERVE_200 stays absent from the Scene;
+8. current Creative entry, Undo/Redo, 50m reason, caps, BFCache, move opacity and
+   `rendererMode=legacy` regressions remain green;
+9. WM-3C through WM-5C regressions remain green;
+10. diff review confirms WM-6B distance-warning logic and WM-7 remain unimplemented.
+
+WM-6B distance warning must not start until WM-6A passes.
