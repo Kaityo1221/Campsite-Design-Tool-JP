@@ -30,7 +30,8 @@ const livePostManifestPatches=[
   'creative-patches-v64-google-form-coordinates.js',
   'creative-patches-v65-download-label.js',
   'creative-patches-v66-activity-range-label.js',
-  'creative-patches-v67-activity-range-wording.js'
+  'creative-patches-v67-activity-range-wording.js',
+  'creative-patches-v68-activity-range-delete-history.js'
 ];
 
 function gitBlobShaBuffer(body){
@@ -83,6 +84,8 @@ assert.ok(html.includes('活動範囲を作成！'),'Creative activity-range cre
 assert.ok(html.includes('活動範囲を作成しました'),'Creative activity-range completion wording missing');
 assert.ok(html.includes('活動範囲の作成をキャンセルしました'),'Creative activity-range cancel wording missing');
 assert.ok(!html.includes('ポリゴン'),'User-facing polygon wording must stay removed from Creative runtime');
+assert.ok(html.includes("pushHistory({type:'polygon-delete',id:item.p.id})"),'Activity-range deletion history push missing');
+assert.ok(html.includes("a.type==='polygon-delete'"),'Activity-range deletion undo/redo handling missing');
 assert.ok(html.includes('cmV58NewEntryStyle'),'New Creative entry style missing');
 assert.ok(html.includes("if(start.classList.contains('ready'))start.disabled=false"),'Creative START must re-enable when returning to entry with a ready file');
 assert.ok(!html.includes("location.href=location.origin+location.pathname"),'Creative back must not reload the page');
