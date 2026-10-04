@@ -290,3 +290,78 @@ test('活動範囲の削除を戻る・やり直しできる',async({page})=>{
   await redo.click();
   await expect(activityRow).toHaveText('活動範囲');
 });
+
+
+test('50m未満候補の設置理由を編集シートから入力しBridge判定に反映する',async({page})=>{
+  const bridgeProject={
+    source:'bridge',
+    projectId:'spacing-reason-flow',
+    phase:'design',
+    createdAt:'2026-10-04T02:40:00.000Z',
+    updatedAt:'2026-10-04T02:40:00.000Z',
+    circleRadii:[50,40,30],
+    polygon:[],
+    selectedPois:[
+      {
+        id:'existing-1',guid:'existing-1',title:'既存POI',
+        lat:35.6812,lng:139.7671,role:'existing',layer:'existing-pokestop',
+        gameEntity:'POKESTOP',description:''
+      },
+      {
+        id:'candidate-1',guid:'candidate-1',title:'候補地A',
+        lat:35.68145,lng:139.7671,role:'added',layer:'new-pokestop',
+        gameEntity:'POKESTOP',description:'新規ゲームスポット',
+        applicationComment:''
+      }
+    ]
+  };
+  bridgeProject.currentPois=bridgeProject.selectedPois.map(item=>({...item}));
+
+  await page.addInitScript(project=>{
+    sessionStorage.setItem('campsiteProject.v1',JSON.stringify(project));
+  },bridgeProject);
+
+  await page.goto('/creative/index.html?campsiteProject=bridge&rendererMode=legacy');
+  await expect.poll(()=>page.evaluate(()=>window.CampsiteCreativeProject?.count||0),{timeout:15000}).toBe(2);
+
+  const next=page.locator('#campsiteProjectNext');
+  await expect(next).toBeVisible();
+  await next.click();
+
+  const gate=page.locator('#campsiteProjectDistanceGate');
+  await expect(gate).toBeVisible();
+  await expect(gate.locator('[data-gate-count]')).toContainText('未入力が 1件');
+
+  await gate.locator('[data-gate-check]').click();
+  const sheet=page.locator('.cm-sheet');
+  await expect(sheet).toBeVisible({timeout:3000});
+  await expect(sheet.locator('.cm-distance-note')).toContainText('最短距離');
+  const memo=sheet.locator('#cmMemo');
+  await expect(memo).toHaveValue('新規ゲームスポット');
+
+  const reason=sheet.locator('#cmSpacingReason');
+  await expect(reason).toBeVisible();
+  await expect(reason).toHaveAttribute('maxlength','300');
+  await reason.fill('景色を見てもらいながら動線を分散できる場所のため');
+
+  const saved=await page.evaluate(()=>{
+    const snapshot=window.CampsiteCreativeWorkspace?.getSnapshot?.();
+    const record=snapshot?.records?.find(item=>item?.id==='candidate-1');
+    return record?{
+      memo:String(record.memo||''),
+      applicationComment:String(record.applicationComment||'')
+    }:null;
+  });
+  expect(saved).toEqual({
+    memo:'新規ゲームスポット',
+    applicationComment:'景色を見てもらいながら動線を分散できる場所のため'
+  });
+
+  await sheet.locator('.cm-sheet-close').click();
+  await expect(sheet).toHaveCount(0);
+
+  await Promise.all([
+    page.waitForURL(/bridge-distance\.html\?campsiteProject=bridge/,{timeout:5000}),
+    next.click()
+  ]);
+});

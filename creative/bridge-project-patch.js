@@ -123,7 +123,7 @@ function campsProjectDistanceMeters(a,b){
   return 2*R*Math.asin(Math.min(1,Math.sqrt(s)));
 }
 function campsProjectHasSpacingReason(record){
-  return String(record?.memo||record?.description||'').trim().length>0;
+  return String(record?.applicationComment||'').trim().length>0;
 }
 function campsProjectWarningRecords(){
   const active=(records||[]).filter(r=>r&&!r.deleted&&Array.isArray(r.latlng));
