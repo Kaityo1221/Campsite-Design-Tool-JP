@@ -217,8 +217,8 @@
       helperText.textContent = '設定した範囲内のPOIをCampsiteへ送ります。';
       primaryButton.textContent =
         busy ? '🌉 Campsiteへ送信中…' :
-        bridgeStatus === 'success' ? '✅ Campsiteへ送りました' :
-        bridgeStatus === 'error' ? '↻ もう一度Campsiteへ送る' :
+        bridgeStatus === 'success' ? '↻ Campsiteへ再送信' :
+        bridgeStatus === 'error' ? '↻ Campsiteへ再送信' :
         '🌉 Campsiteへ送信！';
       primaryButton.disabled = busy;
       primaryButton.onclick = startBridge;
@@ -228,12 +228,12 @@
       secondaryButton.disabled = busy;
       secondaryButton.onclick = editRange;
 
-      if (bridgeMessage) {
+      if (bridgeStatus === 'success' && lastCount >= 0) {
+        progressText.textContent = `✅ ${lastCount.toLocaleString('ja-JP')}件をCampsiteへ送信しました`;
+        progressText.hidden = false;
+      } else if (bridgeMessage) {
         progressText.textContent = bridgeMessage;
         progressText.hidden = false;
-      }
-      if (lastCount > 0 && bridgeStatus === 'success') {
-        helperText.textContent = `送信したPOI：${lastCount.toLocaleString('ja-JP')}件`;
       }
       return;
     }
