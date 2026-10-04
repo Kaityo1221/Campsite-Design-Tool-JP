@@ -414,29 +414,30 @@ test('候補地の12・8・5上限を追加と種類変更の両方で守る',as
   await resume.click();
   await expect(entry).toBeHidden({timeout:4000});
 
-  const limits=await page.evaluate(()=>({
-    stop:jpTypeLimit('new-pokestop'),
-    gym:jpTypeLimit('new-gym'),
-    power:jpTypeLimit('new-power')
-  }));
-  expect(limits).toEqual({stop:12,gym:8,power:5});
+  await page.locator('#cmAddFab').click();
+  const stopBubble=page.locator('.cm-bubble[data-layer="new-pokestop"]');
+  await expect(stopBubble).toBeVisible();
+  await stopBubble.click();
 
-  await page.evaluate(()=>{
-    cmStartAdd('new-pokestop');
-    cmPlace(L.latLng(35.6840,139.7690));
-  });
+  const addConfirm=page.locator('#cmSafeAddConfirm');
+  await expect(addConfirm).toBeVisible();
+  await addConfirm.click();
   await expect(page.locator('#status')).toContainText('ポケストップは最大12個です');
+
   const afterAdd=await page.evaluate(()=>{
     const snapshot=window.CampsiteCreativeWorkspace?.getSnapshot?.();
     return (snapshot?.records||[]).filter(r=>r&&!r.deleted&&r.layer==='new-pokestop').length;
   });
   expect(afterAdd).toBe(12);
 
-  await page.evaluate(()=>{
-    cmExitAddMode(false);
-    const gym=records.find(r=>r&&r.id==='gym-1');
-    cmOpenRecord(gym);
-  });
+  await page.locator('#cmSafeAddCancel').click();
+  await page.locator('#cmCount').click();
+  const list=page.locator('.cm-list');
+  await expect(list).toBeVisible();
+  const gymRow=list.locator('.cm-list-row').filter({hasText:'Gym 1'});
+  await expect(gymRow).toHaveCount(1);
+  await gymRow.click();
+
   const sheet=page.locator('.cm-sheet');
   await expect(sheet).toBeVisible();
   await sheet.locator('#cmType').click();
