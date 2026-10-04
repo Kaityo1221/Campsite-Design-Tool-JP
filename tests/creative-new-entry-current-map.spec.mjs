@@ -129,9 +129,15 @@ test('新トップからSTART演出を経て現行Creative Mode地図UIへ入る
   await page.locator('#toolbox').click();
   const toolMenu=page.locator('#toolMenu');
   await expect(toolMenu).toHaveClass(/open/);
-  await expect(toolMenu.locator('[data-tool="polygon"]')).toHaveText('活動範囲');
+  const activityRangeTool=toolMenu.locator('[data-tool="polygon"]');
+  await expect(activityRangeTool).toHaveText('活動範囲');
   await expect(toolMenu.locator('[data-tool="ruler"]')).toHaveText('物差し');
-  await page.locator('#toolbox').click();
+  await activityRangeTool.click();
+  await expect(page.locator('#status')).toContainText('追加する活動範囲を描いてください');
+  const activityRangeCancel=page.getByRole('button',{name:'×',exact:true});
+  await expect(activityRangeCancel).toBeVisible();
+  await activityRangeCancel.click();
+  await expect(page.locator('#status')).toContainText('活動範囲の作成をキャンセルしました');
   await expect(page.locator('#undo')).toHaveText('← 戻る');
   await expect(page.locator('#redo')).toHaveText('↻ やり直し');
   await expect(page.locator('#cmV45LocateFab')).toHaveCount(0);
