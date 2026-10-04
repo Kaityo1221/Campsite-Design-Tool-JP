@@ -45,6 +45,19 @@ const remote = {
   }
 };
 
+const idOnlyBase = {snapshotId:'id-base', acquisition:{coverageComplete:true}, zones:{interior:[{id:'local-only',title:'Local',lat:35,lng:139}],reference100:[],reserve200:[]}};
+const idOnlyRemote = {snapshotId:'id-remote', acquisition:{coverageComplete:true}, zones:{interior:[{id:'local-only',title:'Local',lat:35,lng:139}],reference100:[],reserve200:[]}};
+const idOnly = diff(idOnlyBase, idOnlyRemote);
+assert.equal(idOnly.additions.length, 0, 'id-only POI must not become stable identity');
+assert.equal(idOnly.changes.length, 0, 'id-only POI must not be compared as stable identity');
+assert.equal(idOnly.absences.length, 0, 'id-only POI must not create disappearance state');
+
+const poiIdBase = {snapshotId:'poi-base', acquisition:{coverageComplete:true}, zones:{interior:[{poiId:'poi-stable',title:'Old',lat:35,lng:139}],reference100:[],reserve200:[]}};
+const poiIdRemote = {snapshotId:'poi-remote', acquisition:{coverageComplete:true}, zones:{interior:[{poiId:'poi-stable',title:'New',lat:35,lng:139}],reference100:[],reserve200:[]}};
+const poiIdStable = diff(poiIdBase, poiIdRemote);
+assert.equal(poiIdStable.changes.length, 1, 'poiId must remain a supported stable identity');
+assert.deepEqual([...poiIdStable.changes[0].categories], ['TITLE_CHANGED']);
+
 const baseBefore = JSON.stringify(base);
 const remoteBefore = JSON.stringify(remote);
 
