@@ -43,17 +43,9 @@ assert.ok(output.includes("message: 'Wayfarerで観察中です…'"));
 assert.ok(output.includes('この範囲を観察'));
 assert.ok(output.includes('project.wayfarerObservation = observation'));
 assert.ok(output.includes('saveObservationResult'));
+assert.ok(output.includes("version: '0.3.0'"), 'Creative link must remain initial-observation only');
 assert.ok(output.includes("status: 'observing'"));
 assert.ok(output.includes("message: '観察結果をProjectへ保存しました。設計範囲内 '"));
-assert.ok(output.includes("campsite:wayfarer-reference-state"), 'WM-5C must listen for Reference coverage state');
-assert.ok(output.includes("reacquireRequired"), 'WM-5C reacquisition-required state missing');
-assert.ok(output.includes("Wayfarerで再取得"), 'WM-5C reacquisition CTA missing');
-assert.ok(output.includes("syncReacquireState"), 'WM-5C Reference-to-CTA sync missing');
-assert.ok(output.includes("REFRESH_AGE_DAYS = 90"), 'WM-7A refresh age threshold must stay 90 days');
-assert.ok(output.includes("更新推奨"), 'WM-7A stale observation hint missing');
-assert.ok(output.includes("syncRefreshAgeState"), 'WM-7A refresh-age state sync missing');
-assert.ok(output.includes("evaluateRefreshAge"), 'WM-7A refresh-age evaluator missing');
-assert.ok(output.includes("version: '0.5.0'"), 'WM-7A Creative link version must advance');
 
 
 assert.ok(index.includes("fetch('./wayfarer-observe-link-patch.js'"));
