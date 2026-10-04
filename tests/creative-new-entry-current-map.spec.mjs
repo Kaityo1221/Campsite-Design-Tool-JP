@@ -376,10 +376,22 @@ test('50m未満候補の設置理由を編集シートから入力しBridge判�
     return value.length;
   }).toBeGreaterThan(0);
 
+  await page.addInitScript(()=>{
+    if(location.pathname.endsWith('/bridge-distance.html')){
+      localStorage.setItem('cm-debug-project-at-distance-start',sessionStorage.getItem('campsiteProject.v1')||'');
+    }
+  });
+
   await Promise.all([
     page.waitForURL(/bridge-distance\.html\?campsiteProject=bridge/,{timeout:5000}),
     next.click()
   ]);
+
+  const projectAtDistanceStart=await page.evaluate(()=>JSON.parse(localStorage.getItem('cm-debug-project-at-distance-start')||'null'));
+  const startCandidate=projectAtDistanceStart?.currentPois?.find(item=>item?.id==='candidate-1');
+  expect(startCandidate?.applicationComment).toBe('景色を見てもらいながら動線を分散できる場所のため');
+  expect(startCandidate?.applicationCommentSignature).toBe(signature);
+  expect(startCandidate?.applicationCommentNeedsReview).toBe(false);
 
   const projectAfterSync=await page.evaluate(()=>JSON.parse(sessionStorage.getItem('campsiteProject.v1')||'null'));
   const syncedCandidate=projectAfterSync?.currentPois?.find(item=>item?.id==='candidate-1');
