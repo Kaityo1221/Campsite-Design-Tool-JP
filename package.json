@@ -47,7 +47,8 @@
     "check:wm5b-local-reclassification": "node scripts/check-wm5b-local-reclassification.mjs",
     "check:wm6b-reference-distance": "node scripts/check-wm6b-reference-distance.mjs",
     "check:wm8a-fixed-reference": "node scripts/check-wm3b2d-project-save.mjs && node scripts/check-wm5a-reserve-coverage.mjs && node scripts/check-wm5b-local-reclassification.mjs && node scripts/check-wm3c-reference-adapter.mjs && node scripts/check-wm3c-reference-scene.mjs && node scripts/check-wm3c-reference-renderer.mjs && node scripts/check-wm6b-reference-distance.mjs",
-    "check:wm8b-integration": "npm run check:wm8a-fixed-reference && npm run check:bridge-next && npm run check:distance-advice && npm run check:field-mode && npm run check:field-prep"
+    "check:wm8b-integration": "npm run check:wm8a-fixed-reference && npm run check:bridge-next && npm run check:distance-advice && npm run check:field-mode && npm run check:field-prep",
+    "check:wm8c-release-readiness": "npm run check:wm8b-integration && npm run check:bridge-pc-spec && npm run check:bridge-display-ownership && npm run check:bridge-poi-engine-regression && npm run check:phase8-roundtrip"
   },
   "devDependencies": {
     "@playwright/test": "^1.55.0",
