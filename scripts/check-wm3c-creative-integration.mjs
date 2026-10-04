@@ -28,8 +28,8 @@ const html = patchWindow.applyCreativeWayfarerReferenceLayerPatch(fixture);
 assert.ok(html.includes('wayfarer-reserve-coverage.js?v=wm5a1'));
 assert.ok(html.includes('wayfarer-local-reclassification.js?v=wm5b1'));
 assert.ok(html.includes('wayfarer-observation-adapter.js?v=wm3c4'));
-assert.ok(html.includes('wayfarer-reference-geometry.js?v=wm3c4'));
-assert.ok(html.includes('wayfarer-reference-scene-builder.js?v=wm3c4'));
+assert.ok(html.includes('wayfarer-reference-geometry.js?v=wm6a1'));
+assert.ok(html.includes('wayfarer-reference-scene-builder.js?v=wm6a1'));
 assert.ok(html.includes('map-renderer.js?v=5d15'), 'Bridge Project must cache-bust Reference-capable renderer');
 assert.ok(html.includes('cmWm3cReferenceRuntime'));
 
