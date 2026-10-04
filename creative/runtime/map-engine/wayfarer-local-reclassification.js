@@ -63,7 +63,7 @@
       return Object.freeze({
         ...resultBase(observation, currentPolygon, coverage),
         canUseLocal: false,
-        reason: 'REACQUIRE_REQUIRED',
+        reason: 'REFERENCE_OUT_OF_COVERAGE',
         zones: Object.freeze(emptyZones()),
         counts: Object.freeze({ interior:0, reference100:0, reserve200:0, total:0 }),
         diagnostics: Object.freeze([])
