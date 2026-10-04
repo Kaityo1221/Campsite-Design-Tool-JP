@@ -722,3 +722,47 @@ was added without changing product logic.
 WM-7B is complete at this boundary.
 WM-7C persistence / review UI / apply flow may start only after this PASS.
 
+
+
+### WM-7C — disappearance-state Project persistence: implementation gate
+
+Scope is persistence-only. Review UI, Remote apply, automatic observation replacement,
+and Base/Local/Remote merge remain out of scope.
+
+Persistence contract:
+
+- optional top-level Project field: `wayfarerObservationDiffState`;
+- `schemaVersion` remains `1.0`;
+- state contains only `baseSnapshotId`, `lastRemoteSnapshotId`, and sanitized
+  positive-integer `absenceCounts`;
+- `wayfarerObservation` remains the observation snapshot and is not used as a
+  container for cross-snapshot disappearance history;
+- only a complete, applicable WM-7B diff may produce a persisted next state;
+- incomplete Remote does not alter persistence state;
+- missing Base/Remote snapshot identity fails closed;
+- reappearance is represented by the GUID disappearing from `absenceCounts`;
+- source Project, editable records, polygon, accepted observation, and unknown
+  future top-level fields remain unchanged;
+- the persistence helper returns a new Project object rather than mutating its input;
+- the module is not loaded into Creative runtime in WM-7C.
+
+Gate before PASS:
+
+1. complete WM-7B result persists Base/Remote identity and absence counts;
+2. JSON round-trip restores the same persistence state;
+3. consecutive complete snapshots can advance an absence count;
+4. reappearance clears the persisted GUID;
+5. incomplete Remote cannot persist or increment state;
+6. missing snapshot identity fails closed;
+7. source Project remains byte-equivalent;
+8. `schemaVersion`, `wayfarerObservation`, records/currentPois, polygon and unknown
+   future fields remain unchanged;
+9. no review UI, Remote apply or merge behavior is introduced;
+10. WM-3 through WM-7B and production Creative regressions remain green.
+
+Implementation files:
+
+- `creative/runtime/map-engine/wayfarer-observation-diff-state.js`
+- `scripts/check-wm7c-observation-diff-state.mjs`
+
+WM-7C is not PASS until remote CI and final diff review are green.
