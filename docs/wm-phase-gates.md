@@ -767,4 +767,38 @@ Implementation files:
 - `creative/runtime/map-engine/wayfarer-observation-diff-state.js`
 - `scripts/check-wm7c-observation-diff-state.mjs`
 
-WM-7C is not PASS until remote CI and final diff review are green.
+WM-7C PASS was fixed on 2026-10-04 JST at final validation head
+`7dad54ec68486fc3c8db8a0a67712438c0126704`.
+
+Final evidence:
+
+- Campsite Bridge PC Check #391: PASS, including strict WM-7B stable identity and
+  WM-7C diff-state persistence regressions;
+- Phase 5 Unified Renderer Release Gate #207: PASS;
+- Campsite Bridge Setup #254, iPhone #209, Bridge Next #327,
+  Distance Advice #217, Distance Mission #253, Workflow Resume #249,
+  Field End-to-End #312, Field Prep Safety #334 and Field Mode Safety #373:
+  PASS;
+- WM-7B identity is now exactly GUID / poiId; local `id` is not a stable
+  observation identity;
+- complete applicable diff state persists Base/Remote snapshot IDs and
+  sanitized absence counts;
+- duplicate Remote snapshot persistence fails closed;
+- incomplete Remote and missing snapshot identity cannot advance persistence;
+- reappearance clears the persisted absence entry;
+- existing unknown future fields inside `wayfarerObservationDiffState` are
+  retained when the known state fields are updated;
+- Creative autosave retains both storage-owned `wayfarerObservation` and
+  `wayfarerObservationDiffState`, preventing a later Creative save from
+  erasing newly persisted observation history;
+- editable records/currentPois and the current Creative polygon remain
+  Creative-owned;
+- no review UI, Remote apply, automatic observation replacement or
+  Base/Local/Remote merge is introduced;
+- final boundary diff from pre-WM-7C head `cbf61f1563fece5e0e5791ddc12476a33cae5536`
+  is limited to the WM-7B identity correction, WM-7C pure persistence helper,
+  its regressions/architecture wiring, the narrow Creative storage-retention
+  wrapper, and gate documentation.
+
+WM-7C is complete at this boundary.
+Do not start review UI / Remote apply / merge behavior without a new phase decision.
