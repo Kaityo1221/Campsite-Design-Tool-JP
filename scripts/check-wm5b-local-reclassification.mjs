@@ -72,7 +72,7 @@ assert.equal(JSON.stringify(observation),before,'source observation must remain 
 
 const outside=reclassify(observation,rect(120,0,320,200));
 assert.equal(outside.canUseLocal,false);
-assert.equal(outside.reason,'REACQUIRE_REQUIRED');
+assert.equal(outside.reason,'REFERENCE_OUT_OF_COVERAGE');
 assert.equal(outside.coverage.covered,false);
 assert.equal(outside.counts.total,0,'outside-reserve result must not expose stale derived zones');
 
@@ -90,7 +90,7 @@ assert.equal(invalid.reason,'INVALID_OBSERVATION_ZONES');
 
 const badPolygon=reclassify(observation,[point(0,0),point(200,200),point(0,200),point(200,0)]);
 assert.equal(badPolygon.canUseLocal,false);
-assert.equal(badPolygon.reason,'REACQUIRE_REQUIRED');
+assert.equal(badPolygon.reason,'REFERENCE_OUT_OF_COVERAGE');
 assert.equal(badPolygon.coverage.reason,'INVALID_CURRENT_POLYGON');
 
 console.log('WM-5B-1 local observation reclassification: PASS');
