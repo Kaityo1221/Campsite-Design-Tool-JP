@@ -13,23 +13,9 @@
     UNCONFIRMED: 'UNCONFIRMED',
     DELETE_CANDIDATE: 'DELETE_CANDIDATE'
   });
-  const EARTH_RADIUS_METERS = 6371008.8;
-  const COORDINATE_TOLERANCE_METERS = 0.5;
-
   function finite(value) {
     const n = Number(value);
     return Number.isFinite(n) ? n : null;
-  }
-  function radians(value) { return value * Math.PI / 180; }
-  function distanceMeters(a, b) {
-    if (!a || !b) return Infinity;
-    const lat1 = finite(a.lat), lng1 = finite(a.lng);
-    const lat2 = finite(b.lat), lng2 = finite(b.lng);
-    if (![lat1,lng1,lat2,lng2].every(Number.isFinite)) return Infinity;
-    const p1 = radians(lat1), p2 = radians(lat2);
-    const dLat = p2 - p1, dLng = radians(lng2 - lng1);
-    const h = Math.sin(dLat/2) ** 2 + Math.cos(p1) * Math.cos(p2) * Math.sin(dLng/2) ** 2;
-    return 2 * EARTH_RADIUS_METERS * Math.asin(Math.min(1, Math.sqrt(h)));
   }
   function identity(poi) {
     return String(poi?.guid || poi?.poiId || poi?.id || '').trim();
@@ -44,7 +30,7 @@
       title: String(poi?.title ?? poi?.name ?? ''),
       type: String(poi?.gameEntity ?? poi?.poiKind ?? poi?.type ?? '').toUpperCase(),
       status: String(poi?.gameStatus ?? poi?.status ?? '').toUpperCase(),
-      lat, lng, raw: poi
+      lat, lng
     });
   }
   function flattenObservation(observation) {
@@ -75,7 +61,7 @@
     if (base.title !== remote.title) changes.push(CHANGE.TITLE);
     if (base.type !== remote.type) changes.push(CHANGE.TYPE);
     if (base.status !== remote.status) changes.push(CHANGE.STATUS);
-    if (distanceMeters(base, remote) > COORDINATE_TOLERANCE_METERS) changes.push(CHANGE.COORDINATE);
+    if (base.lat !== remote.lat || base.lng !== remote.lng) changes.push(CHANGE.COORDINATE);
     return Object.freeze(changes);
   }
   function freezeArray(items) {
