@@ -165,17 +165,22 @@
     catch (_) { return fallback; }
   }
 
-  function normalizeObservation(raw) {
-    if (!raw || typeof raw !== 'object') return null;
-    const polygon = (Array.isArray(raw.polygon) ? raw.polygon : []).map(point => {
+  function normalizePolygon(raw) {
+    const polygon = (Array.isArray(raw) ? raw : []).map(point => {
       if (!Array.isArray(point) || point.length < 2) return null;
       const lat = finite(point[0]);
       const lng = finite(point[1]);
       return Number.isFinite(lat) && Number.isFinite(lng) ? [lat, lng] : null;
     }).filter(Boolean);
+    return polygon.length >= 3 && polygon.length <= 30 ? polygon : [];
+  }
+
+  function normalizeObservation(raw) {
+    if (!raw || typeof raw !== 'object') return null;
+    const polygon = normalizePolygon(raw.polygon);
     const zones = raw.zones && typeof raw.zones === 'object' ? raw.zones : {};
     const observedAt = text(raw.observedAt).trim();
-    if (polygon.length < 3 || polygon.length > 30 || !observedAt) return null;
+    if (!polygon.length || !observedAt) return null;
     if (!Array.isArray(zones.interior) || !Array.isArray(zones.reference100) || !Array.isArray(zones.reserve200)) return null;
     return {
       version: text(raw.version || '0.1.0'),
@@ -202,6 +207,7 @@
     const pois = exportPois(snapshot);
     const activeGuids = new Set(pois.map(poi => poi.guid));
     const referencePois = exportReferencePois(snapshot).filter(poi => !activeGuids.has(poi.guid));
+    const polygon = normalizePolygon(snapshot?.polygon);
     const wayfarerObservation = normalizeObservation(snapshot?.wayfarerObservation);
 
     const payload = {
@@ -215,6 +221,7 @@
       pois,
       referencePois
     };
+    if (polygon.length) payload.polygon = polygon;
     if (wayfarerObservation) payload.wayfarerObservation = wayfarerObservation;
     return payload;
   }
@@ -227,6 +234,7 @@
     normalizePoi,
     normalizeReferencePoi,
     normalizeBounds,
+    normalizePolygon,
     exportPois,
     exportReferencePois,
     normalizeObservation,
