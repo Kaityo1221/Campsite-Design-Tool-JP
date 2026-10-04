@@ -357,6 +357,11 @@ test('50m未満候補の設置理由を編集シートから入力しBridge判�
     applicationComment:'景色を見てもらいながら動線を分散できる場所のため'
   });
 
+  await expect.poll(async()=>{
+    const project=await page.evaluate(()=>JSON.parse(sessionStorage.getItem('campsiteProject.v1')||'null'));
+    return String(project?.currentPois?.find(item=>item?.id==='candidate-1')?.applicationComment||'');
+  },{timeout:5000}).toBe('景色を見てもらいながら動線を分散できる場所のため');
+
   await sheet.locator('.cm-sheet-close').click();
   await expect(sheet).toHaveCount(0);
 
