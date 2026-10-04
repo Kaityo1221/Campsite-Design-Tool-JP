@@ -13,6 +13,7 @@
   let host = null;
   let shadow = null;
   let crosshair = null;
+  let drawingCursorStyle = null;
   let state = {
     active: false,
     completed: false,
@@ -189,8 +190,27 @@
     suppressedWayfarerPoiLayers.clear();
   }
 
+  function syncDrawingCursor() {
+    const drawingPc = state.active === true && state.completed !== true && state.mode === 'pc';
+    if (!drawingPc) {
+      try { drawingCursorStyle?.remove?.(); } catch (_) {}
+      drawingCursorStyle = null;
+      return;
+    }
+    if (drawingCursorStyle?.isConnected) return;
+
+    drawingCursorStyle = document.createElement('style');
+    drawingCursorStyle.id = 'campsite-wm2-drawing-cursor';
+    drawingCursorStyle.textContent = [
+      'app-wf-base-map, app-wf-base-map * { cursor: crosshair !important; }',
+      'app-wf-base-map button, app-wf-base-map a, app-wf-base-map input, app-wf-base-map select { cursor: pointer !important; }'
+    ].join('\n');
+    document.documentElement.appendChild(drawingCursorStyle);
+  }
+
   function syncWayfarerDrawingControls() {
     const drawing = state.active === true && state.completed !== true;
+    syncDrawingCursor();
     if (!drawing) {
       restoreWayfarerDrawingControls();
       restoreWayfarerPoiInteraction();
@@ -345,6 +365,8 @@
     if (!map) {
       restoreWayfarerDrawingControls();
       restoreWayfarerPoiInteraction();
+      try { drawingCursorStyle?.remove?.(); } catch (_) {}
+      drawingCursorStyle = null;
       if (host) host.style.display = 'none';
       if (crosshair) crosshair.hidden = true;
       return;
