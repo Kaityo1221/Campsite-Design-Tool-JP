@@ -298,16 +298,18 @@ assert.ok(receiver.includes('bridge-receiver-detail'), 'Receiver must support di
 assert.ok(receiver.includes('id="bridgeReceiverBoot"'), 'Receiver must show the shared stable loading shell before routing');
 assert.ok(receiver.includes('Campsiteを準備しています…'), 'Receiver loading copy must match Gateway loading copy');
 assert.ok(gateway.includes('#loginScreen,#splashScreen,#openingScreen{display:none!important}'), 'Gateway must suppress legacy login/splash flash');
-assert.ok(gateway.includes('campsite-bridge-auth-pending'), 'Gateway must hide the main app while handoff authentication is unresolved');
-assert.ok(gateway.includes('campsite-bridge-auth-shell'), 'Gateway must keep the app shell hidden even when the login gate becomes visible');
+assert.ok(gateway.includes('#campsiteBridgeAppShell[hidden]{display:none!important}'), 'Gateway must keep the complete Campsite DOM natively hidden before auth resolves');
+assert.ok(gateway.includes('#caAccessGate.ca-gate-handoff-pending{visibility:hidden!important;pointer-events:none!important}'), 'Pending CA gate must stay hidden behind the stable Bridge loading shell');
 assert.ok(gateway.includes("html.replace('<head>', `<head>${bridgeCriticalHead}${leafletCss}`)"), 'Critical Bridge auth CSS must be injected at the start of head');
 assert.ok(gateway.includes('bridgePendingMarkup'), 'Stable Bridge loading shell must be inserted at the start of body');
-assert.ok(gateway.includes('root.classList.remove("campsite-bridge-auth-pending","campsite-bridge-auth-shell")'), 'Only approved handoff may release the hidden app shell');
-assert.ok(gateway.includes('root.classList.remove("campsite-bridge-auth-pending")'), 'Visible login gate should remove only the pending overlay, not expose the app');
+assert.ok(gateway.includes('id="campsiteBridgeAppShell" hidden style="display:none!important"'), 'Fetched Campsite body must be wrapped in a native hidden shell before parsing visible UI');
+assert.ok(gateway.includes('shell.hidden=false'), 'Only approved handoff may release the hidden Campsite DOM shell');
+assert.ok(gateway.includes('shell.style.removeProperty("display")'), 'Approved handoff must remove the hard display guard');
 assert.ok(gateway.includes('bridgeAuthPendingScreen'), 'Gateway must keep a stable auth-pending shell instead of flashing the main app');
 assert.ok(gateway.includes('Campsiteを準備しています…'), 'Gateway loading shell must match the Receiver shell');
-assert.ok(gateway.includes('window.addEventListener("campsite:ca-access-ready",finish'), 'Gateway auth-pending shell must release on approved handoff');
-assert.ok(gateway.includes('!gate.classList.contains("ca-gate-handoff-pending")'), 'Gateway auth-pending shell must release when the login gate becomes visible');
+assert.ok(gateway.includes('window.addEventListener("campsite:ca-access-ready",finish'), 'Gateway hidden shell must release on approved handoff');
+assert.ok(gateway.includes('!gate.classList.contains("ca-gate-handoff-pending")'), 'Gateway loading shell must hand off to the visible login gate when auth is required');
+assert.ok(gateway.includes('`</div>${bridgeScripts}</body>`'), 'Gateway must close the native hidden app shell before Bridge runtime scripts');
 
 const creativeManifest = JSON.parse(fs.readFileSync('creative/runtime/next-lab-manifest.json', 'utf8'));
 assert.equal(creativeManifest.sourceRepo, 'Kaityo1221/Campsite-Design-Tool-Next-Lab');
