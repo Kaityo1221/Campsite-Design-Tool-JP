@@ -70,6 +70,9 @@
       gameEntity: entityOf(poi),
       role: roleOf(poi),
       description: String(poi?.description || poi?.memo || ''),
+      applicationComment: Object.prototype.hasOwnProperty.call(poi || {}, 'applicationComment')
+        ? String(poi?.applicationComment || '')
+        : String(poi?.description || poi?.memo || ''),
       gameStatus: String(poi?.gameStatus || 'UNKNOWN'),
       sponsored: poi?.sponsored === true,
       smr: poi?.smr === true ? true : poi?.smr === false ? false : null,
@@ -132,7 +135,7 @@
         const distance = distanceMeters(poi, other);
         if (!nearest || distance < nearest.distance) nearest = { other, distance };
       }
-      if (!nearest || nearest.distance >= 50 || poi.description.trim()) return;
+      if (!nearest || nearest.distance >= 50 || poi.applicationComment.trim()) return;
       missingCommentPois.push({
         id: poi.id,
         guid: poi.guid,
