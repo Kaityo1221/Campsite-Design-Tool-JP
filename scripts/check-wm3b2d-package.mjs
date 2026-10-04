@@ -1,5 +1,4 @@
 import fs from 'node:fs';
-import path from 'node:path';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 
@@ -39,14 +38,14 @@ assert.ok(entries.has('manifest.json'),'manifest.json missing from ZIP');
 
 const manifest=JSON.parse(entries.get('manifest.json').toString('utf8'));
 assert.equal(manifest.manifest_version,3);
+assert.equal(manifest.name,'Campsite Bridge - PC TEST');
 assert.deepEqual(manifest.permissions,[]);
 assert.deepEqual([...manifest.host_permissions].sort(),[
   'https://wayfarer.nianticlabs.com/*',
   'https://wayfarer.scopely.com/*'
 ]);
 assert.equal(manifest.host_permissions.some(v=>v.includes('<all_urls>')),false);
-assert.equal(manifest.background?.service_worker,'tab-relay-background.js');
-assert.ok(entries.has(manifest.background.service_worker),'service worker missing from ZIP');
+assert.equal(Boolean(manifest.background),false,'retired observation service worker must not ship');
 
 for (const entry of manifest.content_scripts || []) {
   for (const script of entry.js || []) {
@@ -54,30 +53,31 @@ for (const entry of manifest.content_scripts || []) {
   }
 }
 
-for (const required of [
+for (const retired of [
   'creative-tab-relay.js',
   'creative-wm3b2b-test-injector.js',
   'tab-relay-background.js',
   'wayfarer-tab-relay.js',
   'wm3b-tab-link.js',
-  'wm3-observe-controller.js',
-  'wayfarer-observation-zone.js'
+  'wm3-observe-controller.js'
 ]) {
-  assert.ok(entries.has(required),`required WM-3B-2D package file missing: ${required}`);
+  assert.equal(entries.has(retired),false,`retired observation runtime must not enter package: ${retired}`);
 }
 
-const injector=entries.get('creative-wm3b2b-test-injector.js').toString('utf8');
-assert.equal(injector.includes('window.open(WAYFARER_URL, WINDOW_NAME)'),false,'legacy second-tab window.open must not ship');
-assert.ok(injector.includes('CAMPSITE_WAYFARER_OBSERVE_RESULT_V1'));
-assert.ok(injector.includes('project.wayfarerObservation = observation'));
-
-const background=entries.get('tab-relay-background.js').toString('utf8');
-assert.ok(background.includes('OBSERVE_ROUTE_TTL_MS'));
-assert.ok(background.includes('keepForObservationResult'));
+for (const required of [
+  'content.js',
+  'polygon-ui.js',
+  'page-collector.js',
+  'wayfarer-polygon-controller.js',
+  'wayfarer-observation-zone.js',
+  'creative-wm3c-test-runtime.js'
+]) {
+  assert.ok(entries.has(required),`required current PC runtime missing: ${required}`);
+}
 
 const unsafePermissionTokens=['tabs','activeTab','scripting','webRequest','webRequestBlocking','storage'];
 for (const token of unsafePermissionTokens) {
   assert.equal(manifest.permissions.includes(token),false,`unexpected permission shipped: ${token}`);
 }
 
-console.log(`WM-3B-2D package inspection: ${entries.size} files, manifest/scripts/service-worker/permissions/legacy-window.open all OK`);
+console.log(`PC Bridge package inspection: ${entries.size} files, obsolete observation runtime excluded`);
