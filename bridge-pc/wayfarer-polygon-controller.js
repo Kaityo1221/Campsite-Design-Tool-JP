@@ -193,7 +193,8 @@
       invalidEdgeIndexes: [...state.invalidEdgeIndexes],
       canComplete: state.canComplete,
       canUndo: active && points.length > 0,
-      instruction: instructionFor(mode, state)
+      instruction: instructionFor(mode, state),
+      message: ''
     };
   }
 
