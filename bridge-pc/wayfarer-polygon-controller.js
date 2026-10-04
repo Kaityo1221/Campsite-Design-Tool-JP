@@ -7,6 +7,9 @@
   const STATE_EVENT = 'campsite-bridge-pc:polygon-state';
   const MAX_POINTS = 30;
   const MOBILE_WIDTH_MAX = 820;
+  const PC_DRAG_THRESHOLD_PX = 6;
+  const PC_DRAG_CLICK_GUARD_MS = 700;
+  const PC_DRAG_CLICK_GUARD_RADIUS_PX = 16;
 
   if (window.__campsiteWayfarerPolygonControllerInstalled) return;
   window.__campsiteWayfarerPolygonControllerInstalled = true;
@@ -19,6 +22,7 @@
   let mapClickListener = null;
   let mapDomClickHandler = null;
   let mapDomClickTarget = null;
+  let mapDomPointerHandlers = [];
   let pollTimer = null;
   let overlays = [];
   let draftAvailable = false;
@@ -215,6 +219,10 @@
     mapDomClickHandler = null;
     mapDomClickTarget = null;
 
+    mapDomPointerHandlers.splice(0).forEach(item => {
+      try { item.target?.removeEventListener?.(item.type, item.handler, true); } catch (_) {}
+    });
+
     if (!mapClickListener) return;
     try {
       if (typeof mapClickListener.remove === 'function') mapClickListener.remove();
@@ -406,6 +414,59 @@
     try { mapDiv = currentMap?.getDiv?.() || null; } catch (_) { mapDiv = null; }
     if (!mapDiv?.contains || typeof window.addEventListener !== 'function') return false;
 
+    let pointerStart = null;
+    let dragClickGuard = null;
+
+    const onPointerDown = event => {
+      if (!active || completed || interactionMode() !== 'pc') return;
+      if (event?.button != null && Number(event.button) !== 0) return;
+      if (!mapDiv.contains(event?.target)) return;
+      if (isMapControlTarget(event?.target)) return;
+      pointerStart = {
+        pointerId: event?.pointerId ?? null,
+        x: Number(event?.clientX),
+        y: Number(event?.clientY),
+        dragged: false
+      };
+    };
+
+    const onPointerMove = event => {
+      if (!pointerStart) return;
+      if (
+        pointerStart.pointerId != null &&
+        event?.pointerId != null &&
+        event.pointerId !== pointerStart.pointerId
+      ) return;
+      const dx = Number(event?.clientX) - pointerStart.x;
+      const dy = Number(event?.clientY) - pointerStart.y;
+      if (!Number.isFinite(dx) || !Number.isFinite(dy)) return;
+      if (dx * dx + dy * dy >= PC_DRAG_THRESHOLD_PX * PC_DRAG_THRESHOLD_PX) {
+        pointerStart.dragged = true;
+      }
+    };
+
+    const onPointerUp = event => {
+      if (!pointerStart) return;
+      if (
+        pointerStart.pointerId != null &&
+        event?.pointerId != null &&
+        event.pointerId !== pointerStart.pointerId
+      ) return;
+      if (pointerStart.dragged) {
+        dragClickGuard = {
+          x: Number(event?.clientX),
+          y: Number(event?.clientY),
+          until: Date.now() + PC_DRAG_CLICK_GUARD_MS
+        };
+      }
+      pointerStart = null;
+    };
+
+    const onPointerCancel = () => {
+      pointerStart = null;
+      dragClickGuard = null;
+    };
+
     const handler = event => {
       if (!active || completed || interactionMode() !== 'pc') return;
       if (event?.button != null && Number(event.button) !== 0) return;
@@ -416,6 +477,18 @@
       try { event.stopPropagation?.(); } catch (_) {}
       try { event.stopImmediatePropagation?.(); } catch (_) {}
 
+      if (dragClickGuard) {
+        const dx = Number(event?.clientX) - dragClickGuard.x;
+        const dy = Number(event?.clientY) - dragClickGuard.y;
+        const withinTime = Date.now() <= dragClickGuard.until;
+        const nearDragEnd =
+          Number.isFinite(dx) &&
+          Number.isFinite(dy) &&
+          dx * dx + dy * dy <= PC_DRAG_CLICK_GUARD_RADIUS_PX * PC_DRAG_CLICK_GUARD_RADIUS_PX;
+        dragClickGuard = null;
+        if (withinTime && nearDragEnd) return;
+      }
+
       const point = pointFromClientPosition(currentMap, event?.clientX, event?.clientY);
       if (!point) {
         dispatchState({ message: 'クリック位置の座標を取得できませんでした。' });
@@ -424,6 +497,15 @@
       addPoint(point);
     };
 
+    for (const [type, listener] of [
+      ['pointerdown', onPointerDown],
+      ['pointermove', onPointerMove],
+      ['pointerup', onPointerUp],
+      ['pointercancel', onPointerCancel]
+    ]) {
+      window.addEventListener(type, listener, true);
+      mapDomPointerHandlers.push({ target: window, type, handler: listener });
+    }
     window.addEventListener('click', handler, true);
     mapDomClickHandler = handler;
     mapDomClickTarget = window;
