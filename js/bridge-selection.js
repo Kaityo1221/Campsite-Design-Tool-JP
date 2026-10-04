@@ -45,9 +45,20 @@
     };
   }
 
+  function normalizeObservationPolygon(raw) {
+    const polygon = (Array.isArray(raw) ? raw : []).map(point => {
+      if (!Array.isArray(point) || point.length < 2) return null;
+      const lat = Number(point[0]);
+      const lng = Number(point[1]);
+      return Number.isFinite(lat) && Number.isFinite(lng) ? [lat, lng] : null;
+    }).filter(Boolean);
+    return polygon.length >= 3 && polygon.length <= 30 ? polygon : [];
+  }
+
   const adapter = readJson(ADAPTER_STORAGE_KEY);
   const adapterHandoffId = String(adapter?.handoffId || (adapter?.adaptedAt ? `adapted:${adapter.adaptedAt}` : '')).trim();
   const pois = Array.isArray(adapter?.pois) ? adapter.pois.map(normalizePoi).filter(Boolean) : [];
+  const initialObservationPolygon = normalizeObservationPolygon(adapter?.wayfarerObservation?.polygon);
   if (!pois.length) return;
 
   let map = null;
@@ -55,7 +66,7 @@
   let polygonLayer = null;
   let vertexLayer = null;
   let markerByGuid = new Map();
-  let polygonPoints = [];
+  let polygonPoints = initialObservationPolygon.map(point => [...point]);
   let previewPoint = null;
   let drawMode = false;
   let selectedGuids = new Set();
@@ -500,6 +511,7 @@
     }).addTo(map);
     markerLayer = L.layerGroup().addTo(map);
     vertexLayer = L.layerGroup().addTo(map);
+    redrawPolygon();
     map.on('click', event => {
       if (!drawMode) return;
       previewPoint = null;
@@ -509,9 +521,12 @@
     map.on('mousemove', event => {
       updatePolygonPreview(event.latlng);
     });
-    map.on('mouseout', () => {
+    const clearPreviewOnMapLeave = () => {
       if (drawMode) clearPolygonPreview();
-    });
+    };
+    map.on('mouseout', clearPreviewOnMapLeave);
+    mapEl.addEventListener('pointerleave', clearPreviewOnMapLeave, { passive:true });
+    mapEl.addEventListener('mouseleave', clearPreviewOnMapLeave, { passive:true });
     renderMarkers();
     requestAnimationFrame(() => {
       map.invalidateSize();

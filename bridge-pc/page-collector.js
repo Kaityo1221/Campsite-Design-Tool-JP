@@ -61,6 +61,22 @@
     return adapter;
   }
 
+  function acquisitionEngineApi() {
+    const engine = window.CampsiteWayfarerAcquisitionEngine;
+    if (!engine?.createPlan || !engine?.executePlan) {
+      throw new Error('Wayfarer取得Engineを読み込めませんでした。拡張機能を再読み込みしてください。');
+    }
+    return engine;
+  }
+
+  function polygonZoneApi() {
+    const zone = window.CampsiteWayfarerObservationZone;
+    if (!zone?.classifyPois) {
+      throw new Error('設計範囲のPOI判定Engineを読み込めませんでした。拡張機能を再読み込みしてください。');
+    }
+    return zone;
+  }
+
   function numberFrom(value) {
     const num = Number(value);
     return Number.isFinite(num) ? num : null;
@@ -161,6 +177,74 @@
     };
   }
 
+  async function fetchGcsTile(tile) {
+    const response = await fetch(MAP_DATA_PATH + '?' + tile.query, {
+      credentials: 'include',
+      cache: 'no-store'
+    });
+    if (!response.ok) {
+      throw new Error('Wayfarer Mapデータ取得に失敗しました (' + response.status + ')');
+    }
+    return response.json();
+  }
+
+  async function collectPolygon(polygon, options = {}) {
+    const acquisitionEngine = acquisitionEngineApi();
+    const plan = acquisitionEngine.createPlan(polygon, {
+      bufferMeters: Number(options.bufferMeters ?? acquisitionEngine.defaultBufferMeters ?? 200),
+      maxTileMeters: options.maxTileMeters,
+      cellLevel: 14
+    });
+
+    const executionOptions = {};
+    if (typeof options.responseVerifier === 'function') {
+      executionOptions.responseVerifier = options.responseVerifier;
+    }
+
+    const acquisition = await acquisitionEngine.executePlan(
+      plan,
+      fetchGcsTile,
+      executionOptions
+    );
+
+    const parsed = parseMapData(acquisition.mergedPayload);
+    const classified = classifierApi().run(parsed);
+    const routed = referenceLayerApi().splitClassified(classified.pois);
+    const activePois = exporterApi().exportPois({ enginePois: routed.activeEnginePois });
+    const diagnosticReport = buildDiagnosticReport(parsed, classified);
+
+    return {
+      pois: activePois,
+      referencePois: routed.referencePois,
+      enginePois: classified.pois,
+      diagnostics: parsed.diagnostics,
+      classificationDiagnostics: classified.classificationDiagnostics,
+      diagnosticReport,
+      engineStats: classified.diagnostics,
+      parserStats: {
+        sourceCount: parsed.sourceCount,
+        parsedCount: parsed.parsedCount,
+        duplicateCount: parsed.duplicateCount,
+        failedCount: parsed.failedCount
+      },
+      selectedBounds: null,
+      acquisition: {
+        engineVersion: acquisition.version,
+        bufferMeters: plan.bufferMeters,
+        cellLevel: plan.cellLevel,
+        acquisitionBounds: plan.acquisitionBounds,
+        tileCount: plan.tiles.length,
+        geometryCoverageComplete: acquisition.geometryCoverageComplete,
+        transportComplete: acquisition.transportComplete,
+        sourceComplete: acquisition.sourceComplete,
+        coverageComplete: acquisition.coverageComplete,
+        coverageStatus: acquisition.coverageStatus,
+        requests: acquisition.results
+      },
+      sourcePath: MAP_DATA_PATH
+    };
+  }
+
   async function collect() {
     const map = findMap();
     if (!map) throw new Error('Wayfarer Mapを確認できませんでした。');
@@ -231,12 +315,73 @@
       popup.document.open();
       popup.document.write(
         '<!doctype html><meta charset="utf-8"><title>Campsite Bridge</title>' +
-        '<body style="margin:0;background:#020617;color:#e2e8f0;font-family:system-ui;display:grid;place-items:center;min-height:100vh">' +
-        '<div style="text-align:center"><div style="font-size:42px">🌉</div><strong>Campsite Bridge</strong>' +
-        '<div style="margin-top:8px;color:#94a3b8;font-size:13px">WayfarerからPOIを準備しています…</div></div></body>'
+        '<body style="margin:0;background:#020617;color:#e2e8f0;font-family:-apple-system,BlinkMacSystemFont,&quot;Segoe UI&quot;,sans-serif;display:grid;place-items:center;min-height:100vh;padding:24px;text-align:center">' +
+        '<div><strong style="display:block;font-size:18px">🔐 Campsite Bridge</strong>' +
+        '<small style="display:block;margin-top:8px;color:#94a3b8;line-height:1.7">Campsiteを準備しています…</small></div></body>'
       );
       popup.document.close();
     } catch (_) {}
+  }
+
+  function currentCompletedPolygon() {
+    try {
+      const api = window.CampsiteWayfarerPolygonController;
+      const state = api?.getState?.();
+      const polygon = api?.getPolygon?.();
+      if (state?.active === true || state?.completed !== true) return null;
+      if (!Array.isArray(polygon) || polygon.length < 3 || polygon.length > 30) return null;
+      return polygon;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  async function confirmedPolygonSnapshotForBridge(polygon) {
+    const collected = await collectPolygon(polygon, {
+      bufferMeters: 200,
+      maxTileMeters: 500
+    });
+    const zoning = polygonZoneApi().classifyPois(polygon, collected.enginePois);
+    const observedAt = new Date().toISOString();
+    const wayfarerObservation = {
+      version: '0.2.0',
+      snapshotId: 'wm3:' + observedAt,
+      observedAt,
+      polygon: zoning.polygon,
+      counts: zoning.counts,
+      zones: zoning.zones,
+      visibleTotal: zoning.visibleTotal,
+      retainedTotal: zoning.retainedTotal,
+      excludedCount: zoning.excludedCount,
+      outsideCount: zoning.outsideCount,
+      canProceed: zoning.visibleTotal > 0,
+      acquisition: {
+        engineVersion: String(collected?.acquisition?.engineVersion || ''),
+        bufferMeters: Number(collected?.acquisition?.bufferMeters ?? 200),
+        referenceMeters: 100,
+        reserveMeters: 200,
+        cellLevel: Number(collected?.acquisition?.cellLevel || 0),
+        acquisitionBounds: collected?.acquisition?.acquisitionBounds
+          ? JSON.parse(JSON.stringify(collected.acquisition.acquisitionBounds))
+          : null,
+        tileCount: Number(collected?.acquisition?.tileCount || 0),
+        geometryCoverageComplete: collected?.acquisition?.geometryCoverageComplete === true,
+        transportComplete: collected?.acquisition?.transportComplete === true,
+        coverageComplete: collected?.acquisition?.coverageComplete === true,
+        coverageStatus: String(collected?.acquisition?.coverageStatus || 'unverified'),
+        sourceComplete: collected?.acquisition?.sourceComplete ?? null
+      }
+    };
+    return {
+      // Editable Bridge POIs stay limited to the confirmed design polygon.
+      // REFERENCE_100 / RESERVE_200 travel only inside the immutable observation.
+      enginePois: zoning.zones.interior,
+      referencePois: [],
+      selectedBounds: null,
+      diagnosticReport: collected.diagnosticReport,
+      acquisition: collected.acquisition,
+      wayfarerObservation
+    };
   }
 
   function makePayload(snapshot, handshakeId) {
@@ -295,6 +440,7 @@
           cleanup();
           resolve({
             count: Number(data.count || 0),
+            activeCount: Number(data.activeCount ?? data.count ?? 0),
             sourceCount: Number(data.sourceCount || payload.pois.length || 0)
           });
         }
@@ -316,6 +462,16 @@
   }
 
   async function startBridge() {
+    const polygon = currentCompletedPolygon();
+    if (!polygon) {
+      dispatchStatus({
+        state: 'error',
+        code: 'polygon-required',
+        message: '先にBridgeから設計範囲を確定してください。'
+      });
+      return;
+    }
+
     const handshakeId = createId('pc');
     let popup = null;
     let diagnosticReport = null;
@@ -334,10 +490,10 @@
     }
 
     writePreparingPage(popup);
-    dispatchStatus({ state: 'busy', message: 'Wayfarer MapからPOIを取得しています…', diagnosticReport: null });
+    dispatchStatus({ state: 'busy', message: '設計範囲と外周200mを確認しています…', diagnosticReport: null });
 
     try {
-      const snapshot = await collect();
+      const snapshot = await confirmedPolygonSnapshotForBridge(polygon);
       diagnosticReport = snapshot.diagnosticReport;
       const payload = makePayload(snapshot, handshakeId);
       const pois = payload.pois;
@@ -357,10 +513,10 @@
 
       dispatchStatus({
         state: 'success',
-        count: result.count,
+        count: result.activeCount,
         sourceCount: result.sourceCount,
         diagnosticReport,
-        message: result.count.toLocaleString('ja-JP') + '件をCampsiteへ渡しました。Wayfarerはこのまま使えます。'
+        message: result.activeCount.toLocaleString('ja-JP') + '件をCampsiteへ渡しました。Wayfarerはこのまま使えます。'
       });
     } catch (error) {
       dispatchStatus({
@@ -406,6 +562,9 @@
     classifyMapData,
     buildDiagnosticReport,
     makePayload,
+    collectPolygon,
+    currentCompletedPolygon,
+    confirmedPolygonSnapshotForBridge,
     collect,
     startBridge
   });

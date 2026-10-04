@@ -31,6 +31,22 @@ assert.ok(
   'PC Collector must route payload creation through the Bridge V1 exporter'
 );
 assert.ok(
+  collector.includes('const wayfarerObservation = {'),
+  'Initial PC Handoff must create the fixed observation from the confirmed polygon'
+);
+assert.ok(
+  collector.includes('enginePois: zoning.zones.interior'),
+  'Initial Handoff editable Bridge channel must contain only INTERIOR POIs'
+);
+assert.ok(
+  collector.includes('referenceMeters: 100') && collector.includes('reserveMeters: 200'),
+  'Initial observation must retain 100m Reference and 200m Reserve metadata'
+);
+assert.ok(
+  collector.includes('wayfarerObservation'),
+  'Initial Handoff must attach wayfarerObservation to the Bridge payload snapshot'
+);
+assert.ok(
   receiver.includes("bridgePlatform: String(data.bridgePlatform || '').trim().toLowerCase()"),
   'Receiver must retain bridgePlatform from payload'
 );
@@ -57,8 +73,16 @@ assert.ok(
   'Selection must keep the hidden legacy fallback'
 );
 assert.ok(
+  selection.includes('adapter?.wayfarerObservation?.polygon'),
+  'Gateway must prefill the initial polygon from the accepted Wayfarer observation'
+);
+assert.ok(
   nextFlow.includes("const LEGACY_FALLBACK_KEY = 'campsiteBridgeLegacyFlow.v1'"),
   'Next flow must keep the hidden legacy fallback'
+);
+assert.ok(
+  nextFlow.includes('project.wayfarerObservation = observation'),
+  'Project Handoff must retain a matching observation snapshot'
 );
 
 const sessionStorage = storage();
@@ -73,7 +97,38 @@ sessionStorage.setItem('campsiteBridgeAdapter.v0.3', JSON.stringify({
     { guid:'stop', title:'Stop', lat:35.0, lng:139.0, gameEntity:'POKESTOP', gameStatus:'ACTIVE' },
     { guid:'gym', title:'Gym', lat:35.001, lng:139.001, gameEntity:'GYM', gameStatus:'ACTIVE' },
     { guid:'power', title:'Power', lat:35.002, lng:139.002, gameEntity:'POWERSPOT', gameStatus:'ACTIVE' }
-  ]
+  ],
+  wayfarerObservation: {
+    version:'0.2.0',
+    snapshotId:'wm3:pc-route',
+    observedAt:'2026-10-04T09:00:00.000Z',
+    polygon:[
+      [34.999,138.999],
+      [35.004,138.999],
+      [35.004,139.004],
+      [34.999,139.004]
+    ],
+    counts:{ interior:{total:3}, reference100:{total:1}, reserve200:{total:1} },
+    zones:{
+      interior:[
+        { guid:'stop', title:'Stop', lat:35.0, lng:139.0, gameEntity:'POKESTOP', gameStatus:'ACTIVE', observationZone:'INTERIOR' },
+        { guid:'gym', title:'Gym', lat:35.001, lng:139.001, gameEntity:'GYM', gameStatus:'ACTIVE', observationZone:'INTERIOR' },
+        { guid:'power', title:'Power', lat:35.002, lng:139.002, gameEntity:'POWERSPOT', gameStatus:'ACTIVE', observationZone:'INTERIOR' }
+      ],
+      reference100:[
+        { guid:'ref', title:'Reference', lat:35.0035, lng:139.0035, gameEntity:'POKESTOP', gameStatus:'ACTIVE', observationZone:'REFERENCE_100' }
+      ],
+      reserve200:[
+        { guid:'reserve', title:'Reserve', lat:35.0045, lng:139.0045, gameEntity:'POKESTOP', gameStatus:'ACTIVE', observationZone:'RESERVE_200' }
+      ]
+    },
+    visibleTotal:4,
+    retainedTotal:5,
+    excludedCount:0,
+    outsideCount:0,
+    canProceed:true,
+    acquisition:{ bufferMeters:200, referenceMeters:100, reserveMeters:200, coverageComplete:false }
+  }
 }));
 
 const context = {
@@ -137,6 +192,10 @@ assert.equal(project.meta.flowMode, 'next');
 assert.equal(project.meta.preview, false);
 assert.equal(project.currentPois.length, 3);
 assert.equal(project.polygon.length, 4);
+assert.equal(project.wayfarerObservation?.snapshotId, 'wm3:pc-route');
+assert.equal(project.wayfarerObservation?.zones?.reference100?.[0]?.guid, 'ref');
+assert.equal(project.wayfarerObservation?.zones?.reserve200?.[0]?.guid, 'reserve');
+assert.equal(project.currentPois.some(poi => poi.guid === 'ref' || poi.guid === 'reserve'), false, 'Reference/Reserve must stay outside editable currentPois');
 assert.equal(typeof api.saveProject, 'function', 'Next flow must expose storage recovery save');
 
 assert.ok(

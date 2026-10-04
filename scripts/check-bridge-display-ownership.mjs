@@ -10,12 +10,19 @@ const networkRecovery = fs.readFileSync('dist/bridge-shortcut/1.0.0/runtime.part
 const iphonePolicy = fs.readFileSync('dist/bridge-shortcut/1.0.0/runtime.part-09.iphone-wfmm-color-policy.js', 'utf8');
 const displayOwner = fs.readFileSync('js/bridge-wayfarer-display-owner.js', 'utf8');
 const deckCompat = fs.readFileSync('js/bridge-wayfarer-deck-compat.js', 'utf8');
+const acquisition = fs.readFileSync('bridge-pc/wayfarer-acquisition-engine.js', 'utf8');
 const collector = fs.readFileSync('bridge-pc/page-collector.js', 'utf8');
 const parser = fs.readFileSync('bridge-pc/poi-parser.js', 'utf8');
 const classifier = fs.readFileSync('bridge-pc/poi-classifier.js', 'utf8');
 const referenceLayer = fs.readFileSync('bridge-pc/poi-reference-layer.js', 'utf8');
 const diagnostics = fs.readFileSync('bridge-pc/poi-diagnostics.js', 'utf8');
 const exporter = fs.readFileSync('bridge-pc/bridge-v1-exporter.js', 'utf8');
+const wm1LiveVerifier = fs.readFileSync('bridge-pc/wm1-live-verifier.js', 'utf8');
+const wm2PolygonController = fs.readFileSync('bridge-pc/wayfarer-polygon-controller.js', 'utf8');
+const wm2PolygonUi = fs.readFileSync('bridge-pc/polygon-ui.js', 'utf8');
+const wm3ObservationZone = fs.readFileSync('bridge-pc/wayfarer-observation-zone.js', 'utf8');
+const wm3ObserveController = fs.readFileSync('bridge-pc/wm3-observe-controller.js', 'utf8');
+const wm3bTabLink = fs.readFileSync('bridge-pc/wm3b-tab-link.js', 'utf8');
 
 assert.equal(
   fs.existsSync('js/bridge-wayfarer-poi-colors.js'),
@@ -29,24 +36,42 @@ assert.deepEqual(mainEntry.js, [
   'wayfarer-map-adapter.js',
   'wayfarer-display-owner.js',
   'wayfarer-deck-compat.js',
+  'wayfarer-polygon-controller.js',
+  'wayfarer-acquisition-engine.js',
   'poi-parser.js',
   'poi-classifier.js',
   'poi-reference-layer.js',
   'poi-diagnostics.js',
   'bridge-v1-exporter.js',
-  'page-collector.js'
+  'page-collector.js',
+  'wm1-live-verifier.js',
+  'wayfarer-observation-zone.js'
 ], 'PC MAIN-world architecture changed');
 assert.ok(!mainEntry.js.includes('wayfarer-poi-colors.js'), 'PC must never load a Bridge POI renderer');
+assert.ok(!mainEntry.js.includes('wm3-observe-controller.js'), 'Obsolete observation controller must not be loaded');
+assert.ok(!mainEntry.js.includes('wm3b-tab-link.js'), 'Obsolete observation relay must not be loaded');
+assert.equal(Boolean(manifest.background), false, 'Obsolete observation relay service worker must stay removed');
+const isolatedEntry = manifest.content_scripts?.find(entry => entry.world === 'ISOLATED');
+assert.ok(isolatedEntry?.js?.includes('polygon-ui.js'), 'WM-2 polygon UI must stay isolated from the MAIN data/controller world');
+assert.ok(wm2PolygonController.includes('maps.Polygon'), 'WM-2 may render only the project polygon geometry on Wayfarer');
+assert.ok(!wm2PolygonController.includes('gameEntity'), 'WM-2 polygon controller must not become a POI renderer');
+assert.ok(!wm2PolygonUi.includes('gameEntity'), 'WM-2 polygon UI must not render POIs');
 
 const runtimeSources = {
   displayOwner,
   deckCompat,
+  acquisition,
   collector,
   parser,
   classifier,
   referenceLayer,
   diagnostics,
-  exporter
+  exporter,
+  wm1LiveVerifier,
+  wm2PolygonController,
+  wm3ObservationZone,
+  wm3ObserveController,
+  wm3bTabLink
 };
 const forbiddenVisualTokens = [
   'CampsiteBridgePoiColors',
@@ -93,4 +118,4 @@ assert.ok(iphonePolicy.includes('bridgeColors: false'), 'iPhone Bridge colors mu
 assert.ok(iphonePolicy.includes('legacyDomScanning: false'), 'Legacy iPhone DOM scanning must stay disabled');
 assert.ok(iphonePolicy.includes('legacyCanvasSampling: false'), 'Legacy iPhone canvas sampling must stay disabled');
 
-console.log('Bridge display ownership architecture: Wayfarer/WFMM only, Bridge data-only: OK');
+console.log('Bridge display ownership architecture: POIs stay Wayfarer/WFMM; WM-2 project geometry overlay allowed: OK');

@@ -241,6 +241,8 @@ assert.ok(selection.includes('id="bridgeScrollHandle"'), 'Bridge map must expose
 assert.ok(selection.includes('id="bridgeGuide" class="bridge-guide bridge-guide-top"'), 'Polygon guidance must appear above the map');
 assert.ok(selection.includes('外周に沿って1点目・2点目を置いてください'), 'Polygon guidance must explain the first points');
 assert.ok(selection.includes('3点目からは緑の範囲がカーソルに追随します'), 'Polygon guidance must explain live polygon preview');
+assert.ok(selection.includes("mapEl.addEventListener('pointerleave', clearPreviewOnMapLeave"), 'Gateway polygon preview must clear when the pointer leaves the map');
+assert.ok(selection.includes("mapEl.addEventListener('mouseleave', clearPreviewOnMapLeave"), 'Gateway polygon preview must keep a mouseleave fallback');
 assert.ok(selection.includes('<strong>範囲を確認</strong>'), 'Completed polygon guidance must switch to review');
 assert.ok(selection.includes('問題なければ下の「この範囲をCampsiteで使う」を押してください'), 'Completed polygon guidance must explain the confirm action');
 assert.ok(selection.indexOf('id="bridgeGuide" class="bridge-guide bridge-guide-top"') < selection.indexOf('id="campsiteBridgeMap"'), 'Polygon guidance must be above the map');
@@ -293,7 +295,21 @@ assert.ok(receiver.includes('handoffId,'), 'Receiver Adapter must persist the ha
 assert.ok(receiver.includes("setTimeout(goToCampsite, 450)"), 'Receiver must preserve ACK window before handoff');
 assert.ok(receiver.includes("setTimeout(showReceiverDetail, 2500)"), 'Receiver detail should be fallback-only');
 assert.ok(receiver.includes('bridge-receiver-detail'), 'Receiver must support diagnostic detail mode');
+assert.ok(receiver.includes('id="bridgeReceiverBoot"'), 'Receiver must show the shared stable loading shell before routing');
+assert.ok(receiver.includes('Campsiteを準備しています…'), 'Receiver loading copy must match Gateway loading copy');
 assert.ok(gateway.includes('#loginScreen,#splashScreen,#openingScreen{display:none!important}'), 'Gateway must suppress legacy login/splash flash');
+assert.ok(gateway.includes('#campsiteBridgeAppShell[hidden]{display:none!important}'), 'Gateway must keep the complete Campsite DOM natively hidden before auth resolves');
+assert.ok(gateway.includes('#caAccessGate.ca-gate-handoff-pending{visibility:hidden!important;pointer-events:none!important}'), 'Pending CA gate must stay hidden behind the stable Bridge loading shell');
+assert.ok(gateway.includes("html.replace('<head>', `<head>${bridgeCriticalHead}${leafletCss}`)"), 'Critical Bridge auth CSS must be injected at the start of head');
+assert.ok(gateway.includes('bridgePendingMarkup'), 'Stable Bridge loading shell must be inserted at the start of body');
+assert.ok(gateway.includes('id="campsiteBridgeAppShell" hidden style="display:none!important"'), 'Fetched Campsite body must be wrapped in a native hidden shell before parsing visible UI');
+assert.ok(gateway.includes('shell.hidden=false'), 'Only approved handoff may release the hidden Campsite DOM shell');
+assert.ok(gateway.includes('shell.style.removeProperty("display")'), 'Approved handoff must remove the hard display guard');
+assert.ok(gateway.includes('bridgeAuthPendingScreen'), 'Gateway must keep a stable auth-pending shell instead of flashing the main app');
+assert.ok(gateway.includes('Campsiteを準備しています…'), 'Gateway loading shell must match the Receiver shell');
+assert.ok(gateway.includes('window.addEventListener("campsite:ca-access-ready",finish'), 'Gateway hidden shell must release on approved handoff');
+assert.ok(gateway.includes('!gate.classList.contains("ca-gate-handoff-pending")'), 'Gateway loading shell must hand off to the visible login gate when auth is required');
+assert.ok(gateway.includes('`</div>${bridgeScripts}</body>`'), 'Gateway must close the native hidden app shell before Bridge runtime scripts');
 
 const creativeManifest = JSON.parse(fs.readFileSync('creative/runtime/next-lab-manifest.json', 'utf8'));
 assert.equal(creativeManifest.sourceRepo, 'Kaityo1221/Campsite-Design-Tool-Next-Lab');

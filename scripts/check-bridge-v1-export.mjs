@@ -71,6 +71,37 @@ const payload = exporter.makePayload({
   enginePois,
   diagnostics: { unknownCount: 1, secret: 'must-not-leak' },
   classificationDiagnostics: [{ guid: 'unknown-1', reason: 'AMBIGUOUS_GAME_OBJECT' }],
+  wayfarerObservation: {
+    version:'0.2.0',
+    snapshotId:'wm3:2026-10-02T07:20:00.000Z',
+    observedAt:'2026-10-02T07:20:00.000Z',
+    polygon:[[34.99,138.99],[35.01,138.99],[35.01,139.01],[34.99,139.01]],
+    counts:{ interior:{ total:3 }, reference100:{ total:1 }, reserve200:{ total:1 } },
+    zones:{
+      interior:[enginePois[0], enginePois[1], enginePois[2]],
+      reference100:[enginePois[4]],
+      reserve200:[{ ...enginePois[2], guid:'reserve-power', lat:35.015, lng:139.015 }]
+    },
+    visibleTotal:4,
+    retainedTotal:5,
+    excludedCount:0,
+    outsideCount:0,
+    canProceed:true,
+    acquisition:{
+      engineVersion:'wm1-test',
+      bufferMeters:200,
+      referenceMeters:100,
+      reserveMeters:200,
+      cellLevel:14,
+      acquisitionBounds:{ south:34.98, west:138.98, north:35.02, east:139.02 },
+      tileCount:4,
+      geometryCoverageComplete:true,
+      transportComplete:true,
+      coverageComplete:false,
+      coverageStatus:'unverified',
+      sourceComplete:null
+    }
+  },
   selectedBounds: {
     center: { lat: 35.0, lng: 139.0 },
     zoom: 16,
@@ -81,7 +112,7 @@ const payload = exporter.makePayload({
 
 assert.deepEqual(Object.keys(payload), [
   'type', 'bridgeVersion', 'bridgePlatform', 'schemaVersion',
-  'handshakeId', 'selectedBounds', 'autoContinue', 'pois', 'referencePois'
+  'handshakeId', 'selectedBounds', 'autoContinue', 'pois', 'referencePois', 'wayfarerObservation'
 ]);
 assert.equal(payload.type, 'CAMPSITE_BRIDGE_POI_V1');
 assert.equal(payload.bridgeVersion, '0.1.0');
@@ -101,6 +132,12 @@ assert.equal(payload.referencePois.find(p => p.guid === 'inactive-power-1')?.ref
 assert.equal(payload.referencePois.find(p => p.guid === 'inactive-power-1')?.gameEntity, 'POWERSPOT');
 assert.equal(payload.referencePois.find(p => p.guid === 'inactive-power-1')?.gameStatus, 'INACTIVE');
 assert.equal(payload.referencePois.some(p => p.guid === 'unknown-1'), false);
+assert.equal(payload.wayfarerObservation.snapshotId, 'wm3:2026-10-02T07:20:00.000Z');
+assert.equal(payload.wayfarerObservation.observedAt, '2026-10-02T07:20:00.000Z');
+assert.equal(payload.wayfarerObservation.zones.reserve200.length, 1);
+assert.equal(payload.wayfarerObservation.acquisition.bufferMeters, 200);
+assert.equal(payload.wayfarerObservation.acquisition.coverageComplete, false);
+assert.equal(payload.wayfarerObservation.acquisition.transportComplete, true);
 assert.equal('diagnostics' in payload, false);
 assert.equal('classificationDiagnostics' in payload, false);
 assert.equal('enginePois' in payload, false);

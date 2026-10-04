@@ -231,3 +231,42 @@ campsiteBridgeLegacyFlow.v1
 When the key is `1`, or `campsiteBridgeLegacy=1` / `campsiteBridgeNext=0` is supplied to the Gateway, the Next Project handler stays inactive and the existing legacy handoff is used.
 
 Normal CSV / KML / KMZ entry remains outside this Bridge switch.
+
+## 9. Optional Wayfarer observation (WM-4A)
+
+The same `campsiteProject.v1` contract accepts optional top-level
+`wayfarerObservation`; `schemaVersion` remains `1.0`. Older Projects without this
+field remain valid. This is a stored remote observation, separate from editable
+`sourcePois`, `selectedPois`, `currentPois`, added/deleted POIs and edits.
+
+The existing observation stores:
+
+- `version`, `snapshotId` and `observedAt`: snapshot version/identity/time;
+- `polygon`: geometry used for that acquisition, distinct from the current
+  Creative-owned `project.polygon` after subsequent edits;
+- `zones.interior`, `zones.reference100`, `zones.reserve200`: retained POIs with
+  stable GUID/poiId and type/Active/Inactive state;
+- counts and visible/retained totals;
+- `acquisition.bufferMeters`, reference/reserve distances, acquisition bounds and
+  geometry/transport/source/completeness diagnostics.
+
+For the first Wayfarer -> Campsite handoff, a completed current observation may
+travel as the same optional `wayfarerObservation` through Bridge payload ->
+Receiver Adapter -> `campsiteProject.v1`. The Gateway selection is initialized
+from that observation polygon. The Project accepts the observation only when the
+current Project polygon still matches the acquisition polygon; changing the
+polygon drops the stale observation instead of relabeling it as current.
+
+Do not upgrade an unverified or incomplete acquisition to complete during save,
+restore or handoff. RESERVE_200 remains stored and hidden. No 100m/200m boundary
+lines are drawn. Future diff/absence/merge state is reserved for later phases.
+
+RESULT and Creative editing callbacks can hold different in-memory Project
+objects. The feature observation integration must carry the latest stored
+observation through the existing Creative timer, pagehide and navigation saves.
+Only a matching `source`, `projectId` and `meta.bridgeHandoffId` may participate.
+A detached callback must not overwrite a replaced/removed Project or import its
+observation into another handoff. Observation removal must not be undone by a
+stale callback.
+
+See `wm-phase-gates.md` for acceptance evidence and subsequent WM-4 subphases.

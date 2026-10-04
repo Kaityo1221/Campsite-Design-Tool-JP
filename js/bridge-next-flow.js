@@ -99,6 +99,47 @@
     };
   }
 
+  function normalizeObservationPolygon(raw) {
+    const polygon = (Array.isArray(raw) ? raw : []).map(point => {
+      if (!Array.isArray(point) || point.length < 2) return null;
+      const lat = Number(point[0]);
+      const lng = Number(point[1]);
+      return Number.isFinite(lat) && Number.isFinite(lng) ? [lat, lng] : null;
+    }).filter(Boolean);
+    return polygon.length >= 3 && polygon.length <= 30 ? polygon : [];
+  }
+
+  function normalizeWayfarerObservation(raw) {
+    if (!raw || typeof raw !== 'object') return null;
+    const polygon = normalizeObservationPolygon(raw.polygon);
+    const zones = raw.zones && typeof raw.zones === 'object' ? raw.zones : {};
+    const observedAt = String(raw.observedAt || '').trim();
+    if (!polygon.length || !observedAt) return null;
+    if (!Array.isArray(zones.interior) || !Array.isArray(zones.reference100) || !Array.isArray(zones.reserve200)) return null;
+    return {
+      version: String(raw.version || '0.1.0'),
+      snapshotId: String(raw.snapshotId || ('wm3:' + observedAt)),
+      observedAt,
+      polygon,
+      counts: clone(raw.counts || {}),
+      zones: {
+        interior: clone(zones.interior),
+        reference100: clone(zones.reference100),
+        reserve200: clone(zones.reserve200)
+      },
+      visibleTotal: Number(raw.visibleTotal || 0),
+      retainedTotal: Number(raw.retainedTotal || 0),
+      excludedCount: Number(raw.excludedCount || 0),
+      outsideCount: Number(raw.outsideCount || 0),
+      canProceed: raw.canProceed === true,
+      acquisition: clone(raw.acquisition || {})
+    };
+  }
+
+  function samePolygon(a, b) {
+    return JSON.stringify(normalizeObservationPolygon(a)) === JSON.stringify(normalizeObservationPolygon(b));
+  }
+
   function buildProject(selection, adapter) {
     const rawSourcePois = Array.isArray(adapter?.pois) ? adapter.pois : [];
     const sourceByGuid = new Map(rawSourcePois.map(poi => [String(poi?.guid || ''), poi]));
@@ -124,7 +165,7 @@
       ? crypto.randomUUID()
       : `bridge-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
-    return {
+    const project = {
       schemaVersion: PROJECT_SCHEMA_VERSION,
       projectId,
       source: PROJECT_SOURCE,
@@ -153,6 +194,12 @@
         preview: false
       }
     };
+
+    const observation = normalizeWayfarerObservation(adapter?.wayfarerObservation);
+    if (observation && samePolygon(project.polygon, observation.polygon)) {
+      project.wayfarerObservation = observation;
+    }
+    return project;
   }
 
   function showError(message) {
