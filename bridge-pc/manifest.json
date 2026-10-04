@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Campsite Bridge - PC TEST",
+  "name": "Campsite Bridge PC",
   "version": "0.1.0",
-  "description": "Wayfarerで設計範囲を決め、範囲内のPOIをCampsiteへ送るPC実機確認用Bridge。",
+  "description": "Wayfarerで設計範囲を決め、固定Referenceを取得してCampsiteで設計するPC Bridge。",
   "permissions": [],
   "host_permissions": [
     "https://wayfarer.scopely.com/*",
