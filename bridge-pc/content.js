@@ -28,6 +28,7 @@
   let bridgeStatus = 'ready';
   let bridgeMessage = '';
   let lastCount = 0;
+  let sessionRangeConfirmed = false;
   let polygonState = {
     active: false,
     completed: false,
@@ -106,25 +107,28 @@
   }
 
   function startNewRange() {
+    sessionRangeConfirmed = false;
     panelOpen = false;
     sendPolygon('start-new');
     render();
   }
 
   function resumeRange() {
+    sessionRangeConfirmed = false;
     panelOpen = false;
     sendPolygon('resume-draft');
     render();
   }
 
   function editRange() {
+    sessionRangeConfirmed = false;
     panelOpen = false;
     sendPolygon('edit-completed');
     render();
   }
 
   function startBridge() {
-    if (busy || polygonState.completed !== true || polygonState.active === true) return;
+    if (busy || !sessionRangeConfirmed || polygonState.completed !== true || polygonState.active === true) return;
     busy = true;
     bridgeStatus = 'busy';
     bridgeMessage = 'WayfarerからPOIを準備しています…';
@@ -194,7 +198,8 @@
     if (!panel || !primaryButton || !secondaryButton || !tertiaryButton || !stateText || !helperText || !progressText) return;
 
     const drawing = polygonState.active === true;
-    const ready = polygonState.completed === true && !drawing;
+    const ready = sessionRangeConfirmed && polygonState.completed === true && !drawing;
+    const storedCompleted = !sessionRangeConfirmed && polygonState.completed === true && !drawing;
     const resumable = polygonState.draftAvailable === true && polygonState.completed !== true && !drawing;
 
     primaryButton.hidden = false;
@@ -235,6 +240,20 @@
         progressText.textContent = bridgeMessage;
         progressText.hidden = false;
       }
+      return;
+    }
+
+    if (storedCompleted) {
+      stateText.textContent = '📐 設計範囲を決めてください';
+      helperText.textContent = '前回の設計範囲があります。確認・調整してから範囲を確定してください。';
+      primaryButton.textContent = '📐 設計範囲を決める';
+      primaryButton.disabled = false;
+      primaryButton.onclick = editRange;
+
+      secondaryButton.hidden = false;
+      secondaryButton.textContent = '最初からやり直す';
+      secondaryButton.disabled = false;
+      secondaryButton.onclick = startNewRange;
       return;
     }
 
@@ -357,7 +376,10 @@
 
     if (polygonState.active === true) {
       panelOpen = false;
-    } else if (wasDrawing && (polygonState.completed === true || polygonState.paused === true)) {
+    } else if (wasDrawing && polygonState.completed === true) {
+      sessionRangeConfirmed = true;
+      panelOpen = true;
+    } else if (wasDrawing && polygonState.paused === true) {
       panelOpen = true;
     }
     render();
