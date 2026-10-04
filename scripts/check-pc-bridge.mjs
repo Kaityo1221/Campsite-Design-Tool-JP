@@ -321,6 +321,11 @@ assert.equal(content.includes('popup.postMessage'), false, 'ISOLATED UI must not
 assert.ok(content.includes('🌉 Campsite Bridge'), 'PC Bridge side panel title missing');
 assert.ok(content.includes('📐 設計範囲を決める'), 'Bridge panel must own the initial range CTA');
 assert.ok(content.includes('🌉 Campsiteへ送信！'), 'Bridge panel must own the handoff CTA');
+assert.ok(content.includes('let sessionRangeConfirmed = false'), 'Fresh PC session must not treat a stored polygon as send-ready');
+assert.ok(content.includes('const ready = sessionRangeConfirmed && polygonState.completed === true && !drawing'), 'Send CTA must require range confirmation in the current page session');
+assert.ok(content.includes("stateText.textContent = '📐 設計範囲を決めてください'"), 'Stored completed polygon must reopen at the range-decision step');
+assert.ok(content.includes("primaryButton.textContent = '📐 設計範囲を決める'"), 'Range decision must remain the primary first-step CTA');
+assert.ok(content.includes('sessionRangeConfirmed = true'), 'Completing the range in this session must unlock send');
 assert.ok(content.includes('↻ Campsiteへ再送信'), 'Bridge success state must keep an explicit resend action');
 assert.ok(content.includes('件をCampsiteへ送信しました'), 'Bridge success result must be shown separately from the action button');
 assert.ok(content.includes("panelOpen = !panelOpen"), 'Bridge button must only open the side panel');
