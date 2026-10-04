@@ -478,7 +478,7 @@ WM-6B distance warning may now start. WM-7 remains out of scope.
 
 
 
-### WM-6B — Reference-aware 50m distance warning (implementation)
+### WM-6B — Reference-aware 50m distance warning: PASS
 
 Scope is warning-only. Reference POIs remain outside editable Creative state and
 the existing 50m reason/signature workflow remains records-owned.
@@ -528,4 +528,56 @@ Gate before PASS:
    regressions remain green;
 10. WM-7 remains unimplemented.
 
-WM-7 must not start until WM-6B passes.
+WM-6B PASS was fixed on 2026-10-04 JST at final validation head
+`64fc55c2dabdf546f04045cb1860b8c7891418a8`.
+
+Evidence:
+
+- implementation head: `3d80b5a486832cefd550f3a67fc4105e07acff67`;
+- distance-gate cleanup: `ed607b3d77c7adfb89f9dac2f8e001d8e44ad5a7`;
+- VM scheduler hardening: `871b153cdb9e669e03fb53c49cc70b323fc2045c`;
+- duplicate CI-path cleanup: `9cdbea9731b14dc3d1701fd8c1301dbadfef2ddb`;
+- optional Creative-state guard: `7cc984be014c7857a03b7c1e4e724b65f3522245`;
+- optional DOM guard / final validation head:
+  `64fc55c2dabdf546f04045cb1860b8c7891418a8`;
+- Campsite Bridge PC #367: PASS, including
+  `WM-6B Reference-aware nearest distance: PASS` with no WM-6B
+  ReferenceError/warning-refresh noise in the final log;
+- Phase 5 Unified Renderer Release Gate #183: PASS, 15/15 real Creative
+  iPhone/WebKit tests;
+- the WebKit gate includes both WM-6B browser cases:
+  - add mode warns for an exterior Reference POI while Confirm remains enabled;
+  - selected candidate keeps the same Reference warning while editable records
+    remain unchanged;
+- Bridge Next #303, Campsite Bridge iPhone #185, Setup #230,
+  Distance Advice #193, Distance Mission #229, Workflow Resume #225,
+  Field End-to-End #288, Field Prep Safety #310 and Field Mode Safety #349:
+  PASS;
+- `REFERENCE_100` participates in nearest-distance warning only;
+  INTERIOR fallback, RESERVE_200 and Reference circles do not;
+- deleted records and the moving/selected candidate are excluded correctly;
+- warnings are hidden at 50m or more and never block placement;
+- redraw/delete/Undo/Redo and Reference refresh are connected to immediate
+  recalculation without moving Reference POIs into `records/currentPois`;
+- WM-6A inspection behavior and 50m-only Reference-circle behavior remain intact;
+- production `main` was not changed and WM-7 was not implemented.
+
+## WM-6 — PASS
+
+WM-6 is complete at the code-validation head
+`64fc55c2dabdf546f04045cb1860b8c7891418a8`.
+
+Completed scope:
+
+- WM-6A: exterior Reference inspection, singleton title/type panel, read-only
+  interaction and Reference 50m-only circles;
+- WM-6B: Reference-aware under-50m warning for add / move / selected candidate,
+  with existing/new/reference source labeling and non-blocking placement.
+
+The WM-6 implementation preserves the core ownership contract:
+`records/currentPois` remain Creative-owned editable state, while
+`wayfarerObservation` and Reference Scene data remain separate.
+
+WM-7 re-observation / diff / disappearance / merge is the next roadmap phase and
+must start from this accepted WM-6 boundary.
+
