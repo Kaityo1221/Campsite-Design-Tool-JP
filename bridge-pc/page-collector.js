@@ -430,6 +430,16 @@
   }
 
   async function startBridge() {
+    const polygon = currentCompletedPolygon();
+    if (!polygon) {
+      dispatchStatus({
+        state: 'error',
+        code: 'polygon-required',
+        message: '先にBridgeから設計範囲を確定してください。'
+      });
+      return;
+    }
+
     const handshakeId = createId('pc');
     let popup = null;
     let diagnosticReport = null;
@@ -451,10 +461,7 @@
     dispatchStatus({ state: 'busy', message: 'Wayfarer MapからPOIを取得しています…', diagnosticReport: null });
 
     try {
-      const polygon = currentCompletedPolygon();
-      const snapshot = polygon
-        ? await confirmedPolygonSnapshotForBridge(polygon)
-        : await collect();
+      const snapshot = await confirmedPolygonSnapshotForBridge(polygon);
       diagnosticReport = snapshot.diagnosticReport;
       const payload = makePayload(snapshot, handshakeId);
       const pois = payload.pois;
