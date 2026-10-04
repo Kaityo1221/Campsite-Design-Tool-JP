@@ -12,6 +12,14 @@ const pcDisplayOwner = path.join(sourceDir, 'wayfarer-display-owner.js');
 const sharedDeckCompat = 'js/bridge-wayfarer-deck-compat.js';
 const pcDeckCompat = path.join(sourceDir, 'wayfarer-deck-compat.js');
 const retiredPoiOverlay = path.join(sourceDir, 'wayfarer-poi-colors.js');
+const RETIRED_OBSERVATION_RUNTIME = new Set([
+  'wm3-observe-controller.js',
+  'wm3b-tab-link.js',
+  'wayfarer-tab-relay.js',
+  'creative-tab-relay.js',
+  'creative-wm3b2b-test-injector.js',
+  'tab-relay-background.js'
+]);
 const FIXED_DOS_TIME = 0;
 const FIXED_DOS_DATE = ((2026 - 1980) << 9) | (9 << 5) | 21;
 
@@ -33,10 +41,11 @@ function listFiles(dir, base = dir) {
     const absolute = path.join(dir, name);
     const stat = fs.statSync(absolute);
     if (stat.isDirectory()) result.push(...listFiles(absolute, base));
-    else if (stat.isFile()) result.push({
-      absolute,
-      relative: path.relative(base, absolute).split(path.sep).join('/')
-    });
+    else if (stat.isFile()) {
+      const relative = path.relative(base, absolute).split(path.sep).join('/');
+      if (RETIRED_OBSERVATION_RUNTIME.has(relative)) continue;
+      result.push({ absolute, relative });
+    }
   }
   return result;
 }
@@ -116,6 +125,9 @@ const files = listFiles(sourceDir);
 if (!files.length) throw new Error('PC Bridge source is empty');
 if (files.some(file => file.relative === 'wayfarer-poi-colors.js')) {
   throw new Error('Retired POI overlay must not enter the PC Bridge package');
+}
+if (files.some(file => RETIRED_OBSERVATION_RUNTIME.has(file.relative))) {
+  throw new Error('Retired observation runtime must not enter the PC Bridge package');
 }
 
 const locals = [];
