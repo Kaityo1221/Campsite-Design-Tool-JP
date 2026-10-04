@@ -20,7 +20,6 @@ on:
       - 'creative/runtime/map-engine/wayfarer-reference-distance.js'
       - 'scripts/check-wm6b-reference-distance.mjs'
       - 'creative/wayfarer-reference-layer-patch.js'
-      - 'scripts/check-wm6b-reference-distance.mjs'
       - 'creative/runtime/map-engine/**'
       - 'scripts/check-bridge-wayfarer-map-adapter.mjs'
       - 'scripts/check-wayfarer-acquisition-engine.mjs'
