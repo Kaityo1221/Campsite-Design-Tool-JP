@@ -82,6 +82,17 @@ assert.equal(incomplete.canPersist, false);
 assert.equal(incomplete.project, saved.project);
 assert.equal(JSON.stringify(incomplete.project), JSON.stringify(saved.project));
 
+const duplicateRemote = persist(saved.project, {
+  canApply:true,
+  remoteComplete:true,
+  baseSnapshotId:'base-1',
+  remoteSnapshotId:'remote-1',
+  nextAbsenceCounts:{missing:2}
+});
+assert.equal(duplicateRemote.canPersist, false);
+assert.equal(duplicateRemote.reason, 'REMOTE_ALREADY_PERSISTED');
+assert.equal(duplicateRemote.project, saved.project);
+
 const missingId = persist(saved.project, {
   canApply:true, remoteComplete:true, baseSnapshotId:'base-1', remoteSnapshotId:'', nextAbsenceCounts:{missing:2}
 });
