@@ -111,7 +111,7 @@ assert.ok(html.includes('Zen Maru Gothic'),'Creative 50m next-gate font missing'
 assert.ok(!html.includes('installCampsiteProjectMobileUi'),'Legacy JP mobile UI override must stay removed');
 assert.ok(html.includes('JP_MAX_ADDITIONAL=25'),'JP design policy helper missing');
 assert.ok(html.includes("JP_TYPE_LIMITS=Object.freeze({'new-pokestop':12,'new-gym':8,'new-power':5})"),'JP per-type candidate limits missing');
-assert.ok(html.includes("if(isNew(r.layer)&&!jpCanAddLayer(r.layer))return"),'JP per-type add guard missing');
+assert.ok(html.includes("function cmPlace(latlng){if(cmAddMode&&isNew(activeLayer)&&!jpCanAddLayer(activeLayer))return;"),'JP per-type add guard missing');
 assert.ok(html.includes("if(isNew(to)&&!jpCanChangeType(to,r.id))return"),'JP per-type type-change guard missing');
 assert.ok(html.includes("ポケストップは最大"),'JP PokéStop cap message missing');
 assert.ok(html.includes("ジム"),'JP Gym cap label missing');
