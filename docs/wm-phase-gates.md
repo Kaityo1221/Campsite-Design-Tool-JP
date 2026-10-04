@@ -585,7 +585,7 @@ must start from this accepted WM-6 boundary.
 
 ## WM-7 — Re-observation / diff / disappearance / merge
 
-### WM-7A — 90-day refresh-age hint (implementation)
+### WM-7A — 90-day refresh-age hint: PASS
 
 Scope is intentionally limited to specification section 15. Re-observation diff,
 absence counting and Base/Local/Remote merge are not implemented in this subphase.
@@ -616,4 +616,29 @@ Gate before PASS:
 7. WM-3C through WM-6 and current production Creative regressions remain green;
 8. diff/disappearance/merge behavior is still absent.
 
-WM-7B re-observation diff must not start until WM-7A passes.
+WM-7A PASS was fixed on 2026-10-04 JST at code/test head
+`04e8430695e8ca672647a8742b799ffab0067c82`.
+
+Evidence:
+
+- Phase 5 Unified Renderer Release Gate #185: PASS, real Creative WebKit 16/16;
+- the browser suite includes
+  `WM-7A observation age shows a 90-day update hint without auto-opening UI`;
+- Campsite Bridge PC #369, Bridge Next #305, iPhone #187, Setup #232,
+  Distance Advice #195, Distance Mission #231, Workflow Resume #227,
+  Field End-to-End #290, Field Prep #312 and Field Mode Safety #351: PASS;
+- 89 days remains fresh and 90 days is stale in the pure age evaluation;
+- missing/invalid `observedAt` does not invent stale state;
+- stale age changes only the existing observation action and never auto-opens
+  the overlay;
+- WM-5C `Wayfarerで再取得` has priority when reacquisition and age-stale
+  conditions are both true;
+- a newly saved/current `observedAt` clears the hint immediately;
+- no Project schema field was added and the accepted observation is not rewritten;
+- editable Creative records remain unchanged;
+- diff review from the WM-6 PASS head contains only the observation-link age
+  state, regressions and gate documentation. Diff/disappearance/merge behavior
+  is not implemented in this PASS.
+
+WM-7B re-observation diff may now start.
+
