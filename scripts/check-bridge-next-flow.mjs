@@ -241,6 +241,8 @@ assert.ok(selection.includes('id="bridgeScrollHandle"'), 'Bridge map must expose
 assert.ok(selection.includes('id="bridgeGuide" class="bridge-guide bridge-guide-top"'), 'Polygon guidance must appear above the map');
 assert.ok(selection.includes('外周に沿って1点目・2点目を置いてください'), 'Polygon guidance must explain the first points');
 assert.ok(selection.includes('3点目からは緑の範囲がカーソルに追随します'), 'Polygon guidance must explain live polygon preview');
+assert.ok(selection.includes("mapEl.addEventListener('pointerleave', clearPreviewOnMapLeave"), 'Gateway polygon preview must clear when the pointer leaves the map');
+assert.ok(selection.includes("mapEl.addEventListener('mouseleave', clearPreviewOnMapLeave"), 'Gateway polygon preview must keep a mouseleave fallback');
 assert.ok(selection.includes('<strong>範囲を確認</strong>'), 'Completed polygon guidance must switch to review');
 assert.ok(selection.includes('問題なければ下の「この範囲をCampsiteで使う」を押してください'), 'Completed polygon guidance must explain the confirm action');
 assert.ok(selection.indexOf('id="bridgeGuide" class="bridge-guide bridge-guide-top"') < selection.indexOf('id="campsiteBridgeMap"'), 'Polygon guidance must be above the map');
