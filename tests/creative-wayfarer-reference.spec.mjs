@@ -275,7 +275,16 @@ test('WM-3C real Creative renders read-only Wayfarer references without entering
   await expect(referencePanel).toBeHidden();
   await outerReferenceIcon.click({ force:true });
   await expect(referencePanel).toBeVisible();
-  await page.locator('.leaflet-container').click({ position:{ x:28, y:28 }, force:true });
+  await page.evaluate(() => {
+    const container=document.querySelector('.leaflet-container');
+    container?.dispatchEvent(new MouseEvent('click', {
+      bubbles:true,
+      cancelable:true,
+      view:window,
+      clientX:200,
+      clientY:300
+    }));
+  });
   await expect(referencePanel).toBeHidden();
 
   const afterInitialRender = await workspaceSnapshot(page);
