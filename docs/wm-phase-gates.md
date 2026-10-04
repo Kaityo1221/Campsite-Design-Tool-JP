@@ -802,3 +802,24 @@ Final evidence:
 
 WM-7C is complete at this boundary.
 Do not start review UI / Remote apply / merge behavior without a new phase decision.
+
+
+## 2026-10-04 — Re-observation/update flow withdrawn
+
+Product decision: an accepted Wayfarer observation is a fixed Reference snapshot for that Project.
+Existing Projects do not reacquire, refresh, diff, merge, or replace that snapshot.
+
+Retained boundary:
+- initial Wayfarer observation and `wayfarerObservation`;
+- WM-5A/WM-5B local coverage and reclassification safety;
+- Reference Layer, including safe suppression when the current Creative polygon cannot use the retained coverage;
+- WM-6 Reference inspection and distance guidance.
+
+Withdrawn from the product:
+- WM-5C-1 reacquisition CTA and reacquisition roundtrip;
+- WM-7A 90-day refresh-age hint;
+- WM-7B re-observation diff engine;
+- WM-7C diff-state persistence / absence counting;
+- all future Pending/merge/review/update UI based on those phases.
+
+When the current Creative polygon exceeds usable retained coverage, Reference POIs fail closed instead of offering reacquisition.
