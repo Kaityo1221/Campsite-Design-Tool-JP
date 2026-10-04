@@ -8,6 +8,7 @@ const SOURCE_FILES = [
   'creative/runtime/map-engine/wayfarer-observation-adapter.js',
   'creative/runtime/map-engine/wayfarer-reference-geometry.js',
   'creative/runtime/map-engine/wayfarer-reference-scene-builder.js',
+  'creative/runtime/map-engine/wayfarer-reference-distance.js',
   'creative/runtime/map-engine/map-renderer.js'
 ];
 const PATCH_FILE = 'creative/wayfarer-reference-layer-patch.js';

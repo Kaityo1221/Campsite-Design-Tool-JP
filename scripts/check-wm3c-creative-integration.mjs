@@ -30,6 +30,7 @@ assert.ok(html.includes('wayfarer-local-reclassification.js?v=wm5b1'));
 assert.ok(html.includes('wayfarer-observation-adapter.js?v=wm3c4'));
 assert.ok(html.includes('wayfarer-reference-geometry.js?v=wm6a1'));
 assert.ok(html.includes('wayfarer-reference-scene-builder.js?v=wm6a1'));
+assert.ok(html.includes('wayfarer-reference-distance.js?v=wm6b1'));
 assert.ok(html.includes('map-renderer.js?v=5d15'), 'Bridge Project must cache-bust Reference-capable renderer');
 assert.ok(html.includes('cmWm3cReferenceRuntime'));
 
@@ -70,7 +71,8 @@ for (const path of [
   '../creative/runtime/map-engine/wayfarer-local-reclassification.js',
   '../creative/runtime/map-engine/wayfarer-observation-adapter.js',
   '../creative/runtime/map-engine/wayfarer-reference-geometry.js',
-  '../creative/runtime/map-engine/wayfarer-reference-scene-builder.js'
+  '../creative/runtime/map-engine/wayfarer-reference-scene-builder.js',
+  '../creative/runtime/map-engine/wayfarer-reference-distance.js'
 ]) {
   new vm.Script(fs.readFileSync(new URL(path, import.meta.url), 'utf8')).runInContext(context);
 }

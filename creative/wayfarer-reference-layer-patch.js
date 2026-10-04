@@ -12,7 +12,8 @@
       '<script src="./runtime/map-engine/wayfarer-local-reclassification.js?v=wm5b1"></script>',
       '<script src="./runtime/map-engine/wayfarer-observation-adapter.js?v=wm3c4"></script>',
       '<script src="./runtime/map-engine/wayfarer-reference-geometry.js?v=wm6a1"></script>',
-      '<script src="./runtime/map-engine/wayfarer-reference-scene-builder.js?v=wm6a1"></script>'
+      '<script src="./runtime/map-engine/wayfarer-reference-scene-builder.js?v=wm6a1"></script>',
+      '<script src="./runtime/map-engine/wayfarer-reference-distance.js?v=wm6b1"></script>'
     ].join('');
     const coreNeedle = "<script>\n(()=>{'use strict';";
     if (out.includes(coreNeedle) && !out.includes('wayfarer-observation-adapter.js?v=wm3c4')) {
@@ -28,6 +29,8 @@
       #cmWm6ReferenceType{display:block;margin-top:5px;font-size:12px;line-height:1.4;font-weight:800;color:#77684f}
       #cmWm6ReferenceClose{flex:0 0 34px;width:34px;height:34px;border:1px solid rgba(86,72,45,.18);border-radius:999px;background:#fff;color:#4c4030;font-size:21px;line-height:1;display:grid;place-items:center}
       body.cm-unified-renderer-interactive .cm-engine-reference-icon.leaflet-interactive{pointer-events:auto!important}
+      #cmWm6DistanceWarning[hidden]{display:none!important}
+      #cmWm6DistanceWarning{position:fixed;left:50%;bottom:calc(214px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:1890;max-width:min(88vw,420px);padding:8px 13px;border:1px solid rgba(185,101,41,.42);border-radius:999px;background:rgba(255,238,220,.96);color:#8a3f12;font-size:12px;font-weight:950;line-height:1.35;text-align:center;white-space:normal;box-shadow:0 3px 12px rgba(0,0,0,.14);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);pointer-events:none}
     </style>`;
     if (!out.includes('id="cmWm6ReferenceInspectStyle"')) out = out.replace('</head>', wm6Style + '</head>');
 
@@ -145,11 +148,73 @@ if(cmWm5bBaseSignature){
     });
   };
 }
+let cmWm6SelectedCandidate=null;
+let cmWm6DistanceState={visible:false,sourceType:'',distanceMeters:null,text:''};
+function cmWm6EnsureDistanceWarning(){
+  let warning=document.getElementById('cmWm6DistanceWarning');
+  if(warning)return warning;
+  warning=document.createElement('div');
+  warning.id='cmWm6DistanceWarning';
+  warning.hidden=true;
+  warning.setAttribute('role','status');
+  warning.setAttribute('aria-live','polite');
+  document.body.appendChild(warning);
+  return warning;
+}
+function cmWm6DistanceText(nearest){
+  if(!nearest||!Number.isFinite(Number(nearest.distanceMeters)))return'';
+  const distance=Number(nearest.distanceMeters).toFixed(1);
+  if(nearest.sourceType==='REFERENCE_100')return '⚠ '+distance+'m / 設計範囲外の既存POIから50m未満です';
+  if(nearest.sourceType==='NEW_CANDIDATE')return '⚠ '+distance+'m / 新規候補';
+  return '⚠ '+distance+'m / 既存POI';
+}
+function cmWm6DistanceTarget(){
+  if(cmMoveSession?.r&&!cmMoveSession.r.deleted){
+    const c=map.getCenter();
+    return{latlng:[c.lat,c.lng],excludeId:String(cmMoveSession.r.id||'')};
+  }
+  if(cmAddMode){
+    const c=map.getCenter();
+    return{latlng:[c.lat,c.lng],excludeId:''};
+  }
+  if(cmWm6SelectedCandidate&&!cmWm6SelectedCandidate.deleted&&String(cmWm6SelectedCandidate.layer||'').startsWith('new-')){
+    return{latlng:Array.isArray(cmWm6SelectedCandidate.latlng)?cmWm6SelectedCandidate.latlng.slice():null,excludeId:String(cmWm6SelectedCandidate.id||'')};
+  }
+  return null;
+}
+function cmWm6ReferenceDistanceItems(){
+  try{return cmWm3cReferenceScene().items.filter(item=>item?.origin==='reference'&&item?.layerKey==='marker'&&item?.observationZone==='REFERENCE_100')}catch(_){return[]}
+}
+function cmWm6HideDistanceWarning(){
+  const warning=document.getElementById('cmWm6DistanceWarning');
+  if(warning)warning.hidden=true;
+  cmWm6DistanceState={visible:false,sourceType:'',distanceMeters:null,text:''};
+  const move=document.getElementById('cmMoveNearest');
+  if(move){move.textContent='最短POI --';move.classList.remove('danger','safe')}
+}
+function cmWm6RefreshDistanceWarning(){
+  try{
+    if(typeof cmSafeNearestWarning!=='undefined'&&cmSafeNearestWarning)cmSafeNearestWarning.style.display='none';
+    const target=cmWm6DistanceTarget();
+    if(!target?.latlng){cmWm6HideDistanceWarning();return null}
+    const nearest=window.bridgeMapLab_findNearestCreativePoi(target.latlng,records||[],cmWm6ReferenceDistanceItems(),target.excludeId);
+    if(!nearest||!Number.isFinite(Number(nearest.distanceMeters))||Number(nearest.distanceMeters)>=50){cmWm6HideDistanceWarning();return nearest||null}
+    const text=cmWm6DistanceText(nearest);
+    const warning=cmWm6EnsureDistanceWarning();
+    warning.textContent=text;
+    warning.hidden=false;
+    warning.dataset.sourceType=String(nearest.sourceType||'');
+    const move=document.getElementById('cmMoveNearest');
+    if(move){move.textContent=text.replace(/^⚠\s*/,'⚠ ');move.classList.add('danger');move.classList.remove('safe')}
+    cmWm6DistanceState={visible:true,sourceType:String(nearest.sourceType||''),distanceMeters:Number(nearest.distanceMeters),text};
+    return nearest;
+  }catch(error){console.warn('[WM-6B Distance] warning refresh failed',error);cmWm6HideDistanceWarning();return null}
+}
 function cmWm3cReferenceScene(){
   const project=cmWm3cReadProject();
   const observation=project?.wayfarerObservation;
   if(!observation){cmWm5cSetReferenceState({ready:true,display:0,reserve:0,suppressed:0,invalid:0,lastError:'',localCanUse:false,localReason:'NO_OBSERVATION',coverageReason:'',currentPolygon:cmWm5bCurrentCreativePolygon()});return Object.freeze({items:Object.freeze([])})}
-  const required=['bridgeMapLab_evaluateWayfarerReserveCoverage','bridgeMapLab_reclassifyWayfarerObservation','bridgeMapLab_adaptWayfarerObservation','bridgeMapLab_buildWayfarerReferenceGeometry','bridgeMapLab_buildWayfarerReferenceScene'];
+  const required=['bridgeMapLab_evaluateWayfarerReserveCoverage','bridgeMapLab_reclassifyWayfarerObservation','bridgeMapLab_adaptWayfarerObservation','bridgeMapLab_buildWayfarerReferenceGeometry','bridgeMapLab_buildWayfarerReferenceScene','bridgeMapLab_findNearestCreativePoi'];
   const missing=required.filter(name=>typeof window[name]!=='function');
   if(missing.length)throw new Error('Wayfarer Reference modules unavailable: '+missing.join(', '));
   const currentPolygon=cmWm5bCurrentCreativePolygon();
@@ -171,8 +236,40 @@ cmCandidateShadowScene=function(){
     return window.bridgeMapLab_mergeSceneWithWayfarerReferences(baseScene,cmWm3cReferenceScene());
   }catch(error){cmWm5cSetReferenceState({...cmWm3cReferenceState,lastError:String(error?.message||error||'Reference Layer error')});console.warn('[WM-3C Reference] scene skipped',error);return baseScene}
 };
-function cmWm3cReferenceRefresh(){try{window.__cmCandidateShadow?.refresh?.()}catch(error){console.warn('[WM-3C Reference] refresh failed',error)}}
+function cmWm3cReferenceRefresh(){try{window.__cmCandidateShadow?.refresh?.()}catch(error){console.warn('[WM-3C Reference] refresh failed',error)}setTimeout(()=>{try{cmWm6RefreshDistanceWarning()}catch(_){}},0)}
 window.addEventListener('campsite:wayfarer-observation-saved',cmWm3cReferenceRefresh);
+if(typeof cmSafeUpdateNearestWarning==='function'){
+  cmSafeUpdateNearestWarning=function(){return cmWm6RefreshDistanceWarning()};
+}
+if(typeof cmOpenRecord==='function'){
+  const cmWm6BaseOpenRecord=cmOpenRecord;
+  cmOpenRecord=function(r){
+    const result=cmWm6BaseOpenRecord(r);
+    cmWm6SelectedCandidate=r&&!r.deleted&&String(r.layer||'').startsWith('new-')?r:null;
+    setTimeout(cmWm6RefreshDistanceWarning,0);
+    return result;
+  };
+}
+if(typeof cmCloseSheet==='function'){
+  const cmWm6BaseCloseSheet=cmCloseSheet;
+  cmCloseSheet=function(){
+    cmWm6SelectedCandidate=null;
+    const result=cmWm6BaseCloseSheet();
+    cmWm6HideDistanceWarning();
+    return result;
+  };
+}
+if(typeof drawAll==='function'){
+  const cmWm6BaseDrawAll=drawAll;
+  drawAll=function(){
+    const result=cmWm6BaseDrawAll();
+    setTimeout(cmWm6RefreshDistanceWarning,0);
+    return result;
+  };
+}
+try{map.on('move',()=>{if(cmAddMode||cmMoveSession)cmWm6RefreshDistanceWarning()})}catch(_){}
+window.addEventListener('campsite:wayfarer-reference-state',()=>setTimeout(cmWm6RefreshDistanceWarning,0));
+window.__cmWayfarerReferenceDistance=Object.freeze({refresh:cmWm6RefreshDistanceWarning,getState:()=>({...cmWm6DistanceState}),getNearest:()=>cmWm6RefreshDistanceWarning()});
 window.__cmWayfarerReference=Object.freeze({getState:()=>({...cmWm3cReferenceState,currentPolygon:cmWm3cReferenceState.currentPolygon.map(point=>point.slice())}),getCurrentPolygon:()=>cmWm5bCurrentCreativePolygon().map(point=>point.slice()),getScene:()=>cmCandidateShadowScene(),refresh:cmWm3cReferenceRefresh});
 `;
         out = out.slice(0, coreEnd) + augment + out.slice(coreEnd);

@@ -476,3 +476,56 @@ dispatch the map-container click event without altering product behavior.
 
 WM-6B distance warning may now start. WM-7 remains out of scope.
 
+
+
+### WM-6B — Reference-aware 50m distance warning (implementation)
+
+Scope is warning-only. Reference POIs remain outside editable Creative state and
+the existing 50m reason/signature workflow remains records-owned.
+
+The implementation uses a separate pure distance engine over:
+
+- active editable existing POIs;
+- other active new candidates;
+- visible exterior `REFERENCE_100` marker items from the derived Reference Scene.
+
+It explicitly ignores observation-only INTERIOR fallbacks, hidden RESERVE_200,
+Reference circles, deleted records and the currently selected/moving candidate.
+
+Runtime behavior:
+
+- while adding a candidate, the map center is continuously evaluated;
+- while moving a candidate, the moving candidate is excluded and the map center
+  is continuously evaluated;
+- while a new candidate editor sheet is open, that candidate position is
+  evaluated;
+- delete / Undo / Redo / redraw schedules an immediate recalculation;
+- Reference observation/reclassification refresh also schedules recalculation;
+- only distances below 50m show the fixed warning;
+- >=50m shows no WM warning;
+- warning categories are explicit:
+  - exterior Reference: `⚠ xx.xm / 設計範囲外の既存POIから50m未満です`;
+  - editable existing: `⚠ xx.xm / 既存POI`;
+  - other candidate: `⚠ xx.xm / 新規候補`;
+- placement is never blocked by the warning.
+
+Gate before PASS:
+
+1. pure nearest-distance regression classifies EXISTING_POI / NEW_CANDIDATE /
+   REFERENCE_100 and excludes the active candidate;
+2. INTERIOR / RESERVE_200 / Reference circles / deleted records never
+   participate;
+3. pure distance evaluation does not mutate editable records or Reference Scene;
+4. real Creative add mode shows the exterior Reference warning under 50m and
+   leaves Confirm enabled;
+5. moving the add center beyond 50m hides the warning;
+6. selecting a candidate within 50m of an exterior Reference shows the same
+   Reference warning and closing the sheet hides it;
+7. warning display leaves editable records unchanged;
+8. delete / Undo / Redo / redraw and Reference refresh are wired to immediate
+   recalculation without placing Reference POIs in `records/currentPois`;
+9. WM-6A inspection, WM-3C through WM-5C and current production Creative
+   regressions remain green;
+10. WM-7 remains unimplemented.
+
+WM-7 must not start until WM-6B passes.

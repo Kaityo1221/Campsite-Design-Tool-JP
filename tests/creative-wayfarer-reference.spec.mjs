@@ -63,7 +63,7 @@ function collectBrowserErrors(page) {
   return browserErrors;
 }
 
-async function installRoutes(page) {
+async function installRoutes(page, seedProject = project) {
   await page.route('https://unpkg.com/leaflet@1.9.4/dist/leaflet.js', route => route.fulfill({ status:200, contentType:'application/javascript', body:leafletJs }));
   await page.route('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css', route => route.fulfill({ status:200, contentType:'text/css', body:leafletCss }));
   await page.route('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js', route => route.fulfill({ status:200, contentType:'application/javascript', body:jszipJs }));
@@ -81,7 +81,7 @@ async function installRoutes(page) {
   }));
   await page.addInitScript(value => {
     sessionStorage.setItem('campsiteProject.v1', JSON.stringify(value));
-  }, project);
+  }, seedProject);
 }
 
 async function replaceCreativePolygon(page, points) {
@@ -355,6 +355,76 @@ test('WM-3C real Creative renders read-only Wayfarer references without entering
   await expect(referenceIcons).toHaveCount(4);
   expect(await workspaceSnapshot(page)).toEqual(beforeRecords);
 
+  expect(browserErrors).toEqual([]);
+});
+
+test('WM-6B add mode warns for exterior Reference POI without blocking placement', async ({ page }) => {
+  const browserErrors = collectBrowserErrors(page);
+  await installRoutes(page);
+  await page.goto('/creative/index.html?campsiteProject=bridge');
+  await expect.poll(() => page.evaluate(() => window.CampsiteCreativeProject?.count || 0), { timeout:15000 }).toBe(2);
+  await expect.poll(() => page.evaluate(() => typeof window.__cmWayfarerReferenceDistance?.refresh === 'function'), { timeout:15000 }).toBe(true);
+
+  const beforeRecords = await workspaceSnapshot(page);
+  await page.locator('#cmAddFab').click();
+  const stopBubble = page.locator('.cm-bubble[data-layer="new-pokestop"]');
+  await expect(stopBubble).toBeVisible();
+  await stopBubble.click();
+
+  const confirm = page.locator('#cmSafeAddConfirm');
+  await expect(confirm).toBeVisible();
+  await expect(confirm).toBeEnabled();
+
+  await page.evaluate(() => window.CampsiteCreativeCoordinateJump.moveTo(35.68345,139.7686));
+  const warning = page.locator('#cmWm6DistanceWarning');
+  await expect(warning).toBeVisible();
+  await expect(warning).toContainText('設計範囲外の既存POIから50m未満です');
+  const nearState = await page.evaluate(() => window.__cmWayfarerReferenceDistance.getState());
+  expect(nearState.sourceType).toBe('REFERENCE_100');
+  expect(Number(nearState.distanceMeters)).toBeLessThan(50);
+  await expect(confirm).toBeEnabled();
+
+  await page.evaluate(() => window.CampsiteCreativeCoordinateJump.moveTo(35.6827,139.7671));
+  await expect(warning).toBeHidden();
+  const safeState = await page.evaluate(() => window.__cmWayfarerReferenceDistance.getState());
+  expect(safeState.visible).toBe(false);
+
+  await page.locator('#cmSafeAddCancel').click();
+  expect(await workspaceSnapshot(page)).toEqual(beforeRecords);
+  expect(browserErrors).toEqual([]);
+});
+
+test('WM-6B selected candidate keeps Reference warning outside editable records', async ({ page }) => {
+  const browserErrors = collectBrowserErrors(page);
+  const selectedProject = JSON.parse(JSON.stringify(project));
+  const candidate = selectedProject.selectedPois.find(item => item.id === 'c-stop');
+  candidate.lat = 35.68315;
+  candidate.lng = 139.7686;
+  selectedProject.currentPois = selectedProject.selectedPois.map(item => ({ ...item }));
+
+  await installRoutes(page, selectedProject);
+  await page.goto('/creative/index.html?campsiteProject=bridge');
+  await expect.poll(() => page.evaluate(() => window.CampsiteCreativeProject?.count || 0), { timeout:15000 }).toBe(2);
+  await expect.poll(() => page.evaluate(() => window.__cmCandidateShadow?.getState?.()?.interactionOwner || ''), { timeout:15000 }).toBe('map-engine');
+
+  const beforeRecords = await workspaceSnapshot(page);
+  const candidateIcon = page.locator('.cm-engine-candidate-icon').first();
+  await expect(candidateIcon).toBeVisible();
+  await candidateIcon.click({ force:true });
+
+  const sheet = page.locator('.cm-sheet');
+  await expect(sheet).toBeVisible();
+  const warning = page.locator('#cmWm6DistanceWarning');
+  await expect(warning).toBeVisible();
+  await expect(warning).toContainText('設計範囲外の既存POIから50m未満です');
+  const state = await page.evaluate(() => window.__cmWayfarerReferenceDistance.getState());
+  expect(state.sourceType).toBe('REFERENCE_100');
+  expect(Number(state.distanceMeters)).toBeLessThan(50);
+
+  await sheet.locator('.cm-sheet-close').click();
+  await expect(sheet).toHaveCount(0);
+  await expect(warning).toBeHidden();
+  expect(await workspaceSnapshot(page)).toEqual(beforeRecords);
   expect(browserErrors).toEqual([]);
 });
 

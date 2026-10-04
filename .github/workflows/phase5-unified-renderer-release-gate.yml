@@ -100,6 +100,7 @@ jobs:
           node --check creative/runtime/map-engine/wayfarer-observation-adapter.js
           node --check creative/runtime/map-engine/wayfarer-reference-geometry.js
           node --check creative/runtime/map-engine/wayfarer-reference-scene-builder.js
+          node --check creative/runtime/map-engine/wayfarer-reference-distance.js
           node --check creative/wayfarer-observe-link-patch.js
           node --check creative/wayfarer-reference-layer-patch.js
           node --check creative/runtime/creative-patches-v54-coordinate-memo-reason.js
@@ -123,6 +124,7 @@ jobs:
           node --check tests/creative-unified-interaction.spec.mjs
           node --check tests/creative-dev-default-renderer.spec.mjs
           node --check tests/creative-new-entry-current-map.spec.mjs
+          node --check tests/creative-wayfarer-reference.spec.mjs
 
       - name: Verify generated Creative runtime
         run: node scripts/check-creative-runtime-build.mjs
