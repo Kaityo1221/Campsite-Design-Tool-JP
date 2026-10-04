@@ -14,7 +14,6 @@ const exporterSource = fs.readFileSync('bridge-pc/bridge-v1-exporter.js', 'utf8'
 const collector = fs.readFileSync('bridge-pc/page-collector.js', 'utf8');
 const wm1LiveVerifierSource = fs.readFileSync('bridge-pc/wm1-live-verifier.js', 'utf8');
 const wm3ObservationZoneSource = fs.readFileSync('bridge-pc/wayfarer-observation-zone.js', 'utf8');
-const wm3ObserveControllerSource = fs.readFileSync('bridge-pc/wm3-observe-controller.js', 'utf8');
 const wm3bTabLinkSource = fs.readFileSync('bridge-pc/wm3b-tab-link.js', 'utf8');
 const content = fs.readFileSync('bridge-pc/content.js', 'utf8');
 const receiver = fs.readFileSync('bridge-receiver.html', 'utf8');
@@ -39,7 +38,6 @@ assert.ok(mainWorld?.js?.includes('bridge-v1-exporter.js'), 'MAIN Bridge V1 expo
 assert.ok(mainWorld?.js?.includes('page-collector.js'), 'MAIN collector missing');
 assert.ok(mainWorld?.js?.includes('wm1-live-verifier.js'), 'WM-1 live verifier missing');
 assert.ok(mainWorld?.js?.includes('wayfarer-observation-zone.js'), 'WM-3 observation zone missing');
-assert.ok(mainWorld?.js?.includes('wm3-observe-controller.js'), 'WM-3 observe controller missing');
 assert.ok(mainWorld?.js?.includes('wm3b-tab-link.js'), 'WM-3B-0 tab link missing');
 assert.ok(mainWorld.js.indexOf('wayfarer-map-adapter.js') < mainWorld.js.indexOf('page-collector.js'), 'Map adapter must load before collector');
 assert.ok(mainWorld.js.indexOf('wayfarer-acquisition-engine.js') < mainWorld.js.indexOf('page-collector.js'), 'Acquisition engine must load before collector');
@@ -60,7 +58,6 @@ new vm.Script(exporterSource, { filename: 'bridge-pc/bridge-v1-exporter.js' });
 new vm.Script(collector, { filename: 'bridge-pc/page-collector.js' });
 new vm.Script(wm1LiveVerifierSource, { filename: 'bridge-pc/wm1-live-verifier.js' });
 new vm.Script(wm3ObservationZoneSource, { filename: 'bridge-pc/wayfarer-observation-zone.js' });
-new vm.Script(wm3ObserveControllerSource, { filename: 'bridge-pc/wm3-observe-controller.js' });
 new vm.Script(wm3bTabLinkSource, { filename: 'bridge-pc/wm3b-tab-link.js' });
 new vm.Script(content, { filename: 'bridge-pc/content.js' });
 
@@ -317,7 +314,11 @@ assert.ok(zip.includes(Buffer.from('page-collector.js')), 'ZIP must contain page
 assert.ok(zip.includes(Buffer.from('content.js')), 'ZIP must contain content.js');
 assert.ok(zip.includes(Buffer.from('wm1-live-verifier.js')), 'ZIP must contain WM-1 live verifier');
 assert.ok(zip.includes(Buffer.from('wayfarer-observation-zone.js')), 'ZIP must contain WM-3 observation zone');
-assert.ok(zip.includes(Buffer.from('wm3-observe-controller.js')), 'ZIP must contain WM-3 observe controller');
 assert.ok(zip.includes(Buffer.from('wm3b-tab-link.js')), 'ZIP must contain WM-3B-0 tab link');
 
 console.log('Campsite Bridge PC 0.1.0 + POI Engine v1.1 routing + V1 export contract: OK');
+
+assert.equal(mainWorld?.js?.includes('wm3-observe-controller.js'), false, 'User-facing observe controller must not ship in the PC extension');
+assert.ok(collector.includes('currentCompletedPolygon'), 'Bridge must prefer the confirmed design polygon');
+assert.ok(collector.includes('confirmedPolygonSnapshotForBridge'), 'Bridge must build the handoff directly from the confirmed polygon');
+assert.ok(collector.includes('zoning.zones.interior'), 'Bridge must send only POIs inside the confirmed polygon');
