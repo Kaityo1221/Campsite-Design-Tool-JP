@@ -45,11 +45,12 @@ assert.deepEqual(mainEntry.js, [
   'bridge-v1-exporter.js',
   'page-collector.js',
   'wm1-live-verifier.js',
-  'wayfarer-observation-zone.js',
-  'wm3-observe-controller.js',
-  'wm3b-tab-link.js'
+  'wayfarer-observation-zone.js'
 ], 'PC MAIN-world architecture changed');
 assert.ok(!mainEntry.js.includes('wayfarer-poi-colors.js'), 'PC must never load a Bridge POI renderer');
+assert.ok(!mainEntry.js.includes('wm3-observe-controller.js'), 'Obsolete observation controller must not be loaded');
+assert.ok(!mainEntry.js.includes('wm3b-tab-link.js'), 'Obsolete observation relay must not be loaded');
+assert.equal(Boolean(manifest.background), false, 'Obsolete observation relay service worker must stay removed');
 const isolatedEntry = manifest.content_scripts?.find(entry => entry.world === 'ISOLATED');
 assert.ok(isolatedEntry?.js?.includes('polygon-ui.js'), 'WM-2 polygon UI must stay isolated from the MAIN data/controller world');
 assert.ok(wm2PolygonController.includes('maps.Polygon'), 'WM-2 may render only the project polygon geometry on Wayfarer');
