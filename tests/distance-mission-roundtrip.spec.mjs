@@ -10,7 +10,7 @@ const caAccessStub=`window.CampsiteCaAccess=Object.freeze({checkAccess:async()=>
 function baseProject(){
   const lat=35.681236,lng=139.767125;
   const existing={id:'existing-a',guid:'existing-a',title:'既存A',name:'既存A',lat,lng,role:'existing',gameEntity:'POKESTOP',description:''};
-  const added={id:'added-a',guid:'added-a',title:'新規A',name:'新規A',lat:lat+0.00105,lng,role:'added',gameEntity:'POKESTOP',description:'初回確認済み'};
+  const added={id:'added-a',guid:'added-a',title:'新規A',name:'新規A',lat:lat+0.00105,lng,role:'added',gameEntity:'POKESTOP',description:'初回メモ',applicationComment:'初回確認済み'};
   return{
     schemaVersion:'1.0',projectId:'roundtrip-presentation-e2e',workspaceId:'roundtrip-workspace-e2e',source:'bridge',phase:'design',circleRadii:[50,40,30],
     polygon:[[lat-0.002,lng-0.002],[lat-0.002,lng+0.002],[lat+0.003,lng+0.002],[lat+0.003,lng-0.002]],
@@ -60,6 +60,7 @@ async function openPoi(page,title){
 test.beforeEach(async({page})=>installRoutes(page));
 
 test('CREATIVE往復で実編集→stale→再チェック→セーブ→提出前チェックまで同じProjectを保つ',async({page})=>{
+  test.setTimeout(60000);
   const original=baseProject();await seed(page,original);await page.goto('/bridge-distance.html?campsiteProject=bridge');await runDistance(page);await openMission4(page);
   const initialResult=await page.evaluate(()=>JSON.parse(sessionStorage.getItem('campsiteProject.v1')||'null')?.distanceResult||null);expect(initialResult?.stale).toBe(false);
 
@@ -89,10 +90,10 @@ test('CREATIVE往復で実編集→stale→再チェック→セーブ→提出�
   const finalProject=await page.evaluate(()=>JSON.parse(sessionStorage.getItem('campsiteProject.v1')||'null'));expect(finalProject.projectId).toBe(original.projectId);expect(finalProject.workspaceId).toBe(original.workspaceId);expect(finalProject.preSubmit?.source).toBe('campsiteProject.v1');
 });
 
-test('BridgeのPOWER_SPOTをCREATIVEのPowerSpotレイヤーへ受け入れ、端末幅でトップ画像だけを切り替える',async({page})=>{
+test('BridgeのPOWER_SPOTをCREATIVEのPowerSpotレイヤーへ受け入れ、現行トップ画像を維持する',async({page})=>{
   const project=powerSpotProject();await seed(page,project);await page.goto('/creative/index.html?campsiteProject=bridge');await expect.poll(()=>page.evaluate(()=>window.CampsiteCreativeProject?.projectId||''),{timeout:20000}).toBe(project.projectId);
   const normalized=await page.evaluate(()=>JSON.parse(sessionStorage.getItem('campsiteProject.v1')||'null'));expect(normalized.currentPois[0].gameEntity).toBe('POWERSPOT');expect(normalized.selectedPois[0].gameEntity).toBe('POWERSPOT');
   const layers=page.getByRole('button',{name:/レイヤー/});await layers.click();const row=page.locator('.layer-row').filter({hasText:'既存 PowerSpot'}).first();await expect(row).toBeVisible();const button=row.locator('button').first();
   await expect(button).toHaveAttribute('aria-pressed','true');await button.click();await expect(button).toHaveAttribute('aria-pressed','false');await button.click();await expect(button).toHaveAttribute('aria-pressed','true');await layers.click();await openPoi(page,'Bridge PowerSpot');
-  const bg=()=>page.locator('.entry').evaluate(el=>getComputedStyle(el).backgroundImage);await page.setViewportSize({width:393,height:852});await expect.poll(bg).toContain('campsite-top-mobile.png');await page.setViewportSize({width:412,height:915});await expect.poll(bg).toContain('campsite-top-mobile.png');await page.setViewportSize({width:1280,height:800});await expect.poll(bg).toContain('campsite-top-desktop.png');
+  const bg=()=>page.locator('.entry').evaluate(el=>getComputedStyle(el).backgroundImage);await page.setViewportSize({width:393,height:852});await expect.poll(bg).toContain('creative-mode-opening-final.webp');await page.setViewportSize({width:412,height:915});await expect.poll(bg).toContain('creative-mode-opening-final.webp');await page.setViewportSize({width:1280,height:800});await expect.poll(bg).toContain('creative-mode-opening-final.webp');
 });

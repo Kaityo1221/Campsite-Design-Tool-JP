@@ -318,7 +318,8 @@ test('50m未満候補の設置理由を編集シートから入力しBridge判�
   bridgeProject.currentPois=bridgeProject.selectedPois.map(item=>({...item}));
 
   await page.addInitScript(project=>{
-    sessionStorage.setItem('campsiteProject.v1',JSON.stringify(project));
+    const key='campsiteProject.v1';
+    if(!sessionStorage.getItem(key))sessionStorage.setItem(key,JSON.stringify(project));
   },bridgeProject);
 
   await page.goto('/creative/index.html?campsiteProject=bridge&rendererMode=legacy');
@@ -357,13 +358,67 @@ test('50m未満候補の設置理由を編集シートから入力しBridge判�
     applicationComment:'景色を見てもらいながら動線を分散できる場所のため'
   });
 
+  await expect.poll(async()=>{
+    const project=await page.evaluate(()=>JSON.parse(sessionStorage.getItem('campsiteProject.v1')||'null'));
+    return String(project?.currentPois?.find(item=>item?.id==='candidate-1')?.applicationComment||'');
+  },{timeout:5000}).toBe('景色を見てもらいながら動線を分散できる場所のため');
+
   await sheet.locator('.cm-sheet-close').click();
   await expect(sheet).toHaveCount(0);
+
+  let signature='';
+  await expect.poll(async()=>{
+    const value=await page.evaluate(()=>{
+      const snapshot=window.CampsiteCreativeWorkspace?.getSnapshot?.();
+      return String(snapshot?.records?.find(item=>item?.id==='candidate-1')?.applicationCommentSignature||'');
+    });
+    signature=value;
+    return value.length;
+  }).toBeGreaterThan(0);
 
   await Promise.all([
     page.waitForURL(/bridge-distance\.html\?campsiteProject=bridge/,{timeout:5000}),
     next.click()
   ]);
+
+  const projectAfterSync=await page.evaluate(()=>JSON.parse(sessionStorage.getItem('campsiteProject.v1')||'null'));
+  const syncedCandidate=projectAfterSync?.currentPois?.find(item=>item?.id==='candidate-1');
+  expect(syncedCandidate?.applicationComment).toBe('景色を見てもらいながら動線を分散できる場所のため');
+  expect(syncedCandidate?.applicationCommentSignature).toBe(signature);
+  expect(syncedCandidate?.applicationCommentNeedsReview).toBe(false);
+
+  await page.goto('/creative/index.html?campsiteProject=bridge&rendererMode=legacy');
+  await expect.poll(()=>page.evaluate(()=>window.CampsiteCreativeProject?.count||0),{timeout:15000}).toBe(2);
+
+  const restored=await page.evaluate(()=>{
+    const snapshot=window.CampsiteCreativeWorkspace?.getSnapshot?.();
+    const record=snapshot?.records?.find(item=>item?.id==='candidate-1');
+    return record?{
+      applicationComment:String(record.applicationComment||''),
+      applicationCommentSignature:String(record.applicationCommentSignature||''),
+      applicationCommentNeedsReview:record.applicationCommentNeedsReview===true
+    }:null;
+  });
+  expect(restored).toEqual({
+    applicationComment:'景色を見てもらいながら動線を分散できる場所のため',
+    applicationCommentSignature:signature,
+    applicationCommentNeedsReview:false
+  });
+
+  const finalReviewState=await page.evaluate(()=>{
+    const snapshot=window.CampsiteCreativeWorkspace?.getSnapshot?.();
+    const record=snapshot?.records?.find(item=>item?.id==='candidate-1');
+    return record?{
+      reason:String(record.applicationComment||''),
+      signature:String(record.applicationCommentSignature||''),
+      needsReview:record.applicationCommentNeedsReview===true
+    }:null;
+  });
+  expect(finalReviewState).toEqual({
+    reason:'景色を見てもらいながら動線を分散できる場所のため',
+    signature,
+    needsReview:false
+  });
 });
 
 

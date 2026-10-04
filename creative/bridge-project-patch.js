@@ -75,6 +75,7 @@ function campsProjectRecordPoi(r){
     s2L17:String(r.s2L17||''),
     provenance:Array.isArray(r.provenance)?r.provenance.slice():[],
     applicationComment:String(r.applicationComment||''),
+    applicationCommentSignature:String(r.applicationCommentSignature||''),
     applicationCommentNeedsReview:r.applicationCommentNeedsReview===true,
     customRadius:Number.isFinite(Number(r.customRadius))?Number(r.customRadius):null,
     source:r.source===true
@@ -207,6 +208,7 @@ function loadCampsiteBridgeProject(project){
     s2L17:String(poi.s2L17||''),
     provenance:Array.isArray(poi.provenance)?poi.provenance.slice():[],
     applicationComment:String(poi.applicationComment||''),
+    applicationCommentSignature:String(poi.applicationCommentSignature||''),
     applicationCommentNeedsReview:poi.applicationCommentNeedsReview===true,
     customRadius:Number.isFinite(Number(poi.customRadius))?Number(poi.customRadius):undefined
   })).filter(r=>Number.isFinite(r.latlng[0])&&Number.isFinite(r.latlng[1]));
