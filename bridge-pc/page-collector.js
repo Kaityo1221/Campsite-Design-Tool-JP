@@ -69,6 +69,14 @@
     return engine;
   }
 
+  function rawWayfarerFetch(input, init) {
+    const visibility = window.CampsiteBridgeWayfarerPoiVisibility;
+    if (typeof visibility?.rawFetch === 'function') {
+      return visibility.rawFetch(input, init);
+    }
+    return fetch(input, init);
+  }
+
   function polygonZoneApi() {
     const zone = window.CampsiteWayfarerObservationZone;
     if (!zone?.classifyPois) {
@@ -178,7 +186,7 @@
   }
 
   async function fetchGcsTile(tile) {
-    const response = await fetch(MAP_DATA_PATH + '?' + tile.query, {
+    const response = await rawWayfarerFetch(MAP_DATA_PATH + '?' + tile.query, {
       credentials: 'include',
       cache: 'no-store'
     });
@@ -257,7 +265,7 @@
       '&sw=(' + bounds.swLat + ',' + bounds.swLng + ')' +
       '&cellLevel=14';
 
-    const response = await fetch(MAP_DATA_PATH + '?' + query, {
+    const response = await rawWayfarerFetch(MAP_DATA_PATH + '?' + query, {
       credentials: 'include',
       cache: 'no-store'
     });
