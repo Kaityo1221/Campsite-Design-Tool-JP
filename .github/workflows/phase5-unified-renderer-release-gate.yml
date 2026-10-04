@@ -19,6 +19,7 @@ on:
       - 'creative/runtime/creative-patches-v64-google-form-coordinates.js'
       - 'creative/runtime/creative-patches-v65-download-label.js'
       - 'creative/runtime/creative-patches-v66-activity-range-label.js'
+      - 'creative/runtime/creative-patches-v67-activity-range-wording.js'
       - 'creative/runtime/map-engine/**'
       - 'scripts/check-creative-runtime-build.mjs'
       - 'tests/creative-unified-interaction.spec.mjs'
@@ -43,6 +44,7 @@ on:
       - 'creative/runtime/creative-patches-v64-google-form-coordinates.js'
       - 'creative/runtime/creative-patches-v65-download-label.js'
       - 'creative/runtime/creative-patches-v66-activity-range-label.js'
+      - 'creative/runtime/creative-patches-v67-activity-range-wording.js'
       - 'creative/runtime/map-engine/**'
       - 'scripts/check-creative-runtime-build.mjs'
       - 'tests/creative-unified-interaction.spec.mjs'
@@ -92,6 +94,7 @@ jobs:
           node --check creative/runtime/creative-patches-v64-google-form-coordinates.js
           node --check creative/runtime/creative-patches-v65-download-label.js
           node --check creative/runtime/creative-patches-v66-activity-range-label.js
+          node --check creative/runtime/creative-patches-v67-activity-range-wording.js
           node --check tests/creative-unified-interaction.spec.mjs
           node --check tests/creative-dev-default-renderer.spec.mjs
           node --check tests/creative-new-entry-current-map.spec.mjs

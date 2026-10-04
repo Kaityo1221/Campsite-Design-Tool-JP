@@ -29,7 +29,8 @@ const livePostManifestPatches=[
   'creative-patches-v63-remove-workspace-save.js',
   'creative-patches-v64-google-form-coordinates.js',
   'creative-patches-v65-download-label.js',
-  'creative-patches-v66-activity-range-label.js'
+  'creative-patches-v66-activity-range-label.js',
+  'creative-patches-v67-activity-range-wording.js'
 ];
 
 function gitBlobShaBuffer(body){
@@ -78,6 +79,10 @@ assert.ok(html.includes("download.title='ダウンロード'"),'Creative downloa
 assert.ok(html.includes("width:'112px',height:'46px'"),'Creative download action width missing');
 assert.ok(html.includes('<button data-tool="polygon">活動範囲</button>'),'Creative activity-range tool label missing');
 assert.ok(!html.includes('<button data-tool="polygon">ポリゴン</button>'),'Legacy polygon toolbox label must stay removed');
+assert.ok(html.includes('活動範囲を作成！'),'Creative activity-range create action wording missing');
+assert.ok(html.includes('活動範囲を作成しました'),'Creative activity-range completion wording missing');
+assert.ok(html.includes('活動範囲の作成をキャンセルしました'),'Creative activity-range cancel wording missing');
+assert.ok(!html.includes('ポリゴン'),'User-facing polygon wording must stay removed from Creative runtime');
 assert.ok(html.includes('cmV58NewEntryStyle'),'New Creative entry style missing');
 assert.ok(html.includes("if(start.classList.contains('ready'))start.disabled=false"),'Creative START must re-enable when returning to entry with a ready file');
 assert.ok(!html.includes("location.href=location.origin+location.pathname"),'Creative back must not reload the page');
