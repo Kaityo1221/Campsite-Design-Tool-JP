@@ -365,3 +365,87 @@ test('50m未満候補の設置理由を編集シートから入力しBridge判�
     next.click()
   ]);
 });
+
+
+test('候補地の12・8・5上限を追加と種類変更の両方で守る',async({page})=>{
+  const records=[
+    ...Array.from({length:12},(_,i)=>({
+      id:'stop-'+(i+1),
+      layer:'new-pokestop',
+      latlng:[35.6800+i*0.00012,139.7660],
+      creativeSeq:i+1,
+      autoName:'PokéStop '+(i+1),
+      title:'PokéStop '+(i+1),
+      memo:'新規ゲームスポット',
+      deleted:false,
+      source:false
+    })),
+    {
+      id:'gym-1',
+      layer:'new-gym',
+      latlng:[35.6830,139.7680],
+      creativeSeq:1,
+      autoName:'Gym 1',
+      title:'Gym 1',
+      memo:'新規ゲームスポット',
+      deleted:false,
+      source:false
+    }
+  ];
+
+  await page.addInitScript(data=>{
+    localStorage.setItem('next-lab-creative-v7',JSON.stringify({
+      sourceName:'type-cap-test',
+      records:data,
+      polygons:[],
+      activeLayer:'new-pokestop',
+      circleExtras:[],
+      polygonVisible:false,
+      center:[35.6815,139.7670],
+      zoom:16
+    }));
+  },records);
+
+  await page.goto('/creative/index.html');
+  const entry=page.locator('#entry');
+  await expect(entry).toBeVisible({timeout:15000});
+  const resume=page.locator('#resumeButton');
+  await expect(resume).toBeVisible();
+  await resume.click();
+  await expect(entry).toBeHidden({timeout:4000});
+
+  const limits=await page.evaluate(()=>({
+    stop:jpTypeLimit('new-pokestop'),
+    gym:jpTypeLimit('new-gym'),
+    power:jpTypeLimit('new-power')
+  }));
+  expect(limits).toEqual({stop:12,gym:8,power:5});
+
+  await page.evaluate(()=>{
+    cmStartAdd('new-pokestop');
+    cmPlace(L.latLng(35.6840,139.7690));
+  });
+  await expect(page.locator('#status')).toContainText('ポケストップは最大12個です');
+  const afterAdd=await page.evaluate(()=>{
+    const snapshot=window.CampsiteCreativeWorkspace?.getSnapshot?.();
+    return (snapshot?.records||[]).filter(r=>r&&!r.deleted&&r.layer==='new-pokestop').length;
+  });
+  expect(afterAdd).toBe(12);
+
+  await page.evaluate(()=>{
+    cmExitAddMode(false);
+    const gym=records.find(r=>r&&r.id==='gym-1');
+    cmOpenRecord(gym);
+  });
+  const sheet=page.locator('.cm-sheet');
+  await expect(sheet).toBeVisible();
+  await sheet.locator('#cmType').click();
+  await sheet.locator('#cmTypePicker button[data-layer="new-pokestop"]').click();
+  await expect(page.locator('#status')).toContainText('ポケストップは最大12個です');
+
+  const gymLayer=await page.evaluate(()=>{
+    const snapshot=window.CampsiteCreativeWorkspace?.getSnapshot?.();
+    return snapshot?.records?.find(r=>r?.id==='gym-1')?.layer||'';
+  });
+  expect(gymLayer).toBe('new-gym');
+});
