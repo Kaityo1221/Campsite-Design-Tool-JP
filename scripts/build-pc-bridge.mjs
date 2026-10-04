@@ -22,29 +22,6 @@ const RETIRED_OBSERVATION_RUNTIME = new Set([
 ]);
 const FIXED_DOS_TIME = 0;
 const FIXED_DOS_DATE = ((2026 - 1980) << 9) | (9 << 5) | 21;
-const receiverBaseOverride = String(process.env.CAMPSITE_BRIDGE_RECEIVER_BASE || '').trim();
-
-if (receiverBaseOverride) {
-  const receiverUrl = new URL(receiverBaseOverride);
-  if (receiverUrl.protocol !== 'https:' || receiverUrl.origin !== 'https://kaityo1221.github.io') {
-    throw new Error('CAMPSITE_BRIDGE_RECEIVER_BASE must stay on https://kaityo1221.github.io');
-  }
-}
-
-function packagedFileData(file) {
-  const data = fs.readFileSync(file.absolute);
-  if (!receiverBaseOverride || file.relative !== 'page-collector.js') return data;
-
-  const source = data.toString('utf8');
-  const marker = "const RECEIVER_BASE = RECEIVER_ORIGIN + '/Campsite-Design-Tool-JP/bridge-receiver.html';";
-  if (!source.includes(marker)) {
-    throw new Error('PC Bridge receiver base marker not found');
-  }
-  return Buffer.from(
-    source.replace(marker, `const RECEIVER_BASE = ${JSON.stringify(receiverBaseOverride)};`),
-    'utf8'
-  );
-}
 
 function crc32(buffer) {
   let crc = 0xffffffff;
@@ -158,7 +135,7 @@ const centrals = [];
 let offset = 0;
 
 for (const file of files) {
-  const data = packagedFileData(file);
+  const data = fs.readFileSync(file.absolute);
   const crc = crc32(data);
   const local = localHeader(file.relative, data, crc);
   locals.push(local, data);
@@ -187,4 +164,3 @@ const sha256 = crypto.createHash('sha256').update(zip).digest('hex');
 console.log(`Built Campsite Bridge PC 0.1.0: ${zip.length} bytes`);
 console.log(`SHA-256: ${sha256}`);
 console.log(`Files: ${files.map(file => file.relative).join(', ')}`);
-if (receiverBaseOverride) console.log(`Receiver override: ${receiverBaseOverride}`);
