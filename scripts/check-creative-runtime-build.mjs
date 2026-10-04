@@ -93,6 +93,8 @@ assert.ok(html.includes("r.applicationComment=textarea.value.slice(0,300)"),'Cre
 const bridgeProjectPatchSource=fs.readFileSync('creative/bridge-project-patch.js','utf8');
 assert.ok(bridgeProjectPatchSource.includes("return String(record?.applicationComment||'').trim().length>0;"),'Bridge spacing gate must use applicationComment');
 assert.ok(!bridgeProjectPatchSource.includes("return String(record?.memo||record?.description||'').trim().length>0;"),'Bridge spacing gate must not treat memo as spacing reason');
+assert.ok(bridgeProjectPatchSource.includes("applicationCommentSignature:String(r.applicationCommentSignature||'')"),'Creative to Bridge spacing signature persistence missing');
+assert.ok(bridgeProjectPatchSource.includes("applicationCommentSignature:String(poi.applicationCommentSignature||'')"),'Bridge to Creative spacing signature restore missing');
 assert.ok(html.includes('cmV58NewEntryStyle'),'New Creative entry style missing');
 assert.ok(html.includes("if(start.classList.contains('ready'))start.disabled=false"),'Creative START must re-enable when returning to entry with a ready file');
 assert.ok(!html.includes("location.href=location.origin+location.pathname"),'Creative back must not reload the page');
