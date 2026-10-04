@@ -30,8 +30,16 @@ assert.equal(
   'Retired Bridge POI overlay source must stay deleted'
 );
 
-const mainEntry = manifest.content_scripts?.find(entry => entry.world === 'MAIN');
-assert.ok(mainEntry, 'PC manifest MAIN-world entry missing');
+const visibilityEntry = manifest.content_scripts?.find(entry =>
+  entry.world === 'MAIN' && entry.run_at === 'document_start' && (entry.js || []).includes('wayfarer-poi-visibility.js')
+);
+assert.ok(visibilityEntry, 'PC visibility filter MAIN-world entry missing');
+assert.deepEqual(visibilityEntry.js, ['wayfarer-poi-visibility.js'], 'Visibility filter must stay isolated from the data/controller MAIN entry');
+
+const mainEntry = manifest.content_scripts?.find(entry =>
+  entry.world === 'MAIN' && (entry.js || []).includes('page-collector.js')
+);
+assert.ok(mainEntry, 'PC manifest data/controller MAIN-world entry missing');
 assert.deepEqual(mainEntry.js, [
   'wayfarer-map-adapter.js',
   'wayfarer-display-owner.js',
