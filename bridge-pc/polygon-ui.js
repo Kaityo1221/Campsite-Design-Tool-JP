@@ -24,7 +24,8 @@
     selfIntersects: false,
     canComplete: false,
     canUndo: false,
-    instruction: ''
+    instruction: '',
+    message: ''
   };
   let draftPrompted = false;
   let observeState = {
@@ -35,6 +36,7 @@
     message: ''
   };
   const hiddenWayfarerControls = new Map();
+  const suppressedWayfarerPoiLayers = new Map();
 
   function visibleElement(element) {
     if (!element?.getBoundingClientRect) return false;
@@ -156,13 +158,46 @@
     hiddenWayfarerControls.clear();
   }
 
+  function findWayfarerPoiInteractionLayers() {
+    const map = mapHost();
+    if (!map?.querySelectorAll) return [];
+    try {
+      return Array.from(map.querySelectorAll('canvas#deckgl-overlay'));
+    } catch (_) {
+      return [];
+    }
+  }
+
+  function suppressWayfarerPoiInteraction() {
+    for (const layer of findWayfarerPoiInteractionLayers()) {
+      if (!layer || suppressedWayfarerPoiLayers.has(layer)) continue;
+      suppressedWayfarerPoiLayers.set(layer, {
+        pointerEvents: layer.style.pointerEvents
+      });
+      layer.dataset.campsiteWm2PoiInteractionSuppressed = 'true';
+      layer.style.pointerEvents = 'none';
+    }
+  }
+
+  function restoreWayfarerPoiInteraction() {
+    for (const [layer, previous] of suppressedWayfarerPoiLayers.entries()) {
+      try {
+        layer.style.pointerEvents = previous.pointerEvents;
+        delete layer.dataset.campsiteWm2PoiInteractionSuppressed;
+      } catch (_) {}
+    }
+    suppressedWayfarerPoiLayers.clear();
+  }
+
   function syncWayfarerDrawingControls() {
     const drawing = state.active === true && state.completed !== true;
     if (!drawing) {
       restoreWayfarerDrawingControls();
+      restoreWayfarerPoiInteraction();
       return;
     }
     findWayfarerDrawingObstructions().forEach(hideWayfarerControl);
+    suppressWayfarerPoiInteraction();
   }
 
   function mapHost() {
@@ -309,6 +344,7 @@
     const map = mapHost();
     if (!map) {
       restoreWayfarerDrawingControls();
+      restoreWayfarerPoiInteraction();
       if (host) host.style.display = 'none';
       if (crosshair) crosshair.hidden = true;
       return;
