@@ -740,6 +740,7 @@ Persistence contract:
 - only a complete, applicable WM-7B diff may produce a persisted next state;
 - incomplete Remote does not alter persistence state;
 - missing Base/Remote snapshot identity fails closed;
+- a Remote snapshot already recorded as `lastRemoteSnapshotId` fails closed and cannot advance absence counts twice;
 - reappearance is represented by the GUID disappearing from `absenceCounts`;
 - source Project, editable records, polygon, accepted observation, and unknown
   future top-level fields remain unchanged;
@@ -754,11 +755,12 @@ Gate before PASS:
 4. reappearance clears the persisted GUID;
 5. incomplete Remote cannot persist or increment state;
 6. missing snapshot identity fails closed;
-7. source Project remains byte-equivalent;
-8. `schemaVersion`, `wayfarerObservation`, records/currentPois, polygon and unknown
+7. duplicate Remote snapshot identity fails closed;
+8. source Project remains byte-equivalent;
+9. `schemaVersion`, `wayfarerObservation`, records/currentPois, polygon and unknown
    future fields remain unchanged;
-9. no review UI, Remote apply or merge behavior is introduced;
-10. WM-3 through WM-7B and production Creative regressions remain green.
+10. no review UI, Remote apply or merge behavior is introduced;
+11. WM-3 through WM-7B and production Creative regressions remain green.
 
 Implementation files:
 
