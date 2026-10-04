@@ -45,6 +45,11 @@ assert.ok(source.includes("layer.style.pointerEvents = 'none'"));
 
 assert.ok(source.includes('campsite-wm2-drawing-cursor'));
 assert.ok(source.includes('cursor: crosshair !important'));
+assert.equal(
+  source.includes('app-wf-base-map button, app-wf-base-map a, app-wf-base-map input, app-wf-base-map select { cursor: pointer !important; }'),
+  false,
+  'Drawing mode must not revert Wayfarer top controls to the normal pointer cursor'
+);
 assert.ok(source.includes('syncDrawingCursor'));
 
 console.log('WM-2 Wayfarer polygon UI contract: drawing-only panel OK');
