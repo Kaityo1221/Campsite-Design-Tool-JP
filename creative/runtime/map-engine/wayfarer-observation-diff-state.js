@@ -35,6 +35,10 @@
     if (!baseSnapshotId || !remoteSnapshotId) {
       return Object.freeze({canPersist:false, reason:'SNAPSHOT_ID_MISSING', project});
     }
+    const previous = readState(project);
+    if (previous.lastRemoteSnapshotId && previous.lastRemoteSnapshotId === remoteSnapshotId) {
+      return Object.freeze({canPersist:false, reason:'REMOTE_ALREADY_PERSISTED', project});
+    }
 
     const state = Object.freeze({
       baseSnapshotId,
