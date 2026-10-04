@@ -95,7 +95,7 @@ const outside = window.__cmWayfarerReference.getScene();
 assert.equal(outside.items.filter(item => item.origin === 'reference').length, 0, 'Outside-reserve polygon must not keep stale Reference items');
 const outsideState = window.__cmWayfarerReference.getState();
 assert.equal(outsideState.localCanUse, false);
-assert.equal(outsideState.localReason, 'REACQUIRE_REQUIRED');
+assert.equal(outsideState.localReason, 'REFERENCE_OUT_OF_COVERAGE');
 assert.equal(outsideState.coverageReason, 'OUTSIDE_RESERVE');
 
 listeners.get('campsite:wayfarer-observation-saved')?.({});
