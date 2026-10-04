@@ -27,13 +27,9 @@ function renderJpGuide(){jpRefreshReviews();const box=ensureJpGuide(),adds=jpAdd
 `;
     if(html.includes(helperNeedle))html=html.replace(helperNeedle,helpers+helperNeedle);
 
-    const addNeedle="if(helperRadius!==50)r.customRadius=helperRadius;records.push(r);drawRecord(r);";
-    const addReplacement="if(helperRadius!==50)r.customRadius=helperRadius;if(isNew(r.layer)&&!jpCanAddLayer(r.layer))return;records.push(r);drawRecord(r);";
-    if(html.includes(addNeedle))html=html.replace(addNeedle,addReplacement);
-
-    const legacyAddNeedle="const r={id:crypto.randomUUID?.()||String(Date.now()),layer:activeLayer,latlng:[ll.lat,ll.lng],title:layerDefs.find(x=>x[0]===activeLayer)?.[1]||'新規スポット',memo:'',deleted:false};records.push(r);drawRecord(r);";
-    const legacyAddReplacement="const r={id:crypto.randomUUID?.()||String(Date.now()),layer:activeLayer,latlng:[ll.lat,ll.lng],title:layerDefs.find(x=>x[0]===activeLayer)?.[1]||'新規スポット',memo:'',deleted:false};if(isNew(r.layer)&&!jpCanAddLayer(r.layer))return;records.push(r);drawRecord(r);";
-    html=html.split(legacyAddNeedle).join(legacyAddReplacement);
+    const placeNeedle="function cmPlace(latlng){";
+    const placeReplacement="function cmPlace(latlng){if(cmAddMode&&isNew(activeLayer)&&!jpCanAddLayer(activeLayer))return;";
+    if(html.includes(placeNeedle))html=html.replace(placeNeedle,placeReplacement);
 
     const typeChangeNeedle="sheet.querySelector('#cmTypePicker').querySelectorAll('button').forEach(b=>b.onclick=()=>{const to=b.dataset.layer,from=r.layer;if(to===from)return;const wasAuto=";
     const typeChangeReplacement="sheet.querySelector('#cmTypePicker').querySelectorAll('button').forEach(b=>b.onclick=()=>{const to=b.dataset.layer,from=r.layer;if(to===from)return;if(isNew(to)&&!jpCanChangeType(to,r.id))return;const wasAuto=";
