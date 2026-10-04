@@ -219,7 +219,7 @@
         busy ? '🌉 Campsiteへ送信中…' :
         bridgeStatus === 'success' ? '✅ Campsiteへ送りました' :
         bridgeStatus === 'error' ? '↻ もう一度Campsiteへ送る' :
-        '🌉 Campsiteで設計する';
+        '🌉 Campsiteへ送信！';
       primaryButton.disabled = busy;
       primaryButton.onclick = startBridge;
 
