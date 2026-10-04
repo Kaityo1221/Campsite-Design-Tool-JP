@@ -8,7 +8,11 @@ new vm.Script(source, { filename: 'bridge-pc/wayfarer-polygon-controller.js' });
 const listeners = new Map();
 const storage = new Map();
 let mapClick = null;
-let windowCaptureClick = null;
+const windowCaptureHandlers = new Map();
+
+function capture(type) {
+  return windowCaptureHandlers.get(type) || null;
+}
 
 class Overlay {
   constructor(options = {}) { this.options = options; this.map = options.map || null; }
@@ -60,11 +64,11 @@ const fakeWindow = {
     }
   },
   addEventListener(type, fn, options) {
-    if (type === 'click' && options === true) windowCaptureClick = fn;
+    if (options === true) windowCaptureHandlers.set(type, fn);
     else listeners.set(type, fn);
   },
   removeEventListener(type, fn, options) {
-    if (type === 'click' && options === true && windowCaptureClick === fn) windowCaptureClick = null;
+    if (options === true && windowCaptureHandlers.get(type) === fn) windowCaptureHandlers.delete(type);
     else if (listeners.get(type) === fn) listeners.delete(type);
   },
   dispatchEvent() {},
@@ -103,14 +107,54 @@ assert.equal(api.interactionMode(), 'pc');
 
 api.startNew();
 assert.equal(api.getState().active, true);
-assert.equal(typeof windowCaptureClick, 'function', 'PC mode must capture DOM clicks before Wayfarer POI handlers');
+assert.equal(typeof capture('click'), 'function', 'PC mode must capture DOM clicks before Wayfarer POI handlers');
+assert.equal(typeof capture('pointerdown'), 'function', 'PC mode must observe pointerdown for drag detection');
+assert.equal(typeof capture('pointermove'), 'function', 'PC mode must observe pointermove for drag detection');
+assert.equal(typeof capture('pointerup'), 'function', 'PC mode must observe pointerup for drag detection');
 assert.equal(mapClick, null, 'PC capture mode must not depend on the Wayfarer map click event');
 
+const mapTarget = { closest() { return null; } };
 let prevented = 0;
 let stopped = 0;
-windowCaptureClick({
+
+capture('pointerdown')({
   button: 0,
-  target: { closest() { return null; } },
+  pointerId: 1,
+  target: mapTarget,
+  clientX: 300,
+  clientY: 220
+});
+capture('pointermove')({
+  pointerId: 1,
+  target: mapTarget,
+  clientX: 340,
+  clientY: 225
+});
+capture('pointerup')({
+  button: 0,
+  pointerId: 1,
+  target: mapTarget,
+  clientX: 340,
+  clientY: 225
+});
+capture('click')({
+  button: 0,
+  target: mapTarget,
+  clientX: 340,
+  clientY: 225,
+  preventDefault() { prevented += 1; },
+  stopPropagation() { stopped += 1; },
+  stopImmediatePropagation() { stopped += 1; }
+});
+assert.equal(api.getState().pointCount, 0, 'Dragging the map must not add a vertex');
+assert.equal(prevented, 1, 'Drag completion click must still be blocked from native Wayfarer POI handlers');
+assert.equal(stopped, 2, 'Drag completion click must not leak to downstream handlers');
+
+prevented = 0;
+stopped = 0;
+capture('click')({
+  button: 0,
+  target: mapTarget,
   clientX: 500,
   clientY: 250,
   preventDefault() { prevented += 1; },
@@ -131,7 +175,7 @@ assert.equal(api.complete(), true);
 assert.equal(api.getState().completed, true);
 assert.equal(storage.has(api.storageKey), true, 'Completed polygon must remain in draft storage until handoff');
 assert.equal(api.getState().active, false, 'Completing a polygon must leave drawing mode');
-assert.equal(windowCaptureClick, null, 'Completing a polygon must remove the PC DOM click capture');
+assert.equal(capture('click'), null, 'Completing a polygon must remove the PC DOM click capture');
 assert.equal(api.getState().completed, true);
 api.editCompleted();
 assert.equal(api.getState().active, true, 'Completed polygon can be reopened for editing');
@@ -140,7 +184,7 @@ assert.equal(api.getState().completed, false);
 api.exitDrawing();
 assert.equal(api.getState().active, false, 'Explicit normal-display exit must leave drawing mode');
 assert.equal(api.getState().paused, true, 'Explicit normal-display exit must preserve resumable state');
-assert.equal(windowCaptureClick, null);
+assert.equal(capture('click'), null);
 api.resumeDraft();
 assert.equal(api.getState().active, true);
 assert.equal(api.getState().paused, false);
@@ -166,7 +210,7 @@ assert.equal(api.getState().pointCount, 30);
 fakeWindow.innerWidth = 390;
 api.reset();
 assert.equal(api.getState().mode, 'mobile');
-assert.equal(windowCaptureClick, null, 'Mobile mode must not capture map clicks for vertex creation');
+assert.equal(capture('click'), null, 'Mobile mode must not capture map clicks for vertex creation');
 assert.equal(api.addCenter(), true);
 assert.deepEqual([...api.getPolygon()[0]], [35.1, 139.1]);
 
@@ -174,5 +218,8 @@ console.log('WM-2 Wayfarer polygon controller: OK');
 assert.equal(api.getState().message, '', 'Normal polygon state must clear stale transient messages');
 
 assert.ok(source.includes("window.addEventListener('click', handler, true)"), 'PC drawing must preempt native Wayfarer POI clicks');
+assert.ok(source.includes("['pointerdown', onPointerDown]"), 'PC drawing must observe pointerdown without blocking map drag');
+assert.ok(source.includes('PC_DRAG_THRESHOLD_PX'), 'PC drawing must distinguish drag from click');
+assert.ok(source.includes('if (withinTime && nearDragEnd) return;'), 'Drag completion click must not add a vertex');
 assert.ok(source.includes('stopImmediatePropagation'), 'PC drawing must stop downstream POI handlers');
 assert.ok(source.includes('pointFromClientPosition'), 'PC capture click must translate screen position to coordinates');
