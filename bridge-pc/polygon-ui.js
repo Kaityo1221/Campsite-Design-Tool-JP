@@ -191,10 +191,8 @@
 
     drawingCursorStyle = document.createElement('style');
     drawingCursorStyle.id = 'campsite-wm2-drawing-cursor';
-    drawingCursorStyle.textContent = [
-      'app-wf-base-map, app-wf-base-map * { cursor: crosshair !important; }',
-      'app-wf-base-map button, app-wf-base-map a, app-wf-base-map input, app-wf-base-map select { cursor: pointer !important; }'
-    ].join('\n');
+    drawingCursorStyle.textContent =
+      'app-wf-base-map, app-wf-base-map * { cursor: crosshair !important; }';
     document.documentElement.appendChild(drawingCursorStyle);
   }
 
