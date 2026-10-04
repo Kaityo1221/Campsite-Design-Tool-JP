@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Campsite Bridge - WM-3C TEST",
+  "name": "Campsite Bridge - PC TEST",
   "version": "0.1.0",
-  "description": "WM-3C実機確認用。公開Creativeへ一時的にWayfarer Reference Layerを注入して観察結果表示を検証します。",
+  "description": "Wayfarerで設計範囲を決め、範囲内のPOIをCampsiteへ送るPC実機確認用Bridge。",
   "permissions": [],
   "host_permissions": [
     "https://wayfarer.scopely.com/*",
@@ -27,8 +27,7 @@
         "bridge-v1-exporter.js",
         "page-collector.js",
         "wm1-live-verifier.js",
-        "wayfarer-observation-zone.js",
-        "wm3b-tab-link.js"
+        "wayfarer-observation-zone.js"
       ],
       "run_at": "document_idle",
       "world": "MAIN"
@@ -40,8 +39,7 @@
       ],
       "js": [
         "content.js",
-        "polygon-ui.js",
-        "wayfarer-tab-relay.js"
+        "polygon-ui.js"
       ],
       "run_at": "document_idle",
       "world": "ISOLATED"
@@ -55,29 +53,6 @@
       ],
       "run_at": "document_start",
       "world": "MAIN"
-    },
-    {
-      "matches": [
-        "https://kaityo1221.github.io/Campsite-Design-Tool-JP/creative/*"
-      ],
-      "js": [
-        "creative-wm3b2b-test-injector.js"
-      ],
-      "run_at": "document_idle",
-      "world": "MAIN"
-    },
-    {
-      "matches": [
-        "https://kaityo1221.github.io/Campsite-Design-Tool-JP/creative/*"
-      ],
-      "js": [
-        "creative-tab-relay.js"
-      ],
-      "run_at": "document_idle",
-      "world": "ISOLATED"
     }
-  ],
-  "background": {
-    "service_worker": "tab-relay-background.js"
-  }
+  ]
 }
