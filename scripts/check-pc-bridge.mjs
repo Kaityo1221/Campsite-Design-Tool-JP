@@ -337,6 +337,10 @@ assert.equal(mainWorld?.js?.includes('wm3-observe-controller.js'), false, 'User-
 assert.ok(collector.includes('currentCompletedPolygon'), 'Bridge must prefer the confirmed design polygon');
 assert.ok(collector.includes('confirmedPolygonSnapshotForBridge'), 'Bridge must build the handoff directly from the confirmed polygon');
 assert.ok(collector.includes('zoning.zones.interior'), 'Bridge must send only POIs inside the confirmed polygon');
+assert.ok(collector.includes('const wayfarerObservation = {'), 'Bridge must create the fixed observation during the initial handoff');
+assert.ok(collector.includes('referenceMeters: 100'), 'Fixed observation must retain the 100m Reference band');
+assert.ok(collector.includes('reserveMeters: 200'), 'Fixed observation must retain the 200m Reserve band');
+assert.ok(collector.includes('wayfarerObservation'), 'Bridge payload snapshot must carry the fixed observation');
 
 assert.ok(collector.includes("code: 'polygon-required'"), 'Bridge must fail closed when no confirmed polygon exists');
 assert.equal(collector.includes('polygon\n        ? await confirmedPolygonSnapshotForBridge(polygon)\n        : await collect()'), false, 'Bridge must not fall back to viewport collection');
