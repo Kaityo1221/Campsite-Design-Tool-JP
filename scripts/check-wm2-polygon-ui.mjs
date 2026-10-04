@@ -7,13 +7,17 @@ new vm.Script(source, { filename: 'bridge-pc/polygon-ui.js' });
 
 assert.ok(source.includes("'campsite-bridge-pc:polygon-command'"));
 assert.ok(source.includes("'campsite-bridge-pc:polygon-state'"));
-assert.ok(source.includes('📐 範囲を決める'));
-assert.ok(source.includes('地図上をクリック') === false, 'PC instruction belongs to controller state, not duplicated UI copy');
+assert.equal(source.includes('📐 範囲を決める'), false, 'Idle range-start CTA belongs in the Bridge side panel, not on the map');
+assert.equal(source.includes("'campsite-bridge-pc:start'"), false, 'Polygon UI must not own Bridge handoff');
+assert.equal(source.includes("'campsite-bridge-pc:status'"), false, 'Polygon UI must not own Bridge status');
+assert.equal(source.includes('🌉 Campsiteで設計する'), false, 'Polygon UI must stay drawing-only');
+assert.equal(source.includes('🔭 拠点内を観察'), false, 'User-facing observation step must stay removed');
+assert.ok(source.includes("host.style.display = state.active === true ? '' : 'none'"), 'Drawing panel must be hidden outside active polygon editing');
+
 assert.ok(source.includes('＋ 頂点を追加'));
 assert.ok(source.includes('↶ 1つ戻す'));
 assert.ok(source.includes('最初からやり直す'));
 assert.ok(source.includes('範囲を確定'));
-assert.ok(source.includes('前回の作成途中があります。再開しますか？'));
 assert.ok(source.includes('範囲を最初からやり直しますか？'));
 assert.ok(source.includes('campsite-wm2-crosshair'));
 assert.ok(source.includes("state.mode === 'mobile'"));
@@ -30,13 +34,9 @@ assert.ok(source.includes("element.style.visibility = 'hidden'"));
 assert.ok(source.includes('restoreWayfarerDrawingControls'));
 assert.ok(source.includes('← Wayfarer通常表示に戻る'));
 assert.ok(source.includes("'exit-drawing'"));
-assert.ok(source.includes("'edit-completed'"));
-assert.ok(source.includes('📐 範囲選択を再開'));
-assert.ok(source.includes('📐 範囲を編集'));
 assert.ok(source.includes('document.evaluate'));
 assert.ok(source.includes('XPathResult.ORDERED_NODE_SNAPSHOT_TYPE'));
 
-console.log('WM-2 Wayfarer polygon UI contract: OK');
 assert.ok(source.includes('findWayfarerPoiInteractionLayers'));
 assert.ok(source.includes("canvas#deckgl-overlay"));
 assert.ok(source.includes('suppressWayfarerPoiInteraction'));
@@ -47,7 +47,4 @@ assert.ok(source.includes('campsite-wm2-drawing-cursor'));
 assert.ok(source.includes('cursor: crosshair !important'));
 assert.ok(source.includes('syncDrawingCursor'));
 
-assert.ok(source.includes("'campsite-bridge-pc:start'"), 'Confirmed polygon UI must offer the Bridge handoff directly');
-assert.ok(source.includes("'campsite-bridge-pc:status'"), 'Confirmed polygon UI must show Bridge status');
-assert.ok(source.includes('🌉 Campsiteで設計する'), 'Confirmed polygon must expose an obvious Campsite CTA');
-assert.equal(source.includes('🔭 拠点内を観察'), false, 'User-facing observation step must be removed');
+console.log('WM-2 Wayfarer polygon UI contract: drawing-only panel OK');
