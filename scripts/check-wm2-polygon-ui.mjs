@@ -47,3 +47,7 @@ assert.ok(source.includes("canvas#deckgl-overlay"));
 assert.ok(source.includes('suppressWayfarerPoiInteraction'));
 assert.ok(source.includes('restoreWayfarerPoiInteraction'));
 assert.ok(source.includes("layer.style.pointerEvents = 'none'"));
+
+assert.ok(source.includes('campsite-wm2-drawing-cursor'));
+assert.ok(source.includes('cursor: crosshair !important'));
+assert.ok(source.includes('syncDrawingCursor'));
