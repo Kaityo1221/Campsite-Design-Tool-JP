@@ -15,17 +15,6 @@
         "https://wayfarer.nianticlabs.com/*"
       ],
       "js": [
-        "wayfarer-poi-visibility.js"
-      ],
-      "run_at": "document_start",
-      "world": "MAIN"
-    },
-    {
-      "matches": [
-        "https://wayfarer.scopely.com/*",
-        "https://wayfarer.nianticlabs.com/*"
-      ],
-      "js": [
         "wayfarer-map-adapter.js",
         "wayfarer-display-owner.js",
         "wayfarer-deck-compat.js",
