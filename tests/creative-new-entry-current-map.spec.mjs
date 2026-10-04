@@ -228,3 +228,65 @@ test('KMZ保存先パネルのダウンロード操作を文字で表示する',
   await expect(close).toBeVisible();
   await close.click();
 });
+
+
+test('活動範囲の削除を戻る・やり直しできる',async({page})=>{
+  await page.addInitScript(()=>{
+    localStorage.setItem('next-lab-creative-v7',JSON.stringify({
+      sourceName:'activity-range-history',
+      records:[],
+      polygons:[{
+        id:'activity-range-1',
+        points:[
+          [35.6808,139.7667],
+          [35.6816,139.7667],
+          [35.6812,139.7677]
+        ],
+        deleted:false,
+        source:false
+      }],
+      activeLayer:'new-pokestop',
+      circleExtras:[],
+      polygonVisible:true,
+      center:[35.6812,139.7671],
+      zoom:17
+    }));
+  });
+
+  await page.goto('/creative/index.html');
+  const entry=page.locator('#entry');
+  await expect(entry).toBeVisible({timeout:15000});
+  const resume=page.locator('#resumeButton');
+  await expect(resume).toBeVisible();
+  await resume.click();
+  await expect(entry).toBeHidden({timeout:4000});
+
+  const activityRow=page.locator('#layerRows .layer-row').last().locator('button');
+  await expect(activityRow).toHaveText('活動範囲 (1)');
+
+  await page.locator('#toolbox').click();
+  await page.locator('#toolMenu [data-tool="polygon"]').click();
+  const deleteChoice=page.getByRole('button',{name:'削除する',exact:true});
+  await expect(deleteChoice).toBeVisible();
+  await deleteChoice.click();
+
+  await expect(page.locator('#status')).toContainText('削除する活動範囲を選択');
+  const deleteTarget=page.locator('.leaflet-polygon-pane .leaflet-interactive').last();
+  await expect(deleteTarget).toBeVisible();
+  await deleteTarget.click({force:true});
+
+  const confirmDelete=page.getByRole('button',{name:'活動範囲を削除',exact:true});
+  await expect(confirmDelete).toBeVisible();
+  await confirmDelete.click();
+
+  await expect(activityRow).toHaveText('活動範囲');
+  const undo=page.locator('#undo');
+  const redo=page.locator('#redo');
+  await expect(undo).toBeEnabled();
+  await undo.click();
+  await expect(activityRow).toHaveText('活動範囲 (1)');
+  await expect(redo).toBeEnabled();
+
+  await redo.click();
+  await expect(activityRow).toHaveText('活動範囲');
+});
