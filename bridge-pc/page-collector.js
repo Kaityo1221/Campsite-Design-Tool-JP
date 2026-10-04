@@ -315,9 +315,9 @@
       popup.document.open();
       popup.document.write(
         '<!doctype html><meta charset="utf-8"><title>Campsite Bridge</title>' +
-        '<body style="margin:0;background:#020617;color:#e2e8f0;font-family:system-ui;display:grid;place-items:center;min-height:100vh">' +
-        '<div style="text-align:center"><div style="font-size:42px">🌉</div><strong>Campsite Bridge</strong>' +
-        '<div style="margin-top:8px;color:#94a3b8;font-size:13px">WayfarerからPOIを準備しています…</div></div></body>'
+        '<body style="margin:0;background:#020617;color:#e2e8f0;font-family:-apple-system,BlinkMacSystemFont,&quot;Segoe UI&quot;,sans-serif;display:grid;place-items:center;min-height:100vh;padding:24px;text-align:center">' +
+        '<div><strong style="display:block;font-size:18px">🔐 Campsite Bridge</strong>' +
+        '<small style="display:block;margin-top:8px;color:#94a3b8;line-height:1.7">Campsiteを準備しています…</small></div></body>'
       );
       popup.document.close();
     } catch (_) {}
