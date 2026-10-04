@@ -71,9 +71,7 @@ assert.equal('diagnosticReport' in bridgePayload, false, 'Diagnostics must never
 assert.equal('diagnostics' in bridgePayload, false);
 assert.equal('classificationDiagnostics' in bridgePayload, false);
 
-const main = manifest.content_scripts.find(entry =>
-  entry.world === 'MAIN' && (entry.js || []).includes('page-collector.js')
-);
+const main = manifest.content_scripts.find(entry => entry.world === 'MAIN');
 assert.ok(main.js.includes('poi-diagnostics.js'));
 assert.ok(main.js.indexOf('poi-classifier.js') < main.js.indexOf('poi-diagnostics.js'));
 assert.ok(main.js.indexOf('poi-diagnostics.js') < main.js.indexOf('page-collector.js'));
