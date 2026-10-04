@@ -106,6 +106,7 @@ vm.runInContext(classifierSource, context);
 vm.runInContext(referenceSource, context);
 vm.runInContext(diagnosticsSource, context);
 vm.runInContext(exporterSource, context);
+vm.runInContext(wm3ObservationZoneSource, context);
 vm.runInContext(collector, context);
 vm.runInContext(wm1LiveVerifierSource, context);
 
@@ -120,6 +121,7 @@ assert.ok(fakeWindow.CampsiteBridgePoiClassifier, 'POI classifier API missing');
 assert.ok(fakeWindow.CampsiteBridgePoiReferenceLayer, 'POI reference layer API missing');
 assert.ok(fakeWindow.CampsiteBridgePoiDiagnostics, 'POI diagnostics API missing');
 assert.ok(fakeWindow.CampsiteBridgeV1Exporter, 'Bridge V1 exporter API missing');
+assert.ok(fakeWindow.CampsiteWayfarerObservationZone, 'Observation zone API missing');
 assert.equal(typeof api.classifyMapData, 'function', 'Collector must expose classification stage');
 assert.equal(typeof api.collectPolygon, 'function', 'Collector must expose polygon-driven WM-1 acquisition');
 assert.ok(fakeWindow.CampsiteWayfarerWm1LiveVerifier, 'WM-1 live verifier API missing');
@@ -212,6 +214,27 @@ assert.equal(polygonCollection.acquisition.coverageComplete, true);
 assert.equal(polygonCollection.acquisition.coverageStatus, 'complete');
 assert.equal(polygonCollection.pois.length, 3, 'Merged polygon acquisition must dedupe GUIDs through the existing parser');
 assert.equal(polygonCollection.selectedBounds, null, 'Polygon acquisition must not depend on viewport bounds');
+
+const fixedSnapshot = await api.confirmedPolygonSnapshotForBridge([
+  [35.0000, 139.0000],
+  [35.0000, 139.0100],
+  [35.0100, 139.0100],
+  [35.0100, 139.0000]
+]);
+assert.ok(fixedSnapshot.wayfarerObservation, 'Confirmed polygon handoff must create wayfarerObservation');
+assert.match(fixedSnapshot.wayfarerObservation.snapshotId, /^wm3:/);
+assert.equal(fixedSnapshot.wayfarerObservation.acquisition.bufferMeters, 200);
+assert.equal(fixedSnapshot.wayfarerObservation.acquisition.referenceMeters, 100);
+assert.equal(fixedSnapshot.wayfarerObservation.acquisition.reserveMeters, 200);
+assert.equal(fixedSnapshot.wayfarerObservation.polygon.length, 4);
+assert.ok(Array.isArray(fixedSnapshot.wayfarerObservation.zones.interior));
+assert.ok(Array.isArray(fixedSnapshot.wayfarerObservation.zones.reference100));
+assert.ok(Array.isArray(fixedSnapshot.wayfarerObservation.zones.reserve200));
+assert.deepEqual(fixedSnapshot.referencePois, [], 'Reference bands must travel only in wayfarerObservation');
+const fixedPayload = api.makePayload(fixedSnapshot, 'pc-fixed-reference');
+assert.equal(fixedPayload.wayfarerObservation.snapshotId, fixedSnapshot.wayfarerObservation.snapshotId);
+assert.equal(fixedPayload.wayfarerObservation.acquisition.referenceMeters, 100);
+assert.equal(fixedPayload.wayfarerObservation.acquisition.reserveMeters, 200);
 
 const parsed = api.parseMapData(sample);
 assert.equal(parsed.sourceCount, 7);
