@@ -326,7 +326,10 @@ assert.ok(zip.includes(Buffer.from('page-collector.js')), 'ZIP must contain page
 assert.ok(zip.includes(Buffer.from('content.js')), 'ZIP must contain content.js');
 assert.ok(zip.includes(Buffer.from('wm1-live-verifier.js')), 'ZIP must contain WM-1 live verifier');
 assert.ok(zip.includes(Buffer.from('wayfarer-observation-zone.js')), 'ZIP must contain WM-3 observation zone');
-assert.ok(zip.includes(Buffer.from('wm3b-tab-link.js')), 'ZIP must contain WM-3B-0 tab link');
+assert.equal(zip.includes(Buffer.from('wm3b-tab-link.js')), false, 'Retired WM-3B observation link must not enter ZIP');
+assert.equal(zip.includes(Buffer.from('wm3-observe-controller.js')), false, 'Retired observation controller must not enter ZIP');
+assert.equal(zip.includes(Buffer.from('creative-wm3b2b-test-injector.js')), false, 'Retired Creative observation panel must not enter ZIP');
+assert.equal(zip.includes(Buffer.from('tab-relay-background.js')), false, 'Retired observation service worker must not enter ZIP');
 
 console.log('Campsite Bridge PC 0.1.0 + POI Engine v1.1 routing + V1 export contract: OK');
 
