@@ -70,4 +70,14 @@ const zip = fs.readFileSync('downloads/campsite-bridge-pc-0.1.0.zip');
 assert.ok(zip.includes(Buffer.from('creative-wm3c-test-runtime.js')), 'WM-3C runtime not packaged in Bridge ZIP');
 assert.equal(zip.includes(Buffer.from('creative-wm3b2b-test-injector.js')), false, 'Retired Creative observation panel must not enter Bridge ZIP');
 
+const receiverOverride = String(process.env.CAMPSITE_BRIDGE_RECEIVER_BASE || '').trim();
+if (receiverOverride) {
+  assert.ok(zip.includes(Buffer.from(receiverOverride)), 'PR Bridge ZIP must contain the preview receiver override');
+  assert.equal(
+    zip.includes(Buffer.from("const RECEIVER_BASE = RECEIVER_ORIGIN + '/Campsite-Design-Tool-JP/bridge-receiver.html';")),
+    false,
+    'PR Bridge ZIP must not retain the production receiver assignment'
+  );
+}
+
 console.log('WM-3C reference runtime package without retired observation panel: PASS');
