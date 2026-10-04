@@ -14,14 +14,11 @@
     const OBSERVE_ACCEPTED_TYPE = 'CAMPSITE_WAYFARER_OBSERVE_ACCEPTED_V1';
     const OBSERVE_RESULT_TYPE = 'CAMPSITE_WAYFARER_OBSERVE_RESULT_V1';
     const OBSERVATION_SAVED_EVENT = 'campsite:wayfarer-observation-saved';
-    const REFERENCE_STATE_EVENT = 'campsite:wayfarer-reference-state';
     const PROJECT_KEY = 'campsiteProject.v1';
     const RELAY_FROM_MAIN_TYPE = 'CAMPSITE_CREATIVE_MAIN_TO_EXTENSION_V1';
     const RELAY_TO_MAIN_TYPE = 'CAMPSITE_EXTENSION_TO_CREATIVE_MAIN_V1';
     const CONNECT_TIMEOUT_MS = 4200;
     const OBSERVE_RESULT_TIMEOUT_MS = 120000;
-    const REFRESH_AGE_DAYS = 90;
-    const REFRESH_AGE_MS = REFRESH_AGE_DAYS * 24 * 60 * 60 * 1000;
 
     let wayfarerWindow = null;
     let pendingRequestId = '';
@@ -36,10 +33,6 @@
       duplicateMapTabs: false,
       mapTabCount: 0,
       tabCountVerified: false,
-      reacquireRequired: false,
-      refreshStale: false,
-      refreshAgeDays: null,
-      refreshObservedAt: '',
       message: '未接続'
     };
 
@@ -67,93 +60,15 @@
       const state = linkState.status;
       view.status.dataset.state = state;
       view.status.textContent = linkState.message || '未接続';
-      const reacquire = linkState.reacquireRequired === true;
-      const refreshStale = linkState.refreshStale === true;
-      if (view.button) {
-        view.button.dataset.reacquire = reacquire ? '1' : '0';
-        view.button.dataset.refreshStale = refreshStale ? '1' : '0';
-        view.button.textContent = reacquire
-          ? 'Wayfarerで再取得'
-          : refreshStale
-            ? '🔭 Wayfarer観察　更新推奨'
-            : '🔭 Wayfarer観察';
-        view.button.style.background = (reacquire || refreshStale) ? 'rgba(255,241,201,.98)' : 'rgba(238,247,231,.96)';
-        view.button.style.borderColor = (reacquire || refreshStale) ? '#a9791f' : '#5d7353';
-        view.button.style.color = (reacquire || refreshStale) ? '#4b3715' : '#294227';
-        view.button.title = reacquire
-          ? '現在の設計範囲は前回のWayfarer取得範囲を超えています'
-          : refreshStale
-            ? '前回のWayfarer観察から90日以上経過しています'
-            : '';
-      }
       if (view.check) view.check.disabled = state === 'checking' || state === 'sending' || state === 'observing';
       if (view.open) view.open.disabled = state === 'checking' || state === 'sending' || state === 'observing';
-      if (view.observe) {
-        view.observe.disabled = !linkState.connected || state === 'checking' || state === 'sending' || state === 'observing';
-        view.observe.textContent = reacquire ? 'Wayfarerで再取得' : refreshStale ? '観察を更新' : 'この範囲を観察';
-      }
-    }
-
-    function evaluateRefreshAge(observedAt, nowMs = Date.now()) {
-      const observedMs = Date.parse(String(observedAt || ''));
-      const now = Number(nowMs);
-      if (!Number.isFinite(observedMs) || !Number.isFinite(now)) {
-        return Object.freeze({ valid:false, stale:false, ageDays:null, observedAt:String(observedAt || '') });
-      }
-      const ageMs = Math.max(0, now - observedMs);
-      return Object.freeze({
-        valid:true,
-        stale:ageMs >= REFRESH_AGE_MS,
-        ageDays:Math.floor(ageMs / (24 * 60 * 60 * 1000)),
-        observedAt:new Date(observedMs).toISOString()
-      });
-    }
-
-    function syncRefreshAgeState(project) {
-      const current = readCurrentProject() || project || null;
-      const age = evaluateRefreshAge(current?.wayfarerObservation?.observedAt || '');
-      const wasStale = linkState.refreshStale === true;
-      linkState = {
-        ...linkState,
-        refreshStale:age.stale === true,
-        refreshAgeDays:age.valid ? age.ageDays : null,
-        refreshObservedAt:age.valid ? age.observedAt : ''
-      };
-      if (age.stale && !wasStale && linkState.status === 'idle' && linkState.reacquireRequired !== true) {
-        linkState.message = '前回のWayfarer観察から90日以上経過しています。必要に応じて更新してください。';
-      } else if (!age.stale && wasStale &&
-                 linkState.status === 'idle' &&
-                 String(linkState.message || '').includes('90日以上')) {
-        linkState.message = '未接続';
-      }
-      renderState();
-      return { ...age };
+      if (view.observe) view.observe.disabled = !linkState.connected || state === 'checking' || state === 'sending' || state === 'observing';
     }
 
     function setState(next) {
       linkState = { ...linkState, ...next };
       renderState();
       return { ...linkState };
-    }
-
-    function syncReacquireState(detail) {
-      let referenceState = detail && typeof detail === 'object' ? detail : null;
-      if (!referenceState) {
-        try { referenceState = window.__cmWayfarerReference?.getState?.() || null; } catch (_) {}
-      }
-      const required = referenceState?.localCanUse === false &&
-        String(referenceState?.localReason || '') === 'REACQUIRE_REQUIRED';
-      const wasRequired = linkState.reacquireRequired === true;
-      linkState = { ...linkState, reacquireRequired: required };
-      if (required && !wasRequired && linkState.status === 'idle') {
-        linkState.message = '設計範囲が前回の取得範囲を超えています。Wayfarerで再取得してください。';
-      } else if (!required && wasRequired &&
-                 linkState.status === 'idle' &&
-                 String(linkState.message || '').includes('Wayfarerで再取得')) {
-        linkState.message = '未接続';
-      }
-      renderState();
-      return required;
     }
 
     function syncProject(project) {
@@ -321,7 +236,6 @@
 
       project.wayfarerObservation = observation;
       sessionStorage.setItem(PROJECT_KEY, JSON.stringify(project));
-      syncRefreshAgeState(project);
       try {
         window.dispatchEvent(new CustomEvent(OBSERVATION_SAVED_EVENT, { detail: { observedAt: observation.observedAt } }));
       } catch (_) {}
@@ -605,27 +519,20 @@
         if (event.target === overlay) overlay.style.display = 'none';
       });
 
-      syncRefreshAgeState(project);
-      syncReacquireState();
       renderState();
     }
 
-    window.addEventListener(REFERENCE_STATE_EVENT, event => syncReacquireState(event?.detail));
-    window.addEventListener(OBSERVATION_SAVED_EVENT, () => syncRefreshAgeState());
     window.addEventListener('message', handlePong);
     window.addEventListener('message', handleObserveAccepted);
     window.addEventListener('message', handleObserveResult);
 
     window.installCampsiteWayfarerObserveLink = installUi;
     window.CampsiteCreativeWayfarerLink = Object.freeze({
-      version: '0.5.0',
+      version: '0.3.0',
       openWayfarer,
       checkConnection,
       startObservation,
       saveObservationResult,
-      syncReacquireState,
-      syncRefreshAgeState,
-      evaluateRefreshAge,
       getState() { return { ...linkState }; }
     });
   }
