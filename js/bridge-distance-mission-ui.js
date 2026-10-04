@@ -35,7 +35,9 @@
   }
 
   function poiComment(poi) {
-    return String(poi?.description || poi?.memo || '').trim();
+    return (Object.prototype.hasOwnProperty.call(poi || {}, 'applicationComment')
+      ? String(poi?.applicationComment || '')
+      : String(poi?.description || poi?.memo || '')).trim();
   }
 
   function pointOf(poi) {
