@@ -95,7 +95,7 @@ async function replaceCreativePolygon(page, points) {
   await deleteOverlay.evaluate(element => {
     element.dispatchEvent(new MouseEvent('click', { bubbles:true, cancelable:true, view:window }));
   });
-  const confirmDelete = page.getByRole('button', { name:'ポリゴンを削除' });
+  const confirmDelete = page.getByRole('button', { name:'活動範囲を削除' });
   await expect(confirmDelete).toBeVisible();
   await confirmDelete.click();
 
@@ -114,7 +114,7 @@ async function replaceCreativePolygon(page, points) {
   }
 
   await page.evaluate(([lat,lng]) => window.CampsiteCreativeCoordinateJump.moveTo(lat,lng), points[0]);
-  const finish = page.getByRole('button', { name:'ポリゴン作成！' });
+  const finish = page.getByRole('button', { name:'活動範囲を作成！' });
   await expect(finish).toBeVisible();
   await finish.click();
   await expect.poll(() => page.evaluate(() => window.__cmWayfarerReference.getCurrentPolygon().length)).toBe(points.length);
