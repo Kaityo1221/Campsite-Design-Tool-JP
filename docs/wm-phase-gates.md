@@ -644,7 +644,7 @@ WM-7B re-observation diff may now start.
 
 
 
-### WM-7B — pure re-observation diff engine (implementation)
+### WM-7B — pure re-observation diff engine: PASS
 
 Scope is data-only. No Creative review UI, Project persistence, remote apply,
 absence metadata save, or Base/Local/Remote merge is connected in this subphase.
@@ -683,4 +683,42 @@ Gate before PASS:
    `campsiteProject.v1`, `records/currentPois`, or `wayfarerObservation`.
 10. WM-3 through WM-7A and current production Creative regressions remain green.
 
-WM-7C persistence / review UI / apply flow must not start until WM-7B passes.
+WM-7B PASS was fixed on 2026-10-04 JST at final validation head
+`5f437d1c8fb942a16b97266214544043452d377e`.
+
+Evidence:
+
+- pure engine: `creative/runtime/map-engine/wayfarer-observation-diff.js`;
+- pure regression: `scripts/check-wm7b-observation-diff.mjs`;
+- Campsite Bridge PC Check #377: PASS, including
+  `WM-7B Wayfarer observation diff: PASS`;
+- Phase 5 Unified Renderer Release Gate #193: PASS;
+- Bridge Next #313, Campsite Bridge iPhone #195, Setup #240,
+  Distance Advice #203, Distance Mission #239, Workflow Resume #235,
+  Field End-to-End #298, Field Prep Safety #320 and Field Mode Safety #359:
+  PASS;
+- diff identity is stable GUID / poiId, not coordinates;
+- new GUIDs are reported as `NEW_POI`;
+- same-GUID title, type, Active/Inactive status and coordinate changes are
+  reported independently;
+- first complete-snapshot absence is `UNCONFIRMED`;
+- second consecutive complete-snapshot absence is `DELETE_CANDIDATE`;
+- reappearance clears prior absence tracking;
+- incomplete Remote returns `REMOTE_INCOMPLETE`, produces no diff and does
+  not increment absence counts;
+- Base and Remote source observations remain byte-equivalent in regression;
+- all snapshot zones participate in diff, including retained RESERVE_200;
+- the module remains data-only and is not loaded into Creative runtime;
+- no Creative review UI, Project persistence, remote apply, disappearance
+  metadata save or Base/Local/Remote merge was added;
+- diff review from the WM-7A PASS head is limited to the pure diff module,
+  its regression, architecture-check wiring and gate documentation.
+
+The first PC red was a Node VM cross-realm `deepStrictEqual` test artifact:
+the actual and expected summary values were identical. The regression was
+normalized to value comparison, and a final exact coordinate-change assertion
+was added without changing product logic.
+
+WM-7B is complete at this boundary.
+WM-7C persistence / review UI / apply flow may start only after this PASS.
+
