@@ -4,7 +4,7 @@
   let timer=0,busy=false;
   const read=()=>{try{return JSON.parse(sessionStorage.getItem(PK)||'null')}catch(_){return null}};
   const role=p=>p?.role==='added'||String(p?.layer||'').toLowerCase().startsWith('new-')?'added':'existing';
-  const point=p=>{const lat=Number(p?.lat),lng=Number(p?.lng);return Number.isFinite(lat)&&Number.isFinite(lng)?{lat,lng,role:role(p),comment:String(p?.description||p?.memo||'').trim()}:null};
+  const point=p=>{const lat=Number(p?.lat),lng=Number(p?.lng);return Number.isFinite(lat)&&Number.isFinite(lng)?{lat,lng,role:role(p),comment:(Object.prototype.hasOwnProperty.call(p||{},'applicationComment')?String(p?.applicationComment||''):String(p?.description||p?.memo||'')).trim()}:null};
   const dist=(a,b)=>{const R=6371000,l1=a.lat*Math.PI/180,l2=b.lat*Math.PI/180,dl=(b.lat-a.lat)*Math.PI/180,dg=(b.lng-a.lng)*Math.PI/180,q=Math.sin(dl/2)**2+Math.cos(l1)*Math.cos(l2)*Math.sin(dg/2)**2;return R*2*Math.atan2(Math.sqrt(q),Math.sqrt(1-q))};
   function pairs(p){
     const ps=(p?.currentPois||[]).map(point).filter(Boolean);let unresolved=0,duplicates=0;
