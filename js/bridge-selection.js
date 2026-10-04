@@ -521,9 +521,12 @@
     map.on('mousemove', event => {
       updatePolygonPreview(event.latlng);
     });
-    map.on('mouseout', () => {
+    const clearPreviewOnMapLeave = () => {
       if (drawMode) clearPolygonPreview();
-    });
+    };
+    map.on('mouseout', clearPreviewOnMapLeave);
+    mapEl.addEventListener('pointerleave', clearPreviewOnMapLeave, { passive:true });
+    mapEl.addEventListener('mouseleave', clearPreviewOnMapLeave, { passive:true });
     renderMarkers();
     requestAnimationFrame(() => {
       map.invalidateSize();
