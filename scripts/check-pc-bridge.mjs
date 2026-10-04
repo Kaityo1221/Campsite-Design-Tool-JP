@@ -318,7 +318,7 @@ assert.ok(content.includes("'campsite-bridge-pc:status'"), 'ISOLATED UI must lis
 assert.equal(content.includes('popup.postMessage'), false, 'ISOLATED UI must not post to Receiver directly');
 assert.ok(content.includes('🌉 Campsite Bridge'), 'PC Bridge side panel title missing');
 assert.ok(content.includes('📐 設計範囲を決める'), 'Bridge panel must own the initial range CTA');
-assert.ok(content.includes('🌉 Campsiteで設計する'), 'Bridge panel must own the handoff CTA');
+assert.ok(content.includes('🌉 Campsiteへ送信！'), 'Bridge panel must own the handoff CTA');
 assert.ok(content.includes("panelOpen = !panelOpen"), 'Bridge button must only open the side panel');
 assert.ok(content.includes("panelOpen = false;\n    sendPolygon('start-new')"), 'Starting a range must close the Bridge panel');
 assert.ok(content.includes("panelOpen = true"), 'Polygon completion/status must be able to reopen the Bridge panel');
