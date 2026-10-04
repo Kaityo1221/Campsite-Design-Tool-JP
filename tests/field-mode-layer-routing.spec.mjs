@@ -1,5 +1,4 @@
 import { test, expect } from '@playwright/test';
-import { openLegacyTools, startPoiAdd } from './helpers/field-creative-v2.mjs';
 import fs from 'node:fs';
 import JSZip from 'jszip';
 
@@ -52,6 +51,12 @@ async function openFieldMode(page,kml=sourceKml){
   await expect(page.locator('#fieldModeCreativeButton')).toBeEnabled();
 }
 
+async function openPalette(page){
+  const hotbar=page.locator('#fieldModeCreativeHotbar');
+  if(!(await hotbar.evaluate(el=>el.classList.contains('is-open'))))await page.locator('#fieldModeCreativeButton').click();
+  await expect(hotbar).toHaveClass(/is-open/);
+}
+
 async function selectPoiType(page,typeLabel){
   const typeButton=page.locator('#fieldPoiTypeButton');
   await expect(typeButton).toBeVisible();
@@ -63,7 +68,10 @@ async function selectPoiType(page,typeLabel){
 }
 
 async function addCurrentTypePoi(page,typeLabel='ポケストップ'){
-  await startPoiAdd(page);
+  await openPalette(page);
+  const poi=page.locator('#fieldModeCreativeHotbar [data-tool="poi"]');
+  await expect(poi).toBeEnabled();
+  await poi.click();
   await selectPoiType(page,typeLabel);
   const confirm=page.locator('#fieldModeNewPoiButton');
   await expect(confirm).toBeVisible();
@@ -195,7 +203,7 @@ test('活動範囲込み保存でも正式POIレイヤーと参考円選択を�
   await addCurrentTypePoi(page,'ジム');
   await addCurrentTypePoi(page,'パワースポット');
 
-  await openLegacyTools(page);
+  await page.locator('#fieldModeCreativeButton').click();
   const areaTool=page.locator('#fieldModeCreativeHotbar [data-tool="area"]');
   await expect(areaTool).toBeEnabled();
   await areaTool.click();

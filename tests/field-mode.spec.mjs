@@ -1,5 +1,4 @@
 import { test, expect } from '@playwright/test';
-import { openLegacyTools, startPoiAdd } from './helpers/field-creative-v2.mjs';
 import fs from 'node:fs';
 
 const leafletJs=fs.readFileSync('node_modules/leaflet/dist/leaflet.js','utf8');
@@ -55,15 +54,24 @@ async function openFieldMode(page){
   return pageErrors;
 }
 
+async function openPalette(page){
+  const hotbar=page.locator('#fieldModeCreativeHotbar');
+  if(!(await hotbar.evaluate(el=>el.classList.contains('is-open'))))await page.locator('#fieldModeCreativeButton').click();
+  await expect(hotbar).toHaveClass(/is-open/);
+}
+
 async function beginNewPoiPlacement(page){
-  await startPoiAdd(page);
+  await openPalette(page);
+  const poi=page.locator('#fieldModeCreativeHotbar [data-tool="poi"]');
+  await expect(poi).toBeEnabled();
+  await poi.click();
   await expect(page.locator('#fieldModeNewPoiButton')).toBeVisible();
   await expect(page.locator('#fieldModeNewPoiButton')).toContainText('この位置に設置');
   await expect(page.locator('#fieldModeCrosshair')).toBeVisible();
 }
 
 async function createThreePointArea(page){
-  await openLegacyTools(page);
+  await page.locator('#fieldModeCreativeButton').click();
   const areaTool=page.locator('#fieldModeCreativeHotbar [data-tool="area"]');
   await expect(areaTool).toBeEnabled();
   await expect(page.locator('#fieldModeCreativeHotbar [data-tool="line"]')).toBeDisabled();
@@ -78,21 +86,19 @@ async function createThreePointArea(page){
   await expect(page.locator('#fieldModeSelectionDetail')).toContainText('Polygon');
 }
 
-test('通常タップで直接設置し、取消後の道具箱からも通常タップで設置に戻る',async({page})=>{
+test('新規設置は道具箱で取消でき、パレットは再タップで閉じる',async({page})=>{
   const pageErrors=await openFieldMode(page);
 
   await beginNewPoiPlacement(page);
   await expect(page.locator('body')).toHaveClass(/field-creative-active/);
 
-  await page.locator('#fieldModePoiToolCancel').click();
-  await expect.poll(()=>page.evaluate(()=>window.FieldCreative.activeTool())).toBe(null);
-  await expect(page.locator('#fieldModeCreativeHotbar')).toHaveClass(/is-open/);
+  await page.locator('#fieldModeCreativeButton').click();
   await expect(page.locator('#fieldModeCrosshair')).toBeHidden();
   await expect(page.locator('#fieldModeNewPoiButton')).toContainText('新規設置');
   await expect(page.locator('#fieldModeCreativeHotbar')).toBeVisible();
   await expect(page.locator('#fieldModeCreativeHotbar [data-tool="poi"]')).toBeVisible();
 
-  await startPoiAdd(page);
+  await page.locator('#fieldModeCreativeButton').click();
   await expect(page.locator('#fieldModeCreativeHotbar')).toBeHidden();
   await expect(page.locator('body')).toHaveClass(/field-creative-active/);
 
@@ -118,7 +124,7 @@ test('新規POIを確定後、戻る・進むでUndo/Redoできる',async({page}
 test('範囲ツールは3点以上を置き、最後を最初へ閉じてUndo/Redoできる',async({page})=>{
   const pageErrors=await openFieldMode(page);
 
-  await openLegacyTools(page);
+  await page.locator('#fieldModeCreativeButton').click();
   const areaTool=page.locator('#fieldModeCreativeHotbar [data-tool="area"]');
   await expect(areaTool).toBeEnabled();
   await expect(page.locator('#fieldModeCreativeHotbar [data-tool="line"]')).toBeDisabled();

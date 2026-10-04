@@ -1,5 +1,4 @@
 import { test, expect } from '@playwright/test';
-import { openLegacyTools } from './helpers/field-creative-v2.mjs';
 import fs from 'node:fs';
 
 const leafletJs=fs.readFileSync('node_modules/leaflet/dist/leaflet.js','utf8');
@@ -34,13 +33,19 @@ async function openFieldMode(page){
   return pageErrors;
 }
 
+async function openPalette(page){
+  if(!(await page.locator('#fieldModeCreativeHotbar').evaluate(el=>el.classList.contains('is-open')))){
+    await page.locator('#fieldModeCreativeButton').click();
+  }
+  await expect(page.locator('#fieldModeCreativeHotbar')).toHaveClass(/is-open/);
+}
+
 test('距離ツールは始点から十字までをリアルタイム計測し、終了で道具箱へ戻る',async({page})=>{
   const pageErrors=await openFieldMode(page);
-  await openLegacyTools(page);
+  await openPalette(page);
   const distance=page.locator('#fieldModeCreativeHotbar [data-tool="distance"]');
   await expect(distance).toBeEnabled();
-  // The v2 + FAB covers the button center; its upper-left corner remains tappable.
-  await distance.click({position:{x:8,y:8}});
+  await distance.click();
   await expect(page.locator('#fieldModeDistanceActions')).toBeVisible();
   await expect(page.locator('#fieldModeMeasureBadge')).toBeVisible();
   await expect(page.locator('#fieldModeCrosshair')).toBeVisible();
@@ -80,7 +85,7 @@ test('距離判定は30m・40mを参考境界、50mを確保境界として共�
 
 test('範囲作成をやめると下書きを破棄して道具箱へ戻る',async({page})=>{
   const pageErrors=await openFieldMode(page);
-  await openLegacyTools(page);
+  await openPalette(page);
   const area=page.locator('#fieldModeCreativeHotbar [data-tool="area"]');
   await expect(area).toBeEnabled();
   await area.click();
@@ -96,7 +101,7 @@ test('範囲作成をやめると下書きを破棄して道具箱へ戻る',asy
 
 test('消去をやめると対象選択を解除して道具箱へ戻る',async({page})=>{
   const pageErrors=await openFieldMode(page);
-  await openLegacyTools(page);
+  await openPalette(page);
   const eraser=page.locator('#fieldModeCreativeHotbar [data-tool="eraser"]');
   await expect(eraser).toBeEnabled();
   await eraser.click();
@@ -112,7 +117,7 @@ test('消去をやめると対象選択を解除して道具箱へ戻る',async(
 test('位置調整をやめると微調整状態も解除して道具箱へ戻る',async({page})=>{
   const pageErrors=await openFieldMode(page);
   await page.evaluate(()=>selectAddedPoi(poiRecords.find(record=>record.added&&!record.fieldDeleted)));
-  await openLegacyTools(page);
+  await openPalette(page);
   const adjust=page.locator('#fieldModeCreativeHotbar [data-tool="adjust"]');
   await expect(adjust).toBeEnabled();
   await adjust.click();
