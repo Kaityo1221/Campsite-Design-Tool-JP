@@ -7,6 +7,12 @@ new vm.Script(source, { filename: 'bridge-pc/wayfarer-polygon-controller.js' });
 
 const listeners = new Map();
 const storage = new Map();
+storage.set('campsite.wayfarerPolygonDraft.v1', JSON.stringify({
+  version:'0.1.0',
+  points:[[35.0,139.0],[35.0,139.01],[35.01,139.01]],
+  completed:true,
+  updatedAt:'2026-10-04T00:00:00.000Z'
+}));
 let mapClick = null;
 const windowCaptureHandlers = new Map();
 
@@ -101,6 +107,9 @@ vm.runInContext(source, context);
 
 const api = fakeWindow.CampsiteWayfarerPolygonController;
 assert.ok(api, 'WM-2 polygon controller API missing');
+assert.equal(storage.has(api.storageKey), false, 'Fresh Wayfarer page load must clear any previous polygon draft');
+assert.equal(api.getState().draftAvailable, false, 'Fresh Wayfarer page load must not offer stale resume state');
+assert.equal(api.getState().completed, false, 'Fresh Wayfarer page load must not start send-ready');
 assert.equal(api.version, '0.1.0');
 assert.equal(api.maxPoints, 30);
 assert.equal(api.interactionMode(), 'pc');
@@ -223,3 +232,4 @@ assert.ok(source.includes('PC_DRAG_THRESHOLD_PX'), 'PC drawing must distinguish 
 assert.ok(source.includes('if (withinTime && nearDragEnd) return;'), 'Drag completion click must not add a vertex');
 assert.ok(source.includes('stopImmediatePropagation'), 'PC drawing must stop downstream POI handlers');
 assert.ok(source.includes('pointFromClientPosition'), 'PC capture click must translate screen position to coordinates');
+assert.ok(source.includes('clearDraftStorage();\n  points = [];\n  active = false;\n  completed = false;'), 'Page-load initialization must clear stale polygon state');
