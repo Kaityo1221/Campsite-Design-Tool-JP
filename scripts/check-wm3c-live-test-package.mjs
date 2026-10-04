@@ -43,7 +43,7 @@ for (const token of [
 assert.equal(api.transformCreativeHtml(transformed), transformed, 'WM-3C runtime injection must be idempotent');
 
 const manifest = JSON.parse(fs.readFileSync('bridge-pc/manifest.json', 'utf8'));
-assert.equal(manifest.name, 'Campsite Bridge - WM-3C TEST');
+assert.equal(manifest.name, 'Campsite Bridge - PC TEST');
 assert.deepEqual(manifest.permissions, []);
 assert.deepEqual([...manifest.host_permissions].sort(), [
   'https://wayfarer.nianticlabs.com/*',
@@ -60,17 +60,14 @@ assert.deepEqual(creativeRuntimeEntry.matches, [
   'https://kaityo1221.github.io/Campsite-Design-Tool-JP/creative/*'
 ]);
 
-const injector = fs.readFileSync('bridge-pc/creative-wm3b2b-test-injector.js', 'utf8');
-assert.ok(injector.includes("const VERSION = '0.4.0'"));
-assert.ok(injector.includes("OBSERVATION_SAVED_EVENT = 'campsite:wayfarer-observation-saved'"));
-assert.ok(injector.includes("['reference', 'Reference表示']"));
-assert.ok(injector.includes('verifyReferenceDisplay'));
-assert.ok(injector.includes("document.querySelectorAll('.cm-engine-reference-icon').length"), 'LIVE TEST must verify actual Reference DOM count');
-assert.ok(injector.includes('accounted === expectedVisible'), 'LIVE TEST must reconcile display/suppressed/invalid totals');
-assert.ok(injector.includes('rendered === display'), 'LIVE TEST must require rendered Reference count to match Adapter display count');
-assert.ok(injector.includes('window.CampsiteWm3cCreativeTest'));
+assert.equal(
+  (manifest.content_scripts || []).some(entry => (entry.js || []).includes('creative-wm3b2b-test-injector.js')),
+  false,
+  'Retired Creative observation panel must not ship'
+);
 
 const zip = fs.readFileSync('downloads/campsite-bridge-pc-0.1.0.zip');
 assert.ok(zip.includes(Buffer.from('creative-wm3c-test-runtime.js')), 'WM-3C runtime not packaged in Bridge ZIP');
+assert.equal(zip.includes(Buffer.from('creative-wm3b2b-test-injector.js')), false, 'Retired Creative observation panel must not enter Bridge ZIP');
 
-console.log('WM-3C LIVE TEST package: PASS');
+console.log('WM-3C reference runtime package without retired observation panel: PASS');
