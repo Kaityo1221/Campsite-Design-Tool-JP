@@ -171,7 +171,7 @@
               : bridgeMapLab_existingIcon(renderItem.renderKind),
           interactive: readOnlyReference ? false : markerActivationEnabled,
           keyboard: readOnlyReference ? false : markerActivationEnabled,
-          opacity: kind === 'candidate-pin' ? settings.opacity : bridgeMapLab_markerOpacity(renderItem),
+          opacity: bridgeMapLab_markerOpacity(renderItem),
           zIndexOffset: kind === 'candidate-pin' ? 20 : readOnlyReference ? -10 : 0
         }).addTo(markerLayer);
         if (!readOnlyReference) bridgeMapLab_bindMarkerActivation(layer, renderItem.key, renderItem);
@@ -191,7 +191,7 @@
       entry.layer.setLatLng(latLng);
       if (entry.kind === 'candidate-pin') {
         entry.layer.setIcon(bridgeMapLab_candidateIcon(renderItem.renderKind));
-        entry.layer.setOpacity(settings.opacity);
+        entry.layer.setOpacity(bridgeMapLab_markerOpacity(renderItem));
       } else if (entry.kind === 'existing-icon' || entry.kind === 'reference-icon') {
         entry.layer.setIcon(entry.kind === 'reference-icon'
           ? bridgeMapLab_referenceIcon(renderItem.renderKind)

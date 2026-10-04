@@ -332,7 +332,7 @@
   function createRestoredNewRecord(snapshot){
     const latlng=[...snapshot.latlng];
     const rangeCircle=L.circle(latlng,{pane:'fieldBackgroundPane',radius:window.CampsitePoiSpacingPolicy.targetMeters,color:'#d58b00',weight:2,opacity:.7,fillColor:'#ffd35c',fillOpacity:.035,interactive:false,dashArray:'6 5'});
-    const marker=L.circleMarker(latlng,{pane:'fieldPoiPane',radius:9,weight:3,color:'#d58b00',fillColor:'#ffd35c',fillOpacity:.9});
+    const marker=L.circleMarker(latlng,{pane:'fieldPoiPane',radius:10,weight:3,color:'#fff',fillColor:'#ff8418',fillOpacity:1,className:'field-poi-v2-candidate'});
     const record={
       marker,rangeCircle,
       name:snapshot.name||`${typeLabel(snapshot.poiType)} 復元`,

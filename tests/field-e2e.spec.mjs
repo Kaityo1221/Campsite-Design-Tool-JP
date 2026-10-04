@@ -161,12 +161,18 @@ test('調査ファイルから調査範囲・現地作業・完成KMZまで一�
   await expect(page.locator('#fieldModeEntry')).toBeVisible();
   await expect(page.locator('#fieldModeEntryStart')).toBeEnabled();
   await expect(page.locator('#fieldModeEntryStart')).toHaveClass(/is-ready/);
+  await expect.poll(() => page.locator('#fieldModeEntry').evaluate(el => getComputedStyle(el).backgroundImage)).toContain('creative-mode-opening-final.webp');
   await page.locator('#fieldModeEntryStart').click();
+  await expect(page.locator('#fieldModeEntry')).toHaveClass(/is-starting/);
+  await expect.poll(() => page.locator('.field-mode-entry-transition').evaluate(el => getComputedStyle(el).backgroundImage)).toContain('creative-mode-start-transition.webp');
   await expect(page.locator('#fieldModeEntry')).toBeHidden({ timeout: 3000 });
   await expect(page.locator('body')).toHaveClass(/field-mode-entry-started/);
 
   await expect(page.locator('#fieldModeNewPoiButton')).toBeHidden();
   await expect(page.locator('#fieldModeCreativeButton')).toBeEnabled();
+  await expect(page.locator('#fieldCreativeCurrentFab')).toBeVisible();
+  await expect(page.locator('#fieldModeUndoButton')).toHaveText('← 戻る');
+  await expect(page.locator('#fieldModeRedoButton')).toHaveText('↻ やり直し');
 
   await addNewPoi(page, 'ポケストップ');
 

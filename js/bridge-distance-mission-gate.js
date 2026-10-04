@@ -22,7 +22,9 @@
       lat,
       lng,
       role: roleOf(poi),
-      comment: String(poi?.description || poi?.memo || '').trim(),
+      comment: (Object.prototype.hasOwnProperty.call(poi || {}, 'applicationComment')
+        ? String(poi?.applicationComment || '')
+        : String(poi?.description || poi?.memo || '')).trim(),
     };
   }
 

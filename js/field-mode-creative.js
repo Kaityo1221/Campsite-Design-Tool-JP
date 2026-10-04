@@ -73,7 +73,7 @@
       const disabled=!hasAdjustTarget();
       adjustButton.disabled=disabled;
       adjustButton.style.opacity=disabled?'.42':'';
-      adjustButton.title=disabled?'先に黄色い追加予定POIを選択してください':'選択中POIの位置を調整';
+      adjustButton.title=disabled?'先にオレンジ色の追加予定POIを選択してください':'選択中POIの位置を調整';
     }
   }
 

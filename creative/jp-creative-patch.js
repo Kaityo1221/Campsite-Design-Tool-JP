@@ -11,7 +11,15 @@
     // Japan CA design support.
     const helperNeedle='function snapshot(){';
     const helpers=`const JP_MAX_ADDITIONAL=25;
+const JP_TYPE_LIMITS=Object.freeze({'new-pokestop':12,'new-gym':8,'new-power':5});
+const JP_TYPE_LABELS=Object.freeze({'new-pokestop':'ポケストップ','new-gym':'ジム','new-power':'パワースポット'});
 function jpAdditionalRecords(){return records.filter(r=>r&&!r.deleted&&isNew(r.layer))}
+function jpTypeLimit(layer){return Number(JP_TYPE_LIMITS[layer]||0)}
+function jpTypeCount(layer,excludeId=''){return jpAdditionalRecords().filter(r=>r.layer===layer&&String(r.id||'')!==String(excludeId||'')).length}
+function jpTypeLimitMessage(layer){const limit=jpTypeLimit(layer),label=JP_TYPE_LABELS[layer]||String(layer||'ゲームスポット');return label+'は最大'+limit+'個です'}
+function jpCheckTypeCapacity(layer,excludeId=''){const limit=jpTypeLimit(layer);if(!limit)return true;if(jpTypeCount(layer,excludeId)>=limit){msg(jpTypeLimitMessage(layer),1800);renderJpGuide();return false}return true}
+function jpCanAddLayer(layer){if(jpAdditionalRecords().length>=JP_MAX_ADDITIONAL){msg('追加ゲームスポットは最大25個です',1800);renderJpGuide();return false}return jpCheckTypeCapacity(layer)}
+function jpCanChangeType(layer,excludeId){return jpCheckTypeCapacity(layer,excludeId)}
 function jpIssueSignature(r){if(!r||r.deleted||!isNew(r.layer))return'';const near=nearestRecord(r.latlng,r.id);if(!near||!Number.isFinite(near.distance)||near.distance>=50)return'';return String(near.record?.id||'')+'|'+near.distance.toFixed(1)}
 function jpRefreshReviews(){jpAdditionalRecords().forEach(r=>{const sig=jpIssueSignature(r),reason=String(r.applicationComment||'').trim();if(!sig){r.applicationCommentNeedsReview=false;return}r.applicationCommentNeedsReview=!reason||String(r.applicationCommentSignature||'')!==sig})}
 function ensureJpGuide(){let box=document.getElementById('jpCreativeGuide');if(box)return box;box=document.createElement('div');box.id='jpCreativeGuide';box.style.cssText='margin-top:10px;padding:9px;border:1px solid rgba(240,204,123,.55);border-radius:12px;background:rgba(255,248,230,.10);color:#fff8e8;font-size:10px;line-height:1.55';box.innerHTML='<div style="display:flex;justify-content:space-between;gap:8px;font-weight:900"><span>設計チェック</span><span id="jpCreativeCount">0 / 25</span></div><div style="display:flex;justify-content:space-between;gap:8px;margin-top:4px"><span>50m未満</span><span id="jpCreativeUnder50">0</span></div><div style="display:flex;justify-content:space-between;gap:8px"><span>理由の再確認</span><span id="jpCreativeReview">0</span></div><details style="margin-top:7px"><summary style="cursor:pointer;font-weight:900">日本CA向け設計ガイド</summary><div style="margin-top:6px">・50mを基本とし、50m未満は自動NGにせず要確認として扱います。<br>・ゲームスポットを一箇所へ集中させず、公園内を自然に移動できる配置を考えます。<br>・入口や狭い通路への滞留、本来の利用者と衝突しやすい場所への集中を避けます。<br>・活動範囲はミートアップで想定される移動範囲として確認します。<br>・30m / 40mは例外確認の参考表示です。</div></details>';circlePanel.appendChild(box);return box}
@@ -19,13 +27,13 @@ function renderJpGuide(){jpRefreshReviews();const box=ensureJpGuide(),adds=jpAdd
 `;
     if(html.includes(helperNeedle))html=html.replace(helperNeedle,helpers+helperNeedle);
 
-    const addNeedle="if(helperRadius!==50)r.customRadius=helperRadius;records.push(r);drawRecord(r);";
-    const addReplacement="if(helperRadius!==50)r.customRadius=helperRadius;if(isNew(r.layer)&&jpAdditionalRecords().length>=JP_MAX_ADDITIONAL){msg('追加ゲームスポットは最大25個です',1800);renderJpGuide();return}records.push(r);drawRecord(r);";
-    if(html.includes(addNeedle))html=html.replace(addNeedle,addReplacement);
+    const placeNeedle="function cmPlace(latlng){";
+    const placeReplacement="function cmPlace(latlng){if(cmAddMode&&isNew(activeLayer)&&!jpCanAddLayer(activeLayer))return;";
+    if(html.includes(placeNeedle))html=html.replace(placeNeedle,placeReplacement);
 
-    const legacyAddNeedle="const r={id:crypto.randomUUID?.()||String(Date.now()),layer:activeLayer,latlng:[ll.lat,ll.lng],title:layerDefs.find(x=>x[0]===activeLayer)?.[1]||'新規スポット',memo:'',deleted:false};records.push(r);drawRecord(r);";
-    const legacyAddReplacement="const r={id:crypto.randomUUID?.()||String(Date.now()),layer:activeLayer,latlng:[ll.lat,ll.lng],title:layerDefs.find(x=>x[0]===activeLayer)?.[1]||'新規スポット',memo:'',deleted:false};if(isNew(r.layer)&&jpAdditionalRecords().length>=JP_MAX_ADDITIONAL){msg('追加ゲームスポットは最大25個です',1800);renderJpGuide();return}records.push(r);drawRecord(r);";
-    html=html.split(legacyAddNeedle).join(legacyAddReplacement);
+    const typeChangeNeedle="sheet.querySelector('#cmTypePicker').querySelectorAll('button').forEach(b=>b.onclick=()=>{const to=b.dataset.layer,from=r.layer;if(to===from)return;const wasAuto=";
+    const typeChangeReplacement="sheet.querySelector('#cmTypePicker').querySelectorAll('button').forEach(b=>b.onclick=()=>{const to=b.dataset.layer,from=r.layer;if(to===from)return;if(isNew(to)&&!jpCanChangeType(to,r.id))return;const wasAuto=";
+    if(html.includes(typeChangeNeedle))html=html.replace(typeChangeNeedle,typeChangeReplacement);
 
     const commentNeedle="ft.oninput=()=>{r.applicationComment=ft.value.slice(0,300);if(ct)ct.textContent=r.applicationComment.length+' / 300';snapshot()}";
     const commentReplacement="ft.oninput=()=>{r.applicationComment=ft.value.slice(0,300);r.applicationCommentSignature=jpIssueSignature(r);r.applicationCommentNeedsReview=false;if(ct)ct.textContent=r.applicationComment.length+' / 300';snapshot();renderJpGuide()}";

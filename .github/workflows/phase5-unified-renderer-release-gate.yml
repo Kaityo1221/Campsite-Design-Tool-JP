@@ -6,32 +6,64 @@ on:
       - release/phase-5-d13-unified-renderer
     paths:
       - 'creative/index.html'
+      - 'creative/wayfarer-observe-link-patch.js'
       - 'creative/wayfarer-reference-layer-patch.js'
       - 'creative/runtime/creative-patches-v54-coordinate-memo-reason.js'
       - 'creative/runtime/creative-patches-v55-unified-visible.js'
       - 'creative/runtime/creative-patches-v56-unified-interaction.js'
       - 'creative/runtime/creative-patches-v57-dev-default-unified.js'
+      - 'creative/runtime/creative-patches-v58-new-entry-current-map.js'
+      - 'creative/runtime/creative-patches-v59-help-button.js'
+      - 'creative/runtime/creative-patches-v60-rules-carousel.js'
+      - 'creative/runtime/creative-patches-v61-saved-session-hint.js'
+      - 'creative/runtime/creative-patches-v62-remove-locate.js'
+      - 'creative/runtime/creative-patches-v63-remove-workspace-save.js'
+      - 'creative/runtime/creative-patches-v64-google-form-coordinates.js'
+      - 'creative/runtime/creative-patches-v65-download-label.js'
+      - 'creative/runtime/creative-patches-v66-activity-range-label.js'
+      - 'creative/runtime/creative-patches-v67-activity-range-wording.js'
+      - 'creative/runtime/creative-patches-v68-activity-range-delete-history.js'
+      - 'creative/runtime/creative-patches-v69-spacing-reason-flow.js'
+      - 'creative/runtime/creative-patches-v70-unified-move-feedback.js'
+      - 'creative/jp-creative-patch.js'
       - 'creative/runtime/map-engine/**'
       - 'scripts/check-creative-runtime-build.mjs'
       - 'tests/creative-unified-interaction.spec.mjs'
       - 'tests/creative-dev-default-renderer.spec.mjs'
       - 'tests/creative-wayfarer-reference.spec.mjs'
+      - 'tests/creative-new-entry-current-map.spec.mjs'
       - '.github/workflows/phase5-unified-renderer-release-gate.yml'
   pull_request:
     branches:
       - main
     paths:
       - 'creative/index.html'
+      - 'creative/wayfarer-observe-link-patch.js'
       - 'creative/wayfarer-reference-layer-patch.js'
       - 'creative/runtime/creative-patches-v54-coordinate-memo-reason.js'
       - 'creative/runtime/creative-patches-v55-unified-visible.js'
       - 'creative/runtime/creative-patches-v56-unified-interaction.js'
       - 'creative/runtime/creative-patches-v57-dev-default-unified.js'
+      - 'creative/runtime/creative-patches-v58-new-entry-current-map.js'
+      - 'creative/runtime/creative-patches-v59-help-button.js'
+      - 'creative/runtime/creative-patches-v60-rules-carousel.js'
+      - 'creative/runtime/creative-patches-v61-saved-session-hint.js'
+      - 'creative/runtime/creative-patches-v62-remove-locate.js'
+      - 'creative/runtime/creative-patches-v63-remove-workspace-save.js'
+      - 'creative/runtime/creative-patches-v64-google-form-coordinates.js'
+      - 'creative/runtime/creative-patches-v65-download-label.js'
+      - 'creative/runtime/creative-patches-v66-activity-range-label.js'
+      - 'creative/runtime/creative-patches-v67-activity-range-wording.js'
+      - 'creative/runtime/creative-patches-v68-activity-range-delete-history.js'
+      - 'creative/runtime/creative-patches-v69-spacing-reason-flow.js'
+      - 'creative/runtime/creative-patches-v70-unified-move-feedback.js'
+      - 'creative/jp-creative-patch.js'
       - 'creative/runtime/map-engine/**'
       - 'scripts/check-creative-runtime-build.mjs'
       - 'tests/creative-unified-interaction.spec.mjs'
       - 'tests/creative-dev-default-renderer.spec.mjs'
       - 'tests/creative-wayfarer-reference.spec.mjs'
+      - 'tests/creative-new-entry-current-map.spec.mjs'
       - '.github/workflows/phase5-unified-renderer-release-gate.yml'
 
 permissions:
@@ -63,17 +95,34 @@ jobs:
           node --check creative/runtime/map-engine/scene-builder.js
           node --check creative/runtime/map-engine/candidate-scene-builder.js
           node --check creative/runtime/map-engine/map-renderer.js
+          node --check creative/runtime/map-engine/wayfarer-reserve-coverage.js
+          node --check creative/runtime/map-engine/wayfarer-local-reclassification.js
           node --check creative/runtime/map-engine/wayfarer-observation-adapter.js
           node --check creative/runtime/map-engine/wayfarer-reference-geometry.js
           node --check creative/runtime/map-engine/wayfarer-reference-scene-builder.js
+          node --check creative/wayfarer-observe-link-patch.js
           node --check creative/wayfarer-reference-layer-patch.js
           node --check creative/runtime/creative-patches-v54-coordinate-memo-reason.js
           node --check creative/runtime/creative-patches-v55-unified-visible.js
           node --check creative/runtime/creative-patches-v56-unified-interaction.js
           node --check creative/runtime/creative-patches-v57-dev-default-unified.js
+          node --check creative/runtime/creative-patches-v58-new-entry-current-map.js
+          node --check creative/runtime/creative-patches-v59-help-button.js
+          node --check creative/runtime/creative-patches-v60-rules-carousel.js
+          node --check creative/runtime/creative-patches-v61-saved-session-hint.js
+          node --check creative/runtime/creative-patches-v62-remove-locate.js
+          node --check creative/runtime/creative-patches-v63-remove-workspace-save.js
+          node --check creative/runtime/creative-patches-v64-google-form-coordinates.js
+          node --check creative/runtime/creative-patches-v65-download-label.js
+          node --check creative/runtime/creative-patches-v66-activity-range-label.js
+          node --check creative/runtime/creative-patches-v67-activity-range-wording.js
+          node --check creative/runtime/creative-patches-v68-activity-range-delete-history.js
+          node --check creative/runtime/creative-patches-v69-spacing-reason-flow.js
+          node --check creative/runtime/creative-patches-v70-unified-move-feedback.js
+          node --check creative/jp-creative-patch.js
           node --check tests/creative-unified-interaction.spec.mjs
           node --check tests/creative-dev-default-renderer.spec.mjs
-          node --check tests/creative-wayfarer-reference.spec.mjs
+          node --check tests/creative-new-entry-current-map.spec.mjs
 
       - name: Verify generated Creative runtime
         run: node scripts/check-creative-runtime-build.mjs
@@ -82,7 +131,7 @@ jobs:
         run: npx playwright install --with-deps webkit
 
       - name: Run real Creative Mode iPhone WebKit gate
-        run: npx playwright test tests/creative-unified-interaction.spec.mjs tests/creative-dev-default-renderer.spec.mjs tests/creative-wayfarer-reference.spec.mjs
+        run: npx playwright test tests/creative-unified-interaction.spec.mjs tests/creative-dev-default-renderer.spec.mjs tests/creative-new-entry-current-map.spec.mjs tests/creative-wayfarer-reference.spec.mjs
 
       - name: Upload Playwright traces on failure
         if: failure()

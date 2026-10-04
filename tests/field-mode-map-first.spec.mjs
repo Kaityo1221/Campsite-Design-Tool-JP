@@ -55,6 +55,52 @@ test('初期表示はCREATIVE MODEトップで、読込後に明示開始する'
   await expect(page.locator('#fieldModeCreativeButton')).toHaveAttribute('aria-label','候補地を追加');
 });
 
+test('START画像を表示してからMap Firstへ正常に引き継ぐ',async({page})=>{
+  const pageErrors=[];
+  page.on('pageerror',error=>pageErrors.push(error.message));
+  await page.goto('/field-mode.html');
+  await page.locator('#fieldModeFile').setInputFiles({name:'start-handoff.kml',mimeType:'application/vnd.google-earth.kml+xml',buffer:Buffer.from(sampleKml)});
+  await expect(page.locator('#fieldModeFileStatus')).toContainText('件を読み込み');
+  await expect(page.locator('#fieldModeEntryStart')).toBeEnabled();
+
+  const startedAt=Date.now();
+  await page.locator('#fieldModeEntryStart').click();
+  await expect(page.locator('#fieldModeEntry')).toHaveClass(/is-starting/);
+  const transition=page.locator('.field-mode-entry-transition');
+  await expect(transition).toBeVisible();
+  await expect.poll(()=>transition.evaluate(el=>getComputedStyle(el).backgroundImage)).toContain('creative-mode-start-transition.webp');
+
+  await page.waitForTimeout(500);
+  await expect(page.locator('#fieldModeEntry')).toBeVisible();
+  await expect(transition).toBeVisible();
+
+  await expect(page.locator('#fieldModeEntry')).toBeHidden({timeout:3000});
+  expect(Date.now()-startedAt).toBeGreaterThanOrEqual(1400);
+  await expect(page.locator('.field-mode-stage')).toBeVisible();
+  await expect(page.locator('#fieldModeCreativeButton')).toHaveText('＋');
+  await expect(page.locator('#fieldCreativeCurrentFab')).toBeVisible();
+  await expect(page.locator('#fieldModeUndoButton')).toHaveText('← 戻る');
+  await expect(page.locator('#fieldModeRedoButton')).toHaveText('↻ やり直し');
+  expect(pageErrors).toEqual([]);
+});
+
+test('候補地マーカーはオレンジで既存POIと区別する',async({page})=>{
+  await page.goto('/field-mode.html');
+  await loadAndStart(page);
+  const normal=await page.evaluate(()=>{
+    resetPoiSelection();
+    const record=poiRecords.find(item=>item.added);
+    return record?{radius:record.marker.options.radius,color:record.marker.options.color,fillColor:record.marker.options.fillColor,fillOpacity:record.marker.options.fillOpacity,className:record.marker.options.className}:null;
+  });
+  expect(normal).toEqual({radius:10,color:'#fff',fillColor:'#ff8418',fillOpacity:1,className:'field-poi-v2-candidate'});
+  await page.evaluate(()=>poiRecords.find(item=>item.added)?.marker.fire('click'));
+  const selected=await page.evaluate(()=>{
+    const record=poiRecords.find(item=>item.added);
+    return record?{radius:record.marker.options.radius,color:record.marker.options.color,fillColor:record.marker.options.fillColor,fillOpacity:record.marker.options.fillOpacity}:null;
+  });
+  expect(selected).toEqual({radius:13,color:'#7a3d00',fillColor:'#ff9a2e',fillOpacity:1});
+});
+
 test('開始後は現在地FABと戻る・やり直しを維持する',async({page})=>{
   await page.goto('/field-mode.html');
   await loadAndStart(page);
@@ -64,6 +110,11 @@ test('開始後は現在地FABと戻る・やり直しを維持する',async({pa
   await expect(current).toHaveAttribute('aria-label','現在地へ移動');
   await expect(current).toHaveText('◎現在地');
   await expect(current).toBeEnabled();
+  const currentBox=await current.boundingBox();
+  expect(currentBox.width).toBeGreaterThan(48);
+  expect(currentBox.width).toBeLessThan(49.5);
+  expect(currentBox.height).toBeGreaterThan(52);
+  expect(currentBox.height).toBeLessThan(53);
   await expect(page.locator('#fieldModeUndoButton')).toHaveText('← 戻る');
   await expect(page.locator('#fieldModeUndoButton')).toHaveAttribute('aria-label','戻る');
   await expect(page.locator('#fieldModeRedoButton')).toHaveText('↻ やり直し');
@@ -83,6 +134,38 @@ test('開始後は現在地FABと戻る・やり直しを維持する',async({pa
   await expect.poll(()=>page.evaluate(()=>map.distance(map.getCenter(),currentPosition))).toBeLessThan(1);
 });
 
+test('位置調整から完成KMZ出力へ迷わず戻れる',async({page})=>{
+  await page.goto('/field-mode.html');
+  await loadAndStart(page,'operation-finish.kml');
+
+  await page.evaluate(()=>{
+    selectAddedPoi(poiRecords.find(record=>record.added));
+    setCurrentPosition(35.6820,139.7684,5,false);
+  });
+  await openLegacyTools(page);
+  const adjust=page.locator('#fieldModeCreativeHotbar [data-tool="adjust"]');
+  await expect(adjust).toBeEnabled();
+  await adjust.click();
+
+  const adjustPanel=page.locator('.field-mode-adjust-actions');
+  await expect(adjustPanel).toBeVisible();
+  await expect(page.locator('#fieldModeCreativeButton')).toBeHidden();
+  const adjustBox=await adjustPanel.boundingBox();
+  const historyBox=await page.locator('.field-mode-toolbar').boundingBox();
+  expect(adjustBox.y+adjustBox.height).toBeLessThanOrEqual(historyBox.y);
+
+  await page.locator('#fieldModeRelocateButton').click();
+  await expect(page.locator('#fieldModeSaveButton')).toBeEnabled();
+  await page.locator('#fieldModeCreativeClose').click();
+  await expect(page.locator('body')).not.toHaveClass(/field-creative-active/);
+
+  const save=page.locator('#fieldModeSaveButton');
+  await expect(save).toBeVisible();
+  await expect(save).toBeEnabled();
+  await expect(save).toHaveText('設計完成：KMZ＋但し書きを出力');
+  await expect(save).toHaveAttribute('aria-label','完成KMZと必要な50m未満但し書きを端末へ出力');
+});
+
 test('編集時の中央十字は細い1px表示になる',async({page})=>{
   await page.goto('/field-mode.html');
   await loadAndStart(page);
@@ -96,13 +179,81 @@ test('編集時の中央十字は細い1px表示になる',async({page})=>{
   expect(metrics).toEqual({width:'22px',height:'22px',beforeWidth:'1px',beforeHeight:'18px',afterWidth:'18px',afterHeight:'1px',dot:'none'});
 });
 
+test('最終受入：起動から編集・履歴・復元・完成出力まで一気通しできる',async({page})=>{
+  const pageErrors=[];
+  page.on('pageerror',error=>pageErrors.push(error.message));
+  await page.goto('/field-mode.html');
+
+  const entry=page.locator('#fieldModeEntry');
+  await expect(entry).toBeVisible();
+  await expect.poll(()=>entry.evaluate(el=>getComputedStyle(el).backgroundImage)).toContain('creative-mode-opening-final.webp');
+  await page.locator('#fieldModeFile').setInputFiles({name:'final-acceptance.kml',mimeType:'application/vnd.google-earth.kml+xml',buffer:Buffer.from(sampleKml)});
+  await expect(page.locator('#fieldModeEntryStart')).toBeEnabled();
+
+  await page.locator('#fieldModeEntryStart').click();
+  await expect(entry).toHaveClass(/is-starting/);
+  await expect.poll(()=>page.locator('.field-mode-entry-transition').evaluate(el=>getComputedStyle(el).backgroundImage)).toContain('creative-mode-start-transition.webp');
+  await expect(entry).toBeHidden({timeout:3000});
+  await expect(page.locator('body')).toHaveClass(/field-creative-active/);
+  await expect(page.locator('#fieldModeCreativeButton')).toBeVisible();
+  await expect(page.locator('#fieldCreativeCurrentFab')).toBeVisible();
+
+  await page.evaluate(()=>{
+    const record=poiRecords.find(item=>item.added);
+    selectAddedPoi(record);
+    setCurrentPosition(35.6820,139.7684,5,false);
+  });
+  const before=await page.evaluate(()=>[...poiRecords.find(item=>item.added).latlng]);
+
+  await openLegacyTools(page);
+  const adjust=page.locator('#fieldModeCreativeHotbar [data-tool="adjust"]');
+  await expect(adjust).toBeEnabled();
+  await adjust.click();
+  await expect(page.locator('#fieldModeCreativeButton')).toBeHidden();
+  await page.locator('#fieldModeRelocateButton').click();
+  const moved=await page.evaluate(()=>[...poiRecords.find(item=>item.added).latlng]);
+  expect(moved).not.toEqual(before);
+
+  const undo=page.locator('#fieldModeUndoButton');
+  const redo=page.locator('#fieldModeRedoButton');
+  await expect(undo).toBeEnabled();
+  await undo.click();
+  await expect(redo).toBeEnabled();
+  expect(await page.evaluate(()=>[...poiRecords.find(item=>item.added).latlng])).toEqual(before);
+  await redo.click();
+  expect(await page.evaluate(()=>[...poiRecords.find(item=>item.added).latlng])).toEqual(moved);
+  await expect(page.locator('#fieldModeSaveButton')).toBeEnabled();
+
+  await page.evaluate(async()=>{await window.FieldModeSession.saveNow();});
+  await expect(page.locator('#fieldModeSessionStatus')).toContainText('自動保存済み');
+  await page.reload();
+  await expect(page.locator('#fieldModeResumePanel')).toHaveClass(/active/);
+  await page.locator('#fieldModeResumeButton').click();
+  await expect(page.locator('#fieldModeEntryStart')).toBeEnabled({timeout:5000});
+  await page.locator('#fieldModeEntryStart').click();
+  await expect(page.locator('#fieldModeEntry')).toBeHidden({timeout:3000});
+  await expect.poll(()=>page.evaluate(()=>window.FieldModeSession?.hasSource?.()||false)).toBe(true);
+  expect(await page.evaluate(()=>[...poiRecords.find(item=>item.added).latlng])).toEqual(moved);
+  await expect(page.locator('#fieldModeUndoButton')).toBeEnabled();
+
+  await page.locator('#fieldModeCreativeClose').click();
+  await expect(page.locator('body')).not.toHaveClass(/field-creative-active/);
+  const save=page.locator('#fieldModeSaveButton');
+  await expect(save).toBeVisible();
+  await expect(save).toBeEnabled();
+  await expect(save).toHaveText('設計完成：KMZ＋但し書きを出力');
+  expect(pageErrors).toEqual([]);
+});
+
 test('320x568でもトップと主要操作が重ならない',async({page})=>{
   await page.setViewportSize({width:320,height:568});
   await page.goto('/field-mode.html');
   await expect(page.locator('#fieldModeEntryStart')).toBeVisible();
   await loadAndStart(page,'narrow-field.kml');
   await page.locator('#fieldModeDistanceBadge').evaluate(element=>{element.innerHTML='⚠ 50m未満<br>既存POI 12.3m';});
-  const mapUi=await boxes(page,['#fieldModeDistanceBadge','#fieldModeCreativeClose','#fieldCreativeCurrentFab','.leaflet-control-attribution']);
+  const mapUi=await boxes(page,['#fieldModeDistanceBadge','#fieldModeCreativeClose','#fieldCreativeCurrentFab','.leaflet-control-layers','.leaflet-control-attribution']);
   expect(overlaps(mapUi['#fieldModeDistanceBadge'],mapUi['#fieldModeCreativeClose'])).toBe(false);
+  expect(overlaps(mapUi['#fieldModeDistanceBadge'],mapUi['#fieldCreativeCurrentFab'])).toBe(false);
+  expect(overlaps(mapUi['#fieldCreativeCurrentFab'],mapUi['.leaflet-control-layers'])).toBe(false);
   expect(overlaps(mapUi['#fieldCreativeCurrentFab'],mapUi['.leaflet-control-attribution'])).toBe(false);
 });

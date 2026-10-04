@@ -75,6 +75,9 @@
         opacity:.48!important;
       }
       .field-mode-entry-started .field-mode-launcher-label{display:none!important}
+      .field-mode-entry-started.field-creative-active.field-creative-tool-adjust .field-mode-creative-launcher{
+        display:none!important;
+      }
 
       .field-creative-add-flash{
         position:fixed;
@@ -123,12 +126,20 @@
         box-shadow:0 4px 13px rgba(22,41,60,.16);
         font:inherit;
         font-weight:900;
+        transform:scale(.9);
+        transform-origin:top right;
         -webkit-tap-highlight-color:transparent;
       }
       #${CURRENT_ID} .field-current-icon{font-size:23px;line-height:1}
       #${CURRENT_ID} small{font-size:9px;line-height:1.15;font-weight:900}
       .field-mode-entry-started #${CURRENT_ID}{display:grid}
       .field-mode-entry-started.field-creative-active .field-location-badge{display:none!important}
+      .field-mode-entry-started.field-creative-active .field-distance-badge{
+        left:12px!important;
+        right:auto!important;
+        top:62px!important;
+        max-width:min(320px,calc(100% - 104px))!important;
+      }
 
       .field-mode-entry-started.field-creative-active .field-mode-stage{
         bottom:calc(57px + env(safe-area-inset-bottom))!important;
@@ -166,6 +177,11 @@
         }
         .field-creative-add-flash{right:16px}
         #${CURRENT_ID}{right:14px;top:calc(70px + env(safe-area-inset-top))}
+        .field-mode-entry-started.field-creative-active .field-distance-badge{
+          left:10px!important;
+          top:60px!important;
+          max-width:calc(100% - 92px)!important;
+        }
       }
       @media(prefers-reduced-motion:reduce){
         .field-creative-add-flash.is-visible{animation:none;opacity:1}

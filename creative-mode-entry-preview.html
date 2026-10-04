@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow">
+  <title>CREATIVE MODE Opening / START Preview</title>
+  <link rel="preload" as="image" href="assets/creative-mode-opening-final.webp">
+  <link rel="preload" as="image" href="assets/creative-mode-start-transition.webp">
+  <link rel="stylesheet" href="css/field-mode-entry.css?v=6">
+  <link rel="stylesheet" href="css/field-mode-entry-position.css?v=4">
+  <link rel="stylesheet" href="css/field-mode-entry-transition.css?v=2">
+  <style>
+    html,body{margin:0;min-height:100%;background:#17130f;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    *,*::before,*::after{box-sizing:border-box}
+    .preview-note{
+      position:fixed;
+      right:10px;
+      bottom:calc(10px + env(safe-area-inset-bottom));
+      z-index:5200;
+      padding:5px 8px;
+      border:1px solid rgba(255,255,255,.22);
+      border-radius:999px;
+      background:rgba(20,18,16,.56);
+      color:rgba(255,248,232,.72);
+      font-size:9px;
+      font-weight:800;
+      letter-spacing:.05em;
+      pointer-events:none;
+      backdrop-filter:blur(7px);
+      -webkit-backdrop-filter:blur(7px);
+    }
+  </style>
+</head>
+<body class="field-mode-body">
+  <section id="fieldModeEntry" class="field-mode-entry-shell" aria-label="CREATIVE MODE 開始画面">
+    <div class="field-mode-entry-inner">
+      <div class="field-mode-entry-kicker">CREATIVE MODE</div>
+      <p class="field-mode-entry-copy">新しい世界の幕開けへ。</p>
+      <button id="fieldModeEntryStart" class="field-mode-entry-start is-ready" type="button">創作をはじめる</button>
+
+      <div class="field-mode-entry-filebar" aria-label="テスト用ゲームスポット元データ">
+        <span class="field-mode-entry-fileicon">▱</span>
+        <span class="field-mode-entry-filelabel">ゲームスポット元データを選択</span>
+        <span class="field-mode-entry-filename">preview-design.kmz ✓</span>
+        <span class="field-mode-entry-file-slot"></span>
+      </div>
+
+      <div class="field-mode-entry-file-state"></div>
+      <div class="field-mode-entry-hint"></div>
+      <div class="field-mode-entry-resume-slot"></div>
+      <span class="field-mode-entry-main-link">メインツールへ</span>
+    </div>
+
+    <div class="field-mode-entry-transition" aria-hidden="true">CREATIVE MODE START</div>
+  </section>
+
+  <div class="preview-note">TEST PREVIEW</div>
+
+  <script>
+    (() => {
+      'use strict';
+      const entry=document.getElementById('fieldModeEntry');
+      const start=document.getElementById('fieldModeEntryStart');
+      let timer=0;
+
+      function replay(){
+        window.clearTimeout(timer);
+        entry.classList.remove('is-starting');
+        start.disabled=false;
+        void entry.offsetWidth;
+        entry.classList.add('is-starting');
+        start.disabled=true;
+        timer=window.setTimeout(()=>{
+          entry.classList.remove('is-starting');
+          start.disabled=false;
+        },1700);
+      }
+
+      start.addEventListener('click',replay);
+    })();
+  </script>
+</body>
+</html>
