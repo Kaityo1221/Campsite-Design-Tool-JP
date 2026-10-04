@@ -40,7 +40,9 @@
       return Object.freeze({canPersist:false, reason:'REMOTE_ALREADY_PERSISTED', project});
     }
 
+    const rawState = project?.[STATE_KEY];
     const state = Object.freeze({
+      ...(rawState && typeof rawState === 'object' ? rawState : {}),
       baseSnapshotId,
       lastRemoteSnapshotId:remoteSnapshotId,
       absenceCounts:Object.freeze(cleanCounts(diffResult.nextAbsenceCounts))
