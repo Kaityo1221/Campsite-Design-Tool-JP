@@ -4,8 +4,6 @@
   const VERSION = '0.1.0';
   const COMMAND_EVENT = 'campsite-bridge-pc:polygon-command';
   const STATE_EVENT = 'campsite-bridge-pc:polygon-state';
-  const BRIDGE_START_EVENT = 'campsite-bridge-pc:start';
-  const BRIDGE_STATUS_EVENT = 'campsite-bridge-pc:status';
 
   if (window.__campsiteWm2PolygonUiInstalled) return;
   window.__campsiteWm2PolygonUiInstalled = true;
@@ -26,12 +24,6 @@
     canComplete: false,
     canUndo: false,
     instruction: '',
-    message: ''
-  };
-  let draftPrompted = false;
-  let bridgeState = {
-    busy: false,
-    status: 'ready',
     message: ''
   };
   const hiddenWayfarerControls = new Map();
@@ -228,13 +220,6 @@
     }));
   }
 
-  function startBridge() {
-    if (bridgeState.busy) return;
-    window.dispatchEvent(new CustomEvent(BRIDGE_START_EVENT, {
-      detail: JSON.stringify({ startedAt: new Date().toISOString(), source: 'polygon-cta' })
-    }));
-  }
-
   function positionCrosshair() {
     if (!crosshair) return;
     const map = mapHost();
@@ -250,15 +235,6 @@
     const rect = map.getBoundingClientRect();
     crosshair.style.left = Math.round(rect.left + rect.width / 2) + 'px';
     crosshair.style.top = Math.round(rect.top + rect.height / 2) + 'px';
-  }
-
-  function askResumeDraft() {
-    if (draftPrompted || !state.draftAvailable || state.active || state.paused || state.completed) return;
-    draftPrompted = true;
-    window.setTimeout(() => {
-      const resume = window.confirm('前回の作成途中があります。再開しますか？');
-      send(resume ? 'resume-draft' : 'start-new');
-    }, 0);
   }
 
   function createUi() {
@@ -289,18 +265,12 @@
       'button:hover{filter:brightness(1.08)}button:disabled{opacity:.42;cursor:not-allowed}',
       '.primary{border-color:rgba(74,222,128,.6);background:rgba(20,83,45,.98);color:#dcfce7}',
       '.add{width:100%;border-color:rgba(56,189,248,.62);background:rgba(12,74,110,.98);color:#e0f2fe}',
-      '.start{width:100%;min-height:46px;font-size:12px}',
-      '.handoff{width:100%;min-height:50px;font-size:12px;border-color:rgba(74,222,128,.68);background:rgba(20,83,45,.98);color:#dcfce7}',
-      '.handoffMessage{font:800 10.5px/1.5 system-ui;color:#dbeafe;background:rgba(30,41,59,.72);border-radius:9px;padding:7px 9px}',
       '.done{color:#bbf7d0;font:900 11px/1.4 system-ui}',
       '[hidden]{display:none!important}',
       '@media(max-width:620px){.row{grid-template-columns:1fr 1fr}.row .primary{grid-column:1 / -1}}',
       '</style>',
       '<div class="card">',
-      '<button id="start" class="start primary" type="button">📐 範囲を決める</button>',
-      '<button id="handoff" class="handoff" type="button" hidden>🌉 Campsiteで設計する</button>',
-      '<div id="handoffMessage" class="handoffMessage" hidden></div>',
-      '<div id="active" hidden>',
+      '<div id="active">',
       '<div class="top"><div class="title">📐 設計範囲</div><div id="count" class="count">頂点 0 / 30</div></div>',
       '<div id="instruction" class="instruction"></div>',
       '<div id="warning" class="warning" hidden>⚠ 線が交差しています。赤い辺を修正してください。</div>',
@@ -317,25 +287,6 @@
       '</div>'
     ].join('');
 
-    shadow.getElementById('start').addEventListener('click', () => {
-      if (state.completed) {
-        send('edit-completed');
-        return;
-      }
-      if (state.paused && state.draftAvailable) {
-        send('resume-draft');
-        return;
-      }
-      if (state.draftAvailable) {
-        const resume = window.confirm('前回の作成途中があります。再開しますか？');
-        draftPrompted = true;
-        send(resume ? 'resume-draft' : 'start-new');
-      } else {
-        send('start-new');
-      }
-    });
-
-    shadow.getElementById('handoff').addEventListener('click', startBridge);
     shadow.getElementById('addCenter').addEventListener('click', () => send('add-center'));
     shadow.getElementById('exitDrawing').addEventListener('click', () => send('exit-drawing'));
     shadow.getElementById('undo').addEventListener('click', () => send('undo'));
@@ -372,12 +323,8 @@
     }
 
     createUi();
-    host.style.display = '';
+    host.style.display = state.active === true ? '' : 'none';
 
-    const start = shadow.getElementById('start');
-    const activePanel = shadow.getElementById('active');
-    const handoff = shadow.getElementById('handoff');
-    const handoffMessage = shadow.getElementById('handoffMessage');
     const count = shadow.getElementById('count');
     const instruction = shadow.getElementById('instruction');
     const warning = shadow.getElementById('warning');
@@ -387,27 +334,6 @@
     const undo = shadow.getElementById('undo');
     const reset = shadow.getElementById('reset');
     const complete = shadow.getElementById('complete');
-
-    start.hidden = state.active === true;
-    start.textContent = state.completed ? '📐 範囲を編集' : state.paused ? '📐 範囲選択を再開' : '📐 範囲を決める';
-    activePanel.hidden = state.active !== true;
-
-    const handoffReady = state.active !== true && state.completed === true;
-    handoff.hidden = !handoffReady;
-    handoff.disabled = bridgeState.busy === true;
-    handoff.textContent =
-      bridgeState.busy ? '🌉 Campsiteへ送信中…' :
-      bridgeState.status === 'success' ? '✅ Campsiteへ送りました' :
-      bridgeState.status === 'error' ? '↻ もう一度Campsiteへ送る' :
-      '🌉 Campsiteで設計する';
-
-    if (handoffReady && bridgeState.message) {
-      handoffMessage.textContent = String(bridgeState.message);
-      handoffMessage.hidden = false;
-    } else {
-      handoffMessage.hidden = true;
-      handoffMessage.textContent = '';
-    }
 
     if (state.active) {
       count.textContent = '頂点 ' + Number(state.pointCount || 0) + ' / ' + Number(state.maxPoints || 30);
@@ -425,20 +351,7 @@
 
     syncWayfarerDrawingControls();
     positionCrosshair();
-    askResumeDraft();
   }
-
-  window.addEventListener(BRIDGE_STATUS_EVENT, event => {
-    let next = null;
-    try { next = JSON.parse(String(event?.detail || '{}')); } catch (_) { return; }
-    if (!next || typeof next !== 'object') return;
-    bridgeState = {
-      busy: String(next.state || '') === 'busy',
-      status: String(next.state || 'ready'),
-      message: String(next.message || '')
-    };
-    render();
-  });
 
   window.addEventListener(STATE_EVENT, event => {
     let next = null;
