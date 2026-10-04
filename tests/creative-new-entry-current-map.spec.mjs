@@ -318,7 +318,8 @@ test('50m未満候補の設置理由を編集シートから入力しBridge判�
   bridgeProject.currentPois=bridgeProject.selectedPois.map(item=>({...item}));
 
   await page.addInitScript(project=>{
-    sessionStorage.setItem('campsiteProject.v1',JSON.stringify(project));
+    const key='campsiteProject.v1';
+    if(!sessionStorage.getItem(key))sessionStorage.setItem(key,JSON.stringify(project));
   },bridgeProject);
 
   await page.goto('/creative/index.html?campsiteProject=bridge&rendererMode=legacy');
