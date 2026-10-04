@@ -405,7 +405,7 @@ WM-6 must not start until the project owner explicitly continues from this PASS.
 
 ## WM-6 — Creative reference POIs / distance warning
 
-### WM-6A — exterior Reference inspection + 50m-only circle (implementation)
+### WM-6A — exterior Reference inspection + 50m-only circle: PASS
 
 This subphase is intentionally limited to the first half of specification sections
 12 and 13. It does not implement the new-candidate distance-warning calculation yet.
@@ -444,4 +444,35 @@ Gate before PASS:
 9. WM-3C through WM-5C regressions remain green;
 10. diff review confirms WM-6B distance-warning logic and WM-7 remain unimplemented.
 
-WM-6B distance warning must not start until WM-6A passes.
+WM-6A PASS was fixed on 2026-10-04 JST at final validation head
+`27b57ff34102e801ea7e4cc0a99a1d51e467df5b`.
+
+Evidence:
+
+- implementation head: `7c90d0fcdcdf3e495a1c915cd1ba96c78c973070`;
+- cache-tag regression alignment: `84ad74b87dc6f8dd786e0930058f74559b4257a5`;
+- final WebKit gate stabilization: `27b57ff34102e801ea7e4cc0a99a1d51e467df5b`;
+- Phase 5 Unified Renderer Release Gate #176: PASS;
+- Campsite Bridge PC #360: PASS, including Reference Geometry + Scene,
+  Reference Renderer and Creative Reference Integration regressions;
+- Bridge Next #296, iPhone #178, Setup #223, Distance Advice #186,
+  Distance Mission #222, Workflow Resume #218, Field E2E #281,
+  Field Prep #303 and Field Mode Safety #342: PASS;
+- REFERENCE_100 markers are tappable only for inspection while remaining
+  `readOnly:true`; the observation-only INTERIOR fallback is not an exterior
+  inspection target;
+- the singleton panel shows title and POI type only and exposes no coordinates;
+- closing by `×` and map click is covered by the real Creative WebKit test;
+- inspection leaves editable Creative records unchanged;
+- Reference Scene still emits only marker + 50m circle and no 40m/30m circles;
+- RESERVE_200 remains hidden and absent from the Reference Scene;
+- current production Creative entry, activity-range Undo/Redo, 50m reason,
+  candidate caps, BFCache, move-opacity and `rendererMode=legacy` regressions
+  remain green.
+
+The first PC red was a stale WM-3C cache-tag assertion. The first WebKit red was
+a test-only map-click coordinate hitting production UI; the test was changed to
+dispatch the map-container click event without altering product behavior.
+
+WM-6B distance warning may now start. WM-7 remains out of scope.
+
