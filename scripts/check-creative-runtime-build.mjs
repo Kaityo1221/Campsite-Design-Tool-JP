@@ -32,7 +32,8 @@ const livePostManifestPatches=[
   'creative-patches-v66-activity-range-label.js',
   'creative-patches-v67-activity-range-wording.js',
   'creative-patches-v68-activity-range-delete-history.js',
-  'creative-patches-v69-spacing-reason-flow.js'
+  'creative-patches-v69-spacing-reason-flow.js',
+  'creative-patches-v70-unified-move-feedback.js'
 ];
 
 function gitBlobShaBuffer(body){
@@ -137,7 +138,7 @@ assert.ok(html.includes('existing-records-adapter.js?v=5d8'),'D8 existing record
 assert.ok(html.includes('existing-records-refresh-store.js?v=5d8'),'D8 existing refresh store cache-bust missing');
 assert.ok(html.includes('existing-geometry.js?v=5d8'),'D8 existing geometry cache-bust missing');
 assert.ok(html.includes('candidate-records-adapter.js?v=5d8'),'D8 candidate adapter cache-bust missing');
-assert.ok(html.includes('map-renderer.js?v=5d14'),'D14 feedback renderer cache-bust missing');
+assert.ok(html.includes('map-renderer.js?v=5d15'),'Unified move-feedback renderer cache-bust missing');
 assert.ok(html.includes('let cmExistingShadowStore=null'),'D7 existing shadow store binding missing');
 assert.ok(html.includes('bridgeMapLab_createExistingRecordsRefreshStore'),'D7 existing store integration missing');
 assert.ok(html.includes('existingCounts:cmExistingShadowStore'),'D7 existing diagnostics publishing missing');
@@ -161,6 +162,11 @@ assert.ok(mapRendererSource.includes("POKESTOP: 'https://maps.google.com/mapfile
 assert.ok(mapRendererSource.includes("GYM: 'https://maps.google.com/mapfiles/ms/icons/yellow-dot.png'"),'Feedback #002 Gym candidate icon missing');
 assert.ok(mapRendererSource.includes("POWERSPOT: 'https://maps.google.com/mapfiles/ms/icons/purple-dot.png'"),'Feedback #002 PowerSpot candidate icon missing');
 assert.ok(mapRendererSource.includes('entry.layer.setIcon(bridgeMapLab_candidateIcon(renderItem.renderKind));'),'Feedback #002 candidate type-change icon refresh missing');
+assert.ok(mapRendererSource.includes('opacity: bridgeMapLab_markerOpacity(renderItem)'),'Unified candidate marker must honor scene opacity on create');
+assert.ok(mapRendererSource.includes('entry.layer.setOpacity(bridgeMapLab_markerOpacity(renderItem));'),'Unified candidate marker must honor scene opacity on reuse');
+assert.ok(html.includes('cmV70UnifiedMoveFeedback'),'Unified move feedback runtime missing');
+assert.ok(html.includes("cmCandidateShadowRefresh('move-start',true)"),'Unified move start refresh missing');
+assert.ok(html.includes("cmCandidateShadowRefresh('move-end',true)"),'Unified move end refresh missing');
 assert.ok(html.includes('.cm-v45-power{background:var(--cm-purple);box-shadow:0 0 0 2px #681fc1}'),'Feedback #003 active PowerSpot visual baseline missing');
 assert.ok(html.includes('.cm-v45-inactive{background:var(--cm-purple);box-shadow:0 0 0 2px #681fc1;opacity:1}'),'Feedback #003 inactive PowerSpot must match active PowerSpot visual');
 assert.ok(mapRendererSource.includes("INACTIVE_POWERSPOT: 'cm-v45-inactive'"),'Feedback #003 inactive PowerSpot render-kind mapping must remain intact');
