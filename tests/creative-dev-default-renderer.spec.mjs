@@ -102,6 +102,45 @@ test('Phase 5-D11 normal dev URL defaults to Unified interactive renderer', asyn
   expect(browserErrors).toEqual([]);
 });
 
+
+test('Unified renderer restores visual and interaction ownership after BFCache pageshow', async ({ page }) => {
+  const browserErrors = collectBrowserErrors(page);
+  await installRoutes(page);
+
+  await page.goto('/creative/index.html?campsiteProject=bridge');
+  await expect.poll(() => page.evaluate(() => window.__cmCandidateShadow?.getState?.()?.interactionOwner || ''), { timeout:15000 }).toBe('map-engine');
+  await expect(page.locator('.cm-engine-candidate-icon')).toHaveCount(1);
+
+  await page.evaluate(() => {
+    const event = new Event('pagehide');
+    Object.defineProperty(event, 'persisted', { value:true });
+    window.dispatchEvent(event);
+  });
+
+  await expect.poll(() => page.evaluate(() => window.__cmCandidateShadow?.getState?.()?.ready ?? true)).toBe(false);
+  await expect(page.locator('.cm-engine-candidate-icon')).toHaveCount(0);
+
+  await page.evaluate(() => {
+    const event = new Event('pageshow');
+    Object.defineProperty(event, 'persisted', { value:true });
+    window.dispatchEvent(event);
+  });
+
+  await expect.poll(() => page.evaluate(() => window.__cmCandidateShadow?.getState?.()?.interactionOwner || ''), { timeout:15000 }).toBe('map-engine');
+  await expect.poll(() => page.evaluate(() => window.__cmCandidateShadow?.getState?.()?.rendered?.markers || 0)).toBe(2);
+
+  const engineCandidate = page.locator('.cm-engine-candidate-icon');
+  await expect(engineCandidate).toHaveCount(1);
+  expect(await engineCandidate.evaluate(el => getComputedStyle(el).pointerEvents)).toBe('auto');
+  expect(await page.locator('.cm-engine-legacy-candidate').evaluate(el => getComputedStyle(el).pointerEvents)).toBe('none');
+
+  await engineCandidate.click();
+  await expect(page.locator('.cm-sheet')).toBeVisible();
+  await expect(page.locator('#cmDelete')).toBeVisible();
+  expect(browserErrors).toEqual([]);
+});
+
+
 test('Phase 5-D11 rendererMode=legacy restores legacy visual and interaction ownership', async ({ page }) => {
   const browserErrors = collectBrowserErrors(page);
   await installRoutes(page);
