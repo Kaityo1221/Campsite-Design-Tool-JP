@@ -418,7 +418,11 @@ async function recordBlock(admin: any, context: AccessContext, params: BlockPara
     ? `${context.discordGlobalName} (@${context.discordName})`
     : `@${context.discordName}`;
   const lines = [
-    params.testScenario ? "🧪 **Campsite 海外利用ガード テスト検知**" : "🚫 **Campsite 海外利用ガード ブロック**",
+    params.testScenario
+      ? "🧪 **Campsite 海外利用ガード テスト検知**"
+      : params.blockReason === "location_permission_denied"
+        ? "⚠️ **Campsite 位置情報確認ブロック**"
+        : "🚫 **Campsite 海外利用ガード ブロック**",
     "",
     `**Discord:** ${displayName}`,
     `**Discord User ID:** ${context.discordUserId}`,
@@ -498,7 +502,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       ok: true,
       status: "blocked",
       blockReason: "location_permission_denied",
-      message: "この機能を利用するには位置情報の許可が必要です。端末の設定から位置情報を許可してください。",
+      message: "このサイトへの位置情報アクセスを許可してください。Campsite Design Toolは日本国内での現地利用を確認するため位置情報を使用します。ブラウザ／端末の設定で位置情報を許可してから、もう一度確認してください。",
       ipCountry: ipCountry || null,
       gpsResult: "permission_denied",
       isAdmin: context.isAdmin,
