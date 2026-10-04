@@ -31,7 +31,8 @@ const livePostManifestPatches=[
   'creative-patches-v65-download-label.js',
   'creative-patches-v66-activity-range-label.js',
   'creative-patches-v67-activity-range-wording.js',
-  'creative-patches-v68-activity-range-delete-history.js'
+  'creative-patches-v68-activity-range-delete-history.js',
+  'creative-patches-v69-spacing-reason-flow.js'
 ];
 
 function gitBlobShaBuffer(body){
@@ -87,6 +88,11 @@ assert.ok(!html.includes('ポリゴン'),'User-facing polygon wording must stay 
 const activityRangeDeleteHistorySource=fs.readFileSync('creative/runtime/creative-patches-v68-activity-range-delete-history.js','utf8');
 assert.ok(activityRangeDeleteHistorySource.includes("pushHistory({type:'polygon-delete',id:item.p.id})"),'Activity-range deletion history push patch missing');
 assert.ok(html.includes("a.type==='polygon-delete'"),'Activity-range deletion undo/redo handling missing');
+assert.ok(html.includes('id="cmSpacingReason"'),'50m spacing reason field missing from Creative sheet');
+assert.ok(html.includes("r.applicationComment=spacingReason.value.slice(0,300)"),'Creative sheet spacing reason persistence missing');
+const bridgeProjectPatchSource=fs.readFileSync('creative/bridge-project-patch.js','utf8');
+assert.ok(bridgeProjectPatchSource.includes("return String(record?.applicationComment||'').trim().length>0;"),'Bridge spacing gate must use applicationComment');
+assert.ok(!bridgeProjectPatchSource.includes("return String(record?.memo||record?.description||'').trim().length>0;"),'Bridge spacing gate must not treat memo as spacing reason');
 assert.ok(html.includes('cmV58NewEntryStyle'),'New Creative entry style missing');
 assert.ok(html.includes("if(start.classList.contains('ready'))start.disabled=false"),'Creative START must re-enable when returning to entry with a ready file');
 assert.ok(!html.includes("location.href=location.origin+location.pathname"),'Creative back must not reload the page');
