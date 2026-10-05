@@ -5,35 +5,6 @@
   window.applyCreativePatches=function(src){
     src=previous(src);
 
-    // Phase E selection belongs to the Unified Renderer that owns the visible POI markers.
-    src=src.split('runtime/map-engine/map-renderer.js?v=5d8').join('runtime/map-engine/map-renderer.js?v=5d16');
-
-    // Final Phase E selection path: highlight the exact Leaflet marker that fired
-    // the activation event. This avoids owner-key lookup and renderer DOM resync.
-    src=src.replace(
-      "try{if(typeof cmOpenRecord==='function')cmOpenRecord(record);else if(typeof recordPopup==='function')recordPopup(record)}catch(error){console.error('[Unified Interaction] open record failed',error)}",
-      "try{if(typeof cmOpenRecord==='function')cmOpenRecord(record);else if(typeof recordPopup==='function')recordPopup(record);document.querySelectorAll('.cm-engine-selected').forEach(el=>el.classList.remove('cm-engine-selected'));event?.target?.getElement?.()?.classList?.add('cm-engine-selected')}catch(error){console.error('[Unified Interaction] open/select record failed',error)}"
-    );
-
-    if(!src.includes('cmV77CloseSelectionRuntime')){
-      const coreStart=src.indexOf("(()=>{'use strict';");
-      const coreEnd=coreStart>=0?src.indexOf('})();\\n</script>',coreStart):-1;
-      if(coreEnd>=0){
-        const augment=`
-/* cmV77CloseSelectionRuntime */
-if(typeof cmCloseSheet==='function'){
-  const cmV77BaseCloseSheet=cmCloseSheet;
-  cmCloseSheet=function(){
-    const result=cmV77BaseCloseSheet();
-    try{document.querySelectorAll('.cm-engine-selected').forEach(el=>el.classList.remove('cm-engine-selected'));cmCandidateShadowRenderer?.clearSelection?.()}catch(error){console.warn('[Phase E Selection] clear failed',error)}
-    return result;
-  };
-}
-`;
-        src=src.slice(0,coreEnd)+augment+src.slice(coreEnd);
-      }
-    }
-
     const layerMarker='function renderLayerPanel(){';
     if(src.includes(layerMarker)&&!src.includes('function cmV77SyncActivityHint(')){
       const helper=`function cmV77SyncActivityHint(){
@@ -67,12 +38,6 @@ setTimeout(()=>{
     }
 
     const style=`<style id="cmV77PhaseEUxStyle">
-      .cm-engine-existing-icon.cm-engine-selected,
-      .cm-engine-candidate-icon.cm-engine-selected{
-        box-shadow:0 0 0 5px #f0b429,0 0 0 9px rgba(240,180,41,.30)!important;
-        border-radius:999px!important;
-        z-index:1;
-      }
       @keyframes cmV77GuidePulse{0%,100%{box-shadow:0 0 0 0 rgba(240,180,41,.15)}50%{box-shadow:0 0 0 6px rgba(240,180,41,.38)}}
       body.cm-v77-activity-missing .cm-v77-layer-hint,
       body.cm-v77-activity-missing .cm-v77-activity-hint{animation:cmV77GuidePulse 1.6s ease-in-out infinite!important;border-color:#d79a18!important}
