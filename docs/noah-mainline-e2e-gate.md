@@ -59,3 +59,5 @@ The missing assertion is the real browser seam from a Bridge Project into the co
 
 Passing N1 does not publish Noah.
 Public activation is a separate later phase through an administrator-controlled switch.
+
+CI trigger note: the dedicated workflow is part of this branch and must execute before N1 can PASS.
