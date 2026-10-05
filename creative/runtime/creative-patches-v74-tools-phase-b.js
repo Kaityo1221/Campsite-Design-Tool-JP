@@ -12,7 +12,7 @@
 
     src=src.replace(
       "function openPolygonChoice(){closeMenus();closePolygonToolMenu();clearPolygonDeleteMode();const count=polygons.filter(p=>!p.deleted).length;if(!count){beginAnotherPolygon();return}const w=document.createElement('div'),a=document.createElement('button'),d=document.createElement('button'),c=document.createElement('button');",
-      "function openPolygonChoice(){closeMenus();toolMenu.classList.remove('open');closePolygonToolMenu();clearPolygonDeleteMode();const list=polygons.filter(p=>!p.deleted);if(!list.length){beginAnotherPolygon();return}const w=document.createElement('div'),a=document.createElement('button'),d=document.createElement('button'),c=document.createElement('button');"
+      "function openPolygonChoice(){closeMenus();toolMenu.classList.remove('open');closePolygonToolMenu();clearPolygonDeleteMode();clearRuler();if(activeTool==='ruler')activeTool='';renderTools();const list=polygons.filter(p=>!p.deleted);if(!list.length){beginAnotherPolygon();return}const w=document.createElement('div'),a=document.createElement('button'),d=document.createElement('button'),c=document.createElement('button');"
     );
 
     src=src.replace(
