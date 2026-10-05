@@ -8,6 +8,8 @@
 
   let latest = null;
   let mounted = false;
+  let sendState = 'idle';
+  let sendObserver = null;
 
   function send(action) {
     window.dispatchEvent(new CustomEvent(PANEL_COMMAND_EVENT, {
@@ -96,10 +98,48 @@
     ui.append(status, makeButton('📍 POIを集める！', 'start-new', true));
   }
 
+  function observeLegacySendState(root) {
+    if (sendObserver) sendObserver.disconnect();
+    const update = () => {
+      if (!latest?.ready || latest?.sessionRangeConfirmed !== true) return;
+      const text = String(root.textContent || '').replace(/\s+/g, ' ').trim();
+      const buttons = Array.from(root.querySelectorAll('button')).filter(button => !button.closest('#' + UI_ID));
+      const sendButton = buttons.find(button => button.dataset.n4SendLabelApplied === 'true') || buttons[0];
+      if (!sendButton) return;
+
+      if (sendButton.disabled || /送信中|sending/i.test(text)) {
+        sendState = 'busy';
+        sendButton.textContent = '🌉 Campsiteへ送信中…';
+        return;
+      }
+      if (/送信しました|sent|success/i.test(text)) {
+        sendState = 'success';
+        sendButton.textContent = '↻ Campsiteへ再送信';
+        return;
+      }
+      if (/エラー|失敗|error|failed/i.test(text)) {
+        sendState = 'error';
+        sendButton.textContent = '↻ Campsiteへ再送信';
+        return;
+      }
+      if (sendState === 'busy') {
+        sendState = 'idle';
+        sendButton.textContent = '🌉 Campsiteへ送信！';
+      }
+    };
+    sendObserver = new MutationObserver(update);
+    sendObserver.observe(root, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['disabled'] });
+    update();
+  }
+
   function rootReady(ready) {
     const root = findRoot();
     if (!root) return;
     root.dataset.n4PolygonReady = ready ? 'true' : 'false';
+    if (!ready) {
+      sendState = 'idle';
+      if (sendObserver) { sendObserver.disconnect(); sendObserver = null; }
+    }
 
     for (const child of Array.from(root.children)) {
       if (child.id === UI_ID) continue;
@@ -114,6 +154,7 @@
       sendButton.dataset.n4SendLabelApplied = 'true';
       sendButton.textContent = '🌉 Campsiteへ送信！';
     }
+    observeLegacySendState(root);
   }
 
   window.addEventListener(PANEL_STATE_EVENT, event => {
