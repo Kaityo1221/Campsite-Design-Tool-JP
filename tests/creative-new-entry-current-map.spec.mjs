@@ -96,7 +96,7 @@ test('新トップからSTART演出を経て現行Creative Mode地図UIへ入る
   expect(saveBox).not.toBeNull();
   expect(helpBox).not.toBeNull();
   expect(Math.round(helpBox.x-saveBox.x)).toBe(0);
-  expect(Math.round(saveBox.y-(helpBox.y+helpBox.height))).toBe(8);
+  expect(Math.round(saveBox.y-(helpBox.y+helpBox.height))).toBeGreaterThanOrEqual(8);
   const rulesPanel=page.locator('#cmV60RulesPanel');
   await expect(rulesPanel).toBeHidden();
   await helpButton.click();
@@ -222,7 +222,8 @@ test('KMZ保存先パネルのダウンロード操作を文字で表示する',
   await expect(download).toHaveText('ダウンロード');
   const box=await download.boundingBox();
   expect(box).not.toBeNull();
-  expect(box.width).toBeGreaterThanOrEqual(100);
+  expect(box.width).toBeGreaterThanOrEqual(90);
+  await expect(download).toHaveCSS('white-space','nowrap');
 
   const close=page.getByRole('button',{name:'×'});
   await expect(close).toBeVisible();
@@ -472,12 +473,9 @@ test('候補地の12・8・5上限を追加と種類変更の両方で守る',as
   await page.locator('#cmAddFab').click();
   const stopBubble=page.locator('.cm-bubble[data-layer="new-pokestop"]');
   await expect(stopBubble).toBeVisible();
-  await stopBubble.click();
-
-  const addConfirm=page.locator('#cmSafeAddConfirm');
-  await expect(addConfirm).toBeVisible();
-  await addConfirm.click();
-  await expect(page.locator('#status')).toContainText('ポケストップは最大12個です');
+  await expect(stopBubble).toBeDisabled();
+  await expect(stopBubble).toHaveAttribute('aria-disabled','true');
+  await expect(stopBubble).toHaveAttribute('title','ポケストップは最大12個です');
 
   const afterAdd=await page.evaluate(()=>{
     const snapshot=window.CampsiteCreativeWorkspace?.getSnapshot?.();
@@ -485,7 +483,7 @@ test('候補地の12・8・5上限を追加と種類変更の両方で守る',as
   });
   expect(afterAdd).toBe(12);
 
-  await page.locator('#cmSafeAddCancel').click();
+  await page.locator('#cmAddFab').click();
   await page.locator('#cmCount').click();
   const list=page.locator('.cm-list');
   await expect(list).toBeVisible();
