@@ -27,6 +27,9 @@ try {
   const report = {
     manifest: {
       version: manifest.version,
+      manifestVersion: manifest.manifest_version,
+      permissions: manifest.permissions || [],
+      matches: (manifest.content_scripts || []).flatMap(item => item.matches || []),
       contentScripts: manifest.content_scripts?.map(item => item.js || []) || [],
       webAccessibleResources: manifest.web_accessible_resources || []
     },
