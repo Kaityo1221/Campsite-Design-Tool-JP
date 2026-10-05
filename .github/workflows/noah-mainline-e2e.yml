@@ -1,6 +1,9 @@
 name: Noah Mainline E2E Gate
 
 on:
+  push:
+    branches:
+      - 'test/noah-mainline-e2e-gate'
   pull_request:
     branches: [main]
     paths:
