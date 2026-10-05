@@ -33,7 +33,8 @@ const livePostManifestPatches=[
   'creative-patches-v67-activity-range-wording.js',
   'creative-patches-v68-activity-range-delete-history.js',
   'creative-patches-v69-spacing-reason-flow.js',
-  'creative-patches-v70-unified-move-feedback.js'
+  'creative-patches-v70-unified-move-feedback.js',
+  'creative-patches-v75-poi-add-phase-c.js'
 ];
 
 function gitBlobShaBuffer(body){
@@ -118,6 +119,15 @@ assert.ok(html.includes("function cmPlace(latlng){if(cmAddMode&&isNew(activeLaye
 assert.ok(html.includes("if(isNew(to)&&!jpCanChangeType(to,r.id))return"),'JP per-type type-change guard missing');
 assert.ok(html.includes("JP_TYPE_LABELS=Object.freeze({'new-pokestop':'ポケストップ','new-gym':'ジム','new-power':'パワースポット'})"),'JP per-type cap labels missing');
 assert.ok(html.includes("return label+'は最大'+limit+'個です'"),'JP per-type cap message builder missing');
+assert.ok(html.includes('cmV75PoiAddPhaseCStyle'),'Phase C POI-add style missing');
+assert.ok(html.includes("'new-pokestop':{label:'PokéStop',icon:'./assets/pokestop.png'}"),'Phase C selected PokéStop identity missing');
+assert.ok(html.includes("'new-gym':{label:'Gym',icon:'./assets/gym.png'}"),'Phase C selected Gym identity missing');
+assert.ok(html.includes("'new-power':{label:'PowerSpot',icon:'./assets/powerspot.png'}"),'Phase C selected PowerSpot identity missing');
+assert.ok(html.includes('d.innerHTML=cmPhaseCSelectedPoiHtml(activeLayer)')||html.includes('cmPhaseCSelectedPoiHtml(activeLayer)'),'Phase C selected POI bar injection missing');
+assert.ok(!html.includes('cmV75PoiAddPhaseCRuntime'),'Phase C must not install the observer-based selected POI runtime');
+assert.ok(html.includes("jpAdditionalRecords().length>=JP_MAX_ADDITIONAL"),'Phase C total-cap precheck missing');
+assert.ok(html.includes("b.dataset.cmCapacityDisabled=disabled?'1':'0'"),'Phase C per-type disabled state missing');
+assert.ok(html.includes("bubble.dataset.cmCapacityDisabled==='1'"),'Phase C disabled bubble action guard missing');
 assert.ok(html.includes('function cmOpenCoords(){if(cmCoordView?.isConnected)return;'),'Coordinate view singleton guard missing');
 assert.ok(html.includes('cmV46Near&&cmV46Near.distance<50'),'Coordinate reason must only render for candidates under 50m');
 assert.ok(html.includes("./assets/pokestop.png"),'Canonical Next-Lab PokéStop icon reference missing');
