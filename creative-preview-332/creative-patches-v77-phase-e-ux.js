@@ -6,7 +6,7 @@
     src=previous(src);
 
     // Phase E selection belongs to the Unified Renderer that owns the visible POI markers.
-    src=src.split('runtime/map-engine/map-renderer.js?v=5d15').join('../creative-preview-332/map-renderer-phase-e.js?v=phase-e-owner-2');
+    src=src.split('runtime/map-engine/map-renderer.js?v=5d8').join('../creative-preview-332/map-renderer-phase-e.js?v=phase-e-owner-3');
 
     // Hook the existing Unified activation path directly. It already owns both
     // renderItem.ownerKey and cmCandidateShadowRenderer in the same runtime scope.
