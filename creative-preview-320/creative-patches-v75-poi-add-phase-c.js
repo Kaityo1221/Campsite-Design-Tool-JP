@@ -74,8 +74,8 @@ function cmOpenAddMenu(){
       .cm-phase-c-selected-poi{min-width:0;height:40px;display:grid;grid-template-columns:28px minmax(0,1fr);gap:3px;align-items:center;padding:0 3px;border-radius:12px;background:rgba(255,253,247,.62);box-sizing:border-box}
       .cm-phase-c-selected-poi img{width:27px;height:27px;object-fit:contain;display:block}
       .cm-phase-c-selected-poi b{min-width:0;font-size:9px;line-height:1.05;font-weight:950;color:#382d1d;overflow-wrap:anywhere;text-align:left}
-      .cm-bubble.cm-phase-c-capacity-disabled{opacity:.28!important;filter:grayscale(.72)!important;cursor:not-allowed!important;box-shadow:none!important}
-      .cm-bubble.cm-phase-c-capacity-disabled img{filter:grayscale(.72)!important}
+      .cm-fab-wrap.open .cm-bubble.cm-phase-c-capacity-disabled{opacity:.28!important;filter:grayscale(.72)!important;cursor:not-allowed!important;box-shadow:none!important}
+      .cm-fab-wrap.open .cm-bubble.cm-phase-c-capacity-disabled img{filter:grayscale(.72)!important}
     </style>`;
     if(!src.includes('id="cmV75PoiAddPhaseCStyle"'))src=src.replace('</head>',style+'</head>');
 
