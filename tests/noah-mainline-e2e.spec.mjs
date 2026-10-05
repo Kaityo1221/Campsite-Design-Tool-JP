@@ -78,7 +78,7 @@ test('N1 hidden Noah mainline reaches completed Creative and preserves project s
   const saved=await page.evaluate(()=>JSON.parse(sessionStorage.getItem('campsiteProject.v1')||'null'));
   expect(saved.projectId).toBe(project.projectId);
   expect(saved.polygon).toEqual(project.polygon);
-  expect(saved.currentPois.some(p=>p.id==='e-stop')).toBe(true);
+  expect(saved.currentPois.some(p=>p.guid==='noah-guid-stop'&&p.id==='noah-guid-stop')).toBe(true);
   expect(saved.currentPois.some(p=>p.id==='c-stop')).toBe(true);
   const savedCandidate=saved.currentPois.find(p=>p.id==='c-stop');
   expect([Number(savedCandidate.lat),Number(savedCandidate.lng)].map(v=>Number(v.toFixed(6)))).toEqual(moved.latlng);
