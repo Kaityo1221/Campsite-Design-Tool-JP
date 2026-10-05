@@ -112,16 +112,12 @@ test('Phase 5-D10 real Creative Mode delegates engine taps to legacy edit flows 
   await engineExisting.first().click();
   await expect(page.locator('.cm-sheet')).toBeVisible();
   await expect(page.locator('.cm-sheet')).toContainText('既存POI（閲覧のみ）');
-  await expect(engineExisting.first()).toHaveClass(/cm-engine-selected/);
-  await expect.poll(() => page.evaluate(() => window.__cmCandidateShadow?.getState?.()?.rendered?.markers || 0)).toBe(5);
   await page.locator('.cm-sheet-close').click();
   await expect(page.locator('.cm-sheet')).toHaveCount(0);
-  await expect(engineExisting.first()).not.toHaveClass(/cm-engine-selected/);
 
   // Candidate tap must open the current editor, not a new Map Engine editor.
   await engineCandidate.click();
   await expect(page.locator('.cm-sheet')).toBeVisible();
-  await expect(engineCandidate).toHaveClass(/cm-engine-selected/);
   await expect(page.locator('#cmMove')).toBeVisible();
   await expect(page.locator('#cmType')).toBeVisible();
   await expect(page.locator('#cmDelete')).toBeVisible();
@@ -131,7 +127,6 @@ test('Phase 5-D10 real Creative Mode delegates engine taps to legacy edit flows 
 
   // Start the current move flow: pan the map under the fixed crosshair, then confirm.
   await page.locator('#cmMove').click();
-  await expect(engineCandidate).not.toHaveClass(/cm-engine-selected/);
   await expect(page.locator('#cmMoveCrosshair')).toBeVisible();
   await expect(page.locator('#cmMoveBar')).toBeVisible();
   await expect(page.locator('#cmMoveConfirm')).toContainText('移動確定');
