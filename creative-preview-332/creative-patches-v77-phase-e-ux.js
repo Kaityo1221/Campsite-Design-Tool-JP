@@ -5,7 +5,7 @@
   window.applyCreativePatches=function(src){
     src=previous(src);
 
-    const openMarker='function cmOpenRecord(r){';
+    const openMarker=src.includes('function cmOpenRecord(r){if(cmMoveSession)return;')?'function cmOpenRecord(r){if(cmMoveSession)return;':'function cmOpenRecord(r){';
     if(src.includes(openMarker)&&!src.includes('function cmV77HighlightRecord(')){
       const helper=`let cmV77SelectionRing=null;
 function cmV77ClearRecordHighlight(){
@@ -15,7 +15,7 @@ function cmV77HighlightRecord(r){
   cmV77ClearRecordHighlight();
   if(!r||r.deleted||!Array.isArray(r.latlng))return;
   try{
-    cmV77SelectionRing=L.circleMarker(r.latlng,{radius:24,color:'#f0b429',weight:5,opacity:.98,fill:false,interactive:false,pane:'markerPane'}).addTo(map);
+    cmV77SelectionRing=L.circleMarker(r.latlng,{radius:28,color:'#f0b429',weight:6,opacity:.98,fill:false,interactive:false,pane:'markerPane'}).addTo(map);
   }catch(_){}
 }
 `;
