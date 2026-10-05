@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<base href="../creative/">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover,user-scalable=no">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>CREATIVE MODE PREVIEW #332 | Campsite Lab</title>
+<style>
+html,body{margin:0;min-height:100%;background:#17130f;color:#fff8e8;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+#creativeBootStatus{min-height:100vh;display:grid;place-items:center;padding:24px;text-align:center;box-sizing:border-box}
+#creativeBootStatus strong{display:block;font-size:22px;letter-spacing:.06em}
+#creativeBootStatus small{display:block;margin-top:8px;color:#d8c9a8;line-height:1.7}
+#creativeBootStatus .spin{width:28px;height:28px;margin:18px auto 0;border:3px solid rgba(255,248,232,.22);border-top-color:#f3d77f;border-radius:50%;animation:bootSpin .85s linear infinite}
+@keyframes bootSpin{to{transform:rotate(360deg)}}
+</style>
+<script src="../js/ca-access-bootstrap.js?v=3"></script>
+</head>
+<body>
+<div id="creativeBootStatus"><div><strong>🎨 CREATIVE MODE</strong><small>CREATIVE MODEを開いています…</small><div class="spin"></div></div></div>
+<script>
+(async()=>{
+  'use strict';
+
+  const NEXT_LAB_SOURCE='c10b910344952ade36b2791a122f9f38e6c54d0b';
+  const PATCH_FILES=["creative-patches-v2.js","creative-patches-v3.js","creative-patches-v4.js","creative-patches-v5-design-check.js","creative-patches-v6-intuitive.js","creative-patches-v9-return-main.js","creative-patches-v10-save-labels.js","creative-patches-v13-draggable-fab.js","creative-patches-v14-layer-tap-layout.js","creative-patches-v18-preview-crosshair.js","creative-patches-v19-persistent-crosshair.js","creative-patches-v20-radius-gauge-save-return.js","creative-patches-v21-radius-swipe.js","creative-patches-v23-add-mode-close.js","creative-patches-v24-confirm-vertical-radius.js","creative-patches-v25-radius-handle-no-preview.js","creative-patches-v26-compact-radius-bar.js","creative-patches-v27-dot-handle-bar.js","creative-patches-v28-lever-handle.js","creative-patches-v29-lever-notches.js","creative-patches-v30-lever-gesture-lock.js","creative-patches-v32-poi-move-isolated.js","creative-patches-v33-action-wiring.js","creative-patches-v34-placement-core.js","creative-patches-v35-nearest-poi-warning.js","creative-patches-v36-compact-move-bar.js","creative-patches-v37-bottom-dock.js","creative-patches-v38-circle-layer-import.js","creative-patches-v39-layer-panel-top.js","creative-patches-v40-recent-filename.js","creative-patches-v41-save-output-wiring.js","creative-patches-v42-save-button-hardbind.js","creative-patches-v43-save-standalone.js","creative-patches-v44-lab-update-3-lines.js","creative-patches-v45-unified-map-ui.js","creative-patches-v46-field-feedback-polish.js","creative-patches-v48-comet-a-arc.js","creative-patches-v49-remove-add-text.js","creative-patches-v50-add-crosshair-cleanup.js","creative-patches-v51-coordinate-jump.js","creative-patches-v52-existing-new-placement.js","creative-patches-v53-new-poi-auto-memo.js","creative-patches-v54-coordinate-memo-reason.js","creative-patches-v55-unified-visible.js","creative-patches-v56-unified-interaction.js","creative-patches-v57-dev-default-unified.js","creative-patches-v58-new-entry-current-map.js","creative-patches-v59-help-button.js","creative-patches-v60-rules-carousel.js","creative-patches-v61-saved-session-hint.js","creative-patches-v62-remove-locate.js","creative-patches-v63-remove-workspace-save.js","creative-patches-v64-google-form-coordinates.js","creative-patches-v65-download-label.js","creative-patches-v66-activity-range-label.js","creative-patches-v67-activity-range-wording.js","creative-patches-v68-activity-range-delete-history.js","creative-patches-v69-spacing-reason-flow.js","creative-patches-v70-unified-move-feedback.js","creative-patches-v71-memo-sheet-download-fixes.js","creative-patches-v73-production-visual-fixes.js","creative-patches-v74-tools-phase-b.js","creative-patches-v75-poi-add-phase-c.js","creative-patches-v76-radius-reference-ui.js","../creative-preview-332/creative-patches-v77-phase-e-ux.js"];
+  const params=new URLSearchParams(location.search);
+  const isBridgeProject=params.get('campsiteProject')==='bridge';
+  const setBootStatus=text=>{const el=document.querySelector('#creativeBootStatus small');if(el)el.textContent=text};
+  const showError=(stage,error)=>{
+    console.error('[CREATIVE MODE]',stage,error);
+    const message=String(error&&error.message||error||'不明なエラー');
+    document.body.innerHTML='<div id="creativeBootStatus"><div><strong>⚠️ CREATIVE MODE</strong><small>'+stage+'<br>'+message+'</small></div></div>';
+  };
+  const waitFor=async(test,timeoutMs,intervalMs=80)=>{
+    const started=Date.now();
+    while(!test()){
+      if(Date.now()-started>=timeoutMs)return false;
+      await new Promise(r=>setTimeout(r,intervalMs));
+    }
+    return true;
+  };
+  const canonicalGameEntity=value=>{
+    const raw=String(value||'').trim().toUpperCase();
+    const compact=raw.replace(/[\s_-]+/g,'');
+    if(compact==='POWERSPOT')return'POWERSPOT';
+    if(compact==='GYM')return'GYM';
+    if(compact==='POKESTOP')return'POKESTOP';
+    return raw;
+  };
+  const normalizeBridgeProjectEntities=()=>{
+    if(!isBridgeProject)return;
+    const key='campsiteProject.v1';
+    try{
+      const project=JSON.parse(sessionStorage.getItem(key)||'null');
+      if(!project||project.source!=='bridge')return;
+      const normalizePoi=poi=>{
+        if(!poi||typeof poi!=='object')return;
+        const canonical=canonicalGameEntity(poi.gameEntity||poi.type);
+        if(canonical)poi.gameEntity=canonical;
+      };
+      ['sourcePois','selectedPois','currentPois','addedPois','deletedPois'].forEach(name=>{
+        if(Array.isArray(project[name]))project[name].forEach(normalizePoi);
+      });
+      sessionStorage.setItem(key,JSON.stringify(project));
+    }catch(error){
+      console.warn('[CREATIVE MODE] Bridge gameEntity normalize skipped',error);
+    }
+  };
+
+  try{
+    normalizeBridgeProjectEntities();
+    setBootStatus(isBridgeProject?'CREATIVE MODEを開いています…':'認証システムを準備しています…');
+    if(!await waitFor(()=>!!window.CampsiteCaAccess,10000))throw new Error('認証システムの起動に時間がかかっています');
+
+    while(document.getElementById('caAccessGate')){
+      await new Promise(r=>setTimeout(r,120));
+    }
+
+    setBootStatus('CREATIVE MODE本体を準備しています…');
+    const runtimeRes=await fetch('./runtime/runtime-vnext.html',{cache:'no-store'});
+    if(!runtimeRes.ok)throw new Error('runtime HTTP '+runtimeRes.status);
+    let runtime=await runtimeRes.text();
+
+    const writeNeedle='document.open();document.write(html);document.close();';
+    if(!runtime.includes(writeNeedle))throw new Error('runtime write target not found');
+
+    const directPatch=`
+  try{
+    const bootText=document.getElementById('creativeRuntimeBootText');
+    if(bootText)bootText.textContent='機能を準備中…';
+    const patchFiles=${JSON.stringify(PATCH_FILES)};
+    const patchTexts=await Promise.all(patchFiles.map(async name=>{
+      const patchUrl=name.startsWith('../')?name:'./runtime/'+name;
+      const response=await fetch(patchUrl,{cache:'no-store'});
+      if(!response.ok)throw new Error(name+' HTTP '+response.status);
+      return response.text();
+    }));
+
+    window.applyCreativePatches=s=>s;
+    for(let i=0;i<patchTexts.length;i++){
+      Function(await patchTexts[i])();
+      if(typeof window.applyCreativePatches!=='function')throw new Error(patchFiles[i]+' registration failed');
+    }
+    html=window.applyCreativePatches(html);
+
+    const extras=await Promise.all([
+      fetch('./jp-creative-patch.js',{cache:'no-store'}),
+      fetch('./bridge-project-patch.js',{cache:'no-store'}),
+      fetch('./bridge-distance-stale-patch.js',{cache:'no-store'}),
+      fetch('./wayfarer-observe-link-patch.js',{cache:'no-store'}),
+      fetch('./wayfarer-reference-layer-patch.js',{cache:'no-store'})
+    ]);
+    if(extras.some(r=>!r.ok))throw new Error('JP/Bridge/Wayfarer patch HTTP error');
+    Function(await extras[0].text())();
+    Function(await extras[1].text())();
+    Function(await extras[2].text())();
+    Function(await extras[3].text())();
+    Function(await extras[4].text())();
+
+    if(typeof window.applyCreativeJpPatch==='function')html=window.applyCreativeJpPatch(html);
+    const bridgeProject=new URLSearchParams(location.search).get('campsiteProject')==='bridge';
+    if(bridgeProject){
+      if(typeof window.applyCreativeBridgeProjectPatch!=='function')throw new Error('Bridge project patch unavailable');
+      html=window.applyCreativeBridgeProjectPatch(html);
+      if(typeof window.applyCreativeBridgeDistanceStalePatch!=='function')throw new Error('Bridge distance stale patch unavailable');
+      html=window.applyCreativeBridgeDistanceStalePatch(html);
+      if(typeof window.applyCreativeWayfarerObserveLinkPatch!=='function')throw new Error('Wayfarer observe link patch unavailable');
+      html=window.applyCreativeWayfarerObserveLinkPatch(html);
+      if(typeof window.applyCreativeWayfarerReferenceLayerPatch!=='function')throw new Error('Wayfarer reference layer patch unavailable');
+      html=window.applyCreativeWayfarerReferenceLayerPatch(html);
+    }
+
+    const bgOldMain='https://raw.githubusercontent.com/Kaityo1221/campsite-design-tool-adv-lab/main/creative/runtime/assets/creative-mode-opening.png';
+    const bgOldPinned='https://raw.githubusercontent.com/Kaityo1221/campsite-design-tool-adv-lab/1c27ca3ef14f423688f755d350ecc602bee1c573/creative/runtime/assets/creative-mode-opening.png';
+    const bgStable='https://media.githubusercontent.com/media/Kaityo1221/campsite-design-tool-adv-lab/1c27ca3ef14f423688f755d350ecc602bee1c573/creative/runtime/assets/creative-mode-opening.png';
+    html=html.split(bgOldMain).join(bgStable).split(bgOldPinned).join(bgStable);
+    html=html.replace(/<input\\b[^>]*\\bid=["']entryFile["'][^>]*>/i,m=>m.replace(/\\saccept\\s*=\\s*(?:"[^"]*"|'[^']*'|[^\\s>]+)/i,''));
+    html=html.replace('entryFile.onchange=()=>{',"entryFile.removeAttribute('accept');entryFile.accept='';entryFile.onchange=()=>{");
+    // Preview runs under /creative-preview-332/, so keep final runtime assets rooted at /creative/.
+    if(!/<base\b/i.test(html))html=html.replace(/<head([^>]*)>/i,'<head$1><base href="../creative/">');
+  }catch(e){
+    document.body.style.cssText='margin:0;padding:24px;background:#17130f;color:#ffd0c8;font-family:-apple-system,BlinkMacSystemFont,sans-serif;white-space:pre-wrap';
+    document.body.textContent='CREATIVE MODE 読み込みエラー'+String.fromCharCode(10,10)+(e&&e.stack?e.stack:(e&&e.message?e.message:String(e||'')));
+    return;
+  }
+  ${writeNeedle}`;
+
+    runtime=runtime.replace(writeNeedle,directPatch);
+
+    // Same runtime boot shell used by current Next-Lab.
+    const runtimeBoot='<body style="margin:0;background:#17130f;color:#fff8e8;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif"><div id="creativeRuntimeBoot" style="position:fixed;inset:0;z-index:99999;display:grid;place-items:center;background:#17130f;text-align:center"><div><strong style="font-size:22px;letter-spacing:.06em">CREATIVE MODE</strong><small id="creativeRuntimeBootText" style="display:block;margin-top:8px;opacity:.7">地図を準備中…</small><span style="display:block;width:28px;height:28px;margin:18px auto 0;border:3px solid rgba(255,248,232,.22);border-top-color:#f3d77f;border-radius:50%;animation:cmBootSpin .85s linear infinite"></span></div></div><style>@keyframes cmBootSpin{to{transform:rotate(360deg)}}</style><script>';
+    runtime=runtime.replace('<body><script>',runtimeBoot);
+
+    runtime=runtime.replace('<head>','<head><base href="../creative/">');
+    document.open();document.write(runtime);document.close();
+  }catch(error){
+    showError('CREATIVE MODEの起動に失敗しました',error);
+  }
+})();
+</script>
+</body>
+</html>
