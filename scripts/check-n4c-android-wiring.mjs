@@ -20,8 +20,17 @@ try {
   assert.ok(hook.includes('CAMPSITE_BRIDGE_ANDROID_M24_PAGE'));
   assert.ok(ui.includes('CAMPSITE_BRIDGE_ANDROID_M24_PAGE'));
   assert.ok(ui.includes('CAMPSITE_BRIDGE_ANDROID_M24_UI'));
-  assert.ok(controller.includes("campsite-bridge-pc:polygon-command"),'shared controller still has PC event namespace');
-  assert.ok(polygonUi.includes("campsite-bridge-pc:polygon-command"),'shared polygon UI still has PC event namespace');
+  const main=scripts.find(x=>x.world==='MAIN');
+  const isolated=scripts.find(x=>x.world==='ISOLATED');
+  assert.ok(main?.js.includes('page-hook.js'),'page-hook must stay MAIN');
+  for(const file of ['wayfarer-map-adapter.js','wayfarer-observation-zone.js','wayfarer-acquisition-engine.js','wayfarer-polygon-controller.js']) {
+    assert.ok(main?.js.includes(file), `${file} must execute in MAIN`);
+  }
+  for(const file of ['bridge-core.js','polygon-ui.js','bridge-ui.js']) assert.ok(isolated?.js.includes(file), `${file} must execute in ISOLATED`);
+  assert.ok(controller.includes("campsite-bridge-android-n4:polygon-command"),'controller must use Android N4 event namespace');
+  assert.ok(polygonUi.includes("campsite-bridge-android-n4:polygon-command"),'polygon UI must use Android N4 event namespace');
+  assert.equal(controller.includes("campsite-bridge-pc:polygon-command"),false,'PC command namespace leaked into Android controller');
+  assert.equal(polygonUi.includes("campsite-bridge-pc:polygon-command"),false,'PC command namespace leaked into Android polygon UI');
   console.log('N4-C wiring audit');
-  console.log(JSON.stringify({version:manifest.version,scripts,existingAndroidChannel:true,sharedPcEventNamespace:true,verdict:'HOLD: adapter required before real-device gate'},null,2));
+  console.log(JSON.stringify({version:manifest.version,scripts,existingAndroidChannel:true,androidPolygonNamespace:true,executionWorldsAligned:true,verdict:'PASS: execution-world and polygon event seam'},null,2));
 } finally { fs.rmSync(tmp,{recursive:true,force:true}); }
