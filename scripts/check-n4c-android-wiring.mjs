@@ -37,7 +37,7 @@ try {
   assert.ok(panelAdapter.includes("campsite-bridge-android-n4:panel-command"),'panel adapter command seam missing');
   assert.ok(panelUi.includes("campsite-bridge-android-n4:panel-state"),'panel UI state seam missing');
   assert.ok(panelUi.includes("campsite-bridge-android-n4:panel-command"),'panel UI command seam missing');
-  for (const label of ['設計範囲を編集中','作成途中の設計範囲があります','設計範囲を決めてください','設計範囲はまだありません','Campsiteへ送信！','範囲を編集']) assert.ok(panelUi.includes(label), `panel semantic label missing: ${label}`);
+  for (const label of ['設計範囲を編集中','作成途中の設計範囲があります','設計範囲を決めてください','設計範囲はまだありません','Campsiteへ送信！','Campsiteへ送信中…','Campsiteへ再送信','範囲を編集']) assert.ok(panelUi.includes(label), `panel semantic label missing: ${label}`);
   console.log('N4-C wiring audit');
   console.log(JSON.stringify({version:manifest.version,scripts,existingAndroidChannel:true,androidPolygonNamespace:true,executionWorldsAligned:true,verdict:'PASS: execution-world and polygon event seam'},null,2));
 } finally { fs.rmSync(tmp,{recursive:true,force:true}); }
