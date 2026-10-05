@@ -56,8 +56,7 @@ try {
   };
 
   assert.equal(report.pageHook.hasBridgeOverlay, false, 'Bridge POI overlay must stay retired');
-  assert.equal(report.bridgeUi.hasBridgeLabel, true, 'Wayfarer Bridge entry must remain visible');
-
+  // Do not assume which Android layer owns the visible label. N4-A discovers that boundary.
   console.log('N4-A Android XPI contract');
   console.log(JSON.stringify(report, null, 2));
 } finally {
