@@ -86,6 +86,7 @@
     let markerOrder = [];
     const circleOrder = new Map(bridgeMapLab_circleRadii.map((radius) => [radius, []]));
     let lastSyncStats = bridgeMapLab_emptySyncStats();
+    let selectedOwnerKey = '';
     let destroyed = false;
 
     function assertAlive() {
@@ -147,6 +148,19 @@
       return style;
     }
 
+    function bridgeMapLab_syncMarkerSelection(entry) {
+      const element = entry?.layer?.getElement?.();
+      if (!element) return;
+      const selected = !!selectedOwnerKey && String(entry?.renderItem?.ownerKey || '') === selectedOwnerKey;
+      element.classList.toggle('cm-engine-selected', selected);
+      if (selected) element.setAttribute('aria-current', 'true');
+      else element.removeAttribute('aria-current');
+    }
+
+    function bridgeMapLab_syncSelection() {
+      markerEntries.forEach((entry) => bridgeMapLab_syncMarkerSelection(entry));
+    }
+
     function bridgeMapLab_bindMarkerActivation(layer, key, fallbackRenderItem) {
       if (!markerActivationEnabled) return;
       layer.on('click', (event) => {
@@ -206,6 +220,7 @@
         entry.layer.setStyle(style);
       }
       entry.renderItem = renderItem;
+      bridgeMapLab_syncMarkerSelection(entry);
       return true;
     }
 
@@ -238,7 +253,9 @@
         }
 
         const createdEntry = bridgeMapLab_createMarkerLayer(renderItem, latLng);
-        markerEntries.set(key, Object.assign({ renderItem }, createdEntry));
+        const nextEntry = Object.assign({ renderItem }, createdEntry);
+        markerEntries.set(key, nextEntry);
+        bridgeMapLab_syncMarkerSelection(nextEntry);
         created += 1;
         return key;
       });
@@ -396,6 +413,23 @@
 
       getLastSyncStats() {
         return lastSyncStats;
+      },
+
+      setSelectedOwnerKey(ownerKey) {
+        assertAlive();
+        selectedOwnerKey = String(ownerKey || '');
+        bridgeMapLab_syncSelection();
+        return selectedOwnerKey;
+      },
+
+      clearSelection() {
+        assertAlive();
+        selectedOwnerKey = '';
+        bridgeMapLab_syncSelection();
+      },
+
+      getSelectedOwnerKey() {
+        return selectedOwnerKey;
       }
     });
   };
