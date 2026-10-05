@@ -65,6 +65,33 @@ function cmOpenAddMenu(){
       src=src.replace(bubbleGuard,"if(bubble){\n      if(bubble.dataset.cmCapacityDisabled==='1'||bubble.getAttribute('aria-disabled')==='true'){e.preventDefault?.();e.stopPropagation?.();e.stopImmediatePropagation?.();if(typeof jpTypeLimitMessage==='function')msg(jpTypeLimitMessage(bubble.dataset.layer),1800);return true}\n      const key='add:'+bubble.dataset.layer,now=Date.now();");
     }
 
+    const runtime=`<script id="cmV75PoiAddPhaseCRuntime">
+(()=>{
+  const meta=layer=>({
+    'new-pokestop':{label:'PokéStop',icon:'./assets/pokestop.png'},
+    'new-gym':{label:'Gym',icon:'./assets/gym.png'},
+    'new-power':{label:'PowerSpot',icon:'./assets/powerspot.png'}
+  })[layer]||null;
+  const sync=()=>{
+    const bar=document.getElementById('cmSafeAddBar');
+    if(!bar)return;
+    const selected=meta(typeof activeLayer==='undefined'?'':activeLayer);
+    let chip=bar.querySelector('.cm-phase-c-selected-poi');
+    if(!selected){chip?.remove();return}
+    if(!chip){
+      chip=document.createElement('span');
+      chip.className='cm-phase-c-selected-poi';
+      bar.prepend(chip);
+    }
+    chip.setAttribute('aria-label','選択中 '+selected.label);
+    chip.innerHTML='<img src="'+selected.icon+'" alt=""><b>'+selected.label+'</b>';
+  };
+  new MutationObserver(sync).observe(document.body,{childList:true,subtree:true});
+  sync();
+})();
+<\/script>`;
+    if(!src.includes('id="cmV75PoiAddPhaseCRuntime"'))src=src.replace('</body>',runtime+'</body>');
+
     const style=`<style id="cmV75PoiAddPhaseCStyle">
       .cm-safe-add-bar{grid-template-columns:70px 64px 40px 64px 42px!important;column-gap:4px!important}
       .cm-phase-c-selected-poi{min-width:0;height:40px;display:grid;grid-template-columns:28px minmax(0,1fr);gap:3px;align-items:center;padding:0 3px;border-radius:12px;background:rgba(255,253,247,.62);box-sizing:border-box}
