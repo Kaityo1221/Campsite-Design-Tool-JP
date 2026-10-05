@@ -21,8 +21,8 @@ function cmPhaseCSelectedPoiHtml(layer){
 `;
       src=src.replace(installMarker,helpers+installMarker);
       src=src.replace(
-        "d.innerHTML='<button id=\"cmSafeAddLever\"",
-        "d.innerHTML=cmPhaseCSelectedPoiHtml(activeLayer)+'<button id=\"cmSafeAddLever\""
+        "const d=document.createElement('div');d.id='cmSafeAddBar';d.className='cm-safe-add-bar';",
+        "const d=document.createElement('div');d.id='cmSafeAddBar';d.className='cm-safe-add-bar';d.dataset.cmPoiLayer=activeLayer;"
       );
     }
 
@@ -75,7 +75,7 @@ function cmOpenAddMenu(){
   const sync=()=>{
     const bar=document.getElementById('cmSafeAddBar');
     if(!bar)return;
-    const selected=meta(typeof activeLayer==='undefined'?'':activeLayer);
+    const selected=meta(String(bar.dataset.cmPoiLayer||''));
     let chip=bar.querySelector('.cm-phase-c-selected-poi');
     if(!selected){chip?.remove();return}
     if(!chip){
