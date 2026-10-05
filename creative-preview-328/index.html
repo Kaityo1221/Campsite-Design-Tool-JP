@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
+<base href="../creative/">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover,user-scalable=no">
 <meta name="robots" content="noindex,nofollow,noarchive">
-<title>CREATIVE MODE | Campsite Lab</title>
+<title>CREATIVE MODE PREVIEW #328 | Campsite Lab</title>
 <style>
 html,body{margin:0;min-height:100%;background:#17130f;color:#fff8e8;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
 #creativeBootStatus{min-height:100vh;display:grid;place-items:center;padding:24px;text-align:center;box-sizing:border-box}
@@ -22,7 +23,7 @@ html,body{margin:0;min-height:100%;background:#17130f;color:#fff8e8;font-family:
   'use strict';
 
   const NEXT_LAB_SOURCE='c10b910344952ade36b2791a122f9f38e6c54d0b';
-  const PATCH_FILES=["creative-patches-v2.js","creative-patches-v3.js","creative-patches-v4.js","creative-patches-v5-design-check.js","creative-patches-v6-intuitive.js","creative-patches-v9-return-main.js","creative-patches-v10-save-labels.js","creative-patches-v13-draggable-fab.js","creative-patches-v14-layer-tap-layout.js","creative-patches-v18-preview-crosshair.js","creative-patches-v19-persistent-crosshair.js","creative-patches-v20-radius-gauge-save-return.js","creative-patches-v21-radius-swipe.js","creative-patches-v23-add-mode-close.js","creative-patches-v24-confirm-vertical-radius.js","creative-patches-v25-radius-handle-no-preview.js","creative-patches-v26-compact-radius-bar.js","creative-patches-v27-dot-handle-bar.js","creative-patches-v28-lever-handle.js","creative-patches-v29-lever-notches.js","creative-patches-v30-lever-gesture-lock.js","creative-patches-v32-poi-move-isolated.js","creative-patches-v33-action-wiring.js","creative-patches-v34-placement-core.js","creative-patches-v35-nearest-poi-warning.js","creative-patches-v36-compact-move-bar.js","creative-patches-v37-bottom-dock.js","creative-patches-v38-circle-layer-import.js","creative-patches-v39-layer-panel-top.js","creative-patches-v40-recent-filename.js","creative-patches-v41-save-output-wiring.js","creative-patches-v42-save-button-hardbind.js","creative-patches-v43-save-standalone.js","creative-patches-v44-lab-update-3-lines.js","creative-patches-v45-unified-map-ui.js","creative-patches-v46-field-feedback-polish.js","creative-patches-v48-comet-a-arc.js","creative-patches-v49-remove-add-text.js","creative-patches-v50-add-crosshair-cleanup.js","creative-patches-v51-coordinate-jump.js","creative-patches-v52-existing-new-placement.js","creative-patches-v53-new-poi-auto-memo.js","creative-patches-v54-coordinate-memo-reason.js","creative-patches-v55-unified-visible.js","creative-patches-v56-unified-interaction.js","creative-patches-v57-dev-default-unified.js","creative-patches-v58-new-entry-current-map.js","creative-patches-v59-help-button.js","creative-patches-v60-rules-carousel.js","creative-patches-v61-saved-session-hint.js","creative-patches-v62-remove-locate.js","creative-patches-v63-remove-workspace-save.js","creative-patches-v64-google-form-coordinates.js","creative-patches-v65-download-label.js","creative-patches-v66-activity-range-label.js","creative-patches-v67-activity-range-wording.js","creative-patches-v68-activity-range-delete-history.js","creative-patches-v69-spacing-reason-flow.js","creative-patches-v70-unified-move-feedback.js","creative-patches-v71-memo-sheet-download-fixes.js","creative-patches-v73-production-visual-fixes.js","creative-patches-v74-tools-phase-b.js","creative-patches-v75-poi-add-phase-c.js","creative-patches-v76-radius-reference-ui.js"];
+  const PATCH_FILES=["creative-patches-v2.js","creative-patches-v3.js","creative-patches-v4.js","creative-patches-v5-design-check.js","creative-patches-v6-intuitive.js","creative-patches-v9-return-main.js","creative-patches-v10-save-labels.js","creative-patches-v13-draggable-fab.js","creative-patches-v14-layer-tap-layout.js","creative-patches-v18-preview-crosshair.js","creative-patches-v19-persistent-crosshair.js","creative-patches-v20-radius-gauge-save-return.js","creative-patches-v21-radius-swipe.js","creative-patches-v23-add-mode-close.js","creative-patches-v24-confirm-vertical-radius.js","creative-patches-v25-radius-handle-no-preview.js","creative-patches-v26-compact-radius-bar.js","creative-patches-v27-dot-handle-bar.js","creative-patches-v28-lever-handle.js","creative-patches-v29-lever-notches.js","creative-patches-v30-lever-gesture-lock.js","creative-patches-v32-poi-move-isolated.js","creative-patches-v33-action-wiring.js","creative-patches-v34-placement-core.js","creative-patches-v35-nearest-poi-warning.js","creative-patches-v36-compact-move-bar.js","creative-patches-v37-bottom-dock.js","creative-patches-v38-circle-layer-import.js","creative-patches-v39-layer-panel-top.js","creative-patches-v40-recent-filename.js","creative-patches-v41-save-output-wiring.js","creative-patches-v42-save-button-hardbind.js","creative-patches-v43-save-standalone.js","creative-patches-v44-lab-update-3-lines.js","creative-patches-v45-unified-map-ui.js","creative-patches-v46-field-feedback-polish.js","creative-patches-v48-comet-a-arc.js","creative-patches-v49-remove-add-text.js","creative-patches-v50-add-crosshair-cleanup.js","creative-patches-v51-coordinate-jump.js","creative-patches-v52-existing-new-placement.js","creative-patches-v53-new-poi-auto-memo.js","creative-patches-v54-coordinate-memo-reason.js","creative-patches-v55-unified-visible.js","creative-patches-v56-unified-interaction.js","creative-patches-v57-dev-default-unified.js","creative-patches-v58-new-entry-current-map.js","creative-patches-v59-help-button.js","creative-patches-v60-rules-carousel.js","creative-patches-v61-saved-session-hint.js","creative-patches-v62-remove-locate.js","creative-patches-v63-remove-workspace-save.js","creative-patches-v64-google-form-coordinates.js","creative-patches-v65-download-label.js","creative-patches-v66-activity-range-label.js","creative-patches-v67-activity-range-wording.js","creative-patches-v68-activity-range-delete-history.js","creative-patches-v69-spacing-reason-flow.js","creative-patches-v70-unified-move-feedback.js","creative-patches-v71-memo-sheet-download-fixes.js","creative-patches-v73-production-visual-fixes.js","creative-patches-v74-tools-phase-b.js","creative-patches-v75-poi-add-phase-c.js","../creative-preview-328/creative-patches-v76-radius-reference-ui.js"];
   const params=new URLSearchParams(location.search);
   const isBridgeProject=params.get('campsiteProject')==='bridge';
   const setBootStatus=text=>{const el=document.querySelector('#creativeBootStatus small');if(el)el.textContent=text};
@@ -90,7 +91,8 @@ html,body{margin:0;min-height:100%;background:#17130f;color:#fff8e8;font-family:
     if(bootText)bootText.textContent='機能を準備中…';
     const patchFiles=${JSON.stringify(PATCH_FILES)};
     const patchTexts=await Promise.all(patchFiles.map(async name=>{
-      const response=await fetch('./runtime/'+name,{cache:'no-store'});
+      const patchUrl=name.startsWith('../')?name:'./runtime/'+name;
+      const response=await fetch(patchUrl,{cache:'no-store'});
       if(!response.ok)throw new Error(name+' HTTP '+response.status);
       return response.text();
     }));
@@ -135,6 +137,8 @@ html,body{margin:0;min-height:100%;background:#17130f;color:#fff8e8;font-family:
     html=html.split(bgOldMain).join(bgStable).split(bgOldPinned).join(bgStable);
     html=html.replace(/<input\\b[^>]*\\bid=["']entryFile["'][^>]*>/i,m=>m.replace(/\\saccept\\s*=\\s*(?:"[^"]*"|'[^']*'|[^\\s>]+)/i,''));
     html=html.replace('entryFile.onchange=()=>{',"entryFile.removeAttribute('accept');entryFile.accept='';entryFile.onchange=()=>{");
+    // Preview runs under /creative-preview-328/, so keep final runtime assets rooted at /creative/.
+    if(!/<base\b/i.test(html))html=html.replace(/<head([^>]*)>/i,'<head$1><base href="../creative/">');
   }catch(e){
     document.body.style.cssText='margin:0;padding:24px;background:#17130f;color:#ffd0c8;font-family:-apple-system,BlinkMacSystemFont,sans-serif;white-space:pre-wrap';
     document.body.textContent='CREATIVE MODE 読み込みエラー'+String.fromCharCode(10,10)+(e&&e.stack?e.stack:(e&&e.message?e.message:String(e||'')));
@@ -148,6 +152,7 @@ html,body{margin:0;min-height:100%;background:#17130f;color:#fff8e8;font-family:
     const runtimeBoot='<body style="margin:0;background:#17130f;color:#fff8e8;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif"><div id="creativeRuntimeBoot" style="position:fixed;inset:0;z-index:99999;display:grid;place-items:center;background:#17130f;text-align:center"><div><strong style="font-size:22px;letter-spacing:.06em">CREATIVE MODE</strong><small id="creativeRuntimeBootText" style="display:block;margin-top:8px;opacity:.7">地図を準備中…</small><span style="display:block;width:28px;height:28px;margin:18px auto 0;border:3px solid rgba(255,248,232,.22);border-top-color:#f3d77f;border-radius:50%;animation:cmBootSpin .85s linear infinite"></span></div></div><style>@keyframes cmBootSpin{to{transform:rotate(360deg)}}</style><script>';
     runtime=runtime.replace('<body><script>',runtimeBoot);
 
+    runtime=runtime.replace('<head>','<head><base href="../creative/">');
     document.open();document.write(runtime);document.close();
   }catch(error){
     showError('CREATIVE MODEの起動に失敗しました',error);
