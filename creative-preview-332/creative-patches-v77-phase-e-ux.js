@@ -6,41 +6,26 @@
     src=previous(src);
 
     // Phase E selection belongs to the Unified Renderer that owns the visible POI markers.
-    src=src.split('runtime/map-engine/map-renderer.js?v=5d15').join('../creative-preview-332/map-renderer-phase-e.js?v=phase-e-owner-1');
+    src=src.split('runtime/map-engine/map-renderer.js?v=5d15').join('../creative-preview-332/map-renderer-phase-e.js?v=phase-e-owner-2');
 
-    if(!src.includes('cmV77UnifiedSelectionRuntime')){
+    // Hook the existing Unified activation path directly. It already owns both
+    // renderItem.ownerKey and cmCandidateShadowRenderer in the same runtime scope.
+    src=src.replace(
+      "try{if(typeof cmOpenRecord==='function')cmOpenRecord(record);else if(typeof recordPopup==='function')recordPopup(record)}catch(error){console.error('[Unified Interaction] open record failed',error)}",
+      "try{if(typeof cmOpenRecord==='function')cmOpenRecord(record);else if(typeof recordPopup==='function')recordPopup(record);cmCandidateShadowRenderer?.setSelectedOwnerKey?.(String(renderItem?.ownerKey||''))}catch(error){console.error('[Unified Interaction] open/select record failed',error)}"
+    );
+
+    if(!src.includes('cmV77CloseSelectionRuntime')){
       const coreStart=src.indexOf("(()=>{'use strict';");
-      const coreEnd=coreStart>=0?src.indexOf('})();\n</script>',coreStart):-1;
+      const coreEnd=coreStart>=0?src.indexOf('})();\\n</script>',coreStart):-1;
       if(coreEnd>=0){
         const augment=`
-/* cmV77UnifiedSelectionRuntime */
-function cmV77RecordOwnerKey(r){
-  if(!r||r.deleted)return'';
-  const layer=String(r.layer||'');
-  if(layer.startsWith('new-'))return 'candidate:'+String(r.id||'');
-  if(layer.startsWith('existing-'))return 'poi:'+String(r.guid||r.id||'');
-  return'';
-}
-function cmV77SelectRecord(r){
-  const ownerKey=cmV77RecordOwnerKey(r);
-  try{cmCandidateShadowRenderer?.setSelectedOwnerKey?.(ownerKey)}catch(error){console.warn('[Phase E Selection] select failed',error)}
-}
-function cmV77ClearRecordSelection(){
-  try{cmCandidateShadowRenderer?.clearSelection?.()}catch(error){console.warn('[Phase E Selection] clear failed',error)}
-}
-if(typeof cmOpenRecord==='function'){
-  const cmV77BaseOpenRecord=cmOpenRecord;
-  cmOpenRecord=function(r){
-    const result=cmV77BaseOpenRecord(r);
-    cmV77SelectRecord(r);
-    return result;
-  };
-}
+/* cmV77CloseSelectionRuntime */
 if(typeof cmCloseSheet==='function'){
   const cmV77BaseCloseSheet=cmCloseSheet;
   cmCloseSheet=function(){
     const result=cmV77BaseCloseSheet();
-    cmV77ClearRecordSelection();
+    try{cmCandidateShadowRenderer?.clearSelection?.()}catch(error){console.warn('[Phase E Selection] clear failed',error)}
     return result;
   };
 }
