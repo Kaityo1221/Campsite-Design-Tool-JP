@@ -28,7 +28,7 @@ function cmV77HighlightRecord(r){
       const helper=`function cmV77SyncActivityHint(){
   const missing=!polygons.some(p=>p&&!p.deleted);
   document.body.classList.toggle('cm-v77-activity-missing',missing);
-  const layerButton=[...document.querySelectorAll('button')].find(b=>String(b.textContent||'').trim()==='レイヤー');
+  const layerButton=document.getElementById('layerButton');
   if(layerButton)layerButton.classList.toggle('cm-v77-layer-hint',missing);
   const activityButton=[...document.querySelectorAll('#layerPanel button')].find(b=>String(b.textContent||'').includes('活動範囲'));
   if(activityButton)activityButton.classList.toggle('cm-v77-activity-hint',missing);
@@ -38,10 +38,21 @@ function cmV77HighlightRecord(r){
       src=src.replace('}renderLayerPanel();','cmV77SyncActivityHint();}renderLayerPanel();');
     }
 
-    src=src.replace(
-      '<ul class="cm-v60-rules"><li>POI間隔は原則50m</li>',
-      '<ul class="cm-v60-rules"><li><b>最初に「レイヤー → 活動範囲」から活動範囲を作成する</b></li><li>POI間隔は原則50m</li>'
-    );
+    const rulesRuntime=`<script id="cmV77RulesGuideRuntime">
+(()=>{
+  const install=()=>{
+    const list=document.querySelector('#cmV60RulesPanel .cm-v60-card[data-card="2"] .cm-v60-rules');
+    if(!list||list.querySelector('.cm-v77-activity-rule'))return;
+    const li=document.createElement('li');
+    li.className='cm-v77-activity-rule';
+    li.innerHTML='<b>最初に「レイヤー → 活動範囲」から活動範囲を作成する</b>';
+    list.prepend(li);
+  };
+  install();
+  document.getElementById('cmV59HelpButton')?.addEventListener('click',install);
+})();
+</script>`;
+    if(!src.includes('id="cmV77RulesGuideRuntime"'))src=src.replace('</body>',rulesRuntime+'</body>');
 
     const style=`<style id="cmV77PhaseEUxStyle">
       @keyframes cmV77GuidePulse{0%,100%{box-shadow:0 0 0 0 rgba(240,180,41,.15)}50%{box-shadow:0 0 0 6px rgba(240,180,41,.38)}}
