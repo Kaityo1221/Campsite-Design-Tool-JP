@@ -131,6 +131,7 @@ test('Phase 5-D10 real Creative Mode delegates engine taps to legacy edit flows 
 
   // Start the current move flow: pan the map under the fixed crosshair, then confirm.
   await page.locator('#cmMove').click();
+  await expect(engineCandidate).not.toHaveClass(/cm-engine-selected/);
   await expect(page.locator('#cmMoveCrosshair')).toBeVisible();
   await expect(page.locator('#cmMoveBar')).toBeVisible();
   await expect(page.locator('#cmMoveConfirm')).toContainText('移動確定');
@@ -155,7 +156,6 @@ test('Phase 5-D10 real Creative Mode delegates engine taps to legacy edit flows 
     const m=window.__cmCandidateShadow?.getState?.()?.sync?.markers;
     return m ? [m.created,m.reused,m.removed] : null;
   })).toEqual([0,5,0]);
-  await expect(engineCandidate).toHaveClass(/cm-engine-selected/);
 
   // The current move flow returns directly to the map, so Undo/Redo are immediately available.
   await page.locator('#undo').click();
