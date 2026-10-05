@@ -1,0 +1,42 @@
+name: Noah Mainline E2E Gate
+
+on:
+  push:
+    branches:
+      - 'test/noah-mainline-e2e-gate'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'tests/noah-mainline-e2e.spec.mjs'
+      - 'docs/noah-mainline-e2e-gate.md'
+      - '.github/workflows/noah-mainline-e2e.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  noah-mainline-e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Syntax check
+        run: node --check tests/noah-mainline-e2e.spec.mjs
+      - name: Install WebKit
+        run: npx playwright install --with-deps webkit
+      - name: Run hidden Noah mainline gate
+        run: npx playwright test tests/noah-mainline-e2e.spec.mjs
+      - name: Upload Playwright traces on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: noah-mainline-e2e-traces
+          path: test-results
+          if-no-files-found: ignore
