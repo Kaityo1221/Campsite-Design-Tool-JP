@@ -1,5 +1,10 @@
 name: preview-poi-controls-layout-v2-once
-on: push
+on:
+  push:
+    branches:
+      - agent/creative-mode-apac-v4-preview
+    paths:
+      - '.github/workflows/preview-poi-controls-layout-v2-once.yml'
 permissions:
   contents: write
 jobs:
