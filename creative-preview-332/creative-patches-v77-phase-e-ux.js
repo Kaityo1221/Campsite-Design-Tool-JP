@@ -5,23 +5,49 @@
   window.applyCreativePatches=function(src){
     src=previous(src);
 
-    const openMarker=src.includes('function cmOpenRecord(r){if(cmMoveSession)return;')?'function cmOpenRecord(r){if(cmMoveSession)return;':'function cmOpenRecord(r){';
-    if(src.includes(openMarker)&&!src.includes('function cmV77HighlightRecord(')){
-      const helper=`let cmV77SelectionRing=null;
-function cmV77ClearRecordHighlight(){
-  try{if(cmV77SelectionRing){map.removeLayer(cmV77SelectionRing);cmV77SelectionRing=null}}catch(_){}
+    // Phase E selection belongs to the Unified Renderer that owns the visible POI markers.
+    src=src.split('runtime/map-engine/map-renderer.js?v=5d15').join('../creative-preview-332/map-renderer-phase-e.js?v=phase-e-owner-1');
+
+    if(!src.includes('cmV77UnifiedSelectionRuntime')){
+      const coreStart=src.indexOf("(()=>{'use strict';");
+      const coreEnd=coreStart>=0?src.indexOf('})();\n</script>',coreStart):-1;
+      if(coreEnd>=0){
+        const augment=`
+/* cmV77UnifiedSelectionRuntime */
+function cmV77RecordOwnerKey(r){
+  if(!r||r.deleted)return'';
+  const layer=String(r.layer||'');
+  if(layer.startsWith('new-'))return 'candidate:'+String(r.id||'');
+  if(layer.startsWith('existing-'))return 'poi:'+String(r.guid||r.id||'');
+  return'';
 }
-function cmV77HighlightRecord(r){
-  cmV77ClearRecordHighlight();
-  if(!r||r.deleted||!Array.isArray(r.latlng))return;
-  try{
-    cmV77SelectionRing=L.circleMarker(r.latlng,{radius:28,color:'#f0b429',weight:6,opacity:.98,fill:false,interactive:false,pane:'markerPane'}).addTo(map);
-  }catch(_){}
+function cmV77SelectRecord(r){
+  const ownerKey=cmV77RecordOwnerKey(r);
+  try{cmCandidateShadowRenderer?.setSelectedOwnerKey?.(ownerKey)}catch(error){console.warn('[Phase E Selection] select failed',error)}
+}
+function cmV77ClearRecordSelection(){
+  try{cmCandidateShadowRenderer?.clearSelection?.()}catch(error){console.warn('[Phase E Selection] clear failed',error)}
+}
+if(typeof cmOpenRecord==='function'){
+  const cmV77BaseOpenRecord=cmOpenRecord;
+  cmOpenRecord=function(r){
+    const result=cmV77BaseOpenRecord(r);
+    cmV77SelectRecord(r);
+    return result;
+  };
+}
+if(typeof cmCloseSheet==='function'){
+  const cmV77BaseCloseSheet=cmCloseSheet;
+  cmCloseSheet=function(){
+    const result=cmV77BaseCloseSheet();
+    cmV77ClearRecordSelection();
+    return result;
+  };
 }
 `;
-      src=src.replace(openMarker,helper+openMarker+'cmV77HighlightRecord(r);');
+        src=src.slice(0,coreEnd)+augment+src.slice(coreEnd);
+      }
     }
-    src=src.replace('function cmCloseSheet(){','function cmCloseSheet(){cmV77ClearRecordHighlight();');
 
     const layerMarker='function renderLayerPanel(){';
     if(src.includes(layerMarker)&&!src.includes('function cmV77SyncActivityHint(')){
@@ -38,23 +64,30 @@ function cmV77HighlightRecord(r){
       src=src.replace('}renderLayerPanel();','cmV77SyncActivityHint();}renderLayerPanel();');
     }
 
-    const rulesRuntime=`<script id="cmV77RulesGuideRuntime">
-(()=>{
-  const install=()=>{
+    if(!src.includes('cm-v77-activity-rule')){
+      const rulesSelectorScript=`<script id="cmV77ActivityRuleInstall">
+setTimeout(()=>{
+  try{
     const list=document.querySelector('#cmV60RulesPanel .cm-v60-card[data-card="2"] .cm-v60-rules');
-    if(!list||list.querySelector('.cm-v77-activity-rule'))return;
-    const li=document.createElement('li');
-    li.className='cm-v77-activity-rule';
-    li.innerHTML='<b>最初に「レイヤー → 活動範囲」から活動範囲を作成する</b>';
-    list.prepend(li);
-  };
-  install();
-  document.getElementById('cmV59HelpButton')?.addEventListener('click',install);
-})();
+    if(list&&!list.querySelector('.cm-v77-activity-rule')){
+      const item=document.createElement('li');
+      item.className='cm-v77-activity-rule';
+      item.innerHTML='<b>最初に「レイヤー → 活動範囲」から活動範囲を作成する</b>';
+      list.prepend(item);
+    }
+  }catch(error){console.warn('[Phase E UX] activity rule install failed',error)}
+},0);
 </script>`;
-    if(!src.includes('id="cmV77RulesGuideRuntime"'))src=src.replace('</body>',rulesRuntime+'</body>');
+      src=src.replace('</body>',rulesSelectorScript+'</body>');
+    }
 
     const style=`<style id="cmV77PhaseEUxStyle">
+      .cm-engine-existing-icon.cm-engine-selected,
+      .cm-engine-candidate-icon.cm-engine-selected{
+        box-shadow:0 0 0 5px #f0b429,0 0 0 9px rgba(240,180,41,.30)!important;
+        border-radius:999px!important;
+        z-index:1;
+      }
       @keyframes cmV77GuidePulse{0%,100%{box-shadow:0 0 0 0 rgba(240,180,41,.15)}50%{box-shadow:0 0 0 6px rgba(240,180,41,.38)}}
       body.cm-v77-activity-missing .cm-v77-layer-hint,
       body.cm-v77-activity-missing .cm-v77-activity-hint{animation:cmV77GuidePulse 1.6s ease-in-out infinite!important;border-color:#d79a18!important}
