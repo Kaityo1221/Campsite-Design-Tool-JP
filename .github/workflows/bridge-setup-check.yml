@@ -19,6 +19,7 @@ on:
       - 'bridge-android-n4/**'
       - 'scripts/check-n4a-android-xpi-contract.mjs'
       - 'scripts/check-n4b-android-map-seam.mjs'
+      - 'scripts/check-n4c-android-wiring.mjs'
       - 'scripts/build-pc-bridge.mjs'
       - 'scripts/check-bridge-setup.mjs'
       - '.github/workflows/bridge-setup-check.yml'
@@ -43,6 +44,7 @@ jobs:
           node scripts/check-n4a-android-xpi-contract.mjs
           node scripts/check-n4b-android-map-seam.mjs
           node scripts/build-android-bridge-0.3.7-unsigned.mjs
+          node scripts/check-n4c-android-wiring.mjs
 
       - name: Launcher syntax
         run: |
@@ -55,6 +57,7 @@ jobs:
           node --check scripts/check-n4a-android-xpi-contract.mjs
           node --check scripts/check-n4b-android-map-seam.mjs
           node --check scripts/build-android-bridge-0.3.7-unsigned.mjs
+          node --check scripts/check-n4c-android-wiring.mjs
           node --check bridge-android-n4/wayfarer-map-adapter.js
           node --check bridge-pc/page-collector.js
           node --check bridge-pc/content.js
