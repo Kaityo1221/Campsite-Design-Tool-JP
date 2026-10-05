@@ -137,6 +137,8 @@ html,body{margin:0;min-height:100%;background:#17130f;color:#fff8e8;font-family:
     html=html.split(bgOldMain).join(bgStable).split(bgOldPinned).join(bgStable);
     html=html.replace(/<input\\b[^>]*\\bid=["']entryFile["'][^>]*>/i,m=>m.replace(/\\saccept\\s*=\\s*(?:"[^"]*"|'[^']*'|[^\\s>]+)/i,''));
     html=html.replace('entryFile.onchange=()=>{',"entryFile.removeAttribute('accept');entryFile.accept='';entryFile.onchange=()=>{");
+    // Preview runs under /creative-preview-320/, so keep final runtime assets rooted at /creative/.
+    if(!/<base\b/i.test(html))html=html.replace(/<head([^>]*)>/i,'<head$1><base href="../creative/">');
   }catch(e){
     document.body.style.cssText='margin:0;padding:24px;background:#17130f;color:#ffd0c8;font-family:-apple-system,BlinkMacSystemFont,sans-serif;white-space:pre-wrap';
     document.body.textContent='CREATIVE MODE 読み込みエラー'+String.fromCharCode(10,10)+(e&&e.stack?e.stack:(e&&e.message?e.message:String(e||'')));
