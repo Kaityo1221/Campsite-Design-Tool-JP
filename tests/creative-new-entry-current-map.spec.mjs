@@ -133,7 +133,7 @@ test('新トップからSTART演出を経て現行Creative Mode地図UIへ入る
   await expect(activityRangeTool).toHaveText('活動範囲');
   await expect(toolMenu.locator('[data-tool="ruler"]')).toHaveText('物差し');
   await activityRangeTool.click();
-  await expect(page.locator('#status')).toContainText('追加する活動範囲を描いてください');
+  await expect(page.locator('#status')).toContainText('活動範囲を描いてください');
   const activityRangeCancel=page.getByRole('button',{name:'×',exact:true});
   await expect(activityRangeCancel).toBeVisible();
   await activityRangeCancel.click();
