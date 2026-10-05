@@ -29,20 +29,26 @@ try {
   const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
   manifest.version = VERSION;
   manifest.description = `Campsite Bridge ${RELEASE} Android parity candidate. Wayfarer/WFMM owns POI display.`;
+  const page = manifest.content_scripts?.find(item => Array.isArray(item.js) && item.js.includes('page-hook.js'));
   const isolated = manifest.content_scripts?.find(item => Array.isArray(item.js) && item.js.includes('bridge-core.js'));
-  if (!isolated) throw new Error('Android isolated content-script block not found');
-  isolated.js = [
-    'bridge-core.js',
+  if (!page || !isolated) throw new Error('Android content-script blocks not found');
+  page.world = 'MAIN';
+  page.js = [
+    'page-hook.js',
     'wayfarer-map-adapter.js',
     'wayfarer-observation-zone.js',
     'wayfarer-acquisition-engine.js',
-    'wayfarer-polygon-controller.js',
+    'wayfarer-polygon-controller.js'
+  ];
+  isolated.world = 'ISOLATED';
+  isolated.js = [
+    'bridge-core.js',
     'polygon-ui.js',
     'bridge-ui.js'
   ];
   fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
 
-  for (const file of ['page-hook.js', ...isolated.js]) execFileSync(process.execPath, ['--check', path.join(work, file)], { stdio: 'inherit' });
+  for (const file of [...page.js, ...isolated.js]) execFileSync(process.execPath, ['--check', path.join(work, file)], { stdio: 'inherit' });
 
   const files = ['bridge-ui.css','manifest.json','bridge-core.js','page-hook.js','wayfarer-map-adapter.js','wayfarer-observation-zone.js','wayfarer-acquisition-engine.js','wayfarer-polygon-controller.js','polygon-ui.js','bridge-ui.js'];
   fs.rmSync(OUTPUT_XPI, { force: true });
