@@ -8,11 +8,11 @@
     // Phase E selection belongs to the Unified Renderer that owns the visible POI markers.
     src=src.split('runtime/map-engine/map-renderer.js?v=5d8').join('runtime/map-engine/map-renderer.js?v=5d16');
 
-    // Hook the existing Unified activation path directly. It already owns both
-    // renderItem.ownerKey and cmCandidateShadowRenderer in the same runtime scope.
+    // Final Phase E selection path: highlight the exact Leaflet marker that fired
+    // the activation event. This avoids owner-key lookup and renderer DOM resync.
     src=src.replace(
       "try{if(typeof cmOpenRecord==='function')cmOpenRecord(record);else if(typeof recordPopup==='function')recordPopup(record)}catch(error){console.error('[Unified Interaction] open record failed',error)}",
-      "try{if(typeof cmOpenRecord==='function')cmOpenRecord(record);else if(typeof recordPopup==='function')recordPopup(record);cmCandidateShadowRenderer?.setSelectedOwnerKey?.(String(renderItem?.ownerKey||''))}catch(error){console.error('[Unified Interaction] open/select record failed',error)}"
+      "try{if(typeof cmOpenRecord==='function')cmOpenRecord(record);else if(typeof recordPopup==='function')recordPopup(record);document.querySelectorAll('.cm-engine-selected').forEach(el=>el.classList.remove('cm-engine-selected'));event?.target?.getElement?.()?.classList?.add('cm-engine-selected')}catch(error){console.error('[Unified Interaction] open/select record failed',error)}"
     );
 
     if(!src.includes('cmV77CloseSelectionRuntime')){
@@ -25,7 +25,7 @@ if(typeof cmCloseSheet==='function'){
   const cmV77BaseCloseSheet=cmCloseSheet;
   cmCloseSheet=function(){
     const result=cmV77BaseCloseSheet();
-    try{cmCandidateShadowRenderer?.clearSelection?.()}catch(error){console.warn('[Phase E Selection] clear failed',error)}
+    try{document.querySelectorAll('.cm-engine-selected').forEach(el=>el.classList.remove('cm-engine-selected'));cmCandidateShadowRenderer?.clearSelection?.()}catch(error){console.warn('[Phase E Selection] clear failed',error)}
     return result;
   };
 }
