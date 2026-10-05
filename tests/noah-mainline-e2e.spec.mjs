@@ -75,11 +75,18 @@ test('N1 hidden Noah mainline reaches completed Creative and preserves project s
   await page.locator('#redo').click();
   await expect.poll(async()=>(await record(page,'c-stop'))?.latlng).toEqual(moved.latlng);
 
+  // Bridge Project persistence is intentionally synchronized on a 2.5s cadence,
+  // pagehide, or the Project "Next" action. Verify the real persistence boundary
+  // instead of assuming every Creative mutation writes sessionStorage immediately.
+  await expect.poll(async()=>{
+    const saved=await page.evaluate(()=>JSON.parse(sessionStorage.getItem('campsiteProject.v1')||'null'));
+    const candidate=saved?.currentPois?.find(p=>p.id==='c-stop');
+    return candidate?[Number(candidate.lat),Number(candidate.lng)].map(v=>Number(v.toFixed(6))):null;
+  },{timeout:7000,intervals:[250,500,1000]}).toEqual(moved.latlng);
+
   const saved=await page.evaluate(()=>JSON.parse(sessionStorage.getItem('campsiteProject.v1')||'null'));
   expect(saved.projectId).toBe(project.projectId);
   expect(saved.polygon).toEqual(project.polygon);
   expect(saved.currentPois.some(p=>p.guid==='noah-guid-stop'&&p.id==='noah-guid-stop')).toBe(true);
   expect(saved.currentPois.some(p=>p.id==='c-stop')).toBe(true);
-  const savedCandidate=saved.currentPois.find(p=>p.id==='c-stop');
-  expect([Number(savedCandidate.lat),Number(savedCandidate.lng)].map(v=>Number(v.toFixed(6)))).toEqual(moved.latlng);
 });
