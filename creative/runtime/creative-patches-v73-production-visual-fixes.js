@@ -13,12 +13,12 @@
       const replacement=`function recordIcon(r){
   const layer=String(r?.layer||'').toLowerCase();
   if(layer.startsWith('new-')){
-    const pin={
-      'new-pokestop':'https://maps.google.com/mapfiles/ms/icons/blue-dot.png',
-      'new-gym':'https://maps.google.com/mapfiles/ms/icons/yellow-dot.png',
-      'new-power':'https://maps.google.com/mapfiles/ms/icons/purple-dot.png'
+    const iconUrl={
+      'new-pokestop':'./assets/pokestop.png',
+      'new-gym':'./assets/gym.png',
+      'new-power':'./assets/powerspot.png'
     }[layer];
-    if(pin)return L.icon({iconUrl:pin,iconSize:[32,32],iconAnchor:[16,32],popupAnchor:[0,-30]});
+    if(iconUrl)return L.icon({iconUrl,iconSize:[36,36],iconAnchor:[18,18],popupAnchor:[0,-18]});
   }
   const inactive=layer==='existing-power'&&String(r?.gameStatus||'').toUpperCase()==='INACTIVE';
   let shape='cm-v73-stop';
