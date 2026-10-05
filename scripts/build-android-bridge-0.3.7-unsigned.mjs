@@ -25,6 +25,15 @@ try {
 
   for (const [source, target] of EXTRA) fs.copyFileSync(source, path.join(work, target));
 
+  for (const target of ['wayfarer-polygon-controller.js', 'polygon-ui.js']) {
+    const targetPath = path.join(work, target);
+    let source = fs.readFileSync(targetPath, 'utf8');
+    source = source
+      .replaceAll('campsite-bridge-pc:polygon-command', 'campsite-bridge-android-n4:polygon-command')
+      .replaceAll('campsite-bridge-pc:polygon-state', 'campsite-bridge-android-n4:polygon-state');
+    fs.writeFileSync(targetPath, source);
+  }
+
   const manifestPath = path.join(work, 'manifest.json');
   const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
   manifest.version = VERSION;
