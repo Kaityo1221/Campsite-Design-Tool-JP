@@ -125,8 +125,8 @@
   try{recordIcon=v45Icon}catch(_){}
 
   const undo=document.getElementById('undo'),redo=document.getElementById('redo'),locate=document.getElementById('locate');
-  if(undo){undo.textContent='← 戻る';undo.setAttribute('aria-label','戻る')}
-  if(redo){redo.textContent='↻ やり直し';redo.setAttribute('aria-label','やり直し')}
+  if(undo){undo.textContent='↶ 元に戻す';undo.setAttribute('aria-label','元に戻す')}
+  if(redo){redo.textContent='やり直す ↷';redo.setAttribute('aria-label','やり直す')}
 
   if(locate&&!document.getElementById('cmV45LocateFab')){
     const b=document.createElement('button');b.id='cmV45LocateFab';b.type='button';b.setAttribute('aria-label','現在地へ移動');
