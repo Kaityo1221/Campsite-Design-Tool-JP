@@ -139,7 +139,7 @@ test('新トップからSTART演出を経て現行Creative Mode地図UIへ入る
   await activityRangeCancel.click();
   await expect(page.locator('#status')).toContainText('活動範囲の作成をキャンセルしました');
   await expect(page.locator('#undo')).toHaveText('↶ 元に戻す');
-  await expect(page.locator('#redo')).toHaveText('↷ やり直す');
+  await expect(page.locator('#redo')).toHaveText('やり直す ↷');
   await expect(page.locator('#cmV45LocateFab')).toHaveCount(0);
   await expect(page.locator('#locate')).toBeHidden();
 
