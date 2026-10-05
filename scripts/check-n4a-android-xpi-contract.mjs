@@ -57,6 +57,19 @@ try {
 
   assert.equal(report.pageHook.hasBridgeOverlay, false, 'Bridge POI overlay must stay retired');
   // Do not assume which Android layer owns the visible label. N4-A discovers that boundary.
+  const summarize = (source, pattern, radius = 420) => {
+    const match = source.match(pattern);
+    if (!match || match.index == null) return null;
+    return source.slice(Math.max(0, match.index - radius), Math.min(source.length, match.index + match[0].length + radius))
+      .replace(/\s+/g, ' ').trim();
+  };
+  report.connectionSnippets = {
+    uiReceiver: summarize(ui, /bridge-receiver[^'"\\s]*/i),
+    uiPanel: summarize(ui, /cbam24-body/),
+    hookGcs: summarize(hook, /\/api\/v1\/vault\/mapview\/gcs/),
+    hookMessage: summarize(hook, /CustomEvent|dispatchEvent|addEventListener/)
+  };
+
   console.log('N4-A Android XPI contract');
   console.log(JSON.stringify(report, null, 2));
 } finally {
