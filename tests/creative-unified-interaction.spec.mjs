@@ -185,3 +185,21 @@ test('Phase 5-D10 real Creative Mode delegates engine taps to legacy edit flows 
 
   expect(browserErrors).toEqual([]);
 });
+
+test('C7 restored Candidate is followed by Unified Renderer after Creative reload on iPhone/WebKit', async ({ page }) => {
+  const browserErrors = collectBrowserErrors(page);
+  await page.route('**/js/ca-access-bootstrap.js*', route => route.fulfill({status:200,contentType:'application/javascript',body:'window.CampsiteCaAccess=Object.freeze({test:true});'}));
+  await page.addInitScript(value => { sessionStorage.setItem('campsiteProject.v1', JSON.stringify(value)); }, project);
+  await page.goto('/creative/index.html?campsiteProject=bridge&unifiedRenderer=interactive');
+  await expect.poll(() => page.evaluate(() => window.CampsiteCreativeProject?.count || 0), {timeout:15000}).toBe(5);
+  await expect.poll(() => page.evaluate(() => window.__cmCandidateShadow?.getState?.()?.ready === true), {timeout:15000}).toBe(true);
+  await expect.poll(() => page.evaluate(() => window.__cmCandidateShadow?.getState?.()?.rendered?.markers || 0), {timeout:15000}).toBe(5);
+  await expect(page.locator('.cm-engine-existing-icon')).toHaveCount(4);
+  await expect(page.locator('.cm-engine-candidate-icon')).toHaveCount(1);
+  const restored=await workspaceRecord(page,'c-stop');
+  expect(restored).toBeTruthy(); expect(restored.deleted).toBe(false); expect(restored.layer).toBe('new-pokestop');
+  const state=await page.evaluate(() => window.__cmCandidateShadow.getState());
+  expect(state.ready).toBe(true); expect(state.unified).toBe(true); expect(state.interactionOwner).toBe('map-engine');
+  expect(state.rendered).toEqual({markers:5,circles50:5,circles40:5,circles30:5});
+  expect(browserErrors).toEqual([]);
+});
