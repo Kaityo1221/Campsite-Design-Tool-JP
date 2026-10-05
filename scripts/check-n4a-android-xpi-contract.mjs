@@ -69,7 +69,7 @@ try {
   report.connectionSnippets = {
     uiReceiver: summarize(ui, /bridge-receiver[^'"\\s]*/i),
     uiPanel: summarize(ui, /cbam24-body/),
-    hookGcs: summarize(hook, /\/api\/v1\/vault\/mapview\/gcs/),
+    hookGcs: summarize(hook, /\/api\/v1\/vault\/mapview\/gcs/, 1800),
     hookMessage: summarize(hook, /CustomEvent|dispatchEvent|addEventListener/)
   };
 
