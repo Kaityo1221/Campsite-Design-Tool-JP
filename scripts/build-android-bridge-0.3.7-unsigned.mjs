@@ -50,7 +50,8 @@ try {
     'wayfarer-map-adapter.js',
     'wayfarer-observation-zone.js',
     'wayfarer-acquisition-engine.js',
-    'wayfarer-polygon-controller.js'
+    'wayfarer-polygon-controller.js',
+    'wayfarer-acquisition-coordinator.js'
   ];
   isolated.world = 'ISOLATED';
   isolated.js = [
