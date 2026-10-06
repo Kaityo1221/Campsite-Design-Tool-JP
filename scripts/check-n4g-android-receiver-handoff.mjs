@@ -15,12 +15,15 @@ const coord=execFileSync('unzip',['-p',xpi,'wayfarer-acquisition-coordinator.js'
 assert.match(coord,/type: 'WAYFARER_OBSERVATION'/,'MAIN must expose fixed Observation');
 assert.match(coord,/source: PAGE_CHANNEL/,'Observation must use existing page channel');
 assert.match(ui,/data\.type === 'WAYFARER_OBSERVATION'/,'ISOLATED UI must receive Observation');
-assert.match(ui,/\.\.\.\(wayfarerObservation \? \{ wayfarerObservation:/,'payload must conditionally carry Observation');
+assert.match(ui,/wayfarerObservation\.canProceed !== true/,'send must wait for completed fixed Observation');
+assert.match(ui,/wayfarerObservation\?\.zones\?\.interior/,'editable payload must derive from INTERIOR');
+assert.match(ui,/makeSendPois\(\)\.filter\(poi => interiorGuids\.has/,'Receiver POIs must be INTERIOR only');
+assert.match(ui,/wayfarerObservation: JSON\.parse\(JSON\.stringify\(wayfarerObservation\)\)/,'payload must carry fixed Observation');
 assert.match(ui,/receiver\.postMessage\(payload, RECEIVER_ORIGIN\)/,'existing Receiver transport changed');
 assert.match(ui,/const RECEIVER_ORIGIN = 'https:\/\/kaityo1221\.github\.io'/);
 assert.match(ui,/const PROTOCOL = 'CAMPSITE_BRIDGE_POI_V1'/);
 assert.match(ui,/handshakeId,/);
-assert.doesNotMatch(ui,/wayfarerObservation:\s*null/,'absence must not force a null Observation field');
+assert.doesNotMatch(ui,/zones\?\.reference100.*makeSendPois|zones\?\.reserve200.*makeSendPois/,'reference zones must never become editable payload POIs');
 
 const builder=fs.readFileSync('scripts/build-android-bridge-0.3.7-unsigned.mjs','utf8');
 assert.doesNotMatch(builder,/creative\//i,'N4-G builder must not modify Creative');
