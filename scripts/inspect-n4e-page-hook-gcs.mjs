@@ -7,7 +7,7 @@ const tmp=fs.mkdtempSync(path.join(os.tmpdir(),'n4e-hook-'));
 try {
  execFileSync('unzip',['-q','downloads/campsite-bridge-android-0.3.6-unsigned.xpi','page-hook.js','-d',tmp]);
  const s=fs.readFileSync(path.join(tmp,'page-hook.js'),'utf8');
- const patterns=['XMLHttpRequest','GCS_PATH','isGcsUrl(','post(',"window.addEventListener('message'",'function emitGcs','bodyText','poiKind','gameEntity','cachedPois.set','function cache','function normalize','rawPoiTo','normalizePoi','POI_CACHE','CACHE'];
+ const patterns=['XMLHttpRequest','GCS_PATH','isGcsUrl(','post(',"window.addEventListener('message'",'function emitGcs','bodyText','poiKind','gameEntity','cachedPois.set','function cache','function normalize','rawPoiTo','normalizePoi','POI_CACHE','CACHE','cachedPois.set(String','cachedPois.set(guid','cachedPois.set(poi','cachedPois.clear','cell.pois','rawPoi','poiCandidate','candidateFrom'];
  for(const p of patterns){
    let from=0,n=0;
    while((from=s.indexOf(p,from))>=0 && n<8){
