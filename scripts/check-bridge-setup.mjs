@@ -84,6 +84,10 @@ has(js, "setLink('pcExtensionLink'");
 has(js, "setLink('pcWayfarerLink'");
 has(js, "return chrome ? 'chrome' : 'other'");
 has(js, "device === 'pc' && browser !== 'chrome'");
+has(js, "androidRuntimeVersion: '0.3.7'");
+has(js, "androidReleaseLabel: 'N4 TEST'");
+has(js, "androidXpiSha256: '2c4d0962ab2e8c9b36953a04fd186b52fccdc3f0476869771c2f8837e689cfd4'");
+has(js, "androidExtensionUrl: './downloads/campsite-bridge-android-0.3.7.xpi'");
 
 has(config, "appleManualSetupUrl: './bridge-shortcut-install.html'");
 has(config, "appleRuntimeVersion: '1.0.0'");
