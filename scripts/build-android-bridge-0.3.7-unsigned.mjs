@@ -28,6 +28,15 @@ try {
 
   for (const [source, target] of EXTRA) fs.copyFileSync(source, path.join(work, target));
 
+  {
+    const uiPath = path.join(work, 'bridge-ui.js');
+    let ui = fs.readFileSync(uiPath, 'utf8');
+    ui = ui.replace("  let pendingMapView = null;", "  let pendingMapView = null;\n  let wayfarerObservation = null;");
+    ui = ui.replace("    if (data.type === 'GCS_RESPONSE') {", "    if (data.type === 'WAYFARER_OBSERVATION') {\n      wayfarerObservation = data.observation && typeof data.observation === 'object' ? JSON.parse(JSON.stringify(data.observation)) : null;\n      return;\n    }\n\n    if (data.type === 'GCS_RESPONSE') {");
+    ui = ui.replace("      selectedBounds,\n      pois", "      selectedBounds,\n      pois,\n      ...(wayfarerObservation ? { wayfarerObservation: JSON.parse(JSON.stringify(wayfarerObservation)) } : {})");
+    fs.writeFileSync(uiPath, ui);
+  }
+
   for (const target of ['wayfarer-polygon-controller.js', 'polygon-ui.js']) {
     const targetPath = path.join(work, target);
     let source = fs.readFileSync(targetPath, 'utf8');
