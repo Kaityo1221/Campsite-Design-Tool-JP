@@ -45,6 +45,7 @@
       acquisition: Object.freeze({ bufferMeters: BUFFER_METERS, cellLevel: CELL_LEVEL, coverageComplete: acquisition?.coverageComplete === true })
     });
     try { window.dispatchEvent(new CustomEvent(OBSERVATION_EVENT, { detail: JSON.stringify(lastObservation) })); } catch (_) {}
+    try { window.postMessage({ source: PAGE_CHANNEL, type: 'WAYFARER_OBSERVATION', observation: clone(lastObservation) }, location.origin); } catch (_) {}
     return lastObservation;
   }
 
