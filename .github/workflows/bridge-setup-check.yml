@@ -22,6 +22,7 @@ on:
       - 'scripts/check-n4c-android-wiring.mjs'
       - 'scripts/check-n4e-android-gcs-boundary.mjs'
       - 'scripts/inspect-n4e-page-hook-gcs.mjs'
+      - 'scripts/check-n4e-android-acquisition-wiring.mjs'
       - 'scripts/build-pc-bridge.mjs'
       - 'scripts/check-bridge-setup.mjs'
       - '.github/workflows/bridge-setup-check.yml'
@@ -49,6 +50,7 @@ jobs:
           node scripts/check-n4c-android-wiring.mjs
           node scripts/check-n4e-android-gcs-boundary.mjs
           node scripts/inspect-n4e-page-hook-gcs.mjs
+          node scripts/check-n4e-android-acquisition-wiring.mjs
 
       - name: Launcher syntax
         run: |
@@ -64,6 +66,8 @@ jobs:
           node --check scripts/check-n4c-android-wiring.mjs
           node --check scripts/check-n4e-android-gcs-boundary.mjs
           node --check scripts/inspect-n4e-page-hook-gcs.mjs
+          node --check scripts/check-n4e-android-acquisition-wiring.mjs
+          node --check bridge-android-n4/wayfarer-acquisition-coordinator.js
           node --check bridge-android-n4/wayfarer-map-adapter.js
           node --check bridge-pc/page-collector.js
           node --check bridge-pc/content.js
