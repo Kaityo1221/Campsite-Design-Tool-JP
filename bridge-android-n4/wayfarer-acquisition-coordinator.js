@@ -127,7 +127,7 @@
   window.addEventListener(POLYGON_STATE_EVENT, event => {
     let state = null;
     try { state = JSON.parse(String(event?.detail || '{}')); } catch (_) { return; }
-    if (state?.completed !== true || state?.active !== true || !Array.isArray(state?.points) || state.points.length < 3) return;
+    if (state?.completed !== true || state?.active === true || !Array.isArray(state?.points) || state.points.length < 3) return;
     const signature = JSON.stringify(state.points);
     if (signature === lastCompletedSignature) return;
     lastCompletedSignature = signature;
