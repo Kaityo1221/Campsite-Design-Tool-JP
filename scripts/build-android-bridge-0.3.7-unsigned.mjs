@@ -34,7 +34,9 @@ try {
     ui = ui.replace("  let pendingMapView = null;", "  let pendingMapView = null;\n  let wayfarerObservation = null;");
     ui = ui.replace("    if (data.type === 'GCS_RESPONSE') {", "    if (data.type === 'WAYFARER_OBSERVATION') {\n      wayfarerObservation = data.observation && typeof data.observation === 'object' ? JSON.parse(JSON.stringify(data.observation)) : null;\n      return;\n    }\n\n    if (data.type === 'GCS_RESPONSE') {");
     ui = ui.replace("    const pois = makeSendPois();", `    if (!wayfarerObservation || wayfarerObservation.canProceed !== true) {\n      clearSendState();\n      sendWorkflowActive = false;\n      setSendStatus('設計範囲のPOI取得が完了していません。少し待ってから再送信してください。', 'error', 'error');\n      return;\n    }\n    const interiorGuids = new Set((wayfarerObservation?.zones?.interior || []).map(poi => String(poi?.guid || poi?.poiId || '')).filter(Boolean));\n    const pois = makeSendPois().filter(poi => interiorGuids.has(String(poi.guid)));`);
-    ui = ui.replace("      selectedBounds,\\n      pois", "      selectedBounds,\\n      pois,\\n      wayfarerObservation: JSON.parse(JSON.stringify(wayfarerObservation))");
+    ui = ui.replace("      selectedBounds,\n      pois", "      selectedBounds,\n      pois,\n      wayfarerObservation: JSON.parse(JSON.stringify(wayfarerObservation))");
+    if (!ui.includes("wayfarerObservation: JSON.parse(JSON.stringify(wayfarerObservation))")) throw new Error('N4-G Observation payload injection failed');
+    if (!ui.includes("makeSendPois().filter(poi => interiorGuids.has(String(poi.guid)))")) throw new Error('N4-G INTERIOR POI filter injection failed');
     fs.writeFileSync(uiPath, ui);
   }
 
