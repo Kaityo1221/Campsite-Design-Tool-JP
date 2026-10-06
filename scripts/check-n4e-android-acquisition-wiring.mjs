@@ -10,6 +10,7 @@ assert.match(source,/CELL_LEVEL = 14/);
 assert.match(source,/GCS_RESPONSE/);
 assert.match(source,/fitBounds/);
 assert.match(source,/CampsiteWayfarerAcquisitionEngine/);
+assert.match(source,/state\?\.completed !== true \|\| state\?\.active === true/,'acquisition must start from confirmed polygon state (completed=true, active=false)');
 assert.doesNotMatch(source,/new XMLHttpRequest|XMLHttpRequest\s*\(/,'coordinator must not create XHR');
 assert.doesNotMatch(source,/\bfetch\s*\(/,'coordinator must not create fetch transport');
 assert.doesNotMatch(source,/Authorization|Bearer|setRequestHeader/,'coordinator must not own auth or headers');
