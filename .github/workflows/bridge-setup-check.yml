@@ -80,3 +80,13 @@ jobs:
           node --check bridge-android-n4/wayfarer-map-adapter.js
           node --check bridge-pc/page-collector.js
           node --check bridge-pc/content.js
+
+      - name: Upload Android 0.3.7 signing candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: campsite-bridge-android-0.3.7-signing-candidate
+          path: |
+            downloads/campsite-bridge-android-0.3.7-unsigned.xpi
+            downloads/campsite-bridge-android-0.3.7-unsigned.sha256
+          if-no-files-found: error
+          retention-days: 7
