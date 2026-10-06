@@ -13,6 +13,7 @@ const EXTRA = [
   ['bridge-android-n4/wayfarer-map-adapter.js', 'wayfarer-map-adapter.js'],
   ['bridge-android-n4/panel-polygon-adapter.js', 'panel-polygon-adapter.js'],
   ['bridge-android-n4/panel-ui-adapter.js', 'panel-ui-adapter.js'],
+  ['bridge-android-n4/wayfarer-acquisition-coordinator.js', 'wayfarer-acquisition-coordinator.js'],
   ['bridge-pc/wayfarer-polygon-controller.js', 'wayfarer-polygon-controller.js'],
   ['bridge-pc/polygon-ui.js', 'polygon-ui.js'],
   ['bridge-pc/wayfarer-observation-zone.js', 'wayfarer-observation-zone.js'],
@@ -63,7 +64,7 @@ try {
 
   for (const file of [...page.js, ...isolated.js]) execFileSync(process.execPath, ['--check', path.join(work, file)], { stdio: 'inherit' });
 
-  const files = ['bridge-ui.css','manifest.json','bridge-core.js','page-hook.js','wayfarer-map-adapter.js','wayfarer-observation-zone.js','wayfarer-acquisition-engine.js','wayfarer-polygon-controller.js','polygon-ui.js','panel-polygon-adapter.js','bridge-ui.js','panel-ui-adapter.js'];
+  const files = ['bridge-ui.css','manifest.json','bridge-core.js','page-hook.js','wayfarer-map-adapter.js','wayfarer-observation-zone.js','wayfarer-acquisition-engine.js','wayfarer-polygon-controller.js','wayfarer-acquisition-coordinator.js','polygon-ui.js','panel-polygon-adapter.js','bridge-ui.js','panel-ui-adapter.js'];
   fs.rmSync(OUTPUT_XPI, { force: true });
   execFileSync('zip', ['-q','-9',path.resolve(OUTPUT_XPI),...files], { cwd: work });
   const data = fs.readFileSync(OUTPUT_XPI);
