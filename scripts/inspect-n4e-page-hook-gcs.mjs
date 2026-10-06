@@ -29,3 +29,13 @@ try {
     if (i >= 0) console.log(ui.slice(Math.max(0,i-3500), i+10000));
   }
 } catch (error) { console.error(error); process.exitCode = 1; }
+
+// N4-G generated package send payload audit
+try {
+ const { execFileSync }=await import('node:child_process');
+ execFileSync(process.execPath,['scripts/build-android-bridge-0.3.7-unsigned.mjs'],{stdio:'ignore'});
+ const ui=execFileSync('unzip',['-p','downloads/campsite-bridge-android-0.3.7-unsigned.xpi','bridge-ui.js'],{encoding:'utf8'});
+ for(const needle of ['function sendToCampsite','PROTOCOL','handshakeId','postMessage','REQUEST_SEND_ENRICHMENT']){
+  const i=ui.indexOf(needle); console.log('\n--- N4-G '+needle+' @'+i+' ---'); if(i>=0) console.log(ui.slice(Math.max(0,i-4500),i+14000));
+ }
+} catch(error){console.error(error);process.exitCode=1;}
