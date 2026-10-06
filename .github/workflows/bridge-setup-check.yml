@@ -21,6 +21,7 @@ on:
       - 'scripts/check-n4b-android-map-seam.mjs'
       - 'scripts/check-n4c-android-wiring.mjs'
       - 'scripts/check-n4e-android-gcs-boundary.mjs'
+      - 'scripts/inspect-n4e-page-hook-gcs.mjs'
       - 'scripts/build-pc-bridge.mjs'
       - 'scripts/check-bridge-setup.mjs'
       - '.github/workflows/bridge-setup-check.yml'
@@ -62,6 +63,7 @@ jobs:
           node --check scripts/build-android-bridge-0.3.7-unsigned.mjs
           node --check scripts/check-n4c-android-wiring.mjs
           node --check scripts/check-n4e-android-gcs-boundary.mjs
+          node --check scripts/inspect-n4e-page-hook-gcs.mjs
           node --check bridge-android-n4/wayfarer-map-adapter.js
           node --check bridge-pc/page-collector.js
           node --check bridge-pc/content.js
