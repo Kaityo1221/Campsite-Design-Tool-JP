@@ -17,3 +17,15 @@ try {
    }
  }
 } finally { fs.rmSync(tmp,{recursive:true,force:true}); }
+
+// N4-F generated-package ISOLATED audit
+try {
+  const { execFileSync } = await import('node:child_process');
+  execFileSync(process.execPath, ['scripts/build-android-bridge-0.3.7-unsigned.mjs'], { stdio: 'ignore' });
+  const ui = execFileSync('unzip', ['-p','downloads/campsite-bridge-android-0.3.7-unsigned.xpi','bridge-ui.js'], { encoding:'utf8' });
+  for (const needle of ['GCS_RESPONSE','SYNC_POIS','SYNC_STATE','CAMPSITE_BRIDGE_ANDROID_M24_UI','CAMPSITE_BRIDGE_ANDROID_M24_PAGE']) {
+    const i = ui.indexOf(needle);
+    console.log('\n--- built bridge-ui '+needle+' @'+i+' ---');
+    if (i >= 0) console.log(ui.slice(Math.max(0,i-3500), i+10000));
+  }
+} catch (error) { console.error(error); process.exitCode = 1; }
