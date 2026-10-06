@@ -5,6 +5,8 @@
   const POLYGON_STATE_EVENT = 'campsite-bridge-android-n4:polygon-state';
   const ACQUISITION_STATE_EVENT = 'campsite-bridge-android-n4:acquisition-state';
   const PAGE_CHANNEL = 'CAMPSITE_BRIDGE_ANDROID_M24_PAGE';
+  const UI_CHANNEL = 'CAMPSITE_BRIDGE_ANDROID_M24_UI';
+  const OBSERVATION_EVENT = 'campsite-bridge-android-n4:observation';
   const BUFFER_METERS = 200;
   const CELL_LEVEL = 14;
   const TIMEOUT_MS = 12000;
@@ -12,10 +14,38 @@
   let running = false;
   let lastCompletedSignature = '';
   let lastResult = null;
+  let latestPois = [];
+  let lastObservation = null;
+
+  function clone(value) { return JSON.parse(JSON.stringify(value)); }
 
   function emit(state) {
     const detail = { version: VERSION, ...state };
     try { window.dispatchEvent(new CustomEvent(ACQUISITION_STATE_EVENT, { detail: JSON.stringify(detail) })); } catch (_) {}
+  }
+
+  function buildObservation(points, acquisition) {
+    if (lastObservation) return lastObservation;
+    const zoneApi = window.CampsiteWayfarerObservationZone;
+    if (!zoneApi?.classifyPois) throw new Error('Wayfarer Observation Zone is unavailable.');
+    const classified = zoneApi.classifyPois(points, latestPois);
+    const observedAt = String(acquisition?.observedAt || new Date().toISOString());
+    const snapshotId = 'wfobs-' + observedAt.replace(/[^0-9]/g, '') + '-' + Math.random().toString(36).slice(2, 10);
+    lastObservation = Object.freeze({
+      snapshotId,
+      observedAt,
+      polygon: classified.polygon,
+      zones: clone(classified.zones),
+      counts: clone(classified.counts),
+      visibleTotal: classified.visibleTotal,
+      retainedTotal: classified.retainedTotal,
+      excludedCount: classified.excludedCount,
+      outsideCount: classified.outsideCount,
+      canProceed: acquisition?.coverageComplete === true,
+      acquisition: Object.freeze({ bufferMeters: BUFFER_METERS, cellLevel: CELL_LEVEL, coverageComplete: acquisition?.coverageComplete === true })
+    });
+    try { window.dispatchEvent(new CustomEvent(OBSERVATION_EVENT, { detail: JSON.stringify(lastObservation) })); } catch (_) {}
+    return lastObservation;
   }
 
   function parseBoundsFromUrl(value) {
@@ -117,6 +147,8 @@
         sourceComplete: result.sourceComplete
       });
       if (!result.coverageComplete) throw new Error('200m acquisition coverage is incomplete.');
+      await new Promise(resolve => window.setTimeout(resolve, 180));
+      buildObservation(points, lastResult);
       return lastResult;
     } finally {
       restoreView(map, originalView);
@@ -131,9 +163,17 @@
     const signature = JSON.stringify(state.points);
     if (signature === lastCompletedSignature) return;
     lastCompletedSignature = signature;
+    lastObservation = null;
     acquire(state.points).catch(error => {
       emit({ status: 'error', error: String(error?.message || error || 'acquisition failed') });
     });
+  });
+
+  window.addEventListener('message', event => {
+    if (event.source !== window) return;
+    const data = event.data || {};
+    if (data.source !== UI_CHANNEL || data.type !== 'SYNC_STATE' || !Array.isArray(data.pois)) return;
+    latestPois = data.pois.filter(poi => poi?.guid).map(poi => ({ ...poi }));
   });
 
   window.CampsiteBridgeAndroidN4Acquisition = Object.freeze({
@@ -143,6 +183,7 @@
     parseBoundsFromUrl,
     covers,
     acquire,
-    getLastResult: () => lastResult
+    getLastResult: () => lastResult,
+    getObservation: () => lastObservation
   });
 })();
