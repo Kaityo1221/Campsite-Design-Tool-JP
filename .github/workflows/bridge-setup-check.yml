@@ -25,6 +25,7 @@ on:
       - 'scripts/check-n4e-android-acquisition-wiring.mjs'
       - 'scripts/check-n4f-android-observation.mjs'
       - 'scripts/check-n4g-android-receiver-handoff.mjs'
+      - 'scripts/check-n4-android-final-regression.mjs'
       - 'scripts/build-pc-bridge.mjs'
       - 'scripts/check-bridge-setup.mjs'
       - '.github/workflows/bridge-setup-check.yml'
@@ -55,6 +56,7 @@ jobs:
           node scripts/check-n4e-android-acquisition-wiring.mjs
           node scripts/check-n4f-android-observation.mjs
           node scripts/check-n4g-android-receiver-handoff.mjs
+          node scripts/check-n4-android-final-regression.mjs
 
       - name: Launcher syntax
         run: |
@@ -73,6 +75,7 @@ jobs:
           node --check scripts/check-n4e-android-acquisition-wiring.mjs
           node --check scripts/check-n4f-android-observation.mjs
           node --check scripts/check-n4g-android-receiver-handoff.mjs
+          node --check scripts/check-n4-android-final-regression.mjs
           node --check bridge-android-n4/wayfarer-acquisition-coordinator.js
           node --check bridge-android-n4/wayfarer-map-adapter.js
           node --check bridge-pc/page-collector.js
