@@ -7,6 +7,8 @@
   let root = null;
   let line = null;
   let polygon = null;
+  let svgOverlay = null;
+  let redrawTimer = null;
 
   function map() {
     const candidates = [
@@ -22,13 +24,85 @@
     try { line?.setMap?.(null); } catch (_) {}
     try { polygon?.setMap?.(null); } catch (_) {}
     line = null; polygon = null;
+    svgOverlay?.remove();
+    svgOverlay = null;
+  }
+
+  function mercatorY(lat) {
+    const safe = Math.max(-85.05112878, Math.min(85.05112878, Number(lat)));
+    const rad = safe * Math.PI / 180;
+    return Math.log(Math.tan(Math.PI / 4 + rad / 2));
+  }
+
+  function mapRect() {
+    const gm = document.querySelector('.gm-style');
+    const host = gm?.parentElement || gm;
+    const rect = host?.getBoundingClientRect?.();
+    if (rect && rect.width > 40 && rect.height > 40) return rect;
+    return null;
+  }
+
+  function drawScreenOverlay() {
+    svgOverlay?.remove();
+    svgOverlay = null;
+    if (!points.length || !root?.isConnected) return false;
+    const bounds = window.CampsiteBridgeIPhoneRecovery?.getState?.()?.latestRangeBounds;
+    const rect = mapRect();
+    const south = Number(bounds?.swLat), north = Number(bounds?.neLat);
+    const west = Number(bounds?.swLng), east = Number(bounds?.neLng);
+    if (!rect || ![south,north,west,east].every(Number.isFinite)) return false;
+    const ySouth = mercatorY(south), yNorth = mercatorY(north);
+    const lngSpan = east >= west ? east - west : east + 360 - west;
+    if (!(lngSpan > 0) || yNorth === ySouth) return false;
+    const xy = points.map(p => {
+      let lng = Number(p.lng);
+      if (east < west && lng < west) lng += 360;
+      return {
+        x: rect.left + ((lng - west) / lngSpan) * rect.width,
+        y: rect.top + ((yNorth - mercatorY(p.lat)) / (yNorth - ySouth)) * rect.height
+      };
+    });
+    const ns = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('viewBox', `0 0 ${innerWidth} ${innerHeight}`);
+    svg.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;z-index:2147483644;pointer-events:none;overflow:hidden';
+    if (xy.length >= 2) {
+      const shape = document.createElementNS(ns, xy.length >= 3 ? 'polygon' : 'polyline');
+      shape.setAttribute('points', xy.map(p => `${p.x},${p.y}`).join(' '));
+      shape.setAttribute('fill', xy.length >= 3 ? 'rgba(96,165,250,.18)' : 'none');
+      shape.setAttribute('stroke', '#2563eb');
+      shape.setAttribute('stroke-width', '4');
+      shape.setAttribute('stroke-linejoin', 'round');
+      svg.appendChild(shape);
+    }
+    xy.forEach((p, i) => {
+      const dot = document.createElementNS(ns, 'circle');
+      dot.setAttribute('cx', String(p.x)); dot.setAttribute('cy', String(p.y));
+      dot.setAttribute('r', '7'); dot.setAttribute('fill', '#ffffff');
+      dot.setAttribute('stroke', '#2563eb'); dot.setAttribute('stroke-width', '4');
+      svg.appendChild(dot);
+      const label = document.createElementNS(ns, 'text');
+      label.setAttribute('x', String(p.x)); label.setAttribute('y', String(p.y - 12));
+      label.setAttribute('text-anchor', 'middle'); label.setAttribute('fill', '#0f172a');
+      label.setAttribute('stroke', '#ffffff'); label.setAttribute('stroke-width', '3');
+      label.setAttribute('paint-order', 'stroke'); label.setAttribute('font-size', '13');
+      label.setAttribute('font-weight', '800'); label.textContent = String(i + 1);
+      svg.appendChild(label);
+    });
+    document.documentElement.appendChild(svg);
+    svgOverlay = svg;
+    return true;
   }
 
   function draw() {
     clearOverlay();
     const m = map();
     const maps = window.google?.maps;
-    if (!m || !maps || !points.length) return;
+    if (!points.length) return;
+    if (!m || !maps) {
+      drawScreenOverlay();
+      return;
+    }
     if (points.length >= 3) {
       polygon = new maps.Polygon({
         map:m, paths:points, clickable:false,
@@ -93,6 +167,8 @@
   function close() {
     root?.remove();
     root = null;
+    if (redrawTimer) clearInterval(redrawTimer);
+    redrawTimer = null;
     clearOverlay();
   }
 
@@ -119,6 +195,11 @@
     root.querySelector('[data-action="complete"]').addEventListener('click', complete);
     root.querySelector('[data-action="close"]').addEventListener('click', close);
     render();
+    if (redrawTimer) clearInterval(redrawTimer);
+    redrawTimer = setInterval(() => {
+      if (!root?.isConnected) return;
+      if (!map()) drawScreenOverlay();
+    }, 500);
   }
 
   document.getElementById('cbs-area-start')?.addEventListener('click', open);
