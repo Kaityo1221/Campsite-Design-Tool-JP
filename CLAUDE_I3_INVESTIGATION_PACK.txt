@@ -1,0 +1,3339 @@
+# Claude I3 Investigation Pack
+Repository: Kaityo1221/Campsite-Design-Tool-JP
+Source branch: main (PR #351 merged)
+
+PURPOSE
+Find the exact cause why iPhone Safari / Wayfarer records activity-area vertex coordinates but shows no vertex/line/polygon, while PC drawing works.
+
+RULES
+- Investigation only. Do not modify code, create commits, branches, or PRs.
+- Do not touch Android PR #338.
+- Do not modify Shortcut Launcher 1.3.0.
+- PR #350 is rejected and intentionally excluded.
+- Wayfarer/WFMM owns POI visuals. Bridge must not take ownership of POI markers.
+
+CHECK
+1. Which actual Google Map instance PC overlays use.
+2. Whether iPhone getMap() returns the same kind of map instance.
+3. Availability of google.maps.Polygon / Polyline / Circle on iPhone Safari.
+4. Whether the PC Wayfarer Map Adapter can be reused on iPhone.
+5. Exact reason current SVG fallback does not display.
+6. Minimum change for geographic, map-following vertices/line/polygon on iPhone.
+7. Confirm solution does not alter Wayfarer/WFMM POI visuals.
+
+REPORT AS
+Cause / Evidence / Recommended fix / Files to change / Risks
+
+
+===== FILE: bridge-pc/wayfarer-polygon-controller.js =====
+
+(() => {
+  'use strict';
+
+  const VERSION = '0.1.0';
+  const STORAGE_KEY = 'campsite.wayfarerPolygonDraft.v1';
+  const COMMAND_EVENT = 'campsite-bridge-pc:polygon-command';
+  const STATE_EVENT = 'campsite-bridge-pc:polygon-state';
+  const MAX_POINTS = 30;
+  const MOBILE_WIDTH_MAX = 820;
+  const PC_DRAG_THRESHOLD_PX = 6;
+  const PC_DRAG_CLICK_GUARD_MS = 700;
+  const PC_DRAG_CLICK_GUARD_RADIUS_PX = 16;
+
+  if (window.__campsiteWayfarerPolygonControllerInstalled) return;
+  window.__campsiteWayfarerPolygonControllerInstalled = true;
+
+  let points = [];
+  let active = false;
+  let completed = false;
+  let paused = false;
+  let currentMap = null;
+  let mapClickListener = null;
+  let mapDomClickHandler = null;
+  let mapDomClickTarget = null;
+  let mapDomPointerHandlers = [];
+  let pollTimer = null;
+  let overlays = [];
+  let draftAvailable = false;
+
+  function mapAdapterApi() {
+    const adapter = window.CampsiteBridgeWayfarerMapAdapter;
+    if (!adapter?.findMap) throw new Error('Wayfarer Map Adapterを読み込めませんでした。');
+    return adapter;
+  }
+
+  function pointFrom(value) {
+    if (!Array.isArray(value) || value.length < 2) return null;
+    const lat = Number(value[0]);
+    const lng = Number(value[1]);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+    return [lat, lng];
+  }
+
+  function clonePoints(values) {
+    return (Array.isArray(values) ? values : []).map(pointFrom).filter(Boolean);
+  }
+
+  function samePoint(a, b) {
+    return Boolean(a && b && Math.abs(a[0] - b[0]) < 1e-12 && Math.abs(a[1] - b[1]) < 1e-12);
+  }
+
+  function orientation(a, b, c) {
+    const value = (b[1] - a[1]) * (c[0] - b[0]) - (b[0] - a[0]) * (c[1] - b[1]);
+    if (Math.abs(value) < 1e-12) return 0;
+    return value > 0 ? 1 : 2;
+  }
+
+  function onSegment(a, b, c) {
+    return (
+      b[0] <= Math.max(a[0], c[0]) + 1e-12 &&
+      b[0] + 1e-12 >= Math.min(a[0], c[0]) &&
+      b[1] <= Math.max(a[1], c[1]) + 1e-12 &&
+      b[1] + 1e-12 >= Math.min(a[1], c[1])
+    );
+  }
+
+  function segmentsIntersect(a, b, c, d) {
+    const o1 = orientation(a, b, c);
+    const o2 = orientation(a, b, d);
+    const o3 = orientation(c, d, a);
+    const o4 = orientation(c, d, b);
+    if (o1 !== o2 && o3 !== o4) return true;
+    if (o1 === 0 && onSegment(a, c, b)) return true;
+    if (o2 === 0 && onSegment(a, d, b)) return true;
+    if (o3 === 0 && onSegment(c, a, d)) return true;
+    if (o4 === 0 && onSegment(c, b, d)) return true;
+    return false;
+  }
+
+  function edgePairs(values, closed) {
+    const result = [];
+    for (let i = 0; i < values.length - 1; i += 1) {
+      result.push({ index: i, a: values[i], b: values[i + 1] });
+    }
+    if (closed && values.length >= 3) {
+      result.push({ index: values.length - 1, a: values[values.length - 1], b: values[0] });
+    }
+    return result;
+  }
+
+  function findSelfIntersections(values, closed = true) {
+    const clean = clonePoints(values);
+    const edges = edgePairs(clean, closed && clean.length >= 3);
+    const invalid = new Set();
+
+    for (let i = 0; i < edges.length; i += 1) {
+      for (let j = i + 1; j < edges.length; j += 1) {
+        const left = edges[i];
+        const right = edges[j];
+        const adjacent = Math.abs(left.index - right.index) === 1;
+        const closingAdjacent =
+          closed &&
+          clean.length >= 3 &&
+          ((left.index === 0 && right.index === clean.length - 1) ||
+            (right.index === 0 && left.index === clean.length - 1));
+        if (adjacent || closingAdjacent) continue;
+        if (!segmentsIntersect(left.a, left.b, right.a, right.b)) continue;
+        invalid.add(left.index);
+        invalid.add(right.index);
+      }
+    }
+    return [...invalid].sort((a, b) => a - b);
+  }
+
+  function interactionMode() {
+    let coarse = false;
+    try { coarse = window.matchMedia?.('(pointer: coarse)')?.matches === true; } catch (_) {}
+    const narrow = Number(window.innerWidth || 0) > 0 && Number(window.innerWidth) <= MOBILE_WIDTH_MAX;
+    return coarse || narrow ? 'mobile' : 'pc';
+  }
+
+  function readDraft() {
+    try {
+      const raw = window.localStorage?.getItem(STORAGE_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      const savedPoints = clonePoints(parsed?.points);
+      if (!savedPoints.length || savedPoints.length > MAX_POINTS) return null;
+      return {
+        version: String(parsed?.version || ''),
+        points: savedPoints,
+        completed: parsed?.completed === true,
+        updatedAt: String(parsed?.updatedAt || '')
+      };
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function saveDraft() {
+    if (!points.length) {
+      try { window.localStorage?.removeItem(STORAGE_KEY); } catch (_) {}
+      draftAvailable = false;
+      return;
+    }
+    const draft = {
+      version: VERSION,
+      points: clonePoints(points),
+      completed,
+      updatedAt: new Date().toISOString()
+    };
+    try { window.localStorage?.setItem(STORAGE_KEY, JSON.stringify(draft)); } catch (_) {}
+    draftAvailable = true;
+  }
+
+  function clearDraftStorage() {
+    try { window.localStorage?.removeItem(STORAGE_KEY); } catch (_) {}
+    draftAvailable = false;
+  }
+
+  function validation() {
+    const invalidEdgeIndexes = findSelfIntersections(points, points.length >= 3);
+    return {
+      selfIntersects: invalidEdgeIndexes.length > 0,
+      invalidEdgeIndexes,
+      canComplete:
+        active &&
+        !completed &&
+        points.length >= 3 &&
+        points.length <= MAX_POINTS &&
+        invalidEdgeIndexes.length === 0
+    };
+  }
+
+  function instructionFor(mode, state) {
+    if (!active) return '範囲を決めてから拠点内を観察します。';
+    if (completed) return '範囲を確定しました。次の観察Phaseでこの範囲を使用します。';
+    if (state.selfIntersects) return '線が交差しています。交差を解消してから範囲を確定してください。';
+    if (mode === 'mobile') return '中央の十字を頂点に合わせて「頂点を追加」を押してください。';
+    return '地図上をクリックして頂点を追加してください。';
+  }
+
+  function getState() {
+    const mode = interactionMode();
+    const state = validation();
+    return {
+      version: VERSION,
+      storageKey: STORAGE_KEY,
+      active,
+      completed,
+      paused,
+      mode,
+      pointCount: points.length,
+      maxPoints: MAX_POINTS,
+      points: clonePoints(points),
+      draftAvailable,
+      selfIntersects: state.selfIntersects,
+      invalidEdgeIndexes: [...state.invalidEdgeIndexes],
+      canComplete: state.canComplete,
+      canUndo: active && points.length > 0,
+      instruction: instructionFor(mode, state),
+      message: ''
+    };
+  }
+
+  function dispatchState(extra = {}) {
+    try {
+      window.dispatchEvent(new CustomEvent(STATE_EVENT, {
+        detail: JSON.stringify({ ...getState(), ...extra })
+      }));
+    } catch (_) {}
+  }
+
+  function removeMapClickListener() {
+    if (mapDomClickHandler && mapDomClickTarget) {
+      try { mapDomClickTarget.removeEventListener?.('click', mapDomClickHandler, true); } catch (_) {}
+    }
+    mapDomClickHandler = null;
+    mapDomClickTarget = null;
+
+    mapDomPointerHandlers.splice(0).forEach(item => {
+      try { item.target?.removeEventListener?.(item.type, item.handler, true); } catch (_) {}
+    });
+
+    if (!mapClickListener) return;
+    try {
+      if (typeof mapClickListener.remove === 'function') mapClickListener.remove();
+      else window.google?.maps?.event?.removeListener?.(mapClickListener);
+    } catch (_) {}
+    mapClickListener = null;
+  }
+
+  function clearOverlays() {
+    overlays.splice(0).forEach(item => {
+      try { item?.setMap?.(null); } catch (_) {}
+    });
+  }
+
+  function latLngObject(point) {
+    return { lat: point[0], lng: point[1] };
+  }
+
+  function renderOverlays() {
+    clearOverlays();
+    const map = currentMap;
+    const maps = window.google?.maps;
+    if (!map || !maps || !points.length) return;
+
+    const path = points.map(latLngObject);
+    const state = validation();
+
+    if (points.length >= 3 && typeof maps.Polygon === 'function') {
+      overlays.push(new maps.Polygon({
+        map,
+        paths: path,
+        clickable: false,
+        strokeColor: '#16a34a',
+        strokeOpacity: 0.95,
+        strokeWeight: 3,
+        fillColor: '#22c55e',
+        fillOpacity: 0.10
+      }));
+    } else if (points.length >= 2 && typeof maps.Polyline === 'function') {
+      overlays.push(new maps.Polyline({
+        map,
+        path,
+        clickable: false,
+        strokeColor: '#16a34a',
+        strokeOpacity: 0.95,
+        strokeWeight: 3
+      }));
+    }
+
+    if (typeof maps.Circle === 'function') {
+      points.forEach(point => {
+        overlays.push(new maps.Circle({
+          map,
+          center: latLngObject(point),
+          radius: 3,
+          clickable: false,
+          strokeColor: '#166534',
+          strokeOpacity: 1,
+          strokeWeight: 2,
+          fillColor: '#dcfce7',
+          fillOpacity: 1
+        }));
+      });
+    }
+
+    if (state.invalidEdgeIndexes.length && typeof maps.Polyline === 'function') {
+      const edges = edgePairs(points, points.length >= 3);
+      state.invalidEdgeIndexes.forEach(index => {
+        const edge = edges.find(item => item.index === index);
+        if (!edge) return;
+        overlays.push(new maps.Polyline({
+          map,
+          path: [latLngObject(edge.a), latLngObject(edge.b)],
+          clickable: false,
+          strokeColor: '#dc2626',
+          strokeOpacity: 1,
+          strokeWeight: 5
+        }));
+      });
+    }
+  }
+
+  function resolveMap() {
+    try { return mapAdapterApi().findMap(document) || null; }
+    catch (_) { return null; }
+  }
+
+  function addPoint(value) {
+    if (!active || completed) return false;
+    if (points.length >= MAX_POINTS) {
+      dispatchState({ message: '頂点は最大30点です。' });
+      return false;
+    }
+
+    const point = pointFrom(value);
+    if (!point) {
+      dispatchState({ message: '頂点の座標を取得できませんでした。' });
+      return false;
+    }
+    if (points.some(existing => samePoint(existing, point))) {
+      dispatchState({ message: '同じ頂点は追加できません。' });
+      return false;
+    }
+
+    points.push(point);
+    saveDraft();
+    renderOverlays();
+    dispatchState();
+    return true;
+  }
+
+  function handleMapClick(event) {
+    const latLng = event?.latLng;
+    if (!latLng) return;
+    const lat = Number(typeof latLng.lat === 'function' ? latLng.lat() : latLng.lat);
+    const lng = Number(typeof latLng.lng === 'function' ? latLng.lng() : latLng.lng);
+    addPoint([lat, lng]);
+  }
+
+  function coordinateValue(point, key) {
+    try {
+      const value = point?.[key];
+      const number = Number(typeof value === 'function' ? value.call(point) : value);
+      return Number.isFinite(number) ? number : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function mercatorY(lat) {
+    const safeLat = Math.max(-85.05112878, Math.min(85.05112878, Number(lat)));
+    const sin = Math.sin(safeLat * Math.PI / 180);
+    return 0.5 - Math.log((1 + sin) / (1 - sin)) / (4 * Math.PI);
+  }
+
+  function latitudeFromMercatorY(y) {
+    const n = Math.PI - 2 * Math.PI * Number(y);
+    return 180 / Math.PI * Math.atan(Math.sinh(n));
+  }
+
+  function pointFromClientPosition(map, clientX, clientY) {
+    let mapDiv = null;
+    let bounds = null;
+    try {
+      mapDiv = map?.getDiv?.() || null;
+      bounds = map?.getBounds?.() || null;
+    } catch (_) {
+      return null;
+    }
+    if (!mapDiv?.getBoundingClientRect || !bounds) return null;
+
+    const rect = mapDiv.getBoundingClientRect();
+    if (!(rect.width > 0) || !(rect.height > 0)) return null;
+
+    const sw = bounds.getSouthWest?.();
+    const ne = bounds.getNorthEast?.();
+    const south = coordinateValue(sw, 'lat');
+    const west = coordinateValue(sw, 'lng');
+    const north = coordinateValue(ne, 'lat');
+    const east = coordinateValue(ne, 'lng');
+    if (![south, west, north, east].every(Number.isFinite)) return null;
+
+    const x = Math.max(0, Math.min(1, (Number(clientX) - rect.left) / rect.width));
+    const y = Math.max(0, Math.min(1, (Number(clientY) - rect.top) / rect.height));
+
+    let lngSpan = east - west;
+    if (lngSpan < 0) lngSpan += 360;
+    let lng = west + lngSpan * x;
+    if (lng > 180) lng -= 360;
+
+    const northY = mercatorY(north);
+    const southY = mercatorY(south);
+    const lat = latitudeFromMercatorY(northY + (southY - northY) * y);
+    return pointFrom([lat, lng]);
+  }
+
+  function isMapControlTarget(target) {
+    try {
+      return Boolean(target?.closest?.(
+        '.gm-control-active,.gm-fullscreen-control,.gm-bundled-control,.gmnoprint button'
+      ));
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function installPcMapClickCapture() {
+    let mapDiv = null;
+    try { mapDiv = currentMap?.getDiv?.() || null; } catch (_) { mapDiv = null; }
+    if (!mapDiv?.contains || typeof window.addEventListener !== 'function') return false;
+
+    let pointerStart = null;
+    let dragClickGuard = null;
+
+    const onPointerDown = event => {
+      if (!active || completed || interactionMode() !== 'pc') return;
+      if (event?.button != null && Number(event.button) !== 0) return;
+      if (!mapDiv.contains(event?.target)) return;
+      if (isMapControlTarget(event?.target)) return;
+      pointerStart = {
+        pointerId: event?.pointerId ?? null,
+        x: Number(event?.clientX),
+        y: Number(event?.clientY),
+        dragged: false
+      };
+    };
+
+    const onPointerMove = event => {
+      if (!pointerStart) return;
+      if (
+        pointerStart.pointerId != null &&
+        event?.pointerId != null &&
+        event.pointerId !== pointerStart.pointerId
+      ) return;
+      const dx = Number(event?.clientX) - pointerStart.x;
+      const dy = Number(event?.clientY) - pointerStart.y;
+      if (!Number.isFinite(dx) || !Number.isFinite(dy)) return;
+      if (dx * dx + dy * dy >= PC_DRAG_THRESHOLD_PX * PC_DRAG_THRESHOLD_PX) {
+        pointerStart.dragged = true;
+      }
+    };
+
+    const onPointerUp = event => {
+      if (!pointerStart) return;
+      if (
+        pointerStart.pointerId != null &&
+        event?.pointerId != null &&
+        event.pointerId !== pointerStart.pointerId
+      ) return;
+      if (pointerStart.dragged) {
+        dragClickGuard = {
+          x: Number(event?.clientX),
+          y: Number(event?.clientY),
+          until: Date.now() + PC_DRAG_CLICK_GUARD_MS
+        };
+      }
+      pointerStart = null;
+    };
+
+    const onPointerCancel = () => {
+      pointerStart = null;
+      dragClickGuard = null;
+    };
+
+    const handler = event => {
+      if (!active || completed || interactionMode() !== 'pc') return;
+      if (event?.button != null && Number(event.button) !== 0) return;
+      if (!mapDiv.contains(event?.target)) return;
+      if (isMapControlTarget(event?.target)) return;
+
+      try { event.preventDefault?.(); } catch (_) {}
+      try { event.stopPropagation?.(); } catch (_) {}
+      try { event.stopImmediatePropagation?.(); } catch (_) {}
+
+      if (dragClickGuard) {
+        const dx = Number(event?.clientX) - dragClickGuard.x;
+        const dy = Number(event?.clientY) - dragClickGuard.y;
+        const withinTime = Date.now() <= dragClickGuard.until;
+        const nearDragEnd =
+          Number.isFinite(dx) &&
+          Number.isFinite(dy) &&
+          dx * dx + dy * dy <= PC_DRAG_CLICK_GUARD_RADIUS_PX * PC_DRAG_CLICK_GUARD_RADIUS_PX;
+        dragClickGuard = null;
+        if (withinTime && nearDragEnd) return;
+      }
+
+      const point = pointFromClientPosition(currentMap, event?.clientX, event?.clientY);
+      if (!point) {
+        dispatchState({ message: 'クリック位置の座標を取得できませんでした。' });
+        return;
+      }
+      addPoint(point);
+    };
+
+    for (const [type, listener] of [
+      ['pointerdown', onPointerDown],
+      ['pointermove', onPointerMove],
+      ['pointerup', onPointerUp],
+      ['pointercancel', onPointerCancel]
+    ]) {
+      window.addEventListener(type, listener, true);
+      mapDomPointerHandlers.push({ target: window, type, handler: listener });
+    }
+    window.addEventListener('click', handler, true);
+    mapDomClickHandler = handler;
+    mapDomClickTarget = window;
+    mapClickListener = { remove() {} };
+    return true;
+  }
+
+  function bindMap() {
+    const nextMap = resolveMap();
+    if (nextMap !== currentMap) {
+      removeMapClickListener();
+      clearOverlays();
+      currentMap = nextMap;
+    }
+    if (!currentMap) return false;
+
+    const shouldListen = active && !completed && interactionMode() === 'pc';
+    if (shouldListen && !mapClickListener) {
+      const captured = installPcMapClickCapture();
+      if (!captured) {
+        try { mapClickListener = currentMap.addListener('click', handleMapClick); }
+        catch (_) { mapClickListener = null; }
+      }
+    } else if (!shouldListen && mapClickListener) {
+      removeMapClickListener();
+    }
+
+    if (active) renderOverlays();
+    else clearOverlays();
+    return true;
+  }
+
+  function ensurePolling() {
+    if (pollTimer) return;
+    pollTimer = window.setInterval?.(() => {
+      if (!active) return;
+      bindMap();
+    }, 1500) || null;
+  }
+
+  function startNew() {
+    active = true;
+    paused = false;
+    completed = false;
+    points = [];
+    clearDraftStorage();
+    bindMap();
+    ensurePolling();
+    dispatchState();
+    return getState();
+  }
+
+  function resumeDraft() {
+    const draft = readDraft();
+    if (!draft) return startNew();
+    active = true;
+    paused = false;
+    completed = draft.completed === true;
+    points = clonePoints(draft.points);
+    draftAvailable = true;
+    bindMap();
+    ensurePolling();
+    dispatchState();
+    return getState();
+  }
+
+  function addCenter() {
+    if (!active || completed) return false;
+    if (!bindMap()) {
+      dispatchState({ message: 'Wayfarer Mapを確認できませんでした。' });
+      return false;
+    }
+    let center = null;
+    try { center = currentMap?.getCenter?.() || null; } catch (_) { center = null; }
+    if (!center) {
+      dispatchState({ message: '地図中央の座標を取得できませんでした。' });
+      return false;
+    }
+    const lat = Number(typeof center.lat === 'function' ? center.lat() : center.lat);
+    const lng = Number(typeof center.lng === 'function' ? center.lng() : center.lng);
+    return addPoint([lat, lng]);
+  }
+
+  function undo() {
+    if (!active || !points.length) return false;
+    if (completed) completed = false;
+    points.pop();
+    saveDraft();
+    bindMap();
+    dispatchState();
+    return true;
+  }
+
+  function reset() {
+    active = true;
+    paused = false;
+    completed = false;
+    points = [];
+    clearDraftStorage();
+    bindMap();
+    ensurePolling();
+    dispatchState();
+    return getState();
+  }
+
+  function exitDrawing() {
+    if (!active) return getState();
+    saveDraft();
+    active = false;
+    paused = true;
+    removeMapClickListener();
+    clearOverlays();
+    dispatchState({ message: '範囲の途中経過を保存してWayfarer通常表示に戻りました。' });
+    return getState();
+  }
+
+  function editCompleted() {
+    const draft = readDraft();
+    if (!draft) return startNew();
+    points = clonePoints(draft.points);
+    active = true;
+    paused = false;
+    completed = false;
+    saveDraft();
+    bindMap();
+    ensurePolling();
+    dispatchState();
+    return getState();
+  }
+
+  function complete() {
+    const state = validation();
+    if (!state.canComplete) {
+      dispatchState({
+        message: state.selfIntersects
+          ? '線が交差しているため範囲を確定できません。'
+          : '範囲の確定には3点以上の頂点が必要です。'
+      });
+      return false;
+    }
+    completed = true;
+    paused = false;
+    saveDraft();
+    active = false;
+    removeMapClickListener();
+    clearOverlays();
+    dispatchState({ message: '範囲を確定しました。必要に応じて通常表示に戻れます。' });
+    return true;
+  }
+
+  function getPolygon() {
+    return clonePoints(points);
+  }
+
+  function queryState() {
+    const stored = readDraft();
+    if (!active) {
+      draftAvailable = Boolean(stored);
+      if (stored) completed = stored.completed === true;
+    }
+    bindMap();
+    dispatchState();
+    return getState();
+  }
+
+  function handleCommand(event) {
+    let detail = {};
+    try { detail = JSON.parse(String(event?.detail || '{}')); } catch (_) {}
+    const action = String(detail?.action || '');
+
+    if (action === 'start-new') startNew();
+    else if (action === 'resume-draft') resumeDraft();
+    else if (action === 'add-center') addCenter();
+    else if (action === 'undo') undo();
+    else if (action === 'reset') reset();
+    else if (action === 'complete') complete();
+    else if (action === 'exit-drawing') exitDrawing();
+    else if (action === 'edit-completed') editCompleted();
+    else if (action === 'query-state') queryState();
+  }
+
+  // Wayfarer-side polygon work is intentionally ephemeral.
+  // A fresh page load always starts clean so Bridge never offers a stale resume/send state.
+  clearDraftStorage();
+  points = [];
+  active = false;
+  completed = false;
+  paused = false;
+  draftAvailable = false;
+
+  window.addEventListener(COMMAND_EVENT, handleCommand);
+  window.addEventListener('resize', () => {
+    if (!active) return;
+    bindMap();
+    dispatchState();
+  }, { passive: true });
+
+  window.CampsiteWayfarerPolygonController = Object.freeze({
+    version: VERSION,
+    storageKey: STORAGE_KEY,
+    maxPoints: MAX_POINTS,
+    pointFrom,
+    segmentsIntersect,
+    findSelfIntersections,
+    interactionMode,
+    getState,
+    getPolygon,
+    startNew,
+    resumeDraft,
+    addPoint,
+    addCenter,
+    pointFromClientPosition,
+    undo,
+    reset,
+    complete,
+    exitDrawing,
+    editCompleted,
+    queryState
+  });
+
+  window.setTimeout?.(() => queryState(), 300);
+})();
+===== END FILE: bridge-pc/wayfarer-polygon-controller.js =====
+
+
+===== FILE: bridge-pc/polygon-ui.js =====
+
+(() => {
+  'use strict';
+
+  const VERSION = '0.1.0';
+  const COMMAND_EVENT = 'campsite-bridge-pc:polygon-command';
+  const STATE_EVENT = 'campsite-bridge-pc:polygon-state';
+
+  if (window.__campsiteWm2PolygonUiInstalled) return;
+  window.__campsiteWm2PolygonUiInstalled = true;
+
+  let host = null;
+  let shadow = null;
+  let crosshair = null;
+  let drawingCursorStyle = null;
+  let state = {
+    active: false,
+    completed: false,
+    paused: false,
+    mode: 'pc',
+    pointCount: 0,
+    maxPoints: 30,
+    draftAvailable: false,
+    selfIntersects: false,
+    canComplete: false,
+    canUndo: false,
+    instruction: '',
+    message: ''
+  };
+  const hiddenWayfarerControls = new Map();
+  const suppressedWayfarerPoiLayers = new Map();
+
+  function visibleElement(element) {
+    if (!element?.getBoundingClientRect) return false;
+    const rect = element.getBoundingClientRect();
+    if (rect.width <= 1 || rect.height <= 1 || rect.bottom <= 0 || rect.right <= 0) return false;
+    const style = window.getComputedStyle?.(element);
+    return style?.display !== 'none' && style?.visibility !== 'hidden';
+  }
+
+  function compactControlShell(element) {
+    if (!element?.getBoundingClientRect) return element;
+    let best = element;
+    let node = element.parentElement;
+    for (let depth = 0; depth < 4 && node; depth += 1, node = node.parentElement) {
+      const rect = node.getBoundingClientRect?.();
+      if (!rect) break;
+      if (rect.width > 680 || rect.height > 90) break;
+      if (rect.width >= 80 && rect.height >= 24 && rect.top < 340) best = node;
+    }
+    return best;
+  }
+
+  function findWayfarerDrawingObstructions() {
+    const found = [];
+
+    const searchInput = Array.from(document.querySelectorAll('input')).find(input => {
+      const placeholder = String(input.getAttribute?.('placeholder') || '').trim();
+      return visibleElement(input) && /位置を検索|search/i.test(placeholder);
+    });
+    if (searchInput) found.push(compactControlShell(searchInput));
+
+    const categoryLabels = new Set([
+      'ポケストップ',
+      'ジム',
+      'パワースポット',
+      'PokéStop',
+      'PokeStop',
+      'Gym',
+      'Power Spot',
+      'PowerSpot'
+    ]);
+    for (const element of document.querySelectorAll('button,[role="button"]')) {
+      if (!visibleElement(element)) continue;
+      const text = String(element.textContent || '').replace(/\s+/g, ' ').trim();
+      if (categoryLabels.has(text)) {
+        found.push(element);
+        continue;
+      }
+
+      const label = [
+        text,
+        String(element.getAttribute?.('aria-label') || ''),
+        String(element.getAttribute?.('title') || '')
+      ].join(' ').replace(/\s+/g, ' ').trim();
+
+      if (/(コミュニティ|Community)/i.test(label)) {
+        const rect = element.getBoundingClientRect();
+        const isMapTopControl =
+          rect.top < 340 &&
+          rect.left > 180 &&
+          rect.width >= 70 &&
+          rect.width <= 360 &&
+          rect.height <= 100;
+        if (isMapTopControl) found.push(compactControlShell(element));
+      }
+    }
+
+    if (!found.some(element => {
+      const text = String(element.textContent || '').replace(/\s+/g, ' ').trim();
+      return /(コミュニティ|Community)/i.test(text);
+    })) {
+      try {
+        const result = document.evaluate(
+          "//*[normalize-space(.)='コミュニティ' or normalize-space(.)='Community']",
+          document,
+          null,
+          XPathResult.ORDERED_NODE_SNAPSHOT_TYPE,
+          null
+        );
+        for (let i = 0; i < Math.min(result.snapshotLength, 24); i += 1) {
+          const element = result.snapshotItem(i);
+          if (!visibleElement(element)) continue;
+          const rect = element.getBoundingClientRect();
+          if (
+            rect.top < 340 &&
+            rect.left > 180 &&
+            rect.width >= 40 &&
+            rect.width <= 360 &&
+            rect.height <= 100
+          ) {
+            found.push(compactControlShell(element));
+          }
+        }
+      } catch (_) {}
+    }
+
+    return [...new Set(found.filter(Boolean))];
+  }
+
+  function hideWayfarerControl(element) {
+    if (!element || hiddenWayfarerControls.has(element)) return;
+    hiddenWayfarerControls.set(element, {
+      visibility: element.style.visibility,
+      pointerEvents: element.style.pointerEvents
+    });
+    element.dataset.campsiteWm2Hidden = 'true';
+    element.style.visibility = 'hidden';
+    element.style.pointerEvents = 'none';
+  }
+
+  function restoreWayfarerDrawingControls() {
+    for (const [element, previous] of hiddenWayfarerControls.entries()) {
+      try {
+        element.style.visibility = previous.visibility;
+        element.style.pointerEvents = previous.pointerEvents;
+        delete element.dataset.campsiteWm2Hidden;
+      } catch (_) {}
+    }
+    hiddenWayfarerControls.clear();
+  }
+
+  function findWayfarerPoiInteractionLayers() {
+    const map = mapHost();
+    if (!map?.querySelectorAll) return [];
+    try {
+      return Array.from(map.querySelectorAll('canvas#deckgl-overlay'));
+    } catch (_) {
+      return [];
+    }
+  }
+
+  function suppressWayfarerPoiInteraction() {
+    for (const layer of findWayfarerPoiInteractionLayers()) {
+      if (!layer || suppressedWayfarerPoiLayers.has(layer)) continue;
+      suppressedWayfarerPoiLayers.set(layer, {
+        pointerEvents: layer.style.pointerEvents
+      });
+      layer.dataset.campsiteWm2PoiInteractionSuppressed = 'true';
+      layer.style.pointerEvents = 'none';
+    }
+  }
+
+  function restoreWayfarerPoiInteraction() {
+    for (const [layer, previous] of suppressedWayfarerPoiLayers.entries()) {
+      try {
+        layer.style.pointerEvents = previous.pointerEvents;
+        delete layer.dataset.campsiteWm2PoiInteractionSuppressed;
+      } catch (_) {}
+    }
+    suppressedWayfarerPoiLayers.clear();
+  }
+
+  function syncDrawingCursor() {
+    const drawingPc = state.active === true && state.completed !== true && state.mode === 'pc';
+    if (!drawingPc) {
+      try { drawingCursorStyle?.remove?.(); } catch (_) {}
+      drawingCursorStyle = null;
+      return;
+    }
+    if (drawingCursorStyle?.isConnected) return;
+
+    drawingCursorStyle = document.createElement('style');
+    drawingCursorStyle.id = 'campsite-wm2-drawing-cursor';
+    drawingCursorStyle.textContent =
+      'app-wf-base-map, app-wf-base-map * { cursor: crosshair !important; }';
+    document.documentElement.appendChild(drawingCursorStyle);
+  }
+
+  function syncWayfarerDrawingControls() {
+    const drawing = state.active === true && state.completed !== true;
+    syncDrawingCursor();
+    if (!drawing) {
+      restoreWayfarerDrawingControls();
+      restoreWayfarerPoiInteraction();
+      return;
+    }
+    findWayfarerDrawingObstructions().forEach(hideWayfarerControl);
+    suppressWayfarerPoiInteraction();
+  }
+
+  function mapHost() {
+    return document.querySelector('app-wf-base-map');
+  }
+
+  function send(action) {
+    window.dispatchEvent(new CustomEvent(COMMAND_EVENT, {
+      detail: JSON.stringify({ action, sentAt: new Date().toISOString() })
+    }));
+  }
+
+  function positionCrosshair() {
+    if (!crosshair) return;
+    const map = mapHost();
+    const visible =
+      Boolean(map) &&
+      state.active === true &&
+      state.completed !== true &&
+      state.mode === 'mobile';
+
+    crosshair.hidden = !visible;
+    if (!visible) return;
+
+    const rect = map.getBoundingClientRect();
+    crosshair.style.left = Math.round(rect.left + rect.width / 2) + 'px';
+    crosshair.style.top = Math.round(rect.top + rect.height / 2) + 'px';
+  }
+
+  function createUi() {
+    if (host && document.contains(host)) return;
+
+    host = document.createElement('div');
+    host.id = 'campsite-wm2-polygon-ui';
+    host.style.cssText =
+      'position:fixed;left:50%;bottom:18px;transform:translateX(-50%);' +
+      'z-index:2147483645;width:min(440px,calc(100vw - 24px));pointer-events:auto;';
+
+    shadow = host.attachShadow({ mode: 'open' });
+    shadow.innerHTML = [
+      '<style>',
+      ':host{all:initial}',
+      '.card{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif;',
+      'background:rgba(15,23,42,.96);color:#f8fafc;border:1px solid rgba(148,163,184,.3);',
+      'border-radius:14px;box-shadow:0 10px 32px rgba(2,6,23,.32);padding:10px;display:grid;gap:8px}',
+      '.top{display:flex;align-items:center;justify-content:space-between;gap:10px}',
+      '.title{font:900 13px/1.2 system-ui}.count{font:900 11px/1 system-ui;color:#bbf7d0}',
+      '.instruction{font:700 11px/1.45 system-ui;color:#dbeafe}',
+      '.warning{font:900 11px/1.45 system-ui;color:#fecaca;background:rgba(127,29,29,.45);',
+      'border:1px solid rgba(248,113,113,.45);border-radius:9px;padding:7px 9px}',
+      '.message{font:800 11px/1.45 system-ui;color:#fde68a}',
+      '.row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}',
+      'button{min-height:40px;border:1px solid rgba(148,163,184,.35);border-radius:10px;',
+      'background:rgba(30,41,59,.98);color:#f8fafc;font:900 11px/1.15 system-ui;cursor:pointer;padding:0 9px}',
+      'button:hover{filter:brightness(1.08)}button:disabled{opacity:.42;cursor:not-allowed}',
+      '.primary{border-color:rgba(74,222,128,.6);background:rgba(20,83,45,.98);color:#dcfce7}',
+      '.add{width:100%;border-color:rgba(56,189,248,.62);background:rgba(12,74,110,.98);color:#e0f2fe}',
+      '.done{color:#bbf7d0;font:900 11px/1.4 system-ui}',
+      '[hidden]{display:none!important}',
+      '@media(max-width:620px){.row{grid-template-columns:1fr 1fr}.row .primary{grid-column:1 / -1}}',
+      '</style>',
+      '<div class="card">',
+      '<div id="active">',
+      '<div class="top"><div class="title">📐 設計範囲</div><div id="count" class="count">頂点 0 / 30</div></div>',
+      '<div id="instruction" class="instruction"></div>',
+      '<div id="warning" class="warning" hidden>⚠ 線が交差しています。赤い辺を修正してください。</div>',
+      '<div id="message" class="message" hidden></div>',
+      '<div id="done" class="done" hidden>✅ 範囲を確定しました。</div>',
+      '<button id="addCenter" class="add" type="button" hidden>＋ 頂点を追加</button>',
+      '<button id="exitDrawing" type="button">← Wayfarer通常表示に戻る</button>',
+      '<div class="row">',
+      '<button id="undo" type="button">↶ 1つ戻す</button>',
+      '<button id="reset" type="button">最初からやり直す</button>',
+      '<button id="complete" class="primary" type="button">範囲を確定</button>',
+      '</div>',
+      '</div>',
+      '</div>'
+    ].join('');
+
+    shadow.getElementById('addCenter').addEventListener('click', () => send('add-center'));
+    shadow.getElementById('exitDrawing').addEventListener('click', () => send('exit-drawing'));
+    shadow.getElementById('undo').addEventListener('click', () => send('undo'));
+    shadow.getElementById('reset').addEventListener('click', () => {
+      if (!window.confirm('範囲を最初からやり直しますか？')) return;
+      send('reset');
+    });
+    shadow.getElementById('complete').addEventListener('click', () => send('complete'));
+
+    document.documentElement.appendChild(host);
+
+    crosshair = document.createElement('div');
+    crosshair.id = 'campsite-wm2-crosshair';
+    crosshair.setAttribute('aria-hidden', 'true');
+    crosshair.style.cssText =
+      'position:fixed;width:34px;height:34px;margin:-17px 0 0 -17px;z-index:2147483644;' +
+      'pointer-events:none;display:grid;place-items:center;color:#0f172a;font:900 30px/34px system-ui;' +
+      'text-shadow:0 0 2px white,0 0 5px white;';
+    crosshair.textContent = '+';
+    crosshair.hidden = true;
+    document.documentElement.appendChild(crosshair);
+  }
+
+  function render() {
+    const map = mapHost();
+    if (!map) {
+      restoreWayfarerDrawingControls();
+      restoreWayfarerPoiInteraction();
+      try { drawingCursorStyle?.remove?.(); } catch (_) {}
+      drawingCursorStyle = null;
+      if (host) host.style.display = 'none';
+      if (crosshair) crosshair.hidden = true;
+      return;
+    }
+
+    createUi();
+    host.style.display = state.active === true ? '' : 'none';
+
+    const count = shadow.getElementById('count');
+    const instruction = shadow.getElementById('instruction');
+    const warning = shadow.getElementById('warning');
+    const message = shadow.getElementById('message');
+    const done = shadow.getElementById('done');
+    const addCenter = shadow.getElementById('addCenter');
+    const undo = shadow.getElementById('undo');
+    const reset = shadow.getElementById('reset');
+    const complete = shadow.getElementById('complete');
+
+    if (state.active) {
+      count.textContent = '頂点 ' + Number(state.pointCount || 0) + ' / ' + Number(state.maxPoints || 30);
+      instruction.textContent = String(state.instruction || '');
+      warning.hidden = state.selfIntersects !== true;
+      message.textContent = String(state.message || '');
+      message.hidden = !state.message;
+      done.hidden = state.completed !== true;
+      addCenter.hidden = !(state.mode === 'mobile' && state.completed !== true);
+      undo.disabled = state.canUndo !== true;
+      reset.disabled = false;
+      complete.disabled = state.canComplete !== true;
+      complete.textContent = state.completed ? '確定済み' : '範囲を確定';
+    }
+
+    syncWayfarerDrawingControls();
+    positionCrosshair();
+  }
+
+  window.addEventListener(STATE_EVENT, event => {
+    let next = null;
+    try { next = JSON.parse(String(event?.detail || '{}')); } catch (_) { return; }
+    if (!next || typeof next !== 'object') return;
+    state = { ...state, ...next };
+    render();
+  });
+
+  window.addEventListener('resize', () => {
+    positionCrosshair();
+  }, { passive: true });
+
+  const observer = new MutationObserver(() => render());
+  observer.observe(document.documentElement, { childList: true, subtree: true });
+
+  createUi();
+  render();
+  send('query-state');
+
+  window.CampsiteWm2PolygonUi = Object.freeze({
+    version: VERSION,
+    query() { send('query-state'); },
+    syncWayfarerDrawingControls,
+    restoreWayfarerDrawingControls
+  });
+})();
+===== END FILE: bridge-pc/polygon-ui.js =====
+
+
+===== FILE: js/bridge-wayfarer-map-adapter.js =====
+
+(() => {
+  'use strict';
+
+  const VERSION = '1.0.0';
+  const HOST_SELECTOR = 'app-wf-base-map';
+  const CONTEXT_ENTRY_LIMIT = 128;
+
+  if (window.__campsiteBridgeWayfarerMapAdapterInstalled) return;
+  window.__campsiteBridgeWayfarerMapAdapterInstalled = true;
+
+  const diagnostics = {
+    searches: 0,
+    hostsFound: 0,
+    contextEntriesInspected: 0,
+    componentMatches: 0,
+    componentGetMapErrors: 0,
+    mapMatches: 0,
+    failures: 0,
+    lastResolution: 'not-run'
+  };
+
+  function looksLikeGoogleMap(value) {
+    return Boolean(
+      value &&
+      typeof value === 'object' &&
+      typeof value.getBounds === 'function' &&
+      typeof value.getCenter === 'function' &&
+      typeof value.getZoom === 'function' &&
+      typeof value.getDiv === 'function' &&
+      typeof value.addListener === 'function'
+    );
+  }
+
+  function looksLikeMapViewComponent(value) {
+    return Boolean(
+      value &&
+      (typeof value === 'object' || typeof value === 'function') &&
+      typeof value.getMap === 'function' &&
+      typeof value.setCustomLayers === 'function'
+    );
+  }
+
+  function readContext(host, limit = CONTEXT_ENTRY_LIMIT) {
+    const context = host?.__ngContext__;
+    if (!context || typeof context.length !== 'number') return [];
+    const safeLimit = Math.max(0, Math.min(Number(limit) || 0, context.length));
+    const entries = [];
+    for (let index = 0; index < safeLimit; index += 1) {
+      entries.push(context[index]);
+    }
+    return entries;
+  }
+
+  function findMapViewComponent(host) {
+    if (!host) return null;
+    for (const entry of readContext(host)) {
+      diagnostics.contextEntriesInspected += 1;
+      if (!looksLikeMapViewComponent(entry)) continue;
+      diagnostics.componentMatches += 1;
+      return entry;
+    }
+    return null;
+  }
+
+  function findMapContext(root = document) {
+    diagnostics.searches += 1;
+
+    let host = null;
+    try {
+      host = root?.querySelector?.(HOST_SELECTOR) || null;
+    } catch (_) {
+      host = null;
+    }
+
+    if (!host) {
+      diagnostics.failures += 1;
+      diagnostics.lastResolution = 'host-not-found';
+      return null;
+    }
+    diagnostics.hostsFound += 1;
+
+    const component = findMapViewComponent(host);
+    if (!component) {
+      diagnostics.failures += 1;
+      diagnostics.lastResolution = 'component-not-found';
+      return null;
+    }
+
+    let map = null;
+    try {
+      map = component.getMap();
+    } catch (_) {
+      diagnostics.componentGetMapErrors += 1;
+      diagnostics.failures += 1;
+      diagnostics.lastResolution = 'component-get-map-error';
+      return null;
+    }
+
+    if (!looksLikeGoogleMap(map)) {
+      diagnostics.failures += 1;
+      diagnostics.lastResolution = 'invalid-map';
+      return null;
+    }
+
+    diagnostics.mapMatches += 1;
+    diagnostics.lastResolution = 'mapview-component';
+    return {
+      map,
+      host,
+      component,
+      surface: 'mapview',
+      adapter: 'wfmm-mapview-component',
+      resolution: 'component',
+      capabilities: {
+        customLayers: true
+      }
+    };
+  }
+
+  function findMap(root = document) {
+    return findMapContext(root)?.map || null;
+  }
+
+  function getDiagnostics() {
+    return {
+      version: VERSION,
+      hostSelector: HOST_SELECTOR,
+      contextEntryLimit: CONTEXT_ENTRY_LIMIT,
+      ...diagnostics
+    };
+  }
+
+  window.CampsiteBridgeWayfarerMapAdapter = Object.freeze({
+    version: VERSION,
+    hostSelector: HOST_SELECTOR,
+    contextEntryLimit: CONTEXT_ENTRY_LIMIT,
+    looksLikeGoogleMap,
+    looksLikeMapViewComponent,
+    findMapViewComponent,
+    findMapContext,
+    findMap,
+    getDiagnostics
+  });
+})();
+
+===== END FILE: js/bridge-wayfarer-map-adapter.js =====
+
+
+===== FILE: js/bridge-wayfarer-display-owner.js =====
+
+(() => {
+  'use strict';
+
+  const VERSION = '1.0.0';
+  const DECK_SELECTOR = 'canvas#deckgl-overlay';
+  const OWNERS = Object.freeze({
+    WAYFARER: 'WAYFARER',
+    WFMM: 'WFMM',
+    NONE: 'NONE'
+  });
+
+  if (window.__campsiteBridgeWayfarerDisplayOwnerInstalled) return;
+  window.__campsiteBridgeWayfarerDisplayOwnerInstalled = true;
+
+  let lastDiagnostics = null;
+
+  function mapAdapterApi() {
+    return window.CampsiteBridgeWayfarerMapAdapter || null;
+  }
+
+  function looksLikeGoogleMap(value) {
+    const adapter = mapAdapterApi();
+    if (typeof adapter?.looksLikeGoogleMap === 'function') {
+      return adapter.looksLikeGoogleMap(value);
+    }
+    return Boolean(
+      value &&
+      typeof value === 'object' &&
+      typeof value.getBounds === 'function' &&
+      typeof value.getCenter === 'function' &&
+      typeof value.getZoom === 'function' &&
+      typeof value.getDiv === 'function' &&
+      typeof value.addListener === 'function'
+    );
+  }
+
+  function resolveWayfarerContext(root = document) {
+    const adapter = mapAdapterApi();
+    if (typeof adapter?.findMapContext !== 'function') return null;
+    try {
+      return adapter.findMapContext(root) || null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function resolveWfmmMap() {
+    const wfmm = window.WFMM;
+    if (!wfmm || typeof wfmm?.map?.get !== 'function') {
+      return { present: Boolean(wfmm), map: null, error: false };
+    }
+    try {
+      const map = wfmm.map.get();
+      return {
+        present: true,
+        map: looksLikeGoogleMap(map) ? map : null,
+        error: false
+      };
+    } catch (_) {
+      return { present: true, map: null, error: true };
+    }
+  }
+
+  function findDeckCanvases(map) {
+    if (!looksLikeGoogleMap(map)) return [];
+    let mapDiv = null;
+    try { mapDiv = map.getDiv(); } catch (_) { return []; }
+    if (!mapDiv || typeof mapDiv.querySelectorAll !== 'function') return [];
+    try {
+      return Array.from(mapDiv.querySelectorAll(DECK_SELECTOR));
+    } catch (_) {
+      return [];
+    }
+  }
+
+  function pointerEventsOf(canvas) {
+    try {
+      if (typeof window.getComputedStyle === 'function') {
+        return String(window.getComputedStyle(canvas)?.pointerEvents || '');
+      }
+    } catch (_) {}
+    try { return String(canvas?.style?.pointerEvents || ''); } catch (_) { return ''; }
+  }
+
+  function connectionState(node) {
+    if (!node || typeof node !== 'object') return null;
+    return typeof node.isConnected === 'boolean' ? node.isConnected : null;
+  }
+
+  function inspectDeck(map) {
+    const canvases = findDeckCanvases(map);
+    let interactiveCount = 0;
+    let passiveCount = 0;
+    let unknownPointerEventsCount = 0;
+
+    const items = canvases.map((canvas, index) => {
+      const pointerEvents = pointerEventsOf(canvas);
+      if (pointerEvents === 'none') passiveCount += 1;
+      else if (pointerEvents) interactiveCount += 1;
+      else unknownPointerEventsCount += 1;
+      return {
+        index,
+        id: String(canvas?.id || ''),
+        pointerEvents: pointerEvents || null,
+        connected: connectionState(canvas)
+      };
+    });
+
+    return {
+      selector: DECK_SELECTOR,
+      canvasCount: canvases.length,
+      interactiveCount,
+      passiveCount,
+      unknownPointerEventsCount,
+      items
+    };
+  }
+
+  function ownerFrom(wayfarerMap, wfmmMap) {
+    if (looksLikeGoogleMap(wfmmMap)) return OWNERS.WFMM;
+    if (looksLikeGoogleMap(wayfarerMap)) return OWNERS.WAYFARER;
+    return OWNERS.NONE;
+  }
+
+  function resolve(root = document) {
+    const wayfarerContext = resolveWayfarerContext(root);
+    const wayfarerMap = looksLikeGoogleMap(wayfarerContext?.map) ? wayfarerContext.map : null;
+    const wfmm = resolveWfmmMap();
+    const wfmmMap = wfmm.map;
+    const owner = ownerFrom(wayfarerMap, wfmmMap);
+    const map = owner === OWNERS.WFMM ? wfmmMap : wayfarerMap;
+    const deck = inspectDeck(map);
+
+    let mapDiv = null;
+    try { mapDiv = map?.getDiv?.() || null; } catch (_) { mapDiv = null; }
+
+    const diagnostics = {
+      version: VERSION,
+      owner,
+      readOnly: true,
+      map: {
+        resolved: Boolean(map),
+        wayfarerResolved: Boolean(wayfarerMap),
+        wfmmPresent: wfmm.present,
+        wfmmResolved: Boolean(wfmmMap),
+        wfmmGetError: wfmm.error,
+        sameMap: wayfarerMap && wfmmMap ? wayfarerMap === wfmmMap : null,
+        hostConnected: connectionState(wayfarerContext?.host),
+        mapDivConnected: connectionState(mapDiv),
+        adapter: wayfarerContext?.adapter || null,
+        surface: wayfarerContext?.surface || null
+      },
+      deck
+    };
+
+    lastDiagnostics = diagnostics;
+    return {
+      owner,
+      map,
+      wayfarerContext,
+      wayfarerMap,
+      wfmmMap,
+      deckCanvases: findDeckCanvases(map),
+      diagnostics
+    };
+  }
+
+  function diagnose(root = document) {
+    return resolve(root).diagnostics;
+  }
+
+  function getLastDiagnostics() {
+    return lastDiagnostics ? JSON.parse(JSON.stringify(lastDiagnostics)) : null;
+  }
+
+  window.CampsiteBridgeWayfarerDisplayOwner = Object.freeze({
+    version: VERSION,
+    owners: OWNERS,
+    deckSelector: DECK_SELECTOR,
+    looksLikeGoogleMap,
+    resolveWayfarerContext,
+    resolveWfmmMap,
+    findDeckCanvases,
+    inspectDeck,
+    ownerFrom,
+    resolve,
+    diagnose,
+    getLastDiagnostics
+  });
+})();
+
+===== END FILE: js/bridge-wayfarer-display-owner.js =====
+
+
+===== FILE: bridge-pc/page-collector.js =====
+
+(() => {
+  'use strict';
+
+  const VERSION = '0.1.0';
+  const MAP_DATA_PATH = '/api/v1/vault/mapview/gcs';
+  const REQUEST_EVENT = 'campsite-bridge-pc:collect';
+  const RESPONSE_EVENT = 'campsite-bridge-pc:response';
+  const START_EVENT = 'campsite-bridge-pc:start';
+  const STATUS_EVENT = 'campsite-bridge-pc:status';
+  const RECEIVER_ORIGIN = 'https://kaityo1221.github.io';
+  const RECEIVER_BASE = RECEIVER_ORIGIN + '/Campsite-Design-Tool-JP/bridge-receiver.html';
+  const READY_TIMEOUT_MS = 12000;
+  const ACK_TIMEOUT_MS = 6500;
+
+  if (window.__campsiteBridgePcCollectorInstalled) return;
+  window.__campsiteBridgePcCollectorInstalled = true;
+
+  function parserApi() {
+    const parser = window.CampsiteBridgePoiParser;
+    if (!parser?.parsePoi || !parser?.parsePayload) {
+      throw new Error('Campsite Bridge POI Parserを読み込めませんでした。拡張機能を再読み込みしてください。');
+    }
+    return parser;
+  }
+
+  function classifierApi() {
+    const classifier = window.CampsiteBridgePoiClassifier;
+    if (!classifier?.classifyPoi || !classifier?.run) {
+      throw new Error('Campsite Bridge POI分類Engineを読み込めませんでした。拡張機能を再読み込みしてください。');
+    }
+    return classifier;
+  }
+
+  function referenceLayerApi() {
+    const layer = window.CampsiteBridgePoiReferenceLayer;
+    if (!layer?.splitClassified) {
+      throw new Error('Campsite Bridge Reference Layerを読み込めませんでした。拡張機能を再読み込みしてください。');
+    }
+    return layer;
+  }
+
+  function diagnosticsApi() {
+    const diagnostics = window.CampsiteBridgePoiDiagnostics;
+    if (!diagnostics?.build || !diagnostics?.summary) {
+      throw new Error('Campsite Bridge POI診断を読み込めませんでした。拡張機能を再読み込みしてください。');
+    }
+    return diagnostics;
+  }
+
+  function exporterApi() {
+    const exporter = window.CampsiteBridgeV1Exporter;
+    if (!exporter?.makePayload || !exporter?.exportPois || !exporter?.exportReferencePois) {
+      throw new Error('Campsite Bridge V1出力Adapterを読み込めませんでした。拡張機能を再読み込みしてください。');
+    }
+    return exporter;
+  }
+
+  function mapAdapterApi() {
+    const adapter = window.CampsiteBridgeWayfarerMapAdapter;
+    if (!adapter?.findMap || !adapter?.findMapContext) return null;
+    return adapter;
+  }
+
+  function acquisitionEngineApi() {
+    const engine = window.CampsiteWayfarerAcquisitionEngine;
+    if (!engine?.createPlan || !engine?.executePlan) {
+      throw new Error('Wayfarer取得Engineを読み込めませんでした。拡張機能を再読み込みしてください。');
+    }
+    return engine;
+  }
+
+  function polygonZoneApi() {
+    const zone = window.CampsiteWayfarerObservationZone;
+    if (!zone?.classifyPois) {
+      throw new Error('設計範囲のPOI判定Engineを読み込めませんでした。拡張機能を再読み込みしてください。');
+    }
+    return zone;
+  }
+
+  function numberFrom(value) {
+    const num = Number(value);
+    return Number.isFinite(num) ? num : null;
+  }
+
+  function coordinate(point, key) {
+    if (!point) return null;
+    try {
+      const value = point[key];
+      return numberFrom(typeof value === 'function' ? value.call(point) : value);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function findMap() {
+    const adapter = mapAdapterApi();
+    if (!adapter) return null;
+    try {
+      return adapter.findMap(document);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function serializeBounds(map) {
+    if (!map || typeof map.getBounds !== 'function') return null;
+    const bounds = map.getBounds();
+    if (!bounds) return null;
+
+    const sw = bounds.getSouthWest?.();
+    const ne = bounds.getNorthEast?.();
+    const swLat = coordinate(sw, 'lat');
+    const swLng = coordinate(sw, 'lng');
+    const neLat = coordinate(ne, 'lat');
+    const neLng = coordinate(ne, 'lng');
+    const zoom = numberFrom(map.getZoom?.());
+
+    if (![swLat, swLng, neLat, neLng].every(Number.isFinite)) return null;
+
+    let centerLat = (swLat + neLat) / 2;
+    let centerLng = (swLng + neLng) / 2;
+    try {
+      const center = map.getCenter?.();
+      const mapLat = coordinate(center, 'lat');
+      const mapLng = coordinate(center, 'lng');
+      if (Number.isFinite(mapLat)) centerLat = mapLat;
+      if (Number.isFinite(mapLng)) centerLng = mapLng;
+    } catch (_) {}
+
+    return {
+      swLat,
+      swLng,
+      neLat,
+      neLng,
+      zoom: Number.isFinite(zoom) ? zoom : null,
+      center: { lat: centerLat, lng: centerLng }
+    };
+  }
+
+  function normalizePoi(raw) {
+    const parsed = parserApi().parsePoi(raw);
+    if (!parsed?.ok) return null;
+    const classified = classifierApi().classifyPoi(parsed.poi);
+    const routed = referenceLayerApi().splitClassified([classified]);
+    if (routed.activeEnginePois.length !== 1) return null;
+    return exporterApi().normalizePoi(routed.activeEnginePois[0]);
+  }
+
+  function parseMapData(payload) {
+    return parserApi().parsePayload(payload);
+  }
+
+  function classifyMapData(payload) {
+    return classifierApi().run(parseMapData(payload));
+  }
+
+  function normalizeMapData(payload) {
+    const classified = classifyMapData(payload);
+    const routed = referenceLayerApi().splitClassified(classified.pois);
+    return exporterApi().exportPois({ enginePois: routed.activeEnginePois });
+  }
+
+  function buildDiagnosticReport(parsed, classified) {
+    return diagnosticsApi().build(parsed, classified);
+  }
+
+  function selectedBounds(bounds) {
+    if (!bounds) return null;
+    return {
+      center: {
+        lat: Number(bounds.center?.lat),
+        lng: Number(bounds.center?.lng)
+      },
+      zoom: Number.isFinite(Number(bounds.zoom)) ? Number(bounds.zoom) : null,
+      sw: { lat: bounds.swLat, lng: bounds.swLng },
+      ne: { lat: bounds.neLat, lng: bounds.neLng }
+    };
+  }
+
+  async function fetchGcsTile(tile) {
+    const response = await fetch(MAP_DATA_PATH + '?' + tile.query, {
+      credentials: 'include',
+      cache: 'no-store'
+    });
+    if (!response.ok) {
+      throw new Error('Wayfarer Mapデータ取得に失敗しました (' + response.status + ')');
+    }
+    return response.json();
+  }
+
+  async function collectPolygon(polygon, options = {}) {
+    const acquisitionEngine = acquisitionEngineApi();
+    const plan = acquisitionEngine.createPlan(polygon, {
+      bufferMeters: Number(options.bufferMeters ?? acquisitionEngine.defaultBufferMeters ?? 200),
+      maxTileMeters: options.maxTileMeters,
+      cellLevel: 14
+    });
+
+    const executionOptions = {};
+    if (typeof options.responseVerifier === 'function') {
+      executionOptions.responseVerifier = options.responseVerifier;
+    }
+
+    const acquisition = await acquisitionEngine.executePlan(
+      plan,
+      fetchGcsTile,
+      executionOptions
+    );
+
+    const parsed = parseMapData(acquisition.mergedPayload);
+    const classified = classifierApi().run(parsed);
+    const routed = referenceLayerApi().splitClassified(classified.pois);
+    const activePois = exporterApi().exportPois({ enginePois: routed.activeEnginePois });
+    const diagnosticReport = buildDiagnosticReport(parsed, classified);
+
+    return {
+      pois: activePois,
+      referencePois: routed.referencePois,
+      enginePois: classified.pois,
+      diagnostics: parsed.diagnostics,
+      classificationDiagnostics: classified.classificationDiagnostics,
+      diagnosticReport,
+      engineStats: classified.diagnostics,
+      parserStats: {
+        sourceCount: parsed.sourceCount,
+        parsedCount: parsed.parsedCount,
+        duplicateCount: parsed.duplicateCount,
+        failedCount: parsed.failedCount
+      },
+      selectedBounds: null,
+      acquisition: {
+        engineVersion: acquisition.version,
+        bufferMeters: plan.bufferMeters,
+        cellLevel: plan.cellLevel,
+        acquisitionBounds: plan.acquisitionBounds,
+        tileCount: plan.tiles.length,
+        geometryCoverageComplete: acquisition.geometryCoverageComplete,
+        transportComplete: acquisition.transportComplete,
+        sourceComplete: acquisition.sourceComplete,
+        coverageComplete: acquisition.coverageComplete,
+        coverageStatus: acquisition.coverageStatus,
+        requests: acquisition.results
+      },
+      sourcePath: MAP_DATA_PATH
+    };
+  }
+
+  async function collect() {
+    const map = findMap();
+    if (!map) throw new Error('Wayfarer Mapを確認できませんでした。');
+
+    const bounds = serializeBounds(map);
+    if (!bounds) throw new Error('Wayfarer Mapの表示範囲を取得できませんでした。');
+
+    const query =
+      'ne=(' + bounds.neLat + ',' + bounds.neLng + ')' +
+      '&sw=(' + bounds.swLat + ',' + bounds.swLng + ')' +
+      '&cellLevel=14';
+
+    const response = await fetch(MAP_DATA_PATH + '?' + query, {
+      credentials: 'include',
+      cache: 'no-store'
+    });
+    if (!response.ok) {
+      throw new Error('Wayfarer Mapデータ取得に失敗しました (' + response.status + ')');
+    }
+
+    const payload = await response.json();
+    const parsed = parseMapData(payload);
+    const classified = classifierApi().run(parsed);
+    const routed = referenceLayerApi().splitClassified(classified.pois);
+    const activePois = exporterApi().exportPois({ enginePois: routed.activeEnginePois });
+    const diagnosticReport = buildDiagnosticReport(parsed, classified);
+
+    return {
+      pois: activePois,
+      referencePois: routed.referencePois,
+      enginePois: classified.pois,
+      diagnostics: parsed.diagnostics,
+      classificationDiagnostics: classified.classificationDiagnostics,
+      diagnosticReport,
+      engineStats: classified.diagnostics,
+      parserStats: {
+        sourceCount: parsed.sourceCount,
+        parsedCount: parsed.parsedCount,
+        duplicateCount: parsed.duplicateCount,
+        failedCount: parsed.failedCount
+      },
+      selectedBounds: selectedBounds(bounds),
+      sourcePath: MAP_DATA_PATH
+    };
+  }
+
+  function dispatchResponse(detail) {
+    window.dispatchEvent(new CustomEvent(RESPONSE_EVENT, {
+      detail: JSON.stringify(detail)
+    }));
+  }
+
+  function dispatchStatus(detail) {
+    window.dispatchEvent(new CustomEvent(STATUS_EVENT, {
+      detail: JSON.stringify(detail)
+    }));
+  }
+
+  function createId(prefix) {
+    try {
+      if (typeof crypto?.randomUUID === 'function') return prefix + '-' + crypto.randomUUID();
+    } catch (_) {}
+    return prefix + '-' + Date.now() + '-' + Math.random().toString(16).slice(2);
+  }
+
+  function writePreparingPage(popup) {
+    try {
+      popup.document.open();
+      popup.document.write(
+        '<!doctype html><meta charset="utf-8"><title>Campsite Bridge</title>' +
+        '<body style="margin:0;background:#020617;color:#e2e8f0;font-family:-apple-system,BlinkMacSystemFont,&quot;Segoe UI&quot;,sans-serif;display:grid;place-items:center;min-height:100vh;padding:24px;text-align:center">' +
+        '<div><strong style="display:block;font-size:18px">🔐 Campsite Bridge</strong>' +
+        '<small style="display:block;margin-top:8px;color:#94a3b8;line-height:1.7">Campsiteを準備しています…</small></div></body>'
+      );
+      popup.document.close();
+    } catch (_) {}
+  }
+
+  function currentCompletedPolygon() {
+    try {
+      const api = window.CampsiteWayfarerPolygonController;
+      const state = api?.getState?.();
+      const polygon = api?.getPolygon?.();
+      if (state?.active === true || state?.completed !== true) return null;
+      if (!Array.isArray(polygon) || polygon.length < 3 || polygon.length > 30) return null;
+      return polygon;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  async function confirmedPolygonSnapshotForBridge(polygon) {
+    const collected = await collectPolygon(polygon, {
+      bufferMeters: 200,
+      maxTileMeters: 500
+    });
+    const zoning = polygonZoneApi().classifyPois(polygon, collected.enginePois);
+    const observedAt = new Date().toISOString();
+    const wayfarerObservation = {
+      version: '0.2.0',
+      snapshotId: 'wm3:' + observedAt,
+      observedAt,
+      polygon: zoning.polygon,
+      counts: zoning.counts,
+      zones: zoning.zones,
+      visibleTotal: zoning.visibleTotal,
+      retainedTotal: zoning.retainedTotal,
+      excludedCount: zoning.excludedCount,
+      outsideCount: zoning.outsideCount,
+      canProceed: zoning.visibleTotal > 0,
+      acquisition: {
+        engineVersion: String(collected?.acquisition?.engineVersion || ''),
+        bufferMeters: Number(collected?.acquisition?.bufferMeters ?? 200),
+        referenceMeters: 100,
+        reserveMeters: 200,
+        cellLevel: Number(collected?.acquisition?.cellLevel || 0),
+        acquisitionBounds: collected?.acquisition?.acquisitionBounds
+          ? JSON.parse(JSON.stringify(collected.acquisition.acquisitionBounds))
+          : null,
+        tileCount: Number(collected?.acquisition?.tileCount || 0),
+        geometryCoverageComplete: collected?.acquisition?.geometryCoverageComplete === true,
+        transportComplete: collected?.acquisition?.transportComplete === true,
+        coverageComplete: collected?.acquisition?.coverageComplete === true,
+        coverageStatus: String(collected?.acquisition?.coverageStatus || 'unverified'),
+        sourceComplete: collected?.acquisition?.sourceComplete ?? null
+      }
+    };
+    return {
+      // Editable Bridge POIs stay limited to the confirmed design polygon.
+      // REFERENCE_100 / RESERVE_200 travel only inside the immutable observation.
+      enginePois: zoning.zones.interior,
+      referencePois: [],
+      selectedBounds: null,
+      diagnosticReport: collected.diagnosticReport,
+      acquisition: collected.acquisition,
+      wayfarerObservation
+    };
+  }
+
+  function makePayload(snapshot, handshakeId) {
+    return exporterApi().makePayload(snapshot, handshakeId, {
+      bridgeVersion: VERSION,
+      autoContinue: true
+    });
+  }
+
+  function handoffToReceiver(popup, payload, handshakeId) {
+    return new Promise((resolve, reject) => {
+      let readyTimer = null;
+      let ackTimer = null;
+      const resendTimers = [];
+
+      const cleanup = () => {
+        clearTimeout(readyTimer);
+        clearTimeout(ackTimer);
+        resendTimers.splice(0).forEach(clearTimeout);
+        window.removeEventListener('message', onMessage);
+      };
+
+      const fail = message => {
+        cleanup();
+        reject(new Error(message));
+      };
+
+      const sendPayload = () => {
+        try { popup.postMessage(payload, RECEIVER_ORIGIN); }
+        catch (_) {}
+      };
+
+      const onMessage = event => {
+        if (event.origin !== RECEIVER_ORIGIN) return;
+        if (event.source !== popup) return;
+        const data = event.data || {};
+        if (String(data.handshakeId || '') !== handshakeId) return;
+
+        if (data.type === 'CAMPSITE_BRIDGE_READY_V1') {
+          clearTimeout(readyTimer);
+          sendPayload();
+          resendTimers.push(setTimeout(sendPayload, 800));
+          resendTimers.push(setTimeout(sendPayload, 1800));
+          clearTimeout(ackTimer);
+          ackTimer = setTimeout(() => {
+            fail('Campsiteから受信確認が返りませんでした。もう一度お試しください。');
+          }, ACK_TIMEOUT_MS);
+          return;
+        }
+
+        if (data.type === 'CAMPSITE_BRIDGE_ACK_V1') {
+          if (data.accepted !== true) {
+            fail('CampsiteがPOIを受け付けられませんでした。Wayfarer Mapを更新して再試行してください。');
+            return;
+          }
+          cleanup();
+          resolve({
+            count: Number(data.count || 0),
+            activeCount: Number(data.activeCount ?? data.count ?? 0),
+            sourceCount: Number(data.sourceCount || payload.pois.length || 0)
+          });
+        }
+      };
+
+      window.addEventListener('message', onMessage);
+      readyTimer = setTimeout(() => {
+        fail('Campsite Bridge Receiverへ接続できませんでした。ポップアップ設定を確認して再試行してください。');
+      }, READY_TIMEOUT_MS);
+
+      const receiverUrl =
+        RECEIVER_BASE +
+        '?campsiteBridgeDev=1&handshake=' +
+        encodeURIComponent(handshakeId);
+
+      try { popup.location.href = receiverUrl; }
+      catch (_) { fail('Campsite Bridge Receiverを開けませんでした。'); }
+    });
+  }
+
+  async function startBridge() {
+    const polygon = currentCompletedPolygon();
+    if (!polygon) {
+      dispatchStatus({
+        state: 'error',
+        code: 'polygon-required',
+        message: '先にBridgeから設計範囲を確定してください。'
+      });
+      return;
+    }
+
+    const handshakeId = createId('pc');
+    let popup = null;
+    let diagnosticReport = null;
+
+    try {
+      popup = window.open('about:blank', 'CampsiteBridgeReceiver_' + handshakeId, 'popup,width=560,height=820');
+    } catch (_) {}
+
+    if (!popup) {
+      dispatchStatus({
+        state: 'error',
+        code: 'popup-blocked',
+        message: 'ポップアップがブロックされました。Wayfarerでポップアップを許可して再試行してください。'
+      });
+      return;
+    }
+
+    writePreparingPage(popup);
+    dispatchStatus({ state: 'busy', message: '設計範囲と外周200mを確認しています…', diagnosticReport: null });
+
+    try {
+      const snapshot = await confirmedPolygonSnapshotForBridge(polygon);
+      diagnosticReport = snapshot.diagnosticReport;
+      const payload = makePayload(snapshot, handshakeId);
+      const pois = payload.pois;
+      if (!pois.length) {
+        try { popup.close(); } catch (_) {}
+        throw new Error('POIを取得できませんでした。Wayfarer Mapを表示してからもう一度お試しください。');
+      }
+
+      dispatchStatus({
+        state: 'busy',
+        count: pois.length,
+        diagnosticReport,
+        message: pois.length.toLocaleString('ja-JP') + '件をCampsiteへ送信しています…'
+      });
+
+      const result = await handoffToReceiver(popup, payload, handshakeId);
+
+      dispatchStatus({
+        state: 'success',
+        count: result.activeCount,
+        sourceCount: result.sourceCount,
+        diagnosticReport,
+        message: result.activeCount.toLocaleString('ja-JP') + '件をCampsiteへ渡しました。Wayfarerはこのまま使えます。'
+      });
+    } catch (error) {
+      dispatchStatus({
+        state: 'error',
+        diagnosticReport,
+        message: String(error?.message || error || 'Bridge送信に失敗しました。')
+      });
+    }
+  }
+
+  window.addEventListener(START_EVENT, () => {
+    void startBridge();
+  });
+
+  window.addEventListener(REQUEST_EVENT, event => {
+    let requestId = '';
+    try {
+      requestId = String(JSON.parse(String(event.detail || '{}')).requestId || '');
+    } catch (_) {}
+    if (!requestId) return;
+
+    collect()
+      .then(result => dispatchResponse({
+        requestId,
+        ok: true,
+        ...result
+      }))
+      .catch(error => dispatchResponse({
+        requestId,
+        ok: false,
+        error: String(error?.message || error || 'POI取得に失敗しました。')
+      }));
+  });
+
+  window.CampsiteBridgePcCollector = Object.freeze({
+    version: VERSION,
+    mapDataPath: MAP_DATA_PATH,
+    findMap,
+    serializeBounds,
+    normalizePoi,
+    normalizeMapData,
+    parseMapData,
+    classifyMapData,
+    buildDiagnosticReport,
+    makePayload,
+    collectPolygon,
+    currentCompletedPolygon,
+    confirmedPolygonSnapshotForBridge,
+    collect,
+    startBridge
+  });
+})();
+
+===== END FILE: bridge-pc/page-collector.js =====
+
+
+===== FILE: dist/bridge-shortcut/1.0.0/runtime.part-06z.iphone-recovery.js =====
+
+    ...(() => {
+      // iPhone/Safari recovery layer, data-only edition.
+      // Keep GCS acquisition/recovery while retiring Bridge-owned map visuals.
+      const IPHONE_GCS_PATH = '/api/v1/vault/mapview/gcs';
+      let visiblePoiRefreshTimer = null;
+      let visiblePoiRefreshInFlight = false;
+      let visiblePoiRefreshPending = false;
+      let lastVisiblePoiBoundsKey = '';
+      let performanceReplayInFlight = false;
+      let lastPerformanceGcsUrl = '';
+      let latestRangeBounds = null;
+      let latestRangeUrl = '';
+      let latestRangePois = new Map();
+      const mapIdleListeners = new Map();
+
+      function findMapFromAngular() {
+        try {
+          const adapterMap = window.CampsiteBridgeWayfarerMapAdapter?.findMap?.();
+          if (looksLikeGoogleMap(adapterMap)) return adapterMap;
+        } catch (_) {}
+
+        const host = document.querySelector('app-wf-base-map');
+        const context = host?.__ngContext__;
+        if (!context || typeof context.length !== 'number') return null;
+
+        const limit = Math.min(context.length, 128);
+        for (let index = 0; index < limit; index += 1) {
+          const component = context[index];
+          if (!component || (typeof component !== 'object' && typeof component !== 'function')) continue;
+          if (typeof component.getMap !== 'function' || typeof component.setCustomLayers !== 'function') continue;
+          try {
+            const map = component.getMap();
+            if (looksLikeGoogleMap(map)) return map;
+          } catch (_) {}
+        }
+        return null;
+      }
+
+      function numberFromMapValue(value) {
+        const number = Number(value);
+        return Number.isFinite(number) ? number : null;
+      }
+
+      function coordinateFromMapPoint(point, key) {
+        if (!point) return null;
+        try {
+          const value = point[key];
+          return numberFromMapValue(typeof value === 'function' ? value.call(point) : value);
+        } catch (_) {
+          return null;
+        }
+      }
+
+      function currentMapBoundsSnapshot(map) {
+        if (!looksLikeGoogleMap(map) || typeof map.getBounds !== 'function') return null;
+        let bounds = null;
+        try { bounds = map.getBounds(); } catch (_) { bounds = null; }
+        if (!bounds) return null;
+        const sw = bounds.getSouthWest?.();
+        const ne = bounds.getNorthEast?.();
+        const swLat = coordinateFromMapPoint(sw, 'lat');
+        const swLng = coordinateFromMapPoint(sw, 'lng');
+        const neLat = coordinateFromMapPoint(ne, 'lat');
+        const neLng = coordinateFromMapPoint(ne, 'lng');
+        if (![swLat, swLng, neLat, neLng].every(Number.isFinite)) return null;
+        return { swLat, swLng, neLat, neLng };
+      }
+
+      function boundsKeyFromSnapshot(snapshot) {
+        if (!snapshot) return '';
+        return [
+          snapshot.swLat.toFixed(6),
+          snapshot.swLng.toFixed(6),
+          snapshot.neLat.toFixed(6),
+          snapshot.neLng.toFixed(6)
+        ].join(':');
+      }
+
+      function parsePair(value) {
+        const match = String(value || '').trim().match(/^\(\s*([-+0-9.eE]+)\s*,\s*([-+0-9.eE]+)\s*\)$/);
+        if (!match) return null;
+        const lat = Number(match[1]);
+        const lng = Number(match[2]);
+        return Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null;
+      }
+
+      function boundsFromGcsUrl(url) {
+        try {
+          const parsed = new URL(String(url || ''), location.href);
+          const sw = parsePair(parsed.searchParams.get('sw'));
+          const ne = parsePair(parsed.searchParams.get('ne'));
+          if (!sw || !ne) return null;
+          return { swLat: sw.lat, swLng: sw.lng, neLat: ne.lat, neLng: ne.lng };
+        } catch (_) {
+          return null;
+        }
+      }
+
+      function collectLatestRangePois(root) {
+        const byGuid = new Map();
+        const stack = [root];
+        const seen = new WeakSet();
+        while (stack.length) {
+          const node = stack.pop();
+          if (!node || typeof node !== 'object') continue;
+          if (!Array.isArray(node)) {
+            if (seen.has(node)) continue;
+            seen.add(node);
+            let poi = null;
+            try { poi = candidateFromGcsObject(node); } catch (_) { poi = null; }
+            if (poi?.guid) byGuid.set(String(poi.guid), poi);
+          }
+          let values = [];
+          try { values = Object.values(node); } catch (_) { values = []; }
+          for (const value of values) {
+            if (value && typeof value === 'object') stack.push(value);
+          }
+        }
+        return byGuid;
+      }
+
+      function setLatestRange(url, payload) {
+        const bounds = boundsFromGcsUrl(url);
+        if (!bounds) return false;
+        latestRangeBounds = bounds;
+        latestRangeUrl = String(url || '');
+        latestRangePois = collectLatestRangePois(payload);
+        return true;
+      }
+
+      async function refreshVisibleWayfarerPois(force = false) {
+        if (!nativeFetch) return false;
+        if (visiblePoiRefreshInFlight) {
+          visiblePoiRefreshPending = true;
+          return false;
+        }
+        const snapshot = currentMapBoundsSnapshot(bridgeMap);
+        if (!snapshot) return false;
+        const boundsKey = boundsKeyFromSnapshot(snapshot);
+        if (!force && boundsKey === lastVisiblePoiBoundsKey) return false;
+
+        visiblePoiRefreshInFlight = true;
+        try {
+          const query =
+            'ne=(' + snapshot.neLat + ',' + snapshot.neLng + ')' +
+            '&sw=(' + snapshot.swLat + ',' + snapshot.swLng + ')' +
+            '&cellLevel=14';
+          const url = IPHONE_GCS_PATH + '?' + query;
+          const response = await nativeFetch(url, { credentials: 'include', cache: 'no-store' });
+          if (!response.ok) throw new Error('GCS HTTP ' + response.status);
+          const payload = await response.json();
+          stats.gcs += 1;
+          scanJson(payload);
+          setLatestRange(url, payload);
+          lastVisiblePoiBoundsKey = boundsKey;
+          scheduleRender();
+          return true;
+        } catch (error) {
+          stats.parseErrors += 1;
+          console.warn('[Campsite Bridge Shortcut] visible POI refresh failed', error);
+          scheduleRender();
+          return false;
+        } finally {
+          visiblePoiRefreshInFlight = false;
+          if (visiblePoiRefreshPending) {
+            visiblePoiRefreshPending = false;
+            scheduleVisiblePoiRefresh(false, 80);
+          }
+        }
+      }
+
+      function scheduleVisiblePoiRefresh(force = false, delay = 100) {
+        if (visiblePoiRefreshTimer) clearTimeout(visiblePoiRefreshTimer);
+        visiblePoiRefreshTimer = setTimeout(() => {
+          visiblePoiRefreshTimer = null;
+          void refreshVisibleWayfarerPois(force);
+        }, delay);
+      }
+
+      function latestPerformanceGcsUrl() {
+        try {
+          const entries = performance?.getEntriesByType?.('resource') || [];
+          for (let index = entries.length - 1; index >= 0; index -= 1) {
+            const name = String(entries[index]?.name || '');
+            if (name.includes(IPHONE_GCS_PATH)) return name;
+          }
+        } catch (_) {}
+        return '';
+      }
+
+      async function replayLatestPerformanceGcs(force = false) {
+        if (performanceReplayInFlight || !nativeFetch) return false;
+        const url = latestPerformanceGcsUrl();
+        if (!url) return false;
+        if (!force && url === lastPerformanceGcsUrl) return false;
+
+        performanceReplayInFlight = true;
+        try {
+          const response = await nativeFetch(url, { credentials: 'include', cache: 'no-store' });
+          if (!response.ok) throw new Error('GCS replay HTTP ' + response.status);
+          const payload = await response.json();
+          stats.gcs += 1;
+          scanJson(payload);
+          setLatestRange(url, payload);
+          lastPerformanceGcsUrl = url;
+          scheduleRender();
+          return true;
+        } catch (error) {
+          stats.parseErrors += 1;
+          console.warn('[Campsite Bridge Shortcut] performance GCS replay failed', error);
+          scheduleRender();
+          return false;
+        } finally {
+          performanceReplayInFlight = false;
+        }
+      }
+
+      function attachMapIdleRefresh(map) {
+        if (!map || mapIdleListeners.has(map) || typeof map.addListener !== 'function') return;
+        const listeners = [];
+        const add = (eventName, delay) => {
+          try {
+            const listener = map.addListener(eventName, () => scheduleVisiblePoiRefresh(false, delay));
+            if (listener) listeners.push(listener);
+          } catch (_) {}
+        };
+        add('idle', 100);
+        add('dragend', 80);
+        add('center_changed', 180);
+        add('zoom_changed', 140);
+        add('bounds_changed', 220);
+        mapIdleListeners.set(map, {
+          remove() {
+            for (const listener of listeners) {
+              try { listener?.remove?.(); } catch (_) {}
+            }
+          }
+        });
+      }
+
+      const baseCaptureBridgeMap = captureBridgeMap;
+      captureBridgeMap = function(map) {
+        const captured = baseCaptureBridgeMap(map);
+        if (captured) {
+          attachMapIdleRefresh(map);
+          scheduleVisiblePoiRefresh(false, bridgeMap === map ? 100 : 40);
+        }
+        return captured;
+      };
+
+      const baseDiscoverExistingGoogleMap = discoverExistingGoogleMap;
+      discoverExistingGoogleMap = function() {
+        try {
+          const wfmmMap = window.WFMM?.map?.get?.();
+          if (captureBridgeMap(wfmmMap)) return bridgeMap;
+        } catch (_) {}
+
+        // Re-resolve the active Wayfarer MapView before trusting the cached map.
+        // This avoids staying attached to the initial/stale Google Map instance.
+        const angularMap = findMapFromAngular();
+        if (captureBridgeMap(angularMap)) return bridgeMap;
+        if (captureBridgeMap(window.__campsiteBridgeGoogleMap)) return bridgeMap;
+
+        const fallback = baseDiscoverExistingGoogleMap();
+        if (fallback) scheduleVisiblePoiRefresh(false, 100);
+        return fallback;
+      };
+
+      if (typeof window.fetch === 'function' && !window.fetch.__campsiteBridgeShortcutFetchPatched) {
+        const originalFetch = window.fetch.bind(window);
+        const wrappedFetch = async function(input, init) {
+          const response = await originalFetch(input, init);
+          const url = typeof input === 'string' ? input : String(input?.url || response?.url || '');
+          if (url.includes(IPHONE_GCS_PATH)) {
+            stats.gcs += 1;
+            try {
+              const clone = response.clone();
+              clone.json()
+                .then(json => {
+                  scanJson(json);
+                  setLatestRange(url, json);
+                  scheduleRender();
+                })
+                .catch(() => { stats.parseErrors += 1; scheduleRender(); });
+            } catch (_) {
+              stats.parseErrors += 1;
+            }
+          }
+          return response;
+        };
+        try { Object.defineProperty(wrappedFetch, '__campsiteBridgeShortcutFetchPatched', { value: true }); } catch (_) {}
+        window.fetch = wrappedFetch;
+      }
+
+      // Retire every Bridge-owned map visual path while leaving data functions active.
+      function clearBridgeMapVisuals() {
+        try {
+          if (bridgeOverlayRoot) {
+            bridgeOverlayRoot.replaceChildren?.();
+            bridgeOverlayRoot.style.display = 'none';
+            bridgeOverlayRoot.style.visibility = 'hidden';
+            bridgeOverlayRoot.style.pointerEvents = 'none';
+          }
+        } catch (_) {}
+        return false;
+      }
+      try { createGameEntityOverlay = () => null; } catch (_) {}
+      try { createSponsorRingOverlay = () => null; } catch (_) {}
+      try { createSponsorPopupOverlay = () => null; } catch (_) {}
+      try { renderBridgeOverlaysNow = clearBridgeMapVisuals; } catch (_) {}
+      try { scheduleOverlayRender = clearBridgeMapVisuals; } catch (_) {}
+      try { scheduleOverlayRenderAfterIdle = clearBridgeMapVisuals; } catch (_) {}
+      try {
+        if (bridgeOverlayFrame) cancelAnimationFrame(bridgeOverlayFrame);
+        bridgeOverlayFrame = 0;
+      } catch (_) {}
+      try {
+        if (sponsorRingStabilizeTimer) clearTimeout(sponsorRingStabilizeTimer);
+        sponsorRingStabilizeTimer = null;
+      } catch (_) {}
+
+      const baseRenderForIphoneRecovery = render;
+      render = function() {
+        baseRenderForIphoneRecovery();
+        const counts = getCounts();
+        const ready = document.getElementById('cbs-ready');
+        if (ready) {
+          ready.textContent = counts.total > 0
+            ? `● 自動記録中：${counts.total.toLocaleString('ja-JP')}件記録済み`
+            : '● 自動記録中：地図を動かすと記録します';
+          ready.style.color = '#bbf7d0';
+        }
+        const inactiveToggle = document.getElementById('cbs-inactive-toggle');
+        if (inactiveToggle) inactiveToggle.style.display = 'none';
+        const displayNote = document.getElementById('cbs-display-note');
+        if (displayNote) displayNote.style.display = 'none';
+        const diag = document.getElementById('cbs-diagnostics');
+        if (diag && diag.style.display !== 'none') {
+          diag.insertAdjacentHTML('beforeend',
+            `<div style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.12);font-weight:800">iPhone data recovery</div>` +
+            `<div>Latest POI ${latestRangePois.size} / visual overlay retired</div>` +
+            `<div>GCS bounds ${latestRangeBounds ? 'ready' : 'waiting'} / performance URL ${latestPerformanceGcsUrl() ? 'yes' : 'no'}</div>` +
+            `<div>Map listeners ${mapIdleListeners.size} / pending ${visiblePoiRefreshPending ? 'yes' : 'no'}</div>`
+          );
+        }
+        clearBridgeMapVisuals();
+      };
+
+      const baseResetForIphoneRecovery = reset;
+      reset = function() {
+        baseResetForIphoneRecovery();
+        latestRangeBounds = null;
+        latestRangeUrl = '';
+        latestRangePois.clear();
+        lastPerformanceGcsUrl = '';
+        lastVisiblePoiBoundsKey = '';
+        visiblePoiRefreshPending = false;
+        clearBridgeMapVisuals();
+      };
+
+      function resumeRecovery() {
+        try { discoverExistingGoogleMap(); } catch (_) {}
+        scheduleVisiblePoiRefresh(true, 160);
+        void replayLatestPerformanceGcs(true);
+      }
+
+      setTimeout(resumeRecovery, 0);
+      const onVisibilityChange = () => {
+        if (document.visibilityState === 'visible') resumeRecovery();
+      };
+      const onPageShow = () => resumeRecovery();
+      document.addEventListener('visibilitychange', onVisibilityChange, { passive: true });
+      window.addEventListener('pageshow', onPageShow, { passive: true });
+
+      window.CampsiteBridgeIPhoneRecovery = Object.freeze({
+        getMap: () => {
+          try { discoverExistingGoogleMap(); } catch (_) {}
+          return bridgeMap || null;
+        },
+        replayLatestPerformanceGcs: () => replayLatestPerformanceGcs(true),
+        repaintLatestRange: () => false,
+        getState: () => ({
+          performanceUrlFound: Boolean(latestPerformanceGcsUrl()),
+          lastPerformanceGcsUrl,
+          latestRangeUrl,
+          latestRangeCount: latestRangePois.size,
+          latestRangeBounds: latestRangeBounds ? { ...latestRangeBounds } : null,
+          mapCaptured: Boolean(bridgeMap),
+          poiCount: poiByGuid.size,
+          visualFallback: false,
+          continuousPolling: false,
+          mapListeners: mapIdleListeners.size,
+          refreshPending: visiblePoiRefreshPending
+        })
+      });
+
+      window.CampsiteBridgeIPhoneVisualPolicy = Object.freeze({
+        bridgeOwnedMapVisuals: false,
+        gameEntityOverlay: false,
+        sponsorRingOverlay: false,
+        manualViewportProjection: false,
+        wayfarerDisplayUntouched: true,
+        wfmmDisplayUntouched: true
+      });
+
+      window.addEventListener('pagehide', () => {
+        if (visiblePoiRefreshTimer) clearTimeout(visiblePoiRefreshTimer);
+        visiblePoiRefreshTimer = null;
+        visiblePoiRefreshPending = false;
+        for (const listener of mapIdleListeners.values()) {
+          try { listener?.remove?.(); } catch (_) {}
+        }
+        mapIdleListeners.clear();
+        document.removeEventListener('visibilitychange', onVisibilityChange);
+        window.removeEventListener('pageshow', onPageShow);
+        clearBridgeMapVisuals();
+      }, { once: true });
+
+      return {};
+    })(),
+===== END FILE: dist/bridge-shortcut/1.0.0/runtime.part-06z.iphone-recovery.js =====
+
+
+===== FILE: dist/bridge-shortcut/1.0.0/runtime.part-06zz.iphone-network-recovery.js =====
+
+    ...(() => {
+      // iPhone/Safari data recovery when the Wayfarer Google Map instance is not exposed.
+      // Observe new GCS resource requests event-by-event; never poll and never draw.
+      const IPHONE_GCS_PATH = '/api/v1/vault/mapview/gcs';
+      const observedPerformanceGcsUrls = new Set();
+      const performanceReplayQueue = [];
+      let performanceObserver = null;
+      let performanceReplayActive = false;
+      let performanceObserved = 0;
+      let performanceReplayed = 0;
+      let performanceReplayErrors = 0;
+      let performanceGeneration = 0;
+
+      // Campsite design only needs active game POIs plus inactive Power Spots.
+      // Wayfarer can return thousands of portal-only records for one visible range,
+      // especially on iPhone after resume/replay. Reject those before poiByGuid so
+      // they never inflate Bridge memory or the Receiver payload.
+      function isDiscardedNotInGamePoi(poi) {
+        const rawEntity = String(poi?.gameEntity || '')
+          .trim()
+          .toUpperCase()
+          .replace(/[\s_-]/g, '');
+        const entity = normalizeEntity(poi?.gameEntity);
+        const status = normalizeStatus(poi?.gameStatus);
+        return rawEntity === 'NOTINGAME' ||
+          ((entity === 'POKESTOP' || entity === 'GYM') && status === 'INACTIVE');
+      }
+
+      function readMapCoordinate(point, key) {
+        if (!point) return null;
+        try {
+          const value = point[key];
+          const number = Number(typeof value === 'function' ? value.call(point) : value);
+          return Number.isFinite(number) ? number : null;
+        } catch (_) {
+          return null;
+        }
+      }
+
+      function currentBridgeBounds() {
+        let map = bridgeMap || window.__campsiteBridgeGoogleMap || null;
+        if (!map) {
+          try { map = window.WFMM?.map?.get?.() || null; } catch (_) {}
+        }
+        if (!map || typeof map.getBounds !== 'function') return null;
+        try { return map.getBounds() || null; } catch (_) { return null; }
+      }
+
+      function isPoiInsideCurrentViewport(poi) {
+        const lat = Number(poi?.lat);
+        const lng = Number(poi?.lng);
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) return true;
+
+        const bounds = currentBridgeBounds();
+        if (!bounds) return true;
+
+        try {
+          if (typeof bounds.contains === 'function') {
+            const LatLng = window.google?.maps?.LatLng;
+            if (LatLng) return Boolean(bounds.contains(new LatLng(lat, lng)));
+            return Boolean(bounds.contains({ lat, lng }));
+          }
+        } catch (_) {}
+
+        const sw = bounds.getSouthWest?.();
+        const ne = bounds.getNorthEast?.();
+        const south = readMapCoordinate(sw, 'lat');
+        const west = readMapCoordinate(sw, 'lng');
+        const north = readMapCoordinate(ne, 'lat');
+        const east = readMapCoordinate(ne, 'lng');
+        if (![south, west, north, east].every(Number.isFinite)) return true;
+
+        const latitudeInside = lat >= south && lat <= north;
+        const longitudeInside = west <= east
+          ? lng >= west && lng <= east
+          : lng >= west || lng <= east;
+        return latitudeInside && longitudeInside;
+      }
+
+      const baseUpsertPoiForScopeFilter = upsertPoi;
+      upsertPoi = function(poi, deferRender = false) {
+        if (isDiscardedNotInGamePoi(poi)) return false;
+        if (!isPoiInsideCurrentViewport(poi)) return false;
+        return baseUpsertPoiForScopeFilter(poi, deferRender);
+      };
+
+      // Some POIs may have been observed before the Google Map instance became
+      // available. Re-apply viewport scope at read/send time as a second guard.
+      const baseGetSendPoisForScopeFilter = getSendPois;
+      getSendPois = function() {
+        return baseGetSendPoisForScopeFilter().filter(isPoiInsideCurrentViewport);
+      };
+
+      const baseGetReferencePoisForScopeFilter = getReferencePois;
+      getReferencePois = function() {
+        return baseGetReferencePoisForScopeFilter()
+          .filter(poi => poi.referenceKind !== 'NOT_IN_GAME')
+          .filter(isPoiInsideCurrentViewport);
+      };
+
+      function isGcsResourceUrl(value) {
+        return String(value || '').includes(IPHONE_GCS_PATH);
+      }
+
+      function seedExistingPerformanceUrls() {
+        try {
+          const entries = performance?.getEntriesByType?.('resource') || [];
+          for (const entry of entries) {
+            const url = String(entry?.name || '');
+            if (isGcsResourceUrl(url)) observedPerformanceGcsUrls.add(url);
+          }
+        } catch (_) {}
+      }
+
+      async function drainPerformanceReplayQueue() {
+        if (performanceReplayActive || !nativeFetch) return;
+        performanceReplayActive = true;
+        try {
+          while (performanceReplayQueue.length) {
+            const item = performanceReplayQueue.shift();
+            const url = String(item?.url || '');
+            const generation = Number(item?.generation);
+            if (!url || generation !== performanceGeneration) continue;
+            try {
+              const response = await nativeFetch(url, { credentials: 'include', cache: 'no-store' });
+              if (!response.ok) throw new Error('GCS resource replay HTTP ' + response.status);
+              const payload = await response.json();
+              if (generation !== performanceGeneration) continue;
+              stats.gcs += 1;
+              scanJson(payload);
+              performanceReplayed += 1;
+              scheduleRender();
+            } catch (error) {
+              if (generation !== performanceGeneration) continue;
+              performanceReplayErrors += 1;
+              stats.parseErrors += 1;
+              console.warn('[Campsite Bridge Shortcut] GCS resource replay failed', error);
+              scheduleRender();
+            }
+          }
+        } finally {
+          performanceReplayActive = false;
+          scheduleRender();
+          if (performanceReplayQueue.length) void drainPerformanceReplayQueue();
+        }
+      }
+
+      function enqueuePerformanceGcsUrl(rawUrl) {
+        const url = String(rawUrl || '');
+        if (!isGcsResourceUrl(url) || observedPerformanceGcsUrls.has(url)) return false;
+        observedPerformanceGcsUrls.add(url);
+        performanceObserved += 1;
+        performanceReplayQueue.push({ url, generation: performanceGeneration });
+        void drainPerformanceReplayQueue();
+        scheduleRender();
+        return true;
+      }
+
+      function installPerformanceObserver() {
+        if (performanceObserver || typeof PerformanceObserver !== 'function') return false;
+        try {
+          performanceObserver = new PerformanceObserver(list => {
+            for (const entry of list.getEntries()) {
+              enqueuePerformanceGcsUrl(entry?.name);
+            }
+          });
+          try {
+            performanceObserver.observe({ type: 'resource', buffered: false });
+          } catch (_) {
+            performanceObserver.observe({ entryTypes: ['resource'] });
+          }
+          return true;
+        } catch (error) {
+          performanceObserver = null;
+          console.warn('[Campsite Bridge Shortcut] PerformanceObserver unavailable', error);
+          return false;
+        }
+      }
+
+      seedExistingPerformanceUrls();
+      installPerformanceObserver();
+
+      const baseResetForNetworkRecovery = reset;
+      reset = function() {
+        // Bridge reset must also reset this module's URL de-duplication state.
+        // Otherwise Safari can request the same GCS URL again after reset while
+        // the recovery layer silently treats it as already handled. That left
+        // the foreground count partial until visibility/pageshow forced a replay.
+        performanceGeneration += 1;
+        observedPerformanceGcsUrls.clear();
+        performanceReplayQueue.length = 0;
+        performanceObserved = 0;
+        performanceReplayed = 0;
+        performanceReplayErrors = 0;
+        baseResetForNetworkRecovery();
+        scheduleRender();
+      };
+
+      const baseRenderForNetworkRecovery = render;
+      render = function() {
+        baseRenderForNetworkRecovery();
+        const diag = document.getElementById('cbs-diagnostics');
+        if (diag && diag.style.display !== 'none') {
+          diag.insertAdjacentHTML('beforeend',
+            `<div style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.12);font-weight:800">iPhone network recovery</div>` +
+            `<div>Resource observer ${performanceObserver ? 'on' : 'off'} / observed ${performanceObserved}</div>` +
+            `<div>Replayed ${performanceReplayed} / queued ${performanceReplayQueue.length} / error ${performanceReplayErrors}</div>`
+          );
+        }
+      };
+
+      window.CampsiteBridgeIPhoneNetworkRecovery = Object.freeze({
+        getState: () => ({
+          observerActive: Boolean(performanceObserver),
+          observed: performanceObserved,
+          replayed: performanceReplayed,
+          queued: performanceReplayQueue.length,
+          errors: performanceReplayErrors,
+          generation: performanceGeneration,
+          continuousPolling: false
+        })
+      });
+
+      window.addEventListener('pagehide', () => {
+        try { performanceObserver?.disconnect?.(); } catch (_) {}
+        performanceObserver = null;
+        performanceGeneration += 1;
+        observedPerformanceGcsUrls.clear();
+        performanceReplayQueue.length = 0;
+      }, { once: true });
+
+      // If the user closes the Campsite tab after a successful send, Safari can
+      // leave the fixed named target in a stale state. Keep the live Receiver
+      // window while it exists and create a fresh uniquely named blank window
+      // when it was closed. Also clear the previous success UI before retrying.
+      const baseSendToCampsiteForReceiverRecovery = sendToCampsite;
+      let iphoneReceiverWindow = null;
+      sendToCampsite = async function (...args) {
+        if (sendWorkflowActive) {
+          return baseSendToCampsiteForReceiverRecovery.apply(this, args);
+        }
+
+        if (sendSucceeded) {
+          sendSucceeded = false;
+          setSendStatus('');
+          scheduleRender();
+        }
+
+        const originalOpen = window.open;
+        let pending;
+        window.open = function (url, target, features) {
+          const href = String(url || '');
+          if (target !== RECEIVER_WINDOW_NAME || !href.startsWith(RECEIVER_ORIGIN)) {
+            return originalOpen.apply(this, arguments);
+          }
+
+          try {
+            if (iphoneReceiverWindow && !iphoneReceiverWindow.closed) {
+              try { iphoneReceiverWindow.location.href = href; } catch (_) {}
+              return iphoneReceiverWindow;
+            }
+          } catch (_) {
+            iphoneReceiverWindow = null;
+          }
+
+          let handshakeId = '';
+          try { handshakeId = new URL(href).searchParams.get('handshake') || ''; } catch (_) {}
+          const safeHandshake = handshakeId.replace(/[^a-z0-9_-]/gi, '').slice(0, 80);
+          const windowName = `${RECEIVER_WINDOW_NAME}_${safeHandshake || Date.now().toString(36)}`;
+
+          let popup = null;
+          try { popup = originalOpen.call(window, 'about:blank', windowName, features); } catch (_) {}
+          if (!popup) return null;
+          iphoneReceiverWindow = popup;
+          try { popup.location.replace(href); }
+          catch (_) {
+            try { popup.location.href = href; } catch (_) {}
+          }
+          return popup;
+        };
+
+        try {
+          pending = baseSendToCampsiteForReceiverRecovery.apply(this, args);
+        } finally {
+          window.open = originalOpen;
+        }
+
+        return await pending;
+      };
+
+      return {};
+    })(),
+===== END FILE: dist/bridge-shortcut/1.0.0/runtime.part-06zz.iphone-network-recovery.js =====
+
+
+===== FILE: dist/bridge-shortcut/1.0.0/runtime.part-08.iphone-activity-area-ui.js =====
+
+;(() => {
+  'use strict';
+  const ROOT_ID = 'cbs-iphone-area-editor';
+  const MAX_POINTS = 30;
+  let points = [];
+  let completed = false;
+  let root = null;
+  let line = null;
+  let polygon = null;
+  let svgOverlay = null;
+  let redrawTimer = null;
+
+  function map() {
+    const candidates = [
+      (() => { try { return window.CampsiteBridgeIPhoneRecovery?.getMap?.() || null; } catch (_) { return null; } })(),
+      (() => { try { return window.CampsiteBridgeShortcut?.getMap?.() || null; } catch (_) { return null; } })(),
+      window.__campsiteBridgeGoogleMap,
+      (() => { try { return window.WFMM?.map?.get?.() || null; } catch (_) { return null; } })()
+    ];
+    return candidates.find(value => value && typeof value.getCenter === 'function' && typeof value.addListener === 'function') || null;
+  }
+
+  function clearOverlay() {
+    try { line?.setMap?.(null); } catch (_) {}
+    try { polygon?.setMap?.(null); } catch (_) {}
+    line = null; polygon = null;
+    svgOverlay?.remove();
+    svgOverlay = null;
+  }
+
+  function mercatorY(lat) {
+    const safe = Math.max(-85.05112878, Math.min(85.05112878, Number(lat)));
+    const rad = safe * Math.PI / 180;
+    return Math.log(Math.tan(Math.PI / 4 + rad / 2));
+  }
+
+  function mapRect() {
+    const gm = document.querySelector('.gm-style');
+    const host = gm?.parentElement || gm;
+    const rect = host?.getBoundingClientRect?.();
+    if (rect && rect.width > 40 && rect.height > 40) return rect;
+    return null;
+  }
+
+  function drawScreenOverlay() {
+    svgOverlay?.remove();
+    svgOverlay = null;
+    if (!points.length || !root?.isConnected) return false;
+    const bounds = window.CampsiteBridgeIPhoneRecovery?.getState?.()?.latestRangeBounds;
+    const rect = mapRect();
+    const south = Number(bounds?.swLat), north = Number(bounds?.neLat);
+    const west = Number(bounds?.swLng), east = Number(bounds?.neLng);
+    if (!rect || ![south,north,west,east].every(Number.isFinite)) return false;
+    const ySouth = mercatorY(south), yNorth = mercatorY(north);
+    const lngSpan = east >= west ? east - west : east + 360 - west;
+    if (!(lngSpan > 0) || yNorth === ySouth) return false;
+    const xy = points.map(p => {
+      let lng = Number(p.lng);
+      if (east < west && lng < west) lng += 360;
+      return {
+        x: rect.left + ((lng - west) / lngSpan) * rect.width,
+        y: rect.top + ((yNorth - mercatorY(p.lat)) / (yNorth - ySouth)) * rect.height
+      };
+    });
+    const ns = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('viewBox', `0 0 ${innerWidth} ${innerHeight}`);
+    svg.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;z-index:2147483644;pointer-events:none;overflow:hidden';
+    if (xy.length >= 2) {
+      const shape = document.createElementNS(ns, xy.length >= 3 ? 'polygon' : 'polyline');
+      shape.setAttribute('points', xy.map(p => `${p.x},${p.y}`).join(' '));
+      shape.setAttribute('fill', xy.length >= 3 ? 'rgba(96,165,250,.18)' : 'none');
+      shape.setAttribute('stroke', '#2563eb');
+      shape.setAttribute('stroke-width', '4');
+      shape.setAttribute('stroke-linejoin', 'round');
+      svg.appendChild(shape);
+    }
+    xy.forEach((p, i) => {
+      const dot = document.createElementNS(ns, 'circle');
+      dot.setAttribute('cx', String(p.x)); dot.setAttribute('cy', String(p.y));
+      dot.setAttribute('r', '7'); dot.setAttribute('fill', '#ffffff');
+      dot.setAttribute('stroke', '#2563eb'); dot.setAttribute('stroke-width', '4');
+      svg.appendChild(dot);
+      const label = document.createElementNS(ns, 'text');
+      label.setAttribute('x', String(p.x)); label.setAttribute('y', String(p.y - 12));
+      label.setAttribute('text-anchor', 'middle'); label.setAttribute('fill', '#0f172a');
+      label.setAttribute('stroke', '#ffffff'); label.setAttribute('stroke-width', '3');
+      label.setAttribute('paint-order', 'stroke'); label.setAttribute('font-size', '13');
+      label.setAttribute('font-weight', '800'); label.textContent = String(i + 1);
+      svg.appendChild(label);
+    });
+    document.documentElement.appendChild(svg);
+    svgOverlay = svg;
+    return true;
+  }
+
+  function draw() {
+    clearOverlay();
+    const m = map();
+    const maps = window.google?.maps;
+    if (!points.length) return;
+    const canNativePolygon = points.length >= 3 && typeof maps?.Polygon === 'function';
+    const canNativeLine = points.length === 2 && typeof maps?.Polyline === 'function';
+    if (!m || (!canNativePolygon && !canNativeLine)) {
+      drawScreenOverlay();
+      return;
+    }
+    if (points.length >= 3) {
+      polygon = new maps.Polygon({
+        map:m, paths:points, clickable:false,
+        strokeColor:'#2563eb', strokeOpacity:0.95, strokeWeight:3,
+        fillColor:'#60a5fa', fillOpacity:0.16
+      });
+    } else if (points.length >= 2) {
+      line = new maps.Polyline({
+        map:m, path:points, clickable:false,
+        strokeColor:'#2563eb', strokeOpacity:0.95, strokeWeight:3
+      });
+    }
+  }
+
+  function stateText() {
+    if (completed) return '範囲を確定しました。I3ではまだPOI取得は行いません。';
+    if (!points.length) return '地図を動かし、中央の＋を1つ目の頂点に合わせてください。';
+    if (points.length < 3) return `頂点 ${points.length}個。あと${3-points.length}個以上追加してください。`;
+    return `頂点 ${points.length}個。必要なら追加し、範囲を確定してください。`;
+  }
+
+  function render() {
+    if (!root) return;
+    root.querySelector('[data-role="status"]').textContent = stateText();
+    root.querySelector('[data-action="add"]').disabled = completed || points.length >= MAX_POINTS;
+    root.querySelector('[data-action="undo"]').disabled = completed || points.length === 0;
+    root.querySelector('[data-action="complete"]').disabled = completed || points.length < 3;
+    root.querySelector('[data-role="crosshair"]').hidden = completed;
+    draw();
+  }
+
+  function addCenter() {
+    if (completed || points.length >= MAX_POINTS) return;
+    const m = map();
+    const center = m?.getCenter?.();
+    let lat = Number(center && (typeof center.lat === 'function' ? center.lat() : center.lat));
+    let lng = Number(center && (typeof center.lng === 'function' ? center.lng() : center.lng));
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      const bounds = window.CampsiteBridgeIPhoneRecovery?.getState?.()?.latestRangeBounds;
+      const south = Number(bounds?.swLat);
+      const north = Number(bounds?.neLat);
+      const west = Number(bounds?.swLng);
+      const east = Number(bounds?.neLng);
+      if ([south,north,west,east].every(Number.isFinite)) {
+        lat = (south + north) / 2;
+        lng = west <= east ? (west + east) / 2 : ((((west + 360) + east) / 2 + 540) % 360) - 180;
+      }
+    }
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      const status = root?.querySelector('[data-role="status"]');
+      if (status) status.textContent = '地図位置を確認できません。地図を少し動かしてから、もう一度押してください。';
+      return;
+    }
+    points.push({lat,lng});
+    render();
+  }
+
+  function undo() { if (!completed && points.length) { points.pop(); render(); } }
+  function restart() { points = []; completed = false; render(); }
+  function complete() { if (points.length >= 3) { completed = true; render(); } }
+
+  function close() {
+    root?.remove();
+    root = null;
+    if (redrawTimer) clearInterval(redrawTimer);
+    redrawTimer = null;
+    clearOverlay();
+  }
+
+  function open() {
+    if (root?.isConnected) return;
+    root = document.createElement('div');
+    root.id = ROOT_ID;
+    root.innerHTML = `
+      <div data-role="crosshair" aria-hidden="true" style="position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:2147483645;pointer-events:none;width:34px;height:34px;display:grid;place-items:center;font:900 32px/1 -apple-system,BlinkMacSystemFont,sans-serif;color:#0f172a;text-shadow:0 0 3px #fff,0 0 3px #fff">＋</div>
+      <section style="position:fixed;left:12px;right:12px;bottom:max(16px,env(safe-area-inset-bottom));z-index:2147483646;max-width:440px;margin:auto;padding:12px;border-radius:16px;background:rgba(15,23,42,.96);color:#fff;font:12px/1.45 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;box-shadow:0 12px 36px rgba(0,0,0,.38);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><strong style="font-size:15px">📍 活動範囲を決める</strong><button data-action="close" style="border:0;background:transparent;color:#fff;font-size:22px">×</button></div>
+        <div data-role="status" style="margin:8px 0;padding:8px;border-radius:9px;background:rgba(30,41,59,.9)"></div>
+        <button data-action="add" style="width:100%;padding:11px;border:0;border-radius:10px;background:#dbeafe;color:#1e3a8a;font-weight:900">＋ 頂点を追加</button>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:7px">
+          <button data-action="undo" style="padding:9px;border:0;border-radius:9px;font-weight:800">↶ 1つ戻す</button>
+          <button data-action="restart" style="padding:9px;border:0;border-radius:9px;font-weight:800">最初からやり直す</button>
+        </div>
+        <button data-action="complete" style="width:100%;margin-top:7px;padding:11px;border:0;border-radius:10px;background:#dcfce7;color:#14532d;font-weight:900">範囲を確定</button>
+      </section>`;
+    document.documentElement.appendChild(root);
+    root.querySelector('[data-action="add"]').addEventListener('click', addCenter);
+    root.querySelector('[data-action="undo"]').addEventListener('click', undo);
+    root.querySelector('[data-action="restart"]').addEventListener('click', restart);
+    root.querySelector('[data-action="complete"]').addEventListener('click', complete);
+    root.querySelector('[data-action="close"]').addEventListener('click', close);
+    render();
+    if (redrawTimer) clearInterval(redrawTimer);
+    redrawTimer = setInterval(() => {
+      if (!root?.isConnected) return;
+      if (!map()) drawScreenOverlay();
+    }, 500);
+  }
+
+  document.getElementById('cbs-area-start')?.addEventListener('click', open);
+  window.CampsiteBridgeIPhoneAreaPrototype = Object.freeze({
+    open,
+    getState: () => ({ points:points.map(p => ({...p})), completed })
+  });
+})();
+===== END FILE: dist/bridge-shortcut/1.0.0/runtime.part-08.iphone-activity-area-ui.js =====
+
+
+===== FILE: scripts/check-bridge-wayfarer-map-adapter.mjs =====
+
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
+
+const source = fs.readFileSync(new URL('../js/bridge-wayfarer-map-adapter.js', import.meta.url), 'utf8');
+
+function makeMap() {
+  return {
+    getBounds() { return {}; },
+    getCenter() { return {}; },
+    getZoom() { return 17; },
+    getDiv() { return {}; },
+    addListener() { return { remove() {} }; }
+  };
+}
+
+function loadAdapter(host) {
+  const document = {
+    querySelector(selector) {
+      return selector === 'app-wf-base-map' ? host : null;
+    }
+  };
+  const window = {};
+  const context = vm.createContext({ window, document });
+  vm.runInContext(source, context, { filename: 'bridge-wayfarer-map-adapter.js' });
+  return window.CampsiteBridgeWayfarerMapAdapter;
+}
+
+{
+  const map = makeMap();
+  const component = { getMap: () => map, setCustomLayers() {} };
+  const host = { __ngContext__: [null, 7, component] };
+  const adapter = loadAdapter(host);
+  const found = adapter.findMapContext();
+  assert.equal(found.map, map);
+  assert.equal(found.component, component);
+  assert.equal(found.adapter, 'wfmm-mapview-component');
+  assert.equal(found.capabilities.customLayers, true);
+}
+
+{
+  const map = makeMap();
+  const nestedComponent = { getMap: () => map, setCustomLayers() {} };
+  const host = { __ngContext__: [{ nested: nestedComponent }] };
+  const adapter = loadAdapter(host);
+  assert.equal(adapter.findMap(), null, 'adapter must not deep-scan Angular object graphs');
+}
+
+{
+  const map = makeMap();
+  const component = { getMap: () => map, setCustomLayers() {} };
+  const contextEntries = Array.from({ length: 129 }, () => ({}));
+  contextEntries[128] = component;
+  const adapter = loadAdapter({ __ngContext__: contextEntries });
+  assert.equal(adapter.findMap(), null, 'adapter must keep the WFMM 128-entry scan bound');
+}
+
+{
+  const map = makeMap();
+  const lookalike = { getMap: () => map };
+  const adapter = loadAdapter({ __ngContext__: [lookalike] });
+  assert.equal(adapter.findMap(), null, 'component must expose setCustomLayers like Wayfarer mapview');
+}
+
+{
+  const component = { getMap: () => ({ getZoom() { return 17; } }), setCustomLayers() {} };
+  const adapter = loadAdapter({ __ngContext__: [component] });
+  assert.equal(adapter.findMap(), null, 'invalid Google Map lookalikes must be rejected');
+}
+
+{
+  const adapter = loadAdapter(null);
+  assert.equal(adapter.findMap(), null);
+  assert.equal(adapter.getDiagnostics().lastResolution, 'host-not-found');
+}
+
+{
+  const component = { getMap() { throw new Error('boom'); }, setCustomLayers() {} };
+  const adapter = loadAdapter({ __ngContext__: [component] });
+  assert.equal(adapter.findMap(), null);
+  const diagnostics = adapter.getDiagnostics();
+  assert.equal(diagnostics.componentGetMapErrors, 1);
+  assert.equal(diagnostics.lastResolution, 'component-get-map-error');
+}
+
+console.log('Bridge Wayfarer Map Adapter checks passed.');
+
+===== END FILE: scripts/check-bridge-wayfarer-map-adapter.mjs =====
+
+
+===== FILE: scripts/check-wm2-polygon-controller.mjs =====
+
+import fs from 'node:fs';
+import vm from 'node:vm';
+import assert from 'node:assert/strict';
+
+const source = fs.readFileSync('bridge-pc/wayfarer-polygon-controller.js', 'utf8');
+new vm.Script(source, { filename: 'bridge-pc/wayfarer-polygon-controller.js' });
+
+const listeners = new Map();
+const storage = new Map();
+storage.set('campsite.wayfarerPolygonDraft.v1', JSON.stringify({
+  version:'0.1.0',
+  points:[[35.0,139.0],[35.0,139.01],[35.01,139.01]],
+  completed:true,
+  updatedAt:'2026-10-04T00:00:00.000Z'
+}));
+let mapClick = null;
+const windowCaptureHandlers = new Map();
+
+function capture(type) {
+  return windowCaptureHandlers.get(type) || null;
+}
+
+class Overlay {
+  constructor(options = {}) { this.options = options; this.map = options.map || null; }
+  setMap(map) { this.map = map; }
+}
+
+const mapDiv = {
+  contains() { return true; },
+  getBoundingClientRect() {
+    return { left: 0, top: 0, width: 1000, height: 500 };
+  }
+};
+
+const map = {
+  addListener(type, fn) {
+    if (type === 'click') mapClick = fn;
+    return { remove() { mapClick = null; } };
+  },
+  getDiv() { return mapDiv; },
+  getBounds() {
+    return {
+      getSouthWest() { return { lat() { return 35; }, lng() { return 139; } }; },
+      getNorthEast() { return { lat() { return 36; }, lng() { return 140; } }; }
+    };
+  },
+  getCenter() {
+    return { lat() { return 35.1; }, lng() { return 139.1; } };
+  }
+};
+
+const fakeWindow = {
+  __campsiteWayfarerPolygonControllerInstalled: false,
+  innerWidth: 1280,
+  matchMedia() { return { matches: false }; },
+  localStorage: {
+    getItem(key) { return storage.has(key) ? storage.get(key) : null; },
+    setItem(key, value) { storage.set(key, String(value)); },
+    removeItem(key) { storage.delete(key); }
+  },
+  CampsiteBridgeWayfarerMapAdapter: {
+    findMap() { return map; }
+  },
+  google: {
+    maps: {
+      Polygon: Overlay,
+      Polyline: Overlay,
+      Circle: Overlay,
+      event: { removeListener() {} }
+    }
+  },
+  addEventListener(type, fn, options) {
+    if (options === true) windowCaptureHandlers.set(type, fn);
+    else listeners.set(type, fn);
+  },
+  removeEventListener(type, fn, options) {
+    if (options === true && windowCaptureHandlers.get(type) === fn) windowCaptureHandlers.delete(type);
+    else if (listeners.get(type) === fn) listeners.delete(type);
+  },
+  dispatchEvent() {},
+  setInterval() { return 1; },
+  setTimeout(fn) { fn(); return 1; }
+};
+
+class FakeCustomEvent {
+  constructor(type, init = {}) { this.type = type; this.detail = init.detail; }
+}
+
+const context = {
+  window: fakeWindow,
+  document: {},
+  CustomEvent: FakeCustomEvent,
+  console,
+  Date,
+  JSON,
+  Math,
+  Number,
+  String,
+  Array,
+  Object,
+  Set,
+  Error
+};
+
+vm.createContext(context);
+vm.runInContext(source, context);
+
+const api = fakeWindow.CampsiteWayfarerPolygonController;
+assert.ok(api, 'WM-2 polygon controller API missing');
+assert.equal(storage.has(api.storageKey), false, 'Fresh Wayfarer page load must clear any previous polygon draft');
+assert.equal(api.getState().draftAvailable, false, 'Fresh Wayfarer page load must not offer stale resume state');
+assert.equal(api.getState().completed, false, 'Fresh Wayfarer page load must not start send-ready');
+assert.equal(api.version, '0.1.0');
+assert.equal(api.maxPoints, 30);
+assert.equal(api.interactionMode(), 'pc');
+
+api.startNew();
+assert.equal(api.getState().active, true);
+assert.equal(typeof capture('click'), 'function', 'PC mode must capture DOM clicks before Wayfarer POI handlers');
+assert.equal(typeof capture('pointerdown'), 'function', 'PC mode must observe pointerdown for drag detection');
+assert.equal(typeof capture('pointermove'), 'function', 'PC mode must observe pointermove for drag detection');
+assert.equal(typeof capture('pointerup'), 'function', 'PC mode must observe pointerup for drag detection');
+assert.equal(mapClick, null, 'PC capture mode must not depend on the Wayfarer map click event');
+
+const mapTarget = { closest() { return null; } };
+let prevented = 0;
+let stopped = 0;
+
+capture('pointerdown')({
+  button: 0,
+  pointerId: 1,
+  target: mapTarget,
+  clientX: 300,
+  clientY: 220
+});
+capture('pointermove')({
+  pointerId: 1,
+  target: mapTarget,
+  clientX: 340,
+  clientY: 225
+});
+capture('pointerup')({
+  button: 0,
+  pointerId: 1,
+  target: mapTarget,
+  clientX: 340,
+  clientY: 225
+});
+capture('click')({
+  button: 0,
+  target: mapTarget,
+  clientX: 340,
+  clientY: 225,
+  preventDefault() { prevented += 1; },
+  stopPropagation() { stopped += 1; },
+  stopImmediatePropagation() { stopped += 1; }
+});
+assert.equal(api.getState().pointCount, 0, 'Dragging the map must not add a vertex');
+assert.equal(prevented, 1, 'Drag completion click must still be blocked from native Wayfarer POI handlers');
+assert.equal(stopped, 2, 'Drag completion click must not leak to downstream handlers');
+
+prevented = 0;
+stopped = 0;
+capture('click')({
+  button: 0,
+  target: mapTarget,
+  clientX: 500,
+  clientY: 250,
+  preventDefault() { prevented += 1; },
+  stopPropagation() { stopped += 1; },
+  stopImmediatePropagation() { stopped += 1; }
+});
+assert.equal(api.getState().pointCount, 1, 'Captured map click must add one vertex');
+assert.equal(prevented, 1, 'Captured map click must prevent the native Wayfarer click');
+assert.equal(stopped, 2, 'Captured map click must stop downstream POI handlers');
+api.reset();
+
+api.addPoint([35.0, 139.0]);
+api.addPoint([35.0, 139.01]);
+api.addPoint([35.01, 139.01]);
+assert.equal(api.getState().pointCount, 3);
+assert.equal(api.getState().canComplete, true);
+assert.equal(api.complete(), true);
+assert.equal(api.getState().completed, true);
+assert.equal(storage.has(api.storageKey), true, 'Completed polygon must remain in draft storage until handoff');
+assert.equal(api.getState().active, false, 'Completing a polygon must leave drawing mode');
+assert.equal(capture('click'), null, 'Completing a polygon must remove the PC DOM click capture');
+assert.equal(api.getState().completed, true);
+api.editCompleted();
+assert.equal(api.getState().active, true, 'Completed polygon can be reopened for editing');
+assert.equal(api.getState().completed, false);
+
+api.exitDrawing();
+assert.equal(api.getState().active, false, 'Explicit normal-display exit must leave drawing mode');
+assert.equal(api.getState().paused, true, 'Explicit normal-display exit must preserve resumable state');
+assert.equal(capture('click'), null);
+api.resumeDraft();
+assert.equal(api.getState().active, true);
+assert.equal(api.getState().paused, false);
+api.undo();
+assert.equal(api.getState().completed, false);
+assert.equal(api.getState().pointCount, 2);
+
+api.reset();
+api.addPoint([0, 0]);
+api.addPoint([1, 1]);
+api.addPoint([0, 1]);
+api.addPoint([1, 0]);
+assert.equal(api.getState().selfIntersects, true, 'Bow-tie polygon must be rejected');
+assert.equal(api.getState().canComplete, false);
+assert.ok(api.getState().invalidEdgeIndexes.length >= 2);
+
+api.reset();
+for (let i = 0; i < 30; i += 1) api.addPoint([35 + i * 0.0001, 139 + i * 0.0001]);
+assert.equal(api.getState().pointCount, 30);
+assert.equal(api.addPoint([36, 140]), false, '31st vertex must be rejected');
+assert.equal(api.getState().pointCount, 30);
+
+fakeWindow.innerWidth = 390;
+api.reset();
+assert.equal(api.getState().mode, 'mobile');
+assert.equal(capture('click'), null, 'Mobile mode must not capture map clicks for vertex creation');
+assert.equal(api.addCenter(), true);
+assert.deepEqual([...api.getPolygon()[0]], [35.1, 139.1]);
+
+console.log('WM-2 Wayfarer polygon controller: OK');
+assert.equal(api.getState().message, '', 'Normal polygon state must clear stale transient messages');
+
+assert.ok(source.includes("window.addEventListener('click', handler, true)"), 'PC drawing must preempt native Wayfarer POI clicks');
+assert.ok(source.includes("['pointerdown', onPointerDown]"), 'PC drawing must observe pointerdown without blocking map drag');
+assert.ok(source.includes('PC_DRAG_THRESHOLD_PX'), 'PC drawing must distinguish drag from click');
+assert.ok(source.includes('if (withinTime && nearDragEnd) return;'), 'Drag completion click must not add a vertex');
+assert.ok(source.includes('stopImmediatePropagation'), 'PC drawing must stop downstream POI handlers');
+assert.ok(source.includes('pointFromClientPosition'), 'PC capture click must translate screen position to coordinates');
+assert.ok(source.includes('clearDraftStorage();\n  points = [];\n  active = false;\n  completed = false;'), 'Page-load initialization must clear stale polygon state');
+
+===== END FILE: scripts/check-wm2-polygon-controller.mjs =====
