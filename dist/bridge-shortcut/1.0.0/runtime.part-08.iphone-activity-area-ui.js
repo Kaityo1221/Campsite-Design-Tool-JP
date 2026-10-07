@@ -68,10 +68,10 @@
     let lng = Number(center && (typeof center.lng === 'function' ? center.lng() : center.lng));
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
       const bounds = window.CampsiteBridgeIPhoneRecovery?.getState?.()?.latestRangeBounds;
-      const south = Number(bounds?.south);
-      const north = Number(bounds?.north);
-      const west = Number(bounds?.west);
-      const east = Number(bounds?.east);
+      const south = Number(bounds?.swLat);
+      const north = Number(bounds?.neLat);
+      const west = Number(bounds?.swLng);
+      const east = Number(bounds?.neLng);
       if ([south,north,west,east].every(Number.isFinite)) {
         lat = (south + north) / 2;
         lng = west <= east ? (west + east) / 2 : ((((west + 360) + east) / 2 + 540) % 360) - 180;
