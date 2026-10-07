@@ -135,7 +135,8 @@ jobs:
             'runtime.part-06z.iphone-recovery.js'
             'runtime.part-06zz.iphone-network-recovery.js'
             'runtime.part-07.js'
-            'runtime.part-08a.iphone-page-world-host.js'\n            'runtime.part-08.iphone-activity-area-ui.js'
+            'runtime.part-08a.iphone-page-world-host.js'
+            'runtime.part-08.iphone-activity-area-ui.js'
             'runtime.part-09.iphone-wfmm-color-policy.js'
           )
 
