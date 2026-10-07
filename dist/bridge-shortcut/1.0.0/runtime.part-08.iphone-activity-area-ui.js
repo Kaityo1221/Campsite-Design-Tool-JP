@@ -53,7 +53,7 @@
   function render() {
     if (!root) return;
     root.querySelector('[data-role="status"]').textContent = stateText();
-    root.querySelector('[data-action="add"]').disabled = completed || points.length >= MAX_POINTS || !map();
+    root.querySelector('[data-action="add"]').disabled = completed || points.length >= MAX_POINTS;
     root.querySelector('[data-action="undo"]').disabled = completed || points.length === 0;
     root.querySelector('[data-action="complete"]').disabled = completed || points.length < 3;
     root.querySelector('[data-role="crosshair"]').hidden = completed;
@@ -61,12 +61,27 @@
   }
 
   function addCenter() {
+    if (completed || points.length >= MAX_POINTS) return;
     const m = map();
     const center = m?.getCenter?.();
-    if (!center || completed || points.length >= MAX_POINTS) return;
-    const lat = Number(typeof center.lat === 'function' ? center.lat() : center.lat);
-    const lng = Number(typeof center.lng === 'function' ? center.lng() : center.lng);
-    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+    let lat = Number(center && (typeof center.lat === 'function' ? center.lat() : center.lat));
+    let lng = Number(center && (typeof center.lng === 'function' ? center.lng() : center.lng));
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      const bounds = window.CampsiteBridgeIPhoneRecovery?.getState?.()?.latestRangeBounds;
+      const south = Number(bounds?.south);
+      const north = Number(bounds?.north);
+      const west = Number(bounds?.west);
+      const east = Number(bounds?.east);
+      if ([south,north,west,east].every(Number.isFinite)) {
+        lat = (south + north) / 2;
+        lng = west <= east ? (west + east) / 2 : ((((west + 360) + east) / 2 + 540) % 360) - 180;
+      }
+    }
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      const status = root?.querySelector('[data-role="status"]');
+      if (status) status.textContent = '地図位置を確認できません。地図を少し動かしてから、もう一度押してください。';
+      return;
+    }
     points.push({lat,lng});
     render();
   }
