@@ -101,16 +101,16 @@
     root = document.createElement('div');
     root.id = ROOT_ID;
     root.innerHTML = `
-      <div data-role="crosshair" aria-hidden="true" style="position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:2147483645;pointer-events:none;width:34px;height:34px;display:grid;place-items:center;font:900 32px/1 -apple-system,BlinkMacSystemFont,sans-serif;color:#0f172a;text-shadow:0 0 3px #fff,0 0 3px #fff">＋</div>
-      <section style="position:fixed;left:12px;right:12px;bottom:max(16px,env(safe-area-inset-bottom));z-index:2147483646;max-width:440px;margin:auto;padding:12px;border-radius:16px;background:rgba(15,23,42,.96);color:#fff;font:12px/1.45 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;box-shadow:0 12px 36px rgba(0,0,0,.38);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)">
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><strong style="font-size:15px">📍 活動範囲を決める</strong><button data-action="close" style="border:0;background:transparent;color:#fff;font-size:22px">×</button></div>
-        <div data-role="status" style="margin:8px 0;padding:8px;border-radius:9px;background:rgba(30,41,59,.9)"></div>
-        <button data-action="add" style="width:100%;padding:11px;border:0;border-radius:10px;background:#dbeafe;color:#1e3a8a;font-weight:900">＋ 頂点を追加</button>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:7px">
-          <button data-action="undo" style="padding:9px;border:0;border-radius:9px;font-weight:800">↶ 1つ戻す</button>
-          <button data-action="restart" style="padding:9px;border:0;border-radius:9px;font-weight:800">最初からやり直す</button>
+      <div data-role="crosshair" aria-hidden="true" style="position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:2147483645;pointer-events:none;width:26px;height:26px;display:grid;place-items:center;font:500 24px/1 -apple-system,BlinkMacSystemFont,sans-serif;color:rgba(255,255,255,.92);text-shadow:0 1px 3px rgba(15,23,42,.9),0 0 1px #0f172a">＋</div>
+      <section style="position:fixed;left:12px;right:12px;bottom:max(16px,env(safe-area-inset-bottom));z-index:2147483646;max-width:440px;margin:auto;padding:8px 10px;border-radius:14px;background:rgba(15,23,42,.96);color:#fff;font:12px/1.45 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;box-shadow:0 12px 36px rgba(0,0,0,.38);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><strong style="font-size:14px">📍 活動範囲を決める</strong><button data-action="close" style="border:0;background:transparent;color:#fff;font-size:20px;line-height:1;padding:2px 4px">×</button></div>
+        <div data-role="status" style="margin:5px 0;padding:5px 7px;border-radius:8px;background:rgba(30,41,59,.9)"></div>
+        <button data-action="add" style="width:100%;padding:9px;border:0;border-radius:9px;background:#dbeafe;color:#1e3a8a;font-weight:900">＋ 頂点を追加</button>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:5px">
+          <button data-action="undo" style="padding:7px;border:0;border-radius:8px;font-weight:800">↶ 1つ戻す</button>
+          <button data-action="restart" style="padding:7px;border:0;border-radius:8px;font-weight:800">最初からやり直す</button>
         </div>
-        <button data-action="complete" style="width:100%;margin-top:7px;padding:11px;border:0;border-radius:10px;background:#dcfce7;color:#14532d;font-weight:900">範囲を確定</button>
+        <button data-action="complete" style="width:100%;margin-top:5px;padding:9px;border:0;border-radius:9px;background:#dcfce7;color:#14532d;font-weight:900">範囲を確定</button>
       </section>`;
     document.documentElement.appendChild(root);
     root.querySelector('[data-action="add"]').addEventListener('click', addPoint);
