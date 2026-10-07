@@ -1,0 +1,41 @@
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { execFileSync } from 'node:child_process';
+execFileSync(process.execPath,['scripts/build-android-bridge-0.3.6-unsigned.mjs'],{stdio:'ignore'});
+const tmp=fs.mkdtempSync(path.join(os.tmpdir(),'n4e-hook-'));
+try {
+ execFileSync('unzip',['-q','downloads/campsite-bridge-android-0.3.6-unsigned.xpi','page-hook.js','-d',tmp]);
+ const s=fs.readFileSync(path.join(tmp,'page-hook.js'),'utf8');
+ const patterns=['XMLHttpRequest','GCS_PATH','isGcsUrl(','post(',"window.addEventListener('message'",'function emitGcs','bodyText','poiKind','gameEntity','cachedPois.set','function cache','function normalize','rawPoiTo','normalizePoi','POI_CACHE','CACHE','cachedPois.set(String','cachedPois.set(guid','cachedPois.set(poi','cachedPois.clear','cell.pois','rawPoi','poiCandidate','candidateFrom','SYNC_POIS','SYNC_STATE','UI_CHANNEL','postMessage({ source: UI_CHANNEL','pois:','normalizeGcs','parseGcs'];
+ for(const p of patterns){
+   let from=0,n=0;
+   while((from=s.indexOf(p,from))>=0 && n<8){
+     console.log('--- '+p+' #'+(++n)+' @'+from+' ---');
+     console.log(s.slice(Math.max(0,from-900),Math.min(s.length,from+2200)));
+     from+=p.length;
+   }
+ }
+} finally { fs.rmSync(tmp,{recursive:true,force:true}); }
+
+// N4-F generated-package ISOLATED audit
+try {
+  const { execFileSync } = await import('node:child_process');
+  execFileSync(process.execPath, ['scripts/build-android-bridge-0.3.7-unsigned.mjs'], { stdio: 'ignore' });
+  const ui = execFileSync('unzip', ['-p','downloads/campsite-bridge-android-0.3.7-unsigned.xpi','bridge-ui.js'], { encoding:'utf8' });
+  for (const needle of ['GCS_RESPONSE','SYNC_POIS','SYNC_STATE','CAMPSITE_BRIDGE_ANDROID_M24_UI','CAMPSITE_BRIDGE_ANDROID_M24_PAGE']) {
+    const i = ui.indexOf(needle);
+    console.log('\n--- built bridge-ui '+needle+' @'+i+' ---');
+    if (i >= 0) console.log(ui.slice(Math.max(0,i-3500), i+10000));
+  }
+} catch (error) { console.error(error); process.exitCode = 1; }
+
+// N4-G generated package send payload audit
+try {
+ const { execFileSync }=await import('node:child_process');
+ execFileSync(process.execPath,['scripts/build-android-bridge-0.3.7-unsigned.mjs'],{stdio:'ignore'});
+ const ui=execFileSync('unzip',['-p','downloads/campsite-bridge-android-0.3.7-unsigned.xpi','bridge-ui.js'],{encoding:'utf8'});
+ for(const needle of ['function sendToCampsite','PROTOCOL','handshakeId','postMessage','REQUEST_SEND_ENRICHMENT']){
+  const i=ui.indexOf(needle); console.log('\n--- N4-G '+needle+' @'+i+' ---'); if(i>=0) console.log(ui.slice(Math.max(0,i-4500),i+14000));
+ }
+} catch(error){console.error(error);process.exitCode=1;}
