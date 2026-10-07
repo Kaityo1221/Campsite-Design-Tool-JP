@@ -102,7 +102,7 @@
     root.id = ROOT_ID;
     root.innerHTML = `
       <div data-role="crosshair" aria-hidden="true" style="position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:2147483645;pointer-events:none;width:26px;height:26px;display:grid;place-items:center;font:500 24px/1 -apple-system,BlinkMacSystemFont,sans-serif;color:rgba(255,255,255,.92);text-shadow:0 1px 3px rgba(15,23,42,.9),0 0 1px #0f172a">＋</div>
-      <section style="position:fixed;left:12px;right:12px;bottom:max(16px,env(safe-area-inset-bottom));z-index:2147483646;max-width:440px;margin:auto;padding:7px 9px;border-radius:14px;background:rgba(15,23,42,.96);color:#fff;font:12px/1.35 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;box-shadow:0 12px 36px rgba(0,0,0,.38);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)">
+      <section style="position:fixed;left:12px;right:12px;bottom:max(76px,calc(env(safe-area-inset-bottom) + 60px));z-index:2147483646;max-width:440px;margin:auto;padding:7px 9px;border-radius:14px;background:rgba(15,23,42,.96);color:#fff;font:12px/1.35 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;box-shadow:0 12px 36px rgba(0,0,0,.38);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)">
         <div style="display:flex;align-items:center;gap:7px;min-width:0">
           <strong style="font-size:13px;white-space:nowrap">📍 活動範囲</strong>
           <span data-role="status" style="min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#cbd5e1;font-size:11px"></span>
