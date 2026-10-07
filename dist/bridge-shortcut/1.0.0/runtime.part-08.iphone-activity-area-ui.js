@@ -42,14 +42,53 @@
     return null;
   }
 
+
+  function drawFixedScreenVertices() {
+    const ns = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('viewBox', `0 0 ${innerWidth} ${innerHeight}`);
+    svg.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;z-index:2147483644;pointer-events:none;overflow:hidden';
+    const xy = points.map(p => ({x:Number(p.screenX), y:Number(p.screenY)}));
+    if (xy.length >= 2) {
+      const shape = document.createElementNS(ns, xy.length >= 3 ? 'polygon' : 'polyline');
+      shape.setAttribute('points', xy.map(p => `${p.x},${p.y}`).join(' '));
+      shape.setAttribute('fill', xy.length >= 3 ? 'rgba(96,165,250,.18)' : 'none');
+      shape.setAttribute('stroke', '#2563eb');
+      shape.setAttribute('stroke-width', '4');
+      shape.setAttribute('stroke-linejoin', 'round');
+      svg.appendChild(shape);
+    }
+    xy.forEach((p,i) => {
+      const dot = document.createElementNS(ns,'circle');
+      dot.setAttribute('cx',String(p.x)); dot.setAttribute('cy',String(p.y));
+      dot.setAttribute('r','9'); dot.setAttribute('fill','#fff');
+      dot.setAttribute('stroke','#2563eb'); dot.setAttribute('stroke-width','5');
+      svg.appendChild(dot);
+      const label = document.createElementNS(ns,'text');
+      label.setAttribute('x',String(p.x)); label.setAttribute('y',String(p.y-15));
+      label.setAttribute('text-anchor','middle'); label.setAttribute('fill','#0f172a');
+      label.setAttribute('stroke','#fff'); label.setAttribute('stroke-width','4');
+      label.setAttribute('paint-order','stroke'); label.setAttribute('font-size','14');
+      label.setAttribute('font-weight','900'); label.textContent=String(i+1);
+      svg.appendChild(label);
+    });
+    document.documentElement.appendChild(svg);
+    svgOverlay=svg;
+    return true;
+  }
+
   function drawScreenOverlay() {
     svgOverlay?.remove();
     svgOverlay = null;
     if (!points.length || !root?.isConnected) return false;
+    const screenReady = points.every(p => Number.isFinite(p.screenX) && Number.isFinite(p.screenY));
     const bounds = window.CampsiteBridgeIPhoneRecovery?.getState?.()?.latestRangeBounds;
     const rect = mapRect();
     const south = Number(bounds?.swLat), north = Number(bounds?.neLat);
     const west = Number(bounds?.swLng), east = Number(bounds?.neLng);
+    if (screenReady) {
+      return drawFixedScreenVertices();
+    }
     if (!rect || ![south,north,west,east].every(Number.isFinite)) return false;
     const ySouth = mercatorY(south), yNorth = mercatorY(north);
     const lngSpan = east >= west ? east - west : east + 360 - west;
@@ -156,7 +195,7 @@
       if (status) status.textContent = '地図位置を確認できません。地図を少し動かしてから、もう一度押してください。';
       return;
     }
-    points.push({lat,lng});
+    points.push({lat,lng, screenX: innerWidth / 2, screenY: innerHeight / 2});
     render();
   }
 
