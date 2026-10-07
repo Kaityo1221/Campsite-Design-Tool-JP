@@ -23,7 +23,9 @@
         <button id="cbs-inactive-toggle" type="button" style="width:100%;margin-bottom:5px;border:1px solid rgba(255,255,255,.12);border-radius:9px;padding:7px 8px;background:rgba(30,41,59,.82);color:#e2e8f0;font-size:10px;font-weight:800;cursor:pointer">Power Spot INACTIVE：ON</button>
         <div id="cbs-display-note" style="display:none;margin:-1px 0 7px;padding:6px 7px;border-radius:8px;background:rgba(120,53,15,.34);color:#fde68a;font-size:10px;line-height:1.4"></div>
 
-        <button id="cbs-area-start" type="button" style="width:100%;margin-bottom:7px;border:0;border-radius:10px;padding:10px 9px;background:#dbeafe;color:#1e3a8a;font-weight:900;cursor:pointer">📍 POIを集める！</button>\n\n        <button id="cbs-send" type="button" style="width:100%;border:0;border-radius:10px;padding:10px 9px;background:#dcfce7;color:#14532d;font-weight:900;cursor:pointer">🏕 Campsiteへ送る</button>
+        <button id="cbs-area-start" type="button" style="width:100%;margin-bottom:7px;border:0;border-radius:10px;padding:10px 9px;background:#dbeafe;color:#1e3a8a;font-weight:900;cursor:pointer">📍 POIを集める！</button>
+
+        <button id="cbs-send" type="button" style="width:100%;border:0;border-radius:10px;padding:10px 9px;background:#dcfce7;color:#14532d;font-weight:900;cursor:pointer">🏕 Campsiteへ送る</button>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:7px">
           <button id="cbs-diag-toggle" type="button" style="border:0;border-radius:9px;padding:8px 7px;font-weight:700;cursor:pointer">🔧 診断</button>
           <button id="cbs-reset" type="button" style="border:0;border-radius:9px;padding:8px 7px;font-weight:700;cursor:pointer">リセット</button>
