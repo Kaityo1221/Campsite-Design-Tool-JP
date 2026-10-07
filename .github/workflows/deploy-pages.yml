@@ -148,6 +148,7 @@ jobs:
           actual="$(sha256sum "$versioned" | awk '{print $1}')"
 
           node --check "$versioned"
+          node scripts/check-iphone-page-world-host.mjs
           cp "$versioned" "$latest"
 
           cat > "$out_dir/latest.json" <<EOF
