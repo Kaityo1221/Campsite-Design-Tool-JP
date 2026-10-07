@@ -373,6 +373,10 @@
       window.addEventListener('pageshow', onPageShow, { passive: true });
 
       window.CampsiteBridgeIPhoneRecovery = Object.freeze({
+        getMap: () => {
+          try { discoverExistingGoogleMap(); } catch (_) {}
+          return bridgeMap || null;
+        },
         replayLatestPerformanceGcs: () => replayLatestPerformanceGcs(true),
         repaintLatestRange: () => false,
         getState: () => ({
