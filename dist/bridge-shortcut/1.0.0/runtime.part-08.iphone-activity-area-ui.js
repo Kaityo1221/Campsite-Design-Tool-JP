@@ -99,7 +99,9 @@
     const m = map();
     const maps = window.google?.maps;
     if (!points.length) return;
-    if (!m || !maps) {
+    const canNativePolygon = points.length >= 3 && typeof maps?.Polygon === 'function';
+    const canNativeLine = points.length === 2 && typeof maps?.Polyline === 'function';
+    if (!m || (!canNativePolygon && !canNativeLine)) {
       drawScreenOverlay();
       return;
     }
