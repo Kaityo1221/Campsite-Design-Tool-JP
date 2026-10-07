@@ -46,6 +46,7 @@
 
     toggle.addEventListener('click', () => setOpen(toggle.getAttribute('aria-expanded') !== 'true'));
     panel.querySelector('#cbs-close')?.addEventListener('click', event => { event.stopPropagation(); setOpen(false); });
+    panel.querySelector('#cbs-area-start')?.addEventListener('click', () => setOpen(false));
     panel.querySelector('#cbs-send')?.addEventListener('click', sendToCampsite);
     panel.querySelector('#cbs-inactive-toggle')?.addEventListener('click', () => {
       const note = panel.querySelector('#cbs-display-note');
@@ -77,6 +78,7 @@
       getReferencePois: () => getReferencePois(),
       getCounts,
       getReferenceCounts,
+      getMap: () => bridgeMap || null,
       sendToCampsite,
       reset,
       isWfmmPresent,

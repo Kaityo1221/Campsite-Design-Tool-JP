@@ -10,6 +10,7 @@
 
   function map() {
     const candidates = [
+      (() => { try { return window.CampsiteBridgeShortcut?.getMap?.() || null; } catch (_) { return null; } })(),
       window.__campsiteBridgeGoogleMap,
       (() => { try { return window.WFMM?.map?.get?.() || null; } catch (_) { return null; } })()
     ];
