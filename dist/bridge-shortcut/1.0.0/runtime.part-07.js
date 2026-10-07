@@ -77,6 +77,7 @@
       getReferencePois: () => getReferencePois(),
       getCounts,
       getReferenceCounts,
+      getMap: () => bridgeMap || null,
       sendToCampsite,
       reset,
       isWfmmPresent,
