@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Creative Mode Phase 1-A 試験</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="./bootstrap.mjs"></script>
+</head>
+<body>
+  <main>
+    <h1>Creative Mode Phase 1-A</h1>
+    <p>POI操作基盤の試験画面です。状態はメモリ上のみで、ページを閉じると失われます。</p>
+    <section aria-labelledby="fixture-heading">
+      <h2 id="fixture-heading">試験データ</h2>
+      <label>データ <select id="fixture"><option value="basic">基本</option><option value="over">新規26件</option><option value="legacy">旧ID欠落・衝突</option><option value="700">既存700件</option><option value="701">既存701件（反映拒否）</option></select></label>
+      <button id="load" type="button">試験データへ置き換え</button>
+      <pre id="counts" aria-label="件数判定"></pre>
+      <p id="message" role="status" aria-live="polite"></p>
+      <details><summary>ID対応付け・診断</summary><pre id="diagnostics"></pre></details>
+    </section>
+    <section aria-labelledby="add-heading">
+      <h2 id="add-heading">新規POIを追加</h2>
+      <button id="open-add" type="button" aria-expanded="false">＋ 追加メニュー</button>
+      <form id="add-form" hidden>
+        <label>種類 <select id="add-kind"><option value="pokestop">ポケストップ</option><option value="gym">ジム</option><option value="power">パワースポット</option></select></label>
+        <label>名称 <input id="add-title" value="新規試験地点" required></label>
+        <label>緯度 <input id="add-lat" type="number" step="any" value="35.123456789123" required></label>
+        <label>経度 <input id="add-lng" type="number" step="any" value="139.987654321987" required></label>
+        <button id="add-confirm" type="submit">追加を確定</button>
+        <button id="add-cancel" type="button">追加取消</button>
+        <p id="add-reason"></p>
+      </form>
+    </section>
+    <section aria-labelledby="edit-heading">
+      <h2 id="edit-heading">POI編集</h2>
+      <form id="edit-form" hidden>
+        <p id="selected"></p>
+        <label>名称 <input id="edit-title" required></label>
+        <label>メモ <textarea id="edit-memo"></textarea></label>
+        <label>種類 <select id="edit-kind"><option value="pokestop">ポケストップ</option><option value="gym">ジム</option><option value="power">パワースポット</option></select></label>
+        <label>緯度 <input id="edit-lat" type="number" step="any" required></label>
+        <label>経度 <input id="edit-lng" type="number" step="any" required></label>
+        <button type="submit">編集を確定</button>
+        <button id="edit-cancel" type="button">編集取消</button>
+        <button id="delete" type="button">削除</button>
+      </form>
+      <div class="history"><button id="undo" type="button">Undo</button><button id="redo" type="button">Redo</button><button id="reset-history" type="button">履歴を初期化</button><span id="history-count"></span></div>
+      <p>一覧は先頭50件を表示します。基盤内のデータは全件保持します。</p>
+      <div class="table-wrap"><table><thead><tr><th>名称</th><th>区分・種類</th><th>ID・外部ID</th><th>状態</th><th>操作</th></tr></thead><tbody id="pois"></tbody></table></div>
+    </section>
+  </main>
+</body>
+</html>

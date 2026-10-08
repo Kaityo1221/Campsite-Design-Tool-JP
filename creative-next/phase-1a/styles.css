@@ -1,0 +1,17 @@
+:root { font-family: system-ui, sans-serif; color: #18392d; background: #f4f7f4; }
+body { margin: 0; }
+main { max-width: 1050px; margin: auto; padding: 20px max(16px, env(safe-area-inset-right)) 32px max(16px, env(safe-area-inset-left)); }
+h1 { font-size: 1.7rem; } h2 { font-size: 1.15rem; }
+section { background: white; border: 1px solid #b9cbbf; border-radius: 12px; padding: 16px; margin: 16px 0; }
+label { display: block; margin: 8px 0; }
+input, select, textarea { font: inherit; display: block; width: min(100%, 440px); min-height: 36px; box-sizing: border-box; padding: 6px; border: 1px solid #7b9485; border-radius: 5px; }
+button { font: inherit; min-height: 42px; padding: 8px 12px; margin: 4px; background: #e8f1eb; border: 1px solid #698774; border-radius: 6px; cursor: pointer; }
+button:disabled { opacity: .5; cursor: default; }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid #da7c16; outline-offset: 2px; }
+#open-add { background: #f2a33c; color: #23180c; }
+#message { min-height: 24px; font-weight: 650; overflow-wrap: anywhere; }
+pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: .85rem; }
+.history { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; margin-top: 12px; }
+.table-wrap { overflow: auto; } table { border-collapse: collapse; width: 100%; min-width: 660px; table-layout: fixed; } th, td { border: 1px solid #ccd7ce; padding: 9px; text-align: left; font-size: .85rem; overflow-wrap: anywhere; } th { background: #e8f1eb; }
+[hidden] { display: none !important; }
+@media (max-width: 480px) { main { padding-top: 10px; } section { padding: 10px; } h1 { font-size: 1.35rem; } }
