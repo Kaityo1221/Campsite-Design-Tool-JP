@@ -9,7 +9,7 @@ const testLauncher = fs.readFileSync('lab/i4-3-iphone-test-shortcut.js', 'utf8')
 execFileSync(process.execPath, ['--check', 'lab/i4-3-iphone-test-shortcut.js'], { stdio: 'pipe' });
 assert.match(testLauncher, /__cbsI4ProbeTestEnabled = true/);
 assert.ok(testLauncher.includes('raw.githubusercontent.com'));
-assert.match(testLauncher, /campsite-bridge-shortcut-runtime\\.js/);
+assert.ok(testLauncher.includes('campsite-bridge-shortcut-runtime.js'));
 const workflow = fs.readFileSync('.github/workflows/deploy-pages.yml', 'utf8');
 
 for (const name of ['runtime.part-08aa.iphone-i4-probe-host.js','runtime.part-08b.iphone-i4-probe-ui.js']) {
