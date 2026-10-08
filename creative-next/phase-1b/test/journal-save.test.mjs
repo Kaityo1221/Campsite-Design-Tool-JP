@@ -148,3 +148,45 @@ test('explicit undo-restoration can revive only the named POI without moving exi
   await j.save(snapshot(),{restoreDeletedIds:['poi-1']});
   assert.equal((await j.load()).snapshot.records[0].deleted,undefined);
 });
+
+test('third verified revision preserves its immediately preceding revision and rotates back to A',async()=>{
+ const st=new MemoryStorage(),j=make(st);
+ await j.save(snapshot());
+ await j.save(snapshot({records:[record(),record('added','new')]}));
+ const slotB=st.getItem(j.keys.slotB);
+ await j.save(snapshot({records:[record(),record('added','new'),record('third','new')]}),{expectedRevision:2});
+ const loaded=await j.load();assert.equal(loaded.status,'READY');assert.equal(loaded.revision,3);
+ assert.equal(loaded.slot,'a');assert.equal(loaded.snapshot.records.length,3);
+ assert.equal(st.getItem(j.keys.slotB),slotB);
+});
+
+test('stale tab cannot overwrite a newer revision and does not touch saved pointer',async()=>{
+ const st=new MemoryStorage(),a=make(st),b=make(st);
+ await a.save(snapshot());const staleRevision=(await b.load()).revision;
+ await a.save(snapshot({records:[record(),record('added','new')]}));
+ const latestPointer=st.getItem(a.keys.pointer),latestSlot=st.getItem(a.keys.slotB);
+ await assert.rejects(()=>b.save(snapshot(),{expectedRevision:staleRevision}),e=>e.code==='SAVE_CONFLICT');
+ assert.equal(st.getItem(a.keys.pointer),latestPointer);
+ assert.equal(st.getItem(a.keys.slotB),latestSlot);
+ assert.equal((await a.load()).snapshot.records.length,2);
+});
+
+test('quota error on initial write leaves both generations empty and legacy value intact',async()=>{
+ const st=new MemoryStorage();st.setItem('next-lab-creative-v7','OLD SAFE');
+ const j=make(st);
+ st.interceptor=(key)=>{if(key===j.keys.slotA)throw Object.assign(new Error('Storage full'),{name:'QuotaExceededError'})};
+ await assert.rejects(()=>j.save(snapshot()),e=>e.name==='QuotaExceededError');
+ assert.equal((await j.load()).status,'EMPTY');
+ assert.equal(st.getItem(j.keys.pointer),null);
+ assert.equal(st.getItem('next-lab-creative-v7'),'OLD SAFE');
+});
+
+test('pointer corruption after valid second save stays read-only until explicit recovery',async()=>{
+ const st=new MemoryStorage(),j=make(st);
+ await j.save(snapshot());await j.save(snapshot({records:[record(),record('new','new')]}));
+ st.setItem(j.keys.pointer,'BROKEN');
+ const report=await j.load();assert.equal(report.status,'FALLBACK');assert.equal(report.revision,2);
+ const unchanged=new Map(st.data);
+ await assert.rejects(()=>j.save(snapshot({records:[record(),record('new','new')]})),e=>e.code==='SAVE_RECOVERY_REQUIRED');
+ assert.deepEqual(st.data,unchanged);
+});

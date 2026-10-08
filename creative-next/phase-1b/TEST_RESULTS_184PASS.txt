@@ -1,0 +1,1120 @@
+TAP version 13
+# Subtest: activity editor requires confirmation and does not affect original
+ok 1 - activity editor requires confirmation and does not affect original
+  ---
+  duration_ms: 27.515834
+  type: 'test'
+  ...
+# Subtest: move vertex -> re-export -> import has same ID and coordinates
+ok 2 - move vertex -> re-export -> import has same ID and coordinates
+  ---
+  duration_ms: 22.244292
+  type: 'test'
+  ...
+# Subtest: insert a vertex and delete it, maintaining exact source geometry after undo
+ok 3 - insert a vertex and delete it, maintaining exact source geometry after undo
+  ---
+  duration_ms: 12.234036
+  type: 'test'
+  ...
+# Subtest: POI and area operations undo/redo in chronological order
+ok 4 - POI and area operations undo/redo in chronological order
+  ---
+  duration_ms: 11.17816
+  type: 'test'
+  ...
+# Subtest: activity area + POI change survive isolated journal save and reopen
+ok 5 - activity area + POI change survive isolated journal save and reopen
+  ---
+  duration_ms: 33.297584
+  type: 'test'
+  ...
+# Subtest: reject degenerate polygons, zero area, intersections and dateline ambiguity
+ok 6 - reject degenerate polygons, zero area, intersections and dateline ambiguity
+  ---
+  duration_ms: 0.531159
+  type: 'test'
+  ...
+# Subtest: no repeated points, NaN, infinity or out-of-range
+ok 7 - no repeated points, NaN, infinity or out-of-range
+  ---
+  duration_ms: 0.155284
+  type: 'test'
+  ...
+# Subtest: cannot delete below three vertices or edit unsupported area
+ok 8 - cannot delete below three vertices or edit unsupported area
+  ---
+  duration_ms: 19.599696
+  type: 'test'
+  ...
+# Subtest: invalid vertex index and coordinate are rejected with no partial change
+ok 9 - invalid vertex index and coordinate are rejected with no partial change
+  ---
+  duration_ms: 8.173935
+  type: 'test'
+  ...
+# Subtest: edit validation does not confuse distance circles with activity areas
+ok 10 - edit validation does not confuse distance circles with activity areas
+  ---
+  duration_ms: 11.207844
+  type: 'test'
+  ...
+# Subtest: planned exports reject removed or renamed activity IDs
+ok 11 - planned exports reject removed or renamed activity IDs
+  ---
+  duration_ms: 0.365309
+  type: 'test'
+  ...
+# Subtest: unknown command types fail before any mutation
+ok 12 - unknown command types fail before any mutation
+  ---
+  duration_ms: 7.753844
+  type: 'test'
+  ...
+# Subtest: unknown foreign polygon geometry extension refuses source edit
+ok 13 - unknown foreign polygon geometry extension refuses source edit
+  ---
+  duration_ms: 4.090298
+  type: 'test'
+  ...
+# Subtest: special altitude or inner ring geometry refuses source edit
+ok 14 - special altitude or inner ring geometry refuses source edit
+  ---
+  duration_ms: 11.354575
+  type: 'test'
+  ...
+# Subtest: 500+ vertices remain bounded while 512 is the limit
+ok 15 - 500+ vertices remain bounded while 512 is the limit
+  ---
+  duration_ms: 0.772982
+  type: 'test'
+  ...
+# Subtest: area draft remains immutable during in-flight async save and cannot leak references
+ok 16 - area draft remains immutable during in-flight async save and cannot leak references
+  ---
+  duration_ms: 35.913535
+  type: 'test'
+  ...
+# Subtest: fresh canonical records produce re-importable new-v1 KMZ
+ok 17 - fresh canonical records produce re-importable new-v1 KMZ
+  ---
+  duration_ms: 22.49674
+  type: 'test'
+  ...
+# Subtest: deleted POIs are not exported but canonical list is never changed
+ok 18 - deleted POIs are not exported but canonical list is never changed
+  ---
+  duration_ms: 5.56283
+  type: 'test'
+  ...
+# Subtest: activity-area polygon is roundtripped alongside POIs
+ok 19 - activity-area polygon is roundtripped alongside POIs
+  ---
+  duration_ms: 8.065832
+  type: 'test'
+  ...
+# Subtest: separate IDs keep distinct same-named and same-coordinates POIs
+ok 20 - separate IDs keep distinct same-named and same-coordinates POIs
+  ---
+  duration_ms: 5.450852
+  type: 'test'
+  ...
+# Subtest: invalid input, missing ID, duplicate ID, and existing 701 are rejected
+ok 21 - invalid input, missing ID, duplicate ID, and existing 701 are rejected
+  ---
+  duration_ms: 1.048065
+  type: 'test'
+  ...
+# Subtest: new count above 25 is preserved and signaled as a warning
+ok 22 - new count above 25 is preserved and signaled as a warning
+  ---
+  duration_ms: 14.144689
+  type: 'test'
+  ...
+# Subtest: reject source-derived/unknown attributes rather than silently dropping them
+ok 23 - reject source-derived/unknown attributes rather than silently dropping them
+  ---
+  duration_ms: 0.347662
+  type: 'test'
+  ...
+# Subtest: reject empty project until a separately defined empty-output contract exists
+ok 24 - reject empty project until a separately defined empty-output contract exists
+  ---
+  duration_ms: 0.170096
+  type: 'test'
+  ...
+# Subtest: abort stops fresh export
+ok 25 - abort stops fresh export
+  ---
+  duration_ms: 0.368764
+  type: 'test'
+  ...
+# Subtest: circleRingAt builds closed 49-point rings with exact 30/40/50 meter geometry
+ok 26 - circleRingAt builds closed 49-point rings with exact 30/40/50 meter geometry
+  ---
+  duration_ms: 1.759024
+  type: 'test'
+  ...
+# Subtest: source circles are indexed without name/coordinate merging
+ok 27 - source circles are indexed without name/coordinate merging
+  ---
+  duration_ms: 28.122095
+  type: 'test'
+  ...
+# Subtest: moving NEW POI regenerates only its owned ring; untouched owner ring is byte-identical
+ok 28 - moving NEW POI regenerates only its owned ring; untouched owner ring is byte-identical
+  ---
+  duration_ms: 37.945439
+  type: 'test'
+  ...
+# Subtest: existing owner location cannot move and dependent ring is intact
+ok 29 - existing owner location cannot move and dependent ring is intact
+  ---
+  duration_ms: 21.562537
+  type: 'test'
+  ...
+# Subtest: delete removes owner and circle together, undo restores exact ring, redo removes again
+ok 30 - delete removes owner and circle together, undo restores exact ring, redo removes again
+  ---
+  duration_ms: 32.538563
+  type: 'test'
+  ...
+# Subtest: two-generation draft preserves deletion tombstone and linked circle through resume
+ok 31 - two-generation draft preserves deletion tombstone and linked circle through resume
+  ---
+  duration_ms: 47.648221
+  type: 'test'
+  ...
+# Subtest: moving imported source owner with attached circles updates ring, not activity areas
+ok 32 - moving imported source owner with attached circles updates ring, not activity areas
+  ---
+  duration_ms: 22.045503
+  type: 'test'
+  ...
+# Subtest: new v1 valid ready but never auto-applies
+ok 33 - new v1 valid ready but never auto-applies
+  ---
+  duration_ms: 3.439069
+  type: 'test'
+  ...
+# Subtest: diagnostic does not mutate staged input
+ok 34 - diagnostic does not mutate staged input
+  ---
+  duration_ms: 0.257827
+  type: 'test'
+  ...
+# Subtest: same name is warned but separate
+ok 35 - same name is warned but separate
+  ---
+  duration_ms: 0.273171
+  type: 'test'
+  ...
+# Subtest: duplicate internal ID holds
+ok 36 - duplicate internal ID holds
+  ---
+  duration_ms: 0.175404
+  type: 'test'
+  ...
+# Subtest: trailing zero coordinates are semantically identical
+ok 37 - trailing zero coordinates are semantically identical
+  ---
+  duration_ms: 0.20627
+  type: 'test'
+  ...
+# Subtest: coordinate difference holds
+ok 38 - coordinate difference holds
+  ---
+  duration_ms: 0.120572
+  type: 'test'
+  ...
+# Subtest: missing coordinate altitude rejected if comma remains
+ok 39 - missing coordinate altitude rejected if comma remains
+  ---
+  duration_ms: 0.216465
+  type: 'test'
+  ...
+# Subtest: latitude out of bounds holds
+ok 40 - latitude out of bounds holds
+  ---
+  duration_ms: 0.214142
+  type: 'test'
+  ...
+# Subtest: incomplete document marker never falls back
+ok 41 - incomplete document marker never falls back
+  ---
+  duration_ms: 0.349536
+  type: 'test'
+  ...
+# Subtest: unknown version holds
+ok 42 - unknown version holds
+  ---
+  duration_ms: 0.329736
+  type: 'test'
+  ...
+# Subtest: duplicated required key holds
+ok 43 - duplicated required key holds
+  ---
+  duration_ms: 1.301436
+  type: 'test'
+  ...
+# Subtest: memo mismatch holds
+ok 44 - memo mismatch holds
+  ---
+  duration_ms: 0.11975
+  type: 'test'
+  ...
+# Subtest: missing description warns, retains dedicated memo
+ok 45 - missing description warns, retains dedicated memo
+  ---
+  duration_ms: 0.09299
+  type: 'test'
+  ...
+# Subtest: 500 existing warns
+ok 46 - 500 existing warns
+  ---
+  duration_ms: 9.655792
+  type: 'test'
+  ...
+# Subtest: 700 existing can continue
+ok 47 - 700 existing can continue
+  ---
+  duration_ms: 8.17066
+  type: 'test'
+  ...
+# Subtest: 701 existing rejects all
+ok 48 - 701 existing rejects all
+  ---
+  duration_ms: 3.158006
+  type: 'test'
+  ...
+# Subtest: 26 new warns but does not reject
+ok 49 - 26 new warns but does not reject
+  ---
+  duration_ms: 0.23286
+  type: 'test'
+  ...
+# Subtest: bad archive rejects
+ok 50 - bad archive rejects
+  ---
+  duration_ms: 0.08007
+  type: 'test'
+  ...
+# Subtest: more than one KML holds
+ok 51 - more than one KML holds
+  ---
+  duration_ms: 0.075424
+  type: 'test'
+  ...
+# Subtest: unknown geometry holds
+ok 52 - unknown geometry holds
+  ---
+  duration_ms: 0.146711
+  type: 'test'
+  ...
+# Subtest: no silent Placemark drop
+ok 53 - no silent Placemark drop
+  ---
+  duration_ms: 0.100671
+  type: 'test'
+  ...
+# Subtest: legacy profile remains HOLD until actual verification
+ok 54 - legacy profile remains HOLD until actual verification
+  ---
+  duration_ms: 0.152079
+  type: 'test'
+  ...
+# Subtest: legacy without nextlab-layer holds
+ok 55 - legacy without nextlab-layer holds
+  ---
+  duration_ms: 0.07971
+  type: 'test'
+  ...
+# Subtest: verified activity polygon not counted as POI
+ok 56 - verified activity polygon not counted as POI
+  ---
+  duration_ms: 0.100711
+  type: 'test'
+  ...
+# Subtest: synthetic Kasai-shaped manifest: 213 POI, 213 circles, one area remains HOLD
+ok 57 - synthetic Kasai-shaped manifest: 213 POI, 213 circles, one area remains HOLD
+  ---
+  duration_ms: 4.204469
+  type: 'test'
+  ...
+# Subtest: same external GUID with different internal IDs is a warning, not a merge
+ok 58 - same external GUID with different internal IDs is a warning, not a merge
+  ---
+  duration_ms: 0.134232
+  type: 'test'
+  ...
+# Subtest: unknown polygon is never silently dropped
+ok 59 - unknown polygon is never silently dropped
+  ---
+  duration_ms: 0.130015
+  type: 'test'
+  ...
+# Subtest: existing 701 is REJECT even with other BLOCK issues
+ok 60 - existing 701 is REJECT even with other BLOCK issues
+  ---
+  duration_ms: 4.795347
+  type: 'test'
+  ...
+# Subtest: unchanged NEW_V1 can be zipped and reimported with immutable ID, altitude spelling and memo
+ok 61 - unchanged NEW_V1 can be zipped and reimported with immutable ID, altitude spelling and memo
+  ---
+  duration_ms: 24.412581
+  type: 'test'
+  ...
+# Subtest: KMZ attachments and unknown XML metadata survive rewriting byte for byte
+ok 62 - KMZ attachments and unknown XML metadata survive rewriting byte for byte
+  ---
+  duration_ms: 14.676738
+  type: 'test'
+  ...
+# Subtest: updates name and memo including XML metacharacters, preserving source metadata
+ok 63 - updates name and memo including XML metacharacters, preserving source metadata
+  ---
+  duration_ms: 9.131164
+  type: 'test'
+  ...
+# Subtest: existing POI coordinates cannot be changed even to the same coordinate
+ok 64 - existing POI coordinates cannot be changed even to the same coordinate
+  ---
+  duration_ms: 4.023226
+  type: 'test'
+  ...
+# Subtest: new POI moves only by explicit coordinate edit; original zero altitude is kept
+ok 65 - new POI moves only by explicit coordinate edit; original zero altitude is kept
+  ---
+  duration_ms: 8.214215
+  type: 'test'
+  ...
+# Subtest: new move with meaningful elevation refuses to falsify original altitude
+ok 66 - new move with meaningful elevation refuses to falsify original altitude
+  ---
+  duration_ms: 3.490386
+  type: 'test'
+  ...
+# Subtest: untouched meaningful altitude is retained
+ok 67 - untouched meaningful altitude is retained
+  ---
+  duration_ms: 6.112216
+  type: 'test'
+  ...
+# Subtest: an unknown edit field is rejected instead of silently ignored
+ok 68 - an unknown edit field is rejected instead of silently ignored
+  ---
+  duration_ms: 2.224714
+  type: 'test'
+  ...
+# Subtest: duplicate edit IDs are rejected
+ok 69 - duplicate edit IDs are rejected
+  ---
+  duration_ms: 2.846227
+  type: 'test'
+  ...
+# Subtest: unknown edited ID is rejected
+ok 70 - unknown edited ID is rejected
+  ---
+  duration_ms: 3.566911
+  type: 'test'
+  ...
+# Subtest: valid delete removes only target POI, keeps other POI and area
+ok 71 - valid delete removes only target POI, keeps other POI and area
+  ---
+  duration_ms: 8.648418
+  type: 'test'
+  ...
+# Subtest: old Creative KMZ is HOLD and cannot be silently converted or exported
+ok 72 - old Creative KMZ is HOLD and cannot be silently converted or exported
+  ---
+  duration_ms: 1.958083
+  type: 'test'
+  ...
+# Subtest: a blocked new file cannot be written
+ok 73 - a blocked new file cannot be written
+  ---
+  duration_ms: 3.025357
+  type: 'test'
+  ...
+# Subtest: undo/redo layers and map view are not written to KML; no UI updates occur
+ok 74 - undo/redo layers and map view are not written to KML; no UI updates occur
+  ---
+  duration_ms: 8.059583
+  type: 'test'
+  ...
+# Subtest: abort is honored before any mutation
+ok 75 - abort is honored before any mutation
+  ---
+  duration_ms: 3.055021
+  type: 'test'
+  ...
+# Subtest: over-limit legitimate new POIs can still be retained and exported
+ok 76 - over-limit legitimate new POIs can still be retained and exported
+  ---
+  duration_ms: 60.310441
+  type: 'test'
+  ...
+# Subtest: type change into full new category is blocked
+ok 77 - type change into full new category is blocked
+  ---
+  duration_ms: 11.940215
+  type: 'test'
+  ...
+# Subtest: new type change into available category succeeds
+ok 78 - new type change into available category succeeds
+  ---
+  duration_ms: 5.020956
+  type: 'test'
+  ...
+# Subtest: original source archive bytes remain unchanged after export
+ok 79 - original source archive bytes remain unchanged after export
+  ---
+  duration_ms: 3.980582
+  type: 'test'
+  ...
+# Subtest: duplicate area IDs never qualify for export or roundtrip
+ok 80 - duplicate area IDs never qualify for export or roundtrip
+  ---
+  duration_ms: 14.016125
+  type: 'test'
+  ...
+# Subtest: new POI move with unknown Point extension is blocked rather than silently changing its meaning
+ok 81 - new POI move with unknown Point extension is blocked rather than silently changing its meaning
+  ---
+  duration_ms: 2.006045
+  type: 'test'
+  ...
+# Subtest: no import without confirmed review and no storage mutation during preparation
+ok 82 - no import without confirmed review and no storage mutation during preparation
+  ---
+  duration_ms: 30.244936
+  type: 'test'
+  ...
+# Subtest: explicit approval creates isolated editor with empty undo / redo history
+ok 83 - explicit approval creates isolated editor with empty undo / redo history
+  ---
+  duration_ms: 8.442918
+  type: 'test'
+  ...
+# Subtest: edit memo -> undo -> redo -> export -> KML reimport preserves identity
+ok 84 - edit memo -> undo -> redo -> export -> KML reimport preserves identity
+  ---
+  duration_ms: 13.1276
+  type: 'test'
+  ...
+# Subtest: existing POI move is denied without changes to store
+ok 85 - existing POI move is denied without changes to store
+  ---
+  duration_ms: 4.412081
+  type: 'test'
+  ...
+# Subtest: new POI move is supported on sources with no attached circles
+ok 86 - new POI move is supported on sources with no attached circles
+  ---
+  duration_ms: 8.808519
+  type: 'test'
+  ...
+# Subtest: adding a new POI to reviewed KMZ creates a source-safe record and 50m circle
+ok 87 - adding a new POI to reviewed KMZ creates a source-safe record and 50m circle
+  ---
+  duration_ms: 16.579693
+  type: 'test'
+  ...
+# [xmldom fatalError]\\tmissing root element 
+# @\#[line:0,col:undefined]
+# Subtest: failed second selection clears stale pending candidate
+ok 88 - failed second selection clears stale pending candidate
+  ---
+  duration_ms: 5.758074
+  type: 'test'
+  ...
+# Subtest: cancel pending retains prior active edited store
+ok 89 - cancel pending retains prior active edited store
+  ---
+  duration_ms: 12.143491
+  type: 'test'
+  ...
+# Subtest: source-bearing preview save and resume retains immutable source and user edit
+ok 90 - source-bearing preview save and resume retains immutable source and user edit
+  ---
+  duration_ms: 33.540138
+  type: 'test'
+  ...
+# Subtest: second generation journal keeps previous intact revision
+ok 91 - second generation journal keeps previous intact revision
+  ---
+  duration_ms: 41.725661
+  type: 'test'
+  ...
+# Subtest: corrupted journal cannot silently replace editor or old save
+ok 92 - corrupted journal cannot silently replace editor or old save
+  ---
+  duration_ms: 16.267899
+  type: 'test'
+  ...
+# Subtest: stale saved workspace blocks unrelated draft without any automatic delete
+ok 93 - stale saved workspace blocks unrelated draft without any automatic delete
+  ---
+  duration_ms: 9.650344
+  type: 'test'
+  ...
+# Subtest: existing identity mutation is rejected by Phase 1-A commands
+ok 94 - existing identity mutation is rejected by Phase 1-A commands
+  ---
+  duration_ms: 4.481515
+  type: 'test'
+  ...
+# Subtest: no editor cannot export or save
+ok 95 - no editor cannot export or save
+  ---
+  duration_ms: 0.368053
+  type: 'test'
+  ...
+# Subtest: deleted POI without dependent circles stays in journal and can be restored by Undo
+ok 96 - deleted POI without dependent circles stays in journal and can be restored by Undo
+  ---
+  duration_ms: 4.356338
+  type: 'test'
+  ...
+# [xmldom fatalError]\\tmissing root element 
+# @\#[line:0,col:undefined]
+# Subtest: broken KMZ preparation never replaces an existing edited preview
+ok 97 - broken KMZ preparation never replaces an existing edited preview
+  ---
+  duration_ms: 4.166733
+  type: 'test'
+  ...
+# Subtest: journal write failure before pointer commit keeps previous intact generation
+ok 98 - journal write failure before pointer commit keeps previous intact generation
+  ---
+  duration_ms: 21.09884
+  type: 'test'
+  ...
+# Subtest: first verified save can be reopened from the same storage
+ok 99 - first verified save can be reopened from the same storage
+  ---
+  duration_ms: 9.605005
+  type: 'test'
+  ...
+# Subtest: two generations rotate; previous good version always remains intact
+ok 100 - two generations rotate; previous good version always remains intact
+  ---
+  duration_ms: 3.905009
+  type: 'test'
+  ...
+# Subtest: recovery from corrupt current slot uses the last healthy generation without rewriting it
+ok 101 - recovery from corrupt current slot uses the last healthy generation without rewriting it
+  ---
+  duration_ms: 1.428877
+  type: 'test'
+  ...
+# Subtest: pointer corruption returns valid fallback; no storage is auto-repaired
+ok 102 - pointer corruption returns valid fallback; no storage is auto-repaired
+  ---
+  duration_ms: 0.81153
+  type: 'test'
+  ...
+# Subtest: two valid generations but no pointer chooses highest and warns instead of adopting silently
+ok 103 - two valid generations but no pointer chooses highest and warns instead of adopting silently
+  ---
+  duration_ms: 1.507306
+  type: 'test'
+  ...
+# Subtest: corrupt both snapshots yields CORRUPT, no data wiped
+ok 104 - corrupt both snapshots yields CORRUPT, no data wiped
+  ---
+  duration_ms: 0.872761
+  type: 'test'
+  ...
+# Subtest: save rejected while corrupted generations need explicit recovery
+ok 105 - save rejected while corrupted generations need explicit recovery
+  ---
+  duration_ms: 1.68351
+  type: 'test'
+  ...
+# Subtest: failed inactive-slot write preserves previous committed generation
+ok 106 - failed inactive-slot write preserves previous committed generation
+  ---
+  duration_ms: 3.358533
+  type: 'test'
+  ...
+# Subtest: failed pointer write preserves old generation while new slot is left uncommitted
+ok 107 - failed pointer write preserves old generation while new slot is left uncommitted
+  ---
+  duration_ms: 3.745409
+  type: 'test'
+  ...
+# Subtest: silently discarded slot write is discovered on readback
+ok 108 - silently discarded slot write is discovered on readback
+  ---
+  duration_ms: 1.55024
+  type: 'test'
+  ...
+# Subtest: overwritten pointer not equal to expected revision flags version conflict
+ok 109 - overwritten pointer not equal to expected revision flags version conflict
+  ---
+  duration_ms: 1.274996
+  type: 'test'
+  ...
+# Subtest: pointer modified before switch prevents committing staged generation
+ok 110 - pointer modified before switch prevents committing staged generation
+  ---
+  duration_ms: 5.032414
+  type: 'test'
+  ...
+# Subtest: old Creative key is never read, overwritten or deleted
+ok 111 - old Creative key is never read, overwritten or deleted
+  ---
+  duration_ms: 2.087077
+  type: 'test'
+  ...
+# Subtest: invalid user data, duplicate POI ids, illegal coordinates are rejected before writing
+ok 112 - invalid user data, duplicate POI ids, illegal coordinates are rejected before writing
+  ---
+  duration_ms: 0.59193
+  type: 'test'
+  ...
+# Subtest: existing 701 active is refused, but new 26 is safe to store
+ok 113 - existing 701 active is refused, but new 26 is safe to store
+  ---
+  duration_ms: 8.415198
+  type: 'test'
+  ...
+# Subtest: deleted existing is preserved as tombstone; does not contribute to live 700 cap
+ok 114 - deleted existing is preserved as tombstone; does not contribute to live 700 cap
+  ---
+  duration_ms: 8.653005
+  type: 'test'
+  ...
+# Subtest: non-JSON values cannot be silently stringified away
+ok 115 - non-JSON values cannot be silently stringified away
+  ---
+  duration_ms: 0.263646
+  type: 'test'
+  ...
+# Subtest: constructor explicitly rejects legacy namespace
+ok 116 - constructor explicitly rejects legacy namespace
+  ---
+  duration_ms: 0.132869
+  type: 'test'
+  ...
+# Subtest: previously saved existing coordinates cannot be changed by a later save
+ok 117 - previously saved existing coordinates cannot be changed by a later save
+  ---
+  duration_ms: 8.884403
+  type: 'test'
+  ...
+# Subtest: previously saved role cannot be switched by rewriting ID
+ok 118 - previously saved role cannot be switched by rewriting ID
+  ---
+  duration_ms: 4.103377
+  type: 'test'
+  ...
+# Subtest: POI disappears without tombstone is blocked to avoid silent loss
+ok 119 - POI disappears without tombstone is blocked to avoid silent loss
+  ---
+  duration_ms: 1.188967
+  type: 'test'
+  ...
+# Subtest: explicit tombstone saves and can be reopened
+ok 120 - explicit tombstone saves and can be reopened
+  ---
+  duration_ms: 1.289208
+  type: 'test'
+  ...
+# Subtest: an unapproved tombstone revival is blocked
+ok 121 - an unapproved tombstone revival is blocked
+  ---
+  duration_ms: 0.977143
+  type: 'test'
+  ...
+# Subtest: sparse arrays are rejected rather than replaced with null
+ok 122 - sparse arrays are rejected rather than replaced with null
+  ---
+  duration_ms: 0.423636
+  type: 'test'
+  ...
+# Subtest: explicit undo-restoration can revive only the named POI without moving existing coordinates
+ok 123 - explicit undo-restoration can revive only the named POI without moving existing coordinates
+  ---
+  duration_ms: 2.786718
+  type: 'test'
+  ...
+# Subtest: third verified revision preserves its immediately preceding revision and rotates back to A
+ok 124 - third verified revision preserves its immediately preceding revision and rotates back to A
+  ---
+  duration_ms: 1.39771
+  type: 'test'
+  ...
+# Subtest: stale tab cannot overwrite a newer revision and does not touch saved pointer
+ok 125 - stale tab cannot overwrite a newer revision and does not touch saved pointer
+  ---
+  duration_ms: 3.661202
+  type: 'test'
+  ...
+# Subtest: quota error on initial write leaves both generations empty and legacy value intact
+ok 126 - quota error on initial write leaves both generations empty and legacy value intact
+  ---
+  duration_ms: 0.569046
+  type: 'test'
+  ...
+# Subtest: pointer corruption after valid second save stays read-only until explicit recovery
+ok 127 - pointer corruption after valid second save stays read-only until explicit recovery
+  ---
+  duration_ms: 1.409399
+  type: 'test'
+  ...
+# Subtest: keyed map renderer displays POI, owned circles and areas without re-creating unchanged layers
+ok 128 - keyed map renderer displays POI, owned circles and areas without re-creating unchanged layers
+  ---
+  duration_ms: 5.679666
+  type: 'test'
+  ...
+# Subtest: map POI selection uses canonical POI internal ID and avoids invalid initialization
+ok 129 - map POI selection uses canonical POI internal ID and avoids invalid initialization
+  ---
+  duration_ms: 0.417858
+  type: 'test'
+  ...
+# Subtest: independent layer toggles never mutate the input and hide only the requested overlay
+ok 130 - independent layer toggles never mutate the input and hide only the requested overlay
+  ---
+  duration_ms: 7.355875
+  type: 'test'
+  ...
+# Subtest: map click proposes a coordinate; POI clicks only select the canonical ID
+ok 131 - map click proposes a coordinate; POI clicks only select the canonical ID
+  ---
+  duration_ms: 0.347182
+  type: 'test'
+  ...
+# Subtest: vertex drop is only a proposal and a cancelled edit is restored by render
+ok 132 - vertex drop is only a proposal and a cancelled edit is restored by render
+  ---
+  duration_ms: 0.507493
+  type: 'test'
+  ...
+# Subtest: vertex handles track every inserted/deleted vertex without stale index callbacks
+ok 133 - vertex handles track every inserted/deleted vertex without stale index callbacks
+  ---
+  duration_ms: 0.363726
+  type: 'test'
+  ...
+# Subtest: old 2 POI, 2 circles and 1 activity convert to complete NEW_V1 but never auto-apply
+ok 134 - old 2 POI, 2 circles and 1 activity convert to complete NEW_V1 but never auto-apply
+  ---
+  duration_ms: 43.221599
+  type: 'test'
+  ...
+# Subtest: same original KMZ converted twice generates stable unique IDs
+ok 135 - same original KMZ converted twice generates stable unique IDs
+  ---
+  duration_ms: 16.599818
+  type: 'test'
+  ...
+# Subtest: source byte array is not mutated
+ok 136 - source byte array is not mutated
+  ---
+  duration_ms: 6.960582
+  type: 'test'
+  ...
+# Subtest: generated descriptions are stored without becoming user memos
+ok 137 - generated descriptions are stored without becoming user memos
+  ---
+  duration_ms: 14.795436
+  type: 'test'
+  ...
+# Subtest: ordinary HTML-looking handwritten description is preserved as memo
+ok 138 - ordinary HTML-looking handwritten description is preserved as memo
+  ---
+  duration_ms: 11.052901
+  type: 'test'
+  ...
+# Subtest: ambiguous generated-looking description is held rather than stripped
+ok 139 - ambiguous generated-looking description is held rather than stripped
+  ---
+  duration_ms: 4.515196
+  type: 'test'
+  ...
+# Subtest: duplicate locations cannot be assigned circles automatically
+ok 140 - duplicate locations cannot be assigned circles automatically
+  ---
+  duration_ms: 3.721783
+  type: 'test'
+  ...
+# Subtest: unverified unknown polygon stops conversion
+ok 141 - unverified unknown polygon stops conversion
+  ---
+  duration_ms: 3.18755
+  type: 'test'
+  ...
+# Subtest: unknown reserved new metadata in legacy input stops conversion
+ok 142 - unknown reserved new metadata in legacy input stops conversion
+  ---
+  duration_ms: 3.135613
+  type: 'test'
+  ...
+# Subtest: exporting converted KMZ without edits maintains every geometry and ID
+ok 143 - exporting converted KMZ without edits maintains every geometry and ID
+  ---
+  duration_ms: 17.525028
+  type: 'test'
+  ...
+# Subtest: editing a converted POI memo preserves original legacy description metadata
+ok 144 - editing a converted POI memo preserves original legacy description metadata
+  ---
+  duration_ms: 15.38378
+  type: 'test'
+  ...
+# Subtest: moving an existing converted POI is blocked
+ok 145 - moving an existing converted POI is blocked
+  ---
+  duration_ms: 11.709128
+  type: 'test'
+  ...
+# Subtest: malformed old layer does not get guessed from folder
+ok 146 - malformed old layer does not get guessed from folder
+  ---
+  duration_ms: 2.478465
+  type: 'test'
+  ...
+# Subtest: old KMZ kind edit is held when destination folder or icon is missing
+ok 147 - old KMZ kind edit is held when destination folder or icon is missing
+  ---
+  duration_ms: 6.958047
+  type: 'test'
+  ...
+# Subtest: a verified legacy candidate creates a Phase 1-A store preview without auto-import
+ok 148 - a verified legacy candidate creates a Phase 1-A store preview without auto-import
+  ---
+  duration_ms: 31.927074
+  type: 'test'
+  ...
+# Subtest: existing POI movement remains locked in isolated store
+ok 149 - existing POI movement remains locked in isolated store
+  ---
+  duration_ms: 14.061894
+  type: 'test'
+  ...
+# Subtest: memo changes allow Undo / Redo without mutating staged source
+ok 150 - memo changes allow Undo / Redo without mutating staged source
+  ---
+  duration_ms: 11.622208
+  type: 'test'
+  ...
+# Subtest: legacy HOLD stage cannot create editor preview
+ok 151 - legacy HOLD stage cannot create editor preview
+  ---
+  duration_ms: 4.346152
+  type: 'test'
+  ...
+# Subtest: preview blocks staging with mismatched audit counts
+ok 152 - preview blocks staging with mismatched audit counts
+  ---
+  duration_ms: 7.078578
+  type: 'test'
+  ...
+# Subtest: explicit new POI addition generates new internal ID, 50m circle, exact metadata and preserves original source
+ok 153 - explicit new POI addition generates new internal ID, 50m circle, exact metadata and preserves original source
+  ---
+  duration_ms: 55.540091
+  type: 'test'
+  ...
+# Subtest: unconfirmed add does nothing and invalid metadata or ids are rejected by source-aware path
+ok 154 - unconfirmed add does nothing and invalid metadata or ids are rejected by source-aware path
+  ---
+  duration_ms: 9.176321
+  type: 'test'
+  ...
+# Subtest: Undo and Redo of added POI also update circle count and source KML output
+ok 155 - Undo and Redo of added POI also update circle count and source KML output
+  ---
+  duration_ms: 27.613271
+  type: 'test'
+  ...
+# Subtest: two-generation draft keeps newly added POI with its unique ID and circle through resume
+ok 156 - two-generation draft keeps newly added POI with its unique ID and circle through resume
+  ---
+  duration_ms: 29.97165
+  type: 'test'
+  ...
+# Subtest: added POI moves with its circle and deletes with tombstone, then Undo restores
+ok 157 - added POI moves with its circle and deletes with tombstone, then Undo restores
+  ---
+  duration_ms: 14.868566
+  type: 'test'
+  ...
+# Subtest: new POI cannot be added if new total is already 25 (no auto discard)
+ok 158 - new POI cannot be added if new total is already 25 (no auto discard)
+  ---
+  duration_ms: 20.760471
+  type: 'test'
+  ...
+# Subtest: new POI addition can follow explicit deletion of one new with free gym slot; tombstone persists
+ok 159 - new POI addition can follow explicit deletion of one new with free gym slot; tombstone persists
+  ---
+  duration_ms: 37.802233
+  type: 'test'
+  ...
+# Subtest: untrusted raw additions into exporter HOLD and cannot change original source
+ok 160 - untrusted raw additions into exporter HOLD and cannot change original source
+  ---
+  duration_ms: 4.405261
+  type: 'test'
+  ...
+# Subtest: type change of fresh document changes folder and metadata consistently and Undo restores
+ok 161 - type change of fresh document changes folder and metadata consistently and Undo restores
+  ---
+  duration_ms: 13.618277
+  type: 'test'
+  ...
+# Subtest: new POI circle creation requires safe latitude (cannot cross polar seam)
+ok 162 - new POI circle creation requires safe latitude (cannot cross polar seam)
+  ---
+  duration_ms: 3.617537
+  type: 'test'
+  ...
+# Subtest: real ZIP + XML are staged with no auto-apply
+ok 163 - real ZIP + XML are staged with no auto-apply
+  ---
+  duration_ms: 20.542504
+  type: 'test'
+  ...
+# Subtest: plain KML is staged separately without ZIP
+ok 164 - plain KML is staged separately without ZIP
+  ---
+  duration_ms: 0.900383
+  type: 'test'
+  ...
+# Subtest: two KMLs never pick a silent winner
+ok 165 - two KMLs never pick a silent winner
+  ---
+  duration_ms: 2.828461
+  type: 'test'
+  ...
+# Subtest: unknown extra Placemark geometry holds, not drops
+ok 166 - unknown extra Placemark geometry holds, not drops
+  ---
+  duration_ms: 3.103093
+  type: 'test'
+  ...
+# [xmldom fatalError]\\tOpening and ending tag mismatch: "Placemark" != "kml" 
+# @\#[line:1,col:16]
+# Subtest: malformed XML is held without loading any POI
+ok 167 - malformed XML is held without loading any POI
+  ---
+  duration_ms: 1.892364
+  type: 'test'
+  ...
+# Subtest: external DOCTYPE is forbidden and never fetched
+ok 168 - external DOCTYPE is forbidden and never fetched
+  ---
+  duration_ms: 1.926576
+  type: 'test'
+  ...
+# Subtest: ZIP declared expansion too large rejects before XML parsing
+ok 169 - ZIP declared expansion too large rejects before XML parsing
+  ---
+  duration_ms: 4.148855
+  type: 'test'
+  ...
+# Subtest: compressed input safety envelope is enforced
+ok 170 - compressed input safety envelope is enforced
+  ---
+  duration_ms: 1.615008
+  type: 'test'
+  ...
+# Subtest: ZIP path traversal is detected before JSZip normalization
+ok 171 - ZIP path traversal is detected before JSZip normalization
+  ---
+  duration_ms: 1.861067
+  type: 'test'
+  ...
+# Subtest: cancelled staging does not parse or mutate anything
+ok 172 - cancelled staging does not parse or mutate anything
+  ---
+  duration_ms: 1.527386
+  type: 'test'
+  ...
+# Subtest: legacy layer is diagnosed, never auto-imported
+ok 173 - legacy layer is diagnosed, never auto-imported
+  ---
+  duration_ms: 2.080076
+  type: 'test'
+  ...
+# Subtest: new-form literal repeated IDs cannot merge
+ok 174 - new-form literal repeated IDs cannot merge
+  ---
+  duration_ms: 9.396032
+  type: 'test'
+  ...
+# Subtest: original KML, unrelated resources and Japanese unknown Data remain intact in raw bytes
+ok 175 - original KML, unrelated resources and Japanese unknown Data remain intact in raw bytes
+  ---
+  duration_ms: 9.689442
+  type: 'test'
+  ...
+# Subtest: bad CRC in unrelated bundled resource is also rejected
+ok 176 - bad CRC in unrelated bundled resource is also rejected
+  ---
+  duration_ms: 1.782429
+  type: 'test'
+  ...
+# Subtest: network-linked KML feature is never silently accepted
+ok 177 - network-linked KML feature is never silently accepted
+  ---
+  duration_ms: 0.737117
+  type: 'test'
+  ...
+# Subtest: valid KML Document but no Point Placemark remains HOLD
+ok 178 - valid KML Document but no Point Placemark remains HOLD
+  ---
+  duration_ms: 0.544308
+  type: 'test'
+  ...
+# Subtest: wrong ZIP local filename rejects before any decompression
+ok 179 - wrong ZIP local filename rejects before any decompression
+  ---
+  duration_ms: 1.353044
+  type: 'test'
+  ...
+# Subtest: KMZ filename cannot be bypassed with a non-ZIP payload
+ok 180 - KMZ filename cannot be bypassed with a non-ZIP payload
+  ---
+  duration_ms: 0.255714
+  type: 'test'
+  ...
+# Subtest: legacy radius circle is recognized only with structural and shape evidence
+ok 181 - legacy radius circle is recognized only with structural and shape evidence
+  ---
+  duration_ms: 3.909506
+  type: 'test'
+  ...
+# Subtest: synthetic 427-Placemark old Creative KMZ: full ZIP/XML read preserves all 213 POIs and 214 polygons
+ok 182 - synthetic 427-Placemark old Creative KMZ: full ZIP/XML read preserves all 213 POIs and 214 polygons
+  ---
+  duration_ms: 117.097708
+  type: 'test'
+  ...
+# Subtest: isolated end-to-end: new canonical -> KMZ -> staging -> edit -> KMZ re-import -> 2-gen save recovery
+ok 183 - isolated end-to-end: new canonical -> KMZ -> staging -> edit -> KMZ re-import -> 2-gen save recovery
+  ---
+  duration_ms: 48.401258
+  type: 'test'
+  ...
+# Subtest: import staging stays outside live store and save journal until explicit future commit
+ok 184 - import staging stays outside live store and save journal until explicit future commit
+  ---
+  duration_ms: 11.057839
+  type: 'test'
+  ...
+1..184
+# tests 184
+# suites 0
+# pass 184
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1161.472444

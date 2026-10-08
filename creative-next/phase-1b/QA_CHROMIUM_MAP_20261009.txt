@@ -1,0 +1,6 @@
+Simulated-origin Chromium 390px. Real user Kasai KMZ is only used locally and not uploaded.
+BROWSER_MAP_PREVIEW PASS: fake Leaflet event provider, layer toggles, coordinate proposal without state commit, area vertex drag confirm/cancel/undo, legacy storage sentinel preserved.
+BROWSER_AREA PASS: area edit / undo-redo / save-resume / export.
+BROWSER_ADD_KIND PASS: 25 cap/delete/add/type/save-resume/export.
+BROWSER_CIRCLE_EDITOR PASS: moved new POI circle and deleted existing circle roundtrip.
+NOT PASSED: real Leaflet library rendering / tile network, real browser origin, actual native storage and crypto, Safari.

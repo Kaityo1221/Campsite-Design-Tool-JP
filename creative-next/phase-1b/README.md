@@ -80,3 +80,10 @@ This section supersedes the earlier 105/124-PASS status and legacy-kind HOLD not
 ## Oct 9: isolated activity-area editing
 
 `core/activity-areas.mjs` adds fail-closed area vertex validation and source geometry guards. Verified activity-area polygons can have vertices moved, inserted, or deleted with chronological Undo/Redo shared with Phase 1-A POI commands. New-v1 KMZ export rewrites only selected area coordinate rings, re-stages resulting KMZ and verifies edited coordinates. Two-generation isolated journal saves/reopens modified areas; old Creative Mode and source archive stay unchanged. Historical lines above stating all area editing HOLD are superseded only for this guarded isolated editor. Real Leaflet tile/drag behavior and production integration are **not** verified.
+
+### Isolated map UI safety checks (2026-10-09)
+
+- The new map controls live only in `creative-next/phase-2-preview/`.
+- 184 Node tests pass in the isolated suite, including keyed layer visibility, uncommitted map coordinate proposals, vertex drag cancellation, stale tab rejection, quota and save fallback checks.
+- Private real-Kasai regression scripts pass separately when passed the original local KMZ path. Chromium 390px simulated-origin UI checks pass with a fake Leaflet event provider and mock browser storage/crypto, **not a real map tile or real Safari/browser-origin acceptance**.
+- The approved Phase 1-A POI code is left byte-for-byte unchanged; no public entry points or legacy v7 storage were modified.

@@ -5,11 +5,42 @@ const $=id=>document.getElementById(id);
 const session=createIsolatedEditorSession({JSZip:globalThis.JSZip,DOMParser:globalThis.DOMParser,XMLSerializer:globalThis.XMLSerializer,storage:globalThis.localStorage,cryptoProvider:globalThis.crypto});
 const labels={pokestop:'ポケストップ',gym:'ジム',power:'パワースポット'};
 let activeId=null,coordsOnCanvas=[];
-let leafletView=null,fitMapNext=false;
+let leafletView=null,fitMapNext=false,placementArmed=false;
+function updateMapMode(){
+ const s=shape(),target=!$('new-poi').hidden?'new':!$('editor').hidden&&activeId&&s.records.find(p=>p.id===activeId)?.role==='new'?'edit':null;
+ $('map-place').disabled=!leafletView||!s.hasActive||s.recoveredFallback||!target;
+ if(!target||$('map-place').disabled)placementArmed=false;
+ $('map-place').textContent=placementArmed?'位置指定をキャンセル':'地図から緯度・経度を指定';
+ $('map-mode-help').textContent=placementArmed?'次の地図タップで緯度・経度を入力します。編集はまだ確定しません。':
+  '新規POIの追加または編集欄を開いて位置を指定。数値を確認して確定してください。';
+}
+function receiveMapPoint({lat,lng}){
+ if(!placementArmed)return;
+ if(!Number.isFinite(lat)||!Number.isFinite(lng)||Math.abs(lat)>90||Math.abs(lng)>180){announce('地図上の座標が不正です。','error');return;}
+ const isNew=!$('new-poi').hidden;
+ const target=isNew?['new-lat','new-lng']:!$('editor').hidden&&shape().records.find(p=>p.id===activeId)?.role==='new'?['lat','lng']:null;
+ if(!target){placementArmed=false;updateMapMode();return;}
+ $(target[0]).value=String(lat);$(target[1]).value=String(lng);
+ placementArmed=false;updateMapMode();announce('地図の位置を座標欄に反映しました。保存するには追加・編集を確定してください。');
+}
+function receiveVertexDrop({id,index,lat,lng}){
+ try{
+  if(shape().recoveredFallback)throw new Error('読み取り専用の復旧中は編集できません。');
+  if(!confirm(`活動範囲の頂点 ${index+1} を移動しますか？ Undoで戻せます。`))return;
+  const result=session.commandArea({type:'area-move-vertex',id,index,lat,lng},{confirmed:true});
+  if(result.ok){$('area-select').value=id;$('area-vertex').value=String(index);announce('地図上の頂点を更新しました。');}
+ }catch(e){failure(e)}finally{redraw()}
+}
+function receiveVertexSelect({id,index}){
+ if(!shape().areas.some(a=>a.id===id))return;
+ $('area-select').value=id;renderAreaControls(shape());$('area-vertex').value=String(index);updateAreaCoordinates();redraw();
+}
+function layerVisibility(){return {poi:$('layer-poi').checked,circles:$('layer-circles').checked,areas:$('layer-areas').checked};}
+
 try{
  if(globalThis.L){
   $('leaflet-map').hidden=false;
-  leafletView=createLeafletMapView({L:globalThis.L,root:$('leaflet-map'),onSelect:id=>openEditor(id)});
+  leafletView=createLeafletMapView({L:globalThis.L,root:$('leaflet-map'),onSelect:id=>openEditor(id),onMapClick:receiveMapPoint,onVertexDrop:receiveVertexDrop,onVertexSelect:receiveVertexSelect});
  }
 }catch(error){$('leaflet-map').hidden=true;leafletView=null;} // Fall back to the local coordinate map.
 
@@ -39,6 +70,7 @@ function updateAreaCoordinates(){
 }
 function redraw(){
  const s=shape(),filtered=s.records.filter(p=>!p.deleted),term=$('filter').value.trim().toLowerCase();
+ updateMapMode();$('map-fit').disabled=!s.hasActive;
  $('counts').textContent=s.hasActive?`既存 ${s.counts.existing.count} / 700 ｜ 新規 ${s.counts.new.count} / 25 ｜ 距離円 ${s.shapes?.circles??0} ｜ 活動範囲 ${s.areas.length}`:'未読み込み';
  renderAreaControls(s);
  $('accept').disabled=!s.hasPending;$('discard').disabled=!s.hasPending;
@@ -53,8 +85,8 @@ function redraw(){
  }
  if(!shown.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=4;td.textContent=s.hasActive?'該当するPOIがありません':'KMZを読み込んでください';tr.appendChild(td);tbody.appendChild(tr)}
  $('listed').textContent=s.hasActive?`表示 ${shown.length} / 検索結果 ${items.length}件 （最大100件ずつ表示）`:'';
- if(leafletView){leafletView.render(s,{selectedId:activeId,fit:fitMapNext});fitMapNext=false;}
- else drawMap(filtered,s.areas,s.circles||[]);
+ if(leafletView){leafletView.render(s,{selectedId:activeId,selectedAreaId:$('area-select').value,selectedVertexIndex:Number($('area-vertex').value),visibility:layerVisibility(),editable:!s.recoveredFallback,fit:fitMapNext});fitMapNext=false;}
+ else drawMap(layerVisibility().poi?filtered:[],layerVisibility().areas?s.areas:[],layerVisibility().circles?s.circles||[]:[]);
 }
 function drawMap(records,areas,circles=[]){const c=$('map'),ctx=c.getContext('2d');if(!ctx)return;const width=c.width,height=c.height;ctx.clearRect(0,0,width,height);coordsOnCanvas=[];
  const all=[...records.map(p=>[p.lat,p.lng]),...areas.flatMap(a=>a.points)];if(!all.length){ctx.fillStyle='#456d5e';ctx.font='24px system-ui';ctx.fillText('KMZの読込後に位置を表示',34,68);return;}
@@ -67,7 +99,7 @@ function drawMap(records,areas,circles=[]){const c=$('map'),ctx=c.getContext('2d
  for(const c of circles){const pts=circleRingAt(c.lat,c.lng,c.radius).split(/\s+/).map(v=>v.split(',').map(Number));ctx.beginPath();pts.forEach(([lng,lat],i)=>{const [x,y]=project(lat,lng);if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y)});ctx.closePath();ctx.strokeStyle='#259aae';ctx.lineWidth=1.6;ctx.stroke();}
  for(const p of records){const [x,y]=project(p.lat,p.lng);coordsOnCanvas.push({id:p.id,x,y});ctx.beginPath();ctx.arc(x,y,p.id===activeId?9:4.5,0,Math.PI*2);ctx.fillStyle=p.kind==='gym'?'#d8665d':p.kind==='power'?'#8655bf':p.role==='new'?'#e3a12c':'#277bbd';ctx.fill();if(p.id===activeId){ctx.strokeStyle='#17251f';ctx.lineWidth=2;ctx.stroke();}}
 }
-function openEditor(id){const p=shape().records.find(x=>x.id===id);if(!p||p.deleted)return;activeId=id;$('editor').hidden=false;$('selected').textContent=`${p.title}（${p.role==='existing'?'既存':'新規'}）`;
+function openEditor(id){placementArmed=false;const p=shape().records.find(x=>x.id===id);if(!p||p.deleted)return;activeId=id;$('editor').hidden=false;$('selected').textContent=`${p.title}（${p.role==='existing'?'既存':'新規'}）`;
  $('title').value=p.title;$('memo').value=p.memo;$('kind').value=p.kind;
  $('kind').disabled=false; // Exporter separately verifies layer/folder/style migrations.
  $('lat').value=p.lat;$('lng').value=p.lng;
@@ -76,6 +108,9 @@ function openEditor(id){const p=shape().records.find(x=>x.id===id);if(!p||p.dele
  $('delete').disabled=false; // Isolated exporter removes owned circles with deleted POIs.
  redraw();$('editor').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
+for(const id of ['layer-poi','layer-circles','layer-areas'])$(id).addEventListener('change',redraw);
+$('map-fit').addEventListener('click',()=>{fitMapNext=true;redraw();});
+$('map-place').addEventListener('click',()=>{placementArmed=!placementArmed;updateMapMode();});
 $('map').addEventListener('click',e=>{const rect=$('map').getBoundingClientRect(),x=(e.clientX-rect.left)*$('map').width/rect.width,y=(e.clientY-rect.top)*$('map').height/rect.height;const item=coordsOnCanvas.reduce((best,p)=>{const d=Math.hypot(p.x-x,p.y-y);return d<(best?.d??18)?{...p,d}:best},null);if(item)openEditor(item.id)});
 $('inspect').addEventListener('click',async()=>{const f=$('file').files?.[0];if(!f){announce('KMZファイルを選択してください。','error');return;}
  $('inspect').disabled=true;announce('ファイル全体を検査しています…');
@@ -84,12 +119,12 @@ $('inspect').addEventListener('click',async()=>{const f=$('file').files?.[0];if(
   else{$('candidate').textContent=`${result.status}: 読み込み保留\n${(result.issues||[]).slice(0,12).map(i=>i.message||i.code).join('\n')}`;announce('読み込みを停止しました。編集中のデータはそのままです。','error');}
  }catch(e){failure(e);}finally{$('inspect').disabled=false;redraw();}});
 $('accept').addEventListener('click',()=>{if(!confirm('現在の画面を、検査済みKMZの内容へ置き換えますか？保存済みの別作業は削除しません。'))return;
- try{const r=session.acceptPrepared({confirmed:true});if(r.ok){$('candidate').hidden=true;$('editor').hidden=true;activeId=null;fitMapNext=true;$('area-vertex').value='0';announce('隔離プレビューへ反映しました。正式なCreative Modeには反映されていません。');redraw();}}
+ try{const r=session.acceptPrepared({confirmed:true});if(r.ok){$('candidate').hidden=true;$('editor').hidden=true;activeId=null;placementArmed=false;fitMapNext=true;$('area-vertex').value='0';announce('隔離プレビューへ反映しました。正式なCreative Modeには反映されていません。');redraw();}}
  catch(e){failure(e)}});
 $('discard').addEventListener('click',()=>{session.discardPending();$('candidate').hidden=true;announce('検査を取り消しました。');redraw();});
 $('filter').addEventListener('input',redraw);
 $('add-new').addEventListener('click',()=>{
- $('new-poi').hidden=false;$('editor').hidden=true;activeId=null;
+ $('new-poi').hidden=false;$('editor').hidden=true;activeId=null;placementArmed=false;
  const available=[...$('new-kind').options].find(o=>!o.disabled);
  if(available)$('new-kind').value=available.value;
  $('new-poi').scrollIntoView({behavior:'smooth',block:'nearest'});redraw();
@@ -116,8 +151,8 @@ $('editor').addEventListener('submit',e=>{e.preventDefault();if(!activeId)return
 $('edit-cancel').addEventListener('click',()=>{$('editor').hidden=true;activeId=null;redraw();});
 $('delete').addEventListener('click',()=>{if(!activeId||!confirm('このPOIを削除しますか？紐づく距離円も同時に除外します。Undoで戻せます。'))return;try{const r=session.command({type:'delete',id:activeId},{confirmed:true});if(r.ok){$('editor').hidden=true;activeId=null;redraw();}else announce(r.error?.message||'削除できません','error')}catch(e){failure(e)}});
 for(const action of ['undo','redo'])$(action).addEventListener('click',()=>{try{const result=session[action]();if(result.ok){$('editor').hidden=true;activeId=null;announce('履歴を更新しました。');redraw();}else announce(result.error?.message||'履歴操作できません','error')}catch(e){failure(e)}});
-$('area-select').addEventListener('change',()=>renderAreaControls({...shape(),areas:shape().areas}));
-$('area-vertex').addEventListener('change',updateAreaCoordinates);
+$('area-select').addEventListener('change',()=>redraw());
+$('area-vertex').addEventListener('change',()=>{updateAreaCoordinates();redraw();});
 for(const [button,type] of [['area-move','area-move-vertex'],['area-add','area-add-vertex'],['area-delete','area-delete-vertex']]){
  $(button).addEventListener('click',()=>{
   try{
@@ -138,7 +173,7 @@ for(const [button,type] of [['area-move','area-move-vertex'],['area-add','area-a
 $('save').addEventListener('click',async()=>{try{$('save').disabled=true;const saved=await session.saveDraft();$('save-info').textContent=`保存確認完了（第${saved.revision}世代）。ブラウザ内の隔離領域だけに保存しました。`;announce('保存内容の読み直しが成功しました。');}catch(e){failure(e)}finally{redraw();}});
 $('resume').addEventListener('click',async()=>{try{const r=await session.inspectDraft();if(r.status==='EMPTY'){announce('保存済みの隔離作業はありません。');return;}if(r.status==='CORRUPT'){announce('保存データが壊れています。自動削除・上書きはしません。','error');return;}
  if(!confirm(`保存データ（${r.status}）を読み込んで、現在のプレビューを置き換えますか？`))return;
- const restored=await session.resumeDraft({confirmed:true});if(restored.applied){activeId=null;fitMapNext=true;$('area-vertex').value='0';$('editor').hidden=true;announce(restored.readonlyRecovery?'旧世代から表示のみ復旧しました。保存には別の復旧手順が必要です。':'保存データから編集内容を復元しました。');redraw();}}
+ const restored=await session.resumeDraft({confirmed:true});if(restored.applied){activeId=null;placementArmed=false;fitMapNext=true;$('area-vertex').value='0';$('editor').hidden=true;announce(restored.readonlyRecovery?'旧世代から表示のみ復旧しました。保存には別の復旧手順が必要です。':'保存データから編集内容を復元しました。');redraw();}}
  catch(e){failure(e)}});
 $('export').addEventListener('click',async()=>{try{$('export').disabled=true;const out=await session.exportKmz();const url=URL.createObjectURL(new Blob([out.bytes],{type:'application/vnd.google-earth.kmz'}));const a=document.createElement('a');a.href=url;a.download='creative-next-preview.kmz';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);announce('安全性の再検査に合格したKMZを作成しました。');}catch(e){failure(e)}finally{redraw();}});
 redraw();

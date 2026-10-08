@@ -37,3 +37,11 @@ The historical HOLD statements above for *POI insertion* and *all legacy kind ch
 ## Oct 9: activity-area vertex editing (isolated only)
 
 Activity areas with verified `campsite.creative.object=activity-area` and unique `area-id` are editable via numeric latitude/longitude vertex move, insert-after and delete controls. Source distance-circle Polygons are **never editable activity areas**. Polygon must remain simple, closed on export, three or more distinct vertices, with no dateline crossing, self-intersection, or unsupported altitude/hole structure. All editor operations share chronological Undo/Redo with POI edits; draft save/resume and new KMZ export revalidate and preserve original attachments. **Leaflet draggable vertex handles and live iPhone editing are still pending.**
+
+### 2026-10-09 isolated map-edit update (NON-PRODUCTION)
+
+- Leaflet preview layers now have independent POI, 50m owned-circle and activity-area visibility checkboxes. Hiding layers changes rendering only, never staged geometry or draft data.
+- Selecting an **existing** POI never enables map position entry. For a **new** POI, the map-tap mode copies a proposed coordinate into the editor; the actual store changes only after confirming the add/edit form.
+- When Leaflet provides markers, the selected area's numbered vertex handles can be dragged. A browser confirmation and the source geometry validator both gate the change. Cancellation/validation failure re-renders the original point. Numeric inputs remain available as a fallback.
+- The canvas fallback keeps layer toggles and manual numeric edits but does not claim interactive Leaflet map placement. Leaflet tile loading, browser-origin storage and Safari remain unverified.
+- No new activity-area creation/deletion in this step. Unknown and unusual geometries remain HOLD.

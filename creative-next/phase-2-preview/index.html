@@ -24,7 +24,12 @@
  <section class="panel" aria-labelledby="edit-heading">
   <div class="section-head"><h2 id="edit-heading">02 · POI編集</h2><span id="counts" class="count">未読み込み</span></div>
   <div class="warning">🛡️ 既存POIは移動禁止。新規追加には50mの距離円が付きます。移動・削除時は紐づく距離円も連動します。旧形式の種類変更はフォルダー・アイコンまで検証できる場合のみ書き出せます。</div>
-  <div class="map-wrap"><div id="leaflet-map" hidden aria-label="POIと距離円の地図" role="region"></div><canvas id="map" width="900" height="480" aria-label="POIと活動範囲の簡易位置図。地図タイルなし" role="img"></canvas><small>Leafletが読み込めれば地図上にPOIと距離円を表示します。利用できない環境では簡易位置図に切り替えます。</small></div>
+  <div class="map-wrap">
+   <div class="map-toolbar" role="group" aria-label="地図レイヤー表示"><label><input id="layer-poi" type="checkbox" checked>POI</label><label><input id="layer-circles" type="checkbox" checked>距離円</label><label><input id="layer-areas" type="checkbox" checked>活動範囲</label><button id="map-fit" class="ghost" type="button" disabled>全体表示</button></div>
+   <div id="leaflet-map" hidden aria-label="POIと距離円と活動範囲の地図" role="region"></div><canvas id="map" width="900" height="480" aria-label="POIと活動範囲の簡易位置図。地図タイルなし" role="img"></canvas>
+   <div class="toolbar"><button id="map-place" type="button" class="ghost" disabled>地図から緯度・経度を指定</button><span id="map-mode-help" class="hint" role="status">POIの編集欄を開いてから、地図上で位置を指定できます。確定するまで保存されません。</span></div>
+   <small>Leaflet利用時は、活動範囲の番号付き頂点をドラッグできます。確認するまで変更を反映しません。Leafletが使えない場合は簡易位置図と数値欄で編集できます。</small>
+  </div>
   <div class="toolbar"><label class="search-label">POI検索<input id="filter" type="search" placeholder="名称で検索" disabled></label><button id="add-new" type="button" disabled>＋ 新規POIを追加</button><button id="undo" type="button" disabled>元に戻す</button><button id="redo" type="button" disabled>やり直す</button></div>
   <form id="new-poi" hidden><h3>新規POIを追加</h3><p class="hint">緯度・経度を指定して追加します。追加後は50mの距離円を同時生成します。上限25件および種類別の上限を超える追加はできません。</p><label>名称<input id="new-title" required maxlength="180"></label><label>メモ<textarea id="new-memo" rows="2"></textarea></label><label>種類<select id="new-kind"><option value="pokestop">ポケストップ</option><option value="gym">ジム</option><option value="power">パワースポット</option></select></label><div class="coords"><label>緯度<input id="new-lat" type="number" step="any" min="-90" max="90" required></label><label>経度<input id="new-lng" type="number" step="any" min="-180" max="180" required></label></div><div class="toolbar"><button type="submit">追加を確定</button><button id="new-cancel" type="button" class="ghost">キャンセル</button></div></form>
   <div class="table-scroll"><table><thead><tr><th>名称</th><th>種類</th><th>区分</th><th>操作</th></tr></thead><tbody id="pois"><tr><td colspan="4">KMZを読み込んでください。</td></tr></tbody></table></div><small id="listed"></small>
