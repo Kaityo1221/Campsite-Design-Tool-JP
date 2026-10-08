@@ -68,6 +68,7 @@ export function diagnoseKmzCandidate(stage) {
     } else {
       profile = 'LEGACY_CREATIVE_KASAI_CANDIDATE';
     }
+    const areaIds = new Set();
     const internalIds = new Set();
     const guidSeen = new Set();
     const nameSeen = new Set();
@@ -84,7 +85,8 @@ export function diagnoseKmzCandidate(stage) {
         if (profile === 'NEW_V1' && object === 'activity-area') {
           counts.activityAreas++;
           const areaId = data(place.data, 'campsite.creative.area-id', at);
-          if (!areaId || place.polygonValid !== true) report('AREA_INVALID', 'BLOCK', at, 'Activity area is incomplete');
+          if (!areaId || areaIds.has(areaId) || place.polygonValid !== true) report('AREA_INVALID', 'BLOCK', at, 'Activity area is incomplete or ID repeated');
+          else areaIds.add(areaId);
         } else if (profile === 'NEW_V1' && object === 'distance-circle') {
           counts.circles++;
           if (place.circleValid !== true) report('CIRCLE_INVALID', 'BLOCK', at, 'Circle metadata/geometry not verified');
