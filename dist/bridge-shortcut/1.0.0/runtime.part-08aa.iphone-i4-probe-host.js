@@ -1,7 +1,7 @@
 /* I4-3 page-world transport probe; inert until an explicit UI request. */
 ;(() => {
   'use strict';
-  if (new URL(location.href).searchParams.get('cbsI4Probe') !== '1') return;
+  if (window.__cbsI4ProbeTestEnabled !== true && new URL(location.href).searchParams.get('cbsI4Probe') !== '1') return;
   function install() {
     if (window.__cbsI4ProbeInstalled) return;
     window.__cbsI4ProbeInstalled = true;
