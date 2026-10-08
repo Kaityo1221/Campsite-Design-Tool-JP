@@ -1,0 +1,13 @@
+{
+  "name": "campsite-creative-next-phase1b-isolated",
+  "version": "0.0.0-private",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  },
+  "devDependencies": {
+    "jszip": "3.10.1",
+    "@xmldom/xmldom": "0.9.8"
+  }
+}
