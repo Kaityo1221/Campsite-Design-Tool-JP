@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><title>Creative Next Phase1-B Browser Smoke</title></head><body>
+<pre id="result">WAITING</pre>
+<script src="../node_modules/jszip/dist/jszip.min.js"></script>
+<script type="module">
+import {stageKmlInput} from '../core/stage-kmz.mjs';
+import {diagnoseKmzCandidate} from '../core/diagnose-kmz-candidate.mjs';
+const el=document.getElementById('result');
+const tag=(k,v)=>`<Data name="${k}"><value>${v}</value></Data>`;
+const fields=(f)=>`<ExtendedData>${f}</ExtendedData>`;
+const newFields=fields(tag('campsite.creative.format','creative-mode-next')+tag('campsite.creative.version','1'));
+const point=`<Placemark><name>立派なPOI</name><description>原文メモ</description>${fields([
+  tag('campsite.creative.object','poi'),tag('campsite.creative.id','uuid1'),tag('campsite.creative.role','existing'),tag('campsite.creative.kind','gym'),
+  tag('campsite.creative.title','立派なPOI'),tag('campsite.creative.memo','原文メモ'),tag('campsite.creative.lat','35.100'),tag('campsite.creative.lng','139.20')].join(''))}<Point><coordinates>139.200,35.1000,0</coordinates></Point></Placemark>`;
+const kml=(d,body)=>`<?xml version="1.0" encoding="UTF-8"?><kml xmlns="http://www.opengis.net/kml/2.2"><Document>${d}${body}</Document></kml>`;
+async function kmz(files){const z=new JSZip();for(const [name,text] of Object.entries(files))z.file(name,text);return z.generateAsync({type:'uint8array',compression:'DEFLATE'})}
+try{
+  localStorage.setItem('next-lab-creative-v7','PROTECT_ME');
+  const input=await kmz({'doc.kml':kml(newFields,point)});
+  const stage=await stageKmlInput(input,{JSZip,DOMParser});
+  const result=diagnoseKmzCandidate(stage);
+  const twin=await stageKmlInput(await kmz({'doc.kml':kml(newFields,point),'secondary.kml':kml(newFields,point)}),{JSZip,DOMParser});
+  const twinResult=diagnoseKmzCandidate(twin);
+  const checks={
+    parsedKml:stage.audit.safeXml===true,
+    readOneExisting:result.counts.existing===1,
+    readyWithoutApplying:result.disposition==='READY'&&result.canApply===false,
+    originalCoordinateKept:stage.places[0]?.sourceGeometry?.coordinates==='139.200,35.1000,0',
+    multipleKmlHeld:twinResult.disposition==='HOLD',
+    oldSaveUntouched:localStorage.getItem('next-lab-creative-v7')==='PROTECT_ME'
+  };
+  const pass=Object.values(checks).every(Boolean);
+  el.dataset.status=pass?'PASS':'FAIL';
+  el.textContent=JSON.stringify({pass,checks,issues:result.issues,errors:stage.errors});
+}catch(e){el.dataset.status='FAIL';el.textContent=e.stack||String(e)}
+</script></body></html>
