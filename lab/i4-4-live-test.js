@@ -128,7 +128,28 @@ button.textContent='🔭 複数タイル取得 · '+DIAG_VERSION;
 button.style.cssText='position:fixed;right:12px;top:76px;z-index:2147483646;padding:10px;border-radius:9px;background:#123b35;color:white;border:1px solid #b4e3cf';
 const output=document.createElement('pre');
 output.style.cssText='display:none;position:fixed;left:12px;right:12px;top:124px;z-index:2147483646;padding:12px;background:#0f172a;color:white;border-radius:10px;white-space:pre-wrap;max-height:45vh;overflow:auto;font:12px/1.5 monospace';
-const show=s=>{output.style.display='block';output.textContent=s;};
+const copyButton=document.createElement('button');
+copyButton.textContent='📋 結果をコピー';
+copyButton.style.cssText='display:none;position:fixed;right:12px;top:calc(124px + 45vh + 8px);z-index:2147483646;padding:10px;border-radius:9px;background:#123b35;color:white;border:1px solid #b4e3cf';
+let copyText='';
+const show=(value,copyable=false)=>{
+ output.style.display='block';output.textContent=value;
+ copyText=copyable?value:'';
+ copyButton.style.display=copyable?'block':'none';
+ copyButton.textContent='📋 結果をコピー';
+};
+copyButton.addEventListener('click',async()=>{
+ if(!copyText)return;
+ try {
+   if(!navigator.clipboard?.writeText) throw Error('CLIPBOARD_UNAVAILABLE');
+   await navigator.clipboard.writeText(copyText);
+   copyButton.textContent='✅ コピーしました';
+ } catch (_) {
+   copyButton.textContent='コピー不可・長押しで選択';
+   output.style.userSelect='text';
+   output.style.webkitUserSelect='text';
+ }
+});
 document.addEventListener('cbs-i3:evt',event=>{
  let state;try{state=JSON.parse(event.detail);}catch(_){return;}
  if(state?.type==='map-lost'){sid=null;polygon=null;return;}
@@ -146,11 +167,11 @@ button.addEventListener('click',()=>{
   let msg;try{msg=JSON.parse(e.detail);}catch(_){return;}
   if(msg?.requestId!==requestId)return;
   document.removeEventListener('cbs-i44:result',handler);clearTimeout(timer);
-  busy=false;button.disabled=false;show(JSON.stringify(msg,null,2));
+  busy=false;button.disabled=false;show(JSON.stringify(msg,null,2),true);
  };
  const timer=setTimeout(()=>{document.removeEventListener('cbs-i44:result',handler);busy=false;button.disabled=false;show('RESULT_TIMEOUT (取得完了は未確認)');},1500000);
  document.addEventListener('cbs-i44:result',handler);
  document.dispatchEvent(new CustomEvent('cbs-i44:request',{detail:JSON.stringify({requestId,sid,polygon})}));
 });
-document.documentElement.append(button,output);
+document.documentElement.append(button,output,copyButton);
 })();
