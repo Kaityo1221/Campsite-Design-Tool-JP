@@ -12,7 +12,7 @@
   ];
   const finish = value => { try { completion(value); } catch (_) { alert(value); } };
   if (!HOST.test(location.hostname)) {
-    finish('I4-3 TEST: WayfarerのSafariページで実行してください。'); return;
+    finish('I4-3 TEST: 実行先を確認してください。\nhost=' + location.hostname + '\nurl=' + location.origin + '\nSafari共有メニューから「SafariのWebページでJavaScriptを実行」を使ってください。'); return;
   }
   try {
     const fetchCode = async url => {
