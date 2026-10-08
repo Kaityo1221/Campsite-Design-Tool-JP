@@ -4,7 +4,7 @@
 ;(() => {
   'use strict';
   if (new URL(location.href).searchParams.get('cbsI4Probe') !== '1') return;
-  const EVT = 'cbs-i3:evt', CMD = 'cbs-i3:cmd';
+  const EVT = 'cbs-i3:evt';
   let snapshot = null, sid = null, busy = false;
   const button = document.createElement('button');
   button.textContent = '🔬 I4通信診断';
@@ -19,6 +19,9 @@
       sid = msg.sid;
       snapshot = msg.completed === true && Array.isArray(msg.points) && msg.points.length >= 3
         ? msg.points.map(p => ({ lat: Number(p.lat), lng: Number(p.lng) })) : null;
+    } else if (msg?.type === 'map-lost' || (msg?.type === 'state' && msg.sid === null)) {
+      snapshot = null;
+      sid = null;
     }
   });
   button.addEventListener('click', async () => {
@@ -43,7 +46,7 @@
     }, 15000);
     document.addEventListener(resultEvent, handler);
     document.dispatchEvent(new CustomEvent('cbs-i4:request', {
-      detail: JSON.stringify({ requestId, polygon: snapshot })
+      detail: JSON.stringify({ requestId, sid, polygon: snapshot })
     }));
   });
   document.documentElement.append(button, output);
