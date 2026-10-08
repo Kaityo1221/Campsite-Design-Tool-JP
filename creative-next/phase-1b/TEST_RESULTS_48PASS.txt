@@ -1,0 +1,300 @@
+TAP version 13
+# Subtest: new v1 valid ready but never auto-applies
+ok 1 - new v1 valid ready but never auto-applies
+  ---
+  duration_ms: 1.91173
+  type: 'test'
+  ...
+# Subtest: diagnostic does not mutate staged input
+ok 2 - diagnostic does not mutate staged input
+  ---
+  duration_ms: 0.554243
+  type: 'test'
+  ...
+# Subtest: same name is warned but separate
+ok 3 - same name is warned but separate
+  ---
+  duration_ms: 0.391061
+  type: 'test'
+  ...
+# Subtest: duplicate internal ID holds
+ok 4 - duplicate internal ID holds
+  ---
+  duration_ms: 0.241819
+  type: 'test'
+  ...
+# Subtest: trailing zero coordinates are semantically identical
+ok 5 - trailing zero coordinates are semantically identical
+  ---
+  duration_ms: 0.210563
+  type: 'test'
+  ...
+# Subtest: coordinate difference holds
+ok 6 - coordinate difference holds
+  ---
+  duration_ms: 0.178695
+  type: 'test'
+  ...
+# Subtest: missing coordinate altitude rejected if comma remains
+ok 7 - missing coordinate altitude rejected if comma remains
+  ---
+  duration_ms: 0.219446
+  type: 'test'
+  ...
+# Subtest: latitude out of bounds holds
+ok 8 - latitude out of bounds holds
+  ---
+  duration_ms: 0.300016
+  type: 'test'
+  ...
+# Subtest: incomplete document marker never falls back
+ok 9 - incomplete document marker never falls back
+  ---
+  duration_ms: 0.371873
+  type: 'test'
+  ...
+# Subtest: unknown version holds
+ok 10 - unknown version holds
+  ---
+  duration_ms: 0.359925
+  type: 'test'
+  ...
+# Subtest: duplicated required key holds
+ok 11 - duplicated required key holds
+  ---
+  duration_ms: 0.870494
+  type: 'test'
+  ...
+# Subtest: memo mismatch holds
+ok 12 - memo mismatch holds
+  ---
+  duration_ms: 0.113959
+  type: 'test'
+  ...
+# Subtest: missing description warns, retains dedicated memo
+ok 13 - missing description warns, retains dedicated memo
+  ---
+  duration_ms: 0.093629
+  type: 'test'
+  ...
+# Subtest: 500 existing warns
+ok 14 - 500 existing warns
+  ---
+  duration_ms: 6.301291
+  type: 'test'
+  ...
+# Subtest: 700 existing can continue
+ok 15 - 700 existing can continue
+  ---
+  duration_ms: 3.645166
+  type: 'test'
+  ...
+# Subtest: 701 existing rejects all
+ok 16 - 701 existing rejects all
+  ---
+  duration_ms: 3.040779
+  type: 'test'
+  ...
+# Subtest: 26 new warns but does not reject
+ok 17 - 26 new warns but does not reject
+  ---
+  duration_ms: 0.28282
+  type: 'test'
+  ...
+# Subtest: bad archive rejects
+ok 18 - bad archive rejects
+  ---
+  duration_ms: 0.095101
+  type: 'test'
+  ...
+# Subtest: more than one KML holds
+ok 19 - more than one KML holds
+  ---
+  duration_ms: 0.075993
+  type: 'test'
+  ...
+# Subtest: unknown geometry holds
+ok 20 - unknown geometry holds
+  ---
+  duration_ms: 0.131325
+  type: 'test'
+  ...
+# Subtest: no silent Placemark drop
+ok 21 - no silent Placemark drop
+  ---
+  duration_ms: 0.078737
+  type: 'test'
+  ...
+# Subtest: legacy profile remains HOLD until actual verification
+ok 22 - legacy profile remains HOLD until actual verification
+  ---
+  duration_ms: 0.189602
+  type: 'test'
+  ...
+# Subtest: legacy without nextlab-layer holds
+ok 23 - legacy without nextlab-layer holds
+  ---
+  duration_ms: 0.116193
+  type: 'test'
+  ...
+# Subtest: verified activity polygon not counted as POI
+ok 24 - verified activity polygon not counted as POI
+  ---
+  duration_ms: 0.108271
+  type: 'test'
+  ...
+# Subtest: synthetic Kasai-shaped manifest: 213 POI, 213 circles, one area remains HOLD
+ok 25 - synthetic Kasai-shaped manifest: 213 POI, 213 circles, one area remains HOLD
+  ---
+  duration_ms: 2.126128
+  type: 'test'
+  ...
+# Subtest: same external GUID with different internal IDs is a warning, not a merge
+ok 26 - same external GUID with different internal IDs is a warning, not a merge
+  ---
+  duration_ms: 0.112227
+  type: 'test'
+  ...
+# Subtest: unknown polygon is never silently dropped
+ok 27 - unknown polygon is never silently dropped
+  ---
+  duration_ms: 0.092117
+  type: 'test'
+  ...
+# Subtest: existing 701 is REJECT even with other BLOCK issues
+ok 28 - existing 701 is REJECT even with other BLOCK issues
+  ---
+  duration_ms: 3.69511
+  type: 'test'
+  ...
+# Subtest: real ZIP + XML are staged with no auto-apply
+ok 29 - real ZIP + XML are staged with no auto-apply
+  ---
+  duration_ms: 20.747166
+  type: 'test'
+  ...
+# Subtest: plain KML is staged separately without ZIP
+ok 30 - plain KML is staged separately without ZIP
+  ---
+  duration_ms: 0.909442
+  type: 'test'
+  ...
+# Subtest: two KMLs never pick a silent winner
+ok 31 - two KMLs never pick a silent winner
+  ---
+  duration_ms: 4.062712
+  type: 'test'
+  ...
+# Subtest: unknown extra Placemark geometry holds, not drops
+ok 32 - unknown extra Placemark geometry holds, not drops
+  ---
+  duration_ms: 3.248927
+  type: 'test'
+  ...
+# [xmldom fatalError]\\tOpening and ending tag mismatch: "Placemark" != "kml" 
+# @\#[line:1,col:16]
+# Subtest: malformed XML is held without loading any POI
+ok 33 - malformed XML is held without loading any POI
+  ---
+  duration_ms: 2.599482
+  type: 'test'
+  ...
+# Subtest: external DOCTYPE is forbidden and never fetched
+ok 34 - external DOCTYPE is forbidden and never fetched
+  ---
+  duration_ms: 2.212918
+  type: 'test'
+  ...
+# Subtest: ZIP declared expansion too large rejects before XML parsing
+ok 35 - ZIP declared expansion too large rejects before XML parsing
+  ---
+  duration_ms: 4.202384
+  type: 'test'
+  ...
+# Subtest: compressed input safety envelope is enforced
+ok 36 - compressed input safety envelope is enforced
+  ---
+  duration_ms: 2.076546
+  type: 'test'
+  ...
+# Subtest: ZIP path traversal is detected before JSZip normalization
+ok 37 - ZIP path traversal is detected before JSZip normalization
+  ---
+  duration_ms: 1.818172
+  type: 'test'
+  ...
+# Subtest: cancelled staging does not parse or mutate anything
+ok 38 - cancelled staging does not parse or mutate anything
+  ---
+  duration_ms: 3.757853
+  type: 'test'
+  ...
+# Subtest: legacy layer is diagnosed, never auto-imported
+ok 39 - legacy layer is diagnosed, never auto-imported
+  ---
+  duration_ms: 3.818213
+  type: 'test'
+  ...
+# Subtest: new-form literal repeated IDs cannot merge
+ok 40 - new-form literal repeated IDs cannot merge
+  ---
+  duration_ms: 2.019171
+  type: 'test'
+  ...
+# Subtest: original KML, unrelated resources and Japanese unknown Data remain intact in raw bytes
+ok 41 - original KML, unrelated resources and Japanese unknown Data remain intact in raw bytes
+  ---
+  duration_ms: 2.452684
+  type: 'test'
+  ...
+# Subtest: bad CRC in unrelated bundled resource is also rejected
+ok 42 - bad CRC in unrelated bundled resource is also rejected
+  ---
+  duration_ms: 1.700236
+  type: 'test'
+  ...
+# Subtest: network-linked KML feature is never silently accepted
+ok 43 - network-linked KML feature is never silently accepted
+  ---
+  duration_ms: 0.76024
+  type: 'test'
+  ...
+# Subtest: valid KML Document but no Point Placemark remains HOLD
+ok 44 - valid KML Document but no Point Placemark remains HOLD
+  ---
+  duration_ms: 0.554534
+  type: 'test'
+  ...
+# Subtest: wrong ZIP local filename rejects before any decompression
+ok 45 - wrong ZIP local filename rejects before any decompression
+  ---
+  duration_ms: 1.350256
+  type: 'test'
+  ...
+# Subtest: KMZ filename cannot be bypassed with a non-ZIP payload
+ok 46 - KMZ filename cannot be bypassed with a non-ZIP payload
+  ---
+  duration_ms: 0.25585
+  type: 'test'
+  ...
+# Subtest: legacy radius circle is recognized only with structural and shape evidence
+ok 47 - legacy radius circle is recognized only with structural and shape evidence
+  ---
+  duration_ms: 4.904236
+  type: 'test'
+  ...
+# Subtest: synthetic 427-Placemark old Creative KMZ: full ZIP/XML read preserves all 213 POIs and 214 polygons
+ok 48 - synthetic 427-Placemark old Creative KMZ: full ZIP/XML read preserves all 213 POIs and 214 polygons
+  ---
+  duration_ms: 117.626992
+  type: 'test'
+  ...
+1..48
+# tests 48
+# suites 0
+# pass 48
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 270.425873
