@@ -10,6 +10,10 @@ import {indexDependentCircles,circleRingAt} from './dependent-circles.mjs';
 const KML = 'http://www.opengis.net/kml/2.2';
 const PREFIX='campsite.creative.';
 const NEW_LIMIT=Object.freeze({pokestop:12,gym:8,power:5});
+const FOLDER_LABEL={
+  'existing-pokestop':'既存 PokéStop','existing-gym':'既存 Gym','existing-power':'既存 PowerSpot',
+  'new-pokestop':'新規 PokéStop','new-gym':'新規 Gym','new-power':'新規 PowerSpot'
+};
 function stop(code,message){const e=new Error(message);e.code=code;throw e}
 function direct(parent,name){return Array.from(parent?.childNodes||[]).filter(x=>x.nodeType===1&&x.namespaceURI===KML&&x.localName===name)}
 function one(parent,name){return direct(parent,name)[0]||null}
@@ -58,13 +62,100 @@ function asEditList(edits){
   }
   return map;
 }
+function element(doc,parent,name,value){
+  const e=doc.createElementNS(KML,name);if(value!==undefined)e.textContent=String(value);
+  parent.appendChild(e);return e;
+}
+function putData(doc,ext,key,value){const d=element(doc,ext,'Data');d.setAttribute('name',PREFIX+key);element(doc,d,'value',value);}
+function directDocument(xml){
+  const documents=Array.from(xml.getElementsByTagNameNS(KML,'Document'));
+  if(documents.length!==1)return stop('EXPORT_STRUCTURE','One source Document is required');
+  return documents[0];
+}
+function existingFolder(doc,label){
+  const folders=direct(doc,'Folder').filter(f=>one(f,'name')?.textContent===label);
+  if(folders.length>1)stop('EXPORT_FOLDER_AMBIGUOUS','Repeated layer folder '+label);
+  return folders[0]||null;
+}
+function ensureFolder(xml,doc,label){
+  let f=existingFolder(doc,label);
+  if(!f){f=element(xml,doc,'Folder');element(xml,f,'name',label)}
+  return f;
+}
+function legacyLayer(pm){
+  const items=direct(one(pm,'ExtendedData'),'Data').filter(d=>d.getAttribute('name')==='nextlab-layer');
+  if(items.length>1)stop('EXPORT_LAYER','Repeated legacy layer');
+  if(!items.length)return null;
+  if(direct(items[0],'value').length!==1)stop('EXPORT_LAYER','Invalid legacy layer');
+  return {value:one(items[0],'value')?.textContent,node:one(items[0],'value')};
+}
+function verifiedStyle(doc,layer){
+  const styles=direct(doc,'Style').filter(x=>x.getAttribute('id')==='creative-'+layer);
+  if(styles.length!==1)stop('EXPORT_STYLE_HOLD','Target old-style icon is not uniquely defined');
+  return '#creative-'+layer;
+}
+function validateAdditions(additions,originalIds){
+  if(!Array.isArray(additions))stop('EXPORT_ADD','Additions must be an array');
+  const ids=new Set();
+  for(const p of additions){
+    if(!p||typeof p!=='object'||Array.isArray(p)||
+       Object.keys(p).some(k=>!['id','role','kind','title','memo','lat','lng','deleted','guid','poiId','metadata'].includes(k))||
+       typeof p.id!=='string'||!p.id||originalIds.has(p.id)||ids.has(p.id)||
+       p.role!=='new'||!Object.hasOwn(NEW_LIMIT,p.kind)||
+       typeof p.title!=='string'||!p.title.trim()||typeof p.memo!=='string'||
+       p.deleted!==false||p.guid!==null||p.poiId!==null||
+       !p.metadata||typeof p.metadata!=='object'||Array.isArray(p.metadata)||Object.keys(p.metadata).length||
+       typeof p.lat!=='number'||!Number.isFinite(p.lat)||Math.abs(p.lat)>90||
+       typeof p.lng!=='number'||!Number.isFinite(p.lng)||Math.abs(p.lng)>180)
+      stop('EXPORT_ADD','New POI must be canonical, active, source-free and within coordinate bounds');
+    // A POI circle is generated for every new addition. Avoid unsupported
+    // high-latitude circles crossing the world coordinate seam.
+    circleRingAt(p.lat,p.lng,50);
+    ids.add(p.id);
+  }
+  return additions;
+}
+function plannedKindMove(doc,pm,role,kind){
+  const currentLayer=role+'-'+meta(pm,'kind'),targetLayer=role+'-'+kind;
+  const originalFolder=existingFolder(doc,FOLDER_LABEL[currentLayer]);
+  const targetFolder=existingFolder(doc,FOLDER_LABEL[targetLayer]);
+  const oldLayer=legacyLayer(pm);
+  if(!oldLayer&&pm.parentNode===doc&&!originalFolder){
+    if(one(pm,'styleUrl')?.textContent?.startsWith('#creative-'))stop('EXPORT_STYLE_HOLD','Unrecognized old icon reference');
+    return null;
+  }
+  if(!originalFolder||pm.parentNode!==originalFolder||!targetFolder)
+    stop('EXPORT_FOLDER_HOLD','Cannot prove matching original and destination folders');
+  if(oldLayer){
+    if(oldLayer.value!==currentLayer||one(pm,'styleUrl')?.textContent!=='#creative-'+currentLayer)
+      stop('EXPORT_LAYER_HOLD','Original legacy layer and style conflict');
+    verifiedStyle(doc,targetLayer);
+  }else if(one(pm,'styleUrl')?.textContent?.startsWith('#creative-'))
+    stop('EXPORT_STYLE_HOLD','Unrecognized old icon reference');
+  return {pm,folder:targetFolder,targetLayer,oldLayer};
+}
+
+// This synchronous preflight prevents the UI from accepting a kind edit which
+// the source-preserving exporter will reject later. The exporter checks again.
+export function assertSafeKindEdit(stage,{DOMParser},id,kind){
+  if(typeof DOMParser!=='function'||!stage?.sourceKml||!['pokestop','gym','power'].includes(kind))
+    stop('EXPORT_KIND','Verified source and known kind required');
+  const xml=new DOMParser().parseFromString(stage.sourceKml,'application/xml');
+  const doc=directDocument(xml),placemarks=Array.from(xml.getElementsByTagNameNS(KML,'Placemark'));
+  if(placemarks.length!==stage.places.length)stop('EXPORT_SOURCE','Source object count changed');
+  const index=stage.places.findIndex(p=>p.geometry==='Point'&&p.data.some(d=>d.name===PREFIX+'id'&&d.value===id));
+  if(index<0)stop('EXPORT_SOURCE','Source POI not found for kind edit');
+  const pm=placemarks[index],role=meta(pm,'role');
+  if(kind!==meta(pm,'kind'))plannedKindMove(doc,pm,role,kind);
+  return true;
+}
 
 /**
  * Full-write using source XML preservation and explicit new-v1 metadata edits.
  * Every export is re-staged and re-diagnosed before returning bytes.
  * @returns {{bytes: Uint8Array, verification: object}}
  */
-export async function exportNewV1Kmz(stage,{JSZip,DOMParser,XMLSerializer,edits=[],signal}={}){
+export async function exportNewV1Kmz(stage,{JSZip,DOMParser,XMLSerializer,edits=[],additions=[],signal}={}){
   if(signal?.aborted)stop('CANCELLED','Export cancelled');
   if(!JSZip||typeof DOMParser!=='function'||typeof XMLSerializer!=='function')stop('EXPORT_CONFIG','XML and ZIP dependencies required');
   if(!stage?.sourceKml||!(stage.rawSource instanceof Uint8Array)||stage.audit?.unknownInformationPreserved!==true)stop('EXPORT_SOURCE','Original verified source unavailable');
@@ -80,6 +171,9 @@ export async function exportNewV1Kmz(stage,{JSZip,DOMParser,XMLSerializer,edits=
   const placemarks=Array.from(xml.getElementsByTagNameNS(KML,'Placemark'));
   if(placemarks.length!==stage.places.length)stop('EXPORT_SOURCE','Staging count differs from source XML');
   const dependents=indexDependentCircles(stage);
+  const doc=directDocument(xml);
+  const originalIds=new Set(stage.places.filter(p=>p.geometry==='Point').map(p=>p.data.find(d=>d.name===PREFIX+'id')?.value));
+  validateAdditions(additions,originalIds);
   const count={pokestop:0,gym:0,power:0};
   const planned=[];const used=new Set();
   for(let i=0;i<placemarks.length;i++){
@@ -94,13 +188,6 @@ export async function exportNewV1Kmz(stage,{JSZip,DOMParser,XMLSerializer,edits=
     if(role!=='new'&&(('lat' in edit)||('lng' in edit)))stop('EXISTING_POSITION_LOCKED','Existing POIs cannot move');
     if('kind' in edit&&(!['pokestop','gym','power'].includes(edit.kind)))stop('EXPORT_EDITS','Unknown kind');
     const kind=edit.kind??oldKind;
-    // A migrated old KMZ still has legacy nextlab-layer, folder and style.
-    // Until the layer relocation/export contract is implemented, a kind edit
-    // must not create contradictory metadata while claiming success.
-    if ('kind' in edit && edit.kind!==oldKind &&
-      Array.from(one(pm,'ExtendedData')?.childNodes||[]).some(n=>
-        n.nodeType===1 && n.localName==='Data' && n.getAttribute('name')==='nextlab-layer'))
-      stop('LEGACY_LAYER_EDIT_UNSUPPORTED','Changing old KMZ POI kind requires synchronized legacy folder/style/layer migration');
     if('title' in edit&&(typeof edit.title!=='string'||!edit.title.length))stop('EXPORT_EDITS','Invalid title');
     if('memo' in edit&&typeof edit.memo!=='string')stop('EXPORT_EDITS','Invalid memo');
     let lng,lat;
@@ -116,8 +203,18 @@ export async function exportNewV1Kmz(stage,{JSZip,DOMParser,XMLSerializer,edits=
     planned.push({pm,place,id,role,kind,edit,lat,lng,deleted});
   }
   for(const id of requested.keys())if(!used.has(id))stop('EXPORT_EDITS','Unknown POI ID '+id);
-  // No creation or reclassification of new POIs outside available type caps.
+  for(const p of additions)count[p.kind]++;
+  // New POI additions and reclassifications must respect all active caps.
+  if(additions.length&&(Object.values(count).reduce((x,y)=>x+y,0)>25||
+     Object.keys(count).some(k=>count[k]>NEW_LIMIT[k]&&additions.some(p=>p.kind===k))))
+    stop('NEW_ADD_LIMIT','New POI addition exceeds a global or per-kind limit');
   for(const p of planned)if(p.role==='new'&&p.kind!==meta(p.pm,'kind')&&count[p.kind]>NEW_LIMIT[p.kind])stop('NEW_KIND_LIMIT','New POI kind has no free slot');
+  const moves=[];
+  for(const p of planned){
+    if(p.deleted||p.kind===meta(p.pm,'kind'))continue;
+    const move=plannedKindMove(doc,p.pm,p.role,p.kind);
+    if(move)moves.push(move);
+  }
   let removedCircles=0;
   // Source Polygon rings are only updated when their owner is explicitly moved.
   // Before mutating XML, prove all dependent polygon paths and altitudes are safe.
@@ -173,6 +270,26 @@ export async function exportNewV1Kmz(stage,{JSZip,DOMParser,XMLSerializer,edits=
       coords.textContent=p.lng+','+p.lat+(old.length===3?','+old[2]:'');
     }
   }
+  for(const m of moves){
+    if(m.oldLayer){m.oldLayer.node.textContent=m.targetLayer;setDirectText(m.pm,'styleUrl',verifiedStyle(doc,m.targetLayer));}
+    m.folder.appendChild(m.pm);
+  }
+  for(const p of additions){
+    const layer='new-'+p.kind,folder=ensureFolder(xml,doc,FOLDER_LABEL[layer]);
+    const pm=element(xml,folder,'Placemark');element(xml,pm,'name',p.title);element(xml,pm,'description',p.memo);
+    const ext=element(xml,pm,'ExtendedData');
+    for(const [k,v] of Object.entries({object:'poi',id:p.id,role:'new',kind:p.kind,title:p.title,memo:p.memo,lat:p.lat,lng:p.lng}))putData(xml,ext,k,v);
+    const style=direct(doc,'Style').filter(x=>x.getAttribute('id')==='creative-'+layer);
+    if(style.length>1)stop('EXPORT_STYLE_HOLD','Repeated target style');
+    if(style.length===1){const d=element(xml,ext,'Data');d.setAttribute('name','nextlab-layer');element(xml,d,'value',layer);element(xml,pm,'styleUrl','#creative-'+layer);}
+    const point=element(xml,pm,'Point');element(xml,point,'coordinates',String(p.lng)+','+String(p.lat));
+    const circleFolder=ensureFolder(xml,doc,'50m サークル');
+    const c=element(xml,circleFolder,'Placemark');element(xml,c,'name','50m '+p.title);
+    const cext=element(xml,c,'ExtendedData');
+    for(const [k,v] of Object.entries({object:'distance-circle','circle-owner-id':p.id,'circle-radius':'50'}))putData(xml,cext,k,v);
+    const polygon=element(xml,c,'Polygon'),outer=element(xml,polygon,'outerBoundaryIs'),ring=element(xml,outer,'LinearRing');
+    element(xml,ring,'coordinates',circleRingAt(p.lat,p.lng,50));
+  }
   for(const {coord,text} of circleUpdates)coord.textContent=text;
   if(signal?.aborted)stop('CANCELLED','Export cancelled');
   const xmlText=new XMLSerializer().serializeToString(xml);
@@ -185,10 +302,10 @@ export async function exportNewV1Kmz(stage,{JSZip,DOMParser,XMLSerializer,edits=
   const report=diagnoseKmzCandidate(verified);
   if(report.disposition!=='READY'||report.profile!=='NEW_V1'||verified.errors.length||
       report.counts.existing!==before.counts.existing-planned.filter(p=>p.deleted&&p.role==='existing').length||
-      report.counts.newTotal!==planned.filter(p=>!p.deleted&&p.role==='new').length||
-      report.counts.circles!==before.counts.circles-removedCircles||
+      report.counts.newTotal!==planned.filter(p=>!p.deleted&&p.role==='new').length+additions.length||
+      report.counts.circles!==before.counts.circles-removedCircles+additions.length||
       report.counts.activityAreas!==before.counts.activityAreas||
-      verified.places.length!==stage.places.length-planned.filter(p=>p.deleted).length-removedCircles)
+      verified.places.length!==stage.places.length-planned.filter(p=>p.deleted).length-removedCircles+2*additions.length)
     stop('EXPORT_ROUNDTRIP','Generated output did not pass full re-staging and diagnosis');
   if(signal?.aborted)stop('CANCELLED','Export cancelled');
   return {bytes,verification:report};

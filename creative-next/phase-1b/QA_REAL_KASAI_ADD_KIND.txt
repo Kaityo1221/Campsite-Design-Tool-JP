@@ -1,0 +1,5 @@
+Private fixture: user-provided Kasai KMZ SHA-256 1c57f66d8658515ec6959af55044423189fdf5b4c5941d84b9a5466f0ef5d162
+All results derived from running the script with the original file in local QA only. The original or derived KMZ bytes are NOT included.
+REAL_KASAI_ADD_KIND: PASS (188 existing / 25 new / 213 circles / 1 activity area; 25-cap denial; delete then add new Gym with verified 50m circle; change legacy existing kind with synchronized folder/style/nextlab-layer; Undo; save/resume; original SHA unchanged)
+REAL_KASAI_SESSION: PASS (existing moved denied, auditable kind change accepted and undone; delete/Undo linked circles; export and journal resume)
+REAL_KASAI_CIRCLE_EDIT: PASS (owned circle movement and delete/Undo restore)

@@ -29,3 +29,7 @@ node creative-next/phase-1b/test/verify-real-kasai-circle-edit.mjs /private/orig
 ```
 
 The private Kasai fixture must **never** be committed or included in a public ZIP. See `creative-next/PHASE2_CIRCLE_MAP_PROGRESS_20261009.md` for verified counts, test limits and remaining gates.
+
+## Oct 9 update: user-confirmed additions and kind edits (test-only)
+
+The historical HOLD statements above for *POI insertion* and *all legacy kind changes* are superseded. The isolated preview now offers `＋ 新規POIを追加` with title, memo, type and numeric coordinates. New entries receive a 50m circle, follow Undo/Redo and snapshot save/resume, and are rejected at the total 25 or per-kind 12/8/5 limit. Source-bearing old KMZ kind changes move the POI to the correct folder and update its legacy `nextlab-layer` and existing `#creative-*` icon **only when the source can prove the target folder/icon exists**. Unsafe changes remain blocked. The real Kasai sample passed isolated conversion and editing, and Chromium 390px simulated-origin UI operation passed. **Activity-area editing, live Leaflet tiles, real-origin persistence and iPhone Safari acceptance remain pending.** See `creative-next/PHASE2_ADD_KIND_PROGRESS_20261009.md`.

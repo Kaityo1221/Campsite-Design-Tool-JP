@@ -19,12 +19,10 @@ else{
  const changed=editor.command({type:'edit',id:target.id,patch:{memo:'隔離復元検証'}},{confirmed:true});assert.equal(changed.ok,true);
  assert.equal(editor.undo().ok,true);assert.equal(editor.redo().ok,true);
  const old=editor.state().records.find(p=>p.role==='existing');assert.equal(old.metadata.originalPointCoordinates,sourceText);
- let blocked=0;
- for(const c of [
- {type:'move',id:target.id,lat:35.7,lng:139.9},
- {type:'change-kind',id:target.id,kind:target.kind==='gym'?'pokestop':'gym'}
- ]){try{const r=editor.command(c,{confirmed:true});if(!r.ok)blocked++;}catch(e){if(/HOLD/.test(e.code)||e.code==='EXISTING_POSITION_LOCKED')blocked++;else throw e}}
- assert.equal(blocked,2);
+ assert.throws(()=>editor.command({type:'move',id:target.id,lat:35.7,lng:139.9},{confirmed:true}),e=>e.code==='EXISTING_POSITION_LOCKED');
+ const changedKind=editor.command({type:'change-kind',id:target.id,kind:target.kind==='gym'?'pokestop':'gym'},{confirmed:true});
+ assert.equal(changedKind.ok,true,'Audited Kasai legacy layers can move kind with matching folder/icon');
+ assert.equal(editor.undo().ok,true);
  const deletion=editor.command({type:'delete',id:target.id},{confirmed:true});assert.equal(deletion.ok,true);
  assert.equal(editor.state().circles.length,212);
  assert.equal(editor.undo().ok,true);assert.equal(editor.state().circles.length,213);
@@ -33,5 +31,5 @@ else{
  const save=await editor.saveDraft();assert.equal(save.status,'SAVED');const resumed=createIsolatedEditorSession(deps);
  assert.equal((await resumed.resumeDraft({confirmed:true})).applied,true);assert.equal(resumed.state().records[0].memo,'隔離復元検証');
  assert.equal(map.get('next-lab-creative-v7'),'KEEP_ORIGINAL');
- console.log('REAL_KASAI_SESSION: PASS (188 existing, 25 new, 213 circles, 1 area; 2 unsafe edits denied; source-linked POI delete/Undo safely updates circles; export, journal and resume verified; original v7 untouched)');
+ console.log('REAL_KASAI_SESSION: PASS (188 existing, 25 new, 213 circles, 1 area; existing move denied, safe kind edit/Undo accepted; source-linked delete/Undo updates circles; export, journal and resume verified; original v7 untouched)');
 }

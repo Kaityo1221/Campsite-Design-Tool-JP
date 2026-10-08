@@ -41,10 +41,14 @@ test('new POI move is supported on sources with no attached circles',async()=>{
  const output=await x.exportKmz();const stage=await stageKmlInput(output.bytes,deps);
  assert.equal(stage.places[0].coordinates,'139.854,35.645');
 });
-test('adding to already-imported KMZ is blocked without changing the store',async()=>{
- const x=session();await confirmed(x,await build());const before=x.state().records;
- assert.throws(()=>x.command({type:'add',poi:rec('n','new')},{confirmed:true}),e=>e.code==='SOURCE_ADD_HOLD');
- assert.deepEqual(x.state().records,before);
+test('adding a new POI to reviewed KMZ creates a source-safe record and 50m circle',async()=>{
+ const x=session();await confirmed(x,await build());
+ const {id,...input}=rec('n','new');
+ const result=x.command({type:'add',poi:input},{confirmed:true});assert.equal(result.ok,true);
+ assert.equal(x.state().records.length,2);assert.equal(x.state().circles.length,1);
+ const out=await x.exportKmz();const staged=await stageKmlInput(out.bytes,deps);
+ assert.equal(staged.places.filter(p=>p.geometry==='Point').length,2);
+ assert.equal(staged.places.filter(p=>p.geometry==='Polygon').length,1);
 });
 test('failed second selection clears stale pending candidate',async()=>{
  const x=session();assert.equal((await x.prepare(await build())).status,'REVIEW');const bad=await x.prepare(new Uint8Array([1,2,3]));

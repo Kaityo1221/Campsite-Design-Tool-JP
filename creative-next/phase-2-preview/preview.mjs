@@ -21,6 +21,8 @@ function redraw(){
  $('counts').textContent=s.hasActive?`既存 ${s.counts.existing.count} / 700 ｜ 新規 ${s.counts.new.count} / 25 ｜ 距離円 ${s.shapes?.circles??0} ｜ 活動範囲 ${s.areas.length}`:'未読み込み';
  $('accept').disabled=!s.hasPending;$('discard').disabled=!s.hasPending;
  for(const id of ['filter','save','export'])$(id).disabled=!s.hasActive;
+ $('add-new').disabled=!s.hasActive||s.counts.new.count>=25;
+ for(const option of $('new-kind').options)option.disabled=!s.hasActive||!s.counts.new.types[option.value]?.canAdd;
  $('undo').disabled=!s.hasActive||!s.history.undo;$('redo').disabled=!s.hasActive||!s.history.redo;
  const items=filtered.filter(p=>p.title.toLowerCase().includes(term));
  const tbody=$('pois');tbody.replaceChildren();const shown=items.slice(0,100);
@@ -45,7 +47,7 @@ function drawMap(records,areas,circles=[]){const c=$('map'),ctx=c.getContext('2d
 }
 function openEditor(id){const p=shape().records.find(x=>x.id===id);if(!p||p.deleted)return;activeId=id;$('editor').hidden=false;$('selected').textContent=`${p.title}（${p.role==='existing'?'既存':'新規'}）`;
  $('title').value=p.title;$('memo').value=p.memo;$('kind').value=p.kind;
- const sourceLegacy=p.metadata?.originalLayer?.length>0;$('kind').disabled=sourceLegacy;
+ $('kind').disabled=false; // Exporter separately verifies layer/folder/style migrations.
  $('lat').value=p.lat;$('lng').value=p.lng;
  // The canonical store enforces that existing POI positions remain immutable.
  $('lat').disabled=$('lng').disabled=p.role==='existing';
@@ -64,6 +66,23 @@ $('accept').addEventListener('click',()=>{if(!confirm('現在の画面を、検�
  catch(e){failure(e)}});
 $('discard').addEventListener('click',()=>{session.discardPending();$('candidate').hidden=true;announce('検査を取り消しました。');redraw();});
 $('filter').addEventListener('input',redraw);
+$('add-new').addEventListener('click',()=>{
+ $('new-poi').hidden=false;$('editor').hidden=true;activeId=null;
+ const available=[...$('new-kind').options].find(o=>!o.disabled);
+ if(available)$('new-kind').value=available.value;
+ $('new-poi').scrollIntoView({behavior:'smooth',block:'nearest'});redraw();
+});
+$('new-cancel').addEventListener('click',()=>{$('new-poi').hidden=true;redraw();});
+$('new-poi').addEventListener('submit',e=>{e.preventDefault();try{
+ const title=$('new-title').value.trim(),kind=$('new-kind').value;
+ const rawLat=$('new-lat').value.trim(),rawLng=$('new-lng').value.trim();
+ const lat=Number(rawLat),lng=Number(rawLng);
+ if(!title||!rawLat||!rawLng||!Number.isFinite(lat)||!Number.isFinite(lng)||Math.abs(lat)>90||Math.abs(lng)>180)throw new Error('名称と緯度・経度を正しく入力してください。');
+ if(Math.abs(lat)>89.9)throw new Error('極地付近では50mの距離円を安全に生成できません。');
+ const r=session.command({type:'add',poi:{role:'new',kind,title,memo:$('new-memo').value,lat,lng}},{confirmed:true});
+ if(!r.ok){announce(r.error?.message||'追加できませんでした','error');return;}
+ $('new-poi').reset();$('new-poi').hidden=true;announce('新規POIを追加しました。50mの距離円も作成します。');redraw();
+ }catch(error){failure(error);}});
 $('editor').addEventListener('submit',e=>{e.preventDefault();if(!activeId)return;try{const patch={title:$('title').value.trim(),memo:$('memo').value};const kind=$('kind').value;const previous=shape().records.find(x=>x.id===activeId);if(previous&&kind!==previous.kind)patch.kind=kind;
  if(previous?.role==='new'){
   const rawLat=$('lat').value.trim(),rawLng=$('lng').value.trim();

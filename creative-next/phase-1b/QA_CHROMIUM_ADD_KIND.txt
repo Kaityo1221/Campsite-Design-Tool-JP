@@ -1,0 +1,3 @@
+BROWSER_ADD_KIND: PASS (Chromium /usr/bin/chromium, viewport 390x844, page.set_content; private Kasai KMZ)
+Flow: full staging/explicit import; 25-cap add disabled; delete one new Pokestop => new count24/circles212; add a new Pokestop using form => count25/circles213; inspect added POI; change existing POI kind in form; manually save; resume; re-export KMZ; legacy v7 key retained; no JS page errors.
+QA-only mocked localStorage, WebCrypto digest and randomUUID because about:blank does not offer production origin APIs. No Leaflet tiles; direct URL flow/WebKit/Safari/real-origin storage untested.

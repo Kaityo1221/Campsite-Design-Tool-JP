@@ -134,7 +134,7 @@ test('malformed old layer does not get guessed from folder',async()=>{
  const broken=await z.generateAsync({type:'uint8array'});
  await assert.rejects(()=>converted(broken),e=>e.code==='LEGACY_UNSAFE');
 });
-test('old KMZ kind edit is held instead of generating contradictory layer/folder/style',async()=>{
+test('old KMZ kind edit is held when destination folder or icon is missing',async()=>{
  const r=await converted(await source([{lat:35.7,lng:139.8}]));const s=await staged(r.bytes);
- await assert.rejects(()=>exportNewV1Kmz(s,{...dep,edits:[{id:r.pois[0].id,kind:'gym'}]}),e=>e.code==='LEGACY_LAYER_EDIT_UNSUPPORTED');
+ await assert.rejects(()=>exportNewV1Kmz(s,{...dep,edits:[{id:r.pois[0].id,kind:'gym'}]}),e=>e.code==='EXPORT_FOLDER_HOLD');
 });

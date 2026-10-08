@@ -7,9 +7,9 @@ import {stageKmlInput} from '../core/stage-kmz.mjs';
 import {diagnoseKmzCandidate} from '../core/diagnose-kmz-candidate.mjs';
 import {convertLegacyKasaiKmz} from '../core/legacy-kasai-convert.mjs';
 import {previewLegacyPoiStore} from './legacy-poi-preview.mjs';
-import {exportNewV1Kmz} from '../core/export-kmz.mjs';
+import {exportNewV1Kmz,assertSafeKindEdit} from '../core/export-kmz.mjs';
 import {createCreativeSaveJournal} from '../core/journal-save.mjs';
-import {indexDependentCircles,circleOverlay} from '../core/dependent-circles.mjs';
+import {indexDependentCircles,circleOverlay,circleRingAt} from '../core/dependent-circles.mjs';
 const PREFIX='campsite.creative.';
 function error(code,message){let e=new Error(message);e.code=code;return e;}
 function b64(bytes){let str='';for(let i=0;i<bytes.length;i+=32768)str+=String.fromCharCode(...bytes.subarray(i,i+32768));return btoa(str);}
@@ -24,18 +24,23 @@ function areas(stage){return stage.places.filter(p=>get(p,'object')==='activity-
 });}
 function editableDiff(stage,records){
  const originals=new Map(stage.places.filter(p=>p.geometry==='Point').map(p=>[get(p,'id'),p]));
- if(originals.size!==records.length)throw error('SOURCE_MISMATCH','Record count diverges from original source; additions require a separate export contract');
- const owned=circles(stage), edits=[];
+ const recordIds=new Set(records.map(r=>r.id));
+ if(recordIds.size!==records.length||[...originals.keys()].some(id=>!recordIds.has(id)))
+   throw error('SOURCE_MISMATCH','Original source POIs cannot be replaced, merged, or dropped');
+ const edits=[],additions=[];
  for(const r of records){
-  const p=originals.get(r.id);if(!p)throw error('SOURCE_MISMATCH','POI missing from original source');
+  const p=originals.get(r.id);
+  if(!p){
+   if(r.role!=='new'||r.guid!==null||r.poiId!==null||!r.metadata||Object.keys(r.metadata).length)
+     throw error('SOURCE_ADD_HOLD','Only fresh, source-free new POIs can be inserted');
+   if(!r.deleted)additions.push(r);
+   continue;
+  }
   if(r.role!==get(p,'role'))throw error('ROLE_CHANGED','POI identity cannot change');
   const edit={id:r.id};let changed=false;
   if(r.title!==get(p,'title')){edit.title=r.title;changed=true;}
   if(r.memo!==get(p,'memo')){edit.memo=r.memo;changed=true;}
-  if(r.kind!==get(p,'kind')){
-   if(p.data.some(d=>d.name==='nextlab-layer'))throw error('LAYER_MIGRATION_HOLD','Old layer kind changes are not supported safely');
-   edit.kind=r.kind;changed=true;
-  }
+  if(r.kind!==get(p,'kind')){edit.kind=r.kind;changed=true;}
   if(r.lat!==Number(get(p,'lat'))||r.lng!==Number(get(p,'lng'))){
    edit.lat=r.lat;edit.lng=r.lng;changed=true;
   }
@@ -44,7 +49,7 @@ function editableDiff(stage,records){
   }
   if(changed)edits.push(edit);
  }
- return edits;
+ return {edits,additions};
 }
 export function createIsolatedEditorSession({JSZip,DOMParser,XMLSerializer,storage=null,cryptoProvider=globalThis.crypto,namespace='campsite-creative-next-v1-preview'}={}){
  const deps={JSZip,DOMParser,XMLSerializer,cryptoProvider};
@@ -53,7 +58,11 @@ export function createIsolatedEditorSession({JSZip,DOMParser,XMLSerializer,stora
  const view=()=>active?.store.snapshot()??null;
  const state=()=>{
   const records=view()?.records??[];
-  const visibleCircles=active?circleOverlay(active.stage,records):[];
+  const visibleCircles=active?[
+   ...circleOverlay(active.stage,records),
+   ...records.filter(p=>p.role==='new'&&!p.deleted&&!active.sourceIds.has(p.id))
+     .map(p=>({ownerId:p.id,lat:p.lat,lng:p.lng,radius:50}))
+  ]:[];
   return {hasPending:!!pending,hasActive:!!active,counts:view()?.counts??null,history:view()?.history??null,records,
     circles:visibleCircles,shapes:active?{...active.report.counts,circles:visibleCircles.length}:null,
     areas:active?.shapeAreas??[],hasUnsavedSource:!!active?.stage,revision,sourceIsolated:true,recoveredFallback};
@@ -77,16 +86,22 @@ export function createIsolatedEditorSession({JSZip,DOMParser,XMLSerializer,stora
  function acceptPrepared({confirmed=false}={}){
   if(!pending)throw error('IMPORT_NOT_READY','No verified import pending');
   if(confirmed!==true)return {ok:false,applied:false};
-  const next={...pending,store:pending.preview.store,report:pending.preview.report};
+  const next={...pending,store:pending.preview.store,report:pending.preview.report,
+    sourceIds:new Set(pending.preview.records.map(p=>p.id))};
   active=next;pending=null;prepareGeneration++;revision=null;recoveredFallback=false;
   return {ok:true,applied:true,counts:active.report.counts,history:active.store.snapshot().history};
  }
  function command(value,{confirmed=false}={}){
   if(!active)throw error('NO_EDITOR','No confirmed editor session');
   if(confirmed!==true)return {ok:true,changed:false,cancelled:true};
-  if(value?.type==='add')throw error('SOURCE_ADD_HOLD','Adding POIs to an imported KMZ requires source-aware geometry insertion');
-  const snap=active.store.snapshot(),poi=snap.records.find(p=>p.id===value?.id);
-  if(!poi)throw error('POI_NOT_FOUND','POI not found');
+  if(value?.type==='add'&&value?.poi&&(
+      value.poi.guid!=null||value.poi.poiId!=null||
+      (value.poi.metadata&&Object.keys(value.poi.metadata).length)))
+    throw error('SOURCE_ADD_HOLD','A new POI must not claim unverified source metadata or external IDs');
+  if(value?.type==='add'&&value.poi&&Number.isFinite(value.poi.lat)&&Number.isFinite(value.poi.lng))
+    circleRingAt(value.poi.lat,value.poi.lng,50);
+  const snap=active.store.snapshot(),poi=value?.type==='add'?null:snap.records.find(p=>p.id===value?.id);
+  if(!poi&&value?.type!=='add')throw error('POI_NOT_FOUND','POI not found');
   const changingLocation=value.type==='move'||(value.type==='edit'&&('lat' in (value.patch||{})||'lng' in (value.patch||{})));
   if(changingLocation&&circles(active.stage).has(poi.id)){
     const original=active.stage.places.find(p=>get(p,'id')===poi.id);
@@ -95,10 +110,11 @@ export function createIsolatedEditorSession({JSZip,DOMParser,XMLSerializer,stora
     if(raw.length===3&&Number(raw[2])!==0||original?.sourceGeometry?.altitudeMode||original?.sourceGeometry?.extrude)
       throw error('CIRCLE_ALTITUDE_HOLD','Circle/POI position with meaningful altitude cannot move');
   }
-  if((value.type==='change-kind'||(value.type==='edit'&&'kind' in (value.patch||{})))&&poi.metadata.originalLayer?.length){
-    const newKind=value.type==='change-kind'?value.kind:value.patch.kind;
-    if(newKind!==poi.kind)throw error('LAYER_MIGRATION_HOLD','Legacy layer changes need synchronized folder/style migration');
-  }
+  // Source-bearing kind changes are allowed only if the exporter can prove a
+  // coherent folder/legacy-layer/style migration before save or download.
+  const changeKind=value?.type==='change-kind'?value.kind:value?.type==='edit'?value.patch?.kind:undefined;
+  if(poi&&changeKind!==undefined&&changeKind!==poi.kind&&active.sourceIds.has(poi.id))
+    assertSafeKindEdit(active.stage,deps,poi.id,changeKind);
   const result=active.store.execute(value,{confirmed:true});
   if(result.ok&&result.changed){try{editableDiff(active.stage,active.store.snapshot().records)}catch(e){active.store.undo();throw e;}}
   return result;
@@ -107,16 +123,16 @@ export function createIsolatedEditorSession({JSZip,DOMParser,XMLSerializer,stora
  const redo=()=>{if(!active)throw error('NO_EDITOR','No editor');return active.store.redo();};
  async function exportKmz({signal}={}){
   if(!active)throw error('NO_EDITOR','No confirmed editor');
-  const edits=editableDiff(active.stage,active.store.snapshot().records);
-  return exportNewV1Kmz(active.stage,{...deps,edits,signal});
+  const changes=editableDiff(active.stage,active.store.snapshot().records);
+  return exportNewV1Kmz(active.stage,{...deps,...changes,signal});
  }
  async function saveDraft(){
   if(!journal||!active)throw error('SAVE_UNAVAILABLE','No initialized draft journal or editor');
   if(recoveredFallback)throw error('SAVE_RECOVERY_REQUIRED','Recovery is read-only until a separate verified repair workflow');
   const records=active.store.snapshot().records;
   // Refuse to save edits which cannot be safely exported; source bytes retained in the journal.
-  const edits=editableDiff(active.stage,records);
-  await exportNewV1Kmz(active.stage,{...deps,edits});
+  const changes=editableDiff(active.stage,records);
+  await exportNewV1Kmz(active.stage,{...deps,...changes});
   const draft={records,activityAreas:active.shapeAreas,sourceArchiveBase64:b64(active.stage.rawSource),
     sourcePath:active.stage.sourcePath,sourceFormat:active.stage.sourceFormat,reviewOnly:true};
   const result=await journal.save(draft,{expectedRevision:revision===null?undefined:revision});
@@ -135,13 +151,14 @@ export function createIsolatedEditorSession({JSZip,DOMParser,XMLSerializer,stora
   const preview=previewLegacyPoiStore(stage),shapeAreas=areas(stage);
   if(JSON.stringify(shapeAreas)!==JSON.stringify(s.activityAreas))throw error('DRAFT_AREA','Saved area boundaries differ from original source');
   const sourceIds=new Set(preview.records.map(x=>x.id));
-  if(s.records.length!==sourceIds.size||s.records.some(x=>!sourceIds.has(x.id)))throw error('DRAFT_POI','Draft lost source POIs');
+  if(!Array.isArray(s.records)||s.records.length<sourceIds.size||
+    [...sourceIds].some(id=>!s.records.some(x=>x.id===id)))throw error('DRAFT_POI','Draft lost original POIs');
   const previewStore=preview.store;
   const applied=previewStore.replace(s.records);
   if(!applied.ok)throw error('DRAFT_POI','Draft conflicts with original protected POIs');
-  const edits=editableDiff(stage,previewStore.snapshot().records);
-  await exportNewV1Kmz(stage,{...deps,edits});
-  active={stage,store:previewStore,shapeAreas,report:preview.report,converted:false};pending=null;
+  const changes=editableDiff(stage,previewStore.snapshot().records);
+  await exportNewV1Kmz(stage,{...deps,...changes});
+  active={stage,store:previewStore,shapeAreas,report:preview.report,converted:false,sourceIds};pending=null;
   revision=saved.revision;recoveredFallback=saved.status==='FALLBACK';
   return {status:saved.status,applied:true,readonlyRecovery:recoveredFallback,revision};
  }
