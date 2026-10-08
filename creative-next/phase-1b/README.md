@@ -1,38 +1,54 @@
-# Creative Next | Phase 1-B (isolated development)
+# Creative Next | Phase 1-B isolated KMZ and save prototypes
 
-**WIP: do not merge, deploy, publish or connect to existing Creative Mode.**
-Baseline `main`: `f5dc8d88ad3987df82c000e2cac4b8aa0bc5ed80`. This directory has no application entrypoint and writes no saved Creative Mode state. Phase 1-A corrected code is not yet available for safe integration.
+**DO NOT MERGE, DEPLOY, PUBLISH OR CONNECT TO PRODUCTION.**
+Repository: `Kaityo1221/Campsite-Design-Tool-JP`.
+Source baseline: main `f5dc8d88ad3987df82c000e2cac4b8aa0bc5ed80`.
+Implementation branch: `feature/creative-next-kmz-phase1b-20261009`.
+This directory is not imported from any production entrypoint. It does not touch `creative/base-v7.html`, Bridge, Field Mode, DB or old save keys.
 
-## Components
+## What has been implemented
 
-- `core/diagnose-kmz-candidate.mjs`: non-mutating policy evaluator. Separates `READY / HOLD / REJECT`, profile and issues; **always returns `canApply: false`**. Policy is not an importer.
-- `core/stage-kmz.mjs`: bounded, non-mutating ZIP/KML reader that requires injected JSZip and DOMParser. Reads KML `ExtendedData`, coordinate original text, POI, polygon classification evidence. Retains the exact input bytes and original KML. It neither displays nor imports objects.
-- `test/diagnose-kmz-candidate.test.mjs`: 28 policy unit tests.
-- `test/stage-kmz.test.mjs`: 20 actual ZIP + XML tests, including 427-Placemark synthetic Kasai-shaped file, malicious archives, CRC corruption, unknown geometry, escaped Japanese text, duplicated KML, interrupted parsing.
-- `test/browser-smoke.html`: opt-in native-browser smoke test. **Not yet PASS**; environment Chromium could not even load `about:blank`, so this test could not be executed here.
+| Path | Scope |
+|---|---|
+| `core/diagnose-kmz-candidate.mjs` | Pure non-mutating `READY / HOLD / REJECT` policy, always `canApply:false`. |
+| `core/stage-kmz.mjs` | Bounded ZIP and XML staging reader, CRC/paths/size checks, detailed manifests and source bytes retained. |
+| `core/export-kmz.mjs` | NEW_V1 READY KML/KMZ source-preserving edits and re-export, then automatic re-read/re-diagnosis. No implicit legacy conversion. |
+| `core/create-new-kmz.mjs` | Creates a new valid KML/KMZ from **fresh canonical records only**, rejecting provenance-bearing data to prevent information loss. |
+| `core/journal-save.mjs` | LocalStorage-compatible two-generation snapshot journal, SHA-256 integrity, read-back verification, fallback recovery, existing-position protection and undo-gated tombstone restore. Only uses `campsite-creative-next-v1:*` keys. |
+| `test/*.test.mjs` | 105 automated Node tests including input safety, POI limits, duplicates, source preservation, fresh creation, edit roundtrip, save failure, recovery and isolated workflow. |
+| `test/browser-smoke.html` | Browser smoke test intended for later Chromium/WebKit verification. **NOT PASSED**: browser startup previously failed in this environment. |
 
-## Local test
+## Local verification
 
-Use Node 22 or newer and install dev dependencies within this directory (no application installation required):
+From this folder, using Node 22+:
 
 ```sh
 npm install
 npm test
 ```
 
-Dependencies for tests: `jszip@3.10.1`, `@xmldom/xmldom@0.9.8`. Test results at handoff: 48 PASS, 0 FAIL. This test number **does not include Chromium, Safari, real Kasai/Hikarigaoka KMZ, KMZ export/reimport or Phase 1-A integration**.
+Pinned test dependencies: `jszip@3.10.1`, `@xmldom/xmldom@0.9.8`.
+Snapshot of last result: **105 PASS / 0 FAIL** for Node tests, not browser or device tests.
+`TEST_RESULTS_105PASS.txt` contains machine output.
 
-The browser smoke page expects JSZip script from the dev dependency and serves from an HTTP test server. A browser-run report can be produced later when a working browser is available.
+## Safety and limitations
 
-## Provisional safety envelope, not a final product limit
+- Staging **never applies** data to any live app state. Even a `READY` diagnosis is `canApply:false`.
+- Source-preserving export supports verified NEW_V1 inputs only. Legacy Creative format stays `PROFILE_CANDIDATE / HOLD`, including synthetic Kasai-shaped file. It cannot be automatically migrated yet.
+- Unknown resources / XML metadata in an unchanged NEW_V1 source are preserved by cloning and repackaging the source KML/ZIP; prior source and live POI objects are not mutated. XML/ZIP byte-identical output is not required. Unknown altitude behavior prevents movement when fidelity is unproven.
+- The fresh writer is explicitly **not** a legacy/data-provenance conversion engine. If input includes raw-source/unknown metadata, it refuses conversion instead of dropping it.
+- Journal has 2 generations and detects many interruptions and corruptions; browser `localStorage` remains **nontransactional**, especially with multi-tab concurrency. It cannot guarantee atomic behavior across keys. Live-store atomic commit/recovery integration remains unimplemented and requires dedicated testing.
+- The journal is NOT connected to the UI; it does not read, migrate or delete old storage `next-lab-creative-v7`. An approved bulk-import workflow is not connected because saved older POIs must not be replaced without explicit consent.
+- Provisional staging bounds: 8 MiB source, 32 MiB total inflated, 16 MiB KML, 1500 ZIP entries, 4000 Placemarks. The 8 MiB JSON journal bound is also **provisional**. Actual iPhone Safari benchmarking is required to determine safe product limits.
+- Distance-circle O-07 metadata is NOT implemented for NEW_V1. Newly created activity-area Polygons are supported. NEW_V1 distance-circle Polygon inputs are HOLD until proper geometry/identity contract and tests PASS. Unrecognized polygons are never silently dropped.
+- The **real Kasai KMZ** and actual corrected Phase 1-A 33-PASS ZIP were not accessible as bytes to this development runtime. No real-file KMZ roundtrip or Phase 1-A code integration was performed.
+- Chromium/WebKit/iPhone Safari and external My Maps compatibility are NOT PASSED. The existing Chromium environment could not initialize even a blank browser page. Do not advertise those tests as successful.
+- No user source KMZ, backup, published entrypoint, GitHub main, DB or Bridge was modified. Real-device testing and final release require the user's separate gates.
 
-In isolated parser only: 8 MiB input, 32 MiB total expanded ZIP bytes, 16 MiB KML, 1500 entries, 4000 Placemarks. Optional parser limits may only reduce these bounds, not increase them. Final iPhone-safe limits will be selected after iPhone benchmarking. DTDs and entities, path traversal, multiple KMLs, unsupported archive formats, malformed/unverified KML and unknown external KML features are never silently imported.
+## Still needed before the iPhone test gate
 
-`unknownInformationPreserved: true` means the parser still holds original input bytes in staging memory; it **does not** mean a future KMZ writer has demonstrated lossless roundtrip. The corrected Phase 1-A core and O-07 geometry exporter, O-08 transactional save, new UI, integration test and actual device PASS remain mandatory.
-
-## Restrictions
-
-1. Legacy entrypoints `creative/base-v7.html`, Bridge/Wayfarer, Field Mode, DB and old storage key `next-lab-creative-v7` are unchanged.
-2. Profile-matched legacy KMZ stays **HOLD** until explicit profile implementation, real source import/export tests and further gates pass.
-3. No partial apply; not even a `READY` candidate updates live data until explicit `置き換えて開始` and verified storage commit.
-4. `main` and published old Creative Mode must remain untouched. Keep all changes on the isolated feature branch, draft only, pending a future formal gate.
+1. Recover and verify the exact Phase 1-A 33-PASS artifact. Do not substitute older uncorrected code.
+2. Access actual real KMZ bytes in an authorized working runtime (Kasai and other supported formats); execute real roundtrip comparisons including unknown metadata and geometry.
+3. Implement an end-to-end consented import transaction with old save migration, source-provenance restoration, key conflict and storage quota recovery, activity area editing, distance-circle external export contract.
+4. Integrate in an isolated preview with Phase 2 UI/controls/history, test browser WebKit/Chromium, Wayfarer end-to-end and regression suite.
+5. Before iPhone Safari test, deliver test steps and STOP criteria, and ask for approval.
