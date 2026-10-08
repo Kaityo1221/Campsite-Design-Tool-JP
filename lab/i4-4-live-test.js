@@ -1,7 +1,7 @@
 /* I4-4 independent diagnostic: opt-in, read-only, no storage or Creative handoff. */
 ;(() => {
 'use strict';
-const DIAG_VERSION = 'I4-5-shape-v2';
+const DIAG_VERSION = 'I4-6-gmo-v1';
 if (window.__cbsI44Installed) {
   alert('I4-4診断は既に起動中です。最新版へ切替えるにはWayfarerを再読み込みしてください。');
   return;
@@ -44,6 +44,7 @@ const pageInstall = function(source, version) {
     const schemaSummary = Object.create(null);
     const poiTypeSummary = Object.create(null);
     const shapeSummary = Object.create(null);
+    const nestedSummary = Object.create(null);
     try {
       const outcome=await engine.executePlan(plan,async tile=>{
         if (sid !== msg.sid || JSON.stringify(polygon) !== JSON.stringify(msg.polygon)) throw Error('SESSION_CHANGED');
@@ -70,6 +71,24 @@ const pageInstall = function(source, version) {
                 if (typeof id==='string' && id.trim()) {
                   const keys=Object.keys(v).filter(shapeKey).sort();
                   for (const key of keys) bump(shapeSummary,'poiField:'+key+':'+(Array.isArray(v[key])?'array':v[key]===null?'null':typeof v[key]));
+                  // Metadata only: never output element values, IDs, locations or media URLs.
+                  const inspectArray = (field) => {
+                    const arr=v[field];
+                    if (!Array.isArray(arr)) return;
+                    bump(nestedSummary,field+':array');
+                    bump(nestedSummary,field+':length:'+ (arr.length===0?'0':arr.length===1?'1':arr.length<=5?'2-5':'6+'));
+                    for (const element of arr.slice(0,30)) {
+                      const kind=element===null?'null':Array.isArray(element)?'array':typeof element;
+                      bump(nestedSummary,field+':item:'+kind);
+                      if (element && typeof element==='object' && !Array.isArray(element)) {
+                        for(const k of Object.keys(element).slice(0,40)) {
+                          if(shapeKey(k)) bump(nestedSummary,field+':field:'+k+':'+(Array.isArray(element[k])?'array':element[k]===null?'null':typeof element[k]));
+                        }
+                      }
+                    }
+                  };
+                  inspectArray('gmo');
+                  inspectArray('categoryTags');
                   for (const key of Object.keys(v)) if(safeKey(key)) bump(schemaSummary,'poiKey:'+key);
                   for (const key of ['type','kind','category','status','state','gameType','poiType','wayspotType','displayType']) {
                     const value=v[key];
@@ -92,7 +111,7 @@ const pageInstall = function(source, version) {
       });
       const all=new Set(counts.flatMap(c=>c.guids));
       send({tileCount:plan.tiles.length,tiles:outcome.results.map(r=>({id:r.id,ok:r.ok,error:r.error||null})),
-        uniqueGuidCount:all.size,schemaSummary,poiTypeSummary,shapeSummary,perTile:counts.map(c=>({tile:c.tile,guidCount:c.guidCount})),
+        uniqueGuidCount:all.size,schemaSummary,poiTypeSummary,shapeSummary,nestedSummary,perTile:counts.map(c=>({tile:c.tile,guidCount:c.guidCount})),
         geometryCoverageComplete:outcome.geometryCoverageComplete,transportComplete:outcome.transportComplete,
         sourceComplete:null,coverageComplete:false,coverageStatus:outcome.transportComplete?'unverified':'incomplete',
         normalizationStatus:'GUID discovery only; GCS schema unverified',elapsedMs:Math.round(performance.now()-started)});
