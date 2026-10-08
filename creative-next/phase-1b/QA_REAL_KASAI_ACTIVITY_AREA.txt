@@ -1,0 +1,1 @@
+REAL_KASAI_ACTIVITY_AREA: PASS 17->18 vertices, 213 circle rings identical, original 188/new 25, area ID preserved, Undo/Redo, journal resume, protected legacy store and raw KMZ unchanged

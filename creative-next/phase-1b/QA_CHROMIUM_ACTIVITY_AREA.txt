@@ -1,0 +1,3 @@
+BROWSER_AREA: PASS Chromium 390px simulated-origin; area 17->18->17 vertices, move, Undo/Redo, save/reopen, KMZ export, 213 owned circles unchanged; storage/crypto mocks, not native browser/Safari
+BROWSER_ADD_KIND: PASS (390px Chromium set_content: 25 cap/delete-add/circle/type/save-resume/export; mocked browser storage+crypto; not real URL/Safari)
+BROWSER_CIRCLE_EDITOR: PASS (Chromium 390px simulated; new POI move with circle, delete/Undo circle count 213→212→213, journal resume, legacy storage untouched)

@@ -30,8 +30,16 @@
   <div class="table-scroll"><table><thead><tr><th>名称</th><th>種類</th><th>区分</th><th>操作</th></tr></thead><tbody id="pois"><tr><td colspan="4">KMZを読み込んでください。</td></tr></tbody></table></div><small id="listed"></small>
   <form id="editor" hidden><h3 id="selected">POIを編集</h3><label>名称<input id="title" required></label><label>メモ<textarea id="memo" rows="3"></textarea></label><label>種類<select id="kind"><option value="pokestop">ポケストップ</option><option value="gym">ジム</option><option value="power">パワースポット</option></select></label><div class="coords"><label>緯度（新規POIのみ移動可能）<input id="lat" type="number" step="any"></label><label>経度（新規POIのみ移動可能）<input id="lng" type="number" step="any"></label></div><div class="toolbar"><button type="submit">編集を反映</button><button id="edit-cancel" type="button" class="ghost">キャンセル</button><button id="delete" type="button" class="danger">このPOIを削除</button></div></form>
  </section>
+ <section class="panel" aria-labelledby="area-heading">
+  <div class="section-head"><h2 id="area-heading">03 · 活動範囲の編集</h2><span class="count">距離円とは別管理</span></div>
+  <p class="hint">活動範囲の頂点を選んで座標を変更できます。頂点の後ろへの追加・削除にも対応します。ポリゴンの交差や、不正な形は反映しません。元のKMZは変更しません。</p>
+  <div class="coords"><label>活動範囲<select id="area-select" disabled aria-label="活動範囲を選択"></select></label><label>頂点<select id="area-vertex" disabled aria-label="頂点を選択"></select></label></div>
+  <div class="coords"><label>緯度<input id="area-lat" type="number" step="any" min="-90" max="90" disabled></label><label>経度<input id="area-lng" type="number" step="any" min="-180" max="180" disabled></label></div>
+  <div class="toolbar"><button id="area-move" type="button" disabled>頂点を移動</button><button id="area-add" type="button" disabled>この頂点の後に追加</button><button id="area-delete" class="danger" type="button" disabled>頂点を削除</button></div>
+  <p class="hint" id="area-help">KMZを読み込むと頂点を編集できます。変更はUndo／Redo、保存・再開、KMZ書き出しへ反映します。</p>
+ </section>
  <section class="panel" aria-labelledby="save-heading">
-  <h2 id="save-heading">03 · 保存と再開</h2><p class="hint">手動保存・復元も試験用の独立した領域だけを使います。既存の保存データを消さず、保存成功は書き込み後の検査で確認します。</p>
+  <h2 id="save-heading">04 · 保存と再開</h2><p class="hint">手動保存・復元も試験用の独立した領域だけを使います。既存の保存データを消さず、保存成功は書き込み後の検査で確認します。</p>
   <div class="toolbar"><button id="save" disabled type="button">この作業を保存</button><button id="resume" type="button" class="ghost">前回の作業を再開</button><button id="export" disabled type="button">KMZを書き出す</button></div><p id="save-info" class="hint"></p>
  </section>
 </main>

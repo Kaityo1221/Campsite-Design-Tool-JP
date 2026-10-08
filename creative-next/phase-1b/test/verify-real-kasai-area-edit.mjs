@@ -1,0 +1,47 @@
+/* Private fixture only, do not include input/output KMZ in repository/archives.
+ * Usage: node test/verify-real-kasai-area-edit.mjs /path/to/private.kmz
+ */
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+import JSZip from 'jszip';
+import {DOMParser,XMLSerializer} from '@xmldom/xmldom';
+import {createIsolatedEditorSession} from '../integration/isolated-editor-session.mjs';
+import {stageKmlInput} from '../core/stage-kmz.mjs';
+import {diagnoseKmzCandidate} from '../core/diagnose-kmz-candidate.mjs';
+const path=process.argv[2];if(!path)throw Error('Private KMZ file path required');
+const original=readFileSync(path);const fingerprint=createHash('sha256').update(original).digest('hex');
+assert.equal(fingerprint,'1c57f66d8658515ec6959af55044423189fdf5b4c5941d84b9a5466f0ef5d162');
+const deps={JSZip,DOMParser,XMLSerializer};
+const mem=new Map([['next-lab-creative-v7','LOCKED_OLD']]);
+const storage={getItem:k=>mem.get(k)??null,setItem:(k,v)=>mem.set(k,v)};
+const x=createIsolatedEditorSession({...deps,storage});assert.equal((await x.prepare(new Uint8Array(original))).status,'REVIEW');
+assert.equal(x.acceptPrepared({confirmed:true}).applied,true);
+const before=x.state(),area=before.areas[0];assert.equal(area.points.length,17);
+const areaId=area.id;
+const moved=[area.points[0][0]+.00001,area.points[0][1]];
+assert.equal(x.commandArea({type:'area-move-vertex',id:areaId,index:0,lat:moved[0],lng:moved[1]},{confirmed:true}).ok,true);
+const p0=area.points[0],p1=area.points[1],mid=[(p0[0]+p1[0])/2,(p0[1]+p1[1])/2];
+assert.equal(x.commandArea({type:'area-add-vertex',id:areaId,index:0,lat:mid[0],lng:mid[1]},{confirmed:true}).ok,true);
+assert.equal(x.state().areas[0].points.length,18);
+const interim=await x.exportKmz();const stage=await stageKmlInput(interim.bytes,deps);const stats=diagnoseKmzCandidate(stage);
+assert.equal(stats.disposition,'READY',JSON.stringify(stats.issues));
+assert.deepEqual([stats.counts.existing,stats.counts.newTotal,stats.counts.circles,stats.counts.activityAreas],[188,25,213,1]);
+const areaOut=stage.places.find(p=>p.data.some(d=>d.name==='campsite.creative.area-id'&&d.value===areaId));
+assert.equal(areaOut.polygonGeometry.points.length,19);assert.equal(areaOut.polygonGeometry.points[0][1],moved[0]);
+assert.equal(areaOut.polygonGeometry.points[1][1],mid[0]);
+assert.equal(areaOut.polygonGeometry.points.at(-1)[1],moved[0]);
+const originalCircleStage=await stageKmlInput((await (async()=>{const input=await stageKmlInput(new Uint8Array(original),deps);return (await import('../core/legacy-kasai-convert.mjs')).convertLegacyKasaiKmz(input,deps)})()).bytes,deps);
+const circles=s=>s.places.filter(p=>p.data.some(d=>d.name==='campsite.creative.object'&&d.value==='distance-circle')).map(p=>[p.data.find(d=>d.name==='campsite.creative.circle-owner-id').value,p.polygonGeometry.raw]).sort((a,b)=>a[0].localeCompare(b[0]));
+assert.deepEqual(circles(stage),circles(originalCircleStage),'Activity changes must preserve 213 distance circles EXACTLY');
+assert.equal((await x.saveDraft()).status,'SAVED');
+const restored=createIsolatedEditorSession({...deps,storage});assert.equal((await restored.resumeDraft({confirmed:true})).applied,true);
+assert.equal(restored.state().areas[0].points.length,18);assert.equal(restored.state().areas[0].points[0][0],moved[0]);
+assert.equal(restored.undo().changed,false,'Reopen clears transient history');
+assert.equal(x.undo().ok,true);assert.equal(x.state().areas[0].points.length,17);
+assert.equal(x.undo().ok,true);assert.deepEqual(x.state().areas[0].points,area.points);
+assert.equal(x.redo().ok,true);assert.equal(x.redo().ok,true);
+assert.equal(x.state().areas[0].points.length,18);
+assert.equal(mem.get('next-lab-creative-v7'),'LOCKED_OLD');
+assert.equal(createHash('sha256').update(readFileSync(path)).digest('hex'),fingerprint);
+console.log('REAL_KASAI_ACTIVITY_AREA: PASS 17->18 vertices, 213 circle rings identical, original 188/new 25, area ID preserved, Undo/Redo, journal resume, protected legacy store and raw KMZ unchanged');

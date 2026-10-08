@@ -6,6 +6,7 @@
 import { diagnoseKmzCandidate } from './diagnose-kmz-candidate.mjs';
 import { stageKmlInput } from './stage-kmz.mjs';
 import {indexDependentCircles,circleRingAt} from './dependent-circles.mjs';
+import {sourceActivityAreas,plannedAreaEdits,editableAreaGeometry} from './activity-areas.mjs';
 
 const KML = 'http://www.opengis.net/kml/2.2';
 const PREFIX='campsite.creative.';
@@ -155,7 +156,7 @@ export function assertSafeKindEdit(stage,{DOMParser},id,kind){
  * Every export is re-staged and re-diagnosed before returning bytes.
  * @returns {{bytes: Uint8Array, verification: object}}
  */
-export async function exportNewV1Kmz(stage,{JSZip,DOMParser,XMLSerializer,edits=[],additions=[],signal}={}){
+export async function exportNewV1Kmz(stage,{JSZip,DOMParser,XMLSerializer,edits=[],additions=[],areaEdits=[],signal}={}){
   if(signal?.aborted)stop('CANCELLED','Export cancelled');
   if(!JSZip||typeof DOMParser!=='function'||typeof XMLSerializer!=='function')stop('EXPORT_CONFIG','XML and ZIP dependencies required');
   if(!stage?.sourceKml||!(stage.rawSource instanceof Uint8Array)||stage.audit?.unknownInformationPreserved!==true)stop('EXPORT_SOURCE','Original verified source unavailable');
@@ -291,6 +292,21 @@ export async function exportNewV1Kmz(stage,{JSZip,DOMParser,XMLSerializer,edits=
     element(xml,ring,'coordinates',circleRingAt(p.lat,p.lng,50));
   }
   for(const {coord,text} of circleUpdates)coord.textContent=text;
+  // Activity areas are separate from POIs and their distance circles.
+  // Validate every request before touching any activity-area coordinate node.
+  if(!Array.isArray(areaEdits))stop('AREA_EDITS','Invalid activity edits');
+  const sourceAreas=sourceActivityAreas(stage);
+  const byId=new Map(sourceAreas.map(a=>[a.id,a]));
+  const requestedAreas=new Map();
+  for(const edit of areaEdits){
+    if(!edit||typeof edit!=='object'||Object.keys(edit).some(k=>!['id','points'].includes(k))||
+       typeof edit.id!=='string'||requestedAreas.has(edit.id)||!byId.has(edit.id))stop('AREA_EDITS','Unknown, repeated or unsupported activity area edit');
+    requestedAreas.set(edit.id,edit);
+  }
+  const activeAreas=sourceAreas.map(a=>requestedAreas.has(a.id)?requestedAreas.get(a.id):a);
+  const changes=plannedAreaEdits(sourceAreas,activeAreas);
+  const areaWrites=changes.map(edit=>editableAreaGeometry(stage,xml,edit));
+  for(const area of areaWrites)area.coordinates.textContent=area.text;
   if(signal?.aborted)stop('CANCELLED','Export cancelled');
   const xmlText=new XMLSerializer().serializeToString(xml);
   const zip=stage.sourceFormat==='kmz' ? await JSZip.loadAsync(stage.rawSource,{checkCRC32:true}) : new JSZip();
@@ -307,6 +323,13 @@ export async function exportNewV1Kmz(stage,{JSZip,DOMParser,XMLSerializer,edits=
       report.counts.activityAreas!==before.counts.activityAreas||
       verified.places.length!==stage.places.length-planned.filter(p=>p.deleted).length-removedCircles+2*additions.length)
     stop('EXPORT_ROUNDTRIP','Generated output did not pass full re-staging and diagnosis');
+  // Re-read all edited area coordinates rather than relying only on shape counts.
+  for(const area of changes){
+    const shape=verified.places.find(p=>p.geometry==='Polygon'&&p.data.some(d=>d.name===PREFIX+'area-id'&&d.value===area.id));
+    const received=shape?.polygonGeometry?.points?.slice(0,-1).map(p=>[p[1],p[0]]);
+    if(!received||JSON.stringify(received)!==JSON.stringify(area.points))
+      stop('AREA_ROUNDTRIP','Activity area vertices changed during KMZ export/reimport');
+  }
   if(signal?.aborted)stop('CANCELLED','Export cancelled');
   return {bytes,verification:report};
 }
