@@ -3,7 +3,7 @@
  */
 ;(() => {
   'use strict';
-  if (new URL(location.href).searchParams.get('cbsI4Probe') !== '1') return;
+  if (window.__cbsI4ProbeTestEnabled !== true && new URL(location.href).searchParams.get('cbsI4Probe') !== '1') return;
   const EVT = 'cbs-i3:evt';
   let snapshot = null, sid = null, busy = false;
   const button = document.createElement('button');
