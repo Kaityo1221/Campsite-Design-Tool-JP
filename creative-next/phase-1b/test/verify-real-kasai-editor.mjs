@@ -22,14 +22,16 @@ else{
  let blocked=0;
  for(const c of [
  {type:'move',id:target.id,lat:35.7,lng:139.9},
- {type:'delete',id:target.id},
  {type:'change-kind',id:target.id,kind:target.kind==='gym'?'pokestop':'gym'}
- ]){try{const r=editor.command(c,{confirmed:true});if(!r.ok)blocked++;}catch(e){if(/HOLD/.test(e.code)||e.code==='LAYER_MIGRATION_HOLD')blocked++;else throw e}}
- assert.equal(blocked,3);
+ ]){try{const r=editor.command(c,{confirmed:true});if(!r.ok)blocked++;}catch(e){if(/HOLD/.test(e.code)||e.code==='EXISTING_POSITION_LOCKED')blocked++;else throw e}}
+ assert.equal(blocked,2);
+ const deletion=editor.command({type:'delete',id:target.id},{confirmed:true});assert.equal(deletion.ok,true);
+ assert.equal(editor.state().circles.length,212);
+ assert.equal(editor.undo().ok,true);assert.equal(editor.state().circles.length,213);
  const out=await editor.exportKmz(),outStage=await stageKmlInput(out.bytes,deps);
  assert.equal(outStage.errors.length,0);assert.equal(out.verification.counts.circles,213);
  const save=await editor.saveDraft();assert.equal(save.status,'SAVED');const resumed=createIsolatedEditorSession(deps);
  assert.equal((await resumed.resumeDraft({confirmed:true})).applied,true);assert.equal(resumed.state().records[0].memo,'隔離復元検証');
  assert.equal(map.get('next-lab-creative-v7'),'KEEP_ORIGINAL');
- console.log('REAL_KASAI_SESSION: PASS (188 existing, 25 new, 213 circles, 1 area; 3 unsafe edits denied; export, journal and resume verified; original v7 untouched)');
+ console.log('REAL_KASAI_SESSION: PASS (188 existing, 25 new, 213 circles, 1 area; 2 unsafe edits denied; source-linked POI delete/Undo safely updates circles; export, journal and resume verified; original v7 untouched)');
 }

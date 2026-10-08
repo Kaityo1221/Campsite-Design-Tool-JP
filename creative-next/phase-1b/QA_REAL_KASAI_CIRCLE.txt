@@ -1,0 +1,2 @@
+REAL_KASAI_SESSION: PASS (188 existing, 25 new, 213 circles, 1 area; 2 unsafe edits denied; source-linked POI delete/Undo safely updates circles; export, journal and resume verified; original v7 untouched)
+REAL_KASAI_CIRCLE_EDIT: PASS (213 owned circles, move new POI with 50m circle, delete existing with circle, Undo restores 213; original SHA protected)

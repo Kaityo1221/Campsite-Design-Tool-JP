@@ -1,0 +1,8 @@
+PREPARE_STATUS: 検査できました。読み込みを開始するには最終確認が必要です。
+CANDIDATE: 既存 188件｜新規 25件｜距離円 213件｜活動範囲 1件
+ROWS_FILTERED 22
+SAVE_MSG: 保存確認完了（第1世代）。ブラウザ内の隔離領域だけに保存しました。
+RESTORE_MSG: 保存データから編集内容を復元しました。
+EXPORT_MSG: 安全性の再検査に合格したKMZを作成しました。
+BROWSER_PREVIEW_SMOKE: PASS (Chromium 390px; mocked origin-only storage/crypto)
+BROWSER_CIRCLE_EDITOR: PASS (Chromium 390px simulated; new POI move with circle, delete/Undo circle count 213→212→213, journal resume, legacy storage untouched)

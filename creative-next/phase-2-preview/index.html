@@ -4,6 +4,9 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Creative Next | 隔離編集プレビュー</title>
 <link rel="stylesheet" href="./preview.css">
+<!-- Optional isolated Leaflet map. Canvas map remains usable when CDN access is blocked. -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script defer src="./vendor/jszip.min.js"></script>
 <script type="module" src="./preview.mjs"></script>
 </head>
@@ -20,11 +23,11 @@
  </section>
  <section class="panel" aria-labelledby="edit-heading">
   <div class="section-head"><h2 id="edit-heading">02 · POI編集</h2><span id="counts" class="count">未読み込み</span></div>
-  <div class="warning">🛡️ 安全のため、距離円付きPOIの移動・削除と旧形式の種類変更は現在保留します。</div>
-  <div class="map-wrap"><canvas id="map" width="900" height="480" aria-label="POIと活動範囲の簡易位置図。地図タイルなし" role="img"></canvas><small>簡易位置図です。背景地図や実際の距離円表示は、正式な地図UI接続後に検証します。</small></div>
+  <div class="warning">🛡️ 既存POIは移動禁止。新規POIの移動時は距離円も移動し、POI削除時は紐づく距離円も除外します。旧形式の種類変更は引き続き保留します。</div>
+  <div class="map-wrap"><div id="leaflet-map" hidden aria-label="POIと距離円の地図" role="region"></div><canvas id="map" width="900" height="480" aria-label="POIと活動範囲の簡易位置図。地図タイルなし" role="img"></canvas><small>Leafletが読み込めれば地図上にPOIと距離円を表示します。利用できない環境では簡易位置図に切り替えます。</small></div>
   <div class="toolbar"><label class="search-label">POI検索<input id="filter" type="search" placeholder="名称で検索" disabled></label><button id="undo" type="button" disabled>元に戻す</button><button id="redo" type="button" disabled>やり直す</button></div>
   <div class="table-scroll"><table><thead><tr><th>名称</th><th>種類</th><th>区分</th><th>操作</th></tr></thead><tbody id="pois"><tr><td colspan="4">KMZを読み込んでください。</td></tr></tbody></table></div><small id="listed"></small>
-  <form id="editor" hidden><h3 id="selected">POIを編集</h3><label>名称<input id="title" required></label><label>メモ<textarea id="memo" rows="3"></textarea></label><label>種類<select id="kind"><option value="pokestop">ポケストップ</option><option value="gym">ジム</option><option value="power">パワースポット</option></select></label><div class="coords"><label>緯度<input id="lat" type="number" step="any"></label><label>経度<input id="lng" type="number" step="any"></label></div><div class="toolbar"><button type="submit">編集を反映</button><button id="edit-cancel" type="button" class="ghost">キャンセル</button><button id="delete" type="button" class="danger">このPOIを削除</button></div></form>
+  <form id="editor" hidden><h3 id="selected">POIを編集</h3><label>名称<input id="title" required></label><label>メモ<textarea id="memo" rows="3"></textarea></label><label>種類<select id="kind"><option value="pokestop">ポケストップ</option><option value="gym">ジム</option><option value="power">パワースポット</option></select></label><div class="coords"><label>緯度（新規POIのみ移動可能）<input id="lat" type="number" step="any"></label><label>経度（新規POIのみ移動可能）<input id="lng" type="number" step="any"></label></div><div class="toolbar"><button type="submit">編集を反映</button><button id="edit-cancel" type="button" class="ghost">キャンセル</button><button id="delete" type="button" class="danger">このPOIを削除</button></div></form>
  </section>
  <section class="panel" aria-labelledby="save-heading">
   <h2 id="save-heading">03 · 保存と再開</h2><p class="hint">手動保存・復元も試験用の独立した領域だけを使います。既存の保存データを消さず、保存成功は書き込み後の検査で確認します。</p>

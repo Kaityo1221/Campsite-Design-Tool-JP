@@ -1,20 +1,31 @@
-# Creative Next: non-production isolated UI preview
+# Creative Next: non-production isolated map/editor preview
 
-**This is not public Creative Mode. Do not merge, deploy or link it from production.**
+**Do not merge, deploy, link from production, or treat as public Creative Mode.**
 
-This preview connects a fully audited Kasai-style KMZ candidate to the approved Phase 1-A in-memory POI store through the Phase 1-B isolated editor session. Import requires explicit confirmation. It edits title/memo, supports Undo/Redo, guarded KMZ export and two-generation draft save/recovery in its own `campsite-creative-next-v1-preview` namespace.
+This preview connects an audited Kasai-style KMZ candidate to the approved Phase 1-A POI store and guarded Phase 1-B exporter / two-generation save journal. A file must first pass exhaustive staging and explicit replace confirmation. No legacy storage keys are read or modified.
 
-Map canvas is only a coordinate-location illustration, **not** a fully functioning Leaflet / real map UI. Dependent distance circle moves/deletes, legacy kind reassignment, source-bearing POI additions and polygon editing are intentionally blocked until tested atomic updates are designed.
+## Map
 
-For local hosting, from repository root:
+The page attempts to load **Leaflet 1.9.4** from the same unpkg distribution already used by legacy Creative Mode, with OpenStreetMap tiles. The optional `leaflet-map-view.mjs` adapter performs keyed updates for POIs, owned 30/40/50m circles and activity areas. If Leaflet cannot load, a no-network canvas fallback displays POIs, actual distance-circle outlines and activity-area boundaries. The canvas is not a geographic basemap.
 
-```bash
+These map integrations are for a **private, unapproved preview**. Node mocks validate the keyed layer behavior; the CDN/tiles and native network-origin browser workflow have **not** passed real-device tests.
+
+## Preview operations
+
+- Inspect any KMZ completely before committing a candidate into the isolated editor. Any ambiguous or unsafe content HOLD/REJECT with zero application.
+- Edit title/memo; Undo/Redo; source-preserving KMZ export and manual draft save/resume.
+- Move only **new** POIs. All verified circles owned by the POI move with it; existing POI coordinates remain immutable.
+- Delete a POI and its owned circles together in KMZ export, while retaining deleted POI tombstones and the immutable source in preview journal so Undo can restore them. Unrelated circles and activity areas stay untouched.
+- Unsupported legacy kind changes, POI insertion, polygon edits and unknown coordinates/altitudes continue to HOLD.
+
+## Run locally (not from a phone until authorized)
+
+From repository root, serve on an isolated local port and visit `/creative-next/phase-2-preview/index.html`. The preview does not modify or link to any production entrypoint.
+
+```sh
 python -m http.server 8000
-# Open http://localhost:8000/creative-next/phase-2-preview/index.html
+node --test creative-next/phase-1b/test/*.test.mjs
+node creative-next/phase-1b/test/verify-real-kasai-circle-edit.mjs /private/original-kasai.kmz
 ```
 
-Do not visit from an iPhone for approval testing without the user's test-start gate. Safari performance, origin-specific storage, WebCrypto, native downloads, cross-tab concurrency and crashes are not certified.
-
-Dependencies: local JSZip 3.10.1 browser UMD file in `vendor/` (MIT-style license in `JSZip-LICENSE.markdown`), native browser DOMParser/XMLSerializer/WebCrypto; strict no-network KMZ reader. No external runtime libraries fetched. Preview data is stored locally in a non-production namespace.
-
-Code tests: `node --test creative-next/phase-1b/test/*.test.mjs`. Real Kasai fixture remains private and is only used in an optional local runner. Browser UI smoke with 390px viewport was run with mocked origin-only browser storage/crypto due to environment blocking normal URL visits. This test does not constitute a Chromium/WebKit production-origin PASS.
+The private Kasai fixture must **never** be committed or included in a public ZIP. See `creative-next/PHASE2_CIRCLE_MAP_PROGRESS_20261009.md` for verified counts, test limits and remaining gates.

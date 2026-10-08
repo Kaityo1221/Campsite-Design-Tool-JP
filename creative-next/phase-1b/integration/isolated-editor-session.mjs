@@ -9,12 +9,13 @@ import {convertLegacyKasaiKmz} from '../core/legacy-kasai-convert.mjs';
 import {previewLegacyPoiStore} from './legacy-poi-preview.mjs';
 import {exportNewV1Kmz} from '../core/export-kmz.mjs';
 import {createCreativeSaveJournal} from '../core/journal-save.mjs';
+import {indexDependentCircles,circleOverlay} from '../core/dependent-circles.mjs';
 const PREFIX='campsite.creative.';
 function error(code,message){let e=new Error(message);e.code=code;return e;}
 function b64(bytes){let str='';for(let i=0;i<bytes.length;i+=32768)str+=String.fromCharCode(...bytes.subarray(i,i+32768));return btoa(str);}
 function from64(value){if(typeof value!=='string'||!value||!/^[A-Za-z0-9+/]+={0,2}$/.test(value)||value.length%4!==0)throw error('DRAFT_SOURCE','Invalid source archive encoding');let s=atob(value),a=new Uint8Array(s.length);for(let i=0;i<s.length;i++)a[i]=s.charCodeAt(i);return a;}
 function get(p,key){const values=p.data?.filter(d=>d.name===PREFIX+key)||[];return values.length===1?values[0].value:null;}
-function circles(stage){return new Set(stage.places.filter(p=>get(p,'object')==='distance-circle').map(p=>get(p,'circle-owner-id')));}
+function circles(stage){return new Set(indexDependentCircles(stage).keys());}
 function areas(stage){return stage.places.filter(p=>get(p,'object')==='activity-area').map(p=>{
  const pts=p.polygonGeometry?.points;
  if(!Array.isArray(pts)||pts.length<4||!p.polygonValid)throw error('AREA_UNVERIFIED','Unverified activity-area geometry');
@@ -36,11 +37,9 @@ function editableDiff(stage,records){
    edit.kind=r.kind;changed=true;
   }
   if(r.lat!==Number(get(p,'lat'))||r.lng!==Number(get(p,'lng'))){
-   if(owned.has(r.id))throw error('CIRCLE_MOVE_HOLD','POI with an attached distance circle cannot move until circles move together');
    edit.lat=r.lat;edit.lng=r.lng;changed=true;
   }
   if(r.deleted){
-   if(owned.has(r.id))throw error('CIRCLE_DELETE_HOLD','POI with an attached distance circle cannot be deleted separately');
    edit.deleted=true;changed=true;
   }
   if(changed)edits.push(edit);
@@ -52,8 +51,13 @@ export function createIsolatedEditorSession({JSZip,DOMParser,XMLSerializer,stora
  const journal=storage?createCreativeSaveJournal({storage,namespace,subtle:cryptoProvider?.subtle}):null;
  let pending=null,active=null,revision=null,recoveredFallback=false,prepareGeneration=0;
  const view=()=>active?.store.snapshot()??null;
- const state=()=>({hasPending:!!pending,hasActive:!!active,counts:view()?.counts??null,history:view()?.history??null,records:view()?.records??[],
-   shapes:active?.report?.counts??null,areas:active?.shapeAreas??[],hasUnsavedSource:!!active?.stage,revision,sourceIsolated:true,recoveredFallback});
+ const state=()=>{
+  const records=view()?.records??[];
+  const visibleCircles=active?circleOverlay(active.stage,records):[];
+  return {hasPending:!!pending,hasActive:!!active,counts:view()?.counts??null,history:view()?.history??null,records,
+    circles:visibleCircles,shapes:active?{...active.report.counts,circles:visibleCircles.length}:null,
+    areas:active?.shapeAreas??[],hasUnsavedSource:!!active?.stage,revision,sourceIsolated:true,recoveredFallback};
+ };
  async function audited(stage){const diagnosis=diagnoseKmzCandidate(stage);if(stage.errors?.length||diagnosis.disposition!=='READY'||diagnosis.profile!=='NEW_V1')throw error('IMPORT_HOLD','Staged source cannot be safely used for the isolated editor');return {stage,diagnosis};}
  async function prepare(input,{signal}={}){
   const ticket=++prepareGeneration;pending=null; // Never preserve an older candidate after selection.
@@ -83,8 +87,14 @@ export function createIsolatedEditorSession({JSZip,DOMParser,XMLSerializer,stora
   if(value?.type==='add')throw error('SOURCE_ADD_HOLD','Adding POIs to an imported KMZ requires source-aware geometry insertion');
   const snap=active.store.snapshot(),poi=snap.records.find(p=>p.id===value?.id);
   if(!poi)throw error('POI_NOT_FOUND','POI not found');
-  if(value.type==='delete'&&circles(active.stage).has(poi.id))throw error('CIRCLE_DELETE_HOLD','Attached circle must be removed with the POI');
-  if((value.type==='move'||(value.type==='edit'&&('lat' in (value.patch||{})||'lng' in (value.patch||{}))))&&circles(active.stage).has(poi.id))throw error('CIRCLE_MOVE_HOLD','Attached circle must be moved with the POI');
+  const changingLocation=value.type==='move'||(value.type==='edit'&&('lat' in (value.patch||{})||'lng' in (value.patch||{})));
+  if(changingLocation&&circles(active.stage).has(poi.id)){
+    const original=active.stage.places.find(p=>get(p,'id')===poi.id);
+    if(poi.role==='existing')throw error('EXISTING_POSITION_LOCKED','Existing POIs cannot move');
+    const raw=String(original?.sourceGeometry?.coordinates||'').trim().split(',');
+    if(raw.length===3&&Number(raw[2])!==0||original?.sourceGeometry?.altitudeMode||original?.sourceGeometry?.extrude)
+      throw error('CIRCLE_ALTITUDE_HOLD','Circle/POI position with meaningful altitude cannot move');
+  }
   if((value.type==='change-kind'||(value.type==='edit'&&'kind' in (value.patch||{})))&&poi.metadata.originalLayer?.length){
     const newKind=value.type==='change-kind'?value.kind:value.patch.kind;
     if(newKind!==poi.kind)throw error('LAYER_MIGRATION_HOLD','Legacy layer changes need synchronized folder/style migration');

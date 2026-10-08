@@ -5,6 +5,7 @@
  */
 import { diagnoseKmzCandidate } from './diagnose-kmz-candidate.mjs';
 import { stageKmlInput } from './stage-kmz.mjs';
+import {indexDependentCircles,circleRingAt} from './dependent-circles.mjs';
 
 const KML = 'http://www.opengis.net/kml/2.2';
 const PREFIX='campsite.creative.';
@@ -78,6 +79,7 @@ export async function exportNewV1Kmz(stage,{JSZip,DOMParser,XMLSerializer,edits=
     stop('EXPORT_XML','Invalid source XML');
   const placemarks=Array.from(xml.getElementsByTagNameNS(KML,'Placemark'));
   if(placemarks.length!==stage.places.length)stop('EXPORT_SOURCE','Staging count differs from source XML');
+  const dependents=indexDependentCircles(stage);
   const count={pokestop:0,gym:0,power:0};
   const planned=[];const used=new Set();
   for(let i=0;i<placemarks.length;i++){
@@ -116,8 +118,43 @@ export async function exportNewV1Kmz(stage,{JSZip,DOMParser,XMLSerializer,edits=
   for(const id of requested.keys())if(!used.has(id))stop('EXPORT_EDITS','Unknown POI ID '+id);
   // No creation or reclassification of new POIs outside available type caps.
   for(const p of planned)if(p.role==='new'&&p.kind!==meta(p.pm,'kind')&&count[p.kind]>NEW_LIMIT[p.kind])stop('NEW_KIND_LIMIT','New POI kind has no free slot');
+  let removedCircles=0;
+  // Source Polygon rings are only updated when their owner is explicitly moved.
+  // Before mutating XML, prove all dependent polygon paths and altitudes are safe.
+  const circleUpdates=[];
   for(const p of planned){
-    if(p.deleted){p.pm.parentNode.removeChild(p.pm);continue}
+    const attached=dependents.get(p.id)||[];
+    for(const c of attached){
+      const circlePm=placemarks[c.index];
+      if(!circlePm||meta(circlePm,'object')!=='distance-circle'||
+         meta(circlePm,'circle-owner-id')!==p.id||Number(meta(circlePm,'circle-radius'))!==c.radius)
+        stop('CIRCLE_SOURCE','Circle ownership changed during export');
+      if(p.deleted){removedCircles++;continue;}
+      if(!('lat' in p.edit))continue;
+      const polygon=one(circlePm,'Polygon');
+      if(!polygon||direct(polygon,'innerBoundaryIs').length!==0||direct(polygon,'outerBoundaryIs').length!==1||
+         Array.from(polygon.children||[]).some(node=>node.namespaceURI!==KML||node.localName!=='outerBoundaryIs'))
+        stop('CIRCLE_GEOMETRY_HOLD','Cannot safely edit a polygon with unknown or inner boundaries');
+      const boundary=one(polygon,'outerBoundaryIs');
+      if(direct(boundary,'LinearRing').length!==1)stop('CIRCLE_GEOMETRY_HOLD','Circle must have exactly one ring');
+      const ring=one(boundary,'LinearRing');
+      if(direct(ring,'coordinates').length!==1||Array.from(ring.children||[]).some(node=>node.namespaceURI!==KML||node.localName!=='coordinates'))
+        stop('CIRCLE_GEOMETRY_HOLD','Unknown ring geometry cannot move');
+      const coord=one(ring,'coordinates');
+      const vertices=String(coord.textContent).trim().split(/\s+/);
+      if(vertices.length!==49||vertices.some(x=>{
+        const parts=x.split(',');return parts.length<2||parts.length>3||parts.some(v=>!Number.isFinite(Number(v)))||
+          (parts.length===3&&Number(parts[2])!==0);
+      }))stop('CIRCLE_ALTITUDE_HOLD','Circle has unsupported altitude or vertices');
+      circleUpdates.push({coord,text:circleRingAt(Number(p.lat),Number(p.lng),c.radius)});
+    }
+  }
+  for(const p of planned){
+    if(p.deleted){
+      p.pm.parentNode.removeChild(p.pm);
+      for(const c of dependents.get(p.id)||[]){const related=placemarks[c.index];related.parentNode.removeChild(related)}
+      continue;
+    }
     if('title' in p.edit){setMeta(xml,p.pm,'title',p.edit.title);setDirectText(p.pm,'name',p.edit.title)}
     if('memo' in p.edit){setMeta(xml,p.pm,'memo',p.edit.memo);
       const desc=one(p.pm,'description');
@@ -136,6 +173,7 @@ export async function exportNewV1Kmz(stage,{JSZip,DOMParser,XMLSerializer,edits=
       coords.textContent=p.lng+','+p.lat+(old.length===3?','+old[2]:'');
     }
   }
+  for(const {coord,text} of circleUpdates)coord.textContent=text;
   if(signal?.aborted)stop('CANCELLED','Export cancelled');
   const xmlText=new XMLSerializer().serializeToString(xml);
   const zip=stage.sourceFormat==='kmz' ? await JSZip.loadAsync(stage.rawSource,{checkCRC32:true}) : new JSZip();
@@ -147,7 +185,10 @@ export async function exportNewV1Kmz(stage,{JSZip,DOMParser,XMLSerializer,edits=
   const report=diagnoseKmzCandidate(verified);
   if(report.disposition!=='READY'||report.profile!=='NEW_V1'||verified.errors.length||
       report.counts.existing!==before.counts.existing-planned.filter(p=>p.deleted&&p.role==='existing').length||
-      report.counts.newTotal!==planned.filter(p=>!p.deleted&&p.role==='new').length)
+      report.counts.newTotal!==planned.filter(p=>!p.deleted&&p.role==='new').length||
+      report.counts.circles!==before.counts.circles-removedCircles||
+      report.counts.activityAreas!==before.counts.activityAreas||
+      verified.places.length!==stage.places.length-planned.filter(p=>p.deleted).length-removedCircles)
     stop('EXPORT_ROUNDTRIP','Generated output did not pass full re-staging and diagnosis');
   if(signal?.aborted)stop('CANCELLED','Export cancelled');
   return {bytes,verification:report};
