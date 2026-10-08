@@ -29,6 +29,8 @@ assert.match(test,/TILE_LIMIT_EXCEEDED/);
 assert.match(test,/schemaSummary,poiTypeSummary,shapeSummary/);
 assert.match(test,/poiField:/);
 assert.match(test,/nestedSummary/);
+assert.match(test,/navigator\.clipboard\.writeText\(copyText\)/);
+assert.match(test,/show\(JSON\.stringify\(msg,null,2\),true\)/);
 assert.match(test,/inspectArray\('gmo'\)/);
 assert.match(test,/inspectArray\('categoryTags'\)/);
 assert.match(test,/I4-6-gmo-v1/);
