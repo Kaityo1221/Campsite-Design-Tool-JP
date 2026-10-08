@@ -41,3 +41,38 @@ test('no silent Placemark drop',()=>{const s=staged();s.audit.allObjectsCount=2;
 test('legacy profile remains HOLD until actual verification',()=>{const s=staged([legacy()]);s.documentData=[];const r=diagnoseKmzCandidate(s);assert.equal(r.disposition,'HOLD');assert.equal(r.profile,'LEGACY_CREATIVE_KASAI_CANDIDATE');assert.equal(r.counts.existing,1)});
 test('legacy without nextlab-layer holds',()=>{const s=staged([legacy()]);s.documentData=[];s.places[0].data=[];assert.equal(diagnoseKmzCandidate(s).disposition,'HOLD')});
 test('verified activity polygon not counted as POI',()=>{const s=staged([poi(),{geometry:'Polygon',polygonValid:true,data:[tag('campsite.creative.object','activity-area'),tag('campsite.creative.area-id','area1')]}]);const r=diagnoseKmzCandidate(s);assert.equal(r.disposition,'READY');assert.equal(r.counts.activityAreas,1);assert.equal(r.counts.existing,1)});
+test('synthetic Kasai-shaped manifest: 213 POI, 213 circles, one area remains HOLD',()=>{
+  const groups=[['existing-pokestop','既存 PokéStop',127],['existing-gym','既存 Gym',25],['existing-power','既存 PowerSpot',36],['new-pokestop','新規 PokéStop',12],['new-gym','新規 Gym',8],['new-power','新規 PowerSpot',5]];
+  const places=[];
+  for(const [layer,folder,count] of groups){
+    for(let i=0;i<count;i++){
+      const p=legacy();
+      p.name=folder+' '+i;p.folder=folder;p.styleUrl='#creative-'+layer;
+      p.data=[tag('nextlab-layer',layer)];
+      p.coordinates=(139+places.length/10000).toFixed(7)+','+(35+places.length/10000).toFixed(7);
+      places.push(p);
+    }
+  }
+  for(let i=0;i<213;i++)places.push({geometry:'Polygon',legacyShapeVerified:true,legacyShape:'distance-circle'});
+  places.push({geometry:'Polygon',legacyShapeVerified:true,legacyShape:'activity-area'});
+  const s=staged(places);s.documentData=[];
+  const r=diagnoseKmzCandidate(s);
+  assert.equal(places.length,427);assert.equal(r.profile,'LEGACY_CREATIVE_KASAI_CANDIDATE');
+  assert.equal(r.disposition,'HOLD');assert.equal(r.counts.existing,188);assert.equal(r.counts.newTotal,25);
+  assert.deepEqual(r.counts.newByKind,{pokestop:12,gym:8,power:5});
+  assert.equal(r.counts.circles,213);assert.equal(r.counts.activityAreas,1);
+});
+test('same external GUID with different internal IDs is a warning, not a merge',()=>{
+  const a=poi('a'),b=poi('b');
+  a.data.push(tag('campsite.creative.guid','external-1'));
+  b.data.push(tag('campsite.creative.guid','external-1'));
+  const r=result([a,b]);assert.equal(r.disposition,'READY');assert.equal(r.counts.existing,2);assert.ok(has(r,'GUID_DUPLICATE'));
+});
+test('unknown polygon is never silently dropped',()=>{
+  const r=result([poi(),{geometry:'Polygon',data:[]}]);
+  assert.equal(r.disposition,'HOLD');assert.equal(r.counts.unknown,1);assert.ok(has(r,'GEOMETRY_UNKNOWN'));
+});
+test('existing 701 is REJECT even with other BLOCK issues',()=>{
+  const s=staged(Array.from({length:701},(_,i)=>poi(String(i))));s.audit.kmlCount=2;
+  assert.equal(diagnoseKmzCandidate(s).disposition,'REJECT');
+});
