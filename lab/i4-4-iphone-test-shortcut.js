@@ -1,7 +1,7 @@
 /* I4-4 live multi-tile TEST only. Never replaces production Bridge. */
 (async () => {
 'use strict';
-const HOST = /(^|\\.)wayfarer\\.(nianticlabs\\.com|scopely\\.com)$/i;
+  const HOST = /(^|\.)wayfarer\.(nianticlabs\.com|scopely\.com)$/i;
 const BASE = 'https://raw.githubusercontent.com/Kaityo1221/Campsite-Design-Tool-JP/i4-4-live-tiles-iphone-test/';
 const STABLE = 'https://kaityo1221.github.io/Campsite-Design-Tool-JP/js/bridge-shortcut/campsite-bridge-shortcut-runtime.js';
 const finish = s => { try { completion(s); } catch (_) { alert(s); } };
