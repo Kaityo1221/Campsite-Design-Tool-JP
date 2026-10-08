@@ -36,6 +36,8 @@ const pageInstall = function(source) {
     busy=true;
     const started=performance.now();
     const counts=[];
+    const schemaSummary = Object.create(null);
+    const poiTypeSummary = Object.create(null);
     try {
       const outcome=await engine.executePlan(plan,async tile=>{
         if (sid !== msg.sid || JSON.stringify(polygon) !== JSON.stringify(msg.polygon)) throw Error('SESSION_CHANGED');
@@ -49,11 +51,22 @@ const pageInstall = function(source) {
             if(!json || typeof json!=='object') throw Error('INVALID_JSON_SHAPE');
             // Source schema unverified. Count only recognizable GUID records; never infer completeness.
             const ids=new Set(); const visited=new WeakSet(); let inspected=0;
+            const safeKey = key => /^(guid|poiId|id|type|kind|category|status|state|game|gameType|poiType|wayspotType|latitude|longitude|lat|lng|isActive|active|inGame|displayType|properties|data|result|items|features|pois|wayspots|cells)$/i.test(key);
+            const bump = (obj,key) => { obj[key] = (obj[key] || 0) + 1; };
+            bump(schemaSummary,'root:'+ (Array.isArray(json)?'array':'object'));
+            if (!Array.isArray(json)) for(const key of Object.keys(json)) if(safeKey(key)) bump(schemaSummary,'rootKey:'+key);
             const walk=(v,depth)=>{
               if(!v||typeof v!=='object'||depth>9||inspected++>20000||visited.has(v))return;
               visited.add(v);
               if(!Array.isArray(v)) {
                 const id=v.guid??v.poiId;
+                if (typeof id==='string' && id.trim()) {
+                  for (const key of Object.keys(v)) if(safeKey(key)) bump(schemaSummary,'poiKey:'+key);
+                  for (const key of ['type','kind','category','status','state','gameType','poiType','wayspotType','displayType']) {
+                    const value=v[key];
+                    if (typeof value==='string' && /^[A-Za-z0-9_-]{1,40}$/.test(value)) bump(poiTypeSummary,key+':'+value);
+                  }
+                }
                 if(typeof id==='string'&&id.trim())ids.add(id.trim());
               }
               for(const child of Object.values(v)) if(child&&typeof child==='object')walk(child,depth+1);
@@ -70,7 +83,7 @@ const pageInstall = function(source) {
       });
       const all=new Set(counts.flatMap(c=>c.guids));
       send({tileCount:plan.tiles.length,tiles:outcome.results.map(r=>({id:r.id,ok:r.ok,error:r.error||null})),
-        uniqueGuidCount:all.size,perTile:counts.map(c=>({tile:c.tile,guidCount:c.guidCount})),
+        uniqueGuidCount:all.size,schemaSummary,poiTypeSummary,perTile:counts.map(c=>({tile:c.tile,guidCount:c.guidCount})),
         geometryCoverageComplete:outcome.geometryCoverageComplete,transportComplete:outcome.transportComplete,
         sourceComplete:null,coverageComplete:false,coverageStatus:outcome.transportComplete?'unverified':'incomplete',
         normalizationStatus:'GUID discovery only; GCS schema unverified',elapsedMs:Math.round(performance.now()-started)});
