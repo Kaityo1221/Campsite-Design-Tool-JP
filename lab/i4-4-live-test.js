@@ -1,12 +1,17 @@
 /* I4-4 independent diagnostic: opt-in, read-only, no storage or Creative handoff. */
 ;(() => {
 'use strict';
-if (window.__cbsI44Installed) return;
+const DIAG_VERSION = 'I4-5-shape-v2';
+if (window.__cbsI44Installed) {
+  alert('I4-4診断は既に起動中です。最新版へ切替えるにはWayfarerを再読み込みしてください。');
+  return;
+}
 window.__cbsI44Installed = true;
+window.__cbsI44DiagVersion = DIAG_VERSION;
 const engineSource = window.__cbsI44EngineSource;
 delete window.__cbsI44EngineSource;
 if (typeof engineSource !== 'string') throw Error('ENGINE_MISSING');
-const pageInstall = function(source) {
+const pageInstall = function(source, version) {
   if (window.__cbsI44PageInstalled) return;
   window.__cbsI44PageInstalled = true;
   (0,eval)(source);
@@ -23,7 +28,7 @@ const pageInstall = function(source) {
   document.addEventListener('cbs-i44:request', async event => {
     let msg; try { msg = JSON.parse(event.detail); } catch (_) { return; }
     if (!msg || typeof msg.requestId !== 'string' || busy) return;
-    const send = data => document.dispatchEvent(new CustomEvent('cbs-i44:result', {detail:JSON.stringify({requestId:msg.requestId,...data})}));
+    const send = data => document.dispatchEvent(new CustomEvent('cbs-i44:result', {detail:JSON.stringify({requestId:msg.requestId,diagnosticVersion:version,...data})}));
     if (!sid || sid !== msg.sid || !polygon || JSON.stringify(polygon) !== JSON.stringify(msg.polygon)) {
       send({error:'STALE_OR_UNCONFIRMED_POLYGON'}); return;
     }
@@ -96,11 +101,11 @@ const pageInstall = function(source) {
   });
 };
 const script=document.createElement('script');
-script.textContent=';('+pageInstall.toString()+')('+JSON.stringify(engineSource)+');';
+script.textContent=';('+pageInstall.toString()+')('+JSON.stringify(engineSource)+','+JSON.stringify(DIAG_VERSION)+');';
 (document.documentElement||document.head).appendChild(script);script.remove();
 let sid=null,polygon=null,busy=false;
 const button=document.createElement('button');
-button.textContent='🔭 複数タイル取得';
+button.textContent='🔭 複数タイル取得 · '+DIAG_VERSION;
 button.style.cssText='position:fixed;right:12px;top:76px;z-index:2147483646;padding:10px;border-radius:9px;background:#123b35;color:white;border:1px solid #b4e3cf';
 const output=document.createElement('pre');
 output.style.cssText='display:none;position:fixed;left:12px;right:12px;top:124px;z-index:2147483646;padding:12px;background:#0f172a;color:white;border-radius:10px;white-space:pre-wrap;max-height:45vh;overflow:auto;font:12px/1.5 monospace';
