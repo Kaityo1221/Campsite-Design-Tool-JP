@@ -162,10 +162,29 @@ function legacyPolygonEvidence(place, ring) {
   }
   return {};
 }
+function dataFrom(place,key) { return place.data.filter(x=>x.name==='campsite.creative.'+key).map(x=>x.value); }
+function centerDistanceMeters(a,b) { return Math.hypot((a.lng-b.lng)*111320*Math.cos(a.lat*Math.PI/180),(a.lat-b.lat)*111320); }
+function verifyNewCircle(place,owners) {
+  const obj=dataFrom(place,'object'), id=dataFrom(place,'circle-owner-id'), rad=dataFrom(place,'circle-radius');
+  if(obj.length!==1||obj[0]!=='distance-circle'||id.length!==1||rad.length!==1||
+     !['30','40','50'].includes(rad[0])||!place.polygonValid)return false;
+  const coords=place.polygonGeometry?.points;
+  if(!Array.isArray(coords)||coords.length!==49)return false;
+  const lng=coords.slice(0,-1).reduce((v,x)=>v+x[0],0)/48;
+  const lat=coords.slice(0,-1).reduce((v,x)=>v+x[1],0)/48;
+  const target=Number(rad[0]);
+  const meters=coords.slice(0,-1).map(p=>Math.hypot((p[0]-lng)*Math.cos(lat*Math.PI/180)*111320,(p[1]-lat)*111320));
+  const angles=coords.slice(0,-1).map(p=>(Math.atan2((p[0]-lng)*Math.cos(lat*Math.PI/180),p[1]-lat)+2*Math.PI)%(2*Math.PI));
+  const angular=(a,b)=>Math.abs((a-b+3*Math.PI)%(2*Math.PI)-Math.PI);
+  const owner=owners.get(id[0]);
+  return !!owner&&meters.every(m=>Math.abs(m-target)<1.5)&&
+    angles.every((a,i)=>angular(a,i*2*Math.PI/48)<0.055)&&
+    centerDistanceMeters({lat,lng},owner)<0.2;
+}
 function buildPlaces(doc, maxPlacemarks) {
   const pms = Array.from(doc.getElementsByTagNameNS(KML_NS, 'Placemark'));
   if (pms.length > maxPlacemarks) throw failure('POI_LIMIT', 'Too many Placemarks for isolated staging');
-  return pms.map(pm => {
+  const places=pms.map(pm => {
     const folderPath=[];
     for (let node=pm.parentNode;node;node=node.parentNode) if (node.nodeType===1 && node.localName==='Folder' && node.namespaceURI===KML_NS) {
       folderPath.unshift(value(node,'name') ?? '');
@@ -191,6 +210,25 @@ function buildPlaces(doc, maxPlacemarks) {
     }
     return place;
   });
+  // Validate all NEW_V1 circle relations against the actual source POI points,
+  // rather than trusting unverified input flags or folder names.
+  const owners=new Map(),seen=new Set();
+  for (const p of places) {
+    if(p.geometry!=='Point')continue;
+    const ids=dataFrom(p,'id');
+    if(ids.length!==1||!p.coordinates)continue;
+    const parts=p.coordinates.trim().split(',').map(Number);
+    if(parts.length<2||!Number.isFinite(parts[0])||!Number.isFinite(parts[1]))continue;
+    owners.set(ids[0],{lng:parts[0],lat:parts[1]});
+  }
+  for (const p of places) {
+    if(p.geometry!=='Polygon'||dataFrom(p,'object')[0]!=='distance-circle')continue;
+    const owner=dataFrom(p,'circle-owner-id')[0],radius=dataFrom(p,'circle-radius')[0];
+    const key=owner+'/'+radius;
+    p.circleValid=verifyNewCircle(p,owners)&&!seen.has(key);
+    seen.add(key);
+  }
+  return places;
 }
 function parseKml(kml, options) {
   if (/<!(?:DOCTYPE|ENTITY|\[CDATA\[\s*<!DOCTYPE)/i.test(kml)) throw failure('XML_UNSAFE', 'DTD and entity declarations are forbidden');

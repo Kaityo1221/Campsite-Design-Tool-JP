@@ -92,6 +92,13 @@ export async function exportNewV1Kmz(stage,{JSZip,DOMParser,XMLSerializer,edits=
     if(role!=='new'&&(('lat' in edit)||('lng' in edit)))stop('EXISTING_POSITION_LOCKED','Existing POIs cannot move');
     if('kind' in edit&&(!['pokestop','gym','power'].includes(edit.kind)))stop('EXPORT_EDITS','Unknown kind');
     const kind=edit.kind??oldKind;
+    // A migrated old KMZ still has legacy nextlab-layer, folder and style.
+    // Until the layer relocation/export contract is implemented, a kind edit
+    // must not create contradictory metadata while claiming success.
+    if ('kind' in edit && edit.kind!==oldKind &&
+      Array.from(one(pm,'ExtendedData')?.childNodes||[]).some(n=>
+        n.nodeType===1 && n.localName==='Data' && n.getAttribute('name')==='nextlab-layer'))
+      stop('LEGACY_LAYER_EDIT_UNSUPPORTED','Changing old KMZ POI kind requires synchronized legacy folder/style/layer migration');
     if('title' in edit&&(typeof edit.title!=='string'||!edit.title.length))stop('EXPORT_EDITS','Invalid title');
     if('memo' in edit&&typeof edit.memo!=='string')stop('EXPORT_EDITS','Invalid memo');
     let lng,lat;

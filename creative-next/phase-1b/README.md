@@ -52,3 +52,14 @@ Snapshot of last result: **105 PASS / 0 FAIL** for Node tests, not browser or de
 3. Implement an end-to-end consented import transaction with old save migration, source-provenance restoration, key conflict and storage quota recovery, activity area editing, distance-circle external export contract.
 4. Integrate in an isolated preview with Phase 2 UI/controls/history, test browser WebKit/Chromium, Wayfarer end-to-end and regression suite.
 5. Before iPhone Safari test, deliver test steps and STOP criteria, and ask for approval.
+
+## Oct 9: Legacy Kasai private-file conversion and Phase 1-A preview (isolated)
+
+- `core/legacy-kasai-convert.mjs` converts only fully diagnosed, unambiguous legacy Creative Mode Kasai-profile KMZ into a **new-version candidate**. It never modifies an active editor, saves state, or authorizes import (`canApply: false`).
+- It creates stable, unique internal POI IDs from the source SHA-256 and Placemark index; duplicate names remain separate. Original decimal coordinate strings, folder/style, all original geometries, unknown KML, and ZIP attachment bytes are retained. Machine-generated old descriptions become empty editable memos with the original string in `campsite.creative.legacy-description`; ambiguous text is blocked.
+- Polygon `campsite.creative.object` tags distinguish distance circles from activity areas. Distance circles carry a checked owner ID and radius; an ambiguous center, duplicate circle, invalid ring, or missing owner is blocked. `stage-kmz.mjs` rechecks new circle geometry and relation to its referenced point on every re-import.
+- `integration/legacy-poi-preview.mjs` can build a standalone, **in-memory** Phase 1-A POI store from a verified new candidate for testing coordinates, identity and Undo/Redo. No production import, history migration, storage migration or UI connection occurs.
+- Tested against the exact user-supplied Kasai KMZ privately (SHA-256 `1c57f66d8658515ec6959af55044423189fdf5b4c5941d84b9a5466f0ef5d162`): 213/213 exact original coordinates/names, 213 original descriptions preserved, 213/213 circle-to-owner matches, all 214 polygon rings preserved, 3 non-KML attachments byte-identical, no-edit export/re-import READY. **The private KMZ and converted output MUST NEVER be committed to the public repository.**
+- `node --test test/*.test.mjs`: **124/124 PASS** in Node.js 22 with JSZip 3.10.1 / @xmldom/xmldom 0.9.8. Phase 1-A's separately rerun 33 tests also PASS. Real fixture runner is opt-in: `node test/verify-real-kasai.mjs <PRIVATE_KMZ_PATH> [AGGREGATE_REPORT_PATH]`.
+
+**Not yet passed:** browser/Chromium/WebKit regression in the current environment, iPhone Safari, live editor and UI integration, two-generation journal atomicity on Safari, editing legacy POI kind with synced folder/style/legacy layer, moving new POIs together with attached distance circles, and source-aware save rollback. All potentially lossy operations remain fail-closed. Do not merge or deploy.

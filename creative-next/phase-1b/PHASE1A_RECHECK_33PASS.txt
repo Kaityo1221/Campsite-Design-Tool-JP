@@ -1,0 +1,208 @@
+TAP version 13
+# Subtest: application dependencies remain local and contain no persistence, network or production connections
+ok 1 - application dependencies remain local and contain no persistence, network or production connections
+  ---
+  duration_ms: 19.136524
+  type: 'test'
+  ...
+# Subtest: tracked repository files are unchanged; all nonignored additions stay in Phase 1-A
+ok 2 - tracked repository files are unchanged; all nonignored additions stay in Phase 1-A
+  ---
+  duration_ms: 10.756792
+  type: 'test'
+  ...
+# Subtest: missing/colliding IDs are mapped per occurrence; same GUID is preserved
+ok 3 - missing/colliding IDs are mapped per occurrence; same GUID is preserved
+  ---
+  duration_ms: 3.954542
+  type: 'test'
+  ...
+# Subtest: ID allocator reserves IDs occurring later in the input
+ok 4 - ID allocator reserves IDs occurring later in the input
+  ---
+  duration_ms: 0.585211
+  type: 'test'
+  ...
+# Subtest: unknown, contradictory, malformed or guessed legacy data is withheld wholesale
+ok 5 - unknown, contradictory, malformed or guessed legacy data is withheld wholesale
+  ---
+  duration_ms: 1.250823
+  type: 'test'
+  ...
+# Subtest: currentPois is authoritative even when empty; selectedPois is not a fallback
+ok 6 - currentPois is authoritative even when empty; selectedPois is not a fallback
+  ---
+  duration_ms: 0.259931
+  type: 'test'
+  ...
+# Subtest: coordinates keep original precision; existing coordinate updates are rejected on both command paths
+ok 7 - coordinates keep original precision; existing coordinate updates are rejected on both command paths
+  ---
+  duration_ms: 1.847361
+  type: 'test'
+  ...
+# Subtest: existing title, memo, kind and deletion remain editable without using candidate capacity
+ok 8 - existing title, memo, kind and deletion remain editable without using candidate capacity
+  ---
+  duration_ms: 2.255816
+  type: 'test'
+  ...
+# Subtest: identity and role cannot be edited; all failed commands preserve state and history
+ok 9 - identity and role cannot be edited; all failed commands preserve state and history
+  ---
+  duration_ms: 0.795397
+  type: 'test'
+  ...
+# Subtest: existing 499: normal, replacement accepted=true
+ok 10 - existing 499: normal, replacement accepted=true
+  ---
+  duration_ms: 15.156213
+  type: 'test'
+  ...
+# Subtest: existing 500: warning, replacement accepted=true
+ok 11 - existing 500: warning, replacement accepted=true
+  ---
+  duration_ms: 13.640442
+  type: 'test'
+  ...
+# Subtest: existing 700: warning, replacement accepted=true
+ok 12 - existing 700: warning, replacement accepted=true
+  ---
+  duration_ms: 18.64228
+  type: 'test'
+  ...
+# Subtest: existing 701: blocked, replacement accepted=false
+ok 13 - existing 701: blocked, replacement accepted=false
+  ---
+  duration_ms: 9.28748
+  type: 'test'
+  ...
+# Subtest: replacement rejects overlapping existing coordinates at full precision without changing state
+ok 14 - replacement rejects overlapping existing coordinates at full precision without changing state
+  ---
+  duration_ms: 1.18587
+  type: 'test'
+  ...
+# Subtest: replacement rejects an overlapping internal ID when role changes in either direction
+ok 15 - replacement rejects an overlapping internal ID when role changes in either direction
+  ---
+  duration_ms: 0.423868
+  type: 'test'
+  ...
+# Subtest: one conflicting POI rejects the whole replacement without partially applying other records
+ok 16 - one conflicting POI rejects the whole replacement without partially applying other records
+  ---
+  duration_ms: 0.278329
+  type: 'test'
+  ...
+# Subtest: full replacement accepts disjoint IDs and matching identity, then clears history
+ok 17 - full replacement accepts disjoint IDs and matching identity, then clears history
+  ---
+  duration_ms: 0.776578
+  type: 'test'
+  ...
+# Subtest: colliding imported legacy IDs remain separate when remapped, with prior identity protected
+ok 18 - colliding imported legacy IDs remain separate when remapped, with prior identity protected
+  ---
+  duration_ms: 0.542296
+  type: 'test'
+  ...
+# Subtest: 700 existing plus 25 new is supported; 700 plus 26 new is retained with warning
+ok 19 - 700 existing plus 25 new is supported; 700 plus 26 new is retained with warning
+  ---
+  duration_ms: 27.200522
+  type: 'test'
+  ...
+# Subtest: 24 -> 25 is allowed when the target kind has room; 25 -> 26 addition is rejected
+ok 20 - 24 -> 25 is allowed when the target kind has room; 25 -> 26 addition is rejected
+  ---
+  duration_ms: 1.186266
+  type: 'test'
+  ...
+# Subtest: pokestop 11/12/13 boundary
+ok 21 - pokestop 11/12/13 boundary
+  ---
+  duration_ms: 0.887626
+  type: 'test'
+  ...
+# Subtest: gym 7/8/9 boundary
+ok 22 - gym 7/8/9 boundary
+  ---
+  duration_ms: 0.833164
+  type: 'test'
+  ...
+# Subtest: power 4/5/6 boundary
+ok 23 - power 4/5/6 boundary
+  ---
+  duration_ms: 0.436287
+  type: 'test'
+  ...
+# Subtest: over-limit candidates can be edited, deleted and restored by Undo without capacity rejection
+ok 24 - over-limit candidates can be edited, deleted and restored by Undo without capacity rejection
+  ---
+  duration_ms: 1.041137
+  type: 'test'
+  ...
+# Subtest: type change at total 25 is allowed into a free type but not into a full type
+ok 25 - type change at total 25 is allowed into a free type but not into a full type
+  ---
+  duration_ms: 1.345506
+  type: 'test'
+  ...
+# Subtest: deleted candidates do not occupy capacity; snapshots cannot mutate internal state
+ok 26 - deleted candidates do not occupy capacity; snapshots cannot mutate internal state
+  ---
+  duration_ms: 0.879925
+  type: 'test'
+  ...
+# Subtest: addition cancellation, no-op and failed operation do not affect either history stack
+ok 27 - addition cancellation, no-op and failed operation do not affect either history stack
+  ---
+  duration_ms: 0.474324
+  type: 'test'
+  ...
+# Subtest: add -> edit -> move -> type -> delete -> full Undo/Redo keeps ID and exact values
+ok 28 - add -> edit -> move -> type -> delete -> full Undo/Redo keeps ID and exact values
+  ---
+  duration_ms: 0.569687
+  type: 'test'
+  ...
+# Subtest: new confirmed operation drops Redo; previously issued IDs are not reused
+ok 29 - new confirmed operation drops Redo; previously issued IDs are not reused
+  ---
+  duration_ms: 0.248324
+  type: 'test'
+  ...
+# Subtest: accepted replacement and explicit history reset clear history, rejected replacement does not
+ok 30 - accepted replacement and explicit history reset clear history, rejected replacement does not
+  ---
+  duration_ms: 0.444208
+  type: 'test'
+  ...
+# Subtest: metadata, source and import reports are independent copies
+ok 31 - metadata, source and import reports are independent copies
+  ---
+  duration_ms: 0.178449
+  type: 'test'
+  ...
+# Subtest: bounded ID-generator failure and invalid metadata leave replacement untouched
+ok 32 - bounded ID-generator failure and invalid metadata leave replacement untouched
+  ---
+  duration_ms: 0.790861
+  type: 'test'
+  ...
+# Subtest: a sequence of confirmed edits returns through all recorded states in Undo/Redo
+ok 33 - a sequence of confirmed edits returns through all recorded states in Undo/Redo
+  ---
+  duration_ms: 28.908032
+  type: 'test'
+  ...
+1..33
+# tests 33
+# suites 0
+# pass 33
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 214.921089
