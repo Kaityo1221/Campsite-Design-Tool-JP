@@ -3,7 +3,7 @@
  */
 (async () => {
   'use strict';
-  const HOST = /(^|\\.)wayfarer\\.(nianticlabs\\.com|scopely\\.com)$/i;
+  const HOST = /(^|\.)wayfarer\.(nianticlabs\.com|scopely\.com)$/i;
   const STABLE = 'https://kaityo1221.github.io/Campsite-Design-Tool-JP/js/bridge-shortcut/campsite-bridge-shortcut-runtime.js';
   const RAW = 'https://raw.githubusercontent.com/Kaityo1221/Campsite-Design-Tool-JP/bfa79012a65a331eefb0f6057453e8d0b82c61e2/dist/bridge-shortcut/1.0.0/';
   const PROBES = [
@@ -28,7 +28,7 @@
     }
     window.__cbsI4ProbeTestEnabled = true;
     const evaluate = (source, label) => {
-      try { (0, eval)(source + '\\n//# sourceURL=' + label); }
+      try { (0, eval)(source + '\n//# sourceURL=' + label); }
       catch (error) { throw new Error(label + ': ' + (error?.message || error)); }
     };
     evaluate(stable, 'campsite-stable-runtime.js');
