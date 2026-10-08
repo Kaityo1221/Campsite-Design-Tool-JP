@@ -9,10 +9,12 @@ if (!HOST.test(location.hostname)) { finish('Wayfarer Safariで実行してく�
 try {
   const load = async url => { const r = await fetch(url + '?t=' + Date.now(), {cache:'no-store'}); if (!r.ok) throw Error('LOAD HTTP '+r.status); return r.text(); };
   const [stable, engine, test] = await Promise.all([load(STABLE), load(BASE+'bridge-pc/wayfarer-acquisition-engine.js'), load(BASE+'lab/i4-4-live-test.js')]);
+  if (!test.includes("I4-5-shape-v2")) throw Error('DIAGNOSTIC_VERSION_MISMATCH');
   if (!stable.includes("const BRIDGE_VERSION = '1.0.0'")) throw Error('STABLE_RUNTIME_INVALID');
   (0,eval)(stable);
   window.__cbsI44EngineSource = engine;
   (0,eval)(test);
-  finish('I4-4 TEST起動。活動範囲を確定後、🔭 複数タイル取得を押してください。');
+  if (window.__cbsI44DiagVersion !== 'I4-5-shape-v2') throw Error('DIAGNOSTIC_NOT_ACTIVATED: reload Wayfarer');
+  finish('I4-5-shape-v2 起動成功。活動範囲確定後、🔭 複数タイル取得を押してください。');
 } catch(e) { finish('I4-4 TEST起動失敗: '+String(e.message||e)); }
 })();
