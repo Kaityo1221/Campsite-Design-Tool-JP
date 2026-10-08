@@ -5,6 +5,16 @@
   function install() {
     if (window.__cbsI4ProbeInstalled) return;
     window.__cbsI4ProbeInstalled = true;
+    let activeSid = null;
+    let completedPoints = null;
+    document.addEventListener('cbs-i3:evt', event => {
+      let state;
+      try { state = JSON.parse(event.detail); } catch (_) { return; }
+      if (state?.type !== 'state') return;
+      activeSid = typeof state.sid === 'string' ? state.sid : null;
+      completedPoints = state.completed === true && Array.isArray(state.points)
+        ? state.points : null;
+    });
     document.addEventListener('cbs-i4:request', async event => {
       let msg;
       try { msg = JSON.parse(event.detail); } catch (_) { return; }
@@ -12,7 +22,11 @@
       const reply = result => document.dispatchEvent(new CustomEvent('cbs-i4:result', {
         detail: JSON.stringify({ requestId: msg.requestId, result })
       }));
-      const polygon = msg.polygon;
+      const polygon = completedPoints;
+      if (!activeSid || msg.sid !== activeSid || !polygon ||
+          JSON.stringify(msg.polygon) !== JSON.stringify(polygon)) {
+        reply({ errorType: 'STALE_OR_UNCONFIRMED_POLYGON' }); return;
+      }
       if (!Array.isArray(polygon) || polygon.length < 3 || polygon.length > 30 ||
           !polygon.every(p => Number.isFinite(p?.lat) && Number.isFinite(p?.lng) &&
             Math.abs(p.lat) <= 90 && Math.abs(p.lng) <= 180)) {
