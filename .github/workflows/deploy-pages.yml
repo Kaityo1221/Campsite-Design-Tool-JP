@@ -152,6 +152,7 @@ jobs:
 
           node --check "$versioned"
           node scripts/check-iphone-page-world-host.mjs
+          node scripts/check-iphone-i4-probe.mjs
           cp "$versioned" "$latest"
 
           cat > "$out_dir/latest.json" <<EOF
