@@ -47,10 +47,14 @@ export function diagnoseKmzCandidate(stage) {
     report('STAGING_INVALID', 'FATAL', 'file', 'An audited staging manifest is required');
   } else {
     const audit = stage.audit || {};
-    if (audit.zipValid !== true || audit.boundedExtraction !== true || audit.safePaths !== true || audit.safeXml !== true) {
+    if (audit.zipValid !== true || audit.boundedExtraction !== true || audit.safePaths !== true ||
+        (Array.isArray(stage.errors) && stage.errors.some(x => ['XML_UNSAFE','ZIP_BOMB','ZIP_PATH','ZIP_INVALID','ZIP_DUPLICATE','ZIP_LIMIT','ZIP_UNSUPPORTED'].includes(x.code)))) {
       report('ARCHIVE_UNSAFE', 'FATAL', 'archive', 'Archive/XML safety checks did not pass');
     }
+    if (audit.safeXml !== true) report('XML_NOT_VERIFIED', 'BLOCK', 'archive', 'KML was not safely validated');
     if (audit.kmlCount !== 1) report('KML_AMBIGUOUS', 'BLOCK', 'archive', 'Exactly one KML is required for this profile');
+    if (stage.places.length === 0) report('EMPTY_INPUT', 'BLOCK', 'Document', 'No POI candidates');
+    if (audit.unhandledFeatures > 0) report('UNHANDLED_KML_FEATURE', 'BLOCK', 'Document', 'Unrecognized KML features require review');
     if (audit.allObjectsCount !== stage.places.length || audit.unknownInformationPreserved !== true) {
       report('PRESERVATION_UNPROVEN', 'BLOCK', 'archive', 'All placemarks and unedited source information must be preserved');
     }
