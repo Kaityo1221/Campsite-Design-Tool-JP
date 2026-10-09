@@ -50,6 +50,16 @@ async def run():
                 tiles=await page.locator('.leaflet-tile-loaded').count()
                 assert tiles>0,'No real Leaflet map tiles loaded'
                 print('PASS: real Leaflet and '+str(tiles)+' map tiles loaded, not a fallback map')
+                # Actual Leaflet click input must remain a proposal until confirmed.
+                prior_counts=await page.locator('#counts').inner_text()
+                await page.locator('#add-new').click()
+                await page.locator('#map-place').click()
+                await page.locator('#leaflet-map').click(position={'x':145,'y':115})
+                assert await page.locator('#new-lat').input_value(),'Leaflet click did not populate latitude'
+                assert await page.locator('#new-lng').input_value(),'Leaflet click did not populate longitude'
+                assert await page.locator('#counts').inner_text()==prior_counts,'Unconfirmed click changed project'
+                await page.locator('#new-cancel').click()
+                print('PASS: actual Leaflet map click proposed coordinates without committing a POI')
                 await page.locator('#save').click()
                 await page.wait_for_function('document.querySelector("#save-info").textContent.includes("第1世代")',timeout=15000)
                 pointer='campsite-creative-next-v1-preview:current'
@@ -89,6 +99,62 @@ async def run():
                 r1,r2=await asyncio.gather(page.evaluate(save_js,'tab1'),tab2.evaluate(save_js,'tab2'))
                 assert sum(r['ok'] for r in [r1,r2])==1 and any(r.get('code')=='SAVE_CONFLICT' for r in [r1,r2]),(r1,r2)
                 print('PASS: native concurrent Web Locks allow exactly one first-save, second tab rejected')
+
+                # Real Chromium localStorage quota test. Allocate on a unique,
+                # test-only namespace until Chromium itself raises QuotaExceededError.
+                # This uses the native Storage object, not a fake QuotaError shim.
+                quota=await page.evaluate(f'''async () => {{
+                    const {{createCreativeSaveJournal}}=await import('{JS_PATH}');
+                    const j=createCreativeSaveJournal({{storage:localStorage,namespace:'campsite-creative-next-v1-native-quota',locks:navigator.locks,requireLock:true}});
+                    const state=(title)=>({{records:[{{id:'quota-test',role:'existing',kind:'pokestop',title,lat:35.1,lng:139.2}}],activityAreas:[]}});
+                    await j.save(state('Committed'),{{expectedRevision:null}});
+                    const original=localStorage.getItem(j.keys.pointer);
+                    let quotaSeen=false,saveFailed=false,allocated=0,errorName='';
+                    try {{
+                        for(let i=0;i<220;i++){{
+                            try {{localStorage.setItem('campsite-native-quota-filler-'+i,'Q'.repeat(128*1024));allocated++;}}
+                            catch(e){{if(e.name!=='QuotaExceededError')throw e;quotaSeen=true;break;}}
+                        }}
+                        if(quotaSeen){{
+                            try{{await j.save(state('AttemptedUpdate'),{{expectedRevision:1}});}}
+                            catch(e){{saveFailed=true;errorName=e.name;}}
+                        }}
+                        const after=await j.load();
+                        return {{quotaSeen,saveFailed,errorName,allocated,
+                            pointerSame:localStorage.getItem(j.keys.pointer)===original,
+                            revision:after.revision,status:after.status,title:after.snapshot?.records[0]?.title}};
+                    }}finally{{
+                        for(let i=0;i<allocated;i++)localStorage.removeItem('campsite-native-quota-filler-'+i);
+                    }}
+                }}''')
+                assert quota['quotaSeen'] and quota['saveFailed'] and quota['errorName']=='QuotaExceededError',quota
+                assert quota['pointerSame'] and quota['status']=='READY' and quota['revision']==1 and quota['title']=='Committed',quota
+                print('PASS: native localStorage QuotaExceededError preserved committed generation; filler bytes cleaned')
+
+                # Abrupt Chromium renderer termination and reopen, NOT a clean
+                # window.close()/browser.close(). Prior committed data must survive.
+                crash_page=await context.new_page()
+                await crash_page.goto(url,wait_until='domcontentloaded')
+                native_crash=asyncio.Event()
+                crash_page.on('crash',lambda _:native_crash.set())
+                cdp=await context.new_cdp_session(crash_page)
+                try:
+                    await cdp.send('Page.crash')
+                except Exception:
+                    pass  # The DevTools command itself is interrupted by the crash.
+                await asyncio.wait_for(native_crash.wait(),timeout=15)
+                await crash_page.close()
+                reopened=await context.new_page()
+                await reopened.goto(url,wait_until='domcontentloaded')
+                recovered=await reopened.evaluate(f'''async () => {{
+                    const {{createCreativeSaveJournal}}=await import('{JS_PATH}');
+                    const j=createCreativeSaveJournal({{storage:localStorage,namespace:'campsite-creative-next-v1-native-quota',locks:navigator.locks,requireLock:true}});
+                    const state=await j.load();
+                    return {{status:state.status,revision:state.revision,title:state.snapshot?.records[0]?.title}};
+                }}''')
+                assert recovered=={'status':'READY','revision':1,'title':'Committed'},recovered
+                print('PASS: committed native storage survived a forced Chromium renderer crash and fresh-tab reopen')
+
                 await context.close();await browser.close()
                 return 0
         finally:server.shutdown()
