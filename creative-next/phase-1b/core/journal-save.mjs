@@ -90,6 +90,47 @@ export function createCreativeSaveJournal({storage,namespace=DEFAULT_NS,subtle=g
     if(valid.length)return {status:'FALLBACK',snapshot:valid[0].snapshot,revision:valid[0].seq,slot:valid[0].slot,reason:'Pointer invalid/missing, inspected intact generation only; no automatic repairs performed'};
     return {status:'CORRUPT',snapshot:null,revision:null,reason:'No valid generation; original storage not changed'};
   }
+  async function inspectRecovery(){
+    // Diagnostic only. Do not adopt an uncommitted newer slot automatically.
+    const observedPointer=readKey('current');
+    const state=await load();
+    const candidates=[await inspect('a'),await inspect('b')]
+      .filter(s=>s.state==='VALID')
+      .map(s=>Object.freeze({slot:s.slot,revision:s.seq,checksum:s.checksum}));
+    if(readKey('current')!==observedPointer)
+      throw fail('SAVE_CONFLICT','Save pointer changed while inspecting recovery options');
+    return Object.freeze({status:state.status,observedPointer,candidates:Object.freeze(candidates)});
+  }
+  async function recover({confirmed=false,observedPointer,slot,revision,checksum}={}){
+    // Recovery is a separate, explicit action, never a side effect of load().
+    // A user must select an *exact* valid generation from inspectRecovery().
+    if(confirmed!==true)throw fail('SAVE_CONFIRM_REQUIRED','Recovery needs explicit confirmation');
+    if(observedPointer!==null&&typeof observedPointer!=='string'||
+      (slot!=='a'&&slot!=='b')||!Number.isSafeInteger(revision)||revision<1||
+      typeof checksum!=='string'||!/^[a-f0-9]{64}$/.test(checksum))
+      throw fail('SAVE_RECOVERY_INVALID','Recovery requires an exact inspected generation and pointer');
+    if(!locks||typeof locks.request!=='function')
+      throw fail('SAVE_LOCK_UNAVAILABLE','An exclusive Web Lock is required for recovery');
+    return locks.request(key('save-lock'),{mode:'exclusive'},async()=>{
+      if(readKey('current')!==observedPointer)
+        throw fail('SAVE_CONFLICT','Save pointer changed since recovery inspection');
+      const inspection=await inspectRecovery();
+      if(inspection.status!=='FALLBACK')
+        throw fail('SAVE_RECOVERY_INVALID','Recovery is only available for a verified fallback');
+      if(!inspection.candidates.some(c=>c.slot===slot&&c.revision===revision&&c.checksum===checksum))
+        throw fail('SAVE_CONFLICT','Selected recovery generation is no longer valid');
+      const pointer=stringOf({version:1,slot,seq:revision,checksum});
+      if(readKey('current')!==observedPointer)
+        throw fail('SAVE_CONFLICT','Save pointer changed before recovery commit');
+      writeKey('current',pointer); // Only pointer changes; both generations remain intact.
+      if(readKey('current')!==pointer)
+        throw fail('SAVE_VERIFY','Recovered pointer failed read-back');
+      const restored=await load();
+      if(restored.status!=='READY'||restored.slot!==slot||restored.revision!==revision)
+        throw fail('SAVE_VERIFY','Recovered generation failed final validation');
+      return {status:'RECOVERED',slot,revision};
+    });
+  }
   async function saveUnlocked(snapshot,{expectedRevision,restoreDeletedIds=[]}={}){
     if(!Array.isArray(restoreDeletedIds)||restoreDeletedIds.some(x=>typeof x!=='string'))
       throw fail('SAVE_INVALID','Explicit undo-restoration IDs must be strings');
@@ -150,5 +191,5 @@ export function createCreativeSaveJournal({storage,namespace=DEFAULT_NS,subtle=g
     if(requireLock)throw fail('SAVE_LOCK_UNAVAILABLE','Cross-tab exclusive Web Locks are required for safe browser saving');
     return saveUnlocked(snapshot,options); // Non-browser isolated unit tests only.
   }
-  return Object.freeze({load,save,keys:Object.freeze({pointer:key('current'),slotA:key('slot-a'),slotB:key('slot-b')})});
+  return Object.freeze({load,save,inspectRecovery,recover,keys:Object.freeze({pointer:key('current'),slotA:key('slot-a'),slotB:key('slot-b')})});
 }
