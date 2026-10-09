@@ -12,6 +12,9 @@ export function probePreviewEnvironment(env = globalThis) {
   } catch {
     warnings.push('ブラウザの保存領域へのアクセスが禁止されています。保存・再開は利用できません。');
   }
+  let locksReady=false;
+  try { locksReady=typeof env.navigator?.locks?.request==='function'; } catch { locksReady=false; }
+  if(!locksReady)warnings.push('複数タブの同時保存を保護できません。Web Locks APIが使えるHTTPSまたはlocalhostで保存してください。');
   const cryptoReady=!!(env.crypto?.subtle && typeof env.crypto.subtle.digest==='function');
   if(!cryptoReady) warnings.push('安全な検査に必要なSHA-256が利用できません。HTTPSまたはlocalhostで開いてください。');
   const kmlReady=typeof env.DOMParser==='function' && typeof env.XMLSerializer==='function';
@@ -21,9 +24,9 @@ export function probePreviewEnvironment(env = globalThis) {
   if(!env.crypto?.randomUUID) warnings.push('一意ID作成機能がありません。新規活動範囲の追加にはHTTPSまたはlocalhostが必要です。');
   return Object.freeze({
     storage,
-    cryptoReady,
+    cryptoReady,locksReady,
     canInspect:cryptoReady && kmlReady && zipReady,
-    canSave:!!storage && cryptoReady,
+    canSave:!!storage && cryptoReady && locksReady,
     canExport:cryptoReady && zipReady && kmlReady,
     hasUUID:typeof env.crypto?.randomUUID==='function',
     warnings:Object.freeze(warnings)

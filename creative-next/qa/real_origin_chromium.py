@@ -48,13 +48,14 @@ def run(root, kmz, executable):
                secure: !!globalThis.isSecureContext,
                crypto: !!globalThis.crypto?.subtle?.digest,
                storage: (() => {try {return !!localStorage} catch {return false}})(),
+               locks: !!globalThis.navigator?.locks?.request,
                zip: !!globalThis.JSZip?.loadAsync,
                leaflet: !!globalThis.L?.map,
                mapStatus: document.getElementById('map-engine')?.textContent,
                diagnostics: document.getElementById('capability-status')?.textContent
             })''')
             print('CAPABILITIES:', readiness)
-            if not (readiness['secure'] and readiness['crypto'] and readiness['storage'] and readiness['zip']):
+            if not (readiness['secure'] and readiness['crypto'] and readiness['storage'] and readiness['locks'] and readiness['zip']):
                 print('INCOMPLETE: required native browser capabilities missing')
                 browser.close()
                 browser = None
@@ -66,8 +67,22 @@ def run(root, kmz, executable):
                 page.locator('#accept').click()
                 page.wait_for_function("document.querySelector('#counts').textContent.includes('既存 188')",timeout=30000)
                 assert '距離円 213' in page.locator('#counts').inner_text()
+                # A second stale tab must never overwrite the first tab's initial save.
+                stale = ctx.new_page()
+                stale.on('dialog', lambda d: d.accept())
+                stale.goto(url, wait_until='domcontentloaded', timeout=12000)
+                stale.locator('#file').set_input_files(str(kmz))
+                stale.locator('#inspect').click()
+                stale.wait_for_function("document.querySelector('#accept').disabled === false",timeout=30000)
+                stale.locator('#accept').click()
+                stale.wait_for_function("document.querySelector('#counts').textContent.includes('既存 188')",timeout=30000)
                 page.locator('#save').click()
                 page.wait_for_function("document.querySelector('#save-info').textContent.includes('保存確認完了')",timeout=30000)
+                stale.locator('#save').click()
+                stale.wait_for_function("document.querySelector('#status').textContent.includes('SAVE_CONFLICT')",timeout=30000)
+                assert '保存確認完了' not in stale.locator('#save-info').inner_text()
+                print('NATIVE_ORIGIN_STALE_TAB: PASS (second unsaved tab refused)')
+                stale.close()
                 page.reload(wait_until='domcontentloaded')
                 page.locator('#resume').click()
                 page.wait_for_function("document.querySelector('#counts').textContent.includes('既存 188')",timeout=30000)

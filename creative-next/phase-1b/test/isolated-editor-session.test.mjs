@@ -86,7 +86,7 @@ test('corrupted journal cannot silently replace editor or old save',async()=>{
 test('stale saved workspace blocks unrelated draft without any automatic delete',async()=>{
  const s=storage(),x=session(s);await confirmed(x,await build());await x.saveDraft();
  await confirmed(x,await build([rec('different')]));
- await assert.rejects(x.saveDraft(),e=>e.code==='SAVE_EXISTING_REMOVED');
+ await assert.rejects(x.saveDraft(),e=>e.code==='SAVE_CONFLICT');
  assert.equal((await session(s).inspectDraft()).status,'READY');
 });
 test('existing identity mutation is rejected by Phase 1-A commands',async()=>{
@@ -113,10 +113,32 @@ test('journal write failure before pointer commit keeps previous intact generati
  x.command({type:'edit',id:'e1',patch:{memo:'uncommitted'}},{confirmed:true});
  const old=m.getItem('campsite-creative-next-v1-preview:current');
  const bad={getItem:k=>m.getItem(k),setItem:(k,v)=>{if(k.endsWith(':current'))throw Object.assign(new Error('out of quota'),{name:'QuotaExceededError'});m.setItem(k,v)}};
- const y=session(bad);await confirmed(y,await build());y.command({type:'edit',id:'e1',patch:{memo:'uncommitted'}},{confirmed:true});
+ const y=session(bad);assert.equal((await y.resumeDraft({confirmed:true})).applied,true);y.command({type:'edit',id:'e1',patch:{memo:'uncommitted'}},{confirmed:true});
  await assert.rejects(y.saveDraft());
  assert.equal(m.getItem('campsite-creative-next-v1-preview:current'),old);
  const restored=session(m);assert.equal((await restored.inspectDraft()).status,'READY');
  assert.equal((await restored.resumeDraft({confirmed:true})).applied,true);
  assert.equal(restored.state().records[0].memo,'旧メモ');
+});
+
+test('two simultaneous confirmed previews cannot overwrite each other on their first save',async()=>{
+ const st=storage(),tails=new Map(),locks={request(name,options,fn){
+   assert.equal(options.mode,'exclusive');
+   const old=tails.get(name)||Promise.resolve();
+   const result=old.catch(()=>{}).then(()=>fn({name,mode:'exclusive'}));
+   tails.set(name,result.then(()=>{},()=>{}));
+   return result;
+ }};
+ const x=createIsolatedEditorSession({...deps,storage:st,locks,requireSaveLock:true});
+ const y=createIsolatedEditorSession({...deps,storage:st,locks,requireSaveLock:true});
+ const bytes=await build();await confirmed(x,bytes);await confirmed(y,bytes);
+ x.command({type:'edit',id:'e1',patch:{memo:'first tab'}},{confirmed:true});
+ y.command({type:'edit',id:'e1',patch:{memo:'second tab'}},{confirmed:true});
+ const results=await Promise.allSettled([x.saveDraft(),y.saveDraft()]);
+ assert.equal(results.filter(r=>r.status==='fulfilled').length,1);
+ assert.equal(results.filter(r=>r.status==='rejected'&&r.reason.code==='SAVE_CONFLICT').length,1);
+ const restored=await session(st).inspectDraft();
+ assert.equal(restored.status,'READY');assert.equal(restored.revision,1);
+ assert.equal(restored.snapshot.records[0].memo,'first tab');
+ assert.equal(st.getItem('next-lab-creative-v7'),'LEGACY_UNTOUCHED');
 });

@@ -47,9 +47,9 @@ function editableDiff(stage,records){
  }
  return {edits,additions};
 }
-export function createIsolatedEditorSession({JSZip,DOMParser,XMLSerializer,storage=null,cryptoProvider=globalThis.crypto,namespace='campsite-creative-next-v1-preview'}={}){
+export function createIsolatedEditorSession({JSZip,DOMParser,XMLSerializer,storage=null,cryptoProvider=globalThis.crypto,namespace='campsite-creative-next-v1-preview',locks=globalThis.navigator?.locks,requireSaveLock=false}={}){
  const deps={JSZip,DOMParser,XMLSerializer,cryptoProvider};
- const journal=storage?createCreativeSaveJournal({storage,namespace,subtle:cryptoProvider?.subtle}):null;
+ const journal=storage?createCreativeSaveJournal({storage,namespace,subtle:cryptoProvider?.subtle,locks,requireLock:requireSaveLock}):null;
  let pending=null,active=null,revision=null,recoveredFallback=false,prepareGeneration=0;
  let timelineUndo=[],timelineRedo=[];
  const cloneAreas=items=>items.map(a=>({id:a.id,points:a.points.map(p=>[...p])}));
@@ -184,7 +184,7 @@ export function createIsolatedEditorSession({JSZip,DOMParser,XMLSerializer,stora
   await exportNewV1Kmz(active.stage,{...deps,...changes,...areaOperations});
   const draft={records,activityAreas:shapeAreas,sourceArchiveBase64:b64(active.stage.rawSource),
     sourcePath:active.stage.sourcePath,sourceFormat:active.stage.sourceFormat,reviewOnly:true};
-  const result=await journal.save(draft,{expectedRevision:revision===null?undefined:revision});
+  const result=await journal.save(draft,{expectedRevision:revision});
   revision=result.revision;return result;
  }
  async function inspectDraft(){if(!journal)throw error('SAVE_UNAVAILABLE','No journal');return journal.load();}

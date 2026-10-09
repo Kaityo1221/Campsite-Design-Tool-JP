@@ -60,7 +60,7 @@ async function hash(value,subtle){
   return shaBytes(new Uint8Array(await subtle.digest('SHA-256',encoder.encode(value))));
 }
 function tryParse(value){try{return JSON.parse(value)}catch{return null}}
-export function createCreativeSaveJournal({storage,namespace=DEFAULT_NS,subtle=globalThis.crypto?.subtle}={}){
+export function createCreativeSaveJournal({storage,namespace=DEFAULT_NS,subtle=globalThis.crypto?.subtle,locks=globalThis.navigator?.locks,requireLock=false}={}){
   if(!storage||typeof storage.getItem!=='function'||typeof storage.setItem!=='function')throw fail('SAVE_CONFIG','Storage object required');
   if(typeof namespace!=='string'||!/^campsite-creative-next-v\d+(?:-[\w-]+)?$/.test(namespace)||namespace==='next-lab-creative-v7')
     throw fail('SAVE_CONFIG','Use an isolated Creative Next namespace');
@@ -90,7 +90,7 @@ export function createCreativeSaveJournal({storage,namespace=DEFAULT_NS,subtle=g
     if(valid.length)return {status:'FALLBACK',snapshot:valid[0].snapshot,revision:valid[0].seq,slot:valid[0].slot,reason:'Pointer invalid/missing, inspected intact generation only; no automatic repairs performed'};
     return {status:'CORRUPT',snapshot:null,revision:null,reason:'No valid generation; original storage not changed'};
   }
-  async function save(snapshot,{expectedRevision,restoreDeletedIds=[]}={}){
+  async function saveUnlocked(snapshot,{expectedRevision,restoreDeletedIds=[]}={}){
     if(!Array.isArray(restoreDeletedIds)||restoreDeletedIds.some(x=>typeof x!=='string'))
       throw fail('SAVE_INVALID','Explicit undo-restoration IDs must be strings');
     const restored=new Set(restoreDeletedIds);
@@ -133,6 +133,16 @@ export function createCreativeSaveJournal({storage,namespace=DEFAULT_NS,subtle=g
     if(published.status!=='READY'||published.slot!==slot||published.revision!==seq)
       throw fail('SAVE_VERIFY','Published snapshot failed final validation');
     return {status:'SAVED',revision:seq,slot};
+  }
+  async function save(snapshot,options={}){
+    // localStorage has no compare-and-swap. Two tabs can stage into the same
+    // inactive slot before either pointer is switched. Serialize the *entire*
+    // verification and commit section using an origin-scoped exclusive Web Lock.
+    // Browser-facing callers must set requireLock:true; never silently fall back.
+    if(locks && typeof locks.request==='function')
+      return locks.request(key('save-lock'),{mode:'exclusive'},()=>saveUnlocked(snapshot,options));
+    if(requireLock)throw fail('SAVE_LOCK_UNAVAILABLE','Cross-tab exclusive Web Locks are required for safe browser saving');
+    return saveUnlocked(snapshot,options); // Non-browser isolated unit tests only.
   }
   return Object.freeze({load,save,keys:Object.freeze({pointer:key('current'),slotA:key('slot-a'),slotB:key('slot-b')})});
 }

@@ -4,7 +4,7 @@ import {createLeafletMapView} from './leaflet-map-view.mjs';
 import {probePreviewEnvironment} from './browser-capabilities.mjs';
 const $=id=>document.getElementById(id);
 const capabilities=probePreviewEnvironment(globalThis);
-const session=createIsolatedEditorSession({JSZip:globalThis.JSZip,DOMParser:globalThis.DOMParser,XMLSerializer:globalThis.XMLSerializer,storage:capabilities.storage,cryptoProvider:globalThis.crypto});
+const session=createIsolatedEditorSession({JSZip:globalThis.JSZip,DOMParser:globalThis.DOMParser,XMLSerializer:globalThis.XMLSerializer,storage:capabilities.storage,cryptoProvider:globalThis.crypto,locks:globalThis.navigator?.locks,requireSaveLock:true});
 $('capability-status').textContent=capabilities.warnings.length
   ?'環境確認: '+capabilities.warnings.join(' ')
   :'環境確認: 必要な読込機能が見つかりました。保存の実書き込みは保存操作時に検証します。';

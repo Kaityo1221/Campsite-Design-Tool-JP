@@ -4,7 +4,7 @@ import {probePreviewEnvironment} from '../../phase-2-preview/browser-capabilitie
 function nativeLike(){
  const calls=[];
  const storage={getItem(k){calls.push(k);return null},setItem(k){calls.push(k)}};
- const env={localStorage:storage,crypto:{subtle:{digest:async()=>new ArrayBuffer(32)},randomUUID:()=> 'uuid'},DOMParser:class {},XMLSerializer:class {},JSZip:{loadAsync:async()=>({})}};
+ const env={localStorage:storage,navigator:{locks:{request:async(_name,_opts,fn)=>fn()}},crypto:{subtle:{digest:async()=>new ArrayBuffer(32)},randomUUID:()=> 'uuid'},DOMParser:class {},XMLSerializer:class {},JSZip:{loadAsync:async()=>({})}};
  return {env,storage,calls};
 }
 test('complete capability check exposes native handles without accessing any storage keys',()=>{
@@ -42,4 +42,17 @@ test('diagnostics result is immutable and never accesses old Creative Mode save 
  const {env,calls}=nativeLike();const r=probePreviewEnvironment(env);
  assert.ok(Object.isFrozen(r));assert.ok(Object.isFrozen(r.warnings));
  assert.throws(()=>{r.canSave=false;},TypeError);assert.deepEqual(calls,[]);
+});
+
+test('missing cross-tab Web Locks disables browser Save but not KMZ inspection/export',()=>{
+ const {env,calls}=nativeLike();delete env.navigator.locks;
+ const r=probePreviewEnvironment(env);
+ assert.equal(r.locksReady,false);assert.equal(r.canSave,false);
+ assert.equal(r.canInspect,true);assert.equal(r.canExport,true);
+ assert.match(r.warnings.join(' '),/同時保存/);assert.deepEqual(calls,[]);
+});
+test('throwing navigator lock getter fails closed without a storage probe',()=>{
+ const {env,calls}=nativeLike();Object.defineProperty(env.navigator,'locks',{get(){throw new DOMException('Denied','SecurityError')}});
+ const r=probePreviewEnvironment(env);
+ assert.equal(r.canSave,false);assert.equal(r.locksReady,false);assert.deepEqual(calls,[]);
 });
