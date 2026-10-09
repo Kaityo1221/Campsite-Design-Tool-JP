@@ -8,7 +8,16 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous">
 <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
 <script defer src="./vendor/jszip.min.js"></script>
-<script type="module" src="./preview.mjs"></script>
+<script type="module">
+import('./preview.mjs').catch(error => {
+  const message = error?.message || String(error);
+  const status = document.getElementById('capability-status');
+  const details = document.getElementById('status');
+  if (status) status.textContent = '起動エラー: ' + message;
+  if (details) details.textContent = 'Creative Nextの初期化に失敗しました。画面のエラー文をお知らせください。';
+  console.error('Creative Next preview initialization failed', error);
+});
+</script>
 </head>
 <body>
 <header class="head"><div class="tag">Campsite · Creative Next</div><h1>新Creative Mode <span>隔離プレビュー</span></h1><p>本番に接続していない試験画面です。旧Creative Modeのデータ・保存領域は変更しません。</p></header>
