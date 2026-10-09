@@ -106,7 +106,7 @@ async def run():
                 quota=await page.evaluate(f'''async () => {{
                     const {{createCreativeSaveJournal}}=await import('{JS_PATH}');
                     const j=createCreativeSaveJournal({{storage:localStorage,namespace:'campsite-creative-next-v1-native-quota',locks:navigator.locks,requireLock:true}});
-                    const state=(title)=>({{records:[{{id:'quota-test',role:'existing',kind:'pokestop',title,lat:35.1,lng:139.2}}],activityAreas:[]}});
+                    const state=(title,forceLarge=false)=>({{records:[{{id:'quota-test',role:'existing',kind:'pokestop',title,lat:35.1,lng:139.2,memo:forceLarge?'M'.repeat(256*1024):''}}],activityAreas:[]}});
                     await j.save(state('Committed'),{{expectedRevision:null}});
                     const original=localStorage.getItem(j.keys.pointer);
                     let quotaSeen=false,saveFailed=false,allocated=0,errorName='';
@@ -116,7 +116,7 @@ async def run():
                             catch(e){{if(e.name!=='QuotaExceededError')throw e;quotaSeen=true;break;}}
                         }}
                         if(quotaSeen){{
-                            try{{await j.save(state('AttemptedUpdate'),{{expectedRevision:1}});}}
+                            try{{await j.save(state('AttemptedUpdate',true),{{expectedRevision:1}});}}
                             catch(e){{saveFailed=true;errorName=e.name;}}
                         }}
                         const after=await j.load();
