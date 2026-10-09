@@ -156,8 +156,15 @@ async def run():
                     return {{status:r.status,revision:r.revision,title:r.snapshot?.records[0]?.title}};
                 }}''')
                 assert committed=={'status':'READY','revision':1,'title':'CommittedBeforeCrash'},committed
-                # Allow Chromium's LevelDB journal time to flush the committed write.
-                await asyncio.sleep(1)
+                # Chromium may batch LocalStorage LevelDB disk commits after the
+                # synchronous JavaScript setter returns. Check persistence AFTER
+                # a short disk-flush window; immediate SIGKILL remains a separate
+                # documented durability risk, not a promised behavior.
+                await asyncio.sleep(8)
+                storage_dir=profile/'Default'/'Local Storage'/'leveldb'
+                print('NATIVE_STORAGE_DISK_FILES',
+                    [(p.name,p.stat().st_size) for p in storage_dir.glob('*') if p.is_file()][:12],
+                    flush=True)
                 # Identify ONLY this disposable profile's top-level Chromium PID.
                 roots=[]
                 profile_arg=('--user-data-dir='+str(profile)).encode()
