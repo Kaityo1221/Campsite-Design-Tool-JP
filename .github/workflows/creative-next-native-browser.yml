@@ -41,3 +41,5 @@ jobs:
         run: node --test creative-next/phase-1b/test/*.test.mjs
       - name: Native Leaflet and origin-backed storage gates
         run: python creative-next/qa/native-browser-gates.py
+      - name: Strict IndexedDB immediate browser crash gate
+        run: python creative-next/qa/strict-idb-crash-gate.py
