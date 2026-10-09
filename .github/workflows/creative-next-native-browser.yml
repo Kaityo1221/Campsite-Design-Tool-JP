@@ -43,3 +43,5 @@ jobs:
         run: python creative-next/qa/native-browser-gates.py
       - name: Strict IndexedDB immediate browser crash gate
         run: python creative-next/qa/strict-idb-crash-gate.py
+      - name: Native recovery from IndexedDB checkpoint UI
+        run: python creative-next/qa/strict-idb-ui-gate.py
