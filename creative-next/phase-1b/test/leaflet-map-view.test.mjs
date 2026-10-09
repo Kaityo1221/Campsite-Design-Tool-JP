@@ -137,6 +137,22 @@ test('map reports real Leaflet tile-layer lifecycle without claiming downloaded 
  const tile=[...fake.layers].find(layer=>layer.type==='tile');assert.ok(tile);
  tile.fire('load');assert.deepEqual(reports,['WAITING','READY']);
  tile.fire('tileerror');assert.deepEqual(reports,['WAITING','READY','ERROR']);
+ tile.fire('load');assert.equal(reports.at(-1),'ERROR','load follows error after failed tiles; do not report READY');
+ tile.fire('loading');assert.equal(reports.at(-1),'WAITING');
+ tile.fire('load');assert.equal(reports.at(-1),'READY','a clean retry can return to READY');
+ view.destroy();
+});
+
+test('mixed successful and failed tiles cannot overwrite the error state on batch completion',()=>{
+ const fake=interactiveLeaflet(),states=[];
+ const view=createLeafletMapView({L:fake.L,root:{},onTilesState:s=>states.push(s)});
+ const tiles=[...fake.layers].find(l=>l.type==='tile');
+ tiles.fire('loading');tiles.fire('tileerror');tiles.fire('load');
+ assert.deepEqual(states,['WAITING','WAITING','ERROR','ERROR']);
+ tiles.fire('loading');tiles.fire('tileerror');tiles.fire('tileerror');tiles.fire('load');
+ assert.equal(states.at(-1),'ERROR');
+ tiles.fire('loading');tiles.fire('load');
+ assert.equal(states.at(-1),'READY');
  view.destroy();
 });
 

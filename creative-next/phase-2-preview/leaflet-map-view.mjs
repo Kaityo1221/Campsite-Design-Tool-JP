@@ -11,8 +11,13 @@ export function createLeafletMapView({L,root,onSelect,onMapClick,onVertexDrop,on
  if(tiles&&L.tileLayer){
   const tileLayer=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
    {maxZoom:19,attribution:'© OpenStreetMap contributors'});
-  tileLayer.on?.('load',()=>onTilesState?.('READY'));
-  tileLayer.on?.('tileerror',()=>onTilesState?.('ERROR'));
+  // Leaflet emits 'load' when *all tile requests have finished*, including
+  // failed requests. A load event after a tileerror is not evidence of success.
+  // Reset the failure flag only for a new loading cycle (pan/zoom/retry).
+  let failedThisCycle=false;
+  tileLayer.on?.('loading',()=>{failedThisCycle=false;onTilesState?.('WAITING')});
+  tileLayer.on?.('tileerror',()=>{failedThisCycle=true;onTilesState?.('ERROR')});
+  tileLayer.on?.('load',()=>onTilesState?.(failedThisCycle?'ERROR':'READY'));
   onTilesState?.('WAITING');
   tileLayer.addTo(map);
  }else onTilesState?.('NO_TILES');
