@@ -49,7 +49,7 @@ async def run():
                 await page.locator('.leaflet-tile-loaded').first.wait_for(state='attached',timeout=30000)
                 tiles=await page.locator('.leaflet-tile-loaded').count()
                 assert tiles>0,'No real Leaflet map tiles loaded'
-                print('PASS: real Leaflet and '+str(tiles)+' map tiles loaded, not a fallback map')
+                print('PASS: real Leaflet and '+str(tiles)+' map tiles loaded, not a fallback map',flush=True)
                 # Actual Leaflet click input must remain a proposal until confirmed.
                 prior_counts=await page.locator('#counts').inner_text()
                 await page.locator('#add-new').click()
@@ -59,7 +59,7 @@ async def run():
                 assert await page.locator('#new-lng').input_value(),'Leaflet click did not populate longitude'
                 assert await page.locator('#counts').inner_text()==prior_counts,'Unconfirmed click changed project'
                 await page.locator('#new-cancel').click()
-                print('PASS: actual Leaflet map click proposed coordinates without committing a POI')
+                print('PASS: actual Leaflet map click proposed coordinates without committing a POI',flush=True)
                 await page.locator('#save').click()
                 await page.wait_for_function('document.querySelector("#save-info").textContent.includes("第1世代")',timeout=15000)
                 pointer='campsite-creative-next-v1-preview:current'
@@ -86,7 +86,7 @@ async def run():
                 await page.locator('#recovery-apply').click()
                 await page.wait_for_function('document.querySelector("#save-info").textContent.includes("復旧")',timeout=20000)
                 assert await page.evaluate('(k)=>localStorage.getItem(k)!="BROKEN"',pointer)
-                print('PASS: localhost origin Leaflet initialized, KMZ imported, localStorage persisted/reloaded, 2 generations, explicit UI recovery')
+                print('PASS: localhost origin Leaflet initialized, KMZ imported, localStorage persisted/reloaded, 2 generations, explicit UI recovery',flush=True)
                 # Native, origin-shared tab conflict on a separate test-only namespace
                 tab2=await context.new_page()
                 await tab2.goto(url,wait_until='domcontentloaded')
@@ -98,7 +98,7 @@ async def run():
                 }}'''
                 r1,r2=await asyncio.gather(page.evaluate(save_js,'tab1'),tab2.evaluate(save_js,'tab2'))
                 assert sum(r['ok'] for r in [r1,r2])==1 and any(r.get('code')=='SAVE_CONFLICT' for r in [r1,r2]),(r1,r2)
-                print('PASS: native concurrent Web Locks allow exactly one first-save, second tab rejected')
+                print('PASS: native concurrent Web Locks allow exactly one first-save, second tab rejected',flush=True)
 
                 # Real Chromium localStorage quota test. Allocate on a unique,
                 # test-only namespace until Chromium itself raises QuotaExceededError.
@@ -127,23 +127,31 @@ async def run():
                         for(let i=0;i<allocated;i++)localStorage.removeItem('campsite-native-quota-filler-'+i);
                     }}
                 }}''')
+                print('NATIVE_QUOTA_RESULT',quota,flush=True)
                 assert quota['quotaSeen'] and quota['saveFailed'] and quota['errorName']=='QuotaExceededError',quota
                 assert quota['pointerSame'] and quota['status']=='READY' and quota['revision']==1 and quota['title']=='Committed',quota
-                print('PASS: native localStorage QuotaExceededError preserved committed generation; filler bytes cleaned')
+                print('PASS: native localStorage QuotaExceededError preserved committed generation; filler bytes cleaned',flush=True)
 
                 # Abrupt Chromium renderer termination and reopen, NOT a clean
                 # window.close()/browser.close(). Prior committed data must survive.
+                print('NATIVE_RENDERER_CRASH_START',flush=True)
                 crash_page=await context.new_page()
                 await crash_page.goto(url,wait_until='domcontentloaded')
                 native_crash=asyncio.Event()
                 crash_page.on('crash',lambda _:native_crash.set())
                 cdp=await context.new_cdp_session(crash_page)
+                # A renderer deliberately killed by Page.crash may NEVER reply to
+                # the command. Send concurrently and wait for the crash event.
+                crash_command=asyncio.create_task(cdp.send('Page.crash'))
                 try:
-                    await cdp.send('Page.crash')
-                except Exception:
-                    pass  # The DevTools command itself is interrupted by the crash.
-                await asyncio.wait_for(native_crash.wait(),timeout=15)
-                await crash_page.close()
+                    await asyncio.wait_for(native_crash.wait(),timeout=12)
+                finally:
+                    crash_command.cancel()
+                    # The crashed target may reject close or remain unresponsive.
+                    try:
+                        await asyncio.wait_for(crash_page.close(),timeout=5)
+                    except Exception:
+                        pass
                 reopened=await context.new_page()
                 await reopened.goto(url,wait_until='domcontentloaded')
                 recovered=await reopened.evaluate(f'''async () => {{
@@ -153,7 +161,7 @@ async def run():
                     return {{status:state.status,revision:state.revision,title:state.snapshot?.records[0]?.title}};
                 }}''')
                 assert recovered=={'status':'READY','revision':1,'title':'Committed'},recovered
-                print('PASS: committed native storage survived a forced Chromium renderer crash and fresh-tab reopen')
+                print('PASS: committed native storage survived a forced Chromium renderer crash and fresh-tab reopen',flush=True)
 
                 await context.close();await browser.close()
                 return 0
