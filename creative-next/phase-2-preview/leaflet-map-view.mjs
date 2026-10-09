@@ -5,11 +5,17 @@
 const color=p=>p.kind==='gym'?'#cb5149':p.kind==='power'?'#8054b9':p.role==='new'?'#d18d22':'#1976bc';
 const latlng=p=>[p.lat,p.lng];
 const validLatLng=p=>p&&typeof p.lat==='number'&&typeof p.lng==='number'&&Number.isFinite(p.lat)&&Number.isFinite(p.lng)&&Math.abs(p.lat)<=90&&Math.abs(p.lng)<=180;
-export function createLeafletMapView({L,root,onSelect,onMapClick,onVertexDrop,onVertexSelect,tiles=true}={}){
+export function createLeafletMapView({L,root,onSelect,onMapClick,onVertexDrop,onVertexSelect,onTilesState,tiles=true}={}){
  if(!L?.map||!L?.circleMarker||!L?.circle||!L?.polygon||!root)throw Error('Leaflet is not available');
  const map=L.map(root,{zoomControl:true,preferCanvas:true}).setView([35.643,139.857],15);
- if(tiles&&L.tileLayer)L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-  {maxZoom:19,attribution:'© OpenStreetMap contributors'}).addTo(map);
+ if(tiles&&L.tileLayer){
+  const tileLayer=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+   {maxZoom:19,attribution:'© OpenStreetMap contributors'});
+  tileLayer.on?.('load',()=>onTilesState?.('READY'));
+  tileLayer.on?.('tileerror',()=>onTilesState?.('ERROR'));
+  onTilesState?.('WAITING');
+  tileLayer.addTo(map);
+ }else onTilesState?.('NO_TILES');
  const pois=new Map(),circles=new Map(),areas=new Map(),vertices=new Map();
  let destroyed=false;
  const mapClicked=e=>{if(!destroyed&&validLatLng(e?.latlng))onMapClick?.({lat:e.latlng.lat,lng:e.latlng.lng})};

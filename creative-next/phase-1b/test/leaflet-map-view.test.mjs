@@ -129,3 +129,21 @@ test('vertex handles track every inserted/deleted vertex without stale index cal
  assert.equal([...mock.layers].filter(x=>x.type==='vertex').length,3);
  view.destroy();
 });
+
+test('map reports real Leaflet tile-layer lifecycle without claiming downloaded tiles initially',()=>{
+ const fake=interactiveLeaflet(),reports=[];
+ const view=createLeafletMapView({L:fake.L,root:{},onTilesState:s=>reports.push(s)});
+ assert.deepEqual(reports,['WAITING']);
+ const tile=[...fake.layers].find(layer=>layer.type==='tile');assert.ok(tile);
+ tile.fire('load');assert.deepEqual(reports,['WAITING','READY']);
+ tile.fire('tileerror');assert.deepEqual(reports,['WAITING','READY','ERROR']);
+ view.destroy();
+});
+
+test('no tile layer is explicitly not a basemap PASS',()=>{
+ const fake=interactiveLeaflet(),reports=[];
+ const view=createLeafletMapView({L:fake.L,root:{},tiles:false,onTilesState:s=>reports.push(s)});
+ assert.deepEqual(reports,['NO_TILES']);
+ assert.equal([...fake.layers].filter(x=>x.type==='tile').length,0);
+ view.destroy();
+});

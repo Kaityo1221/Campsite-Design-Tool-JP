@@ -1,11 +1,17 @@
 import {createIsolatedEditorSession} from '../phase-1b/integration/isolated-editor-session.mjs';
 import {circleRingAt} from '../phase-1b/core/dependent-circles.mjs';
 import {createLeafletMapView} from './leaflet-map-view.mjs';
+import {probePreviewEnvironment} from './browser-capabilities.mjs';
 const $=id=>document.getElementById(id);
-const session=createIsolatedEditorSession({JSZip:globalThis.JSZip,DOMParser:globalThis.DOMParser,XMLSerializer:globalThis.XMLSerializer,storage:globalThis.localStorage,cryptoProvider:globalThis.crypto});
+const capabilities=probePreviewEnvironment(globalThis);
+const session=createIsolatedEditorSession({JSZip:globalThis.JSZip,DOMParser:globalThis.DOMParser,XMLSerializer:globalThis.XMLSerializer,storage:capabilities.storage,cryptoProvider:globalThis.crypto});
+$('capability-status').textContent=capabilities.warnings.length
+  ?'環境確認: '+capabilities.warnings.join(' ')
+  :'環境確認: 必要な読込機能が見つかりました。保存の実書き込みは保存操作時に検証します。';
 const labels={pokestop:'ポケストップ',gym:'ジム',power:'パワースポット'};
 let activeId=null,coordsOnCanvas=[];
 let leafletView=null,fitMapNext=false,placementArmed=false;
+function setMapStatus(message){$('map-engine').textContent=message;}
 function updateMapMode(){
  const s=shape(),target=!$('new-poi').hidden?'new':!$('editor').hidden&&activeId&&s.records.find(p=>p.id===activeId)?.role==='new'?'edit':null;
  $('map-place').disabled=!leafletView||!s.hasActive||s.recoveredFallback||!target;
@@ -40,9 +46,10 @@ function layerVisibility(){return {poi:$('layer-poi').checked,circles:$('layer-c
 try{
  if(globalThis.L){
   $('leaflet-map').hidden=false;
-  leafletView=createLeafletMapView({L:globalThis.L,root:$('leaflet-map'),onSelect:id=>openEditor(id),onMapClick:receiveMapPoint,onVertexDrop:receiveVertexDrop,onVertexSelect:receiveVertexSelect});
+  leafletView=createLeafletMapView({L:globalThis.L,root:$('leaflet-map'),onSelect:id=>openEditor(id),onMapClick:receiveMapPoint,onVertexDrop:receiveVertexDrop,onVertexSelect:receiveVertexSelect,onTilesState:state=>{if(state==='READY')setMapStatus('Leaflet地図: 地図タイル読込済み');else if(state==='ERROR')setMapStatus('Leaflet地図: タイル取得に失敗。座標と編集機能は利用可能');else setMapStatus('Leaflet地図: タイル読込待ち');}});
  }
 }catch(error){$('leaflet-map').hidden=true;leafletView=null;} // Fall back to the local coordinate map.
+if(!leafletView)setMapStatus('簡易位置図（地図タイルなし）。Leafletが利用できません。');
 
 function announce(msg,kind='normal'){$('status').textContent=msg;$('status').style.color=kind==='error'?'#a33d31':'#295648';}
 function failure(e){announce(`${e?.code?e.code+': ':''}${e?.message||String(e)}`,'error');}
@@ -73,10 +80,11 @@ function updateAreaCoordinates(){
 function redraw(){
  const s=shape(),filtered=s.records.filter(p=>!p.deleted),term=$('filter').value.trim().toLowerCase();
  updateMapMode();$('map-fit').disabled=!s.hasActive;
+ $('inspect').disabled=!capabilities.canInspect; $('resume').disabled=!capabilities.canSave;
  $('counts').textContent=s.hasActive?`既存 ${s.counts.existing.count} / 700 ｜ 新規 ${s.counts.new.count} / 25 ｜ 距離円 ${s.shapes?.circles??0} ｜ 活動範囲 ${s.areas.length}`:'未読み込み';
  renderAreaControls(s);
  $('accept').disabled=!s.hasPending;$('discard').disabled=!s.hasPending;
- for(const id of ['filter','save','export'])$(id).disabled=!s.hasActive;
+ $('filter').disabled=!s.hasActive; $('save').disabled=!s.hasActive||!capabilities.canSave; $('export').disabled=!s.hasActive||!capabilities.canExport;
  $('add-new').disabled=!s.hasActive||s.counts.new.count>=25;
  for(const option of $('new-kind').options)option.disabled=!s.hasActive||!s.counts.new.types[option.value]?.canAdd;
  $('undo').disabled=!s.hasActive||!s.history.undo;$('redo').disabled=!s.hasActive||!s.history.redo;

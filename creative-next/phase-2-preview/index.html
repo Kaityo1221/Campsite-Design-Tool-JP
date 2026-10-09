@@ -4,9 +4,9 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Creative Next | 隔離編集プレビュー</title>
 <link rel="stylesheet" href="./preview.css">
-<!-- Optional isolated Leaflet map. Canvas map remains usable when CDN access is blocked. -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- Leaflet 1.9.4 CDN pinned by Subresource Integrity; preview falls back if offline. -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous">
+<script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
 <script defer src="./vendor/jszip.min.js"></script>
 <script type="module" src="./preview.mjs"></script>
 </head>
@@ -19,12 +19,13 @@
   <div class="toolbar"><input id="file" type="file" accept=".kmz,.kml,application/vnd.google-earth.kmz" aria-label="KMZを選択"><button id="inspect" type="button">安全性を検査</button></div>
   <div id="candidate" class="candidate" hidden></div>
   <div class="toolbar"><button id="accept" type="button" disabled>確認して編集を開始</button><button id="discard" type="button" disabled class="ghost">検査を取り消す</button></div>
+  <p id="capability-status" class="capability-status" role="status">ブラウザ環境を確認中</p>
   <p id="status" role="status" aria-live="polite" class="status">KMZを選択してください。</p>
  </section>
  <section class="panel" aria-labelledby="edit-heading">
   <div class="section-head"><h2 id="edit-heading">02 · POI編集</h2><span id="counts" class="count">未読み込み</span></div>
   <div class="warning">🛡️ 既存POIは移動禁止。新規追加には50mの距離円が付きます。移動・削除時は紐づく距離円も連動します。旧形式の種類変更はフォルダー・アイコンまで検証できる場合のみ書き出せます。</div>
-  <div class="map-wrap">
+  <div class="map-wrap"><p id="map-engine" class="map-engine" role="status">地図の初期化中</p>
    <div class="map-toolbar" role="group" aria-label="地図レイヤー表示"><label><input id="layer-poi" type="checkbox" checked>POI</label><label><input id="layer-circles" type="checkbox" checked>距離円</label><label><input id="layer-areas" type="checkbox" checked>活動範囲</label><button id="map-fit" class="ghost" type="button" disabled>全体表示</button></div>
    <div id="leaflet-map" hidden aria-label="POIと距離円と活動範囲の地図" role="region"></div><canvas id="map" width="900" height="480" aria-label="POIと活動範囲の簡易位置図。地図タイルなし" role="img"></canvas>
    <div class="toolbar"><button id="map-place" type="button" class="ghost" disabled>地図から緯度・経度を指定</button><span id="map-mode-help" class="hint" role="status">POIの編集欄を開いてから、地図上で位置を指定できます。確定するまで保存されません。</span></div>

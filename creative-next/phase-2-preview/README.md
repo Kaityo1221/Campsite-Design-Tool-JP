@@ -54,3 +54,26 @@ Activity areas with verified `campsite.creative.object=activity-area` and unique
 - The source-aware KMZ exporter rejects source area deletion if geometry contains unverified structure, holes, special altitude, or ambiguous ownership. All output is re-imported and diagnosed before bytes are returned.
 - 195 Node tests pass (including 11 new membership tests); six private real-Kasai regression scripts pass. Simulated Chromium 390px UI (local in-memory storage/crypto) passes. Native Leaflet tiles, actual HTTP-origin storage, ordinary Chromium/WebKit page navigation and iPhone Safari are **not verified**.
 - Nothing here changes public `main` or old Creative Mode. Do not merge or deploy without subsequent full gate review.
+
+## Oct 9: browser startup guard and truthful map readiness (isolated only)
+
+- An isolated, read-only capability probe now handles browsers whose `localStorage`
+  *getter* throws `SecurityError` (notably Safari restriction modes). It never
+  reads or writes a legacy storage key. Import/export are disabled when the
+  required Web Crypto/JSZip/XML facilities are absent; Save/Resume are disabled
+  when browser storage is inaccessible. The UI explains which capabilities are
+  absent rather than presenting an apparently usable save button.
+- Leaflet 1.9.4 CSS/JS are pinned by published SHA-256 Subresource Integrity
+  values. The external CDN and OpenStreetMap tiles **still need a network**;
+  this is not a self-hosted/offline Leaflet deployment. The tile-status label
+  distinguishes loading, loaded, and failed tiles; only an actual tile `load`
+  event may be labeled loaded.
+- `qa/real_origin_chromium.py` is provided to run a genuine HTTP-localhost,
+  native-browser, native-WebCrypto, native-localStorage smoke test with an
+  explicitly supplied *private* KMZ. Its browser context is ephemeral, and
+  its fixture is never copied into public files. **In the current managed
+  environment Chromium navigation is blocked by `ERR_BLOCKED_BY_ADMINISTRATOR`**;
+  the runner correctly reports BLOCKED, not PASS.
+- Node: 205/205 (previous 195 + 8 capability + 2 map tile-status tests); real
+  private Kasai six regression scripts PASS. Not a substitute for actual
+  Chromium/WebKit/Safari URL-origin testing or PO device-test authorization.
