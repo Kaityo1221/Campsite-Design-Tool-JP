@@ -45,3 +45,5 @@ jobs:
         run: python creative-next/qa/strict-idb-crash-gate.py
       - name: Native recovery from IndexedDB checkpoint UI
         run: python creative-next/qa/strict-idb-ui-gate.py
+      - name: PC full isolated end-to-end regression
+        run: python creative-next/qa/pc-final-regression.py
