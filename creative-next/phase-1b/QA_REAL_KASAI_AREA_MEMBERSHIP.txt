@@ -1,0 +1,1 @@
+REAL_KASAI_AREA_MEMBERSHIP: PASS original 188/25/213/1 -> delete 0 areas -> add 1 new area, Undo/Redo, journal restore, attachments unchanged, legacy store protected, original raw file untouched

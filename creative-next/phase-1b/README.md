@@ -87,3 +87,7 @@ This section supersedes the earlier 105/124-PASS status and legacy-kind HOLD not
 - 184 Node tests pass in the isolated suite, including keyed layer visibility, uncommitted map coordinate proposals, vertex drag cancellation, stale tab rejection, quota and save fallback checks.
 - Private real-Kasai regression scripts pass separately when passed the original local KMZ path. Chromium 390px simulated-origin UI checks pass with a fake Leaflet event provider and mock browser storage/crypto, **not a real map tile or real Safari/browser-origin acceptance**.
 - The approved Phase 1-A POI code is left byte-for-byte unchanged; no public entry points or legacy v7 storage were modified.
+
+### 2026-10-09 isolated activity membership checkpoint
+
+Verified activity-area creation and complete deletion are handled by `plannedAreaOperations()` and a guarded exporter. Real Kasai 188 existing / 25 new POIs and all 213 distance circles remain unaffected by delete/re-create. Source KMZ and its non-KML attachments are never committed or included with test artifacts. Newly created activity-area IDs are unique and source areas can only be removed after strict source geometry preflight. Results: 195/195 Node PASS, six private real-Kasai regressions PASS, simulated Chromium 390px DOM UI PASS. This checkpoint does **not** constitute real-origin Leaflet/Chromium/WebKit/Safari acceptance.

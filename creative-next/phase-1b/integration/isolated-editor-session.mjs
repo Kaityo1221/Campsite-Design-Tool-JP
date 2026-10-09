@@ -10,7 +10,7 @@ import {previewLegacyPoiStore} from './legacy-poi-preview.mjs';
 import {exportNewV1Kmz,assertSafeKindEdit} from '../core/export-kmz.mjs';
 import {createCreativeSaveJournal} from '../core/journal-save.mjs';
 import {indexDependentCircles,circleOverlay,circleRingAt} from '../core/dependent-circles.mjs';
-import {sourceActivityAreas,planActivityChange,plannedAreaEdits,editableAreaGeometry} from '../core/activity-areas.mjs';
+import {sourceActivityAreas,planActivityChange,planActivityMembership,plannedAreaOperations,editableAreaGeometry} from '../core/activity-areas.mjs';
 const PREFIX='campsite.creative.';
 function error(code,message){let e=new Error(message);e.code=code;return e;}
 function b64(bytes){let str='';for(let i=0;i<bytes.length;i+=32768)str+=String.fromCharCode(...bytes.subarray(i,i+32768));return btoa(str);}
@@ -85,7 +85,7 @@ export function createIsolatedEditorSession({JSZip,DOMParser,XMLSerializer,stora
   if(!pending)throw error('IMPORT_NOT_READY','No verified import pending');
   if(confirmed!==true)return {ok:false,applied:false};
   const next={...pending,store:pending.preview.store,report:pending.preview.report,
-    sourceIds:new Set(pending.preview.records.map(p=>p.id))};
+    sourceIds:new Set(pending.preview.records.map(p=>p.id)),areaUsed:new Set(pending.shapeAreas.map(a=>a.id))};
   active=next;pending=null;prepareGeneration++;revision=null;recoveredFallback=false;timelineUndo=[];timelineRedo=[];
   return {ok:true,applied:true,counts:active.report.counts,history:active.store.snapshot().history};
  }
@@ -122,13 +122,23 @@ export function createIsolatedEditorSession({JSZip,DOMParser,XMLSerializer,stora
   if(!active)throw error('NO_EDITOR','No confirmed editor session');
   if(confirmed!==true)return {ok:true,changed:false,cancelled:true};
   if(recoveredFallback)throw error('SAVE_RECOVERY_REQUIRED','Fallback recovery is read-only');
-  const plan=planActivityChange(active.shapeAreas,value);
+  const membership=value?.type==='area-create'||value?.type==='area-remove';
+  const plan=membership?planActivityMembership(active.shapeAreas,value,{reservedIds:[...active.areaUsed]}):planActivityChange(active.shapeAreas,value);
   if(!plan.changed)return {ok:true,changed:false};
   // Fail before accepting edits to unsupported source structures or altitude modes.
-  const xml=new deps.DOMParser().parseFromString(active.stage.sourceKml,'application/xml');
-  editableAreaGeometry(active.stage,xml,{id:plan.id,points:plan.after});
-  const current=active.shapeAreas.find(a=>a.id===plan.id);
-  current.points=plan.after;
+  const isSource=areas(active.stage).some(a=>a.id===plan.id);
+  if(isSource){
+    const xml=new deps.DOMParser().parseFromString(active.stage.sourceKml,'application/xml');
+    editableAreaGeometry(active.stage,xml,{id:plan.id,points:plan.after??plan.before});
+  }
+  const proposed=cloneAreas(active.shapeAreas),index=proposed.findIndex(a=>a.id===plan.id);
+  if(plan.kind==='area-membership'){
+    if(plan.before===null)proposed.push({id:plan.id,points:plan.after});
+    else proposed.splice(index,1);
+  }else proposed[index].points=plan.after;
+  plannedAreaOperations(areas(active.stage),proposed);
+  active.shapeAreas=proposed;
+  if(plan.kind==='area-membership'&&plan.before===null)active.areaUsed.add(plan.id);
   timelineUndo.push(plan);timelineRedo=[];
   return {ok:true,changed:true,id:plan.id};
  }
@@ -144,11 +154,15 @@ export function createIsolatedEditorSession({JSZip,DOMParser,XMLSerializer,stora
     return result;
   }
   const area=active.shapeAreas.find(a=>a.id===step.id);
-  if(!area)throw error('HISTORY_CONFLICT','Area ID missing from history');
   const expected=direction==='undo'?step.after:step.before;
   const target=direction==='undo'?step.before:step.after;
-  if(JSON.stringify(area.points)!==JSON.stringify(expected))throw error('HISTORY_CONFLICT','Activity area differs from history');
-  area.points=target.map(p=>[...p]);dest.push(source.pop());
+  if(expected===null?!!area:!area||JSON.stringify(area.points)!==JSON.stringify(expected))throw error('HISTORY_CONFLICT','Activity area differs from history');
+  const next=cloneAreas(active.shapeAreas),index=next.findIndex(a=>a.id===step.id);
+  if(target===null)next.splice(index,1);
+  else if(index<0)next.push({id:step.id,points:target.map(p=>[...p])});
+  else next[index].points=target.map(p=>[...p]);
+  plannedAreaOperations(areas(active.stage),next);
+  active.shapeAreas=next;dest.push(source.pop());
   return {ok:true,changed:true};
  }
  const undo=()=>historyStep('undo');
@@ -156,8 +170,8 @@ export function createIsolatedEditorSession({JSZip,DOMParser,XMLSerializer,stora
  async function exportKmz({signal}={}){
   if(!active)throw error('NO_EDITOR','No confirmed editor');
   const changes=editableDiff(active.stage,active.store.snapshot().records);
-  const areaEdits=plannedAreaEdits(areas(active.stage),active.shapeAreas);
-  return exportNewV1Kmz(active.stage,{...deps,...changes,areaEdits,signal});
+  const areaOperations=plannedAreaOperations(areas(active.stage),active.shapeAreas);
+  return exportNewV1Kmz(active.stage,{...deps,...changes,...areaOperations,signal});
  }
  async function saveDraft(){
   if(!journal||!active)throw error('SAVE_UNAVAILABLE','No initialized draft journal or editor');
@@ -166,8 +180,8 @@ export function createIsolatedEditorSession({JSZip,DOMParser,XMLSerializer,stora
   const shapeAreas=cloneAreas(active.shapeAreas);
   // Refuse to save edits which cannot be safely exported; source bytes retained in the journal.
   const changes=editableDiff(active.stage,records);
-  const areaEdits=plannedAreaEdits(areas(active.stage),shapeAreas);
-  await exportNewV1Kmz(active.stage,{...deps,...changes,areaEdits});
+  const areaOperations=plannedAreaOperations(areas(active.stage),shapeAreas);
+  await exportNewV1Kmz(active.stage,{...deps,...changes,...areaOperations});
   const draft={records,activityAreas:shapeAreas,sourceArchiveBase64:b64(active.stage.rawSource),
     sourcePath:active.stage.sourcePath,sourceFormat:active.stage.sourceFormat,reviewOnly:true};
   const result=await journal.save(draft,{expectedRevision:revision===null?undefined:revision});
@@ -184,8 +198,8 @@ export function createIsolatedEditorSession({JSZip,DOMParser,XMLSerializer,stora
   const stage=await stageKmlInput(input,deps);await audited(stage);
   if(stage.sourcePath!==s.sourcePath||stage.sourceFormat!==s.sourceFormat)throw error('DRAFT_SOURCE','Source archive does not match its saved path and format');
   const preview=previewLegacyPoiStore(stage),shapeAreas=areas(stage);
-  const areaEdits=plannedAreaEdits(shapeAreas,s.activityAreas);
-  await exportNewV1Kmz(stage,{...deps,areaEdits});
+  const areaOperations=plannedAreaOperations(shapeAreas,s.activityAreas);
+  await exportNewV1Kmz(stage,{...deps,...areaOperations});
   const sourceIds=new Set(preview.records.map(x=>x.id));
   if(!Array.isArray(s.records)||s.records.length<sourceIds.size||
     [...sourceIds].some(id=>!s.records.some(x=>x.id===id)))throw error('DRAFT_POI','Draft lost original POIs');
@@ -193,8 +207,8 @@ export function createIsolatedEditorSession({JSZip,DOMParser,XMLSerializer,stora
   const applied=previewStore.replace(s.records);
   if(!applied.ok)throw error('DRAFT_POI','Draft conflicts with original protected POIs');
   const changes=editableDiff(stage,previewStore.snapshot().records);
-  await exportNewV1Kmz(stage,{...deps,...changes,areaEdits});
-  active={stage,store:previewStore,shapeAreas:cloneAreas(s.activityAreas),report:preview.report,converted:false,sourceIds};pending=null;timelineUndo=[];timelineRedo=[];
+  await exportNewV1Kmz(stage,{...deps,...changes,...areaOperations});
+  active={stage,store:previewStore,shapeAreas:cloneAreas(s.activityAreas),report:preview.report,converted:false,sourceIds,areaUsed:new Set([...shapeAreas,...s.activityAreas].map(a=>a.id))};pending=null;timelineUndo=[];timelineRedo=[];
   revision=saved.revision;recoveredFallback=saved.status==='FALLBACK';
   return {status:saved.status,applied:true,readonlyRecovery:recoveredFallback,revision};
  }

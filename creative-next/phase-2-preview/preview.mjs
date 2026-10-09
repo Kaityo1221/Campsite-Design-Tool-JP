@@ -60,6 +60,8 @@ function renderAreaControls(s){
  areaSelect.disabled=vertexSelect.disabled=!area;
  for(const id of ['area-lat','area-lng','area-move','area-add','area-delete'])$(id).disabled=!area;
  $('area-delete').disabled=!area||area.points.length<=3;
+ $('area-create-open').disabled=!s.hasActive||s.recoveredFallback||s.areas.length>=64;
+ $('area-remove').disabled=!area||s.recoveredFallback;
  if(area){$('area-lat').value=area.points[index][0];$('area-lng').value=area.points[index][1];}
  else{$('area-lat').value='';$('area-lng').value='';}
 }
@@ -151,6 +153,33 @@ $('editor').addEventListener('submit',e=>{e.preventDefault();if(!activeId)return
 $('edit-cancel').addEventListener('click',()=>{$('editor').hidden=true;activeId=null;redraw();});
 $('delete').addEventListener('click',()=>{if(!activeId||!confirm('このPOIを削除しますか？紐づく距離円も同時に除外します。Undoで戻せます。'))return;try{const r=session.command({type:'delete',id:activeId},{confirmed:true});if(r.ok){$('editor').hidden=true;activeId=null;redraw();}else announce(r.error?.message||'削除できません','error')}catch(e){failure(e)}});
 for(const action of ['undo','redo'])$(action).addEventListener('click',()=>{try{const result=session[action]();if(result.ok){$('editor').hidden=true;activeId=null;announce('履歴を更新しました。');redraw();}else announce(result.error?.message||'履歴操作できません','error')}catch(e){failure(e)}});
+$('area-create-open').addEventListener('click',()=>{
+ if(!shape().hasActive||shape().recoveredFallback)return;
+ $('area-create-form').hidden=false;$('area-create-points').focus();
+});
+$('area-create-cancel').addEventListener('click',()=>{$('area-create-form').hidden=true;});
+$('area-create-form').addEventListener('submit',event=>{event.preventDefault();try{
+ const lines=$('area-create-points').value.trim().split(/\r?\n/).map(line=>line.trim()).filter(Boolean);
+ if(lines.length<3||lines.length>512)throw new Error('頂点は3〜512件にしてください。');
+ const points=lines.map(line=>{
+  const parts=line.split(',').map(t=>t.trim());
+  if(parts.length!==2||parts.some(t=>!t||!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(t)))throw new Error('「緯度,経度」を1行ずつ入力してください。');
+  return parts.map(Number);
+ });
+ if(!globalThis.crypto?.randomUUID)throw new Error('安全な一意IDを作成できません。HTTPSまたはlocalhostから操作してください。');
+ if(!confirm(`新しい活動範囲（${points.length}頂点）を追加しますか？ Undoで戻せます。`))return;
+ const id='area-'+globalThis.crypto.randomUUID();
+ const result=session.commandArea({type:'area-create',id,points},{confirmed:true});
+ if(!result.changed)throw new Error('活動範囲の作成が拒否されました。');
+ $('area-create-form').reset();$('area-create-form').hidden=true;
+ announce('活動範囲を追加しました。Undoで元に戻せます。');
+ redraw();$('area-select').value=id;renderAreaControls(shape());
+}catch(e){failure(e)}});
+$('area-remove').addEventListener('click',()=>{
+ const id=$('area-select').value;if(!id||shape().recoveredFallback)return;
+ if(!confirm('この活動範囲を丸ごと削除しますか？ 距離円やPOIは削除しません。Undoで戻せます。'))return;
+ try{const result=session.commandArea({type:'area-remove',id},{confirmed:true});if(result.changed){announce('活動範囲を削除しました。Undoで戻せます。');redraw();}}catch(e){failure(e)}
+});
 $('area-select').addEventListener('change',()=>redraw());
 $('area-vertex').addEventListener('change',()=>{updateAreaCoordinates();redraw();});
 for(const [button,type] of [['area-move','area-move-vertex'],['area-add','area-add-vertex'],['area-delete','area-delete-vertex']]){

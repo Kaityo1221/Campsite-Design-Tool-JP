@@ -1,0 +1,1 @@
+CHROMIUM_390_AREA_MEMBERSHIP_UI PASS: original KMZ, form add, confirm remove, Undo/Redo, journal save, legacy key safe; simulated origin/crypto, canvas fallback; not native Leaflet/tiles or Safari

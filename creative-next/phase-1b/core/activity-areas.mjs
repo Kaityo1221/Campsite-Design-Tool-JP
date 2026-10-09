@@ -68,6 +68,42 @@ export function plannedAreaEdits(source,active){
   return JSON.stringify(a.points)===JSON.stringify(b.points)?[]:[{id:a.id,points:b.points.map(p=>[...p])}];
  });
 }
+// Membership changes are explicit. A source area can be removed, but its
+// original bytes remain in the journal; a fresh area cannot impersonate it.
+// Old callers still use plannedAreaEdits() with its strict membership guard.
+export function plannedAreaOperations(source,active){
+ if(!Array.isArray(source)||!Array.isArray(active)||active.length>64)stop('AREA_LIMIT','活動範囲は最大64件です');
+ const original=new Map(),current=new Map();
+ for(const a of source){if(!a||typeof a.id!=='string'||!a.id||original.has(a.id))stop('AREA_SOURCE','元の活動範囲IDが不正です');original.set(a.id,a);}
+ for(const a of active){
+  if(!a||typeof a.id!=='string'||!a.id||a.id.length>128||current.has(a.id))stop('AREA_ID','活動範囲IDが不正または重複しています');
+  if(!original.has(a.id)&&!/^area-[a-zA-Z0-9_-]+$/.test(a.id))stop('AREA_ID','新規ID形式が不正です');
+  validateActivityPoints(a.points);current.set(a.id,a);
+ }
+ const areaEdits=[],areaAdditions=[],areaDeletions=[];
+ for(const a of source){
+  const b=current.get(a.id);
+  if(!b){areaDeletions.push(a.id);continue;}
+  if(JSON.stringify(a.points)!==JSON.stringify(b.points))areaEdits.push({id:a.id,points:b.points.map(p=>[...p])});
+ }
+ for(const a of active)if(!original.has(a.id))areaAdditions.push({id:a.id,points:a.points.map(p=>[...p])});
+ return {areaEdits,areaAdditions,areaDeletions};
+}
+export function planActivityMembership(areas,command,{reservedIds=[]}={}){
+ if(!Array.isArray(areas)||!command||typeof command!=='object')stop('AREA_COMMAND','活動範囲操作が不正です');
+ if(command.type==='area-create'){
+  if(typeof command.id!=='string'||!/^area-[a-zA-Z0-9_-]+$/.test(command.id)||command.id.length>128||reservedIds.includes(command.id)||areas.some(a=>a.id===command.id))stop('AREA_ID','新しい活動範囲IDが重複または不正です');
+  const points=validateActivityPoints(command.points);
+  if(areas.length>=64)stop('AREA_LIMIT','活動範囲は最大64件です');
+  return {kind:'area-membership',id:command.id,before:null,after:points,changed:true};
+ }
+ if(command.type==='area-remove'){
+  const a=areas.find(a=>a.id===command.id);
+  if(!a)stop('AREA_NOT_FOUND','削除する活動範囲がありません');
+  return {kind:'area-membership',id:a.id,before:a.points.map(p=>[...p]),after:null,changed:true};
+ }
+ stop('AREA_COMMAND','活動範囲操作が不正です');
+}
 function coordAttributes(node){return !!node?.attributes?.length;}
 export function editableAreaGeometry(stage,xmlDoc,edit){
  const KML='http://www.opengis.net/kml/2.2';const elems=(node,name)=>Array.from(node?.childNodes??[]).filter(x=>x.nodeType===1&&x.namespaceURI===KML&&(!name||x.localName===name));

@@ -45,3 +45,12 @@ Activity areas with verified `campsite.creative.object=activity-area` and unique
 - When Leaflet provides markers, the selected area's numbered vertex handles can be dragged. A browser confirmation and the source geometry validator both gate the change. Cancellation/validation failure re-renders the original point. Numeric inputs remain available as a fallback.
 - The canvas fallback keeps layer toggles and manual numeric edits but does not claim interactive Leaflet map placement. Leaflet tile loading, browser-origin storage and Safari remain unverified.
 - No new activity-area creation/deletion in this step. Unknown and unusual geometries remain HOLD.
+
+## Oct 9: explicit activity-area creation and complete deletion (isolation only)
+
+- A separate "＋ 活動範囲を新規作成" editor accepts 3–512 numeric `lat,lng` vertices (one per line). It validates a non-self-intersecting polygon before the confirmed edit. The editor creates a distinct, immutable `area-<UUID>` ID and does not treat distance-circle polygons as activity areas.
+- "活動範囲を丸ごと削除" requires confirmation. It removes only the selected activity area from a generated KMZ; the source archive remains in an isolated journal for explicit Undo and user-approved recovery. The POI count and distance circles must remain unchanged.
+- Undo/Redo applies creation and deletion in the same chronological sequence as POI edits and vertex changes. Source area IDs cannot be reused for an unrelated new area. Preview limits new+existing activity areas to 64 (provisional safety bound, not an iPhone file-size limit).
+- The source-aware KMZ exporter rejects source area deletion if geometry contains unverified structure, holes, special altitude, or ambiguous ownership. All output is re-imported and diagnosed before bytes are returned.
+- 195 Node tests pass (including 11 new membership tests); six private real-Kasai regression scripts pass. Simulated Chromium 390px UI (local in-memory storage/crypto) passes. Native Leaflet tiles, actual HTTP-origin storage, ordinary Chromium/WebKit page navigation and iPhone Safari are **not verified**.
+- Nothing here changes public `main` or old Creative Mode. Do not merge or deploy without subsequent full gate review.

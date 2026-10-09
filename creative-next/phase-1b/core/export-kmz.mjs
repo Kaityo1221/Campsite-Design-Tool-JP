@@ -6,7 +6,7 @@
 import { diagnoseKmzCandidate } from './diagnose-kmz-candidate.mjs';
 import { stageKmlInput } from './stage-kmz.mjs';
 import {indexDependentCircles,circleRingAt} from './dependent-circles.mjs';
-import {sourceActivityAreas,plannedAreaEdits,editableAreaGeometry} from './activity-areas.mjs';
+import {sourceActivityAreas,plannedAreaOperations,editableAreaGeometry} from './activity-areas.mjs';
 
 const KML = 'http://www.opengis.net/kml/2.2';
 const PREFIX='campsite.creative.';
@@ -156,7 +156,7 @@ export function assertSafeKindEdit(stage,{DOMParser},id,kind){
  * Every export is re-staged and re-diagnosed before returning bytes.
  * @returns {{bytes: Uint8Array, verification: object}}
  */
-export async function exportNewV1Kmz(stage,{JSZip,DOMParser,XMLSerializer,edits=[],additions=[],areaEdits=[],signal}={}){
+export async function exportNewV1Kmz(stage,{JSZip,DOMParser,XMLSerializer,edits=[],additions=[],areaEdits=[],areaAdditions=[],areaDeletions=[],signal}={}){
   if(signal?.aborted)stop('CANCELLED','Export cancelled');
   if(!JSZip||typeof DOMParser!=='function'||typeof XMLSerializer!=='function')stop('EXPORT_CONFIG','XML and ZIP dependencies required');
   if(!stage?.sourceKml||!(stage.rawSource instanceof Uint8Array)||stage.audit?.unknownInformationPreserved!==true)stop('EXPORT_SOURCE','Original verified source unavailable');
@@ -294,7 +294,7 @@ export async function exportNewV1Kmz(stage,{JSZip,DOMParser,XMLSerializer,edits=
   for(const {coord,text} of circleUpdates)coord.textContent=text;
   // Activity areas are separate from POIs and their distance circles.
   // Validate every request before touching any activity-area coordinate node.
-  if(!Array.isArray(areaEdits))stop('AREA_EDITS','Invalid activity edits');
+  if(!Array.isArray(areaEdits)||!Array.isArray(areaAdditions)||!Array.isArray(areaDeletions))stop('AREA_EDITS','Invalid activity operations');
   const sourceAreas=sourceActivityAreas(stage);
   const byId=new Map(sourceAreas.map(a=>[a.id,a]));
   const requestedAreas=new Map();
@@ -303,10 +303,36 @@ export async function exportNewV1Kmz(stage,{JSZip,DOMParser,XMLSerializer,edits=
        typeof edit.id!=='string'||requestedAreas.has(edit.id)||!byId.has(edit.id))stop('AREA_EDITS','Unknown, repeated or unsupported activity area edit');
     requestedAreas.set(edit.id,edit);
   }
-  const activeAreas=sourceAreas.map(a=>requestedAreas.has(a.id)?requestedAreas.get(a.id):a);
-  const changes=plannedAreaEdits(sourceAreas,activeAreas);
+  const deleteSet=new Set();
+  for(const id of areaDeletions){
+    if(typeof id!=='string'||!byId.has(id)||deleteSet.has(id)||requestedAreas.has(id))stop('AREA_EDITS','Invalid, repeated or conflicting activity deletion');
+    deleteSet.add(id);
+  }
+  const activeAreas=sourceAreas.filter(a=>!deleteSet.has(a.id)).map(a=>requestedAreas.get(a.id)??a).concat(areaAdditions);
+  const operations=plannedAreaOperations(sourceAreas,activeAreas);
+  if(operations.areaAdditions.length!==areaAdditions.length||operations.areaDeletions.length!==deleteSet.size)
+    stop('AREA_EDITS','Activity membership did not match explicit instructions');
+  const changes=operations.areaEdits;
   const areaWrites=changes.map(edit=>editableAreaGeometry(stage,xml,edit));
+  // Preflight removed source geometries before any further writes: unusual
+  // source-specific structures must never be silently discarded.
+  const removals=operations.areaDeletions.map(id=>{
+    const area=byId.get(id);
+    editableAreaGeometry(stage,xml,{id,points:area.points});
+    const index=stage.places.findIndex(p=>p.geometry==='Polygon'&&p.data.some(d=>d.name===PREFIX+'area-id'&&d.value===id));
+    const pm=placemarks[index];
+    if(index<0||!pm||meta(pm,'area-id')!==id||meta(pm,'object')!=='activity-area')stop('AREA_SOURCE','Removed area no longer matches source');
+    return pm;
+  });
   for(const area of areaWrites)area.coordinates.textContent=area.text;
+  for(const pm of removals)pm.parentNode.removeChild(pm);
+  for(const area of operations.areaAdditions){
+    const folder=ensureFolder(xml,doc,'ポリゴン');
+    const pm=element(xml,folder,'Placemark');element(xml,pm,'name','活動範囲');
+    const ext=element(xml,pm,'ExtendedData');putData(xml,ext,'object','activity-area');putData(xml,ext,'area-id',area.id);
+    const polygon=element(xml,pm,'Polygon'),outer=element(xml,polygon,'outerBoundaryIs'),ring=element(xml,outer,'LinearRing');
+    element(xml,ring,'coordinates',[...area.points,area.points[0]].map(([lat,lng])=>`${lng},${lat}`).join(' '));
+  }
   if(signal?.aborted)stop('CANCELLED','Export cancelled');
   const xmlText=new XMLSerializer().serializeToString(xml);
   const zip=stage.sourceFormat==='kmz' ? await JSZip.loadAsync(stage.rawSource,{checkCRC32:true}) : new JSZip();
@@ -320,16 +346,17 @@ export async function exportNewV1Kmz(stage,{JSZip,DOMParser,XMLSerializer,edits=
       report.counts.existing!==before.counts.existing-planned.filter(p=>p.deleted&&p.role==='existing').length||
       report.counts.newTotal!==planned.filter(p=>!p.deleted&&p.role==='new').length+additions.length||
       report.counts.circles!==before.counts.circles-removedCircles+additions.length||
-      report.counts.activityAreas!==before.counts.activityAreas||
-      verified.places.length!==stage.places.length-planned.filter(p=>p.deleted).length-removedCircles+2*additions.length)
+      report.counts.activityAreas!==before.counts.activityAreas-operations.areaDeletions.length+operations.areaAdditions.length||
+      verified.places.length!==stage.places.length-planned.filter(p=>p.deleted).length-removedCircles+2*additions.length-operations.areaDeletions.length+operations.areaAdditions.length)
     stop('EXPORT_ROUNDTRIP','Generated output did not pass full re-staging and diagnosis');
   // Re-read all edited area coordinates rather than relying only on shape counts.
-  for(const area of changes){
+  for(const area of activeAreas){
     const shape=verified.places.find(p=>p.geometry==='Polygon'&&p.data.some(d=>d.name===PREFIX+'area-id'&&d.value===area.id));
     const received=shape?.polygonGeometry?.points?.slice(0,-1).map(p=>[p[1],p[0]]);
     if(!received||JSON.stringify(received)!==JSON.stringify(area.points))
       stop('AREA_ROUNDTRIP','Activity area vertices changed during KMZ export/reimport');
   }
+  for(const id of operations.areaDeletions)if(verified.places.some(p=>p.data?.some(d=>d.name===PREFIX+'area-id'&&d.value===id)))stop('AREA_ROUNDTRIP','Deleted activity area survived export');
   if(signal?.aborted)stop('CANCELLED','Export cancelled');
   return {bytes,verification:report};
 }

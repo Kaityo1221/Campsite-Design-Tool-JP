@@ -41,6 +41,10 @@
   <div class="coords"><label>活動範囲<select id="area-select" disabled aria-label="活動範囲を選択"></select></label><label>頂点<select id="area-vertex" disabled aria-label="頂点を選択"></select></label></div>
   <div class="coords"><label>緯度<input id="area-lat" type="number" step="any" min="-90" max="90" disabled></label><label>経度<input id="area-lng" type="number" step="any" min="-180" max="180" disabled></label></div>
   <div class="toolbar"><button id="area-move" type="button" disabled>頂点を移動</button><button id="area-add" type="button" disabled>この頂点の後に追加</button><button id="area-delete" class="danger" type="button" disabled>頂点を削除</button></div>
+  <div class="toolbar"><button id="area-create-open" type="button" disabled>＋ 活動範囲を新規作成</button><button id="area-remove" type="button" class="danger" disabled>活動範囲を丸ごと削除</button></div>
+  <form id="area-create-form" hidden><h3>新しい活動範囲</h3><p class="hint">頂点を3つ以上、1行ずつ「緯度,経度」で入力してください。順に線で結び、最後の頂点は自動で閉じます。適用前に座標と形状を検証します。</p><label>頂点の座標（最大512点）<textarea id="area-create-points" rows="5" placeholder="35.64,139.85
+35.64,139.86
+35.65,139.86" required></textarea></label><div class="toolbar"><button type="submit">形状を確認して追加</button><button id="area-create-cancel" class="ghost" type="button">キャンセル</button></div></form>
   <p class="hint" id="area-help">KMZを読み込むと頂点を編集できます。変更はUndo／Redo、保存・再開、KMZ書き出しへ反映します。</p>
  </section>
  <section class="panel" aria-labelledby="save-heading">
