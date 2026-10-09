@@ -25,7 +25,7 @@ function snapshot(title){return {records:[{id:'existing-1',role:'existing',kind:
 function journal(storage,locks,extra={}){return createCreativeSaveJournal({storage,locks,requireLock:true,subtle:webcrypto.subtle,...extra});}
 test('browser save refuses to write when an exclusive lock is unavailable',async()=>{
  const storage=new Storage(),j=journal(storage,null);
- await assert.rejects(()=>j.save(snapshot('A')),(e)=>e.code==='SAVE_LOCK_UNAVAILABLE');
+ await assert.rejects(()=>j.save(snapshot('A'),{expectedRevision:null}),(e)=>e.code==='SAVE_LOCK_UNAVAILABLE');
  assert.equal(storage.writes.length,0);
  assert.equal((await j.load()).status,'EMPTY');
 });
@@ -56,7 +56,7 @@ test('same revision, two simultaneous updates: old revision is preserved and onl
 });
 test('a failed queued writer does not stall the lock queue or disturb healthy generation',async()=>{
  const storage=new Storage(),locks=new ExclusiveLocks(),a=journal(storage,locks),b=journal(storage,locks);
- await a.save(snapshot('Original'));
+ await a.save(snapshot('Original'),{expectedRevision:null});
  const rejected=b.save({...snapshot('Bad'),records:[]},{expectedRevision:1});
  const valid=a.save(snapshot('New'),{expectedRevision:1});
  const badResult=await Promise.allSettled([rejected,valid]);
@@ -68,7 +68,36 @@ test('independent save namespaces use separate exclusive lock names',async()=>{
  const storage=new Storage(),locks=new ExclusiveLocks();
  const a=journal(storage,locks,{namespace:'campsite-creative-next-v1-preview'});
  const b=journal(storage,locks,{namespace:'campsite-creative-next-v1-other'});
- await Promise.all([a.save(snapshot('A')),b.save(snapshot('B'))]);
+ await Promise.all([a.save(snapshot('A'),{expectedRevision:null}),b.save(snapshot('B'),{expectedRevision:null})]);
  assert.notEqual(locks.requests[0],locks.requests[1]);
  assert.equal((await a.load()).status,'READY');assert.equal((await b.load()).status,'READY');
+});
+
+
+test('strict browser journal forbids a missing revision on initial save without touching storage',async()=>{
+ const storage=new Storage(),locks=new ExclusiveLocks(),j=journal(storage,locks);
+ await assert.rejects(()=>j.save(snapshot('First')),(e)=>e.code==='SAVE_REVISION_REQUIRED');
+ assert.equal(locks.requests.length,0);assert.equal(storage.writes.length,0);
+ assert.equal((await j.load()).status,'EMPTY');
+});
+
+test('strict browser journal forbids a missing or invalid revision after a successful save',async()=>{
+ const storage=new Storage(),locks=new ExclusiveLocks(),j=journal(storage,locks);
+ await j.save(snapshot('First'),{expectedRevision:null});
+ const savedPointer=storage.getItem(j.keys.pointer),priorWrites=storage.writes.length;
+ for(const args of [{}, {expectedRevision:undefined},{expectedRevision:-1},{expectedRevision:1.5},{expectedRevision:'1'},{expectedRevision:NaN}]){
+   await assert.rejects(()=>j.save(snapshot('Bad'),args),(e)=>e.code==='SAVE_REVISION_REQUIRED');
+ }
+ assert.equal(storage.getItem(j.keys.pointer),savedPointer);
+ assert.equal(storage.writes.length,priorWrites);
+ assert.equal((await j.load()).snapshot.records[0].title,'First');
+});
+
+test('a stale first-save null revision cannot replace a saved project',async()=>{
+ const storage=new Storage(),locks=new ExclusiveLocks(),j=journal(storage,locks);
+ await j.save(snapshot('First'),{expectedRevision:null});
+ const originalPointer=storage.getItem(j.keys.pointer);
+ await assert.rejects(()=>j.save(snapshot('Stale first'),{expectedRevision:null}),(e)=>e.code==='SAVE_CONFLICT');
+ assert.equal(storage.getItem(j.keys.pointer),originalPointer);
+ assert.equal((await j.load()).snapshot.records[0].title,'First');
 });

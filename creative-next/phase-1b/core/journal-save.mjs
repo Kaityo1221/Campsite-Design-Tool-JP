@@ -135,6 +135,12 @@ export function createCreativeSaveJournal({storage,namespace=DEFAULT_NS,subtle=g
     return {status:'SAVED',revision:seq,slot};
   }
   async function save(snapshot,options={}){
+    // The interactive browser editor must always submit the version it last
+    // observed, including null for an empty journal. An omitted precondition
+    // would bypass stale-tab checks even while a Web Lock serialized writers.
+    if(requireLock && (!options || !Object.prototype.hasOwnProperty.call(options,'expectedRevision') ||
+        !(options.expectedRevision===null || (Number.isSafeInteger(options.expectedRevision) && options.expectedRevision>=1))))
+      throw fail('SAVE_REVISION_REQUIRED','Browser saving requires the last observed revision, or null for a new project');
     // localStorage has no compare-and-swap. Two tabs can stage into the same
     // inactive slot before either pointer is switched. Serialize the *entire*
     // verification and commit section using an origin-scoped exclusive Web Lock.
