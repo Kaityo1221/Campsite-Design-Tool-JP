@@ -3,7 +3,7 @@
 No production URL or old v7 storage is ever touched. A blocked launch is NOT PASS.
 Requires Python Playwright and Chromium; Leaflet 1.9.4 CDN network must be available.
 """
-import asyncio, pathlib, subprocess, tempfile, sys
+import asyncio, pathlib, subprocess, tempfile, sys, os
 from functools import partial
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from threading import Thread
@@ -22,7 +22,9 @@ async def run():
         url=f'http://127.0.0.1:{server.server_port}'+URL_PATH
         try:
             async with async_playwright() as p:
-                browser=await p.chromium.launch(headless=True,executable_path='/usr/bin/chromium',args=['--no-sandbox','--disable-dev-shm-usage'])
+                chromium_bin=os.environ.get('CREATIVE_NEXT_CHROMIUM_BIN')
+                if not chromium_bin and pathlib.Path('/usr/bin/chromium').exists(): chromium_bin='/usr/bin/chromium'
+                browser=await p.chromium.launch(headless=True,executable_path=chromium_bin or p.chromium.executable_path,args=['--no-sandbox','--disable-dev-shm-usage'])
                 context=await browser.new_context(viewport={'width':390,'height':844},accept_downloads=True)
                 page=await context.new_page()
                 try:
@@ -43,6 +45,11 @@ async def run():
                 await page.wait_for_function('document.querySelector("#counts").textContent.includes("1")',timeout=25000)
                 assert await page.locator('.leaflet-container').count()==1
                 assert await page.locator('.leaflet-marker-pane').count()==1
+                await page.wait_for_function('document.getElementById("map-engine").textContent.includes("地図タイル読込済み")',timeout=30000)
+                await page.locator('.leaflet-tile-loaded').first.wait_for(state='attached',timeout=30000)
+                tiles=await page.locator('.leaflet-tile-loaded').count()
+                assert tiles>0,'No real Leaflet map tiles loaded'
+                print('PASS: real Leaflet and '+str(tiles)+' map tiles loaded, not a fallback map')
                 await page.locator('#save').click()
                 await page.wait_for_function('document.querySelector("#save-info").textContent.includes("第1世代")',timeout=15000)
                 pointer='campsite-creative-next-v1-preview:current'

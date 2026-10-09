@@ -1,0 +1,43 @@
+name: Creative Next isolated native browser gates
+
+on:
+  push:
+    branches:
+      - feature/creative-next-kmz-phase1b-20261009
+    paths:
+      - 'creative-next/**'
+      - '.github/workflows/creative-next-native-browser.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: creative-next-native-browser-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  native-chromium:
+    if: github.ref == 'refs/heads/feature/creative-next-kmz-phase1b-20261009'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout isolated branch
+        uses: actions/checkout@v4
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install QA-only dependencies
+        run: |
+          npm install --prefix creative-next --no-save --no-package-lock --ignore-scripts jszip@3.10.1 @xmldom/xmldom@0.9.8
+          python -m pip install playwright==1.56.0
+          python -m playwright install --with-deps chromium
+      - name: Baseline isolated Node tests
+        run: node --test creative-next/phase-1b/test/*.test.mjs
+      - name: Native Leaflet and origin-backed storage gates
+        run: python creative-next/qa/native-browser-gates.py
