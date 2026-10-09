@@ -15,7 +15,7 @@ import('./preview.mjs').catch(async error => {
   const targets = [
     './preview.mjs',
     './preview.js',
-    '../phase-1b/integration/isolated-editor-session.js',
+    '../phase-1b/core/stage-kmz.js','../phase-1b/core/diagnose-kmz-candidate.js','../phase-1b/core/legacy-kasai-convert.js','../phase-1b/integration/legacy-poi-preview.js','../phase-1b/core/export-kmz.js','../phase-1b/core/journal-save.js','../phase-1b/core/dependent-circles.js','../phase-1b/core/activity-areas.js','../phase-1b/integration/isolated-editor-session.js',
     '../phase-1b/core/stage-kmz.js',
     './browser-capabilities.js',
     './leaflet-map-view.js'
@@ -34,7 +34,7 @@ import('./preview.mjs').catch(async error => {
     }
   }
   if (status) status.textContent = '起動エラー: ' + (error?.message || String(error));
-  if (details) details.textContent = '配信・依存診断 (v3): ' + checks.join(' | ');
+  if (details) details.textContent = '配信・依存診断 (v4): ' + checks.join(' | ');
   console.error('Creative Next preview initialization failed', error, checks);
 });
 </script>
