@@ -2,6 +2,7 @@ import {createIsolatedEditorSession} from '../phase-1b/integration/isolated-edit
 import {circleRingAt} from '../phase-1b/core/dependent-circles.mjs';
 import {createLeafletMapView} from './leaflet-map-view.mjs';
 import {probePreviewEnvironment} from './browser-capabilities.mjs';
+import {recoveryChoices,exactRecoveryChoice} from './recovery-choices.mjs';
 const $=id=>document.getElementById(id);
 const capabilities=probePreviewEnvironment(globalThis);
 const session=createIsolatedEditorSession({JSZip:globalThis.JSZip,DOMParser:globalThis.DOMParser,XMLSerializer:globalThis.XMLSerializer,storage:capabilities.storage,cryptoProvider:globalThis.crypto,locks:globalThis.navigator?.locks,requireSaveLock:true});
@@ -11,6 +12,7 @@ $('capability-status').textContent=capabilities.warnings.length
 const labels={pokestop:'ポケストップ',gym:'ジム',power:'パワースポット'};
 let activeId=null,coordsOnCanvas=[];
 let leafletView=null,fitMapNext=false,placementArmed=false;
+let recoveryReport=null,recoveryOptions=[];
 function setMapStatus(message){$('map-engine').textContent=message;}
 function updateMapMode(){
  const s=shape(),target=!$('new-poi').hidden?'new':!$('editor').hidden&&activeId&&s.records.find(p=>p.id===activeId)?.role==='new'?'edit':null;
@@ -129,7 +131,7 @@ $('inspect').addEventListener('click',async()=>{const f=$('file').files?.[0];if(
   else{$('candidate').textContent=`${result.status}: 読み込み保留\n${(result.issues||[]).slice(0,12).map(i=>i.message||i.code).join('\n')}`;announce('読み込みを停止しました。編集中のデータはそのままです。','error');}
  }catch(e){failure(e);}finally{$('inspect').disabled=false;redraw();}});
 $('accept').addEventListener('click',()=>{if(!confirm('現在の画面を、検査済みKMZの内容へ置き換えますか？保存済みの別作業は削除しません。'))return;
- try{const r=session.acceptPrepared({confirmed:true});if(r.ok){$('candidate').hidden=true;$('editor').hidden=true;activeId=null;placementArmed=false;fitMapNext=true;$('area-vertex').value='0';announce('隔離プレビューへ反映しました。正式なCreative Modeには反映されていません。');redraw();}}
+ try{const r=session.acceptPrepared({confirmed:true});if(r.ok){clearRecoveryReview();$('candidate').hidden=true;$('editor').hidden=true;activeId=null;placementArmed=false;fitMapNext=true;$('area-vertex').value='0';announce('隔離プレビューへ反映しました。正式なCreative Modeには反映されていません。');redraw();}}
  catch(e){failure(e)}});
 $('discard').addEventListener('click',()=>{session.discardPending();$('candidate').hidden=true;announce('検査を取り消しました。');redraw();});
 $('filter').addEventListener('input',redraw);
@@ -207,10 +209,51 @@ for(const [button,type] of [['area-move','area-move-vertex'],['area-add','area-a
   }catch(e){failure(e)}
  });
 }
-$('save').addEventListener('click',async()=>{try{$('save').disabled=true;const saved=await session.saveDraft();$('save-info').textContent=`保存確認完了（第${saved.revision}世代）。ブラウザ内の隔離領域だけに保存しました。`;announce('保存内容の読み直しが成功しました。');}catch(e){failure(e)}finally{redraw();}});
+$('save').addEventListener('click',async()=>{try{$('save').disabled=true;const saved=await session.saveDraft();clearRecoveryReview();$('save-info').textContent=`保存確認完了（第${saved.revision}世代）。ブラウザ内の隔離領域だけに保存しました。`;announce('保存内容の読み直しが成功しました。');}catch(e){failure(e)}finally{redraw();}});
 $('resume').addEventListener('click',async()=>{try{const r=await session.inspectDraft();if(r.status==='EMPTY'){announce('保存済みの隔離作業はありません。');return;}if(r.status==='CORRUPT'){announce('保存データが壊れています。自動削除・上書きはしません。','error');return;}
  if(!confirm(`保存データ（${r.status}）を読み込んで、現在のプレビューを置き換えますか？`))return;
- const restored=await session.resumeDraft({confirmed:true});if(restored.applied){activeId=null;placementArmed=false;fitMapNext=true;$('area-vertex').value='0';$('editor').hidden=true;announce(restored.readonlyRecovery?'旧世代から表示のみ復旧しました。保存には別の復旧手順が必要です。':'保存データから編集内容を復元しました。');redraw();}}
+ const restored=await session.resumeDraft({confirmed:true});if(restored.applied){clearRecoveryReview();activeId=null;placementArmed=false;fitMapNext=true;$('area-vertex').value='0';$('editor').hidden=true;announce(restored.readonlyRecovery?'旧世代から表示のみ復旧しました。保存には別の復旧手順が必要です。':'保存データから編集内容を復元しました。');redraw();}}
  catch(e){failure(e)}});
+function clearRecoveryReview(){
+ recoveryReport=null;recoveryOptions=[];$('recovery-review').hidden=true;
+ $('recovery-choice').replaceChildren(new Option('保存世代を選択してください',''));
+ $('recovery-apply').disabled=true;
+}
+$('recovery-inspect').disabled=!capabilities.storage||!capabilities.cryptoReady;
+$('recovery-inspect').addEventListener('click',async()=>{
+ try{
+  clearRecoveryReview();
+  const report=await session.inspectRecovery();
+  if(report.status!=='FALLBACK'){
+   announce(report.status==='READY'?'保存内容は正常です。復旧は必要ありません。':report.status==='EMPTY'?'復旧する保存データはありません。':'正常な保存世代が見つかりません。データを削除しません。',report.status==='CORRUPT'?'error':undefined);
+   return;
+  }
+  recoveryOptions=recoveryChoices(report);
+  if(!recoveryOptions.length){announce('安全に選択できる保存世代がありません。','error');return;}
+  recoveryReport=report;
+  $('recovery-choice').replaceChildren(new Option('保存世代を選択してください',''),
+   ...recoveryOptions.map(c=>new Option(c.label,c.key)));
+  $('recovery-info').textContent=`検査で確認した正常な保存世代: ${recoveryOptions.length}件。選択するまで保存内容は変更されません。`;
+  $('recovery-review').hidden=false;
+  announce('保存世代を確認しました。復旧する世代を選択してください。');
+ }catch(e){clearRecoveryReview();failure(e)}
+});
+$('recovery-choice').addEventListener('change',()=>{
+ $('recovery-apply').disabled=!capabilities.locksReady||!exactRecoveryChoice(recoveryOptions,$('recovery-choice').value);
+});
+$('recovery-cancel').addEventListener('click',()=>{clearRecoveryReview();announce('復旧を中止しました。保存内容は変更していません。')});
+$('recovery-apply').addEventListener('click',async()=>{
+ const choice=exactRecoveryChoice(recoveryOptions,$('recovery-choice').value);
+ if(!choice||!recoveryReport){announce('保存世代を先に選択してください。','error');return;}
+ if(!confirm(`第${choice.revision}世代（保存枠${choice.slot.toUpperCase()}）を復旧しますか？\n現在の編集画面は置き換わります。元の保存枠は削除しません。`))return;
+ $('recovery-apply').disabled=true;
+ try{
+  const repaired=await session.recoverDraft({report:recoveryReport,candidate:choice,confirmed:true});
+  if(!repaired.applied)throw new Error('復旧した編集内容を検証できませんでした。');
+  activeId=null;placementArmed=false;fitMapNext=true;$('editor').hidden=true;
+  $('save-info').textContent=`第${repaired.revision}世代へ復旧しました。保存枠は両方保持しています。`;
+  clearRecoveryReview();redraw();announce('保存世代の復旧と読み込みを検証できました。');
+ }catch(e){clearRecoveryReview();failure(e);announce('復旧結果を確認できません。再診断してから操作してください。','error')}
+});
 $('export').addEventListener('click',async()=>{try{$('export').disabled=true;const out=await session.exportKmz();const url=URL.createObjectURL(new Blob([out.bytes],{type:'application/vnd.google-earth.kmz'}));const a=document.createElement('a');a.href=url;a.download='creative-next-preview.kmz';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);announce('安全性の再検査に合格したKMZを作成しました。');}catch(e){failure(e)}finally{redraw();}});
 redraw();

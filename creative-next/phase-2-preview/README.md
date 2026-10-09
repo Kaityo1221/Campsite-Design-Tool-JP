@@ -77,3 +77,12 @@ Activity areas with verified `campsite.creative.object=activity-area` and unique
 - Node: 205/205 (previous 195 + 8 capability + 2 map tile-status tests); real
   private Kasai six regression scripts PASS. Not a substitute for actual
   Chromium/WebKit/Safari URL-origin testing or PO device-test authorization.
+
+## Explicit recovery UI (2026-10-09, isolated preview)
+
+1. Click **復旧できる保存世代を確認** in section 04. Diagnostics only read the two SHA-256-verified journal generations and do not choose a generation or write storage.
+2. Only a `FALLBACK` state with verified candidates displays a choice. No generation is preselected. Choose an exact saved revision and review its slot/checksum, then click **選んだ世代を確認して復旧** and accept the final warning.
+3. The core uses an exclusive origin-scoped Web Lock, checks that the selected generation and original pointer have not changed, updates only the pointer, reads the saved state back, and rebuilds the preview. Any conflict or missing Web Lock stops the operation. Original saved slots and v7 data are never automatically deleted.
+4. After a healthy load, empty journal, fully corrupt journal, or canceled dialog, **no repair is offered**. Inspect again if the situation changes. Legacy source and export safeguards still apply.
+
+**Status:** isolated Node test and Chromium DOM layout verified. Real localhost navigation, native Leaflet/tiles, localStorage/Web Locks, multi-tab races and Safari device tests remain **NOT PASS** because the current managed Chromium denies page navigation with `ERR_BLOCKED_BY_ADMINISTRATOR`. See `../qa/native-browser-gates.py` for an executable real-origin test suite in an unrestricted test environment. Do not merge or expose the isolated preview as production.

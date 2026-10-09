@@ -188,6 +188,23 @@ export function createIsolatedEditorSession({JSZip,DOMParser,XMLSerializer,stora
   revision=result.revision;return result;
  }
  async function inspectDraft(){if(!journal)throw error('SAVE_UNAVAILABLE','No journal');return journal.load();}
+ async function inspectRecovery(){
+  if(!journal)throw error('SAVE_UNAVAILABLE','No journal');
+  return journal.inspectRecovery(); // Read-only, including a damaged pointer.
+ }
+ async function recoverDraft({report,candidate,confirmed=false}={}){
+  if(!journal)throw error('SAVE_UNAVAILABLE','No journal');
+  if(confirmed!==true)throw error('SAVE_CONFIRM_REQUIRED','Choose a verified generation and confirm recovery');
+  if(!report||report.status!=='FALLBACK'||!Array.isArray(report.candidates)||
+     !report.candidates.some(c=>c.slot===candidate?.slot&&c.revision===candidate?.revision&&c.checksum===candidate?.checksum))
+    throw error('SAVE_RECOVERY_INVALID','Select a generation from the current inspected fallback');
+  const restored=await journal.recover({confirmed:true,observedPointer:report.observedPointer,
+    slot:candidate.slot,revision:candidate.revision,checksum:candidate.checksum});
+  const reloaded=await resumeDraft({confirmed:true});
+  if(reloaded.status!=='READY'||!reloaded.applied||reloaded.revision!==restored.revision)
+    throw error('SAVE_VERIFY','Pointer repaired, but editor resume failed; inspect again before editing');
+  return Object.freeze({...restored,applied:true,readonlyRecovery:false});
+ }
  async function resumeDraft({confirmed=false}={}){
   if(!journal)throw error('SAVE_UNAVAILABLE','No journal');
   const saved=await journal.load();
@@ -212,5 +229,5 @@ export function createIsolatedEditorSession({JSZip,DOMParser,XMLSerializer,stora
   revision=saved.revision;recoveredFallback=saved.status==='FALLBACK';
   return {status:saved.status,applied:true,readonlyRecovery:recoveredFallback,revision};
  }
- return Object.freeze({prepare,discardPending,acceptPrepared,command,commandArea,undo,redo,exportKmz,saveDraft,inspectDraft,resumeDraft,state});
+ return Object.freeze({prepare,discardPending,acceptPrepared,command,commandArea,undo,redo,exportKmz,saveDraft,inspectDraft,inspectRecovery,recoverDraft,resumeDraft,state});
 }

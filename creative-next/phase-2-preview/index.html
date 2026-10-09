@@ -51,6 +51,15 @@
  <section class="panel" aria-labelledby="save-heading">
   <h2 id="save-heading">04 · 保存と再開</h2><p class="hint">手動保存・復元も試験用の独立した領域だけを使います。既存の保存データを消さず、保存成功は書き込み後の検査で確認します。</p>
   <div class="toolbar"><button id="save" disabled type="button">この作業を保存</button><button id="resume" type="button" class="ghost">前回の作業を再開</button><button id="export" disabled type="button">KMZを書き出す</button></div><p id="save-info" class="hint"></p>
+  <div class="toolbar"><button id="recovery-inspect" type="button" class="ghost">復旧できる保存世代を確認</button></div>
+  <div id="recovery-review" class="recovery-review" hidden role="region" aria-label="保存世代の復旧確認">
+   <h3>保存データを復旧する</h3>
+   <p class="warning">元の保存世代は削除しません。どちらの世代に戻すか、ご自身で選んでください。現在編集中の内容は確認後に置き換わります。</p>
+   <p id="recovery-info" class="hint" role="status"></p>
+   <label for="recovery-choice">復旧する保存世代</label>
+   <select id="recovery-choice"><option value="">保存世代を選択してください</option></select>
+   <div class="toolbar"><button id="recovery-apply" type="button" class="danger" disabled>選んだ世代を確認して復旧</button><button id="recovery-cancel" type="button" class="ghost">やめる</button></div>
+  </div>
  </section>
 </main>
 <footer>Creative Next · 検証専用 · 本番公開なし</footer>

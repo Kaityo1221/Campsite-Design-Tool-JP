@@ -5,3 +5,5 @@
 .map-toolbar{display:flex;gap:13px;flex-wrap:wrap;align-items:center;margin:0 0 12px}.map-toolbar label{display:inline-flex;align-items:center;gap:6px;margin:0;min-height:35px}.map-toolbar input{width:auto;min-width:16px}.map-toolbar button{margin-left:auto}.creative-next-vertex{background:white;border:2px solid #267e61;border-radius:50%;box-shadow:0 2px 7px #14261d6e;text-align:center;font-weight:700;font-size:11px;line-height:20px;color:#22503e;cursor:grab}.creative-next-vertex:active{cursor:grabbing}@media(max-width:600px){.map-toolbar{gap:8px}.map-toolbar button{margin-left:0}}
 
 .capability-status,.map-engine{font-size:12px;line-height:1.6;padding:8px 10px;margin:6px 0;color:#234a3b;background:#edf4f0;border-radius:7px}.map-engine{background:#eff6fa;color:#23546d}
+
+.recovery-review{margin-top:12px;padding:16px;border-radius:12px;border:2px solid #b3c7bb;background:#fbfdfb}.recovery-review h3{margin:0 0 8px}.recovery-review label{margin:10px 0 4px}.recovery-review .warning{margin-bottom:12px}
