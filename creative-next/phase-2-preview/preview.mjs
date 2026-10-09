@@ -3,9 +3,20 @@ import {circleRingAt} from '../phase-1b/core/dependent-circles.mjs';
 import {createLeafletMapView} from './leaflet-map-view.mjs';
 import {probePreviewEnvironment} from './browser-capabilities.mjs';
 import {recoveryChoices,exactRecoveryChoice} from './recovery-choices.mjs';
+import {createStrictIndexedCheckpoint} from './strict-idb-checkpoint.mjs';
 const $=id=>document.getElementById(id);
 const capabilities=probePreviewEnvironment(globalThis);
+// Experimental durability sidecar, separate from the existing two-generation
+// localStorage journal. The browser cannot claim successful *protected* save
+// until the strict IndexedDB checkpoint transaction has completed.
+let strictCheckpoint=null;
+try{
+ if(globalThis.indexedDB && globalThis.crypto?.subtle)
+  strictCheckpoint=createStrictIndexedCheckpoint({namespace:'campsite-creative-next-v1-preview'});
+}catch{/* Fail closed: the save control below is disabled without protection. */}
+
 const session=createIsolatedEditorSession({JSZip:globalThis.JSZip,DOMParser:globalThis.DOMParser,XMLSerializer:globalThis.XMLSerializer,storage:capabilities.storage,cryptoProvider:globalThis.crypto,locks:globalThis.navigator?.locks,requireSaveLock:true});
+$('strict-checkpoint-info').textContent=strictCheckpoint?'IndexedDB耐久性チェックポイント: 準備中（実保存は未検証）':'IndexedDBチェックポイントを利用できません。安全な保存は停止しています。';
 $('capability-status').textContent=capabilities.warnings.length
   ?'環境確認: '+capabilities.warnings.join(' ')
   :'環境確認: 必要な読込機能が見つかりました。保存の実書き込みは保存操作時に検証します。';
@@ -79,6 +90,32 @@ function updateAreaCoordinates(){
  const p=area?.points[Number($('area-vertex').value)];
  if(p){$('area-lat').value=p[0];$('area-lng').value=p[1];}
 }
+async function refreshStrictCheckpoint(){
+ $('strict-restore').hidden=true;
+ if(!strictCheckpoint)return;
+ try{
+  const [disk,journal]=await Promise.all([strictCheckpoint.inspect(),session.inspectDraft()]);
+  if(disk.status==='READY' && journal.status==='EMPTY' && !shape().hasActive){
+   $('strict-restore').hidden=false;
+   $('strict-checkpoint-info').textContent=`緊急復旧候補: IndexedDB ${disk.revision}世代。従来保存が空です。復旧には確認が必要です。`;
+  }else if(disk.status==='READY')
+   $('strict-checkpoint-info').textContent=`IndexedDBチェックポイント ${disk.revision}世代を検査済み（保存の絶対保証ではありません）。`;
+  else if(disk.status==='EMPTY')
+   $('strict-checkpoint-info').textContent='IndexedDBチェックポイントはまだありません。';
+  else $('strict-checkpoint-info').textContent='IndexedDBチェックポイントの検査に問題があります。自動復元は行いません。';
+ }catch(e){$('strict-checkpoint-info').textContent='IndexedDBの読込に失敗しました。保存データの上書きは行いません。';}
+}
+$('strict-restore').addEventListener('click',async()=>{
+ if(!strictCheckpoint)return;
+ if(!confirm('通常保存が空のため、確認済みIndexedDBバックアップから復元しますか？既存の作業は上書きしません。'))return;
+ try{
+  const [checkpoint,local]=await Promise.all([strictCheckpoint.inspect(),session.inspectDraft()]);
+  if(checkpoint.status!=='READY'||local.status!=='EMPTY')throw new Error('復元候補の状態が変更されました。再確認してください。');
+  await session.restoreStrictCheckpoint({checkpointSnapshot:checkpoint.snapshot,confirmed:true});
+  clearRecoveryReview();fitMapNext=true;announce('確認済みIndexedDBチェックポイントから復元しました。');redraw();
+  await refreshStrictCheckpoint();
+ }catch(e){failure(e);await refreshStrictCheckpoint();}
+});
 function redraw(){
  const s=shape(),filtered=s.records.filter(p=>!p.deleted),term=$('filter').value.trim().toLowerCase();
  updateMapMode();$('map-fit').disabled=!s.hasActive;
@@ -86,7 +123,7 @@ function redraw(){
  $('counts').textContent=s.hasActive?`既存 ${s.counts.existing.count} / 700 ｜ 新規 ${s.counts.new.count} / 25 ｜ 距離円 ${s.shapes?.circles??0} ｜ 活動範囲 ${s.areas.length}`:'未読み込み';
  renderAreaControls(s);
  $('accept').disabled=!s.hasPending;$('discard').disabled=!s.hasPending;
- $('filter').disabled=!s.hasActive; $('save').disabled=!s.hasActive||!capabilities.canSave; $('export').disabled=!s.hasActive||!capabilities.canExport;
+ $('filter').disabled=!s.hasActive; $('save').disabled=!s.hasActive||!capabilities.canSave||!strictCheckpoint; $('export').disabled=!s.hasActive||!capabilities.canExport;
  $('add-new').disabled=!s.hasActive||s.counts.new.count>=25;
  for(const option of $('new-kind').options)option.disabled=!s.hasActive||!s.counts.new.types[option.value]?.canAdd;
  $('undo').disabled=!s.hasActive||!s.history.undo;$('redo').disabled=!s.hasActive||!s.history.redo;
@@ -209,7 +246,27 @@ for(const [button,type] of [['area-move','area-move-vertex'],['area-add','area-a
   }catch(e){failure(e)}
  });
 }
-$('save').addEventListener('click',async()=>{try{$('save').disabled=true;const saved=await session.saveDraft();clearRecoveryReview();$('save-info').textContent=`保存確認完了（第${saved.revision}世代）。ブラウザ内の隔離領域だけに保存しました。`;announce('保存内容の読み直しが成功しました。');}catch(e){failure(e)}finally{redraw();}});
+$('save').addEventListener('click',async()=>{
+ try{
+  $('save').disabled=true;
+  if(!strictCheckpoint)throw new Error('耐久性チェックポイントが利用できません。KMZ書き出しをご利用ください。');
+  const saved=await session.saveDraft();
+  // Local journal first, strict checkpoint second. Never tell the user the
+  // entire protected save completed if IndexedDB fails.
+  const draft=await session.inspectDraft();
+  if(draft.status!=='READY'||draft.revision!==saved.revision)throw new Error('保存直後の世代照合に失敗');
+  const current=await strictCheckpoint.inspect();
+  if(!['EMPTY','READY'].includes(current.status))throw new Error('IndexedDBの復旧確認が必要。KMZバックアップを推奨します。');
+  const checkpointed=await strictCheckpoint.save(draft.snapshot,{expectedRevision:current.revision});
+  clearRecoveryReview();
+  $('save-info').textContent=`保存確認完了（第${saved.revision}世代）。IndexedDB耐久性チェックポイント${checkpointed.revision}世代の完了も確認しました。ただし強制終了や端末故障への絶対保証ではありません。`;
+  announce('2世代保存とIndexedDBチェックポイントを確認しました。');
+  await refreshStrictCheckpoint();
+ }catch(e){
+  $('save-info').textContent='保護付き保存は未完了です。KMZを書き出して退避してください。';
+  failure(e);
+ }finally{redraw();}
+});
 $('resume').addEventListener('click',async()=>{try{const r=await session.inspectDraft();if(r.status==='EMPTY'){announce('保存済みの隔離作業はありません。');return;}if(r.status==='CORRUPT'){announce('保存データが壊れています。自動削除・上書きはしません。','error');return;}
  if(!confirm(`保存データ（${r.status}）を読み込んで、現在のプレビューを置き換えますか？`))return;
  const restored=await session.resumeDraft({confirmed:true});if(restored.applied){clearRecoveryReview();activeId=null;placementArmed=false;fitMapNext=true;$('area-vertex').value='0';$('editor').hidden=true;announce(restored.readonlyRecovery?'旧世代から表示のみ復旧しました。保存には別の復旧手順が必要です。':'保存データから編集内容を復元しました。');redraw();}}
@@ -257,3 +314,5 @@ $('recovery-apply').addEventListener('click',async()=>{
 });
 $('export').addEventListener('click',async()=>{try{$('export').disabled=true;const out=await session.exportKmz();const url=URL.createObjectURL(new Blob([out.bytes],{type:'application/vnd.google-earth.kmz'}));const a=document.createElement('a');a.href=url;a.download='creative-next-preview.kmz';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);announce('安全性の再検査に合格したKMZを作成しました。');}catch(e){failure(e)}finally{redraw();}});
 redraw();
+
+void refreshStrictCheckpoint();

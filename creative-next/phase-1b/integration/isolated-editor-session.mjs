@@ -188,6 +188,39 @@ export function createIsolatedEditorSession({JSZip,DOMParser,XMLSerializer,stora
   revision=result.revision;return result;
  }
  async function inspectDraft(){if(!journal)throw error('SAVE_UNAVAILABLE','No journal');return journal.load();}
+ async function restoreStrictCheckpoint({checkpointSnapshot,confirmed=false}={}){
+  if(!journal)throw error('SAVE_UNAVAILABLE','No journal');
+  if(confirmed!==true)throw error('SAVE_CONFIRM_REQUIRED','Restoration needs explicit confirmation');
+  if(active||pending)throw error('SAVE_ACTIVE','Cannot replace an active or pending editor');
+  const current=await journal.load();
+  if(current.status!=='EMPTY')throw error('SAVE_CONFLICT','Checkpoint restoration only allowed when local journal is empty');
+  if(!checkpointSnapshot||checkpointSnapshot.reviewOnly!==true||
+     typeof checkpointSnapshot.sourceArchiveBase64!=='string')
+     throw error('DRAFT_MISMATCH','Not a source-bearing isolated editor checkpoint');
+  // Validate original KMZ, POI immutability, edited polygons, and export
+  // BEFORE writing anything to the currently empty local journal.
+  const input=from64(checkpointSnapshot.sourceArchiveBase64);
+  const stage=await stageKmlInput(input,deps);await audited(stage);
+  if(stage.sourcePath!==checkpointSnapshot.sourcePath||stage.sourceFormat!==checkpointSnapshot.sourceFormat)
+    throw error('DRAFT_SOURCE','Checkpoint source format or path mismatch');
+  const preview=previewLegacyPoiStore(stage),shapeAreas=areas(stage);
+  const areaOperations=plannedAreaOperations(shapeAreas,checkpointSnapshot.activityAreas);
+  const sourceIds=new Set(preview.records.map(x=>x.id));
+  if(!Array.isArray(checkpointSnapshot.records)||checkpointSnapshot.records.length<sourceIds.size||
+    [...sourceIds].some(id=>!checkpointSnapshot.records.some(x=>x.id===id)))
+    throw error('DRAFT_POI','Checkpoint lost original POIs');
+  const applied=preview.store.replace(checkpointSnapshot.records);
+  if(!applied.ok)throw error('DRAFT_POI','Checkpoint would violate protected source POIs');
+  const changes=editableDiff(stage,preview.store.snapshot().records);
+  await exportNewV1Kmz(stage,{...deps,...changes,...areaOperations});
+  // Journal handles CAS/lock, schema and checksum; resume repeats verification.
+  const saved=await journal.save(checkpointSnapshot,{expectedRevision:null});
+  const resumed=await resumeDraft({confirmed:true});
+  if(resumed.status!=='READY'||!resumed.applied||resumed.revision!==saved.revision)
+    throw error('SAVE_VERIFY','Checkpoint was restored to journal but editor verification failed');
+  return Object.freeze({status:'CHECKPOINT_RESTORED',revision:saved.revision});
+ }
+
  async function inspectRecovery(){
   if(!journal)throw error('SAVE_UNAVAILABLE','No journal');
   return journal.inspectRecovery(); // Read-only, including a damaged pointer.
@@ -229,5 +262,5 @@ export function createIsolatedEditorSession({JSZip,DOMParser,XMLSerializer,stora
   revision=saved.revision;recoveredFallback=saved.status==='FALLBACK';
   return {status:saved.status,applied:true,readonlyRecovery:recoveredFallback,revision};
  }
- return Object.freeze({prepare,discardPending,acceptPrepared,command,commandArea,undo,redo,exportKmz,saveDraft,inspectDraft,inspectRecovery,recoverDraft,resumeDraft,state});
+ return Object.freeze({prepare,discardPending,acceptPrepared,command,commandArea,undo,redo,exportKmz,saveDraft,inspectDraft,inspectRecovery,recoverDraft,resumeDraft,restoreStrictCheckpoint,state});
 }

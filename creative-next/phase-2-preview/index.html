@@ -50,7 +50,7 @@
  </section>
  <section class="panel" aria-labelledby="save-heading">
   <h2 id="save-heading">04 · 保存と再開</h2><p class="hint">手動保存・復元も試験用の独立した領域だけを使います。既存の保存データを消さず、保存成功は書き込み後の検査で確認します。</p>
-  <div class="toolbar"><button id="save" disabled type="button">この作業を保存</button><button id="resume" type="button" class="ghost">前回の作業を再開</button><button id="export" disabled type="button">KMZを書き出す</button></div><p id="save-info" class="hint"></p>
+  <div class="toolbar"><button id="save" disabled type="button">この作業を保存</button><button id="resume" type="button" class="ghost">前回の作業を再開</button><button id="export" disabled type="button">KMZを書き出す</button></div><p id="save-info" class="hint"></p><p id="strict-checkpoint-info" class="hint"></p><button id="strict-restore" class="ghost" hidden type="button">IndexedDBバックアップから確認して復元</button>
   <div class="toolbar"><button id="recovery-inspect" type="button" class="ghost">復旧できる保存世代を確認</button></div>
   <div id="recovery-review" class="recovery-review" hidden role="region" aria-label="保存世代の復旧確認">
    <h3>保存データを復旧する</h3>
