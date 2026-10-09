@@ -1,5 +1,8 @@
 # Creative Next: non-production isolated map/editor preview
 
+> **重要・最新版への導線 (2026-10-09)**: 以下は実装途中の履歴も含むREADMEです。「POI追加HOLD」「Leaflet未PASS」等の古い記述は現在の合否ではありません。最新版は [Creative Next共通仕様書](../SPECIFICATION.md) と [PC総合回帰結果](../PC_FINAL_REGRESSION_REPORT_20261009.md) を参照。実Chromium総合試験・Node 249件PASS済み、iPhone Safari未実施。公開・mainマージは未承認です。
+
+
 **Do not merge, deploy, link from production, or treat as public Creative Mode.**
 
 This preview connects an audited Kasai-style KMZ candidate to the approved Phase 1-A POI store and guarded Phase 1-B exporter / two-generation save journal. A file must first pass exhaustive staging and explicit replace confirmation. No legacy storage keys are read or modified.

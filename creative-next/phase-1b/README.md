@@ -1,5 +1,8 @@
 # Creative Next | Phase 1-B isolated KMZ and save prototypes
 
+> **重要・最新版への導線 (2026-10-09)**: このREADMEは開発経緯を含むため、105/195件PASSやブラウザ未PASSといった古い記述があります。現在の仕様・249件PASS・PC最終試験・iPhone未実施ゲートは [共通仕様書](../SPECIFICATION.md) を優先してください。公開・mainマージ・iPhone実機試験は未承認です。
+
+
 **DO NOT MERGE, DEPLOY, PUBLISH OR CONNECT TO PRODUCTION.**
 Repository: `Kaityo1221/Campsite-Design-Tool-JP`.
 Source baseline: main `f5dc8d88ad3987df82c000e2cac4b8aa0bc5ed80`.
