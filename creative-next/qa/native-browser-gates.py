@@ -132,41 +132,74 @@ async def run():
                 assert quota['pointerSame'] and quota['status']=='READY' and quota['revision']==1 and quota['title']=='Committed',quota
                 print('PASS: native localStorage QuotaExceededError preserved committed generation; filler bytes cleaned',flush=True)
 
-                # Abrupt Chromium renderer termination and reopen, NOT a clean
-                # window.close()/browser.close(). Prior committed data must survive.
-                print('NATIVE_RENDERER_CRASH_START',flush=True)
-                crash_page=await context.new_page()
-                await crash_page.goto(url,wait_until='domcontentloaded')
-                native_crash=asyncio.Event()
-                crash_page.on('crash',lambda _:native_crash.set())
-                cdp=await context.new_cdp_session(crash_page)
-                # A renderer deliberately killed by Page.crash may NEVER reply to
-                # the command. Send concurrently and wait for the crash event.
-                crash_command=asyncio.create_task(cdp.send('Page.crash'))
-                try:
-                    await asyncio.wait_for(native_crash.wait(),timeout=12)
-                finally:
-                    crash_command.cancel()
-                    # The crashed target may reject close or remain unresponsive.
+                # Real abrupt browser-process termination. Use a separate
+                # persistent profile so the on-disk storage can be reopened
+                # after SIGKILL, unlike ephemeral incognito new_context().
+                await context.close();await browser.close()
+                profile=pathlib.Path(tmp)/'chrome-crash-profile'
+                crash_context=await asyncio.wait_for(
+                    p.chromium.launch_persistent_context(str(profile),headless=True,
+                        executable_path=chromium_bin or p.chromium.executable_path,
+                        args=['--no-sandbox','--disable-dev-shm-usage']),
+                    timeout=25)
+                crash_page=crash_context.pages[0] if crash_context.pages else await crash_context.new_page()
+                await crash_page.goto(url,wait_until='domcontentloaded',timeout=15000)
+                committed=await crash_page.evaluate(f'''async () => {{
+                    const {{createCreativeSaveJournal}}=await import('{JS_PATH}');
+                    const j=createCreativeSaveJournal({{storage:localStorage,
+                        namespace:'campsite-creative-next-v1-crash-persistent',
+                        locks:navigator.locks,requireLock:true}});
+                    await j.save({{records:[{{id:'persist',role:'existing',kind:'pokestop',
+                      title:'CommittedBeforeCrash',lat:35,lng:139}}],activityAreas:[]}},
+                      {{expectedRevision:null}});
+                    const r=await j.load();
+                    return {{status:r.status,revision:r.revision,title:r.snapshot?.records[0]?.title}};
+                }}''')
+                assert committed=={'status':'READY','revision':1,'title':'CommittedBeforeCrash'},committed
+                # Allow Chromium's LevelDB journal time to flush the committed write.
+                await asyncio.sleep(1)
+                # Identify ONLY this disposable profile's top-level Chromium PID.
+                roots=[]
+                profile_arg=('--user-data-dir='+str(profile)).encode()
+                for process in pathlib.Path('/proc').iterdir():
+                    if not process.name.isdecimal():
+                        continue
                     try:
-                        await asyncio.wait_for(crash_page.close(),timeout=5)
-                    except Exception:
-                        pass
-                reopened=await context.new_page()
-                await reopened.goto(url,wait_until='domcontentloaded')
+                        args=(process/'cmdline').read_bytes().split(b'\x00')
+                    except (OSError,PermissionError):
+                        continue
+                    if profile_arg in args and not any(a.startswith(b'--type=') for a in args):
+                        roots.append(int(process.name))
+                assert len(roots)==1,('Cannot safely identify one disposable Chromium process',roots)
+                print('NATIVE_BROWSER_SIGKILL_START',{'profile':profile.name},flush=True)
+                import signal
+                os.kill(roots[0],signal.SIGKILL)
+                await asyncio.sleep(1)
+                # Reopen the exact on-disk profile; a clean close would not
+                # test crash resilience and must not substitute for SIGKILL.
+                reopened_context=await asyncio.wait_for(
+                    p.chromium.launch_persistent_context(str(profile),headless=True,
+                        executable_path=chromium_bin or p.chromium.executable_path,
+                        args=['--no-sandbox','--disable-dev-shm-usage']),
+                    timeout=25)
+                reopened=reopened_context.pages[0] if reopened_context.pages else await reopened_context.new_page()
+                await reopened.goto(url,wait_until='domcontentloaded',timeout=15000)
                 recovered=await reopened.evaluate(f'''async () => {{
                     const {{createCreativeSaveJournal}}=await import('{JS_PATH}');
-                    const j=createCreativeSaveJournal({{storage:localStorage,namespace:'campsite-creative-next-v1-native-quota',locks:navigator.locks,requireLock:true}});
+                    const j=createCreativeSaveJournal({{storage:localStorage,
+                        namespace:'campsite-creative-next-v1-crash-persistent',
+                        locks:navigator.locks,requireLock:true}});
                     const state=await j.load();
-                    return {{status:state.status,revision:state.revision,title:state.snapshot?.records[0]?.title}};
+                    return {{status:state.status,revision:state.revision,
+                        title:state.snapshot?.records[0]?.title}};
                 }}''')
-                assert recovered=={'status':'READY','revision':1,'title':'Committed'},recovered
-                print('PASS: committed native storage survived a forced Chromium renderer crash and fresh-tab reopen',flush=True)
+                assert recovered=={'status':'READY','revision':1,'title':'CommittedBeforeCrash'},recovered
+                print('PASS: real browser SIGKILL and fresh persistent-profile reopen preserved committed localStorage',flush=True)
+                await reopened_context.close()
 
-                await context.close();await browser.close()
                 return 0
         finally:server.shutdown()
 
 if __name__=='__main__':
     try:sys.exit(asyncio.run(run()))
-    except Exception as exc:print('NOT_PASS:',str(exc)[:1000]);sys.exit(1)
+    except Exception as exc:print('NOT_PASS:',type(exc).__name__,repr(exc)[:1000],flush=True);sys.exit(1)
