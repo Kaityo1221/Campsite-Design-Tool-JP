@@ -9,13 +9,29 @@
 <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
 <script defer src="./vendor/jszip.min.js"></script>
 <script type="module">
-import('./preview.mjs').catch(error => {
-  const message = error?.message || String(error);
+import('./preview.mjs').catch(async error => {
   const status = document.getElementById('capability-status');
   const details = document.getElementById('status');
-  if (status) status.textContent = '起動エラー: ' + message;
-  if (details) details.textContent = 'Creative Nextの初期化に失敗しました。画面のエラー文をお知らせください。';
-  console.error('Creative Next preview initialization failed', error);
+  const targets = [
+    './preview.mjs',
+    './preview.js',
+    '../phase-1b/integration/isolated-editor-session.js',
+    '../phase-1b/core/stage-kmz.js',
+    './browser-capabilities.js',
+    './leaflet-map-view.js'
+  ];
+  const checks = [];
+  for (const target of targets) {
+    try {
+      const response = await fetch(target, {cache:'no-store'});
+      checks.push(target + ': HTTP ' + response.status + ' / ' + (response.headers.get('content-type') || 'type unknown'));
+    } catch (e) {
+      checks.push(target + ': ' + (e?.message || String(e)));
+    }
+  }
+  if (status) status.textContent = '起動エラー: ' + (error?.message || String(error));
+  if (details) details.textContent = '配信診断 (v2): ' + checks.join(' | ');
+  console.error('Creative Next preview initialization failed', error, checks);
 });
 </script>
 </head>
