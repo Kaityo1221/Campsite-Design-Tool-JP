@@ -21,6 +21,10 @@ import('./preview.mjs').catch(async error => {
     './leaflet-map-view.js'
   ];
   const checks = [];
+  for (const target of ['./browser-capabilities.js','./leaflet-map-view.js','./recovery-choices.js','./strict-idb-checkpoint.js','../phase-1b/integration/isolated-editor-session.js']) {
+    try { await import(target); checks.push('IMPORT OK ' + target); }
+    catch (e) { checks.push('IMPORT FAIL ' + target + ': ' + (e?.message || String(e))); }
+  }
   for (const target of targets) {
     try {
       const response = await fetch(target, {cache:'no-store'});
@@ -30,7 +34,7 @@ import('./preview.mjs').catch(async error => {
     }
   }
   if (status) status.textContent = '起動エラー: ' + (error?.message || String(error));
-  if (details) details.textContent = '配信診断 (v2): ' + checks.join(' | ');
+  if (details) details.textContent = '配信・依存診断 (v3): ' + checks.join(' | ');
   console.error('Creative Next preview initialization failed', error, checks);
 });
 </script>
