@@ -20,7 +20,7 @@ async def confirm_next(page, accept=True):
     page.once('dialog', lambda d: asyncio.create_task(d.accept() if accept else d.dismiss()))
 
 async def expect_count(page, snippet):
-    await page.wait_for_function('x => document.querySelector("#counts").textContent.includes(x)', snippet, timeout=12000)
+    await page.wait_for_function('x => document.querySelector("#counts").textContent.includes(x)', arg=snippet, timeout=12000)
 
 async def run():
     with tempfile.TemporaryDirectory(prefix='creative-next-pc-final-') as scratch:
