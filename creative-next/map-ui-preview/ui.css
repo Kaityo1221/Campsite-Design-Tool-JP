@@ -43,3 +43,37 @@
 @media(max-height:690px){.entry-spacer{min-height:130px}.floating-left{bottom:calc(130px + env(safe-area-inset-bottom))}.preview-state{top:calc(106px + env(safe-area-inset-top))}}
 @media(max-width:390px){.entry-content{padding-left:14px;padding-right:14px}.entry h1{font-size:clamp(33px,9.1vw,42px)}.floating-left{left:9px}.floating-right{right:9px}.top-tools .float-btn{font-size:12px}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+
+/* U2-C: iPhone Map First panels, review build. No engine behavior touched. */
+@media (max-width:600px) {
+  .tool-panel,.add-panel {
+    right:80px;
+    bottom:calc(91px + env(safe-area-inset-bottom));
+    width:min(226px,calc(100vw - 170px));
+    max-height:calc(100dvh - 205px);
+    overflow-y:auto;
+    padding:10px;
+    border-radius:15px;
+  }
+  .tool-panel .panel-title strong,.add-panel .panel-title strong {font-size:14px}
+  .tool-panel button:not(.close) {min-height:44px;font-size:12px;margin:4px 0;padding:6px 8px}
+  .poi-choices {gap:5px;margin-top:7px}
+  .poi-choices button {min-height:78px;padding:5px 2px;gap:4px}
+  .poi-choices img {width:30px;height:30px}
+  .poi-choices span {font-size:10px;overflow-wrap:anywhere}
+  .tool-panel p,.add-panel p {font-size:10px;line-height:1.35;margin:8px 0 0}
+  .help-panel {
+    width:min(318px,calc(100vw - 48px));
+    bottom:calc(146px + env(safe-area-inset-bottom));
+    border-radius:18px;
+  }
+  .help-head{padding:8px 9px 3px 14px}
+  .help-head strong{font-size:16px}
+  .help-cards{gap:8px;padding:3px 12px 6px}
+  .help-cards article{min-height:154px;padding:12px 12px 10px}
+  .help-cards h2{font-size:18px;margin:5px 0 8px}
+  .help-cards p{font-size:12px;line-height:1.45}
+  .big-count{font-size:32px}
+  .help-dots{padding:0 0 7px}
+  .workspace:has(.pop-panel:not([hidden]),.help-panel:not([hidden])) .preview-state {opacity:0}
+}
