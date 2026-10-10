@@ -1,0 +1,26 @@
+name: Creative Next Exclusive Browser E2E
+on:
+  push:
+    branches: [feature/creative-next-ui-exact-parity-20261010]
+    paths:
+      - 'creative-next/qa/exclusive-browser/**'
+      - 'creative-next/qa/exclusive-browser-e2e.py'
+      - '.github/workflows/creative-next-exclusive-browser.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  event-exclusivity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install playwright==1.56.0
+      - run: python -m playwright install --with-deps chromium
+      - run: node creative-next/qa/current-creative-ui-source-parity.cjs
+      - run: python creative-next/qa/exclusive-browser-e2e.py
