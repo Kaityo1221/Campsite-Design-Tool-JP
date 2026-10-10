@@ -1,0 +1,23 @@
+name: Creative Next Exact UI Read Following
+on:
+  push:
+    branches: [feature/creative-next-ui-exact-parity-20261010]
+    paths:
+      - 'creative-next/integration/creative-ui-read-follower.mjs'
+      - 'creative-next/qa/creative-ui-read-follower.test.mjs'
+      - '.github/workflows/creative-next-ui-read-follower.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  read-only-adapter:
+    if: github.ref == 'refs/heads/feature/creative-next-ui-exact-parity-20261010'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check creative-next/integration/creative-ui-read-follower.mjs
+      - run: node creative-next/qa/creative-ui-read-follower.test.mjs
+      - run: node creative-next/qa/current-creative-ui-source-parity.cjs
