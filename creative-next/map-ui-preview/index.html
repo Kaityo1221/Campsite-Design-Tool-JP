@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>CREATIVE MODE | Map First UI rehearsal</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous">
+<link rel="stylesheet" href="./ui.css?v=u2-20261010">
+<script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
+<script defer src="./ui.js?v=u2-20261010"></script>
+</head>
+<body>
+<section id="entry" class="entry" aria-labelledby="entryTitle">
+  <div class="entry-content">
+    <p class="entry-kicker">CAMPSITE / CREATIVE NEXT</p>
+    <h1 id="entryTitle">CREATIVE MODE</h1>
+    <p class="entry-copy">新しい世界の幕開けへ。</p>
+    <div class="entry-spacer" aria-hidden="true"></div>
+    <div class="entry-actions">
+      <div class="preview-label">UIデザイン確認専用・編集データは扱いません</div>
+      <button id="start" type="button" class="start">創作をはじめる <span aria-hidden="true">✣</span></button>
+      <button class="filebar" type="button" disabled><span aria-hidden="true">▱</span><b>ゲームスポット元データを選択</b><small>機能接続前</small></button>
+      <p class="entry-note">この版では地図と操作画面の見た目を確認できます。KMZ読込・保存・既存データの再開は行いません。</p>
+    </div>
+  </div>
+</section>
+
+<main id="workspace" class="workspace" hidden aria-label="Creative Mode 地図中心UIプレビュー">
+  <div id="mapFallback" class="map-fallback" aria-hidden="true"><span>地図を準備しています</span></div>
+  <div id="leafletMap" class="leaflet-map" role="region" aria-label="地図を移動・拡大できます"></div>
+  <div class="workspace-top">
+    <button id="back" class="float-btn back-btn" type="button">‹ 戻る</button>
+    <div class="top-tools">
+      <button id="basemap" class="float-btn" type="button" aria-pressed="false">地図切替</button>
+      <button id="layers" class="float-btn" type="button" aria-expanded="false" aria-controls="layerPanel">▱ レイヤー</button>
+    </div>
+  </div>
+  <div class="preview-state" role="status" aria-live="polite">UIプレビュー <span aria-hidden="true">·</span> 編集・保存は未接続</div>
+  <div class="map-crosshair" aria-hidden="true"><span></span></div>
+  <div class="floating-left">
+    <button id="help" type="button" class="square-btn" aria-label="設計ルールを開く">?</button>
+  </div>
+  <div class="floating-right">
+    <button id="save" type="button" class="square-btn" disabled aria-label="保存（機能接続前）"><span aria-hidden="true">💾</span></button>
+    <button id="toolbox" type="button" class="square-btn" aria-expanded="false" aria-controls="toolPanel" aria-label="道具箱を開く"><span aria-hidden="true">🧰</span></button>
+    <button id="add" type="button" class="add-btn" aria-expanded="false" aria-controls="addPanel" aria-label="追加するPOIの種類を見る">+</button>
+  </div>
+  <div class="bottom-dock" role="toolbar" aria-label="編集履歴">
+    <button type="button" disabled aria-label="元に戻す（機能接続前）">↶ <span>元に戻す</span></button>
+    <button type="button" disabled aria-label="やり直す（機能接続前）">↷ <span>やり直す</span></button>
+  </div>
+  <section id="layerPanel" class="pop-panel layer-panel" hidden aria-label="地図レイヤー">
+    <div class="panel-title"><strong>レイヤー</strong><button class="close" type="button" data-close="layerPanel" aria-label="閉じる">×</button></div>
+    <fieldset disabled><label><input type="checkbox" checked> POI</label><label><input type="checkbox" checked> 距離円</label><label><input type="checkbox" checked> 活動範囲</label></fieldset>
+    <p>元データ接続後に表示を切り替えられます。</p>
+  </section>
+  <section id="toolPanel" class="pop-panel tool-panel" hidden aria-label="道具箱">
+    <div class="panel-title"><strong>道具箱</strong><button class="close" type="button" data-close="toolPanel" aria-label="閉じる">×</button></div>
+    <button type="button" disabled>⬡ 活動範囲</button><button type="button" disabled>📏 距離を測る</button><button type="button" disabled>🎯 位置調整</button>
+    <p>編集機能は接続テスト後に有効になります。</p>
+  </section>
+  <section id="addPanel" class="pop-panel add-panel" hidden aria-label="追加するゲームスポット">
+    <div class="panel-title"><strong>ゲームスポットを追加</strong><button class="close" type="button" data-close="addPanel" aria-label="閉じる">×</button></div>
+    <div class="poi-choices">
+      <button type="button" disabled><img src="./assets/pokestop.png" alt=""><span>ポケストップ</span></button>
+      <button type="button" disabled><img src="./assets/gym.png" alt=""><span>ジム</span></button>
+      <button type="button" disabled><img src="./assets/powerspot.png" alt=""><span>パワースポット</span></button>
+    </div>
+    <p>種類選択と地図への配置は次工程で接続します。</p>
+  </section>
+  <section id="helpPanel" class="help-panel" hidden role="dialog" aria-modal="false" aria-label="設計ルール">
+    <div class="help-head"><strong>設計ルール</strong><button id="helpClose" type="button" aria-label="設計ルールを閉じる">×</button></div>
+    <div id="helpCards" class="help-cards">
+      <article><small>GAME SPOTS</small><h2>配置できるゲームスポット</h2><strong class="big-count">25個</strong><p>ポケストップ12 / ジム8 / パワースポット5</p></article>
+      <article><small>DISTANCE</small><h2>距離のルール</h2><p>50mが基準。40mと30mは参考円として表示します。50m未満は理由を確認します。</p></article>
+      <article><small>FINISH</small><h2>保存するとき</h2><p>KMZ書き出しと作業の保存・復旧を確認してから完成させます。現在はUI確認専用です。</p></article>
+    </div>
+    <div class="help-dots" aria-label="ルールのページ切替">
+      <button type="button" data-page="0" aria-label="1ページ目" aria-current="true"></button>
+      <button type="button" data-page="1" aria-label="2ページ目"></button>
+      <button type="button" data-page="2" aria-label="3ページ目"></button>
+    </div>
+  </section>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+</main>
+</body>
+</html>
