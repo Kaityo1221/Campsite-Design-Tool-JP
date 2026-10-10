@@ -45,6 +45,19 @@ async def run():
                 await page.wait_for_function('document.querySelector("#counts").textContent.includes("1")',timeout=25000)
                 assert await page.locator('.leaflet-container').count()==1
                 assert await page.locator('.leaflet-marker-pane').count()==1
+                # Leaflet uses its own vector Canvas under preferCanvas:true.
+                # Hiding all canvases in .map-wrap made POIs, circles and areas invisible
+                # while draggable vertex DOM markers still appeared on Safari.
+                vectors=page.locator('#leaflet-map .leaflet-overlay-pane canvas')
+                assert await vectors.count()>0,'Leaflet Canvas renderer did not mount'
+                vector_state=await vectors.first.evaluate("""el => {
+                    const s=getComputedStyle(el);
+                    return {display:s.display,visibility:s.visibility,width:el.getBoundingClientRect().width,
+                      height:el.getBoundingClientRect().height,background:s.backgroundImage};
+                }""")
+                assert vector_state['display']!='none' and vector_state['visibility']!='hidden' and vector_state['width']>0 and vector_state['height']>0,('Leaflet vector Canvas hidden by CSS',vector_state)
+                assert vector_state['background']=='none',('Leaflet vector Canvas has fallback-only styling',vector_state)
+                print('PASS: Leaflet vector Canvas (POI/circles/areas) is visible and transparent, not hidden by fallback styling',flush=True)
                 await page.wait_for_function('document.getElementById("map-engine").textContent.includes("地図タイル読込済み")',timeout=30000)
                 await page.locator('.leaflet-tile-loaded').first.wait_for(state='attached',timeout=30000)
                 tiles=await page.locator('.leaflet-tile-loaded').count()
