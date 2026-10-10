@@ -28,29 +28,35 @@ async def main():
                     page.on('pageerror',lambda e:errors.append(str(e)))
                     response=await page.goto(f'http://127.0.0.1:{server.server_port}{PATH}',wait_until='domcontentloaded',timeout=15000)
                     assert response and response.status==200,response
-                    assert await page.locator('#entry').is_visible()
-                    assert await page.locator('#workspace').is_hidden()
-                    assert await page.locator('#start').is_enabled()
-                    assert await page.locator('.filebar').is_disabled()
+                    print('U2_CHECK start state',width,flush=True)
+                    assert await page.locator('#entry').is_visible(),'entry hidden'
+                    assert await page.locator('#workspace').is_hidden(),'workspace must be hidden before start'
+                    assert await page.locator('#start').is_enabled(),'start not enabled'
+                    assert await page.locator('.filebar').is_disabled(),'file chooser must be disabled'
                     assert not await page.locator('body').evaluate('(b)=>b.scrollWidth>innerWidth+1'),'entry overflow'
                     before=await page.evaluate('JSON.stringify(Object.entries(localStorage))')
+                    print('U2_CHECK launch map',width,flush=True)
                     await page.locator('#start').click()
                     await page.wait_for_function("location.hash==='#map'")
                     assert await page.locator('#workspace').is_visible()
                     assert await page.locator('#save').is_disabled()
                     assert await page.locator('.bottom-dock button').first.is_disabled()
+                    print('U2_CHECK layer panel',width,flush=True)
                     await page.locator('#layers').click()
                     assert await page.locator('#layerPanel').is_visible()
                     assert await page.locator('#layerPanel fieldset').is_disabled()
                     await page.locator('#layers').click()
                     assert await page.locator('#layerPanel').is_hidden()
+                    print('U2_CHECK POI panel',width,flush=True)
                     await page.locator('#add').click()
                     assert await page.locator('#addPanel').is_visible()
                     assert all([await button.is_disabled() for button in await page.locator('.poi-choices button').all()])
                     icons=await page.locator('.poi-choices img').evaluate_all('(els)=>els.map(x=>x.complete && x.naturalWidth>0)')
                     assert len(icons)==3 and all(icons),('original Creative POI icons failed to load',icons)
+                    print('U2_CHECK tools',width,flush=True)
                     await page.locator('#toolbox').click()
                     assert await page.locator('#addPanel').is_hidden() and await page.locator('#toolPanel').is_visible()
+                    print('U2_CHECK help',width,flush=True)
                     await page.locator('#help').click()
                     assert await page.locator('#helpPanel').is_visible() and await page.locator('#toolPanel').is_hidden()
                     await page.locator('[data-page="1"]').click()
@@ -69,6 +75,7 @@ async def main():
                     })""")
                     assert dimensions['docWidth']<=width+1,('map page width overflow',dimensions)
                     assert all(h>=44 for h in dimensions['controls'].values()),('tap target too small',dimensions)
+                    print('U2_CHECK history',width,flush=True)
                     await page.locator('#back').click()
                     assert await page.locator('#entry').is_visible()
                     await page.go_forward()
@@ -87,5 +94,7 @@ async def main():
 if __name__=='__main__':
     try: asyncio.run(main())
     except Exception as error:
+        import traceback
+        traceback.print_exc()
         print('NOT_PASS_MAP_FIRST_U2',type(error).__name__,str(error)[:1000],flush=True)
         sys.exit(1)
