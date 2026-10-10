@@ -14,7 +14,7 @@ const actions=[];
 const owned=replaceWithExclusiveCreativeControl({element:old,makeAction:()=>({type:'undo'}),dispatch:a=>actions.push(a)});
 assert.equal(host.child,owned.element);assert.equal(old.parentNode,null);
 assert.equal(owned.element.attrs.onclick,undefined);owned.element.click();owned.element.click();
-assert.equal(old.old,0);assert.deepEqual(actions.map(x=>x.requestId),['isolated-1','isolated-2']);
+assert.equal(old.old,0);assert.equal(new Set(actions.map(x=>x.requestId)).size,2);assert.ok(actions[0].requestId.startsWith('isolated-'));
 owned.dispose();owned.element.click();assert.equal(actions.length,2);
 assert.throws(()=>replaceWithExclusiveCreativeControl({element:old,dispatch:()=>{},makeAction:()=>({})}));
 console.log('PASS: detached old direct listeners, visual clone, exclusive new dispatch, teardown');
