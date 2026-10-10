@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Creative Next r13 · iPhone保存安全性テスト</title>
+<style>
+:root{color-scheme:light;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN",sans-serif;background:#f4f8f5;color:#1c332a}
+*{box-sizing:border-box}
+body{margin:0 auto;max-width:640px;padding:18px 16px 48px}
+h1{font-size:1.35rem;margin:14px 0 8px}
+p{line-height:1.65}
+small{font-size:.8rem;color:#53675e}
+section{border:1px solid #d5e3d8;background:white;border-radius:14px;padding:16px;margin:16px 0}
+button{min-height:46px;border:0;border-radius:10px;background:#236e48;color:white;padding:12px 14px;font-weight:700;font-size:1rem;width:100%;margin:5px 0}
+button:disabled{opacity:.55}
+button.secondary{background:#e9f1e9;color:#24513c}
+a{color:#256642}
+ul{padding-left:20px;line-height:1.8;overflow-wrap:anywhere}
+li{margin:4px 0;padding:2px 0}
+.pass{color:#17633b;font-weight:600}
+.hold{color:#ad422b;font-weight:650}
+.info{color:#4e6260}
+#summary{padding:10px 0;line-height:1.6}
+</style>
+</head>
+<body>
+<small>🏕️ Creative Next / r13 / iPhone Safari 専用</small>
+<h1>保存・復旧の安全性テスト</h1>
+<p>iPhone版の最終安全性確認です。<strong>実KMZは使用しません。</strong>
+r9〜r12と旧Creative Modeの保存領域には触れず、r13専用の合成POIデータを使います。</p>
+<section>
+<h2>1. 安全性の一括検査</h2>
+<p>破損ポインタ、容量不足の模擬、競合する同時保存、localStorageとIndexedDBへの保存を検証します。
+安全な隔離データ以外の削除・上書きは行いません。</p>
+<button id="run" type="button">一括検査を実行</button>
+</section>
+<section>
+<h2>2. 保存した後の再開検査</h2>
+<p>1がすべてPASSしたら、Safariでこのページを再読み込みするか、Safariを一度終了してから同じURLを開き直し、
+次のボタンで保存内容を確認してください。</p>
+<button id="reopen" type="button" class="secondary">保存データを再確認</button>
+</section>
+<section>
+<h2>検査結果</h2>
+<p id="summary" role="status" aria-live="polite"></p>
+<ul id="result" aria-label="検査項目ごとの結果"></ul>
+<button id="copy" type="button" class="secondary" disabled>検査結果をコピー</button>
+<p id="copy-status" role="status"></p>
+</section>
+<p><a href="./index.html">← r13隔離編集プレビューへ戻る</a></p>
+<script type="module" src="./iphone-safety-lab.mjs"></script>
+</body>
+</html>
