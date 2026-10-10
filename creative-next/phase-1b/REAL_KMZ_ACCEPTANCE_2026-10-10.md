@@ -16,7 +16,7 @@ Original uploaded KMZ files are not modified or replaced. Exception handling req
 ## Hikarigaoka Park
 
 - Original legacy KMZ: 199 existing + 12 new POIs, 211 x 40m circles, 422 x 50m circles, one activity area.
-- 50m circles have a duplicated 211-item set: one duplicate with identical XML per original 50m ring. All 633 circles have unique POI centers; exactly 211 repeated owner/radius pairs.
+- 50m circles have a duplicated 211-item set: one duplicate with identical XML per original 50m ring. All 633 circles can be matched to a single corresponding POI center; there are exactly 211 repeated owner/radius pairs.
 - The user explicitly approved excluding **only the repeated 211 50m circles** from a separate conversion/test copy.
 - Audited copy: 211 POIs, 211 x 40m circles, 211 x 50m circles, one activity area, 634 Placemarks.
 - The user reported PASS for direct conversion of this cleaned old-format copy in isolated r12, export and reimport with matching counts.
