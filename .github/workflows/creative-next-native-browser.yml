@@ -43,6 +43,8 @@ jobs:
         run: python creative-next/qa/native-browser-gates.py
       - name: Strict IndexedDB immediate browser crash gate
         run: python creative-next/qa/strict-idb-crash-gate.py
+      - name: Reject IndexedDB tamper between preflight and commit
+        run: python creative-next/qa/strict-idb-tamper-race-gate.py
       - name: Native recovery from IndexedDB checkpoint UI
         run: python creative-next/qa/strict-idb-ui-gate.py
       - name: PC full isolated end-to-end regression
