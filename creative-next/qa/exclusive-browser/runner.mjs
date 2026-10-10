@@ -13,3 +13,5 @@ const undo=replaceWithExclusiveCreativeControl({element:oldUndo,dispatch:a=>boun
 const redo=replaceWithExclusiveCreativeControl({element:oldRedo,dispatch:a=>boundary.dispatch(a),makeAction:()=>({type:'redo'})});
 undo.element.disabled=false;redo.element.disabled=false;
 window.__creativeE2E={counts,undo,redo};
+
+// Unique action IDs are generated for each cloned button independently.
