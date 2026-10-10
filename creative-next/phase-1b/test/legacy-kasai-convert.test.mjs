@@ -102,6 +102,22 @@ test('unverified unknown polygon stops conversion',async()=>{
  const broken=await z.generateAsync({type:'uint8array'});
  await assert.rejects(()=>converted(broken),e=>e.code==='LEGACY_UNSAFE');
 });
+test('duplicate 50m ring for the same unique POI is refused without modifying source',async()=>{
+ const original=await source([{lat:35.7,lng:139.8}]);
+ const zipped=await JSZip.loadAsync(original),old=await zipped.file('doc.kml').async('string');
+ const duplicate='<Folder><name>50m サークル</name>'+circle(35.7,139.8,1,50)+'</Folder>';
+ zipped.file('doc.kml',old.replace('</Document>',duplicate+'</Document>'));
+ const input=await zipped.generateAsync({type:'uint8array'}),before=Buffer.from(input);
+ const stage=await staged(input);
+ assert.equal(stage.places.length,4);
+ assert.equal(stage.places.filter(p=>p.legacyShapeVerified===true&&p.legacyShape==='distance-circle').length,2);
+ assert.equal(diagnoseKmzCandidate(stage).disposition,'HOLD');
+ await assert.rejects(()=>convertLegacyKasaiKmz(stage,dep),e=>e.code==='LEGACY_CIRCLE_DUPLICATE');
+ assert.deepEqual(Buffer.from(input),before);
+ const single=await converted(original);
+ assert.equal(single.verification.disposition,'READY');
+ assert.equal(single.verification.counts.circles,1);
+});
 test('unknown reserved new metadata in legacy input stops conversion',async()=>{
  const input=await source([{more:'<Data name="campsite.creative.foo"><value>unexpected</value></Data>'}]);
  await assert.rejects(()=>converted(input),e=>e.code==='LEGACY_SCHEMA');
