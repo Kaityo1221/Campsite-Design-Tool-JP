@@ -155,10 +155,15 @@ function legacyPolygonEvidence(place, ring) {
     return (angle+2*Math.PI)%(2*Math.PI);
   });
   const angular=(angle,expected)=>Math.abs((angle-expected+3*Math.PI)%(2*Math.PI)-Math.PI);
-  if (meters.every(m=>Math.abs(m-target)<1.5) &&
-      radians.every((v,i)=>angular(v,i*2*Math.PI/48)<0.055)) {
+  // Old Creative exports may emit clockwise OR counterclockwise rings.
+  // Accept either winding only after verifying the same 48 ordered samples,
+  // north-start bearing, radius and center. This is not a generic polygon
+  // shortcut and does not relax POI ownership checks in the converter.
+  const forward=radians.every((v,i)=>angular(v,i*2*Math.PI/48)<0.055);
+  const reverse=radians.every((v,i)=>angular(v,-i*2*Math.PI/48)<0.055);
+  if (meters.every(m=>Math.abs(m-target)<1.5) && (forward||reverse)) {
     return {legacyShape:'distance-circle',legacyShapeVerified:true,
-      legacyCircle:{radius:target,center:{lat,lng}}};
+      legacyCircle:{radius:target,center:{lat,lng},winding:forward?'clockwise':'counterclockwise'}};
   }
   return {};
 }
