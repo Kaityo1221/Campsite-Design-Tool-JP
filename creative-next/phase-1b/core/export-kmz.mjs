@@ -342,13 +342,24 @@ export async function exportNewV1Kmz(stage,{JSZip,DOMParser,XMLSerializer,edits=
   // Do not claim success unless exactly this output can be imported safely again.
   const verified=await stageKmlInput(bytes,{JSZip,DOMParser,signal});
   const report=diagnoseKmzCandidate(verified);
-  if(report.disposition!=='READY'||report.profile!=='NEW_V1'||verified.errors.length||
-      report.counts.existing!==before.counts.existing-planned.filter(p=>p.deleted&&p.role==='existing').length||
-      report.counts.newTotal!==planned.filter(p=>!p.deleted&&p.role==='new').length+additions.length||
-      report.counts.circles!==before.counts.circles-removedCircles+additions.length||
-      report.counts.activityAreas!==before.counts.activityAreas-operations.areaDeletions.length+operations.areaAdditions.length||
-      verified.places.length!==stage.places.length-planned.filter(p=>p.deleted).length-removedCircles+2*additions.length-operations.areaDeletions.length+operations.areaAdditions.length)
-    stop('EXPORT_ROUNDTRIP','Generated output did not pass full re-staging and diagnosis');
+  // Keep strict fail-closed behavior while exposing *which* check failed.
+  // Exclude user-specific IDs, coordinates and source content from error details.
+  const expected={
+    existing:before.counts.existing-planned.filter(p=>p.deleted&&p.role==='existing').length,
+    newTotal:planned.filter(p=>!p.deleted&&p.role==='new').length+additions.length,
+    circles:before.counts.circles-removedCircles+additions.length,
+    activityAreas:before.counts.activityAreas-operations.areaDeletions.length+operations.areaAdditions.length,
+    placemarks:stage.places.length-planned.filter(p=>p.deleted).length-removedCircles+2*additions.length-operations.areaDeletions.length+operations.areaAdditions.length
+  };
+  const got={...report.counts,placemarks:verified.places.length};
+  const failures=[];
+  if(verified.errors.length)failures.push('STAGING:'+verified.errors.map(x=>String(x.code||'UNKNOWN')).slice(0,8).join(','));
+  if(report.disposition!=='READY'||report.profile!=='NEW_V1')
+    failures.push('DIAGNOSIS:'+report.disposition+'/'+report.profile+':'+report.issues.filter(x=>x.severity!=='WARNING').map(x=>x.code).slice(0,8).join(','));
+  for(const key of Object.keys(expected))if(got[key]!==expected[key])
+    failures.push('COUNT_'+key+':'+got[key]+'/'+expected[key]);
+  if(failures.length)
+    stop('EXPORT_ROUNDTRIP','Generated output failed verified re-import: '+failures.join(' | '));
   // Re-read all edited area coordinates rather than relying only on shape counts.
   for(const area of activeAreas){
     const shape=verified.places.find(p=>p.geometry==='Polygon'&&p.data.some(d=>d.name===PREFIX+'area-id'&&d.value===area.id));
