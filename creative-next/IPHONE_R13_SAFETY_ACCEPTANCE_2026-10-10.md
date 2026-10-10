@@ -46,3 +46,11 @@
 3. Send copied result or screenshots. Only after confirming both tests and absence of regressions may the iPhone safety milestone be marked 85%.
 4. If Safari cannot provide any required API, preserve stored data and hold the safety gate. Do not remove/overwrite old journal keys to make the test pass.
 5. After 85%: iPhone UI adjustment (90%), combined regression (95%), then explicit PO release decision (100%). Android parity implementation comes only after evaluating recorded differences.
+
+## iPhone Safari user-reported partial acceptance (2026-10-10 19:22 JST)
+- User submitted r13 lab results after Safari reopening (user-agent text: `Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6.1 Mobile/15E148 Safari/604.1`). This is an **iPhone Safari user report**, not CI.
+- `PASS | localStorage再開 | 状態: READY`
+- `PASS | IndexedDB再開 | 状態: READY`
+- `再開試験PASS: 両方の保存データを読み取れました。`
+- Acceptance of **reopen/re-read gate: 2/2 PASS**. First one-click six-result Safari safety inspection was **not included in this submitted report**, so **unconfirmed**, not failed and not presumed PASS.
+- iPhone progress remains **80% (delta ±0%; next 85%)** until the 6/6 initial Safari report is provided and checked. Do not request repeated r10/r12 KMZ regression.
