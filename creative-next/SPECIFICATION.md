@@ -58,6 +58,7 @@
 - IndexedDBが`READY`で、通常のlocalStorageジャーナルが`EMPTY`、編集中/取込保留がない場合のみ「バックアップから復元」を表示。ユーザーの確認と元KMZ/POI/エリアの再検証を済ませて復元。キャンセルは無変更。
 - localStorageの2世代とIndexedDBの別々の書込は**単一の原子トランザクションではない**。片側失敗や容量不足は完全成功と案内しない。独立KMZ書出とユーザー確認を優先する。
 - **2026-10-10の保存競合追加対策**: IndexedDBはSHA-256を検証した事前読取エンベロープ全体とreadwrite取引内の現物を比較し、同じrevisionでもbody/checksum/保存構造が変われば`IDB_CONFLICT`で停止。検証後の破損を無断で上書きしない。専用の実Chromiumレース注入ゲートおよびトランザクション中断注入ゲートを隔離CIに追加（後者のCI合否は最新Actionsログで確認）。iPhone Safari実機では未検証。
+- **iPhone隔離検証版 r13（2026-10-10）**: 既存r9/r10/r11/r12の配信ソースおよび保存名前空間を保持し、専用 `iphone-safety-r13/` と `campsite-creative-next-v1-iphone-safety-r13` を追加。さらに独立した `*-r13-lab` 名前空間だけで合成データを用いて、破損ポインタの読取専用保護、模擬容量不足、実Web Locks競合、localStorage実保存、strict IndexedDB保存・再読込を一括検査する。詳細とCI結果は [iPhone r13安全性検証引き継ぎ](IPHONE_R13_SAFETY_ACCEPTANCE_2026-10-10.md) を参照。Chromium自動検査PASSはiPhone Safari実機PASSと別扱い。
 
 ## 4. 実証エビデンス（検証種別を混同しない）
 ### 4.1 葛西原本の非公開ローカル検証
