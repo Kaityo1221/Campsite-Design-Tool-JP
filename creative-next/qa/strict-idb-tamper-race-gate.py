@@ -84,6 +84,51 @@ async def main():
                 assert result['afterStatus'] == 'CORRUPT', result
                 assert result['afterRevision'] is None, result
                 print('PASS: IDB change after inspection is refused, not silently overwritten', flush=True)
+                # Fault injection: abort an IndexedDB put after a healthy commit.
+                # The last healthy generation must remain intact and the caller
+                # must never receive CHECKPOINTED for the aborted transaction.
+                fault = await page.evaluate("""async () => {
+                    const {createStrictIndexedCheckpoint} =
+                        await import('/creative-next/phase-2-preview/strict-idb-checkpoint.mjs');
+                    const ns = 'campsite-creative-next-v1-idb-abort-fault-gate';
+                    const snap = title => ({
+                        records:[{id:'safe',role:'existing',kind:'pokestop',title,lat:35,lng:139}],
+                        activityAreas:[]
+                    });
+                    const cp = createStrictIndexedCheckpoint({namespace:ns});
+                    await cp.save(snap('Committed'),{expectedRevision:null});
+                    const nativePut = IDBObjectStore.prototype.put;
+                    let aborted = false;
+                    IDBObjectStore.prototype.put = function(value,key) {
+                        if (key === ns) {
+                            aborted = true;
+                            this.transaction.abort();
+                            return {};
+                        }
+                        return nativePut.call(this,value,key);
+                    };
+                    let attemptCode;
+                    try {
+                        try {
+                            await cp.save(snap('ShouldNotCommit'),{expectedRevision:1});
+                            attemptCode = 'UNEXPECTED_SAVED';
+                        } catch (error) {
+                            attemptCode = error.code || error.name || 'UNKNOWN';
+                        }
+                    } finally {
+                        IDBObjectStore.prototype.put = nativePut;
+                    }
+                    const after = await cp.inspect();
+                    await cp.close();
+                    return {aborted,attemptCode,status:after.status,
+                        revision:after.revision,title:after.snapshot?.records?.[0]?.title};
+                }""")
+                print('IDB_ABORT_FAULT_RESULT', fault, flush=True)
+                assert fault == {
+                    'aborted': True, 'attemptCode': 'IDB_ABORT',
+                    'status': 'READY', 'revision': 1, 'title': 'Committed'
+                }, fault
+                print('PASS: aborted IndexedDB transaction reports failure and preserves committed data', flush=True)
             finally:
                 await browser.close()
     finally:
