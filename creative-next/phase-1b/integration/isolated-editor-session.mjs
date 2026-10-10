@@ -5,6 +5,7 @@
  */
 import {stageKmlInput} from '../core/stage-kmz.mjs';
 import {diagnoseKmzCandidate} from '../core/diagnose-kmz-candidate.mjs';
+import {auditLegacyShapeCompatibility} from '../core/legacy-shape-audit.mjs';
 import {convertLegacyKasaiKmz} from '../core/legacy-kasai-convert.mjs';
 import {previewLegacyPoiStore} from './legacy-poi-preview.mjs';
 import {exportNewV1Kmz,assertSafeKindEdit} from '../core/export-kmz.mjs';
@@ -70,12 +71,13 @@ export function createIsolatedEditorSession({JSZip,DOMParser,XMLSerializer,stora
   const ticket=++prepareGeneration;pending=null; // Never preserve an older candidate after selection.
   const current=()=>{if(ticket!==prepareGeneration)throw error('PREPARE_STALE','A newer file selection or cancellation superseded this request');};
   const first=await stageKmlInput(input,{...deps,signal});current();const initial=diagnoseKmzCandidate(first);
+   const legacyAudit=initial.profile==='LEGACY_CREATIVE_KASAI_CANDIDATE'?auditLegacyShapeCompatibility(first):null;
   if(first.errors?.length||initial.disposition==='REJECT')return {status:'REJECT',issues:[...first.errors,...initial.issues],canApply:false};
   let converted=false;let next=first;
   if(initial.profile==='LEGACY_CREATIVE_KASAI_CANDIDATE'&&initial.disposition==='HOLD'){
     try{const candidate=await convertLegacyKasaiKmz(first,{...deps,signal});next=await stageKmlInput(candidate.bytes,{...deps,signal});current();converted=true;}
-    catch(e){return {status:'HOLD',issues:[{code:e.code||'LEGACY_HOLD',message:e.message},...initial.issues],canApply:false};}
-  } else if(initial.disposition!=='READY'||initial.profile!=='NEW_V1')return {status:'HOLD',issues:initial.issues,canApply:false};
+    catch(e){return {status:'HOLD',issues:[{code:e.code||'LEGACY_HOLD',message:e.message},...initial.issues],legacyAudit,canApply:false};}
+  } else if(initial.disposition!=='READY'||initial.profile!=='NEW_V1')return {status:'HOLD',issues:initial.issues,legacyAudit,canApply:false};
   try {await audited(next);current();const preview=previewLegacyPoiStore(next);const shapeAreas=areas(next);pending={stage:next,preview,shapeAreas,converted};
     return {status:'REVIEW',counts:preview.report.counts,converted,canApply:false,message:'No changes applied; explicit user confirmation is required'};
   } catch(e){return {status:'HOLD',issues:[{code:e.code||'IMPORT_HOLD',message:e.message}],canApply:false};}
