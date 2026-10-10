@@ -29,6 +29,31 @@ test('211 distinct POIs with both 40m and 50m owner circles are diagnostically v
  assert.equal(r.summary.verifiedOwners,422);assert.equal(r.summary.duplicatedVerifiedOwnerRadius,0);
  assert.equal(r.summary.ambiguousVerifiedCircles,0);assert.equal(r.issues.length,0);
 });
+test('real Hikarigaoka-shaped 211 POIs, 422 x 50m and 211 x 40m explicitly HOLD 211 repeated owner/radius pairs',()=>{
+ const places=[];
+ for(let i=0;i<211;i++)places.push(poi(35.6+i*.001,139.8));
+ for(let i=0;i<211;i++)places.push(circle(35.6+i*.001,139.8,50));
+ for(let i=0;i<211;i++)places.push(circle(35.6+i*.001,139.8,50)); // exact duplicate ring copies
+ for(let i=0;i<211;i++)places.push(circle(35.6+i*.001,139.8,40));
+ places.push({geometry:'Polygon',legacyShape:'activity-area',legacyShapeVerified:true});
+ const stage=makeStage(places),before=JSON.stringify(stage);
+ const r=auditLegacyShapeCompatibility(stage);
+ assert.equal(JSON.stringify(stage),before);
+ assert.equal(stage.places.length,845);
+ assert.equal(r.status,'REPORT_ONLY');
+ assert.equal(r.canConvert,false);
+ assert.equal(r.summary.pois,211);
+ assert.equal(r.summary.circleCandidates,633);
+ assert.equal(r.summary.circleByRadius[50],422);
+ assert.equal(r.summary.circleByRadius[40],211);
+ assert.equal(r.summary.activityAreas,1);
+ assert.equal(r.summary.verifiedCircleGeometry,633);
+ assert.equal(r.summary.verifiedOwners,633);
+ assert.equal(r.summary.orphanVerifiedCircles,0);
+ assert.equal(r.summary.ambiguousVerifiedCircles,0);
+ assert.equal(r.summary.duplicatedVerifiedOwnerRadius,211);
+ assert.equal(has(r,'CIRCLE_OWNER_RADIUS_DUPLICATE').count,211);
+});
 test('187+187 circles with 46 coordinates are reported as unverified and not assigned owners',()=>{
  const places=[];
  for(let i=0;i<188;i++)places.push(poi(35.6+i*.001,139.8));
