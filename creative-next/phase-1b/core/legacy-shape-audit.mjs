@@ -30,7 +30,7 @@ function circleRadius(p){
 }
 function safeAudit(stage){
  const audit=stage?.audit;
- return !!(Array.isArray(stage?.places)&&audit?.safeXml===true&&
+ return !!(Array.isArray(stage?.places)&&audit?.zipValid===true&&audit?.safeXml===true&&
   audit?.boundedExtraction===true&&audit?.safePaths===true&&
   audit?.unknownInformationPreserved===true&&audit?.allObjectsCount===stage.places.length&&
   audit?.kmlCount===1&&!stage.errors?.length);
