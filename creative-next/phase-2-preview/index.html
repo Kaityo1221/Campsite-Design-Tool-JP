@@ -12,16 +12,26 @@
 import('./preview.mjs').catch(async error => {
   const status = document.getElementById('capability-status');
   const details = document.getElementById('status');
+  // Error-only diagnostics must match the files imported by preview.mjs.
+  // Keep this list in sync with the actual .mjs modules; do not probe fake .js paths.
   const targets = [
     './preview.mjs',
-    './preview.js',
-    '../phase-1b/core/stage-kmz.js','../phase-1b/core/diagnose-kmz-candidate.js','../phase-1b/core/legacy-kasai-convert.js','../phase-1b/integration/legacy-poi-preview.js','../phase-1b/core/export-kmz.js','../phase-1b/core/journal-save.js','../phase-1b/core/dependent-circles.js','../phase-1b/core/activity-areas.js','../phase-1b/integration/isolated-editor-session.js',
-    '../phase-1b/core/stage-kmz.js',
-    './browser-capabilities.js',
-    './leaflet-map-view.js'
+    '../phase-1b/core/stage-kmz.mjs',
+    '../phase-1b/core/diagnose-kmz-candidate.mjs',
+    '../phase-1b/core/legacy-kasai-convert.mjs',
+    '../phase-1b/integration/legacy-poi-preview.mjs',
+    '../phase-1b/core/export-kmz.mjs',
+    '../phase-1b/core/journal-save.mjs',
+    '../phase-1b/core/dependent-circles.mjs',
+    '../phase-1b/core/activity-areas.mjs',
+    '../phase-1b/integration/isolated-editor-session.mjs',
+    './browser-capabilities.mjs',
+    './leaflet-map-view.mjs',
+    './recovery-choices.mjs',
+    './strict-idb-checkpoint.mjs'
   ];
   const checks = [];
-  for (const target of ['./browser-capabilities.js','./leaflet-map-view.js','./recovery-choices.js','./strict-idb-checkpoint.js','../phase-1b/integration/isolated-editor-session.js']) {
+  for (const target of ['./browser-capabilities.mjs','./leaflet-map-view.mjs','./recovery-choices.mjs','./strict-idb-checkpoint.mjs','../phase-1b/integration/isolated-editor-session.mjs']) {
     try { await import(target); checks.push('IMPORT OK ' + target); }
     catch (e) { checks.push('IMPORT FAIL ' + target + ': ' + (e?.message || String(e))); }
   }
@@ -34,7 +44,7 @@ import('./preview.mjs').catch(async error => {
     }
   }
   if (status) status.textContent = '起動エラー: ' + (error?.message || String(error));
-  if (details) details.textContent = '配信・依存診断 (v4): ' + checks.join(' | ');
+  if (details) details.textContent = '配信・依存診断 (v5): ' + checks.join(' | ');
   console.error('Creative Next preview initialization failed', error, checks);
 });
 </script>
