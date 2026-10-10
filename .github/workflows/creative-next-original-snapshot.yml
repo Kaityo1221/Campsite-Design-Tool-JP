@@ -1,0 +1,29 @@
+name: Creative Next Original UI Static Snapshot
+on:
+  push:
+    branches: [feature/creative-next-ui-exact-parity-20261010]
+    paths:
+      - 'creative-next/qa/build-original-ui-snapshot.cjs'
+      - '.github/workflows/creative-next-original-snapshot.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  original-visual:
+    if: github.ref == 'refs/heads/feature/creative-next-ui-exact-parity-20261010'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node creative-next/qa/current-creative-ui-source-parity.cjs
+      - run: node creative-next/qa/build-original-ui-snapshot.cjs
+      - name: Snapshot cannot execute storage or write operations
+        run: |
+          if grep -iq '<script' creative-next/exact-ui-snapshot/index.html; then exit 1; fi
+          test -s creative-next/exact-ui-snapshot/index.html
+      - uses: actions/upload-artifact@v4
+        with:
+          name: creative-next-original-ui-snapshot
+          path: creative-next/exact-ui-snapshot/index.html
