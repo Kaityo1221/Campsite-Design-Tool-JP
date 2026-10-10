@@ -47,7 +47,7 @@
   }
   $('start').addEventListener('click',()=>{location.hash='#map';});
   $('back').addEventListener('click',()=>{
-    if(location.hash==='#map')location.hash='';
+    if(location.hash==='#map')history.back();
     else render();
   });
   window.addEventListener('hashchange',render);
