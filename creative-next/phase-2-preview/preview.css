@@ -7,3 +7,14 @@
 .capability-status,.map-engine{font-size:12px;line-height:1.6;padding:8px 10px;margin:6px 0;color:#234a3b;background:#edf4f0;border-radius:7px}.map-engine{background:#eff6fa;color:#23546d}
 
 .recovery-review{margin-top:12px;padding:16px;border-radius:12px;border:2px solid #b3c7bb;background:#fbfdfb}.recovery-review h3{margin:0 0 8px}.recovery-review label{margin:10px 0 4px}.recovery-review .warning{margin-bottom:12px}
+
+/* iPhone 90%-B: touch and legibility only; no save/KMZ/geometry logic changed. */
+@media(max-width:600px){
+  button{min-height:44px;font-size:14px}
+  .toolbar button{flex:1 1 140px;min-width:0}
+  .table-scroll{max-width:100%;overflow-x:auto;overscroll-behavior-x:contain}
+  td:first-child{max-width:260px;overflow-wrap:anywhere}
+  td button{min-height:44px;padding:9px 12px}
+  input:not([type=file]),select,textarea{font-size:16px}
+  .map-toolbar label{min-height:44px}
+}

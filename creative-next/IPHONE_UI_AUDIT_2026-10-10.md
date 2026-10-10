@@ -25,3 +25,12 @@
 - `main`/旧Creative Mode/Bridge/Field Mode/旧v7キー/原本KMZ変更不可。
 - r9〜r13の既存配信や保存領域を黙って上書きしない。必要な新規UIプレビューには独立URL・名前空間とソース固定を使う。
 - PC/Android完成版の作り直し禁止。iPhoneで確定した要修正のみ後追い差分台帳へ記録。
+
+## 90%-B CSS一次修正（実機判定待ち）
+- タッチ領域: 幅600px以下に限定し通常ボタンとPOI編集ボタンを最低44px。地図チェック項目ラベルも44px。
+- ボタン横並び: モバイルのボタン行は140pxを目安に折返し。操作ラベルの過剰圧縮を抑制。
+- 文字とSafari入力ズーム: 入力・選択・テキストエリア16px。ボタン14px。
+- POI表: 表の横スクロール領域を維持し、長い名称はセル内で折返し。
+- 新URL `iphone-ui-r14/` には専用保存名前空間 `campsite-creative-next-v1-iphone-ui-r14`。r9〜r13は変更しない。
+- 変更範囲: `preview.css` と `workspace-namespace.mjs` のみ。KMZ・保存の実装、PC/Android、本番、旧Creative Modeには変更なし。
+- **現状態: r14候補ソース作成。GitHub CI・iPhone Safari実機は未判定。進捗85%維持。**
