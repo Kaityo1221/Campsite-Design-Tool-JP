@@ -55,8 +55,7 @@ export function createStrictIndexedCheckpoint({indexedDB=globalThis.indexedDB,su
   if(!snapshot||!Array.isArray(snapshot.records)||!Array.isArray(snapshot.activityAreas))return null;
   return {revision:entry.revision,snapshot};
  }
- async function inspect(){
-  const raw=await readRaw();
+ async function inspectRaw(raw){
   if(raw===null)return {status:'EMPTY',revision:null,snapshot:null};
   if(raw.version!==1||!raw.current)return {status:'CORRUPT',revision:null,snapshot:null};
   const current=await verify(raw.current);
@@ -64,6 +63,10 @@ export function createStrictIndexedCheckpoint({indexedDB=globalThis.indexedDB,su
   const previous=await verify(raw.previous);
   if(previous)return {status:'FALLBACK',...previous,strictRequested:true};
   return {status:'CORRUPT',revision:null,snapshot:null};
+ }
+ async function inspect(){return inspectRaw(await readRaw())}
+ function sameStoredEnvelope(a,b){
+  try{return JSON.stringify(a)===JSON.stringify(b)}catch{return false}
  }
  async function save(snapshot,{expectedRevision}={}){
   if(!checkedRevision(expectedRevision))throw failure('IDB_REVISION_REQUIRED','Expected revision must be null or positive integer');
@@ -73,7 +76,8 @@ export function createStrictIndexedCheckpoint({indexedDB=globalThis.indexedDB,su
   const body=JSON.stringify(snapshot);
   if(typeof body!=='string'||enc.encode(body).length>MAX_SIZE)throw failure('IDB_LIMIT','Checkpoint too large');
   const checksum=digest(new Uint8Array(await subtle.digest('SHA-256',enc.encode(body))));
-  const prior=await inspect();
+  const observedEnvelope=await readRaw();
+  const prior=await inspectRaw(observedEnvelope);
   if(prior.status==='CORRUPT'||prior.status==='FALLBACK')throw failure('IDB_RECOVERY_REQUIRED','Checkpoint needs inspection before another write');
   const db=await open();
   const committed=await promiseTransaction(db,'readwrite',(store,resolve,abort)=>{
@@ -81,6 +85,11 @@ export function createStrictIndexedCheckpoint({indexedDB=globalThis.indexedDB,su
    got.onerror=()=>abort(failure('IDB_READ','Unable to read current checkpoint'));
    got.onsuccess=()=>{
     const original=got.result??null;
+    // Between preflight checksum inspection and the transaction, another tab
+    // may rewrite the same revision. Refuse ANY changed IDB envelope, even if
+    // its revision is unchanged, rather than silently erasing corrupt data.
+    if(!sameStoredEnvelope(original,observedEnvelope))
+     return abort(failure('IDB_CONFLICT','Checkpoint changed after checksum inspection'));
     // Never overwrite a corrupted record: only explicit recovery can decide.
     if(original&&(!original.current||!Number.isSafeInteger(original.current.revision)))
      return abort(failure('IDB_RECOVERY_REQUIRED','Corrupt checkpoint must be inspected'));
