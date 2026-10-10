@@ -1,8 +1,8 @@
 # Creative Next 共通仕様書（正本）
-**版**: 2026-10-09 / pre-iPhone gate v1  
+**版**: 2026-10-10 / protected-preview readiness v2  
 **リポジトリ**: `Kaityo1221/Campsite-Design-Tool-JP`  
 **開発ブランチ**: `feature/creative-next-kmz-phase1b-20261009`  
-**状態**: PC総合回帰PASS。iPhone Safari実機試験の**開始前で停止**。公開・mainマージは未承認。
+**状態**: PC総合回帰PASS。Vercel限定プレビューはSSO有効かつデプロイREADY。iPhone Safari実機E2Eは未PASS。公開・mainマージは未承認。
 
 ## 0. 正本と履歴の扱い
 この文書を現時点のCreative Next仕様とゲート状態の**唯一の要約正本**とする。個別の`PHASE2_*.md`、`phase-1b/README.md`、`phase-2-preview/README.md`は実装経緯・当時の検証記録を保持するため、「未実装」「ブラウザ未PASS」など古い記述が残る。競合する場合は**本仕様書＋最新のGitHub Actions実行ログ＋実コード**で判定する。承認済みPhase 1-A原本は無断変更しない。以前合意された42項目の完全な原表は本書に再掲していないため、**本書を根拠に42項目すべての最終合格とは宣言しない**。
@@ -56,11 +56,11 @@
 
 ## 5. 未判定とSTOP条件
 - **iPhone Safari実機: 未開始・未PASS**。IndexedDB durability、保存容量、タッチ/スクロール、地図ドラッグ、戻る/進む、KMZファイルUI、実機性能は未確認。
-- 実機用限定プレビューの認証/URLは**未作成・未提供**。静的な開発パスは利用者用の公開リンクではない。
+- 実機用Vercel限定プレビュー `campsite-creative-next-private-preview` は**作成済み**。2026-10-10時点の隔離ブランチcommit `1d9eed610d785837a5f4a85dd4c12debf2288966` のデプロイ `dpl_42USmXjGcugNXrGH7x98jdYkfv5H` は **READY**、Vercel Authentication (SSO) は有効。候補URL: `https://campsite-creative-next-private-preview-e94khjeg7-kaityo1222.vercel.app/creative-next/phase-2-preview/index.html`。ただし認証後の実ページ到達・iPhone Safari起動成功は**未確認**。このURLは一般公開承認を意味しない。
 - Phase 1-B / Phase 2 **全体の正式PASS未判定**。外部My Maps完全往復・全入力形式・42項目網羅は確認できたと断言しない。
 - プレビューのテストは、POの明示承認を受けるまで開始しない。公開`main`へのマージ、旧Creative Mode切替、本番デプロイも別の明示承認が必要。
 - 実機テスト中に既存データ移動/消失、元ZIP添付の変化、保存の誤成功表示、認証/権限異常、重大画面崩れが生じたら**STOP**し、機密ファイルを公開せず隔離ブランチで修正→PC再試験。
-- 安全なプレビュー導線・試験対象KMZ・手順・戻し方を提示し、POの開始指示が出るまで作業を止める。
+- プレビューの候補URLとSSO保護は確認済み。安全な試験対象KMZ・手順・戻し方とともに、認証後のページ到達から順にiPhone Safari実機を確認する。認証失敗・404・起動エラーならそこでSTOP。
 
 ## 6. 参照ファイルと再現
 - 隔離UI: `creative-next/phase-2-preview/index.html`
@@ -73,6 +73,6 @@
 
 ## 7. 次作業担当への必須ルール
 1. **この仕様書、引き継ぎ、最新実コード、最新CIを照合**。古い歴史的READMEの未実装表現を現在の事実として引用しない。
-2. 現在の状態は「**iPhone Safari実機テスト直前で停止**」。開発側の追加作業・本番変更はPOの次の指示に従う。
-3. iPhone試験開始には、まず安全な限定プレビューの候補・権限・公開範囲・ロールバックを設計・提示し、**POの明示承認を得てから**実施。
+2. 現在の状態は「**SSO付き限定プレビューの配信確認済み、iPhone Safari実機E2E未PASS**」。認証後の起動確認までは判定を上げない。開発側の追加作業・本番変更はPOの指示に従う。
+3. 限定プレビューの候補・権限・公開範囲・ロールバックを提示し、**POの明示承認の範囲だけ**iPhone試験を実施。動作未検証のURLをPASSとして扱わない。
 4. 実機でPASSしても本番マージ/公開は別ゲート。別途POの明示承認なしに実施しない。
