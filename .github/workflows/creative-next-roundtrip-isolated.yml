@@ -9,6 +9,7 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+  statuses: write
 jobs:
   phase1b:
     runs-on: ubuntu-latest
@@ -23,7 +24,33 @@ jobs:
           node-version: '22'
       - name: Install isolated QA dependencies
         run: npm install --ignore-scripts --no-audit --no-fund
-      - name: Run dedicated iPhone regression
-        run: node --test test/compound-ios-export-regression.test.mjs
-      - name: Run full Phase 1-B suite
-        run: npm test
+      - name: Reproduce iPhone regression
+        id: ios
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          node --test test/compound-ios-export-regression.test.mjs 2>&1 | tee /tmp/creative-ios.log
+      - name: Run complete Phase 1-B suite
+        id: suite
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          npm test 2>&1 | tee /tmp/creative-suite.log
+      - name: Publish short QA status on this branch commit
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          IOS_OUTCOME: ${{ steps.ios.outcome }}
+          SUITE_OUTCOME: ${{ steps.suite.outcome }}
+        run: |
+          node --input-type=module -e '
+            import fs from "node:fs";
+            const result=process.env.IOS_OUTCOME==="success"&&process.env.SUITE_OUTCOME==="success";
+            const log=fs.existsSync("/tmp/creative-ios.log")?fs.readFileSync("/tmp/creative-ios.log","utf8"):"";
+            const match=log.match(/error: (.*)/);
+            const reason=match?.[1]?.replace(/[^-\w .:/]/g,"").slice(0,80)||"see CI log";
+            const payload={state:result?"success":"failure",context:"creative-next/isolated-phase1b",description:result?"iPhone regression and complete Phase 1-B suite PASS":"iPhone "+process.env.IOS_OUTCOME+", suite "+process.env.SUITE_OUTCOME+": "+reason};
+            const res=await fetch("https://api.github.com/repos/"+process.env.GITHUB_REPOSITORY+"/statuses/"+process.env.GITHUB_SHA,{method:"POST",headers:{Authorization:"Bearer "+process.env.GH_TOKEN,Accept:"application/vnd.github+json"},body:JSON.stringify(payload)});
+            if(!res.ok)throw new Error("GitHub status write failed: "+res.status);
+            if(!result)process.exitCode=1;
+          '
