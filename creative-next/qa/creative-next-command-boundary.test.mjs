@@ -15,6 +15,8 @@ confirm=false;assert.equal(c.dispatch({type:'poi',payload:{type:'add'},requestId
 assert.equal(n,0);confirm=true;
 for(const t of ['poi','area','undo','redo'])assert.equal(c.dispatch({type:t,payload:{type:'test'},requestId:t}).status,'APPLIED');
 assert.equal(n,4);assert.equal(refresh,4);
+assert.equal(c.dispatch({type:'poi',requestId:'poi'}).reason,'ALREADY_HANDLED');
+assert.equal(n,4);
 readonly=true;assert.equal(c.dispatch({type:'undo',requestId:'5'}).reason,'READ_ONLY_OR_NO_EDITOR');
 readonly=false;active=false;assert.equal(c.dispatch({type:'redo',requestId:'6'}).status,'HOLD');
 active=true;
@@ -29,3 +31,7 @@ assert.equal(reentrant.dispatch({type:'poi',requestId:'outer'}).status,'APPLIED'
 assert.equal(nested.reason,'IN_FLIGHT');
 c.stop();assert.equal(c.dispatch({type:'poi',requestId:'8'}).status,'STOPPED');
 console.log('PASS: explicit isolated command routing, confirmation, readonly guard, no save routing, reentrant refusal, errors and stop');
+
+const redrawFails=createCreativeNextCommandBoundary({session,refresh:()=>{throw Error('render unavailable')},confirmAction:()=>true});
+assert.equal(redrawFails.dispatch({type:'poi',requestId:'render-failure'}).status,'APPLIED_RENDER_HOLD');
+assert.equal(redrawFails.dispatch({type:'poi',requestId:'render-failure'}).reason,'ALREADY_HANDLED');
