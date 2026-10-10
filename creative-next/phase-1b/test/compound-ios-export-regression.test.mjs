@@ -36,7 +36,7 @@ test('iPhone combined POI/area vertex add-delete sequence can save and roundtrip
  const xml=new DOMParser().parseFromString(await zipped.file('doc.kml').async('string'),'application/xml');
  const ns='http://www.opengis.net/kml/2.2';
  const document=xml.getElementsByTagNameNS(ns,'Document')[0];
- const folder=[...xml.getElementsByTagNameNS(ns,'Folder')].find(x=>Array.from(x.childNodes||[]).some(y=>y.localName==='name'&&y.textContent==='50m サークル'));
+ const folder=Array.from(xml.getElementsByTagNameNS(ns,'Folder')).find(x=>Array.from(x.childNodes||[]).some(y=>y.localName==='name'&&y.textContent==='50m サークル'));
  assert.ok(folder);
  const el=(parent,name,value)=>{const n=xml.createElementNS(ns,name);if(value!==undefined)n.textContent=String(value);parent.appendChild(n);return n;};
  const pm=el(folder,'Placemark');el(pm,'name','50m 既存POI A');
