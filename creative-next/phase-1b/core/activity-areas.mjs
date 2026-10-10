@@ -110,9 +110,21 @@ export function editableAreaGeometry(stage,xmlDoc,edit){
  const one=(p,n)=>elems(p,n)[0];
  const areas=sourceActivityAreas(stage),area=areas.find(a=>a.id===edit.id);
  if(!area)stop('AREA_NOT_FOUND','元データ内の活動範囲がありません');
- const placeIndex=stage.places.findIndex(p=>own(p,'area-id').length===1&&own(p,'area-id')[0]===edit.id);
- const pm=Array.from(xmlDoc.getElementsByTagNameNS(KML,'Placemark'))[placeIndex];
- if(!pm||own(stage.places[placeIndex],'object')[0]!=='activity-area')stop('AREA_SOURCE','不正な活動範囲です');
+ // Source placemark indices become stale when the exporter appends new POIs
+ // to earlier KML folders. Bind to the immutable area ID in the *current* XML.
+ const sourceMatches=stage.places.filter(p=>own(p,'area-id').length===1&&own(p,'area-id')[0]===edit.id);
+ if(sourceMatches.length!==1||own(sourceMatches[0],'object').length!==1||own(sourceMatches[0],'object')[0]!=='activity-area')
+   stop('AREA_SOURCE','元データの活動範囲IDが不正です');
+ const dataValues=(pm,key)=>elems(pm,'ExtendedData').flatMap(ext=>elems(ext,'Data'))
+   .filter(d=>d.getAttribute('name')===PREFIX+key)
+   .map(d=>elems(d,'value')[0]?.textContent??'');
+ const candidates=Array.from(xmlDoc.getElementsByTagNameNS(KML,'Placemark'))
+   .filter(pm=>dataValues(pm,'area-id').includes(edit.id));
+ if(candidates.length!==1)stop('AREA_SOURCE','活動範囲IDが見つからないか重複しています');
+ const pm=candidates[0];
+ if(dataValues(pm,'area-id').length!==1||dataValues(pm,'object').length!==1||
+    dataValues(pm,'object')[0]!=='activity-area')
+   stop('AREA_SOURCE','編集対象の活動範囲メタデータが不正です');
  const polys=elems(pm,'Polygon');if(polys.length!==1)stop('AREA_STRUCTURE','単一Polygon以外は編集できません');
  const poly=polys[0];
  const children=node=>Array.from(node?.childNodes??[]).filter(x=>x.nodeType===1);
