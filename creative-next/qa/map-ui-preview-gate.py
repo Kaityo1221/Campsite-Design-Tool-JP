@@ -59,7 +59,29 @@ async def main():
                     }""")
                     print('BACKGROUND_CONTENT_DIAGNOSTIC',width,report,flush=True)
                     assert await page.locator('#entry').is_visible(),'entry hidden'
-                    assert await page.evaluate("""async()=> {const url=getComputedStyle(document.getElementById('entry')).backgroundImage.match(/url\\(\\\"?([^\\\")]+)\\\"?\\)/)?.[1]; if(!url || !url.includes('creative-mode-opening-final.webp'))return false; const r=await fetch(url);return r.status===200&&r.headers.get('content-type')?.startsWith('image/')}"""), 'start background image missing'
+                    art=await page.locator('#entryArtwork').evaluate("""async e=>{
+                      await e.decode();
+                      const r=e.getBoundingClientRect(),s=getComputedStyle(e);
+                      return {w:e.naturalWidth,h:e.naturalHeight,rectWidth:r.width,rectHeight:r.height,
+                        opacity:s.opacity,display:s.display,objectFit:s.objectFit,
+                        loaded:e.complete,src:e.currentSrc};
+                    }""")
+                    assert art['loaded'] and art['w']>=700 and art['h']>=1200,('PNG artwork missing',art)
+                    assert art['rectWidth']>=width and art['rectHeight']>700,('PNG artwork not filling iPhone entry',art)
+                    assert art['opacity']=='1' and art['display']!='none' and art['objectFit']=='cover',('Artwork visibility',art)
+                    # Screenshot must have visible photographic detail, rather than the old flat dark fallback.
+                    from io import BytesIO
+                    from PIL import Image, ImageStat
+                    screen=Image.open(BytesIO(await page.screenshot())).convert('RGB')
+                    averages=[]
+                    for xx in (0.15,0.50,0.85):
+                        for yy in (0.38,0.55,0.70):
+                            xc=int(width*xx);yc=int(844*yy)
+                            box=screen.crop((max(0,xc-20),max(0,yc-20),min(width,xc+20),min(844,yc+20)))
+                            averages.append(round(sum(ImageStat.Stat(box).mean)/3))
+                    print('ENTRY_SCREENSHOT_LUMINANCE',width,averages,flush=True)
+                    assert max(averages)>=45,('Entry still appears blank/dark despite decoded PNG',averages)
+
                     assert await page.locator('#workspace').is_hidden(),'workspace must be hidden before start'
                     assert await page.locator('#start').is_enabled(),'start not enabled'
                     assert await page.locator('.filebar').is_disabled(),'file chooser must be disabled'
