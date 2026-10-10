@@ -25,7 +25,7 @@ for(const [relative,sha] of Object.entries(expected)){
  const filename=path.join(root,relative);
  if(!fs.existsSync(filename)){console.error('MISSING',relative);failed++;continue}
  const bytes=fs.readFileSync(filename);
- const hash=crypto.createHash('sha1').update(Buffer.from('blob '+bytes.length+'\\0'.replace('\\0','\\x00'))).update(bytes).digest('hex');
+ const hash=crypto.createHash('sha1').update(Buffer.from('blob '+bytes.length+' ')).update(Buffer.from([0])).update(bytes).digest('hex');
  if(hash!==sha){console.error('VISUAL_DRIFT',relative,'actual='+hash,'baseline='+sha);failed++}
  else console.log('UI_SAME',relative);
 }
