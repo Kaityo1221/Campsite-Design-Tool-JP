@@ -1,7 +1,7 @@
 # Creative Next r13 iPhone safety acceptance (2026-10-10 JST)
 
 ## Status / progress
-- iPhone工程 **80%（前回比 ±0%） → 85% が次の目標**。Safari実機の異常系に未PASS項目があるので85%へ繰り上げない。
+- iPhone工程 **85%（前回80%より +5%） → 次の目標90%（iPhone UI最終調整）**。2026-10-10 19:24 JST、PO報告によるSafari安全性6/6と再開2/2を照合し85%安全性ゲートPASS。
 - PC版・Android版はPO申告の完成状態を保持。今回の変更から完成版へ自動移植しない。
 - `main`/旧Creative Mode/Field Mode/Bridge/旧保存キー/実KMZ原本/既存r9〜r12保存名前空間：**変更禁止、変更していない**。
 - 隔離プレビューのみ。PO承認なしの本番公開・切替・マージ禁止。
@@ -47,10 +47,23 @@
 4. If Safari cannot provide any required API, preserve stored data and hold the safety gate. Do not remove/overwrite old journal keys to make the test pass.
 5. After 85%: iPhone UI adjustment (90%), combined regression (95%), then explicit PO release decision (100%). Android parity implementation comes only after evaluating recorded differences.
 
-## iPhone Safari user-reported partial acceptance (2026-10-10 19:22 JST)
+## iPhone Safari user-reported reopen acceptance (2026-10-10 19:22 JST)
 - User submitted r13 lab results after Safari reopening (user-agent text: `Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6.1 Mobile/15E148 Safari/604.1`). This is an **iPhone Safari user report**, not CI.
 - `PASS | localStorage再開 | 状態: READY`
 - `PASS | IndexedDB再開 | 状態: READY`
 - `再開試験PASS: 両方の保存データを読み取れました。`
-- Acceptance of **reopen/re-read gate: 2/2 PASS**. First one-click six-result Safari safety inspection was **not included in this submitted report**, so **unconfirmed**, not failed and not presumed PASS.
-- iPhone progress remains **80% (delta ±0%; next 85%)** until the 6/6 initial Safari report is provided and checked. Do not request repeated r10/r12 KMZ regression.
+- Acceptance of **reopen/re-read gate: 2/2 PASS**. First one-click 6/6 report was submitted separately at 19:24 JST (see below).
+
+## iPhone Safari user-reported initial safety acceptance (2026-10-10 19:24 JST)
+- User submitted original lab output with the same iPhone Safari user-agent as the 19:22 reopen report.
+- `PASS | Safari機能 | storage, locks, crypto, idb / 4`
+- `PASS | 破損ポインタの読取専用保護`
+- `PASS | 容量不足（安全な模擬）の保存停止`
+- `PASS | Web Locksによる競合拒否`
+- `PASS | localStorage実保存・再読込`
+- `PASS | IndexedDB strict保存・再読込`
+- `合格: r13の隔離検査が完了。Safari再起動後の検査は別途必要です。`
+- **Initial 6/6 PASS**, previously reported **reopen 2/2 PASS**. Both required user-reported Safari gates passed; **85% milestone PASS** as of 19:24 JST, previous 80%, delta +5%. Next milestone is 90% UI.
+- Scope caveat: corruption and quota were synthetic/in-memory; Web Locks + storage/IDB were genuine browser APIs. A process force-kill, real native quota exhaustion and all abnormal iPhone interruptions were not proven; do not claim absolute data durability. Chrome/Chromium CI remains separate from real Safari report.
+- Prior r10/r12 user-reported PASS preserved; no repeat required. PC and Android completed baseline unchanged. No main merge, production cutover, legacy keys, existing preview namespace or original KMZ touched.
+- **Next**: audit iPhone UI layout, button tap targets, file picker, browser history/scrolling, map controls and actionable save error messaging within isolated branch; record any later Android parity decisions in P-04 / P-05. Proceed to 90% only after UI acceptance, then regression95%, release decision100% after explicit PO approval.
