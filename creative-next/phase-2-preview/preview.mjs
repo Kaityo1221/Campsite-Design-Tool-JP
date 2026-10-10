@@ -4,18 +4,20 @@ import {createLeafletMapView} from './leaflet-map-view.mjs';
 import {probePreviewEnvironment} from './browser-capabilities.mjs';
 import {recoveryChoices,exactRecoveryChoice} from './recovery-choices.mjs';
 import {createStrictIndexedCheckpoint} from './strict-idb-checkpoint.mjs';
+import {namespaceForPreviewPath} from './workspace-namespace.mjs';
 const $=id=>document.getElementById(id);
 const capabilities=probePreviewEnvironment(globalThis);
+const workspaceNamespace=namespaceForPreviewPath(globalThis.location?.pathname||'');
 // Experimental durability sidecar, separate from the existing two-generation
 // localStorage journal. The browser cannot claim successful *protected* save
 // until the strict IndexedDB checkpoint transaction has completed.
 let strictCheckpoint=null;
 try{
  if(globalThis.indexedDB && globalThis.crypto?.subtle)
-  strictCheckpoint=createStrictIndexedCheckpoint({namespace:'campsite-creative-next-v1-preview'});
+  strictCheckpoint=createStrictIndexedCheckpoint({namespace:workspaceNamespace});
 }catch{/* Fail closed: the save control below is disabled without protection. */}
 
-const session=createIsolatedEditorSession({JSZip:globalThis.JSZip,DOMParser:globalThis.DOMParser,XMLSerializer:globalThis.XMLSerializer,storage:capabilities.storage,cryptoProvider:globalThis.crypto,locks:globalThis.navigator?.locks,requireSaveLock:true});
+const session=createIsolatedEditorSession({JSZip:globalThis.JSZip,DOMParser:globalThis.DOMParser,XMLSerializer:globalThis.XMLSerializer,storage:capabilities.storage,cryptoProvider:globalThis.crypto,locks:globalThis.navigator?.locks,requireSaveLock:true,namespace:workspaceNamespace});
 $('strict-checkpoint-info').textContent=strictCheckpoint?'IndexedDB耐久性チェックポイント: 準備中（実保存は未検証）':'IndexedDBチェックポイントを利用できません。安全な保存は停止しています。';
 $('capability-status').textContent=capabilities.warnings.length
   ?'環境確認: '+capabilities.warnings.join(' ')
