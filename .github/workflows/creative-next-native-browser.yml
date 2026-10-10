@@ -47,5 +47,7 @@ jobs:
         run: python creative-next/qa/strict-idb-tamper-race-gate.py
       - name: Native recovery from IndexedDB checkpoint UI
         run: python creative-next/qa/strict-idb-ui-gate.py
+      - name: iPhone r13 synthetic safety lab on native Chromium
+        run: python creative-next/qa/iphone-r13-safety-lab-gate.py
       - name: PC full isolated end-to-end regression
         run: python creative-next/qa/pc-final-regression.py
