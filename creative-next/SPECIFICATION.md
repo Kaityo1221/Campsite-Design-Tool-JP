@@ -1,19 +1,29 @@
 # Creative Next 共通仕様書（正本）
-**版**: 2026-10-10 / isolated preview and three-platform alignment readiness v3  
+**版**: 2026-10-10 / device-platform parity & functional-integration readiness v4  
 **リポジトリ**: `Kaityo1221/Campsite-Design-Tool-JP`  
 **開発ブランチ**: `feature/creative-next-kmz-phase1b-20261009`  
-**状態**: Creative Next単体のPC隔離回帰PASS、r10 iPhone基本機能・保存/復旧テストおよびr12 葛西/光が丘の承認済みコピーのKMZ変換往復はユーザー報告PASS。**Wayfarer Map → Creative Mode → Campsite Design Toolの3者結合E2Eは未PASS**。Phase 1-B全体はHOLD、公開・mainマージは未承認。
+**状態**: PO申告では**PC版完成 / Android版完成（iPhone制作で判明する差分は後日追加） / iPhone版制作中**。Creative Next単体のPC隔離回帰PASS、r10 iPhone基本機能・保存/復旧テストおよびr12 葛西/光が丘の承認済みコピーのKMZ変換往復はユーザー報告PASS。**PC/Android/iPhoneの最終仕様整合とWayfarer Map→Creative Mode→Campsite Design Toolの機能間結合E2Eは別途未PASS**。Phase 1-B全体はHOLD、公開・mainマージは未承認。
 
 ## 0. 正本と履歴の扱い
 この文書を現時点のCreative Next仕様とゲート状態の**唯一の要約正本**とする。個別の`PHASE2_*.md`、`phase-1b/README.md`、`phase-2-preview/README.md`は実装経緯・当時の検証記録を保持するため、「未実装」「ブラウザ未PASS」など古い記述が残る。競合する場合は**本仕様書＋最新のGitHub Actions実行ログ＋実コード**で判定する。承認済みPhase 1-A原本は無断変更しない。以前合意された42項目の完全な原表は本書に再掲していないため、**本書を根拠に42項目すべての最終合格とは宣言しない**。
 
-## 0.1 3プラットフォーム整合の正規ゲート（2026-10-10追加）
+## 0.1 新フローの3機能間連携ゲート（2026-10-10追加）
 
-- [3プラットフォーム統合仕様・差分管理](THREE_PLATFORM_ALIGNMENT.md) を正本の**横断整合付属書**とする。
+- [Wayfarer Map → Creative Mode → Campsite Design Toolの機能間連携・差分台帳](THREE_PLATFORM_ALIGNMENT.md) を**機能連携の付属書**とする。この3つは「3プラットフォーム」ではない。
 - Wayfarer Map の基礎仕様は [Wayfarer Observe Flow v1](../docs/wayfarer-observe-flow-spec-v1.md) の凍結事項を尊重する。双方が競合する場合は差分台帳 X-01～X-07 として扱い、合意なしで片方へ寄せない。
 - 同じ「ポリゴン」でも、WM-0のプロジェクト正本1個（最大30頂点）とCreative Nextの追加活動範囲（最大64個、各512頂点）を**同一制限とみなさない**。実際の変換ルールは未合意。
-- Creative Next単体のKMZ互換性PASSと、`campsiteProject.v1` / Wayfarer観察を含む3者統合PASSは**別ゲート**。
+- Creative Next単体のKMZ互換性PASSと、`campsiteProject.v1` / Wayfarer観察を含む3機能間連携PASSは**別ゲート**。さらにPC/Android/iPhone環境別のPASSとも別に記録する。
 - 実公園KMZの例外整理とユーザー報告PASSは [実KMZ受入記録](phase-1b/REAL_KMZ_ACCEPTANCE_2026-10-10.md) に記録。原本は変更・GitHub公開しない。
+
+## 0.2 PC・Android・iPhone 3プラットフォーム仕様整合ゲート（PO方針 2026-10-10）
+
+- **3プラットフォームとはPC版・Android版・iPhone版**であり、新フローの3機能（Wayfarer/Creative/Campsite）とは別軸。
+- [PC・Android・iPhone 共通仕様・差分台帳](PLATFORM_PARITY_PC_ANDROID_IPHONE.md) を**端末/OS別の正規付属書**とする。
+- **PC版: 完成**。現在の完成版を基準とし、無断で作り直さない。
+- **Android版: 完成**。iPhone制作中に確定した仕様差分・改善点について、必要な項目だけ後から追加する。完成という状態と、iPhone差分がすべて反映済みであることは同義ではない。
+- **iPhone版: 制作中**。r10/r12の範囲限定PASSを保持し、残りの安全性・UI・回帰試験を継続。
+- 最終ゲート: iPhone→Android差分台帳の採否判定、PCベースラインとの突合、3環境での共通シナリオ回帰を経て、POが承認する。
+- 以前の**80%はiPhone/Creative Nextの工程ベース暫定進捗**であり、完成したPC/Androidを含む3プラットフォーム整合率を算出した数値ではない。
 
 ## 1. 開発境界と権限
 - 新フロー専用: `creative-next/`。CI設定だけは`.github/workflows/creative-next-native-browser.yml`で隔離ブランチのみ対象。
@@ -68,7 +78,8 @@
 - **実公園KMZ例外:** 葛西は所有者不明50m円1件、光が丘は50m円完全重複211件を**変換用コピーのみ**から除外。原本や一般のKMZに自動適用しない。詳細は実KMZ受入記録。
 - **公開プレビュー:** GitHub Pagesの隔離r9/r10/r11/r12は各試験版を保つ。本番Creative Modeへの接続ではない。Vercel追加ビルドに頻度制限があり、無断連打しない。
 - **安全性の残り:** 想定外中断、復旧破損、複数タブ競合等をさらに陰性テストし、実Safariで検証済みでない状況は未PASSと明記する。
-- **3者統合:** `Wayfarer Map → Creative Mode → Campsite Design Tool` の所有権、ポリゴン、外周参照POI、再観察、保存/受渡しの仕様差分 X-01～X-07がHOLD。結合E2E未PASS。
+- **3プラットフォーム整合:** PC完成・Android完成・iPhone制作中。iPhoneで見つけた差分をAndroidへ後追い反映するため、PC/Android/iPhoneの最終仕様比較・共通回帰は未PASS。詳細は端末/OS別付属書。
+- **3機能間連携:** `Wayfarer Map → Creative Mode → Campsite Design Tool` の所有権、ポリゴン、外周参照POI、再観察、保存/受渡しの仕様差分 X-01～X-07がHOLD。結合E2E未PASS。
 - **本番:** Phase 1-B/Phase 2全体の正式PASS、旧Creative Mode切替、`main`マージは別途明示承認が必要。未承認。
 - **STOP条件:** 元データ移動/消失、原ZIP添付の変化、保存の誤成功表示、認証/権限異常、重大なUI崩れ、不正データの黙認、設計正本の競合が生じれば隔離で修正し、再検証する。
 
@@ -83,8 +94,8 @@
 
 ## 7. 次作業担当への必須ルール（2026-10-10更新）
 
-1. 本仕様書、横断整合付属書、実KMZ受入記録、最新CIと実コードを照合する。古いREADMEや日付付き試験レポートの「iPhone未実施」は当時の履歴として扱う。
-2. 3プラットフォームはそれぞれの正本と責務を維持し、差分 X-01～X-07 にPOの判断を得る。新たなデータマスターや旧Creativeの無承認切替を生まない。
+1. 本仕様書、PC/Android/iPhone環境差分付属書、機能間連携付属書、実KMZ受入記録、最新CIと実コードを照合する。古いREADMEや日付付き試験レポートの「iPhone未実施」は当時の履歴として扱う。
+2. 3プラットフォームとはPC・Android・iPhoneを指す。PC完成を基準とし、iPhoneの変更点は台帳へ追記し、Android完成版への反映要否を検証する。機能間の差分X-01～X-07は別途PO判断を得る。
 3. iPhoneでPASSした操作と、未検証のWebKit/3者結合/本番リリースを混同しない。
 4. 原本の私有KMZ、変換結果、利用者データを公開リポジトリにアップロードしない。
 5. 安全性テストや統合UIは隔離ブランチで進め、POの別途承認まで本番・`main`を変更しない。
