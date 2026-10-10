@@ -5,7 +5,7 @@ import {DOMParser,XMLSerializer} from '@xmldom/xmldom';
 import {createFreshV1Kmz} from '../core/create-new-kmz.mjs';
 import {createIsolatedEditorSession} from '../integration/isolated-editor-session.mjs';
 import {
-  LEGACY_PREVIEW_NAMESPACE,R10_SAVE_NAMESPACE,R11_AUDIT_NAMESPACE,R12_WINDING_NAMESPACE,namespaceForPreviewPath
+  LEGACY_PREVIEW_NAMESPACE,R10_SAVE_NAMESPACE,R11_AUDIT_NAMESPACE,R12_WINDING_NAMESPACE,R13_SAFETY_NAMESPACE,namespaceForPreviewPath
 } from '../../phase-2-preview/workspace-namespace.mjs';
 
 const deps={JSZip,DOMParser,XMLSerializer};
@@ -17,12 +17,14 @@ const fixture={
  records:[{id:'old',role:'existing',kind:'pokestop',title:'source',memo:'',lat:35.64,lng:139.85,deleted:false}],
  activityAreas:[{id:'area-one',points:[[35.6408,139.8535],[35.6407,139.8585],[35.6445,139.8585],[35.6445,139.8535]]}]
 };
-test('versioned preview URL selects a distinct valid namespace only in r10',()=>{
+test('versioned preview URLs select isolated workspaces through r13',()=>{
  assert.notEqual(LEGACY_PREVIEW_NAMESPACE,R10_SAVE_NAMESPACE);
  assert.notEqual(LEGACY_PREVIEW_NAMESPACE,R11_AUDIT_NAMESPACE);
  assert.notEqual(R10_SAVE_NAMESPACE,R11_AUDIT_NAMESPACE);
  assert.notEqual(R12_WINDING_NAMESPACE,R11_AUDIT_NAMESPACE);
  assert.notEqual(R12_WINDING_NAMESPACE,R10_SAVE_NAMESPACE);
+ for(const previous of [LEGACY_PREVIEW_NAMESPACE,R10_SAVE_NAMESPACE,R11_AUDIT_NAMESPACE,R12_WINDING_NAMESPACE])
+   assert.notEqual(R13_SAFETY_NAMESPACE,previous);
  assert.equal(namespaceForPreviewPath('/campsite-creative-next-preview/roundtrip-fix-r9/phase-2-preview/index.html'),LEGACY_PREVIEW_NAMESPACE);
  assert.equal(namespaceForPreviewPath('/campsite-creative-next-preview/phase-2-preview/index.html'),LEGACY_PREVIEW_NAMESPACE);
  assert.equal(namespaceForPreviewPath('/campsite-creative-next-preview/save-isolated-r10/phase-2-preview/index.html'),R10_SAVE_NAMESPACE);
@@ -32,6 +34,9 @@ test('versioned preview URL selects a distinct valid namespace only in r10',()=>
  assert.equal(namespaceForPreviewPath('/campsite-creative-next-preview/legacy-audit-r11/phase-2-preview/'),R11_AUDIT_NAMESPACE);
  assert.equal(namespaceForPreviewPath('/campsite-creative-next-preview/legacy-winding-r12/phase-2-preview/index.html'),R12_WINDING_NAMESPACE);
  assert.equal(namespaceForPreviewPath('/campsite-creative-next-preview/legacy-winding-r12/phase-2-preview/'),R12_WINDING_NAMESPACE);
+ assert.equal(namespaceForPreviewPath('/campsite-creative-next-preview/iphone-safety-r13/phase-2-preview/index.html'),R13_SAFETY_NAMESPACE);
+ assert.equal(namespaceForPreviewPath('/campsite-creative-next-preview/iphone-safety-r13/phase-2-preview/'),R13_SAFETY_NAMESPACE);
+ assert.equal(namespaceForPreviewPath('/campsite-creative-next-preview/iphone-safety-r13/other/index.html'),LEGACY_PREVIEW_NAMESPACE);
 });
 
 test('old saved journal is untouched when a separate r10 session saves',async()=>{
