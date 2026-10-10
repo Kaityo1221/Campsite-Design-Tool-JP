@@ -1,0 +1,13 @@
+/* Creative Next isolated preview workspace selector.
+ * Never migrate, clear or overwrite previously created preview workspaces.
+ * The r10 recovery test uses a new namespace even on the same Pages origin.
+ */
+export const LEGACY_PREVIEW_NAMESPACE='campsite-creative-next-v1-preview';
+export const R10_SAVE_NAMESPACE='campsite-creative-next-v1-save-isolated-r10';
+
+export function namespaceForPreviewPath(pathname=''){
+  if(typeof pathname==='string' &&
+     /(?:^|\/)save-isolated-r10\/phase-2-preview\/(?:index\.html)?$/.test(pathname))
+    return R10_SAVE_NAMESPACE;
+  return LEGACY_PREVIEW_NAMESPACE;
+}
