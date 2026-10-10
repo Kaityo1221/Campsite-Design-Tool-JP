@@ -29,6 +29,35 @@ async def main():
                     response=await page.goto(f'http://127.0.0.1:{server.server_port}{PATH}',wait_until='domcontentloaded',timeout=15000)
                     assert response and response.status==200,response
                     print('U2_CHECK start state',width,flush=True)
+                    report=await page.evaluate("""async() => {
+                      const sources=[
+                        '/assets/creative-mode-opening-final.webp',
+                        '/assets/creative-mode-opening.png',
+                        '/creative-next/map-ui-preview/assets/creative-mode-opening-final.webp'
+                      ];
+                      const outputs=[];
+                      for(const src of sources){
+                        const pic=new Image();pic.src=src;
+                        try {await pic.decode()}catch(e){outputs.push({src,error:String(e)});continue}
+                        const canvas=document.createElement('canvas');
+                        canvas.width=20;canvas.height=30;
+                        const context=canvas.getContext('2d',{willReadFrequently:true});
+                        context.drawImage(pic,0,0,20,30);
+                        const arr=context.getImageData(0,0,20,30).data;
+                        let lum=0,alp=0,bright=0,colored=0;
+                        for(let i=0;i<arr.length;i+=4){
+                          const y=(arr[i]*.2126+arr[i+1]*.7152+arr[i+2]*.0722);
+                          lum+=y;alp+=arr[i+3];
+                          if(y>65&&arr[i+3]>100)bright++;
+                          if(Math.max(arr[i],arr[i+1],arr[i+2])-Math.min(arr[i],arr[i+1],arr[i+2])>25&&arr[i+3]>100)colored++;
+                        }
+                        outputs.push({src,w:pic.naturalWidth,h:pic.naturalHeight,
+                          avgLum:Math.round(lum/600),avgAlpha:Math.round(alp/600),
+                          brightFraction:Math.round(bright/6),coloredFraction:Math.round(colored/6)});
+                      }
+                      return {images:outputs,cssImage:getComputedStyle(document.getElementById('entry')).backgroundImage.slice(0,350)};
+                    }""")
+                    print('BACKGROUND_CONTENT_DIAGNOSTIC',width,report,flush=True)
                     assert await page.locator('#entry').is_visible(),'entry hidden'
                     assert await page.evaluate("""async()=> {const url=getComputedStyle(document.getElementById('entry')).backgroundImage.match(/url\\(\\\"?([^\\\")]+)\\\"?\\)/)?.[1]; if(!url || !url.includes('creative-mode-opening-final.webp'))return false; const r=await fetch(url);return r.status===200&&r.headers.get('content-type')?.startsWith('image/')}"""), 'start background image missing'
                     assert await page.locator('#workspace').is_hidden(),'workspace must be hidden before start'
