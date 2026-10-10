@@ -1,0 +1,23 @@
+name: Creative Next Existing Leaflet Overlay
+on:
+  push:
+    branches: [feature/creative-next-ui-exact-parity-20261010]
+    paths:
+      - 'creative-next/integration/creative-next-original-leaflet-overlay.mjs'
+      - 'creative-next/qa/creative-next-original-leaflet-overlay.test.mjs'
+      - '.github/workflows/creative-next-existing-leaflet-overlay.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  original-ui-overlay:
+    if: github.ref == 'refs/heads/feature/creative-next-ui-exact-parity-20261010'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node creative-next/qa/current-creative-ui-source-parity.cjs
+      - run: node creative-next/qa/creative-ui-read-follower.test.mjs
+      - run: node creative-next/qa/creative-next-original-leaflet-overlay.test.mjs
