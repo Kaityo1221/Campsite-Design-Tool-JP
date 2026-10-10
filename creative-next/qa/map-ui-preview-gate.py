@@ -44,7 +44,7 @@ async def main():
                     print('U2_CHECK layer panel',width,flush=True)
                     await page.locator('#layers').click()
                     assert await page.locator('#layerPanel').is_visible()
-                    assert await page.locator('#layerPanel fieldset').is_disabled()
+                    assert all([await control.is_disabled() for control in await page.locator('#layerPanel input').all()]),'Layer controls must not modify unconnected data'
                     await page.locator('#layers').click()
                     assert await page.locator('#layerPanel').is_hidden()
                     print('U2_CHECK POI panel',width,flush=True)
