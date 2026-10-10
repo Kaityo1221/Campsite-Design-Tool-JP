@@ -1,0 +1,32 @@
+name: Creative Next Map First U2 isolated UI
+on:
+  push:
+    branches: [feature/creative-next-map-ui-20261010]
+    paths:
+      - 'creative-next/map-ui-preview/**'
+      - 'creative-next/qa/map-ui-preview-gate.py'
+      - '.github/workflows/creative-next-map-ui.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  u2-visual-only:
+    if: github.ref == 'refs/heads/feature/creative-next-map-ui-20261010'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check display-only JavaScript syntax
+        run: node --check creative-next/map-ui-preview/ui.js
+      - name: Install headless browser for UI check
+        run: |
+          python -m pip install playwright==1.56.0
+          python -m playwright install --with-deps chromium
+      - name: Isolated Map First UI 375/390/430 and storage safety
+        run: python creative-next/qa/map-ui-preview-gate.py
