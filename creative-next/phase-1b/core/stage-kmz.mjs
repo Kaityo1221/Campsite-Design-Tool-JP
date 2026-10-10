@@ -182,9 +182,13 @@ function verifyNewCircle(place,owners) {
   const angles=coords.slice(0,-1).map(p=>(Math.atan2((p[0]-lng)*Math.cos(lat*Math.PI/180),p[1]-lat)+2*Math.PI)%(2*Math.PI));
   const angular=(a,b)=>Math.abs((a-b+3*Math.PI)%(2*Math.PI)-Math.PI);
   const owner=owners.get(id[0]);
+  // A verified legacy ring retains its original winding on conversion.
+  // Both orientations are valid if the radius, 48 samples, north-start
+  // bearing and exact POI owner relation independently pass verification.
+  const forward=angles.every((a,i)=>angular(a,i*2*Math.PI/48)<0.055);
+  const reverse=angles.every((a,i)=>angular(a,-i*2*Math.PI/48)<0.055);
   return !!owner&&meters.every(m=>Math.abs(m-target)<1.5)&&
-    angles.every((a,i)=>angular(a,i*2*Math.PI/48)<0.055)&&
-    centerDistanceMeters({lat,lng},owner)<0.2;
+    (forward||reverse)&&centerDistanceMeters({lat,lng},owner)<0.2;
 }
 function buildPlaces(doc, maxPlacemarks) {
   const pms = Array.from(doc.getElementsByTagNameNS(KML_NS, 'Placemark'));
