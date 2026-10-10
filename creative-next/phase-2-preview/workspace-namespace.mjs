@@ -5,6 +5,7 @@
 export const LEGACY_PREVIEW_NAMESPACE='campsite-creative-next-v1-preview';
 export const R10_SAVE_NAMESPACE='campsite-creative-next-v1-save-isolated-r10';
 export const R11_AUDIT_NAMESPACE='campsite-creative-next-v1-legacy-audit-r11';
+export const R12_WINDING_NAMESPACE='campsite-creative-next-v1-legacy-winding-r12';
 
 export function namespaceForPreviewPath(pathname=''){
   if(typeof pathname==='string' &&
@@ -13,5 +14,8 @@ export function namespaceForPreviewPath(pathname=''){
   if(typeof pathname==='string' &&
      /(?:^|\/)legacy-audit-r11\/phase-2-preview\/(?:index\.html)?$/.test(pathname))
     return R11_AUDIT_NAMESPACE;
+  if(typeof pathname==='string' &&
+     /(?:^|\/)legacy-winding-r12\/phase-2-preview\/(?:index\.html)?$/.test(pathname))
+    return R12_WINDING_NAMESPACE;
   return LEGACY_PREVIEW_NAMESPACE;
 }
