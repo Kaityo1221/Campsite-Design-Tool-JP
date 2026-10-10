@@ -1,5 +1,5 @@
-import {replaceWithExclusiveCreativeControl} from '../integration/exclusive-creative-control.mjs';
-import {createCreativeNextCommandBoundary} from '../integration/creative-next-command-boundary.mjs';
+import {replaceWithExclusiveCreativeControl} from '../../integration/exclusive-creative-control.mjs';
+import {createCreativeNextCommandBoundary} from '../../integration/creative-next-command-boundary.mjs';
 // Isolated browser E2E ONLY: leave original visual class, inline style and position unchanged.
 const oldUndo=document.getElementById('undo');
 const oldRedo=document.getElementById('redo');
