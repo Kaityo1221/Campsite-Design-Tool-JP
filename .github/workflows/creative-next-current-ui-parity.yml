@@ -1,0 +1,25 @@
+name: Creative Next Current UI Source Parity
+on:
+  push:
+    branches: [feature/creative-next-ui-exact-parity-20261010]
+    paths:
+      - 'creative/**'
+      - 'assets/creative-mode-opening-final.webp'
+      - 'assets/creative-mode-start-transition.webp'
+      - 'creative-next/qa/current-creative-ui-source-parity.cjs'
+      - 'creative-next/UI_EXACT_PARITY_2026-10-10.md'
+      - '.github/workflows/creative-next-current-ui-parity.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  visual-source-freeze:
+    if: github.ref == 'refs/heads/feature/creative-next-ui-exact-parity-20261010'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify original Creative UI source and art are unchanged
+        run: node creative-next/qa/current-creative-ui-source-parity.cjs
