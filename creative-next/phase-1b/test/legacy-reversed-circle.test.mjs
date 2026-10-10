@@ -23,7 +23,7 @@ function document(circles){
  return `<?xml version="1.0" encoding="utf-8"?>
  <kml xmlns="${NS}"><Document><name>old circles</name>
  <Folder><name>既存 PokéStop</name><Placemark><name>known POI</name>
- <description>説明: POKESTOP&amp;lt;br&amp;gt;nextlab-layer: existing-pokestop</description>
+ <description>説明: POKESTOP&lt;br&gt;nextlab-layer: existing-pokestop</description>
  <ExtendedData><Data name="nextlab-layer"><value>existing-pokestop</value></Data></ExtendedData>
  <styleUrl>#creative-existing-pokestop</styleUrl>
  <Point><coordinates>139.8000000,35.7000000,0</coordinates></Point>
