@@ -173,14 +173,14 @@ $('inspect').addEventListener('click',async()=>{const f=$('file').files?.[0];if(
       const a=result.legacyAudit.summary;
       const lengths=Object.entries(a.ringsByLength).sort((x,y)=>Number(x[0])-Number(y[0])).map(([k,v])=>k+'座標点='+v).join('、');
       const issues=result.legacyAudit.issues.map(x=>x.code+': '+x.count+'件').join(' / ');
-      auditText='\\n\\n【旧KMZの読取専用診断】\\nPOI候補 '+a.pois+'件・距離円候補 '+a.circleCandidates+'件（30m='+a.circleByRadius[30]+'、40m='+a.circleByRadius[40]+'、50m='+a.circleByRadius[50]+'）'+
-        '\\n円の座標点数: '+(lengths||'なし')+
-        '\\n形状確認済 '+a.verifiedCircleGeometry+'件・未確認 '+a.unverifiedCircleGeometry+'件'+
-        '\\n所有者不明 '+a.orphanVerifiedCircles+'件・曖昧 '+a.ambiguousVerifiedCircles+'件・同一半径重複 '+a.duplicatedVerifiedOwnerRadius+'件'+
-        (issues?'\\n要調査: '+issues:'')+
-        '\\n※診断のみ。安全確認を省略した取込や自動修復は行いません。';
+      auditText='\n\n【旧KMZの読取専用診断】\nPOI候補 '+a.pois+'件・距離円候補 '+a.circleCandidates+'件（30m='+a.circleByRadius[30]+'、40m='+a.circleByRadius[40]+'、50m='+a.circleByRadius[50]+'）'+
+        '\n円の座標点数: '+(lengths||'なし')+
+        '\n形状確認済 '+a.verifiedCircleGeometry+'件・未確認 '+a.unverifiedCircleGeometry+'件'+
+        '\n所有者不明 '+a.orphanVerifiedCircles+'件・曖昧 '+a.ambiguousVerifiedCircles+'件・同一半径重複 '+a.duplicatedVerifiedOwnerRadius+'件'+
+        (issues?'\n要調査: '+issues:'')+
+        '\n※診断のみ。安全確認を省略した取込や自動修復は行いません。';
     }
-    $('candidate').textContent=`${result.status}: 読み込み保留\\n${(result.issues||[]).slice(0,12).map(i=>i.message||i.code).join('\\n')}${auditText}`;
+    $('candidate').textContent=`${result.status}: 読み込み保留\n${(result.issues||[]).slice(0,12).map(i=>i.message||i.code).join('\n')}${auditText}`;
     announce('読み込みを停止しました。編集中のデータはそのままです。','error');
    }
  }catch(e){failure(e);}finally{$('inspect').disabled=false;redraw();}});
