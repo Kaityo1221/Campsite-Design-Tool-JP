@@ -1,11 +1,19 @@
 # Creative Next 共通仕様書（正本）
-**版**: 2026-10-10 / protected-preview readiness v2  
+**版**: 2026-10-10 / isolated preview and three-platform alignment readiness v3  
 **リポジトリ**: `Kaityo1221/Campsite-Design-Tool-JP`  
 **開発ブランチ**: `feature/creative-next-kmz-phase1b-20261009`  
-**状態**: PC総合回帰PASS。Vercel限定プレビューはSSO有効かつデプロイREADY。iPhone Safari実機E2Eは未PASS。公開・mainマージは未承認。
+**状態**: Creative Next単体のPC隔離回帰PASS、r10 iPhone基本機能・保存/復旧テストおよびr12 葛西/光が丘の承認済みコピーのKMZ変換往復はユーザー報告PASS。**Wayfarer Map → Creative Mode → Campsite Design Toolの3者結合E2Eは未PASS**。Phase 1-B全体はHOLD、公開・mainマージは未承認。
 
 ## 0. 正本と履歴の扱い
 この文書を現時点のCreative Next仕様とゲート状態の**唯一の要約正本**とする。個別の`PHASE2_*.md`、`phase-1b/README.md`、`phase-2-preview/README.md`は実装経緯・当時の検証記録を保持するため、「未実装」「ブラウザ未PASS」など古い記述が残る。競合する場合は**本仕様書＋最新のGitHub Actions実行ログ＋実コード**で判定する。承認済みPhase 1-A原本は無断変更しない。以前合意された42項目の完全な原表は本書に再掲していないため、**本書を根拠に42項目すべての最終合格とは宣言しない**。
+
+## 0.1 3プラットフォーム整合の正規ゲート（2026-10-10追加）
+
+- [3プラットフォーム統合仕様・差分管理](THREE_PLATFORM_ALIGNMENT.md) を正本の**横断整合付属書**とする。
+- Wayfarer Map の基礎仕様は [Wayfarer Observe Flow v1](../docs/wayfarer-observe-flow-spec-v1.md) の凍結事項を尊重する。双方が競合する場合は差分台帳 X-01～X-07 として扱い、合意なしで片方へ寄せない。
+- 同じ「ポリゴン」でも、WM-0のプロジェクト正本1個（最大30頂点）とCreative Nextの追加活動範囲（最大64個、各512頂点）を**同一制限とみなさない**。実際の変換ルールは未合意。
+- Creative Next単体のKMZ互換性PASSと、`campsiteProject.v1` / Wayfarer観察を含む3者統合PASSは**別ゲート**。
+- 実公園KMZの例外整理とユーザー報告PASSは [実KMZ受入記録](phase-1b/REAL_KMZ_ACCEPTANCE_2026-10-10.md) に記録。原本は変更・GitHub公開しない。
 
 ## 1. 開発境界と権限
 - 新フロー専用: `creative-next/`。CI設定だけは`.github/workflows/creative-next-native-browser.yml`で隔離ブランチのみ対象。
@@ -54,13 +62,15 @@
 - PC操作を一連で実行: 合成KMZ取込→編集→保存→リロード→実KMZ書出→**独立した別ブラウザコンテキスト**で再読込、幅1366px・ページJSエラーなしPASS。
 - **PC総合回帰PASS**は「合成KMZの実ブラウザ操作＋葛西原本の別の非公開回帰」という範囲の判定。葛西原本をiPhoneでE2E操作したPASSではない。
 
-## 5. 未判定とSTOP条件
-- **iPhone Safari実機: 未開始・未PASS**。IndexedDB durability、保存容量、タッチ/スクロール、地図ドラッグ、戻る/進む、KMZファイルUI、実機性能は未確認。
-- 実機用Vercel限定プレビュー `campsite-creative-next-private-preview` は**作成済み**。2026-10-10時点の隔離ブランチcommit `1d9eed610d785837a5f4a85dd4c12debf2288966` のデプロイ `dpl_42USmXjGcugNXrGH7x98jdYkfv5H` は **READY**、Vercel Authentication (SSO) は有効。候補URL: `https://campsite-creative-next-private-preview-e94khjeg7-kaityo1222.vercel.app/creative-next/phase-2-preview/index.html`。ただし認証後の実ページ到達・iPhone Safari起動成功は**未確認**。このURLは一般公開承認を意味しない。
-- Phase 1-B / Phase 2 **全体の正式PASS未判定**。外部My Maps完全往復・全入力形式・42項目網羅は確認できたと断言しない。
-- プレビューのテストは、POの明示承認を受けるまで開始しない。公開`main`へのマージ、旧Creative Mode切替、本番デプロイも別の明示承認が必要。
-- 実機テスト中に既存データ移動/消失、元ZIP添付の変化、保存の誤成功表示、認証/権限異常、重大画面崩れが生じたら**STOP**し、機密ファイルを公開せず隔離ブランチで修正→PC再試験。
-- プレビューの候補URLとSSO保護は確認済み。安全な試験対象KMZ・手順・戻し方とともに、認証後のページ到達から順にiPhone Safari実機を確認する。認証失敗・404・起動エラーならそこでSTOP。
+## 5. 未判定・現行ゲート（2026-10-10時点）
+
+- **iPhone Safari実機:** r10基本編集、Undo/Redo、保護保存・再開、不正データ拒否はユーザー報告PASS。r12は葛西・光が丘のユーザー承認済み整理コピーに対する旧形式変換→書出→再取込をユーザー報告PASS。ユーザー報告の範囲を越える全面合格宣言はしない。
+- **実公園KMZ例外:** 葛西は所有者不明50m円1件、光が丘は50m円完全重複211件を**変換用コピーのみ**から除外。原本や一般のKMZに自動適用しない。詳細は実KMZ受入記録。
+- **公開プレビュー:** GitHub Pagesの隔離r9/r10/r11/r12は各試験版を保つ。本番Creative Modeへの接続ではない。Vercel追加ビルドに頻度制限があり、無断連打しない。
+- **安全性の残り:** 想定外中断、復旧破損、複数タブ競合等をさらに陰性テストし、実Safariで検証済みでない状況は未PASSと明記する。
+- **3者統合:** `Wayfarer Map → Creative Mode → Campsite Design Tool` の所有権、ポリゴン、外周参照POI、再観察、保存/受渡しの仕様差分 X-01～X-07がHOLD。結合E2E未PASS。
+- **本番:** Phase 1-B/Phase 2全体の正式PASS、旧Creative Mode切替、`main`マージは別途明示承認が必要。未承認。
+- **STOP条件:** 元データ移動/消失、原ZIP添付の変化、保存の誤成功表示、認証/権限異常、重大なUI崩れ、不正データの黙認、設計正本の競合が生じれば隔離で修正し、再検証する。
 
 ## 6. 参照ファイルと再現
 - 隔離UI: `creative-next/phase-2-preview/index.html`
@@ -71,8 +81,10 @@
 - 実Chromium CI: `.github/workflows/creative-next-native-browser.yml`、`creative-next/qa/native-browser-gates.py`、`strict-idb-crash-gate.py`、`strict-idb-ui-gate.py`、`pc-final-regression.py`
 - 詳細: `creative-next/PC_FINAL_REGRESSION_REPORT_20261009.md`、`creative-next/PRE_IPHONE_SAFARI_HANDOFF_20261009.md`
 
-## 7. 次作業担当への必須ルール
-1. **この仕様書、引き継ぎ、最新実コード、最新CIを照合**。古い歴史的READMEの未実装表現を現在の事実として引用しない。
-2. 現在の状態は「**SSO付き限定プレビューの配信確認済み、iPhone Safari実機E2E未PASS**」。認証後の起動確認までは判定を上げない。開発側の追加作業・本番変更はPOの指示に従う。
-3. 限定プレビューの候補・権限・公開範囲・ロールバックを提示し、**POの明示承認の範囲だけ**iPhone試験を実施。動作未検証のURLをPASSとして扱わない。
-4. 実機でPASSしても本番マージ/公開は別ゲート。別途POの明示承認なしに実施しない。
+## 7. 次作業担当への必須ルール（2026-10-10更新）
+
+1. 本仕様書、横断整合付属書、実KMZ受入記録、最新CIと実コードを照合する。古いREADMEや日付付き試験レポートの「iPhone未実施」は当時の履歴として扱う。
+2. 3プラットフォームはそれぞれの正本と責務を維持し、差分 X-01～X-07 にPOの判断を得る。新たなデータマスターや旧Creativeの無承認切替を生まない。
+3. iPhoneでPASSした操作と、未検証のWebKit/3者結合/本番リリースを混同しない。
+4. 原本の私有KMZ、変換結果、利用者データを公開リポジトリにアップロードしない。
+5. 安全性テストや統合UIは隔離ブランチで進め、POの別途承認まで本番・`main`を変更しない。
