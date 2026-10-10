@@ -33,6 +33,8 @@ async def main():
                     }
                 }""")
                 assert ns['r14']=='campsite-creative-next-v1-iphone-ui-r14' and ns['r14']!=ns['r13'] and ns['r14']!=ns['fallback'],ns
+                # Wait for the preview module's synchronous initial redraw before adding the synthetic row.
+                await page.wait_for_function("document.getElementById('capability-status').textContent !== 'ブラウザ環境を確認中'",timeout=15000)
                 # Replace only the display-only placeholder row with a very long sample POI name.
                 # This asserts layout, not an actual KMZ import or app save/restore.
                 await page.evaluate("""() => {
