@@ -30,6 +30,7 @@ async def main():
                     assert response and response.status==200,response
                     print('U2_CHECK start state',width,flush=True)
                     assert await page.locator('#entry').is_visible(),'entry hidden'
+                    assert await page.evaluate("""async()=> {const url=getComputedStyle(document.getElementById('entry')).backgroundImage.match(/url\\(\\\"?([^\\\")]+)\\\"?\\)/)?.[1]; if(!url || !url.includes('creative-mode-opening-final.webp'))return false; const r=await fetch(url);return r.status===200&&r.headers.get('content-type')?.startsWith('image/')}"""), 'start background image missing'
                     assert await page.locator('#workspace').is_hidden(),'workspace must be hidden before start'
                     assert await page.locator('#start').is_enabled(),'start not enabled'
                     assert await page.locator('.filebar').is_disabled(),'file chooser must be disabled'
