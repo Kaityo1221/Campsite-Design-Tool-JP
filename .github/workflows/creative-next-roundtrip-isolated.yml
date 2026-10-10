@@ -1,0 +1,29 @@
+name: Creative Next isolated roundtrip QA
+on:
+  push:
+    branches:
+      - feature/creative-next-kmz-phase1b-20261009
+    paths:
+      - 'creative-next/phase-1b/**'
+      - '.github/workflows/creative-next-roundtrip-isolated.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  phase1b:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    defaults:
+      run:
+        working-directory: creative-next/phase-1b
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install isolated QA dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Run dedicated iPhone regression
+        run: node --test test/compound-ios-export-regression.test.mjs
+      - name: Run full Phase 1-B suite
+        run: npm test
