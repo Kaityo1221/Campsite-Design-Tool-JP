@@ -11,11 +11,12 @@ export function createCreativeNextCommandBoundary({session,refresh,confirmAction
  if(typeof refresh!=='function'||typeof confirmAction!=='function')
   throw new TypeError('Refresh and explicit confirmation callbacks required');
  let stopped=false,busy=false;
- const inFlight=new Set();
+ const inFlight=new Set(),completed=new Set();
  function dispatch({type,payload,requestId}={}){
   if(stopped)return {status:'STOPPED',changed:false};
   if(!MUTATIONS.has(type))return {status:'HOLD',changed:false,reason:'UNSUPPORTED_ACTION'};
   if(typeof requestId!=='string'||!requestId.trim())return {status:'HOLD',changed:false,reason:'REQUEST_ID_REQUIRED'};
+  if(completed.has(requestId))return {status:'HOLD',changed:false,reason:'ALREADY_HANDLED'};
   if(busy||inFlight.has(requestId))return {status:'HOLD',changed:false,reason:'IN_FLIGHT'};
   const state=session.state();
   if(!state.hasActive||state.recoveredFallback)return {status:'HOLD',changed:false,reason:'READ_ONLY_OR_NO_EDITOR'};
@@ -30,7 +31,7 @@ export function createCreativeNextCommandBoundary({session,refresh,confirmAction
    if(result&&typeof result.then==='function')throw new Error('ASYNC_ACTION_NOT_SUPPORTED');
    // Refresh only after the isolated engine reports a committed state.
    const changed=result?.changed===true||result?.ok===true&&type!=='poi'&&type!=='area';
-   if(changed)refresh();
+   if(changed){completed.add(requestId);if(completed.size>512)completed.delete(completed.values().next().value);try{refresh()}catch{return {status:'APPLIED_RENDER_HOLD',changed:true,result};}}
    return {status:changed?'APPLIED':'NO_CHANGE',changed,result};
   }catch(error){return {status:'HOLD',changed:false,reason:error?.code||error?.message||'ACTION_FAILED'};}
   finally{inFlight.delete(requestId);busy=false}
