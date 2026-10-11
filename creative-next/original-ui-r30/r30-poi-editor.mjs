@@ -3,8 +3,9 @@ import {attachCreativeNextOverlay} from '../integration/creative-next-original-l
 import {createOriginalNewPoiSheet} from '../integration/creative-next-original-new-poi-sheet.mjs';
 import {ORIGINAL_LAYER_GROUPS,countOriginalLayerRecords} from '../integration/original-layer-counts.mjs';
 import {createOriginalOptionalCircleOverlay} from '../integration/original-optional-circles-r30.mjs';
+import {createOriginalPlacementR30} from '../integration/original-placement-r30.mjs';
 // Isolated original-UI controller. No legacy app scripts, journal, or browser storage.
-let map=null,overlay=null,optionalCircles=null,poiEditor=null,base=null,aerial=null,usingAerial=false,tool=null,moveTargetId=null,disposed=false;
+let map=null,overlay=null,optionalCircles=null,placement=null,poiEditor=null,base=null,aerial=null,usingAerial=false,tool=null,disposed=false;
 let rulerFirst=null,rulerPoints=[];
 const id=name=>document.getElementById(name);
 const entry=id('entry'),status=id('entryState'),message=id('status');
@@ -38,7 +39,7 @@ function refreshMap(){
 function backToEntry(){
  if(!map)return;
  if(poiEditor&&!poiEditor.close())return;
- hidePanels();tool=null;moveTargetId=null;
+ hidePanels();tool=null;placement?.hide();
  map?.closePopup();
  entry.classList.remove('hidden');
  const resume=id('resumeButton');
@@ -48,6 +49,7 @@ function backToEntry(){
 function reopenMap(){
  if(!map)return;
  entry.classList.add('hidden');
+ placement?.show();
  requestAnimationFrame(()=>map?.invalidateSize());
 }
 function refreshLayerCounts(){
@@ -74,36 +76,6 @@ function togglePanel(which){
  const panel=id(which),open=!panel.classList.contains('open');
  hidePanels();
  if(open)panel.classList.add('open');
-}
-function beginAdd(){
- if(!map)return;
- tool=tool==='add'?null:'add';hidePanels();
- inform(tool?'新規POIを追加する場所を地図でタップ。もう一度道具箱から終了できます。':'追加操作を終了しました');
-}
-function addAt(latlng){
- const raw=globalThis.prompt('追加する種類を選択してください。1=PokéStop / 2=Gym / 3=PowerSpot','1');
- if(raw===null){inform('追加をキャンセルしました');return;}
- const kind=({'1':'pokestop','2':'gym','3':'power'})[raw.trim()];
- if(!kind){inform('追加する種類は1・2・3から選択してください');return;}
- const name=globalThis.prompt('新しいPOIの名前を入力してください','新しいスポット');
- if(name===null){inform('追加をキャンセルしました');return;}
- if(!name.trim()){inform('POIの名前が必要です');return;}
- if(!globalThis.confirm('この地点に新しいPOIを追加しますか？（元KMZは変更しません）'))return;
- try{
-  const result=fileReview.engine.command({type:'add',poi:{role:'new',kind,title:name.trim(),memo:'',lat:latlng.lat,lng:latlng.lng,deleted:false,guid:null,poiId:null,metadata:{}}},{confirmed:true});
-  if(!result?.changed){inform('追加を保留しました：'+String(result?.error?.message||result?.error?.code||'追加制限'));return;}
-  tool=null;refreshMap();inform('新規POIを追加しました。↩ 戻るで取り消せます（保存なし）');
- }catch(e){inform('追加を保留しました：'+String(e.code||e.message||'UNKNOWN'));}
-}
-function moveAt(latlng){
- const id=moveTargetId,record=fileReview.engine.state().records.find(p=>p.id===id&&!p.deleted);
- if(!record||record.role!=='new'){tool=null;moveTargetId=null;inform('移動できる新規POIが見つかりません');return;}
- if(!globalThis.confirm('この新しい地点にPOIを移動しますか？（元KMZは変更しません）'))return;
- try{
-  const result=fileReview.engine.command({type:'move',id,lat:latlng.lat,lng:latlng.lng},{confirmed:true});
-  if(!result?.changed){inform('移動を保留しました：'+String(result?.error?.message||result?.error?.code||'制限'));return;}
-  tool=null;moveTargetId=null;refreshMap();inform('POIを移動しました。↩ 戻るで取り消せます（保存なし）');
- }catch(error){inform('移動を保留しました：'+String(error?.code||error?.message||'UNKNOWN'));}
 }
 function measureAt(latlng){
  if(!rulerFirst){rulerFirst=latlng;inform('物差し：次の地点をタップしてください');return;}
@@ -161,7 +133,7 @@ function attachMapControls(){
    inform(radius+'m距離円を'+(visible?'表示':'非表示')+'にしました');
   });
  }
- const extras={add:beginAdd,polygon:()=>{
+ const extras={polygon:()=>{
   tool=null;hidePanels();inform('活動範囲の編集は次の接続段階です。既存データは変更しません。');
  },ruler:()=>{
   tool=tool==='ruler'?null:'ruler';rulerFirst=null;hidePanels();
@@ -179,7 +151,7 @@ function attachMapControls(){
    navigator.geolocation.getCurrentPosition(p=>{map?.setView([p.coords.latitude,p.coords.longitude],16);inform('現在地付近に移動しました');},()=>inform('現在地を取得できませんでした'),{enableHighAccuracy:false,timeout:10000});
   });
  }
- const onMapClick=e=>{if(tool==='add')addAt(e.latlng);else if(tool==='ruler')measureAt(e.latlng);else if(tool==='move')moveAt(e.latlng);};
+ const onMapClick=e=>{if(tool==='ruler'&&!placement?.isActive())measureAt(e.latlng);};
  map.on('click',onMapClick);
  listeners.push(()=>map?.off('click',onMapClick));
  listen(document,'dblclick',e=>{
@@ -209,6 +181,7 @@ const fileReview=attachOriginalFileReview({
   try{
    entry.classList.add('hidden');
    map=globalThis.L.map('map',{zoomControl:false,preferCanvas:true,doubleClickZoom:false}).setView([35.643,139.857],15);
+   map.createPane('placement').classList.add('placement-pane');
    base=globalThis.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap contributors'}).addTo(map);
    aerial=globalThis.L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'Tiles © Esri'});
    overlay=attachCreativeNextOverlay({session:fileReview.engine,map,L:globalThis.L,onPoiClick:poiId=>{
@@ -219,7 +192,12 @@ const fileReview=attachOriginalFileReview({
    poiEditor=createOriginalNewPoiSheet({document,map,session:fileReview.engine,
     onChanged:()=>refreshMap(),
     onMessage:inform,
-    onMoveRequest:id=>{tool='move';moveTargetId=id;hidePanels();inform('移動する地点を地図でタップしてください。');}
+    onMoveRequest:id=>{placement?.beginMove(id);}
+   });
+   placement=createOriginalPlacementR30({document,map,L:globalThis.L,session:fileReview.engine,
+    onChanged:()=>refreshMap(),onMessage:inform,
+    onPlacementStart:()=>{tool=null;rulerFirst=null;hidePanels();},
+    onMoved:poiId=>poiEditor?.show(poiId)
    });
    const view=overlay.refresh();
    optionalCircles.refresh();
@@ -232,11 +210,11 @@ const fileReview=attachOriginalFileReview({
   }catch(error){
    entry.classList.remove('hidden');
    status.textContent='地図表示を保留しました：'+String(error.code||error.message||'MAP_ERROR').slice(0,70);
-   poiEditor?.dispose();optionalCircles?.destroy();overlay?.destroy();map?.remove();poiEditor=null;optionalCircles=null;overlay=null;map=null;
+   poiEditor?.dispose();placement?.dispose();optionalCircles?.destroy();overlay?.destroy();map?.remove();poiEditor=null;placement=null;optionalCircles=null;overlay=null;map=null;
   }
  }
 });
 installHanded();
-globalThis.creativeR30=Object.freeze({status:()=>({boot:window.creativeR30Boot,active:fileReview.engine.state().hasActive,count:overlay?.counts()||null}),
- dispose(){disposed=true;clearTimeout(inform.timer);for(const remove of listeners)remove();poiEditor?.dispose();optionalCircles?.destroy();overlay?.destroy();map?.remove();fileReview.dispose();}});
+globalThis.creativeR30=Object.freeze({status:()=>({boot:window.creativeR30Boot,active:fileReview.engine.state().hasActive,count:overlay?.counts()||null,placement:placement?.status()||null}),
+ dispose(){disposed=true;clearTimeout(inform.timer);for(const remove of listeners)remove();poiEditor?.dispose();placement?.dispose();optionalCircles?.destroy();overlay?.destroy();map?.remove();fileReview.dispose();}});
 window.creativeR30Boot='READY';
