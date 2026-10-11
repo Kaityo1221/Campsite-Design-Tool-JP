@@ -5,6 +5,7 @@ export function attachOriginalFileReview({document,JSZip,DOMParser,XMLSerializer
  if(!input||!start||!state||!name)throw Error('ORIGINAL_ENTRY_MISSING');
  const ui=createRealEngineOriginalUI({document,JSZip,DOMParser,XMLSerializer});
  let prepared=false,busy=false,disposed=false;
+ let editorReady=false;
  input.disabled=false;start.disabled=true;
  // Input and start are cloned before binding, removing direct old handlers.
  const fileClone=input.cloneNode(true);fileClone.disabled=false;input.replaceWith(fileClone);
@@ -12,7 +13,7 @@ export function attachOriginalFileReview({document,JSZip,DOMParser,XMLSerializer
  // Keep bound nodes in local scope, never touch legacy runtime.
  const onChange=()=>changeFile(fileClone);
  async function changeFile(el){
-  if(disposed||busy)return;prepared=false;startClone.disabled=true;
+  if(disposed||busy||editorReady)return;prepared=false;startClone.disabled=true;
   const file=el.files?.[0];if(!file)return;
   if(!/\.(kmz|kml)$/i.test(file.name)){state.textContent='KMZ / KMLを選択してください';return;}
   busy=true;state.textContent='内容を確認しています…';name.textContent=file.name;
@@ -26,6 +27,7 @@ export function attachOriginalFileReview({document,JSZip,DOMParser,XMLSerializer
   if(disposed||!prepared||busy)return;
   if(confirmReview()!==true){state.textContent='承認されていないため開始しません';return;}
   const result=ui.accept({confirmed:true});prepared=false;startClone.disabled=true;
+  editorReady=result.applied===true;fileClone.disabled=editorReady;
   state.textContent=result.applied?'隔離エンジンへ読み込みました（保存なし）':'開始できませんでした';onResult(result);
  };
  fileClone.addEventListener('change',onChange);startClone.addEventListener('click',onStart);
