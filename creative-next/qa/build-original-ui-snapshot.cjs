@@ -86,6 +86,17 @@ const r26html=r25html
  .replace('<script type="module" src="./r25-map-controls.mjs"></script>',r26Guard+'<script type="module" src="./r25-map-controls.mjs"></script>');
 if(!r26html.includes('id="cmNextR26TapGuard"')||!r26html.includes(r26Guard))throw Error('R26_TAP_GUARD_BUILD_FAILED');
 fs.writeFileSync(path.join(r26,'index.html'),r26html);
+// r27: original POI popup, preserving r26 HTML and all visual patch styling.
+const r27=path.join(root,'creative-next/original-ui-r27');
+fs.mkdirSync(r27,{recursive:true});
+const r27Style='<style id="cmNextR27PopupTapGuard">.popup-form button,.popup-form select{touch-action:none!important;-webkit-user-select:none!important;user-select:none!important;-webkit-touch-callout:none!important}</style>';
+const r27html=r26html
+ .replace('./r26-ios-tap-guard.js','./r27-ios-tap-guard.js')
+ .replace('./r25-map-controls.mjs','./r27-poi-editor.mjs')
+ .replace('</head>',r27Style+'</head>');
+if(!r27html.includes('id="cmNextR27PopupTapGuard"')||!r27html.includes('./r27-poi-editor.mjs')||!r27html.includes('./r27-ios-tap-guard.js'))throw Error('R27_GENERATION_MISSING');
+fs.writeFileSync(path.join(r27,'index.html'),r27html);
+
 
 if(/<script\b/i.test(html))throw Error('Runtime script escaped snapshot');
 console.log('PASS: production source snapshot',names.length,'patches, scripts stripped, original visual CSS retained');
