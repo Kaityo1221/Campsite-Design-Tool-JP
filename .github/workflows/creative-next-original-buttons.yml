@@ -1,0 +1,23 @@
+name: Creative Next Original Buttons Contract
+on:
+  push:
+    branches: [feature/creative-next-ui-exact-parity-20261010]
+    paths:
+      - 'creative-next/integration/original-ui-buttons-fixture.mjs'
+      - 'creative-next/qa/original-ui-buttons-fixture.test.mjs'
+      - '.github/workflows/creative-next-original-buttons.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node creative-next/qa/current-creative-ui-source-parity.cjs
+      - run: node creative-next/qa/original-ui-buttons-fixture.test.mjs
+      - run: node creative-next/qa/exclusive-creative-control.test.mjs
+      - run: node creative-next/qa/creative-next-command-boundary.test.mjs
