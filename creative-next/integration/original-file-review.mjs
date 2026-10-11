@@ -10,7 +10,8 @@ export function attachOriginalFileReview({document,JSZip,DOMParser,XMLSerializer
  // The r20 snapshot already removed ALL legacy scripts/handlers.
  // Preserve the original native file input for iOS Safari. Cloning it can break the file activation path.
  const fileClone=input;
- const startClone=start;
+ const startClone=start.cloneNode(true);
+ start.replaceWith(startClone);
  fileClone.removeAttribute('disabled');
  startClone.disabled=true;
  const onChange=()=>changeFile(fileClone);
