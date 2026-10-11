@@ -4,8 +4,9 @@
  */
 import {createCreativeNextReadFollower} from './creative-ui-read-follower.mjs';
 const styles=Object.freeze({pokestop:'cm-v73-stop',gym:'cm-v73-gym',power:'cm-v73-power'});
-export function attachCreativeNextOverlay({session,map,L}={}){
+export function attachCreativeNextOverlay({session,map,L,onPoiClick=null}={}){
  if(!map||!L?.marker||!L?.divIcon||!L?.circle)throw new TypeError('Existing Leaflet map and primitives required');
+ if(onPoiClick!==null&&typeof onPoiClick!=='function')throw new TypeError('POI tap callback must be a function');
  const markers=new Map(),rings=new Map();
  const hiddenLayers=new Set(),hiddenRadii=new Set();
  let disposed=false;
@@ -30,7 +31,12 @@ export function attachCreativeNextOverlay({session,map,L}={}){
     setMounted(current.layer,!hiddenLayers.has(groupKey(p)));
    }else{
     if(current)drop(current.layer);
-    const marker=L.marker(p.latlng,{icon:icon(p),draggable:false,keyboard:false,interactive:false});
+    const marker=L.marker(p.latlng,{icon:icon(p),draggable:false,keyboard:false,interactive:!!onPoiClick});
+    if(onPoiClick)marker.on('click',event=>{
+     if(disposed)return;
+     event?.originalEvent?.stopPropagation?.();
+     onPoiClick(p.id);
+    });
     if(!hiddenLayers.has(groupKey(p)))marker.addTo(map);
     markers.set(p.id,{kind:p.kind,role:p.role,layer:marker});
    }
