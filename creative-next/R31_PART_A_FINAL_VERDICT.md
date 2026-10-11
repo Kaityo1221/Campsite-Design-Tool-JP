@@ -1,6 +1,6 @@
-# r31 PART A 最終判定（2026-10-11）
+# r31 PART A 最終判定（2026-10-12、承認2026-10-11）
 
-**ローカルPART A PASS。リモートCIは今回のソースcommitで再測定する。**
+**PART A PASS。Windows EdgeとLinux Chromium専用CIで全ゲートPASSし、ここで停止。**
 進捗85% / Phase 1 HOLDを維持。PART B、保存有効化、KMZ実出力、隔離preview配信、main反映は未実施。iPhone Safari実機NOT_TESTED。
 
 ## 基点と承認
@@ -37,6 +37,14 @@ fingerprint: f206ea51801e3a74e69cf7156a6fff803422ebe5af57a500fcb4d1a2ecae75ff
 
 ## リモートCI・コミット
 
-今回のソースcommitと最終CI結果はCI完了後に追記する。ローカルPASSをリモートPASSやiPhone実機PASSに流用しない。
+検証ソースcommit: 109a1b0a6a66dc95ae88de72091f45a3fb611aab。
+
+専用CI [38149500935](https://github.com/Kaityo1221/Campsite-Design-Tool-JP/actions/runs/38149500935): SUCCESS。Linux Chromium 141.0.7390.37、390/393/1366px各52/52場面・32/32操作・独立＋3/3受入PASS。回帰333/333、監査17/17 PASS。7グループすべてPASS、未承認操作差0。全57データ要求HOLD、旧実行/保存0、map1/幅、正常解除。既知参照FAIL9件を再現して診断として保持した。ローカルとCIのfingerprint一致を確認。
+
+証跡はqa/r31/part-a-final-ci-evidence.json、Actions artifact r31-part-a-measured-evidence（元画像/各測定JSON/log含む）。報告・証跡のみの後続commitではCIを再実行せず、UI/QAの検証対象を上記SHAに固定する。
+
+変更禁止の旧preview-poi-controls-layout-once.yml/v2-once.ymlには既存のjobなしFAIL（38149499292/38149499966）が別途残る。今回変更していない。全リポジトリworkflowが成功したとは扱わず、r31専用CIの結果を報告する。
+
+iPhone Safari実機は未検証。固定offline画像/タイルの比較PASSは実ネットワークでの画像取得成功まで証明するものではない。保存有効化やPART Bへ進まない。
 
 PART Aが全ゲートPASSした時点で停止し、追加機能・次Phaseを実装しない。
