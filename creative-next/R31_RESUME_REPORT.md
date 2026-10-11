@@ -9,7 +9,7 @@
 R31_HOLD_REPORT.md、R31_UI_SOURCE_LEDGER.md、source-inventory.json、browser-diagnostic.json、前回監査コードは保持。過去のignored画像12枚・依存・regression.logも削除していない。今回は別名の報告/比較結果を追加した。
 
 回帰修復コミット: 77a32fe7ad307626c95d515505709ea497c7c876。
-UI分離・CIコミットと最新リモート結果は本報告の最終更新で記録する。
+UI分離・CIコミット: 436ee51c578b7f9cf6b433eaabc4aff5cdadc0f4。報告追記のみの後続commitではCI再実行を省略し、検証対象ソースをこのSHAで固定する。
 
 ## 2. 既存回帰4件
 
@@ -56,7 +56,7 @@ R31_FUNCTIONAL_GROUPS.mdに46件のUI/状態参照/イベント/データ変更/
 
 左右利きは現行v58がボタンを非表示にするため表示API、sheet準備も表示APIを使用。marker通常タップ全経路、animation全時間、距離円/活動範囲全canvas、Safari実機は未PASS。
 
-詳細はqa/r31/ui-runtime-comparison.json。前回browser-diagnostic.jsonは上書きしていない。
+上記はWindows Edgeローカルの結果。Linux Chromium CIは36場面中30 PASS/6 FAIL: ルール3幅、移動393/1366、新規sheet1366。CIではGym追加バーと保存menuが一致したが、ローカル差分は未解消として保持する。詳細はqa/r31/ui-runtime-comparison.jsonおよびui-runtime-comparison-ci.json。前回browser-diagnostic.jsonは上書きしていない。
 
 ## 7. PART A判定
 
@@ -70,7 +70,9 @@ R31_FUNCTIONAL_GROUPS.mdに46件のUI/状態参照/イベント/データ変更/
 
 旧監査commitのrun38135119893は回帰4 FAILとHOLDでFAIL。今回専用workflowを修復し、回帰jobとPART A比較/HOLD jobを分離。Leaflet/pngjsをCI依存へ追加。deployment jobはない。
 
-最新runの結果は完了後追記する。ローカルは既存333件と監査/抽出9件PASS、UI比較HOLD。全CIがPASSしたとは宣言しない。
+最新run [38138730367](https://github.com/Kaityo1221/Campsite-Design-Tool-JP/actions/runs/38138730367)、ソースSHA 436ee51c578b7f9cf6b433eaabc4aff5cdadc0f4。regression job SUCCESS（333+9 PASS/0 FAIL）、part-a job FAILURE（UI比較HOLD exit2、全体HOLD gate exit2）。artifact r31-resume-hold-evidence を保存した。qa/r31/remote-ci-result.jsonにも記録。全CIはFAILでありPASSとは扱わない。
+
+別途、変更禁止の旧preview-poi-controls-layout-once.yml/v2-once.ymlにも既存のjobなしFAILがある（run38138729478/38138728867）。今回変更していない。main/旧プレビューの修正に範囲を拡張しない。
 
 ## 10. 残る実装課題
 

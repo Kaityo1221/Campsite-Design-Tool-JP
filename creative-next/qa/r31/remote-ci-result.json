@@ -1,0 +1,27 @@
+{
+  "sourceCommit": "436ee51c578b7f9cf6b433eaabc4aff5cdadc0f4",
+  "runId": 38138730367,
+  "runUrl": "https://github.com/Kaityo1221/Campsite-Design-Tool-JP/actions/runs/38138730367",
+  "conclusion": "failure",
+  "regression": {
+    "status": "PASS",
+    "existingTests": 333,
+    "auditExtractionTests": 9,
+    "failed": 0
+  },
+  "partA": {
+    "status": "HOLD",
+    "comparisonExitCode": 2,
+    "completionGateExitCode": 2,
+    "scenePass": 30,
+    "sceneFail": 6,
+    "artifact": "r31-resume-hold-evidence"
+  },
+  "partB": "NOT_STARTED",
+  "deployed": false,
+  "safariRealDevice": "NOT_TESTED",
+  "otherUntouchedWorkflowFailures": [
+    38138728867,
+    38138729478
+  ]
+}
