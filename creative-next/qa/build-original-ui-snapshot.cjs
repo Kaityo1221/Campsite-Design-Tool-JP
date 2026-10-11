@@ -45,5 +45,8 @@ fs.mkdirSync(r18,{recursive:true});
 fs.writeFileSync(path.join(r18,'index.html'),html.replace('</body>','<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script><script type="module" src="./r18-real-engine.mjs"></script></body>'));
 
 
+const r19=path.join(root,'creative-next/original-ui-r19');
+fs.mkdirSync(r19,{recursive:true});
+fs.writeFileSync(path.join(r19,'index.html'),html.replace('</body>','<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script><script type="module" src="./r19-file-review.mjs"></script></body>'));
 if(/<script\b/i.test(html))throw Error('Runtime script escaped snapshot');
 console.log('PASS: production source snapshot',names.length,'patches, scripts stripped, original visual CSS retained');
