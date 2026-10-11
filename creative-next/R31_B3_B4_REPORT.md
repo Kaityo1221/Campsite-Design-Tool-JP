@@ -2,7 +2,7 @@
 
 2026-10-12 JST. Dedicated branch: `codex/original-ui-r31-b3-b4`.
 
-**Local B3/B4 PASS; GitHub CI pending. Production readiness remains HOLD. iPhone Safari実機未検証。** No merge, deployment, production navigation link or publication.
+**B3/B4 PASS. Dedicated GitHub CI SUCCESS, 169/169 checks and all browser flows PASS. Production readiness remains HOLD. iPhone Safari実機未検証。** No merge, deployment, production navigation link or publication.
 
 Base is GitHub B2 PASS HEAD `7ef98ad4250af8f2d1a1458d289d3ed1989a8da7`, confirmed before implementation and before push. Protected remote refs remain:
 
@@ -25,7 +25,7 @@ The frozen **B2 adapter is imported unchanged**. A small capability facade guard
 ## Validation
 
 - 14 new safety cases: review/cancel/stale reads, explicit acceptance, full POI protection, mixed area/POI export, source/opaque-entry preservation, save/restore, authorized tombstone Undo, stale-tab writes, lock/confirmation/busy refusal, quota/readback faults, damaged journal, rehashed malicious snapshot and legacy ambiguous/orphan circles.
-- 155 frozen cases: B1/B2 adapter compatibility plus focused KMZ staging/export, legacy conversion, circles, area membership, Session and journal concurrency/recovery tests.
+- 155 regression/frozen-boundary cases: B1/B2 adapter compatibility plus focused KMZ staging/export, legacy conversion, circles, area membership, Session and journal concurrency/recovery tests and the additions-only scope check.
 - Frozen B1/B2 browser assertion sequences against the derived presentation: **3 widths each PASS**, assertions and thresholds unchanged. Only presentation/output routing is adapted in memory; frozen builders are not executed and frozen files/evidence are never written.
 - Actual new-entry flow at **390×844, 393×852, 1366×768 PASS**: reject bad file, review/cancel/start, new POI edit, save, Undo/Redo, Back/Continue, KMZ download/reimport, navigation and real same-origin storage resume, existing read-only display, isolated key access, one map/Session and zero UI resources/object URLs after disposal. Network and real user datasets are excluded.
 - Additions-only scope check protects every pre-existing tracked path, including A/B1/B2, shared engine, Creative Mode, Wayfarer/Bridge/Field, r16-r30 and data. No synced project source is edited.
@@ -51,7 +51,12 @@ Development checks found and fixed the entry's inherited base-URL resolution and
 
 ## Commit and CI
 
-Source commit and dedicated CI run will be recorded after push. A final report-only commit will not change verified runtime/test code or trigger another dedicated CI run.
+- Initial implementation commit: `f1672066010bd455bc42fba3ff797e1d420067b9`.
+- Final verified runtime/test commit: **`02b511f9f404ae9f7e391e76618b0e8ab273098d`**. The final change releases the owned Session reference and denies state reads after disposal.
+- [Dedicated CI 38181493057](https://github.com/Kaityo1221/Campsite-Design-Tool-JP/actions/runs/38181493057), attempt 1: **SUCCESS**, 2026-10-12 07:42:38–07:43:56 JST. Exact head is the final source SHA above. Result: `unitPassed:169`, `unitFailed:0`, `b2Regression:PASS`, `b3b4Browser:PASS`, `safariRealDevice:NOT_TESTED`, `productionMerged:false`, `published:false`.
+- Earlier source CI 38181403699 was explicitly cancelled when the disposal fix superseded it, to avoid duplicate full test runs. No acceptance thresholds were changed.
+- Existing old-preview workflows also report FAIL ([38181491808](https://github.com/Kaityo1221/Campsite-Design-Tool-JP/actions/runs/38181491808), [38181492329](https://github.com/Kaityo1221/Campsite-Design-Tool-JP/actions/runs/38181492329)). They are the unchanged two workflows already reported FAIL at the B2 baseline and remain outside this scope. This is not a claim that every workflow in the repository is green.
+- Protected B2/A-B1/main refs were verified unchanged after final CI. Local original B2 checkout is clean. The final report-only commit changes this Markdown file only and is excluded from dedicated CI trigger paths; all tested runtime/QA code stays exactly at the verified SHA.
 
 ## Remaining HOLD
 
