@@ -118,6 +118,19 @@ if(!r28html.includes('id="cmNextR28OriginalSheetStyle"')||!r28html.includes('./r
  throw Error('R28_GENERATION_MISSING');
 fs.writeFileSync(path.join(r28,'index.html'),r28html);
 
+// r29: exactly the approved r28 visual shell, with a versioned controller.
+// The only behavior delta synchronizes the six existing layer count labels.
+const r29=path.join(root,'creative-next/original-ui-r29');
+fs.mkdirSync(r29,{recursive:true});
+const r29html=r28html
+ .replace('./r28-ios-tap-guard.js','./r29-ios-tap-guard.js')
+ .replace('./r28-poi-editor.mjs','./r29-poi-editor.mjs');
+if(!r29html.includes('id="cmNextR28OriginalSheetStyle"')||
+   !r29html.includes('./r29-poi-editor.mjs')||!r29html.includes('./r29-ios-tap-guard.js'))
+ throw Error('R29_EXACT_VISUAL_BUILD_FAILED');
+fs.writeFileSync(path.join(r29,'index.html'),r29html);
+
+
 
 
 if(/<script\b/i.test(html))throw Error('Runtime script escaped snapshot');
