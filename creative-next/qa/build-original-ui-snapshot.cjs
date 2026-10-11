@@ -55,8 +55,13 @@ fs.writeFileSync(path.join(r20,'index.html'),html.replace('</body>','<script src
 const r22=path.join(root,'creative-next/original-ui-r22');
 fs.mkdirSync(r22,{recursive:true});
 let foundNative=false;
-let native=html.replace(/<input[^>]*id=["']entryFile["'][^>]*>/i,tag=>{foundNative=true;return tag.replace(/\\sdisabled(?:=["']?disabled["']?)?/i,'')});
+let native=html.replace(/<input[^>]*id=["']entryFile["'][^>]*>/i,tag=>{foundNative=true;return tag.replace(/\sdisabled(?:=(?:"[^"]*"|'[^']*'|[^\s>]+))?/gi,'')});
 if(!foundNative)throw Error('Original native picker missing');
+// Gate the generated HTML, not merely the regex or the original source template.
+const nativeInput=native.match(/<input\b[^>]*\bid=["']entryFile["'][^>]*>/i)?.[0];
+if(!nativeInput || !/\btype=["']file["']/i.test(nativeInput) || /\sdisabled\b/i.test(nativeInput)){
+  throw Error('R22_NATIVE_FILE_PICKER_DISABLED: generated #entryFile must be an enabled file input');
+}
 native=native.replace('</body>', '<script>window.addEventListener("error",function(e){var el=document.getElementById("entryState");if(el)el.textContent="起動エラー: "+String(e.message||"unknown").slice(0,90)});document.getElementById("entryFile").addEventListener("change",function(){var f=this.files&&this.files[0];if(f){document.getElementById("entryFileName").textContent=f.name;document.getElementById("entryState").textContent="ファイルを選択しました。読み込み準備中…"}});</script></body>');
 native=native.replace('</body>','<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script type="module" src="./r22-readonly-map.mjs"></script></body>');
 fs.writeFileSync(path.join(r22,'index.html'),native);
