@@ -1,0 +1,38 @@
+name: Creative Next r31 B2 map and area gates
+on:
+  push:
+    branches: [codex/original-ui-r31-b2]
+    paths:
+      - 'creative-next/original-ui-r31-b2/**'
+      - 'creative-next/qa/r31-b2/**'
+      - 'creative-next/R31_B2_REPORT.md'
+      - '.github/workflows/creative-next-r31-b2.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  b2:
+    if: github.ref == 'refs/heads/codex/original-ui-r31-b2'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install isolated QA dependencies
+        run: npm install --prefix creative-next --no-save --no-package-lock --ignore-scripts jszip@3.10.1 @xmldom/xmldom@0.9.8 acorn@8.15.0 leaflet@1.9.4 pngjs@7.0.0 playwright@1.56.0
+      - name: Install Chromium
+        run: creative-next/node_modules/.bin/playwright install --with-deps chromium
+      - name: Frozen A and B1, B1 on B2, B2 map and area flows
+        run: node creative-next/qa/r31-b2/run.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: r31-b2-synthetic-evidence
+          path: |
+            creative-next/qa/r31-b2/*.json
+            creative-next/qa/r31-b2/*.log
+            creative-next/qa/r31/*.log
+            creative-next/qa/r31-b1/*.log
+# No deploy, save/restore, import/export UI, or B3/B4 jobs.

@@ -1,0 +1,69 @@
+{
+  "baseline": "e8436035bf89ee653747c6afbed08e2f43099e9e",
+  "uiSha256": "ba5f42905bab3f263af37faaf6318f0b6f671e3bbd2c2d9026289076588f7184",
+  "adapterSha256": "2e175dbf3b2098f64482ce6395326f23c7414b31dcd60b82d1bff54d774682db",
+  "patches": [
+    {
+      "file": "ui-runtime.mjs",
+      "target": "let draftPoints=[]"
+    },
+    {
+      "file": "ui-runtime.mjs",
+      "target": "if(action.type==='change-kind')openSheet(action.id);message"
+    },
+    {
+      "file": "ui-runtime.mjs",
+      "target": "function beginArea(){clearTools();cancelPlacement();closePanels();"
+    },
+    {
+      "file": "ui-runtime.mjs",
+      "target": "listen(draw,'click',()=>{hold({type:'area-redraw'});beginArea();});"
+    },
+    {
+      "file": "ui-runtime.mjs",
+      "target": "listen(b,'click',()=>{ui.circleRadii="
+    },
+    {
+      "file": "ui-runtime.mjs",
+      "target": "setViewReader(provider){if(stopped||typeof provider!=='function')throw Error('RE"
+    },
+    {
+      "file": "ui-runtime.mjs",
+      "target": "mode:commandSink?'PART_B1_POI_ONLY'"
+    },
+    {
+      "file": "ui-runtime.mjs",
+      "target": "preview:previewCircle?"
+    },
+    {
+      "file": "adapter.mjs",
+      "target": "export function connectB1("
+    },
+    {
+      "file": "adapter.mjs",
+      "target": "const POI=new Set"
+    },
+    {
+      "file": "adapter.mjs",
+      "target": "const seen=new Set(),pending=new Map()"
+    },
+    {
+      "file": "adapter.mjs",
+      "target": "if(!action||(!POI.has(action.type)&&!['undo','redo'].includes(action.type)))retu"
+    },
+    {
+      "file": "adapter.mjs",
+      "target": "let payload;\n  if(POI.has"
+    },
+    {
+      "file": "adapter.mjs",
+      "target": "type:POI.has(action.type)?'poi':action.type"
+    },
+    {
+      "file": "adapter.mjs",
+      "target": "seen.clear();view=null;"
+    }
+  ],
+  "engineCopied": false,
+  "templatesCssUnchanged": true
+}

@@ -1,0 +1,86 @@
+{
+  "status": {
+    "status": "HOLD",
+    "baseline": "e8436035bf89ee653747c6afbed08e2f43099e9e",
+    "fingerprint": "e9870da7a793c931fa914866bea19e9e1ef7c04a818c580f8aada87191171f94",
+    "stable": false,
+    "frozenB1": "PASS",
+    "unit": {
+      "status": "PASS",
+      "passed": 14,
+      "failed": 0
+    },
+    "b1ConnectedToB2": "PASS",
+    "b2Browser": "HOLD",
+    "partAOnB2": "HOLD",
+    "freeze": "PASS",
+    "singleSession": true,
+    "singleMap": true,
+    "singleHistory": true,
+    "storageEnabled": false,
+    "deployed": false,
+    "partB3": "NOT_STARTED",
+    "partB4": "NOT_STARTED",
+    "progress": "85% / Phase 1 HOLD",
+    "safariRealDevice": "NOT_TESTED"
+  },
+  "browser": [
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "error": "locator.tap: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#cmAddFab')\u001b[22m\n\u001b[2m    - locator resolved to <button id=\"cmAddFab\" title=\"候補地を追加\" class=\"cm-add-fab\" aria-label=\"候補地を追加\">＋</button>\u001b[22m\n\u001b[2m  - attempting tap action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <button type=\"button\">点を打つ</button> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying tap action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <button type=\"button\">点を打つ</button> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying tap action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    55 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is visible, enabled and stable\u001b[22m\n\u001b[2m       - scrolling into view if needed\u001b[22m\n\u001b[2m       - done scrolling\u001b[22m\n\u001b[2m       - <button type=\"button\">点を打つ</button> intercepts pointer events\u001b[22m\n\u001b[2m     - retrying tap action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n"
+    },
+    {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "error": "locator.tap: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#cmAddFab')\u001b[22m\n\u001b[2m    - locator resolved to <button id=\"cmAddFab\" title=\"候補地を追加\" class=\"cm-add-fab\" aria-label=\"候補地を追加\">＋</button>\u001b[22m\n\u001b[2m  - attempting tap action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <button type=\"button\">点を打つ</button> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying tap action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <button type=\"button\">点を打つ</button> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying tap action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    55 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is visible, enabled and stable\u001b[22m\n\u001b[2m       - scrolling into view if needed\u001b[22m\n\u001b[2m       - done scrolling\u001b[22m\n\u001b[2m       - <button type=\"button\">点を打つ</button> intercepts pointer events\u001b[22m\n\u001b[2m     - retrying tap action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n"
+    }
+  ],
+  "partABlockers": [
+    {
+      "group": "exception",
+      "reason": "UNAPPROVED_OPERATION_DIFFERENCE"
+    },
+    {
+      "group": "areasAndMap",
+      "reason": "INCOMPLETE_OR_DIFFERENT_UI_OR_OPERATION"
+    },
+    {
+      "group": "comparison",
+      "reason": "UNAPPROVED_UI_DIFFERENCE_OR_INCOMPLETE_RUN"
+    },
+    {
+      "group": "operations",
+      "reason": "UNVERIFIED_ACTION:390"
+    }
+  ],
+  "retained": true,
+  "note": "Development run overlapped source/test edits; cached old generator was used. This is not final-source PASS evidence.",
+  "partAOperationFailures": [
+    {
+      "width": 390,
+      "name": "map-drag-camera",
+      "pass": false,
+      "details": [
+        {
+          "center": [
+            35.682764354753225,
+            139.76104974746707
+          ],
+          "zoom": 16
+        },
+        {
+          "center": [
+            35.68269463797096,
+            139.76113557815555
+          ],
+          "zoom": 16
+        }
+      ]
+    }
+  ]
+}

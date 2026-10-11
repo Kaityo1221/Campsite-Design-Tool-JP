@@ -1,0 +1,7 @@
+*.log
+artifacts/
+browser-result.json
+b1-compatible-browser-result.json
+ui-regression-result.json
+frozen-b1-regression-result.json
+b2-status.json
