@@ -1,0 +1,28 @@
+name: Creative Next Phase1 r20 Browser Acceptance
+on:
+  push:
+    branches: [feature/creative-next-ui-exact-parity-20261010]
+    paths:
+      - 'creative-next/qa/phase1-r20-acceptance.*'
+      - '.github/workflows/creative-next-phase1-r20-browser.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: npm install --no-save jszip@3.10.1 @xmldom/xmldom@0.9.8
+      - run: pip install playwright==1.56.0
+      - run: python -m playwright install --with-deps chromium
+      - run: node creative-next/qa/current-creative-ui-source-parity.cjs
+      - run: node creative-next/qa/build-original-ui-snapshot.cjs
+      - run: node creative-next/qa/phase1-r20-acceptance.mjs
+      - run: python creative-next/qa/phase1-r20-acceptance.py
