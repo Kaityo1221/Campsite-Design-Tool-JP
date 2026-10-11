@@ -1,0 +1,9 @@
+module.exports={
+ startupAndDisplay:['startup-transition-completes','startup-button-hold','rules-escape'],
+ poiAddition:['plus-normal-tap-new-pokestop','plus-normal-tap-new-gym','plus-normal-tap-new-power','position-preview-new-pokestop','position-preview-new-gym','position-preview-new-power','add-lever-snap'],
+ poiEditAndMove:['sheet-handle-swipe','move-lever-snap'],
+ areasAndMap:['area-confirm-hold','area-delete-hold','area-redraw-hold','area-view-immutable','area-cancel-teardown','ruler-exit','map-drag-camera'],
+ saveAndKmz:['chooser-cancel'],
+ listCoordinatesAuxiliary:['coordinate-copy-value','coordinate-apply-close','coordinate-confirm-hold','list-swipe-page','list-close'],
+ animationsAndGestures:['fab-drag-no-menu','lever-cancel-restores-surface','map-double-click-zoom','map-double-tap-zoom','map-pinch-zoom','addition-animation-cleanup','all-display-actions-view-immutable']
+};

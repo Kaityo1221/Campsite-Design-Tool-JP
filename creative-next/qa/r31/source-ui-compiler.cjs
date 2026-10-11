@@ -28,6 +28,8 @@ function checkExpression(node,parameters){
   }
   if(n.type==='CallExpression'){
    const c=n.callee;
+   if(!['Identifier','MemberExpression'].includes(c.type))throw Error('INDIRECT_TEMPLATE_CALL');
+   if(c.type==='MemberExpression'&&(c.computed||c.optional))throw Error('INDIRECT_TEMPLATE_METHOD');
    if(c.type==='Identifier'&&!['esc','String'].includes(c.name))throw Error('UNREVIEWED_TEMPLATE_CALL: '+c.name);
    if(c.type==='MemberExpression'&&!['entries','map','join','max','toFixed','trim','slice'].includes(c.property.name))throw Error('UNREVIEWED_TEMPLATE_METHOD');
   }
@@ -68,10 +70,47 @@ async function compile(){
  const selected=fn('cmPhaseCSelectedPoiHtml');let selectedReturn;
  walk(selected.node,n=>{if(n.type==='ReturnStatement')selectedReturn=n.argument;});
  emit('selectedPoi',{node:selectedReturn,code:core.code.slice(selectedReturn.start,selectedReturn.end),owner:selected.name},['meta']);
- emit('saveMenu',expressions('cmOpenSaveMenu','innerHTML')[0],['cmKmzExported']);
+ // The v70/v63 current UI hides the old #save menu. Its unbound exported-state
+ // variable is not reconstructed or authorized; only the current standalone menu is emitted.
  emit('standaloneSave',expressions('cmOpenStandaloneSave','innerHTML')[0],[]);
  emit('list',expressions('cmOpenList','innerHTML')[0],[]);
  emit('coords',expressions('cmOpenCoords','innerHTML')[0],[]);
+ function displayInput(name,expression,replacements,parameters){
+  let code=expression.code;for(const [before,after]of replacements)code=code.replace(before,after);
+  emit(name,{...expression,code,node:acorn.parseExpressionAt(code,0,{ecmaVersion:'latest'})},parameters);
+  proofs.at(-1).originalExpressionSha256=digest(expression.code);proofs.at(-1).displayInputs=replacements;
+ }
+ displayInput('coordinateCard',expressions('cmOpenCoords','innerHTML')[1],[['cmTypeLabel(r.layer)','typeLabel']],['r','typeLabel']);
+ emit('coordinateMemo',expressions('cmOpenCoords','innerHTML')[2],['cmV54Memo']);
+ emit('coordinateReason',expressions('cmOpenCoords','innerHTML')[3],[]);
+ const row=fn('cmRow');let rowReturn;walk(row.node,n=>{if(n.type==='ReturnStatement')rowReturn=n.argument;});
+ displayInput('listRow',{node:rowReturn,code:core.code.slice(rowReturn.start,rowReturn.end),owner:row.name},[['cmListIcon(r)','iconHtml']],['r','marks','iconHtml']);
+ emit('polygonCrosshair',expressions('ensurePolyCrosshair','innerHTML')[0],[]);
+ const polyIcon=fn('fixedPolyIcon');walk(polyIcon.node,n=>{if(n.type==='ReturnStatement')emit('polygonIcon',{node:n.argument.arguments[0],code:core.code.slice(n.argument.arguments[0].start,n.argument.arguments[0].end),owner:polyIcon.name},['first','closing']);});
+ let circleIndex=0;walk(fn('circleOpts').node,n=>{if(n.type==='ReturnStatement')emit('recordCircle'+[50,40,30][circleIndex++],{node:n.argument,code:core.code.slice(n.argument.start,n.argument.end),owner:'circleOpts'},['circleRenderer']);});
+ // Whitelist constant DOM properties/styles individually, including nested UI builders.
+ const presentationNodes={};
+ for(const owner of ['showSaveChooser','ensurePolyAction','ensurePolyCrosshair','openPolygonChoice','showPolygonDeleteConfirm','beginRuler','cmV69InstallSpacingReason']){
+  const nodes={};walk(fn(owner).node,n=>{
+   if(n.type==='VariableDeclarator'&&n.init?.type==='CallExpression'&&n.init.callee.object?.name==='document'&&n.init.callee.property?.name==='createElement')nodes[n.id.name]={tag:constant(n.init.arguments[0]),properties:{},styles:{},attributes:{},sourceFunction:owner};
+   if(n.type==='AssignmentExpression'&&n.left.type==='Identifier'&&n.right.type==='CallExpression'&&n.right.callee.object?.name==='document'&&n.right.callee.property?.name==='createElement')nodes[n.left.name]={tag:constant(n.right.arguments[0]),properties:{},styles:{},attributes:{},sourceFunction:owner};
+   if(n.type==='AssignmentExpression'&&nodes[n.left.object?.name]&&['id','className','type','textContent','title','maxLength','placeholder'].includes(n.left.property?.name)){
+    try{nodes[n.left.object.name].properties[n.left.property.name]=constant(n.right);}catch{}
+   }
+   if(n.type==='CallExpression'&&n.callee.object?.name==='Object'&&n.callee.property?.name==='assign'&&n.arguments[0]?.property?.name==='style'){
+    const target=n.arguments[0].object.name;if(nodes[target]){try{Object.assign(nodes[target].styles,constant(n.arguments[1]));}catch{}}
+   }
+  });
+  walk(fn(owner).node,n=>{
+   if(n.type==='CallExpression'&&n.callee.property?.name==='forEach'&&n.callee.object?.type==='ArrayExpression'){
+    const names=n.callee.object.elements.map(x=>x.name);walk(n.arguments[0],x=>{
+     if(x.type==='CallExpression'&&x.callee.object?.name==='Object'&&x.callee.property?.name==='assign'&&x.arguments[0]?.property?.name==='style'){
+      try{const styles=constant(x.arguments[1]);for(const name of names)if(nodes[name])nodes[name].styles={...styles,...nodes[name].styles};}catch{}
+     }
+    });
+   }
+  });presentationNodes[owner]=nodes;
+ }
  const help=all.find(s=>s.id==='cmV59HelpButtonRuntime'),rules=all.find(s=>s.id==='cmV60RulesCarouselRuntime');
  let rulesExpr;walk(acorn.parse(rules.code,{ecmaVersion:'latest'}),n=>{if(n.type==='AssignmentExpression'&&n.left.property?.name==='innerHTML')rulesExpr=n.right;});
  emit('rules',{node:rulesExpr,code:rules.code.slice(rulesExpr.start,rulesExpr.end),owner:rules.id},[]);
@@ -84,6 +123,11 @@ async function compile(){
   if(n.type==='ReturnStatement'&&n.argument?.type==='CallExpression'&&n.argument.callee?.property?.name==='divIcon')
    emit('existingIconOptions',{node:n.argument.arguments[0],code:core.code.slice(n.argument.arguments[0].start,n.argument.arguments[0].end),owner:'recordIcon'},['shape']);
  });
+ const rendererCode=fs.readFileSync(path.join(ROOT,'creative/runtime/map-engine/map-renderer.js'),'utf8').replace(/\r\n/g,'\n'),rendererParsed=analyze(rendererCode);let markerUrls;
+ walk(rendererParsed.ast,n=>{if(n.type==='VariableDeclarator'&&n.id.name==='bridgeMapLab_candidateIconUrls')markerUrls=constant(n.init.arguments[0]);});
+ for(const [owner,name,parameters]of [['bridgeMapLab_candidateIcon','displayCandidateIcon',['iconUrl']],['bridgeMapLab_divIcon','displayExistingIcon',['shapeClass','engineClass']]]){
+  const f=rendererParsed.functions.find(f=>f.name===owner);walk(f.node,n=>{if(n.type==='ReturnStatement')emit(name,{node:n.argument.arguments[0],code:rendererCode.slice(n.argument.arguments[0].start,n.argument.arguments[0].end),owner:'creative/runtime/map-engine/map-renderer.js:'+owner},parameters);});
+ }
  const activityRules=all.find(s=>s.id==='cmV77ActivityRuleInstall');let activityExpr;
  walk(acorn.parse(activityRules.code,{ecmaVersion:'latest'}),n=>{if(n.type==='AssignmentExpression'&&n.left.property?.name==='innerHTML')activityExpr=n.right;});
  emit('activityRule',{node:activityExpr,code:activityRules.code.slice(activityExpr.start,activityExpr.end),owner:activityRules.id},[]);
@@ -98,6 +142,7 @@ async function compile(){
  const coordinateParsed=analyze(coordinate.code),ensure=coordinateParsed.functions.find(f=>f.name==='ensurePanel');
  let coordinateHtml;walk(ensure.node,n=>{if(n.type==='AssignmentExpression'&&n.left.property?.name==='innerHTML')coordinateHtml=n.right;});
  emit('coordinatePanel',{node:coordinateHtml,code:coordinate.code.slice(coordinateHtml.start,coordinateHtml.end),owner:coordinate.id+'.ensurePanel'},[]);
+ const coordinateDecorate=all.find(s=>s.id==='cmV52ExistingNewPlacementRuntime');let coordinatePart=0;walk(acorn.parse(coordinateDecorate.code,{ecmaVersion:'latest'}),n=>{if(n.type==='AssignmentExpression'&&n.left.property?.name==='innerHTML')emit(['coordinateMode','coordinateConfirmRow'][coordinatePart++],{node:n.right,code:coordinateDecorate.code.slice(n.right.start,n.right.end),owner:coordinateDecorate.id+'.decorate'},[]);});
  const bind=coordinateParsed.functions.find(f=>f.name==='bindBar');let coordinateButton={tag:'button',properties:{},attributes:{},sourceFunction:coordinate.id+'.bindBar'};
  walk(bind.node,n=>{
   if(n.type==='AssignmentExpression'&&n.left.object?.name==='button'&&['type','className','textContent'].includes(n.left.property.name))coordinateButton.properties[n.left.property.name]=constant(n.right);
@@ -141,15 +186,15 @@ async function compile(){
   .replace(/\bon\w+\s*=\s*(?:"[^"]*"|'[^']*')/gi,'');
  if(/<script\b|\bon\w+\s*=/i.test(safeHtml))throw Error('EXECUTABLE_SOURCE_ESCAPED');
  const templateModule="// Generated original presentation expressions only; never edit by hand.\n"+
-  "export const types=Object.freeze("+JSON.stringify(types)+");\nexport const layerDefs="+JSON.stringify(layerDefs)+";\n"+
-  "export const dynamicStyles="+JSON.stringify(dynamicStyles)+";\nexport const descriptors="+JSON.stringify(descriptors)+";\n"+
+  "export const types=Object.freeze("+JSON.stringify(types)+");\nexport const layerDefs="+JSON.stringify(layerDefs)+";\nexport const markerUrls="+JSON.stringify(markerUrls)+";\n"+
+  "export const dynamicStyles="+JSON.stringify(dynamicStyles)+";\nexport const descriptors="+JSON.stringify(descriptors)+";\nexport const presentationNodes="+JSON.stringify(presentationNodes)+";\n"+
   "const esc=s=>String(s??'').replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#039;'}[c]));\n"+
   Object.entries(templates).map(([k,v])=>'export const '+k+'='+v+';').join('\n')+'\n';
  const html=safeHtml.replace('<head>','<head><base href="../../creative/">').replace('</body>',
   '<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>'+
   '<script type="module" src="../creative-next/original-ui-r31/ui-runtime.mjs"></script></body>');
  return{html,templateModule,proofs,manifest:{patchCount:source.names.length,patchOrder:source.names,documentSha256:digest(source.html),
-  originalFunctionsExecuted:0,unprovenFunctionsAllowed:0,legacyScriptsEmitted:0,types,descriptors,dynamicStyles:dynamicStyles.map(({css,...rest})=>rest),templates:proofs,
+  originalFunctionsExecuted:0,unprovenFunctionsAllowed:0,legacyScriptsEmitted:0,displayRendererSourceSha256:digest(rendererCode),types,descriptors,presentationNodes,dynamicStyles:dynamicStyles.map(({css,...rest})=>rest),templates:proofs,
   runtimeMode:'PART_A_VIEW_ONLY',partB:'NOT_CONNECTED',completeGate:'HOLD_UNTIL_FULL_RUNTIME_COMPARISON'}};
 }
 async function build(){

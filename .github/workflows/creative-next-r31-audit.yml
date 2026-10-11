@@ -14,23 +14,8 @@ concurrency:
   group: r31-resume-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  regression:
-    if: github.ref == 'refs/heads/codex/original-ui-r31'
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - name: Install QA dependencies
-        run: npm install --prefix creative-next --no-save --no-package-lock --ignore-scripts jszip@3.10.1 @xmldom/xmldom@0.9.8 acorn@8.15.0
-      - name: Unchanged engine and repaired mock regressions
-        run: node --test creative-next/phase-1a/tests/poi-core.test.mjs creative-next/phase-1b/test/*.test.mjs creative-next/qa/*.test.mjs creative-next/qa/*.test.cjs
-      - name: Frozen sources, historical deny policy and template extraction
-        run: node --test creative-next/qa/r31/source-audit.test.cjs creative-next/qa/r31/source-ui-compiler.test.cjs
   part-a:
-    needs: regression
+    if: github.ref == 'refs/heads/codex/original-ui-r31'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -44,8 +29,8 @@ jobs:
         run: node creative-next/qa/r31/functional-groups.cjs
       - name: Install Chromium
         run: creative-next/node_modules/.bin/playwright install --with-deps chromium
-      - name: Compare source-derived r31 runtime with production UI
-        run: node creative-next/qa/r31/ui-runtime-comparison.cjs
+      - name: Measure regressions, isolation and all seven UI operation groups
+        run: node creative-next/qa/r31/run-part-a.cjs
       - name: Full Part A completion gate (HOLD prevents Part B)
         if: always()
         run: node creative-next/qa/r31/part-a-status.cjs
@@ -53,11 +38,15 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: r31-resume-hold-evidence
+          name: r31-part-a-measured-evidence
           path: |
             creative-next/qa/r31/ui-extraction-manifest.json
             creative-next/qa/r31/functional-groups.json
             creative-next/qa/r31/ui-runtime-comparison.json
             creative-next/qa/r31/part-a-status.json
+            creative-next/qa/r31/isolation-audit.json
+            creative-next/qa/r31/regression-result.json
+            creative-next/qa/r31/audit-test-result.json
+            creative-next/qa/r31/*.log
             creative-next/qa/r31/artifacts/resume/**/*.png
 # No deployment job, Pages upload, publishing credentials, or Part B wiring.

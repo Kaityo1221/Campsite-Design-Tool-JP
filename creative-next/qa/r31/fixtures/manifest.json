@@ -1,0 +1,20 @@
+{
+  "purpose": "Exact reference icon bytes for offline QA, no substitute marker graphics",
+  "items": [
+    {
+      "file": "blue-dot.png",
+      "url": "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+      "sha256": "510c3d2d4ea8fb5eae4504d6b12c152ade622ba6d53bc0bc66e256b17f171bd2"
+    },
+    {
+      "file": "purple-dot.png",
+      "url": "https://maps.google.com/mapfiles/ms/icons/purple-dot.png",
+      "sha256": "528a45461be3c2934584e494b603ec8a374a7eeed76d0cb46370f2ebc6cd1315"
+    },
+    {
+      "file": "yellow-dot.png",
+      "url": "https://maps.google.com/mapfiles/ms/icons/yellow-dot.png",
+      "sha256": "67a51f8885542e9f552a6beb4e3a6324d0309ea252a57682b11833bcd342230f"
+    }
+  ]
+}

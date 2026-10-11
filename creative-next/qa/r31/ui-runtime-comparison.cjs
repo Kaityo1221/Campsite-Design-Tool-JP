@@ -7,7 +7,7 @@ const {build}=require('./source-ui-compiler.cjs');
 const FIXED_TILE=(()=>{const p=new PNG({width:256,height:256});for(let i=0;i<p.data.length;i+=4){p.data[i]=230;p.data[i+1]=236;p.data[i+2]=234;p.data[i+3]=255;}return PNG.sync.write(p);})();
 const FOCUS={
  entry:['.entry-title','.entry-copy','.filebar','#leftHand','#rightHand','#startButton','#resumeButton','#cmRecent','#cmV58StartTransition'],
- map:['#back','#mapToggle','#layerButton','#toolbox','#cmStandaloneSaveButton','#cmCount','#cmAddFab'],
+ map:['#map','#back','#mapToggle','#layerButton','#toolbox','#cmStandaloneSaveButton','#cmCount','#cmAddFab'],
  plus:['#cmFabWrap','.cm-bubble','#cmSelectedType'],
  add:['#cmSafeAddBar','#cmSafeAddDot','#cmSafeAddLever','#cmSafeAddConfirm','#cmSafeAddCancel'],
  sheet:['.cm-sheet','#cmName','#cmMemo','#cmMove','#cmType','#cmDelete'],
@@ -20,15 +20,23 @@ const mime=file=>({'.js':'application/javascript','.mjs':'application/javascript
 function instrumentReference(html){
  const core=scripts(html).find(s=>s.id==='production-core'),end=core.code.lastIndexOf('})();');
  if(end<0)throw Error('REFERENCE_PROBE_TARGET_MISSING');
- const probe="window.__r31ReferenceProbe={view:()=>({pois:records.filter(r=>!r.deleted).map(r=>({id:r.id,role:cmIsNew(r)?'new':'existing',kind:r.layer.includes('gym')?'gym':r.layer.includes('power')?'power':'pokestop',title:r.title||'',memo:r.memo||'',lat:r.latlng[0],lng:r.latlng[1],deleted:false})),circles:[],areas:polygons.filter(p=>!p.deleted).map(p=>({id:p.id,points:p.points})),history:{undo:undoStack.length,redo:redoStack.length}}),openSheet:id=>cmOpenRecord(records.find(r=>r.id===id)),setHand:h=>setHand(h),camera:()=>({center:[map.getCenter().lat,map.getCenter().lng],zoom:map.getZoom()})};\n";
+ const probe="window.__r31ReferenceProbe={view:()=>({pois:records.filter(r=>!r.deleted).map(r=>({id:r.id,role:cmIsNew(r)?'new':'existing',kind:r.layer.includes('gym')?'gym':r.layer.includes('power')?'power':'pokestop',title:r.title||'',memo:r.memo||'',lat:r.latlng[0],lng:r.latlng[1],deleted:false})),circles:circleExtras.map(radius=>({radius})),areas:polygons.filter(p=>!p.deleted).map(p=>({id:p.id,points:p.points})),history:{undo:undoStack.length,redo:redoStack.length}}),openSheet:id=>cmOpenRecord(records.find(r=>r.id===id)),setHand:h=>setHand(h),camera:()=>({center:[map.getCenter().lat,map.getCenter().lng],zoom:map.getZoom()}),setCamera:c=>map.setView(c.center,c.zoom,{animate:false,reset:true}),chooser:()=>showSaveChooser(null,'synthetic.kmz'),transition:()=>{entry.classList.remove('hidden');cmV58NewEntryTransition(beginEditor)},feedback:p=>cmV46FlyStarToCount({latlng:[p.lat,p.lng]}),fixtureArea:points=>{polygons=points.length?[{id:'qa-area',points,deleted:false}]:[];polygonVisible=!!points.length;drawAll();renderLayerPanel()},layoutState:()=>({centerCached:!!map._lastCenter}),toolState:()=>({tool:activeTool,radii:circleExtras,points:polyDraft,closing:polyClosing,dragging:map.dragging.enabled(),touchZoom:map.touchZoom.enabled()})};\n";
  return html.replace(core.code,core.code.slice(0,end)+probe+core.code.slice(end));
 }
 async function contextFor(browser,viewport,kind,reference){
- const context=await browser.newContext({viewport,isMobile:viewport.width<500,hasTouch:viewport.width<500,serviceWorkers:'block'});
+ const context=await browser.newContext({viewport,isMobile:viewport.width<500,hasTouch:true,serviceWorkers:'block'});
  await context.addInitScript(({referenceOnly})=>{
   const accesses=[],make=()=>{const data=new Map();return{getItem(k){accesses.push(['get',k]);return data.get(k)??null;},setItem(k,v){accesses.push(['set',k]);data.set(k,String(v));},removeItem(k){accesses.push(['remove',k]);data.delete(k);},clear(){accesses.push(['clear']);data.clear();},key(i){return [...data.keys()][i]??null;},get length(){return data.size;}};};
   Object.defineProperty(window,'localStorage',{value:make()});Object.defineProperty(window,'sessionStorage',{value:make()});
   window.__r31Storage=accesses;window.__r31Requests=[];
+  window.__r31MapStarts=0;
+  if(!referenceOnly){
+   const active=[],add=EventTarget.prototype.addEventListener,remove=EventTarget.prototype.removeEventListener;
+   EventTarget.prototype.addEventListener=function(type,fn,options){const capture=typeof options==='boolean'?options:!!options?.capture;if(new Error().stack.includes('/original-ui-r31/ui-runtime.mjs')&&!active.some(x=>x.target===this&&x.type===type&&x.fn===fn&&x.capture===capture))active.push({target:this,type,fn,capture});return add.call(this,type,fn,options);};
+   EventTarget.prototype.removeEventListener=function(type,fn,options){const capture=typeof options==='boolean'?options:!!options?.capture;const i=active.findIndex(x=>x.target===this&&x.type===type&&x.fn===fn&&x.capture===capture);if(i>=0)active.splice(i,1);return remove.call(this,type,fn,options);};
+   window.__r31LiveListeners=()=>active.map(x=>({type:x.type,target:x.target.id||x.target.nodeName||'window'}));
+  }
+  window.__r31Clipboard=[];Object.defineProperty(navigator,'clipboard',{value:{async writeText(text){window.__r31Clipboard.push(text);}}});
   // Reference-only initial saved-state fixture is EMPTY; suppress the two legacy autosave intervals.
   if(referenceOnly){const nativeInterval=window.setInterval.bind(window);window.setInterval=(fn,ms,...args)=>['snapshot','cmPersistCurrent'].includes(fn?.name)?0:nativeInterval(fn,ms,...args);}
   Object.defineProperty(navigator,'geolocation',{value:{getCurrentPosition(_,fail){fail?.({code:1});},watchPosition(){return 0;},clearWatch(){}}});
@@ -44,23 +52,27 @@ async function contextFor(browser,viewport,kind,reference){
    if(kind==='candidate'&&url.pathname.includes('/creative/runtime/'))return route.abort();
   }else if(url.hostname==='cdnjs.cloudflare.com'&&url.pathname.endsWith('/jszip.min.js'))file=require.resolve('jszip/dist/jszip.min.js');
   else if(url.hostname==='unpkg.com'&&/leaflet@1.9.4\/dist\/(leaflet.js|leaflet.css)$/.test(url.pathname))file=path.join(path.dirname(require.resolve('leaflet')),url.pathname.split('/').pop());
-  if(file&&fs.existsSync(file)&&fs.statSync(file).isFile())return route.fulfill({status:200,contentType:mime(file),body:/\.(?:js|mjs|html|css)$/.test(file)?read(file):fs.readFileSync(file)});
-  if(/tile\.openstreetmap|arcgisonline|maps\.google\.com/.test(url.hostname))return route.fulfill({status:200,contentType:'image/png',body:FIXED_TILE});
+  else if(url.hostname==='maps.google.com'&&/^\/mapfiles\/ms\/icons\/(blue|yellow|purple)-dot.png$/.test(url.pathname))file=path.join(__dirname,'fixtures',path.basename(url.pathname));
+  if(file&&fs.existsSync(file)&&fs.statSync(file).isFile()){let body=/\.(?:js|mjs|html|css)$/.test(file)?read(file):fs.readFileSync(file);if(url.pathname.endsWith('/leaflet.js'))body+='\n;(()=>{const make=L.map;L.map=(...args)=>{window.__r31MapStarts++;return make(...args)}})();';return route.fulfill({status:200,contentType:mime(file),body});}
+  if(/tile\.openstreetmap|arcgisonline/.test(url.hostname))return route.fulfill({status:200,contentType:'image/png',body:FIXED_TILE});
   return route.abort();
  });
- const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('dialog',d=>d.accept());
+ const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('dialog',d=>d.accept());const coverage=await context.newCDPSession(page);await coverage.send('Profiler.enable');await coverage.send('Profiler.startPreciseCoverage',{callCount:true,detailed:true});
  await page.goto(kind==='reference'?'https://r31.invalid/creative/index.html':'https://r31.invalid/creative-next/original-ui-r31/index.html',{waitUntil:'load'});
  if(kind==='candidate')await page.waitForFunction(()=>Boolean(window.creativeR31));
  await page.waitForTimeout(150);
- return{context,page,errors,trace};
+ return{context,page,errors,trace,coverage};
 }
 async function snapshot(page,selectors){
  return page.evaluate(selectors=>Object.fromEntries(selectors.map(selector=>{
   const nodes=[...document.querySelectorAll(selector)];
   const describe=n=>{
    const r=n.getBoundingClientRect(),s=getComputedStyle(n);
-   const structure=[...n.querySelectorAll('*')].map(x=>({tag:x.tagName,id:x.id,classes:x.className,
-    text:x.children.length?null:x.textContent,value:x.value??null,maxLength:x.maxLength??null}));
+   // Map backend DOM includes reference-only hidden legacy layers. Compare the
+   // whole visible map image and its controls; compare geometry separately below.
+   const structure=(selector==='#map'?[]:[...n.querySelectorAll('*')]).map(x=>({tag:x.tagName,id:x.id,classes:x.className,
+    text:x.children.length?null:x.textContent,value:x.value??null,maxLength:x.maxLength??null,
+    box:JSON.stringify(x.getBoundingClientRect().toJSON()),attributes:Object.fromEntries(['d','stroke','fill','stroke-width','stroke-dasharray','opacity','fill-opacity','inputmode','aria-pressed','hidden'].filter(k=>x.hasAttribute(k)).map(k=>[k,x.getAttribute(k)])),styles:Object.fromEntries(['fontFamily','fontSize','transform','filter','outline','background','width','height','objectFit'].map(k=>[k,getComputedStyle(x)[k]]))}));
    return{tag:n.tagName,count:nodes.length,id:n.id,classes:n.className,text:n.children.length?null:n.textContent,
     box:Object.fromEntries(['x','y','width','height'].map(k=>[k,Math.round(r[k]*100)/100])),
     styles:Object.fromEntries(['display','position','fontSize','fontFamily','fontWeight','color','background','border','borderRadius','zIndex','touchAction','transform','opacity','animationName'].map(k=>[k,s[k]])),structure};
@@ -77,21 +89,34 @@ function pixelDifference(a,b){
 }
 async function compareScene(pair,name,selectors,folder){
  await Promise.all(pair.map(x=>x.page.waitForTimeout(300)));
+ const notifications=await Promise.all(pair.map(x=>x.page.evaluate(()=>({text:document.getElementById('status').textContent,opacity:getComputedStyle(document.getElementById('status')).opacity}))));
+ // Translucent layer panels overlap transient notifications. Capture their steady
+ // frame after BOTH real fade transitions finish, and retain the preceding text/phase.
+ const overlaySettles=selectors.includes('#layerPanel')||(selectors.includes('#cmV60RulesPanel')&&await pair[0].page.evaluate(()=>{const p=document.getElementById('cmV60RulesPanel').getBoundingClientRect(),s=document.getElementById('status').getBoundingClientRect();return p.top<s.bottom&&p.bottom>s.top;}));
+ if(overlaySettles||name==='map-right')await Promise.all(pair.map(x=>x.page.waitForFunction(()=>getComputedStyle(document.getElementById('status')).opacity==='0',null,{timeout:3500})));
  // Lock variable animation phase for image comparison; transition/gesture behavior has separate checks.
  for(const x of pair)await x.page.evaluate(()=>document.getAnimations().forEach(a=>{if(a.effect?.getTiming().iterations===Infinity){a.pause();a.currentTime=0;}}));
  const snapshots=await Promise.all(pair.map(x=>snapshot(x.page,selectors))),differences=[];
  for(const selector of selectors)if(JSON.stringify(snapshots[0][selector])!==JSON.stringify(snapshots[1][selector]))
   differences.push({selector,reference:snapshots[0][selector],candidate:snapshots[1][selector]});
  const pixels=[];
+ const full=[];for(const x of pair){await x.page.bringToFront();await x.page.evaluate(async()=>{await document.fonts.ready;await Promise.all([...document.images].map(i=>i.decode().catch(()=>{})));});full.push(PNG.sync.read(await x.page.screenshot()));}
+ if(['map-right','rules-open'].includes(name))for(let i=0;i<2;i++)fs.writeFileSync(path.join(folder,name+'-full-'+i+'.png'),PNG.sync.write(full[i]));
+ const crop=(png,box)=>{const x=Math.max(0,Math.floor(box.x)),y=Math.max(0,Math.floor(box.y)),width=Math.min(png.width,Math.ceil(box.x+box.width))-x,height=Math.min(png.height,Math.ceil(box.y+box.height))-y;if(width<=0||height<=0)throw Error('EMPTY_VISIBLE_CAPTURE');const out=new PNG({width,height});PNG.bitblt(png,out,x,y,width,height,0,0);return PNG.sync.write(out);};
  for(const selector of selectors){
   const locators=pair.map(x=>x.page.locator(selector).first());
-  if(await locators[0].count()&&await locators[1].count()&&await locators[0].isVisible()&&await locators[1].isVisible()){
-   const buffers=[];for(let i=0;i<pair.length;i++){await pair[i].page.bringToFront();buffers.push(await locators[i].screenshot({animations:'disabled'}));}
+  const geometry=selector.includes('.leaflet-')&&(/-pane\b|svg/.test(selector));
+  const boxes=await Promise.all(locators.map(async loc=>geometry?loc.evaluate(root=>{const shapes=[...root.querySelectorAll('path,.leaflet-marker-icon')].map(n=>{const b=n.getBoundingClientRect(),padding=Number(n.getAttribute('stroke-width')||0)/2+2;return{x:b.left-padding,y:b.top-padding,right:b.right+padding,bottom:b.bottom+padding};});if(!shapes.length)return null;const x=Math.min(...shapes.map(s=>s.x)),y=Math.min(...shapes.map(s=>s.y));return{x,y,width:Math.max(...shapes.map(s=>s.right))-x,height:Math.max(...shapes.map(s=>s.bottom))-y};}):await loc.count()?loc.boundingBox():null));
+  if(boxes[0]&&boxes[1]&&(geometry||await locators[0].isVisible()&&await locators[1].isVisible())){
+   const buffers=[];for(let i=0;i<pair.length;i++)buffers.push(crop(full[i],boxes[i]));
    const diff=pixelDifference(...buffers);pixels.push({selector,...diff});
    if(!diff.same){const safe=selector.replace(/[^\w]/g,'_');fs.writeFileSync(path.join(folder,name+'-'+safe+'-reference.png'),buffers[0]);fs.writeFileSync(path.join(folder,name+'-'+safe+'-r31.png'),buffers[1]);}
   }
  }
- return{name,status:differences.length||pixels.some(p=>!p.same)?'FAIL':'PASS',differences,pixels};
+ const state=await Promise.all(pair.map(x=>x.page.evaluate(()=>({camera:window.__r31ReferenceProbe?.camera()||window.creativeR31?.status().camera,mapVisible:document.getElementById('entry').classList.contains('hidden'),focus:document.activeElement?.outerHTML,scroll:[scrollX,scrollY],fonts:document.fonts.status}))));
+ if(state.every(s=>s.mapVisible)&&JSON.stringify(state[0].camera)!==JSON.stringify(state[1].camera))differences.push({selector:'map.camera',reference:state[0].camera,candidate:state[1].camera});
+ if(overlaySettles&&notifications[0].text!==notifications[1].text)differences.push({selector:'#status.text',reference:notifications[0].text,candidate:notifications[1].text});
+ return{name,status:differences.length||pixels.some(p=>!p.same)?'FAIL':'PASS',differences,pixels,state,notifications};
 }
 async function run(){
  await build();
@@ -105,7 +130,7 @@ async function run(){
  const browser=await chromium.launch({channel:process.env.R31_BROWSER_CHANNEL||undefined,headless:true}),results=[];
  const root=path.join(__dirname,'artifacts','resume');fs.mkdirSync(root,{recursive:true});
  try{
-  for(const viewport of [{width:390,height:844},{width:393,height:852},{width:1366,height:768}]){
+  for(const viewport of [{width:390,height:844},{width:393,height:852},{width:1366,height:768}].filter(v=>!process.env.R31_WIDTH||v.width===Number(process.env.R31_WIDTH))){
    const pair=[],scenes=[],actionErrors=[],folder=path.join(root,String(viewport.width));fs.mkdirSync(folder,{recursive:true});
    try{
     pair.push(await contextFor(browser,viewport,'reference',reference));pair.push(await contextFor(browser,viewport,'candidate',reference));
@@ -118,7 +143,8 @@ async function run(){
     await pair[0].page.locator('#entryFile').setInputFiles({name:'r31-synthetic.kmz',mimeType:'application/vnd.google-earth.kmz',buffer:Buffer.from(bytes)});
     await pair[0].page.locator('#startButton').click();
     await pair[0].page.waitForFunction(()=>document.getElementById('entry').classList.contains('hidden'),{timeout:15000});
-    await pair[0].page.waitForTimeout(200); // wait for source beginEditor map.invalidateSize(50)
+    await pair[0].page.bringToFront();
+    await pair[0].page.waitForFunction(()=>!__r31ReferenceProbe.layoutState().centerCached,null,{timeout:5000}); // source beginEditor invalidateSize must actually finish
     const view=await pair[0].page.evaluate(()=>window.__r31ReferenceProbe.view());
     const before=JSON.stringify(view),camera=await pair[0].page.evaluate(()=>__r31ReferenceProbe.camera());
     await pair[1].page.evaluate(view=>{
@@ -147,6 +173,7 @@ async function run(){
     await pair[1].page.evaluate(id=>creativeR31.openSheet(id),old.id);
     const existingReadOnly=await pair[1].page.locator('.cm-sheet input,.cm-sheet textarea,#cmMove,#cmDelete,#cmType').count()===0;
     await capture('existing-sheet','sheet');await both('.cm-sheet-close');
+    const operations=await require('./part-a-operations.cjs').exercise({pair,view,camera,folder,compareScene,both,onScene:s=>scenes.push(s)});
     // Exercise disconnected data requests with ordinary clicks, after visual comparisons.
     const duplicateMountRejected=await pair[1].page.evaluate(async()=>{
      const {mountCreativeUi}=await import('/creative-next/original-ui-r31/ui-runtime.mjs');
@@ -165,27 +192,29 @@ async function run(){
 
     await pair[1].page.locator('#cmStandaloneSaveButton').click();
     await pair[1].page.locator('#cmStandaloneKmz').click();
-    const candidateChecks=await pair[1].page.evaluate(()=>({status:creativeR31.status(),storage:__r31Storage,
+    const candidateChecks=await pair[1].page.evaluate(()=>({status:creativeR31.status(),storage:__r31Storage,mapStarts:__r31MapStarts,legacyCapabilities:typeof window.bridgeMapLab_createMapRenderer==='function'||typeof window.CampsiteCreativeWorkspace==='object',
      proposals:__r31Requests,fixture:JSON.stringify(__r31Fixture)}));
     if(candidateChecks.fixture!==before)throw Error('UI_MUTATED_READ_VIEW');
     if(candidateChecks.proposals.length<6||candidateChecks.proposals.some(p=>p.result.status!=='HOLD'||p.result.changed!==false))throw Error('DATA_REQUEST_ESCAPED_HOLD');
     if(candidateChecks.status.mapCount!==1)throw Error('SINGLE_UI_MAP_VIOLATION');
     const markup=await pair[1].page.content();
-    const hiddenLegacyRequests=pair[1].trace.filter(u=>u.includes('/creative/runtime/'));
-    await pair[1].page.evaluate(()=>creativeR31.dispose());
-    const disposed=await pair[1].page.evaluate(()=>({status:creativeR31.status(),ownedControls:document.querySelectorAll('#cmFabWrap,#cmV59HelpButton,#cmV60RulesPanel,#cmStandaloneSaveButton,.cm-sheet').length}));
-    results.push({viewport,status:scenes.every(s=>s.status==='PASS')&&pair.every(x=>x.errors.length===0)&&candidateChecks.storage.length===0&&hiddenLegacyRequests.length===0&&existingReadOnly&&disposed.ownedControls===0?'PASS':'HOLD',
-     scenes,actionErrors,existingReadOnly,duplicateMountRejected,candidateChecks:{...candidateChecks,fixture:undefined},hiddenLegacyRequests,disposed,errors:pair.map(x=>x.errors),
+    const hiddenLegacyRequests=pair[1].trace.filter(u=>u.includes('/creative/runtime/')||/creative-next\/(phase-1|integration)/.test(u));
+    const executed=await pair[1].coverage.send('Profiler.takePreciseCoverage');const legacyCoverage=executed.result.filter(s=>/\/creative\/runtime\/|\/creative\/index.html|creative-next\/(phase-1|integration)/.test(s.url));
+    const originalFunctionsExecuted=legacyCoverage.reduce((sum,s)=>sum+s.functions.reduce((n,f)=>n+f.ranges.reduce((n,r)=>n+r.count,0),0),0);
+    await pair[1].page.evaluate(()=>{creativeR31.dispose();creativeR31.dispose();creativeR31.setHand('left');creativeR31.transition();});
+    const disposed=await pair[1].page.evaluate(()=>({status:creativeR31.status(),independentListeners:__r31LiveListeners(),ownedControls:document.querySelectorAll('#cmFabWrap,#cmV59HelpButton,#cmV60RulesPanel,#cmStandaloneSaveButton,.cm-sheet').length}));
+    results.push({viewport,status:scenes.every(s=>s.status==='PASS')&&operations.checks.every(x=>x.pass)&&pair.every(x=>x.errors.length===0)&&candidateChecks.storage.length===0&&candidateChecks.mapStarts===1&&!candidateChecks.legacyCapabilities&&originalFunctionsExecuted===0&&hiddenLegacyRequests.length===0&&existingReadOnly&&disposed.ownedControls===0&&disposed.independentListeners.length===0?'PASS':'HOLD',
+     scenes,operations:operations.checks,originalFunctionsExecuted,legacyCoverage,actionErrors,existingReadOnly,duplicateMountRejected,candidateChecks:{...candidateChecks,fixture:undefined},hiddenLegacyRequests,disposed,errors:pair.map(x=>x.errors),
      renderedMode:'read-only synthetic view; no r31 data import or editor Session'});
    }catch(error){
     actionErrors.push(error.message.slice(0,2400));
-    results.push({viewport,status:'HOLD',scenes,actionErrors,errors:pair.map(x=>x.errors)});
+    results.push({viewport,status:'HOLD',scenes,operations:pair[1]?.operationChecks||[],actionErrors,errors:pair.map(x=>x.errors)});
    }finally{for(const x of pair)await x.context.close();}
   }
  }finally{await browser.close();}
- const report={status:results.every(x=>x.status==='PASS')?'PASS':'HOLD',
-  partA:'HOLD',partB:'NOT_STARTED',scope:'Focused source UI groups; full activity/coordinate/animation/gesture gates incomplete',
-  browser:'Chromium engine; Edge channel if configured',safariRealDevice:'NOT_TESTED',forceClicksUsed:0,referenceAutosaveIntervals:'two legacy save intervals suppressed for fixed EMPTY initial saved-state fixture',
+ const report={fingerprint:require('./evidence.cjs').fingerprint(),status:results.every(x=>x.status==='PASS')&&results.length===3?'PASS':'HOLD',
+  partA:'MEASURED_BY_PART_A_GATE',partB:'NOT_STARTED',scope:'Seven PART A groups: display, normal input, HOLD and teardown',
+  browser:{channel:process.env.R31_BROWSER_CHANNEL||'chromium',version:browser.version(),platform:process.platform},safariRealDevice:'NOT_TESTED',forceClicksUsed:0,referenceAutosaveIntervals:'two legacy save intervals suppressed for fixed EMPTY initial saved-state fixture',
   fixture:'synthetic NEW_V1; reference memory storage; candidate read-only view and HOLD requests',results};
  fs.writeFileSync(path.join(__dirname,'ui-runtime-comparison.json'),JSON.stringify(report,null,2)+'\n');
  console.log(JSON.stringify({status:report.status,partA:report.partA,results:results.map(x=>({width:x.viewport.width,status:x.status,actions:x.actionErrors,scenes:x.scenes.map(s=>({name:s.name,status:s.status,dom:s.differences.length,pixels:s.pixels.filter(p=>!p.same).length}))}))}));

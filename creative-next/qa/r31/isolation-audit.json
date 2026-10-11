@@ -1,0 +1,305 @@
+{
+  "status": "PASS",
+  "runtimeSha256": "bd6f779ee5cabb2eba7cde57744cd792e1896f3c34e9961dc1eee1dab3bc4fc5",
+  "historicalDefinitions": 369,
+  "deniedDefinitions": 369,
+  "unprovenFunctionsAllowed": 0,
+  "emittedScripts": [
+    "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js",
+    "../creative-next/original-ui-r31/ui-runtime.mjs"
+  ],
+  "legacyScriptCount": 0,
+  "staticRuntime": {
+    "status": "PASS",
+    "errors": []
+  },
+  "templateErrors": [],
+  "allowlist": [
+    {
+      "name": "fab",
+      "sourceFunction": "cmInstallFab",
+      "expressionSha256": "db252d62c7204caf288d9cfb210e2f3a4b310c8f6b4c7e107b7cdc0b94859ed5",
+      "parameters": [
+        "cmTypeInfo"
+      ],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "existingSheet",
+      "sourceFunction": "cmOpenRecord",
+      "expressionSha256": "fd37c4aeab27029fc9ef23f377bb8bc38aa30e125a684363897cd80e022ed99b",
+      "parameters": [
+        "r",
+        "typeLabel"
+      ],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "newSheet",
+      "sourceFunction": "cmOpenRecord",
+      "expressionSha256": "246d6336e90551e6bcc448d430510509f5a7a0101e0c9cc4ef71bf3931ce0a5b",
+      "parameters": [
+        "r",
+        "typeLabel",
+        "warn",
+        "cmTypeInfo"
+      ],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "moveBar",
+      "sourceFunction": "cmInstallMoveUi",
+      "expressionSha256": "fe0d0b8fc784ebbe7ba0e2b807868418777910f340cefc90af808fa9f738b8bc",
+      "parameters": [],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "addBarTail",
+      "sourceFunction": "cmSafeInstallAddBar",
+      "expressionSha256": "999a30e52cd3564b1e639a72226dcf4c3068bc4ceb38b589449792356f47111a",
+      "parameters": [],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "selectedPoi",
+      "sourceFunction": "cmPhaseCSelectedPoiHtml",
+      "expressionSha256": "075ae756cad067703a1f6d440e23114e111f2f408d783c3603cd39d0dbcb5073",
+      "parameters": [
+        "meta"
+      ],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "standaloneSave",
+      "sourceFunction": "cmOpenStandaloneSave",
+      "expressionSha256": "97070f042f1b343cf0868640db405efe1fedf9def0ae4ac0ba5d2278b2bc0b6c",
+      "parameters": [],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "list",
+      "sourceFunction": "cmOpenList",
+      "expressionSha256": "12246e83a2ebbf621c82e5c1424377557c5fae71fa702b06ca0e300224a502fd",
+      "parameters": [],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "coords",
+      "sourceFunction": "cmOpenCoords",
+      "expressionSha256": "a62c8d92385b404aed26a27d514062900f292e13ded8586ae07ff13cb1e2d20e",
+      "parameters": [],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "coordinateCard",
+      "sourceFunction": "cmOpenCoords",
+      "expressionSha256": "adeca0207d8768ed837676b1cd7a6ce5c79a15fddc71f930ef17dac49580be57",
+      "parameters": [
+        "r",
+        "typeLabel"
+      ],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only",
+      "originalExpressionSha256": "45e38922f03db664f528c02540751a530ac2aec36780def0dd1530cd08f9a5b4",
+      "displayInputs": [
+        [
+          "cmTypeLabel(r.layer)",
+          "typeLabel"
+        ]
+      ]
+    },
+    {
+      "name": "coordinateMemo",
+      "sourceFunction": "cmOpenCoords",
+      "expressionSha256": "8bbc52751aec723f2cf53c2d6977939d48fc823c61b4ae8d2cb32c2088741077",
+      "parameters": [
+        "cmV54Memo"
+      ],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "coordinateReason",
+      "sourceFunction": "cmOpenCoords",
+      "expressionSha256": "24cceab037c35516bf7e2b336d786dc06561906f74dc4299699832dd980ccd5b",
+      "parameters": [],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "listRow",
+      "sourceFunction": "cmRow",
+      "expressionSha256": "6fead0ea7f6cb5a2cca2060372dde688c28d38e53c6b5e8426d647636e78544f",
+      "parameters": [
+        "r",
+        "marks",
+        "iconHtml"
+      ],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only",
+      "originalExpressionSha256": "f7e05ce74f7fa214a6064854302b5d826729da45cd41d0ee7075d6ac0f3f9add",
+      "displayInputs": [
+        [
+          "cmListIcon(r)",
+          "iconHtml"
+        ]
+      ]
+    },
+    {
+      "name": "polygonCrosshair",
+      "sourceFunction": "ensurePolyCrosshair",
+      "expressionSha256": "32261e941df4e781d53d3e8b39cabf4a32b6702843d2bab11073903ba3a27d69",
+      "parameters": [],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "polygonIcon",
+      "sourceFunction": "fixedPolyIcon",
+      "expressionSha256": "5ecbae71e3dd59deb096a36ef111f4e375e7b480ab708bd91fa35bf2a230a54b",
+      "parameters": [
+        "first",
+        "closing"
+      ],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "recordCircle50",
+      "sourceFunction": "circleOpts",
+      "expressionSha256": "82970bd740e8da7f1dabb6fc94229354a465d4dfe4a1d7ed380f462714548082",
+      "parameters": [
+        "circleRenderer"
+      ],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "recordCircle40",
+      "sourceFunction": "circleOpts",
+      "expressionSha256": "7ff45c45e37e5f15ee7c7c82c45fe630a9797f4a0c07fe5158c8e7fe6366e551",
+      "parameters": [
+        "circleRenderer"
+      ],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "recordCircle30",
+      "sourceFunction": "circleOpts",
+      "expressionSha256": "f66d9c930c28159c4fb17fa96866ee109352f2d1540c83cf37a4d270e37acef3",
+      "parameters": [
+        "circleRenderer"
+      ],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "rules",
+      "sourceFunction": "cmV60RulesCarouselRuntime",
+      "expressionSha256": "71d451e4041b358c14692b28759a80172e0ae04ec88c515a2cf5745929dfa174",
+      "parameters": [],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "newIconOptions",
+      "sourceFunction": "recordIcon",
+      "expressionSha256": "ae557cbd3ff81c3d33ec57b40ef5ce5a0e014bd212ba1b2d488079d70eb7215f",
+      "parameters": [
+        "iconUrl"
+      ],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "existingIconOptions",
+      "sourceFunction": "recordIcon",
+      "expressionSha256": "e4bf18e47b8459b0cb6dd3ebc3401403eed176bca37dff72bcbe2d65ec6f638c",
+      "parameters": [
+        "shape"
+      ],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "displayCandidateIcon",
+      "sourceFunction": "creative/runtime/map-engine/map-renderer.js:bridgeMapLab_candidateIcon",
+      "expressionSha256": "bcad30a549ef9ef7bc2a0ab90ec16cfe3b55a819552379637d0a1ffc99a5801e",
+      "parameters": [
+        "iconUrl"
+      ],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "displayExistingIcon",
+      "sourceFunction": "creative/runtime/map-engine/map-renderer.js:bridgeMapLab_divIcon",
+      "expressionSha256": "d6b0adb3b13f055c85abda7e0e687068d32fdf2d232a7bdcabbb9bb4fb10e18c",
+      "parameters": [
+        "shapeClass",
+        "engineClass"
+      ],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "activityRule",
+      "sourceFunction": "cmV77ActivityRuleInstall",
+      "expressionSha256": "d8717046c6b6a626c078ce3565161a1c82f71f57832e5c42b9427e6ff0fb7e3c",
+      "parameters": [],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "addCircleOptions",
+      "sourceFunction": "cmSafeEnsureAddCircle",
+      "expressionSha256": "b4d047030c595456ea8624cfaf16546000d8b81cb21685cf62816c728f30b7a8",
+      "parameters": [
+        "cmSafeAddRadius",
+        "circleRenderer"
+      ],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "moveCircleOptions",
+      "sourceFunction": "cmBeginMove",
+      "expressionSha256": "c88b13902a92ed3adaa6eca43358739418bd001383903fa39fa62beaf62d81db",
+      "parameters": [
+        "circleRenderer"
+      ],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "coordinatePanel",
+      "sourceFunction": "cmV51CoordinateJumpRuntime.ensurePanel",
+      "expressionSha256": "d1199bbf4708a1ffa259bb0e25bad614403fe54c32878d5d26c7547a2ab48e4c",
+      "parameters": [],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "coordinateMode",
+      "sourceFunction": "cmV52ExistingNewPlacementRuntime.decorate",
+      "expressionSha256": "e98858011109ffbbbbba9e57cebeb3211610a845e16bc1d0369b3a6af9415be6",
+      "parameters": [],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "coordinateConfirmRow",
+      "sourceFunction": "cmV52ExistingNewPlacementRuntime.decorate",
+      "expressionSha256": "a1f8a59fef11c388844663a4d362b4f71c341042c69ac9088cff8d300cd42ed1",
+      "parameters": [],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "leverOffset",
+      "sourceFunction": "cmSafeLeverOffset",
+      "expressionSha256": "3331380683b7e4757460fa4d81f98a7126f1271a766b9fddeb3b26223ceebdbd",
+      "parameters": [
+        "r"
+      ],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "addDot",
+      "sourceFunction": "cmSafeAddDotElement",
+      "expressionSha256": "04dc142bb9bf3cf1cb0abc547b759e626731021ca1505935c04ca659854bca05",
+      "parameters": [],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "moveCrosshair",
+      "sourceFunction": "cmMoveCrosshairElement",
+      "expressionSha256": "40c3fb55965fe8aee495b2871d87a241ccbbe60d7990b6ad8bbaee2d5f111d7e",
+      "parameters": [],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    }
+  ],
+  "proofBoundary": "Only Leaflet and the new presentation module are emitted. No old core/renderer/store/history module or binding is reachable. Browser precise coverage measures executed application script identities.",
+  "fingerprint": "f706ea3bfdee1129d273efc45ab6de68f368dae93ebb989674f28694312aa350"
+}

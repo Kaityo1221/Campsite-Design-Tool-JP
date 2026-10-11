@@ -71,6 +71,7 @@
   "originalFunctionsExecuted": 0,
   "unprovenFunctionsAllowed": 0,
   "legacyScriptsEmitted": 0,
+  "displayRendererSourceSha256": "77b9a052dcdddbb9e9de8582d9dbaac4b160db3efad5c78569b82f5521d01bfd",
   "types": {
     "new-pokestop": {
       "label": "PokéStop",
@@ -160,6 +161,364 @@
       "sourceFunction": "cmInstallStandaloneSave"
     }
   },
+  "presentationNodes": {
+    "showSaveChooser": {
+      "wrap": {
+        "tag": "div",
+        "properties": {
+          "id": "cmV73SaveChooser"
+        },
+        "styles": {
+          "position": "fixed",
+          "left": "50%",
+          "transform": "translateX(-50%)",
+          "bottom": "calc(132px + env(safe-area-inset-bottom))",
+          "zIndex": "1600",
+          "display": "flex",
+          "gap": "7px",
+          "alignItems": "center",
+          "padding": "7px",
+          "borderRadius": "14px",
+          "background": "rgba(48,40,29,.95)",
+          "boxShadow": "0 8px 24px rgba(0,0,0,.28)"
+        },
+        "attributes": {},
+        "sourceFunction": "showSaveChooser"
+      },
+      "choose": {
+        "tag": "button",
+        "properties": {
+          "type": "button",
+          "textContent": "保存先を選ぶ"
+        },
+        "styles": {
+          "minWidth": "143px",
+          "height": "44px",
+          "padding": "0 14px",
+          "border": "2px solid #8a6b31",
+          "borderRadius": "15px",
+          "background": "#fff8e6",
+          "color": "#37270c",
+          "fontWeight": "950",
+          "fontSize": "16px"
+        },
+        "attributes": {},
+        "sourceFunction": "showSaveChooser"
+      },
+      "download": {
+        "tag": "button",
+        "properties": {
+          "type": "button",
+          "textContent": "ダウンロード",
+          "title": "ダウンロード"
+        },
+        "styles": {
+          "width": "96px",
+          "height": "44px",
+          "border": "2px solid #8a6b31",
+          "borderRadius": "12px",
+          "background": "rgba(255,253,247,.96)",
+          "color": "#5d4630",
+          "fontWeight": "950",
+          "fontSize": "12px",
+          "whiteSpace": "nowrap",
+          "boxSizing": "border-box",
+          "padding": "0 8px"
+        },
+        "attributes": {},
+        "sourceFunction": "showSaveChooser"
+      },
+      "close": {
+        "tag": "button",
+        "properties": {
+          "type": "button",
+          "textContent": "×"
+        },
+        "styles": {
+          "width": "46px",
+          "height": "46px",
+          "border": "2px solid #8a6b31",
+          "borderRadius": "14px",
+          "background": "rgba(255,253,247,.96)",
+          "color": "#5d4630",
+          "fontWeight": "950",
+          "fontSize": "24px"
+        },
+        "attributes": {},
+        "sourceFunction": "showSaveChooser"
+      }
+    },
+    "ensurePolyAction": {
+      "b": {
+        "tag": "button",
+        "properties": {
+          "type": "button"
+        },
+        "styles": {
+          "position": "fixed",
+          "left": "50%",
+          "transform": "translateX(-50%)",
+          "bottom": "calc(74px + env(safe-area-inset-bottom))",
+          "zIndex": "1450",
+          "minWidth": "160px",
+          "height": "52px",
+          "padding": "0 20px",
+          "border": "2px solid #8a6b31",
+          "borderRadius": "15px",
+          "background": "#fff8e6",
+          "color": "#37270c",
+          "fontWeight": "950",
+          "fontSize": "16px",
+          "boxShadow": "0 5px 16px rgba(0,0,0,.28)"
+        },
+        "attributes": {},
+        "sourceFunction": "ensurePolyAction"
+      },
+      "x": {
+        "tag": "button",
+        "properties": {
+          "type": "button",
+          "textContent": "×"
+        },
+        "styles": {
+          "position": "fixed",
+          "left": "calc(50% + 88px)",
+          "bottom": "calc(77px + env(safe-area-inset-bottom))",
+          "zIndex": "1450",
+          "width": "46px",
+          "height": "46px",
+          "border": "2px solid #8a6b31",
+          "borderRadius": "14px",
+          "background": "rgba(255,253,247,.96)",
+          "color": "#5d4630",
+          "fontWeight": "950",
+          "fontSize": "24px",
+          "boxShadow": "0 5px 16px rgba(0,0,0,.22)"
+        },
+        "attributes": {},
+        "sourceFunction": "ensurePolyAction"
+      }
+    },
+    "ensurePolyCrosshair": {
+      "d": {
+        "tag": "div",
+        "properties": {},
+        "styles": {
+          "position": "fixed",
+          "left": "50%",
+          "top": "50%",
+          "transform": "translate(-50%,-50%)",
+          "width": "52px",
+          "height": "52px",
+          "zIndex": "1450",
+          "pointerEvents": "none"
+        },
+        "attributes": {},
+        "sourceFunction": "ensurePolyCrosshair"
+      }
+    },
+    "openPolygonChoice": {
+      "w": {
+        "tag": "div",
+        "properties": {},
+        "styles": {
+          "position": "fixed",
+          "left": "50%",
+          "transform": "translateX(-50%)",
+          "bottom": "calc(132px + env(safe-area-inset-bottom))",
+          "zIndex": "1600",
+          "width": "min(330px,88vw)",
+          "padding": "10px",
+          "borderRadius": "16px",
+          "background": "rgba(48,40,29,.97)"
+        },
+        "attributes": {},
+        "sourceFunction": "openPolygonChoice"
+      },
+      "a": {
+        "tag": "button",
+        "properties": {
+          "textContent": "描き直す"
+        },
+        "styles": {
+          "width": "100%",
+          "height": "46px",
+          "marginTop": "7px",
+          "border": "2px solid #8a6b31",
+          "borderRadius": "13px",
+          "fontWeight": "950"
+        },
+        "attributes": {},
+        "sourceFunction": "openPolygonChoice"
+      },
+      "d": {
+        "tag": "button",
+        "properties": {
+          "textContent": "削除する"
+        },
+        "styles": {
+          "width": "100%",
+          "height": "46px",
+          "marginTop": "7px",
+          "border": "2px solid #8a6b31",
+          "borderRadius": "13px",
+          "fontWeight": "950"
+        },
+        "attributes": {},
+        "sourceFunction": "openPolygonChoice"
+      },
+      "c": {
+        "tag": "button",
+        "properties": {
+          "textContent": "キャンセル"
+        },
+        "styles": {
+          "width": "100%",
+          "height": "46px",
+          "marginTop": "7px",
+          "border": "2px solid #8a6b31",
+          "borderRadius": "13px",
+          "fontWeight": "950"
+        },
+        "attributes": {},
+        "sourceFunction": "openPolygonChoice"
+      }
+    },
+    "showPolygonDeleteConfirm": {
+      "w": {
+        "tag": "div",
+        "properties": {},
+        "styles": {
+          "position": "fixed",
+          "left": "50%",
+          "transform": "translateX(-50%)",
+          "bottom": "calc(132px + env(safe-area-inset-bottom))",
+          "zIndex": "1700",
+          "width": "min(360px,90vw)",
+          "padding": "9px",
+          "borderRadius": "16px",
+          "background": "rgba(48,40,29,.97)",
+          "display": "grid",
+          "gridTemplateColumns": "1fr auto",
+          "gap": "8px"
+        },
+        "attributes": {},
+        "sourceFunction": "showPolygonDeleteConfirm"
+      },
+      "d": {
+        "tag": "button",
+        "properties": {
+          "textContent": "活動範囲を削除"
+        },
+        "styles": {
+          "height": "50px",
+          "border": "2px solid #8a6b31",
+          "borderRadius": "13px",
+          "fontWeight": "950",
+          "fontSize": "14px",
+          "background": "#fff0ee",
+          "color": "#8c2f28",
+          "borderColor": "#c88179"
+        },
+        "attributes": {},
+        "sourceFunction": "showPolygonDeleteConfirm"
+      },
+      "b": {
+        "tag": "button",
+        "properties": {
+          "textContent": "戻る"
+        },
+        "styles": {
+          "height": "50px",
+          "border": "2px solid #8a6b31",
+          "borderRadius": "13px",
+          "fontWeight": "950",
+          "fontSize": "14px",
+          "background": "#fffdf7",
+          "color": "#37270c",
+          "minWidth": "78px"
+        },
+        "attributes": {},
+        "sourceFunction": "showPolygonDeleteConfirm"
+      }
+    },
+    "beginRuler": {
+      "exit": {
+        "tag": "button",
+        "properties": {
+          "id": "cmRulerExit",
+          "type": "button",
+          "textContent": "× 終了"
+        },
+        "styles": {
+          "position": "fixed",
+          "left": "50%",
+          "transform": "translateX(-50%)",
+          "bottom": "calc(132px + env(safe-area-inset-bottom))",
+          "zIndex": "1700",
+          "height": "46px",
+          "padding": "0 22px",
+          "border": "1px solid rgba(30,50,70,.18)",
+          "borderRadius": "14px",
+          "background": "rgba(255,255,255,.97)",
+          "color": "#17202b",
+          "fontWeight": "900",
+          "boxShadow": "0 4px 13px rgba(22,41,60,.15)"
+        },
+        "attributes": {},
+        "sourceFunction": "beginRuler"
+      }
+    },
+    "cmV69InstallSpacingReason": {
+      "field": {
+        "tag": "div",
+        "properties": {
+          "className": "cm-field cm-spacing-reason"
+        },
+        "styles": {},
+        "attributes": {},
+        "sourceFunction": "cmV69InstallSpacingReason"
+      },
+      "label": {
+        "tag": "label",
+        "properties": {
+          "textContent": "設置理由（50m未満・300文字まで）"
+        },
+        "styles": {},
+        "attributes": {},
+        "sourceFunction": "cmV69InstallSpacingReason"
+      },
+      "textarea": {
+        "tag": "textarea",
+        "properties": {
+          "id": "cmSpacingReason",
+          "maxLength": 300,
+          "placeholder": "ここに設置したい理由を入力"
+        },
+        "styles": {},
+        "attributes": {},
+        "sourceFunction": "cmV69InstallSpacingReason"
+      },
+      "count": {
+        "tag": "div",
+        "properties": {
+          "className": "cm-spacing-reason-count"
+        },
+        "styles": {},
+        "attributes": {},
+        "sourceFunction": "cmV69InstallSpacingReason"
+      },
+      "countValue": {
+        "tag": "span",
+        "properties": {
+          "id": "cmSpacingReasonCount"
+        },
+        "styles": {},
+        "attributes": {},
+        "sourceFunction": "cmV69InstallSpacingReason"
+      }
+    }
+  },
   "dynamicStyles": [
     {
       "id": "cmStyle",
@@ -228,15 +587,6 @@
       "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
     },
     {
-      "name": "saveMenu",
-      "sourceFunction": "cmOpenSaveMenu",
-      "expressionSha256": "160d41a6ff6f5421d1a349420d0d7a3145f308781019062bd910a3e95f6bc21d",
-      "parameters": [
-        "cmKmzExported"
-      ],
-      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
-    },
-    {
       "name": "standaloneSave",
       "sourceFunction": "cmOpenStandaloneSave",
       "expressionSha256": "97070f042f1b343cf0868640db405efe1fedf9def0ae4ac0ba5d2278b2bc0b6c",
@@ -255,6 +605,101 @@
       "sourceFunction": "cmOpenCoords",
       "expressionSha256": "a62c8d92385b404aed26a27d514062900f292e13ded8586ae07ff13cb1e2d20e",
       "parameters": [],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "coordinateCard",
+      "sourceFunction": "cmOpenCoords",
+      "expressionSha256": "adeca0207d8768ed837676b1cd7a6ce5c79a15fddc71f930ef17dac49580be57",
+      "parameters": [
+        "r",
+        "typeLabel"
+      ],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only",
+      "originalExpressionSha256": "45e38922f03db664f528c02540751a530ac2aec36780def0dd1530cd08f9a5b4",
+      "displayInputs": [
+        [
+          "cmTypeLabel(r.layer)",
+          "typeLabel"
+        ]
+      ]
+    },
+    {
+      "name": "coordinateMemo",
+      "sourceFunction": "cmOpenCoords",
+      "expressionSha256": "8bbc52751aec723f2cf53c2d6977939d48fc823c61b4ae8d2cb32c2088741077",
+      "parameters": [
+        "cmV54Memo"
+      ],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "coordinateReason",
+      "sourceFunction": "cmOpenCoords",
+      "expressionSha256": "24cceab037c35516bf7e2b336d786dc06561906f74dc4299699832dd980ccd5b",
+      "parameters": [],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "listRow",
+      "sourceFunction": "cmRow",
+      "expressionSha256": "6fead0ea7f6cb5a2cca2060372dde688c28d38e53c6b5e8426d647636e78544f",
+      "parameters": [
+        "r",
+        "marks",
+        "iconHtml"
+      ],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only",
+      "originalExpressionSha256": "f7e05ce74f7fa214a6064854302b5d826729da45cd41d0ee7075d6ac0f3f9add",
+      "displayInputs": [
+        [
+          "cmListIcon(r)",
+          "iconHtml"
+        ]
+      ]
+    },
+    {
+      "name": "polygonCrosshair",
+      "sourceFunction": "ensurePolyCrosshair",
+      "expressionSha256": "32261e941df4e781d53d3e8b39cabf4a32b6702843d2bab11073903ba3a27d69",
+      "parameters": [],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "polygonIcon",
+      "sourceFunction": "fixedPolyIcon",
+      "expressionSha256": "5ecbae71e3dd59deb096a36ef111f4e375e7b480ab708bd91fa35bf2a230a54b",
+      "parameters": [
+        "first",
+        "closing"
+      ],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "recordCircle50",
+      "sourceFunction": "circleOpts",
+      "expressionSha256": "82970bd740e8da7f1dabb6fc94229354a465d4dfe4a1d7ed380f462714548082",
+      "parameters": [
+        "circleRenderer"
+      ],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "recordCircle40",
+      "sourceFunction": "circleOpts",
+      "expressionSha256": "7ff45c45e37e5f15ee7c7c82c45fe630a9797f4a0c07fe5158c8e7fe6366e551",
+      "parameters": [
+        "circleRenderer"
+      ],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "recordCircle30",
+      "sourceFunction": "circleOpts",
+      "expressionSha256": "f66d9c930c28159c4fb17fa96866ee109352f2d1540c83cf37a4d270e37acef3",
+      "parameters": [
+        "circleRenderer"
+      ],
       "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
     },
     {
@@ -279,6 +724,25 @@
       "expressionSha256": "e4bf18e47b8459b0cb6dd3ebc3401403eed176bca37dff72bcbe2d65ec6f638c",
       "parameters": [
         "shape"
+      ],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "displayCandidateIcon",
+      "sourceFunction": "creative/runtime/map-engine/map-renderer.js:bridgeMapLab_candidateIcon",
+      "expressionSha256": "bcad30a549ef9ef7bc2a0ab90ec16cfe3b55a819552379637d0a1ffc99a5801e",
+      "parameters": [
+        "iconUrl"
+      ],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "displayExistingIcon",
+      "sourceFunction": "creative/runtime/map-engine/map-renderer.js:bridgeMapLab_divIcon",
+      "expressionSha256": "d6b0adb3b13f055c85abda7e0e687068d32fdf2d232a7bdcabbb9bb4fb10e18c",
+      "parameters": [
+        "shapeClass",
+        "engineClass"
       ],
       "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
     },
@@ -312,6 +776,20 @@
       "name": "coordinatePanel",
       "sourceFunction": "cmV51CoordinateJumpRuntime.ensurePanel",
       "expressionSha256": "d1199bbf4708a1ffa259bb0e25bad614403fe54c32878d5d26c7547a2ab48e4c",
+      "parameters": [],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "coordinateMode",
+      "sourceFunction": "cmV52ExistingNewPlacementRuntime.decorate",
+      "expressionSha256": "e98858011109ffbbbbba9e57cebeb3211610a845e16bc1d0369b3a6af9415be6",
+      "parameters": [],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "coordinateConfirmRow",
+      "sourceFunction": "cmV52ExistingNewPlacementRuntime.decorate",
+      "expressionSha256": "a1f8a59fef11c388844663a4d362b4f71c341042c69ac9088cff8d300cd42ed1",
       "parameters": [],
       "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
     },
