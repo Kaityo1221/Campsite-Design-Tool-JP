@@ -65,5 +65,14 @@ if(!nativeInput || !/\btype=["']file["']/i.test(nativeInput) || /\sdisabled\b/i.
 native=native.replace('</body>', '<script>window.addEventListener("error",function(e){var el=document.getElementById("entryState");if(el)el.textContent="起動エラー: "+String(e.message||"unknown").slice(0,90)});document.getElementById("entryFile").addEventListener("change",function(){var f=this.files&&this.files[0];if(f){document.getElementById("entryFileName").textContent=f.name;document.getElementById("entryState").textContent="ファイルを選択しました。読み込み準備中…"}});</script></body>');
 native=native.replace('</body>','<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script type="module" src="./r22-readonly-map.mjs"></script></body>');
 fs.writeFileSync(path.join(r22,'index.html'),native);
+// r25: exact same approved HTML/CSS; only attach isolated behavior to map controls.
+// The invisible touch-action rule suppresses Safari double-tap page zoom on controls.
+const r25=path.join(root,'creative-next/original-ui-r25');
+fs.mkdirSync(r25,{recursive:true});
+const r25html=native
+ .replace('./r22-readonly-map.mjs','./r25-map-controls.mjs')
+ .replace('</head>','<style id="cmNextTapGuard">button,.filebar{touch-action:manipulation!important;-webkit-tap-highlight-color:transparent}</style></head>');
+if(!r25html.includes('./r25-map-controls.mjs')||!r25html.includes('id="cmNextTapGuard"'))throw Error('R25_CONTROL_BUILD_FAILED');
+fs.writeFileSync(path.join(r25,'index.html'),r25html);
 if(/<script\b/i.test(html))throw Error('Runtime script escaped snapshot');
 console.log('PASS: production source snapshot',names.length,'patches, scripts stripped, original visual CSS retained');
