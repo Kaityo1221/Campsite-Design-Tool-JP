@@ -6,28 +6,6 @@ export function attachOriginalFileReview({document,JSZip,DOMParser,XMLSerializer
  const ui=createRealEngineOriginalUI({document,JSZip,DOMParser,XMLSerializer});
  let prepared=false,busy=false,disposed=false;
  input.disabled=false;start.disabled=true;
- const change=async()=>{
-  if(disposed||busy)return;
-  prepared=false;start.disabled=true;
-  const file=input.files?.[0];if(!file)return;
-  if(!/\.(kmz|kml)$/i.test(file.name)){state.textContent='KMZ / KMLを選択してください';return;}
-  busy=true;state.textContent='内容を確認しています…';name.textContent=file.name;
-  try{
-   const result=await ui.prepare(new Uint8Array(await file.arrayBuffer()));
-   if(disposed)return;
-   prepared=result.status==='REVIEW';
-   state.textContent=prepared?'読み込み候補を確認しました。開始時に承認が必要です。':'このファイルは読み込めません';
-   start.disabled=!prepared;onResult(result);
-  }catch(e){if(!disposed)state.textContent='読み込みを保留しました';}
-  finally{busy=false;}
- };
- const begin=()=>{
-  if(disposed||!prepared||busy)return;
-  if(confirmReview()!==true){state.textContent='承認されていないため開始しません';return;}
-  const result=ui.accept({confirmed:true});prepared=false;start.disabled=true;
-  state.textContent=result.applied?'隔離エンジンへ読み込みました（保存なし）':'開始できませんでした';
-  onResult(result);
- };
  // Input and start are cloned before binding, removing direct old handlers.
  const fileClone=input.cloneNode(true);fileClone.disabled=false;input.replaceWith(fileClone);
  const startClone=start.cloneNode(true);startClone.disabled=true;start.replaceWith(startClone);
