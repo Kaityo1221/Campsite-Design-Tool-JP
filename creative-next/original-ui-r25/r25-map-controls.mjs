@@ -156,7 +156,9 @@ function attachMapControls(){
    navigator.geolocation.getCurrentPosition(p=>{map?.setView([p.coords.latitude,p.coords.longitude],16);inform('現在地付近に移動しました');},()=>inform('現在地を取得できませんでした'),{enableHighAccuracy:false,timeout:10000});
   });
  }
- listen(map,'click',e=>{if(tool==='add')addAt(e.latlng);else if(tool==='ruler')measureAt(e.latlng);});
+ const onMapClick=e=>{if(tool==='add')addAt(e.latlng);else if(tool==='ruler')measureAt(e.latlng);};
+ map.on('click',onMapClick);
+ listeners.push(()=>map?.off('click',onMapClick));
  listen(document,'dblclick',e=>{
   if(e.target?.closest?.('button,.filebar')){e.preventDefault();e.stopPropagation();}
  },true);
