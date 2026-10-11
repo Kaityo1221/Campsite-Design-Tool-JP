@@ -1,0 +1,9 @@
+// Run unchanged Part A 156/333/17 on the B1-derived presentation in disconnected mode.
+// Keep every historical Part A JSON byte intact; only B1 evidence is written here.
+const fs=require('fs'),path=require('path'),{chromium}=require('playwright');
+const {derivedBrowser}=require('./browser.cjs');
+async function run(){require('./build.cjs').build();const dir=path.resolve(__dirname,'../r31'),saved=new Map(fs.readdirSync(dir).filter(n=>n.endsWith('.json')).map(n=>[n,fs.readFileSync(path.join(dir,n))]));const launch=chromium.launch.bind(chromium);chromium.launch=async(...args)=>derivedBrowser(await launch(...args));
+ try{await require('../r31/run-part-a.cjs').run();const names=['ui-runtime-comparison','plus-acceptance','reference-plus-diagnostic','part-a-status','regression-result','audit-test-result','isolation-audit'];const evidence=Object.fromEntries(names.map(n=>[n,JSON.parse(fs.readFileSync(path.join(dir,n+'.json'),'utf8'))]));const report={b1DerivedSha256:require('./build-manifest.json').derivedSha256,partAMode:'frozen presentation; B1 commands disabled for Part A HOLD fixtures',status:evidence['part-a-status'].partA,evidence};fs.writeFileSync(path.join(__dirname,'ui-regression-result.json'),JSON.stringify(report,null,2)+'\n');return report;
+ }finally{chromium.launch=launch;for(const [name,bytes]of saved)fs.writeFileSync(path.join(dir,name),bytes);}
+}
+module.exports={run};if(require.main===module)run().then(r=>{process.exitCode=r.status==='PASS'?0:2;}).catch(e=>{console.error(e);process.exitCode=1;});

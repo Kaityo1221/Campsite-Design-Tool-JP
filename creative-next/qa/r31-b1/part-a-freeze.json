@@ -1,0 +1,152 @@
+{
+  "sourceCommit": "109a1b0a6a66dc95ae88de72091f45a3fb611aab",
+  "evidenceHead": "f271cf82d13bcf0b5fe01069cc3a8d0c3318967b",
+  "ci": "https://github.com/Kaityo1221/Campsite-Design-Tool-JP/actions/runs/38149500935",
+  "fingerprint": "f206ea51801e3a74e69cf7156a6fff803422ebe5af57a500fcb4d1a2ecae75ff",
+  "files": [
+    {
+      "file": "creative-next/original-ui-r31/index.html",
+      "sha256": "10bea1f581e239b69d6ce0e00893c30500c16445f82dac37bfbd07ce0b57ab73"
+    },
+    {
+      "file": "creative-next/original-ui-r31/source-templates.mjs",
+      "sha256": "4ce7094ce850bc9b39dcfa7681143bc2bfd5dfd194652966fed66ccc6cfbb60b"
+    },
+    {
+      "file": "creative-next/original-ui-r31/ui-runtime.mjs",
+      "sha256": "bd6f779ee5cabb2eba7cde57744cd792e1896f3c34e9961dc1eee1dab3bc4fc5"
+    },
+    {
+      "file": "creative-next/qa/r31/part-a-final-ci-evidence.json",
+      "sha256": "6e19998024a53561932783ae8102ad353494e4a7c217767cb5d5006b4da21915"
+    },
+    {
+      "file": "creative-next/R31_PART_A_FINAL_VERDICT.md",
+      "sha256": "14738e91e51ddcfa4b1cc43abbc00e7af68d1c46d4bd5a4a8f948e5b290aa3ae"
+    },
+    {
+      "file": ".github/workflows/creative-next-r31-audit.yml",
+      "sha256": "84e5173fce4caedbe9dac0806ecd95d84d3d43a4816f696a745f0111e950ba3f"
+    },
+    {
+      "file": "creative-next/phase-1b/integration/isolated-editor-session.mjs",
+      "sha256": "6090b58692608090539178c1c353d7739e9fcf800f098c1bc03ab94aad1766b6"
+    },
+    {
+      "file": "creative-next/phase-1a/core/poi-store.mjs",
+      "sha256": "f1ce760f9e5f02884f7b026f6eea040ebc5be66594965e1501060e67a6ee68d3"
+    },
+    {
+      "file": "creative-next/integration/creative-next-command-boundary.mjs",
+      "sha256": "d148e0f0074db743d611578ed5f7594569ecafbe7cf16873a0cd2c4fe8787361"
+    },
+    {
+      "file": "creative-next/integration/creative-ui-read-follower.mjs",
+      "sha256": "3202c03d0d96a9cd8ab3a36cff29c74b55202c02e33b1337072bc597704bff57"
+    },
+    {
+      "file": "creative-next/phase-1a/core/history.mjs",
+      "sha256": "bc576df701a726cbef33bb09de710b286daf0b13c2976b97b5b76946428dce3a"
+    },
+    {
+      "file": "creative-next/phase-1a/core/poi-commands.mjs",
+      "sha256": "f0458c44ab5d507f99c96360b634e5aeb3ddd0df35e82e7115a096c8410fe445"
+    },
+    {
+      "file": "creative-next/phase-1a/core/poi-id.mjs",
+      "sha256": "2c632c97e2e75e8e61e09962dfe7cd7de47eea7f4b43c84821904558ae7b2184"
+    },
+    {
+      "file": "creative-next/phase-1a/core/poi-limits.mjs",
+      "sha256": "b71b776937a1945e0aa1330073e67889ef00cd2a56132200934525d709745709"
+    },
+    {
+      "file": "creative-next/phase-1a/core/poi-model.mjs",
+      "sha256": "02b2a509503e39364e8241014fc755ae1938b9072d60b9ce3cc5d8c9b9945633"
+    },
+    {
+      "file": "creative-next/phase-1b/core/activity-areas.mjs",
+      "sha256": "bcfdd9907613d757f136863ea092cebc0b0bdbaf3b8c4a4f6838d250086e40b2"
+    },
+    {
+      "file": "creative-next/phase-1b/core/create-new-kmz.mjs",
+      "sha256": "65375b4b1d0e88913517914f73496e5b54d6ac34f9bd4d9c761421c2286bc4e6"
+    },
+    {
+      "file": "creative-next/phase-1b/core/dependent-circles.mjs",
+      "sha256": "1ef693ff65bc1c31ed06a1b660960ab32ba802c8368c5dd8fc4d19999ca12aa2"
+    },
+    {
+      "file": "creative-next/phase-1b/core/diagnose-kmz-candidate.mjs",
+      "sha256": "864b1ef5f507385fdf5064439b5b4d63660a622e4cdc193c1611b68596a0e39a"
+    },
+    {
+      "file": "creative-next/phase-1b/core/export-kmz.mjs",
+      "sha256": "77ed51bd0ad025be291115a6d45717fd726e93d42536f36cc5dcfd8890d72878"
+    },
+    {
+      "file": "creative-next/phase-1b/core/journal-save.mjs",
+      "sha256": "1286d40ce990895ac9becd3ef8b445d757252817a68ed9f0214ce117c848da65"
+    },
+    {
+      "file": "creative-next/phase-1b/core/legacy-kasai-convert.mjs",
+      "sha256": "df6947d73adc2f2c7a27fd8092e9e3a09da664245758eda3aa45582e9b7c5351"
+    },
+    {
+      "file": "creative-next/phase-1b/core/legacy-shape-audit.mjs",
+      "sha256": "092479c689031bc34bc0a46a65afb0e2ecefe21c3f2174cd4551f51f25852fcb"
+    },
+    {
+      "file": "creative-next/phase-1b/core/stage-kmz.mjs",
+      "sha256": "e32bb6aacad2060073c5509497fd8c7ef18a9f24416a34aac09e21f1da233cc1"
+    },
+    {
+      "file": "creative-next/phase-1b/integration/legacy-poi-preview.mjs",
+      "sha256": "9a90dee07da01a0e6964294d0270a15d24bd8fdfdb98a9d30275e0c0b2ecc530"
+    },
+    {
+      "file": "creative-next/phase-1b/integration/phase1a-fresh-bridge.mjs",
+      "sha256": "783f865919eb17e764c9fd40b8432fde20bdf7a73d167c7c6948941036bad85a"
+    },
+    {
+      "file": "creative-next/integration/creative-next-original-leaflet-overlay.mjs",
+      "sha256": "513e4e19d73c7a92a0d07caa12fc1882fd50006ffbdf764ed5ca48b1599deae5"
+    },
+    {
+      "file": "creative-next/integration/creative-next-original-new-poi-sheet.mjs",
+      "sha256": "5186e6e72983d19cea195044d765bd5aa5a0ba19a9ab9b9dceeb8d7c2e5aa841"
+    },
+    {
+      "file": "creative-next/integration/creative-next-original-poi-popup.mjs",
+      "sha256": "3a42beede3a0fe02630479538e8502c6c5113c8802a9033321dd1ee759ee0d24"
+    },
+    {
+      "file": "creative-next/integration/exclusive-creative-control.mjs",
+      "sha256": "fdedb92ed60c70c3da8abfa88960a4e12582ec3d2f93c410564883be26f80832"
+    },
+    {
+      "file": "creative-next/integration/original-file-review.mjs",
+      "sha256": "07644db87c8f2beb3d1cff6f648c086ee891218afe00e9f295b68fd16eea47df"
+    },
+    {
+      "file": "creative-next/integration/original-layer-counts.mjs",
+      "sha256": "8f97db11f9d7889eb845806a732aa5a3723a15d8d7dbccd001a0932d9ea74f0e"
+    },
+    {
+      "file": "creative-next/integration/original-optional-circles-r30.mjs",
+      "sha256": "cbd36eaa9c277912028eda2bca62536a4b3189b0af8c716de34bc417eff7bc7f"
+    },
+    {
+      "file": "creative-next/integration/original-placement-r30.mjs",
+      "sha256": "b8ed635bab0836d2a517c90a92ee563872ff42ee0495464ec072b79fc1019a22"
+    },
+    {
+      "file": "creative-next/integration/original-ui-buttons-fixture.mjs",
+      "sha256": "3d1f75223f6a7b5b64ec1de9c3b8e78bb603a184cc4d6dc5d27121b052e76c4f"
+    },
+    {
+      "file": "creative-next/integration/real-engine-original-ui.mjs",
+      "sha256": "235c0a67d7d96a5d67b6d5de0d6f6cc08a0230491e9e19626ab1b28b5d2a5d47"
+    }
+  ]
+}

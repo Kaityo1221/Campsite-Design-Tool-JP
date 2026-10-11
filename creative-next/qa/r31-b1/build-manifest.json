@@ -1,0 +1,9 @@
+{
+  "partA": "109a1b0a6a66dc95ae88de72091f45a3fb611aab",
+  "partAEvidence": "f271cf82d13bcf0b5fe01069cc3a8d0c3318967b",
+  "sourceSha256": "bd6f779ee5cabb2eba7cde57744cd792e1896f3c34e9961dc1eee1dab3bc4fc5",
+  "derivedSha256": "2e829851263ea43109cc5ce2d38a56fdc7472941382623b257d496e2d05d5764",
+  "patches": 6,
+  "htmlCssTemplatesUnchanged": true,
+  "engineCopied": false
+}

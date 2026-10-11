@@ -1,0 +1,643 @@
+{
+  "status": "PASS",
+  "forceClicksUsed": 0,
+  "syntheticOnly": true,
+  "results": [
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "status": "PASS",
+      "flow": "add edit move undo redo change-kind delete undo",
+      "originalFunctionsExecuted": 0,
+      "editCancelUnchanged": true,
+      "renderFault": {
+        "adapter": {
+          "stopped": false,
+          "fault": true,
+          "refreshes": 10,
+          "pendingEdits": 0,
+          "sessionCount": 1,
+          "listeners": 3,
+          "history": {
+            "undo": 6,
+            "redo": 0
+          }
+        },
+        "message": "HOLD：変更済みですが描画を確認できません",
+        "history": {
+          "undo": 6,
+          "redo": 0
+        }
+      },
+      "protection": {
+        "ui": {
+          "mode": "PART_B1_POI_ONLY",
+          "dataConnected": true,
+          "stopped": false,
+          "mapCount": 1,
+          "proposals": 10,
+          "resources": {
+            "listeners": 48,
+            "timers": 11,
+            "rafs": 0,
+            "animations": 0,
+            "observers": 0,
+            "owned": 30
+          },
+          "camera": {
+            "center": [
+              35.691,
+              139.771
+            ],
+            "zoom": 17
+          },
+          "ui": {
+            "hand": "right",
+            "menu": false,
+            "mode": null,
+            "layer": "new-pokestop",
+            "radius": 50,
+            "selected": null,
+            "dragged": false,
+            "tool": "",
+            "aerial": false,
+            "areaVisible": false,
+            "visibleLayers": {
+              "existing-pokestop": true,
+              "existing-gym": true,
+              "existing-power": true,
+              "new-pokestop": true,
+              "new-gym": true,
+              "new-power": true
+            },
+            "circleRadii": [
+              50
+            ]
+          },
+          "areaPreview": {
+            "points": [],
+            "closing": false
+          },
+          "preview": null
+        },
+        "duplicate": {
+          "status": "HOLD",
+          "changed": false,
+          "reason": "ALREADY_HANDLED"
+        },
+        "unchanged": true,
+        "existing": true,
+        "denied": [
+          {
+            "status": "HOLD",
+            "changed": false,
+            "reason": "EXISTING_OR_UNKNOWN_POI_READ_ONLY"
+          },
+          {
+            "status": "HOLD",
+            "changed": false,
+            "reason": "EXISTING_OR_UNKNOWN_POI_READ_ONLY"
+          },
+          {
+            "status": "HOLD",
+            "changed": false,
+            "reason": "EXISTING_OR_UNKNOWN_POI_READ_ONLY"
+          },
+          {
+            "status": "HOLD",
+            "changed": false,
+            "reason": "EXISTING_OR_UNKNOWN_POI_READ_ONLY"
+          }
+        ],
+        "scope": [
+          {
+            "status": "HOLD",
+            "changed": false,
+            "reason": "B1_SCOPE"
+          },
+          {
+            "status": "HOLD",
+            "changed": false,
+            "reason": "B1_SCOPE"
+          },
+          {
+            "status": "HOLD",
+            "changed": false,
+            "reason": "B1_SCOPE"
+          },
+          {
+            "status": "HOLD",
+            "changed": false,
+            "reason": "B1_SCOPE"
+          },
+          {
+            "status": "HOLD",
+            "changed": false,
+            "reason": "B1_SCOPE"
+          }
+        ],
+        "storage": [],
+        "mapStarts": 1,
+        "history": {
+          "undo": 5,
+          "redo": 0
+        },
+        "markers": 2,
+        "adapter": {
+          "stopped": false,
+          "fault": false,
+          "refreshes": 10,
+          "pendingEdits": 0,
+          "sessionCount": 1,
+          "listeners": 3,
+          "history": {
+            "undo": 5,
+            "redo": 0
+          }
+        }
+      },
+      "disposed": {
+        "ui": {
+          "mode": "PART_A_VIEW_ONLY",
+          "dataConnected": false,
+          "stopped": true,
+          "mapCount": 0,
+          "proposals": 12,
+          "resources": {
+            "listeners": 0,
+            "timers": 0,
+            "rafs": 0,
+            "animations": 0,
+            "observers": 0,
+            "owned": 0
+          },
+          "camera": null,
+          "ui": {
+            "hand": "right",
+            "menu": false,
+            "mode": null,
+            "layer": "new-pokestop",
+            "radius": 50,
+            "selected": null,
+            "dragged": false,
+            "tool": "",
+            "aerial": false,
+            "areaVisible": false,
+            "visibleLayers": {
+              "existing-pokestop": true,
+              "existing-gym": true,
+              "existing-power": true,
+              "new-pokestop": true,
+              "new-gym": true,
+              "new-power": true
+            },
+            "circleRadii": [
+              50
+            ]
+          },
+          "areaPreview": {
+            "points": [],
+            "closing": false
+          },
+          "preview": null
+        },
+        "adapter": {
+          "stopped": true,
+          "fault": true,
+          "refreshes": 10,
+          "pendingEdits": 0,
+          "sessionCount": 0,
+          "listeners": 0
+        },
+        "listeners": []
+      },
+      "errors": []
+    },
+    {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "status": "PASS",
+      "flow": "add edit move undo redo change-kind delete undo",
+      "originalFunctionsExecuted": 0,
+      "editCancelUnchanged": true,
+      "renderFault": {
+        "adapter": {
+          "stopped": false,
+          "fault": true,
+          "refreshes": 10,
+          "pendingEdits": 0,
+          "sessionCount": 1,
+          "listeners": 3,
+          "history": {
+            "undo": 6,
+            "redo": 0
+          }
+        },
+        "message": "HOLD：変更済みですが描画を確認できません",
+        "history": {
+          "undo": 6,
+          "redo": 0
+        }
+      },
+      "protection": {
+        "ui": {
+          "mode": "PART_B1_POI_ONLY",
+          "dataConnected": true,
+          "stopped": false,
+          "mapCount": 1,
+          "proposals": 10,
+          "resources": {
+            "listeners": 48,
+            "timers": 12,
+            "rafs": 0,
+            "animations": 0,
+            "observers": 0,
+            "owned": 30
+          },
+          "camera": {
+            "center": [
+              35.691,
+              139.771
+            ],
+            "zoom": 17
+          },
+          "ui": {
+            "hand": "right",
+            "menu": false,
+            "mode": null,
+            "layer": "new-pokestop",
+            "radius": 50,
+            "selected": null,
+            "dragged": false,
+            "tool": "",
+            "aerial": false,
+            "areaVisible": false,
+            "visibleLayers": {
+              "existing-pokestop": true,
+              "existing-gym": true,
+              "existing-power": true,
+              "new-pokestop": true,
+              "new-gym": true,
+              "new-power": true
+            },
+            "circleRadii": [
+              50
+            ]
+          },
+          "areaPreview": {
+            "points": [],
+            "closing": false
+          },
+          "preview": null
+        },
+        "duplicate": {
+          "status": "HOLD",
+          "changed": false,
+          "reason": "ALREADY_HANDLED"
+        },
+        "unchanged": true,
+        "existing": true,
+        "denied": [
+          {
+            "status": "HOLD",
+            "changed": false,
+            "reason": "EXISTING_OR_UNKNOWN_POI_READ_ONLY"
+          },
+          {
+            "status": "HOLD",
+            "changed": false,
+            "reason": "EXISTING_OR_UNKNOWN_POI_READ_ONLY"
+          },
+          {
+            "status": "HOLD",
+            "changed": false,
+            "reason": "EXISTING_OR_UNKNOWN_POI_READ_ONLY"
+          },
+          {
+            "status": "HOLD",
+            "changed": false,
+            "reason": "EXISTING_OR_UNKNOWN_POI_READ_ONLY"
+          }
+        ],
+        "scope": [
+          {
+            "status": "HOLD",
+            "changed": false,
+            "reason": "B1_SCOPE"
+          },
+          {
+            "status": "HOLD",
+            "changed": false,
+            "reason": "B1_SCOPE"
+          },
+          {
+            "status": "HOLD",
+            "changed": false,
+            "reason": "B1_SCOPE"
+          },
+          {
+            "status": "HOLD",
+            "changed": false,
+            "reason": "B1_SCOPE"
+          },
+          {
+            "status": "HOLD",
+            "changed": false,
+            "reason": "B1_SCOPE"
+          }
+        ],
+        "storage": [],
+        "mapStarts": 1,
+        "history": {
+          "undo": 5,
+          "redo": 0
+        },
+        "markers": 2,
+        "adapter": {
+          "stopped": false,
+          "fault": false,
+          "refreshes": 10,
+          "pendingEdits": 0,
+          "sessionCount": 1,
+          "listeners": 3,
+          "history": {
+            "undo": 5,
+            "redo": 0
+          }
+        }
+      },
+      "disposed": {
+        "ui": {
+          "mode": "PART_A_VIEW_ONLY",
+          "dataConnected": false,
+          "stopped": true,
+          "mapCount": 0,
+          "proposals": 12,
+          "resources": {
+            "listeners": 0,
+            "timers": 0,
+            "rafs": 0,
+            "animations": 0,
+            "observers": 0,
+            "owned": 0
+          },
+          "camera": null,
+          "ui": {
+            "hand": "right",
+            "menu": false,
+            "mode": null,
+            "layer": "new-pokestop",
+            "radius": 50,
+            "selected": null,
+            "dragged": false,
+            "tool": "",
+            "aerial": false,
+            "areaVisible": false,
+            "visibleLayers": {
+              "existing-pokestop": true,
+              "existing-gym": true,
+              "existing-power": true,
+              "new-pokestop": true,
+              "new-gym": true,
+              "new-power": true
+            },
+            "circleRadii": [
+              50
+            ]
+          },
+          "areaPreview": {
+            "points": [],
+            "closing": false
+          },
+          "preview": null
+        },
+        "adapter": {
+          "stopped": true,
+          "fault": true,
+          "refreshes": 10,
+          "pendingEdits": 0,
+          "sessionCount": 0,
+          "listeners": 0
+        },
+        "listeners": []
+      },
+      "errors": []
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "status": "PASS",
+      "flow": "add edit move undo redo change-kind delete undo",
+      "originalFunctionsExecuted": 0,
+      "editCancelUnchanged": true,
+      "renderFault": {
+        "adapter": {
+          "stopped": false,
+          "fault": true,
+          "refreshes": 10,
+          "pendingEdits": 0,
+          "sessionCount": 1,
+          "listeners": 3,
+          "history": {
+            "undo": 6,
+            "redo": 0
+          }
+        },
+        "message": "HOLD：変更済みですが描画を確認できません",
+        "history": {
+          "undo": 6,
+          "redo": 0
+        }
+      },
+      "protection": {
+        "ui": {
+          "mode": "PART_B1_POI_ONLY",
+          "dataConnected": true,
+          "stopped": false,
+          "mapCount": 1,
+          "proposals": 10,
+          "resources": {
+            "listeners": 48,
+            "timers": 12,
+            "rafs": 0,
+            "animations": 0,
+            "observers": 0,
+            "owned": 30
+          },
+          "camera": {
+            "center": [
+              35.691,
+              139.771
+            ],
+            "zoom": 17
+          },
+          "ui": {
+            "hand": "right",
+            "menu": false,
+            "mode": null,
+            "layer": "new-pokestop",
+            "radius": 50,
+            "selected": null,
+            "dragged": false,
+            "tool": "",
+            "aerial": false,
+            "areaVisible": false,
+            "visibleLayers": {
+              "existing-pokestop": true,
+              "existing-gym": true,
+              "existing-power": true,
+              "new-pokestop": true,
+              "new-gym": true,
+              "new-power": true
+            },
+            "circleRadii": [
+              50
+            ]
+          },
+          "areaPreview": {
+            "points": [],
+            "closing": false
+          },
+          "preview": null
+        },
+        "duplicate": {
+          "status": "HOLD",
+          "changed": false,
+          "reason": "ALREADY_HANDLED"
+        },
+        "unchanged": true,
+        "existing": true,
+        "denied": [
+          {
+            "status": "HOLD",
+            "changed": false,
+            "reason": "EXISTING_OR_UNKNOWN_POI_READ_ONLY"
+          },
+          {
+            "status": "HOLD",
+            "changed": false,
+            "reason": "EXISTING_OR_UNKNOWN_POI_READ_ONLY"
+          },
+          {
+            "status": "HOLD",
+            "changed": false,
+            "reason": "EXISTING_OR_UNKNOWN_POI_READ_ONLY"
+          },
+          {
+            "status": "HOLD",
+            "changed": false,
+            "reason": "EXISTING_OR_UNKNOWN_POI_READ_ONLY"
+          }
+        ],
+        "scope": [
+          {
+            "status": "HOLD",
+            "changed": false,
+            "reason": "B1_SCOPE"
+          },
+          {
+            "status": "HOLD",
+            "changed": false,
+            "reason": "B1_SCOPE"
+          },
+          {
+            "status": "HOLD",
+            "changed": false,
+            "reason": "B1_SCOPE"
+          },
+          {
+            "status": "HOLD",
+            "changed": false,
+            "reason": "B1_SCOPE"
+          },
+          {
+            "status": "HOLD",
+            "changed": false,
+            "reason": "B1_SCOPE"
+          }
+        ],
+        "storage": [],
+        "mapStarts": 1,
+        "history": {
+          "undo": 5,
+          "redo": 0
+        },
+        "markers": 2,
+        "adapter": {
+          "stopped": false,
+          "fault": false,
+          "refreshes": 10,
+          "pendingEdits": 0,
+          "sessionCount": 1,
+          "listeners": 3,
+          "history": {
+            "undo": 5,
+            "redo": 0
+          }
+        }
+      },
+      "disposed": {
+        "ui": {
+          "mode": "PART_A_VIEW_ONLY",
+          "dataConnected": false,
+          "stopped": true,
+          "mapCount": 0,
+          "proposals": 12,
+          "resources": {
+            "listeners": 0,
+            "timers": 0,
+            "rafs": 0,
+            "animations": 0,
+            "observers": 0,
+            "owned": 0
+          },
+          "camera": null,
+          "ui": {
+            "hand": "right",
+            "menu": false,
+            "mode": null,
+            "layer": "new-pokestop",
+            "radius": 50,
+            "selected": null,
+            "dragged": false,
+            "tool": "",
+            "aerial": false,
+            "areaVisible": false,
+            "visibleLayers": {
+              "existing-pokestop": true,
+              "existing-gym": true,
+              "existing-power": true,
+              "new-pokestop": true,
+              "new-gym": true,
+              "new-power": true
+            },
+            "circleRadii": [
+              50
+            ]
+          },
+          "areaPreview": {
+            "points": [],
+            "closing": false
+          },
+          "preview": null
+        },
+        "adapter": {
+          "stopped": true,
+          "fault": true,
+          "refreshes": 10,
+          "pendingEdits": 0,
+          "sessionCount": 0,
+          "listeners": 0
+        },
+        "listeners": []
+      },
+      "errors": []
+    }
+  ]
+}
