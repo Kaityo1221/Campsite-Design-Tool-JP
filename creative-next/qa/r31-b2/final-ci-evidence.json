@@ -1,0 +1,790 @@
+{
+  "status": "PASS",
+  "sourceCommit": "e6cd511360c8bd36fad9453b8fc1ff09549e6cd5",
+  "baseline": "e8436035bf89ee653747c6afbed08e2f43099e9e",
+  "branch": "codex/original-ui-r31-b2",
+  "ci": {
+    "url": "https://github.com/Kaityo1221/Campsite-Design-Tool-JP/actions/runs/38177749153",
+    "id": 38177749153,
+    "attempt": 1,
+    "conclusion": "success",
+    "sourceFingerprint": "a6c7a22397939dfbb600e928a60aeda9b2b5b53da5cd84db3d5b9da27b80bebc",
+    "sourceMatchesLocal": true,
+    "startedAt": "2026-10-12 06:46 JST",
+    "completedAt": "2026-10-12 06:54 JST"
+  },
+  "gates": {
+    "status": "PASS",
+    "baseline": "e8436035bf89ee653747c6afbed08e2f43099e9e",
+    "fingerprint": "a6c7a22397939dfbb600e928a60aeda9b2b5b53da5cd84db3d5b9da27b80bebc",
+    "stable": true,
+    "frozenB1": "PASS",
+    "unit": {
+      "status": "PASS",
+      "passed": 14,
+      "failed": 0
+    },
+    "b1ConnectedToB2": "PASS",
+    "b2Browser": "PASS",
+    "partAOnB2": "PASS",
+    "freeze": "PASS",
+    "singleSession": true,
+    "singleMap": true,
+    "singleHistory": true,
+    "storageEnabled": false,
+    "deployed": false,
+    "partB3": "NOT_STARTED",
+    "partB4": "NOT_STARTED",
+    "progress": "85% / Phase 1 HOLD",
+    "safariRealDevice": "NOT_TESTED"
+  },
+  "build": {
+    "baseline": "e8436035bf89ee653747c6afbed08e2f43099e9e",
+    "uiSha256": "ba5f42905bab3f263af37faaf6318f0b6f671e3bbd2c2d9026289076588f7184",
+    "adapterSha256": "2e175dbf3b2098f64482ce6395326f23c7414b31dcd60b82d1bff54d774682db",
+    "patches": [
+      {
+        "file": "ui-runtime.mjs",
+        "target": "let draftPoints=[]"
+      },
+      {
+        "file": "ui-runtime.mjs",
+        "target": "if(action.type==='change-kind')openSheet(action.id);message"
+      },
+      {
+        "file": "ui-runtime.mjs",
+        "target": "function beginArea(){clearTools();cancelPlacement();closePanels();"
+      },
+      {
+        "file": "ui-runtime.mjs",
+        "target": "listen(draw,'click',()=>{hold({type:'area-redraw'});beginArea();});"
+      },
+      {
+        "file": "ui-runtime.mjs",
+        "target": "listen(b,'click',()=>{ui.circleRadii="
+      },
+      {
+        "file": "ui-runtime.mjs",
+        "target": "setViewReader(provider){if(stopped||typeof provider!=='function')throw Error('RE"
+      },
+      {
+        "file": "ui-runtime.mjs",
+        "target": "mode:commandSink?'PART_B1_POI_ONLY'"
+      },
+      {
+        "file": "ui-runtime.mjs",
+        "target": "preview:previewCircle?"
+      },
+      {
+        "file": "adapter.mjs",
+        "target": "export function connectB1("
+      },
+      {
+        "file": "adapter.mjs",
+        "target": "const POI=new Set"
+      },
+      {
+        "file": "adapter.mjs",
+        "target": "const seen=new Set(),pending=new Map()"
+      },
+      {
+        "file": "adapter.mjs",
+        "target": "if(!action||(!POI.has(action.type)&&!['undo','redo'].includes(action.type)))retu"
+      },
+      {
+        "file": "adapter.mjs",
+        "target": "let payload;\n  if(POI.has"
+      },
+      {
+        "file": "adapter.mjs",
+        "target": "type:POI.has(action.type)?'poi':action.type"
+      },
+      {
+        "file": "adapter.mjs",
+        "target": "seen.clear();view=null;"
+      }
+    ],
+    "engineCopied": false,
+    "templatesCssUnchanged": true
+  },
+  "partAOnB2": {
+    "status": "PASS",
+    "uiPassed": 156,
+    "uiTotal": 156,
+    "operationsPassed": 96,
+    "plusPassed": 9,
+    "regression": {
+      "fingerprint": "f206ea51801e3a74e69cf7156a6fff803422ebe5af57a500fcb4d1a2ecae75ff",
+      "status": "PASS",
+      "exitCode": 0,
+      "tests": 333,
+      "passed": 333,
+      "failed": 0,
+      "skipped": 0
+    },
+    "audit": {
+      "fingerprint": "f206ea51801e3a74e69cf7156a6fff803422ebe5af57a500fcb4d1a2ecae75ff",
+      "status": "PASS",
+      "exitCode": 0,
+      "tests": 17,
+      "passed": 17,
+      "failed": 0,
+      "skipped": 0
+    },
+    "groups": {
+      "startupAndDisplay": {
+        "status": "PASS",
+        "requiredScenes": 8,
+        "missing": [],
+        "unverified": []
+      },
+      "poiAddition": {
+        "status": "PASS",
+        "requiredScenes": 8,
+        "missing": [],
+        "unverified": []
+      },
+      "poiEditAndMove": {
+        "status": "PASS",
+        "requiredScenes": 6,
+        "missing": [],
+        "unverified": []
+      },
+      "areasAndMap": {
+        "status": "PASS",
+        "requiredScenes": 16,
+        "missing": [],
+        "unverified": []
+      },
+      "saveAndKmz": {
+        "status": "PASS",
+        "requiredScenes": 3,
+        "missing": [],
+        "unverified": []
+      },
+      "listCoordinatesAuxiliary": {
+        "status": "PASS",
+        "requiredScenes": 8,
+        "missing": [],
+        "unverified": []
+      },
+      "animationsAndGestures": {
+        "status": "PASS",
+        "requiredScenes": 6,
+        "missing": [],
+        "unverified": []
+      }
+    },
+    "measured": {
+      "originalFunctionsExecuted": [
+        {
+          "width": 390,
+          "count": 0
+        },
+        {
+          "width": 393,
+          "count": 0
+        },
+        {
+          "width": 1366,
+          "count": 0
+        }
+      ],
+      "legacyStorageAccesses": [
+        {
+          "width": 390,
+          "count": 0
+        },
+        {
+          "width": 393,
+          "count": 0
+        },
+        {
+          "width": 1366,
+          "count": 0
+        }
+      ],
+      "unprovenFunctionsAllowed": 0,
+      "regressionPassed": 333,
+      "auditPassed": 17
+    },
+    "unapprovedOperationDifferences": []
+  },
+  "frozenB1": {
+    "status": "PASS",
+    "unit": {
+      "status": "PASS",
+      "passed": 6,
+      "exitCode": 0
+    },
+    "browser": "PASS",
+    "partA": {
+      "status": "PASS",
+      "uiPassed": 156,
+      "uiTotal": 156,
+      "operationsPassed": 96,
+      "plusPassed": 9,
+      "regression": {
+        "fingerprint": "f206ea51801e3a74e69cf7156a6fff803422ebe5af57a500fcb4d1a2ecae75ff",
+        "status": "PASS",
+        "exitCode": 0,
+        "tests": 333,
+        "passed": 333,
+        "failed": 0,
+        "skipped": 0
+      },
+      "audit": {
+        "fingerprint": "f206ea51801e3a74e69cf7156a6fff803422ebe5af57a500fcb4d1a2ecae75ff",
+        "status": "PASS",
+        "exitCode": 0,
+        "tests": 17,
+        "passed": 17,
+        "failed": 0,
+        "skipped": 0
+      },
+      "groups": {
+        "startupAndDisplay": {
+          "status": "PASS",
+          "requiredScenes": 8,
+          "missing": [],
+          "unverified": []
+        },
+        "poiAddition": {
+          "status": "PASS",
+          "requiredScenes": 8,
+          "missing": [],
+          "unverified": []
+        },
+        "poiEditAndMove": {
+          "status": "PASS",
+          "requiredScenes": 6,
+          "missing": [],
+          "unverified": []
+        },
+        "areasAndMap": {
+          "status": "PASS",
+          "requiredScenes": 16,
+          "missing": [],
+          "unverified": []
+        },
+        "saveAndKmz": {
+          "status": "PASS",
+          "requiredScenes": 3,
+          "missing": [],
+          "unverified": []
+        },
+        "listCoordinatesAuxiliary": {
+          "status": "PASS",
+          "requiredScenes": 8,
+          "missing": [],
+          "unverified": []
+        },
+        "animationsAndGestures": {
+          "status": "PASS",
+          "requiredScenes": 6,
+          "missing": [],
+          "unverified": []
+        }
+      },
+      "measured": {
+        "originalFunctionsExecuted": [
+          {
+            "width": 390,
+            "count": 0
+          },
+          {
+            "width": 393,
+            "count": 0
+          },
+          {
+            "width": 1366,
+            "count": 0
+          }
+        ],
+        "legacyStorageAccesses": [
+          {
+            "width": 390,
+            "count": 0
+          },
+          {
+            "width": 393,
+            "count": 0
+          },
+          {
+            "width": 1366,
+            "count": 0
+          }
+        ],
+        "unprovenFunctionsAllowed": 0,
+        "regressionPassed": 333,
+        "auditPassed": 17
+      },
+      "unapprovedOperationDifferences": []
+    }
+  },
+  "b1ConnectedToB2": {
+    "status": "PASS",
+    "viewports": [
+      {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "status": "PASS",
+        "oldCalls": 0
+      },
+      {
+        "viewport": {
+          "width": 393,
+          "height": 852
+        },
+        "status": "PASS",
+        "oldCalls": 0
+      },
+      {
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "status": "PASS",
+        "oldCalls": 0
+      }
+    ]
+  },
+  "b2Browser": {
+    "status": "PASS",
+    "forceClicksUsed": 0,
+    "syntheticOnly": true,
+    "viewports": [
+      {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "status": "PASS",
+        "mapStarts": 1,
+        "sessionCount": 1,
+        "legacyStorageAccesses": 0,
+        "existingPoiUnchanged": true,
+        "duplicate": {
+          "status": "HOLD",
+          "changed": false,
+          "reason": "ALREADY_HANDLED"
+        },
+        "originalFunctionsExecuted": 0,
+        "draftCancelUnchanged": true,
+        "draftUndoRedoSeparate": true,
+        "redrawSemantics": "explicit delete + fresh create; cancel does not undo committed deletion",
+        "renderFault": {
+          "adapter": {
+            "stopped": false,
+            "fault": true,
+            "refreshes": 22,
+            "pendingEdits": 0,
+            "sessionCount": 1,
+            "listeners": 3,
+            "history": {
+              "undo": 8,
+              "redo": 0
+            }
+          },
+          "message": "HOLD：変更済みですが描画を確認できません",
+          "areas": 1
+        },
+        "disposed": {
+          "ui": {
+            "mode": "PART_A_VIEW_ONLY",
+            "dataConnected": false,
+            "stopped": true,
+            "mapCount": 0,
+            "proposals": 22,
+            "resources": {
+              "listeners": 0,
+              "timers": 0,
+              "rafs": 0,
+              "animations": 0,
+              "observers": 0,
+              "owned": 0
+            },
+            "camera": null,
+            "ui": {
+              "hand": "right",
+              "menu": false,
+              "mode": null,
+              "layer": "new-power",
+              "radius": 50,
+              "selected": null,
+              "dragged": true,
+              "tool": "",
+              "aerial": false,
+              "areaVisible": true,
+              "visibleLayers": {
+                "existing-pokestop": true,
+                "existing-gym": true,
+                "existing-power": true,
+                "new-pokestop": true,
+                "new-gym": true,
+                "new-power": true
+              },
+              "circleRadii": [
+                50,
+                40,
+                30
+              ]
+            },
+            "areaPreview": {
+              "points": [],
+              "closing": false
+            },
+            "drawing": {
+              "areas": 0,
+              "draftLayers": 0,
+              "deleteLayers": 0,
+              "circles": []
+            },
+            "preview": null
+          },
+          "adapter": {
+            "stopped": true,
+            "fault": true,
+            "refreshes": 22,
+            "pendingEdits": 0,
+            "sessionCount": 0,
+            "listeners": 0
+          },
+          "listeners": []
+        }
+      },
+      {
+        "viewport": {
+          "width": 393,
+          "height": 852
+        },
+        "status": "PASS",
+        "mapStarts": 1,
+        "sessionCount": 1,
+        "legacyStorageAccesses": 0,
+        "existingPoiUnchanged": true,
+        "duplicate": {
+          "status": "HOLD",
+          "changed": false,
+          "reason": "ALREADY_HANDLED"
+        },
+        "originalFunctionsExecuted": 0,
+        "draftCancelUnchanged": true,
+        "draftUndoRedoSeparate": true,
+        "redrawSemantics": "explicit delete + fresh create; cancel does not undo committed deletion",
+        "renderFault": {
+          "adapter": {
+            "stopped": false,
+            "fault": true,
+            "refreshes": 22,
+            "pendingEdits": 0,
+            "sessionCount": 1,
+            "listeners": 3,
+            "history": {
+              "undo": 8,
+              "redo": 0
+            }
+          },
+          "message": "HOLD：変更済みですが描画を確認できません",
+          "areas": 1
+        },
+        "disposed": {
+          "ui": {
+            "mode": "PART_A_VIEW_ONLY",
+            "dataConnected": false,
+            "stopped": true,
+            "mapCount": 0,
+            "proposals": 22,
+            "resources": {
+              "listeners": 0,
+              "timers": 0,
+              "rafs": 0,
+              "animations": 0,
+              "observers": 0,
+              "owned": 0
+            },
+            "camera": null,
+            "ui": {
+              "hand": "right",
+              "menu": false,
+              "mode": null,
+              "layer": "new-power",
+              "radius": 50,
+              "selected": null,
+              "dragged": true,
+              "tool": "",
+              "aerial": false,
+              "areaVisible": true,
+              "visibleLayers": {
+                "existing-pokestop": true,
+                "existing-gym": true,
+                "existing-power": true,
+                "new-pokestop": true,
+                "new-gym": true,
+                "new-power": true
+              },
+              "circleRadii": [
+                50,
+                40,
+                30
+              ]
+            },
+            "areaPreview": {
+              "points": [],
+              "closing": false
+            },
+            "drawing": {
+              "areas": 0,
+              "draftLayers": 0,
+              "deleteLayers": 0,
+              "circles": []
+            },
+            "preview": null
+          },
+          "adapter": {
+            "stopped": true,
+            "fault": true,
+            "refreshes": 22,
+            "pendingEdits": 0,
+            "sessionCount": 0,
+            "listeners": 0
+          },
+          "listeners": []
+        }
+      },
+      {
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "status": "PASS",
+        "mapStarts": 1,
+        "sessionCount": 1,
+        "legacyStorageAccesses": 0,
+        "existingPoiUnchanged": true,
+        "duplicate": {
+          "status": "HOLD",
+          "changed": false,
+          "reason": "ALREADY_HANDLED"
+        },
+        "originalFunctionsExecuted": 0,
+        "draftCancelUnchanged": true,
+        "draftUndoRedoSeparate": true,
+        "redrawSemantics": "explicit delete + fresh create; cancel does not undo committed deletion",
+        "renderFault": {
+          "adapter": {
+            "stopped": false,
+            "fault": true,
+            "refreshes": 22,
+            "pendingEdits": 0,
+            "sessionCount": 1,
+            "listeners": 3,
+            "history": {
+              "undo": 8,
+              "redo": 0
+            }
+          },
+          "message": "HOLD：変更済みですが描画を確認できません",
+          "areas": 1
+        },
+        "disposed": {
+          "ui": {
+            "mode": "PART_A_VIEW_ONLY",
+            "dataConnected": false,
+            "stopped": true,
+            "mapCount": 0,
+            "proposals": 22,
+            "resources": {
+              "listeners": 0,
+              "timers": 0,
+              "rafs": 0,
+              "animations": 0,
+              "observers": 0,
+              "owned": 0
+            },
+            "camera": null,
+            "ui": {
+              "hand": "right",
+              "menu": false,
+              "mode": null,
+              "layer": "new-power",
+              "radius": 50,
+              "selected": null,
+              "dragged": true,
+              "tool": "",
+              "aerial": false,
+              "areaVisible": true,
+              "visibleLayers": {
+                "existing-pokestop": true,
+                "existing-gym": true,
+                "existing-power": true,
+                "new-pokestop": true,
+                "new-gym": true,
+                "new-power": true
+              },
+              "circleRadii": [
+                50,
+                40,
+                30
+              ]
+            },
+            "areaPreview": {
+              "points": [],
+              "closing": false
+            },
+            "drawing": {
+              "areas": 0,
+              "draftLayers": 0,
+              "deleteLayers": 0,
+              "circles": []
+            },
+            "preview": null
+          },
+          "adapter": {
+            "stopped": true,
+            "fault": true,
+            "refreshes": 22,
+            "pendingEdits": 0,
+            "sessionCount": 0,
+            "listeners": 0
+          },
+          "listeners": []
+        }
+      }
+    ]
+  },
+  "localFinal": {
+    "unit": {
+      "passed": 14,
+      "failed": 0
+    },
+    "b2Browser": "PASS",
+    "partAOnB2": {
+      "status": "PASS",
+      "uiPassed": 156,
+      "uiTotal": 156,
+      "operationsPassed": 96,
+      "plusPassed": 9,
+      "regression": {
+        "fingerprint": "f206ea51801e3a74e69cf7156a6fff803422ebe5af57a500fcb4d1a2ecae75ff",
+        "status": "PASS",
+        "exitCode": 0,
+        "tests": 333,
+        "passed": 333,
+        "failed": 0,
+        "skipped": 0
+      },
+      "audit": {
+        "fingerprint": "f206ea51801e3a74e69cf7156a6fff803422ebe5af57a500fcb4d1a2ecae75ff",
+        "status": "PASS",
+        "exitCode": 0,
+        "tests": 17,
+        "passed": 17,
+        "failed": 0,
+        "skipped": 0
+      },
+      "groups": {
+        "startupAndDisplay": {
+          "status": "PASS",
+          "requiredScenes": 8,
+          "missing": [],
+          "unverified": []
+        },
+        "poiAddition": {
+          "status": "PASS",
+          "requiredScenes": 8,
+          "missing": [],
+          "unverified": []
+        },
+        "poiEditAndMove": {
+          "status": "PASS",
+          "requiredScenes": 6,
+          "missing": [],
+          "unverified": []
+        },
+        "areasAndMap": {
+          "status": "PASS",
+          "requiredScenes": 16,
+          "missing": [],
+          "unverified": []
+        },
+        "saveAndKmz": {
+          "status": "PASS",
+          "requiredScenes": 3,
+          "missing": [],
+          "unverified": []
+        },
+        "listCoordinatesAuxiliary": {
+          "status": "PASS",
+          "requiredScenes": 8,
+          "missing": [],
+          "unverified": []
+        },
+        "animationsAndGestures": {
+          "status": "PASS",
+          "requiredScenes": 6,
+          "missing": [],
+          "unverified": []
+        }
+      },
+      "measured": {
+        "originalFunctionsExecuted": [
+          {
+            "width": 390,
+            "count": 0
+          },
+          {
+            "width": 393,
+            "count": 0
+          },
+          {
+            "width": 1366,
+            "count": 0
+          }
+        ],
+        "legacyStorageAccesses": [
+          {
+            "width": 390,
+            "count": 0
+          },
+          {
+            "width": 393,
+            "count": 0
+          },
+          {
+            "width": 1366,
+            "count": 0
+          }
+        ],
+        "unprovenFunctionsAllowed": 0,
+        "regressionPassed": 333,
+        "auditPassed": 17
+      },
+      "unapprovedOperationDifferences": []
+    }
+  },
+  "retainedDevelopmentHold": "development-hold.json",
+  "knownOutOfScopeWorkflowFailures": [
+    {
+      "id": 38177747670,
+      "url": "https://github.com/Kaityo1221/Campsite-Design-Tool-JP/actions/runs/38177747670",
+      "workflow": "preview-poi-controls-layout-once.yml"
+    },
+    {
+      "id": 38177748323,
+      "url": "https://github.com/Kaityo1221/Campsite-Design-Tool-JP/actions/runs/38177748323",
+      "workflow": "preview-poi-controls-layout-v2-once.yml"
+    }
+  ],
+  "mainBefore": "f5dc8d88ad3987df82c000e2cac4b8aa0bc5ed80",
+  "partB3": "NOT_STARTED",
+  "partB4": "NOT_STARTED",
+  "deployed": false,
+  "progress": "85% / Phase 1 HOLD",
+  "safariRealDevice": "NOT_TESTED",
+  "mainAfter": "f5dc8d88ad3987df82c000e2cac4b8aa0bc5ed80",
+  "baselineBranchAfter": "e8436035bf89ee653747c6afbed08e2f43099e9e",
+  "protectedRefsUnchanged": true
+}
