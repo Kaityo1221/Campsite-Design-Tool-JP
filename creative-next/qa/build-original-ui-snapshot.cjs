@@ -74,5 +74,18 @@ const r25html=native
  .replace('</head>','<style id="cmNextTapGuard">button,.filebar{touch-action:manipulation!important;-webkit-tap-highlight-color:transparent}</style></head>');
 if(!r25html.includes('./r25-map-controls.mjs')||!r25html.includes('id="cmNextTapGuard"'))throw Error('R25_CONTROL_BUILD_FAILED');
 fs.writeFileSync(path.join(r25,'index.html'),r25html);
+// r26: retain the exact approved r25 visual HTML; restrict only map-control gestures.
+// This guard is a classic script so Safari receives its non-passive touch listeners
+// before the deferred Creative Next map module can be used.
+const r26=path.join(root,'creative-next/original-ui-r26');
+fs.mkdirSync(r26,{recursive:true});
+const r26Style='<style id="cmNextR26TapGuard">#map,.leaflet-container,.topbtn,.toolbox,.save,.bottom-bar button,#toolMenu button,#layerPanel button,#circlePanel button{touch-action:none!important}.topbtn,.toolbox,.save,.bottom-bar button,#toolMenu button,#layerPanel button,#circlePanel button{-webkit-user-select:none!important;user-select:none!important;-webkit-touch-callout:none!important}</style>';
+const r26Guard='<script src="./r26-ios-tap-guard.js"></script>';
+const r26html=r25html
+ .replace('</head>',r26Style+'</head>')
+ .replace('<script type="module" src="./r25-map-controls.mjs"></script>',r26Guard+'<script type="module" src="./r25-map-controls.mjs"></script>');
+if(!r26html.includes('id="cmNextR26TapGuard"')||!r26html.includes(r26Guard))throw Error('R26_TAP_GUARD_BUILD_FAILED');
+fs.writeFileSync(path.join(r26,'index.html'),r26html);
+
 if(/<script\b/i.test(html))throw Error('Runtime script escaped snapshot');
 console.log('PASS: production source snapshot',names.length,'patches, scripts stripped, original visual CSS retained');
