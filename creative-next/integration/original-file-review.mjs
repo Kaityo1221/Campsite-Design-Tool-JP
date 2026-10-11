@@ -59,5 +59,5 @@ export function attachOriginalFileReview({document,JSZip,DOMParser,XMLSerializer
   }
  };
  fileClone.addEventListener('change',onChange);startClone.addEventListener('click',onStart);
- return Object.freeze({engine:ui.engine,dispose(){disposed=true;fileClone.removeEventListener('change',onChange);startClone.removeEventListener('click',onStart);fileClone.disabled=true;startClone.disabled=true;ui.dispose()}});
+ return Object.freeze({engine:ui.engine,syncControls:()=>ui.sync(),dispose(){disposed=true;fileClone.removeEventListener('change',onChange);startClone.removeEventListener('click',onStart);fileClone.disabled=true;startClone.disabled=true;ui.dispose()}});
 }
