@@ -221,7 +221,7 @@ async function run(){
     await pair[1].page.evaluate(()=>{creativeR31.dispose();creativeR31.dispose();creativeR31.setHand('left');creativeR31.transition();});
     const disposed=await pair[1].page.evaluate(()=>({status:creativeR31.status(),independentListeners:__r31LiveListeners(),ownedControls:document.querySelectorAll('#cmFabWrap,#cmV59HelpButton,#cmV60RulesPanel,#cmStandaloneSaveButton,.cm-sheet').length}));
     results.push({viewport,status:scenes.every(s=>s.status==='PASS')&&operations.checks.every(x=>x.pass)&&pair.every(x=>x.errors.length===0)&&candidateChecks.storage.length===0&&candidateChecks.mapStarts===1&&!candidateChecks.legacyCapabilities&&originalFunctionsExecuted===0&&hiddenLegacyRequests.length===0&&existingReadOnly&&disposed.ownedControls===0&&disposed.independentListeners.length===0?'PASS':'HOLD',
-     scenes,operations:operations.checks,originalFunctionsExecuted,legacyCoverage,actionErrors,existingReadOnly,duplicateMountRejected,candidateChecks:{...candidateChecks,fixture:undefined},hiddenLegacyRequests,disposed,errors:pair.map(x=>x.errors),
+     scenes,operations:operations.checks,referenceDiagnostics:operations.referenceDiagnostics,originalFunctionsExecuted,legacyCoverage,actionErrors,existingReadOnly,duplicateMountRejected,candidateChecks:{...candidateChecks,fixture:undefined},hiddenLegacyRequests,disposed,errors:pair.map(x=>x.errors),
      renderedMode:'read-only synthetic view; no r31 data import or editor Session'});
    }catch(error){
     actionErrors.push(error.message.slice(0,2400));
@@ -229,7 +229,11 @@ async function run(){
    }finally{for(const x of pair)await x.context.close();}
   }
  }finally{await browser.close();}
- const report={fingerprint:require('./evidence.cjs').fingerprint(),status:results.every(x=>x.status==='PASS')&&results.length===3?'PASS':'HOLD',
+ const acceptance=await require('./plus-acceptance.cjs').run();
+ for(const result of results){const measured=acceptance.results.find(r=>r.viewport.width===result.viewport.width);if(measured)result.operations.push(...measured.checks);if(!measured||measured.status!=='PASS')result.status='HOLD';}
+ const diagnostics={fingerprint:require('./evidence.cjs').fingerprint(),policy:require('./plus-policy.cjs'),status:'REFERENCE_DIAGNOSTIC_ONLY',results:results.map(r=>({viewport:r.viewport,checks:r.referenceDiagnostics||[]}))};
+ fs.writeFileSync(path.join(__dirname,'reference-plus-diagnostic.json'),JSON.stringify(diagnostics,null,2)+'\n');
+ const report={approvedDifferences:[require('./plus-policy.cjs').id],unapprovedOperationDifferences:results.flatMap(r=>(r.operations||[]).filter(c=>!c.pass).map(c=>({width:r.viewport.width,name:c.name}))),fingerprint:require('./evidence.cjs').fingerprint(),status:results.every(x=>x.status==='PASS')&&results.length===3?'PASS':'HOLD',
   partA:'MEASURED_BY_PART_A_GATE',partB:'NOT_STARTED',scope:'Seven PART A groups: display, normal input, HOLD and teardown',
   browser:{channel:process.env.R31_BROWSER_CHANNEL||'chromium',version:browser.version(),platform:process.platform},safariRealDevice:'NOT_TESTED',forceClicksUsed:0,referenceAutosaveIntervals:'two legacy save intervals suppressed for fixed EMPTY initial saved-state fixture',
   fixture:'synthetic NEW_V1; reference memory storage; candidate read-only view and HOLD requests',results};
@@ -237,5 +241,5 @@ async function run(){
  console.log(JSON.stringify({status:report.status,partA:report.partA,results:results.map(x=>({width:x.viewport.width,status:x.status,actions:x.actionErrors,scenes:x.scenes.map(s=>({name:s.name,status:s.status,dom:s.differences.length,pixels:s.pixels.filter(p=>!p.same).length}))}))}));
  return report;
 }
-module.exports={run,pixelDifference,instrumentReference};
+module.exports={run,pixelDifference,instrumentReference,contextFor};
 if(require.main===module)run().then(r=>{process.exitCode=r.status==='PASS'?0:2;}).catch(e=>{console.error(e);process.exitCode=1;});

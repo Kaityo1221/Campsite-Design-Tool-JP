@@ -1,10 +1,20 @@
 // Fail closed on absent, incomplete, stale or failed measured evidence.
 const fs=require('node:fs'),path=require('node:path');
 const required=require('./part-a-groups.cjs'),requiredOperations=require('./part-a-operation-requirements.cjs'),{fingerprint}=require('./evidence.cjs');
-function evaluate({comparison,regression,auditTests,isolation},expectedFingerprint){
+function evaluate({comparison,regression,auditTests,isolation,plusAcceptance,referenceDiagnostics},expectedFingerprint){
  const blockers=[],groups={};const deny=(group,reason)=>blockers.push({group,reason});
- for(const [name,report]of Object.entries({comparison,regression,auditTests,isolation}))if(!report||report.fingerprint!==expectedFingerprint)deny(name,'MISSING_OR_STALE_EVIDENCE');
- const widths=[390,393,1366],results=comparison?.results||[];
+ for(const [name,report]of Object.entries({comparison,regression,auditTests,isolation,plusAcceptance,referenceDiagnostics}))if(!report||report.fingerprint!==expectedFingerprint)deny(name,'MISSING_OR_STALE_EVIDENCE');
+ const widths=[390,393,1366],results=comparison?.results||[],policy=require('./plus-policy.cjs');
+ if(policy.approved!==true||policy.id!=='R31-PLUS-2STEP-2026-10-11'||policy.scope!=='plus-touch-open-only'||comparison?.approvedDifferences?.length!==1||comparison.approvedDifferences[0]!==policy.id||comparison?.unapprovedOperationDifferences?.length!==0)deny('exception','UNAPPROVED_OPERATION_DIFFERENCE');
+ if(plusAcceptance?.policyId!==policy.id||plusAcceptance?.status!=='PASS'||plusAcceptance?.forceClicksUsed!==0||plusAcceptance?.independentContexts!==true||plusAcceptance?.results?.length!==3)deny('plusAcceptance','INDEPENDENT_TWO_STEP_NOT_PASSED');
+ if(referenceDiagnostics?.policy?.id!==policy.id||referenceDiagnostics?.results?.length!==3)deny('referenceDiagnostics','MISSING_REFERENCE_DIAGNOSTIC');
+ for(const width of widths){
+  const accept=plusAcceptance?.results?.find(r=>r.viewport.width===width),diag=referenceDiagnostics?.results?.find(r=>r.viewport.width===width);
+  if(!accept||accept.status!=='PASS'||accept.safe!==true||accept.checks?.length!==3||policy.kinds.some(kind=>!accept.checks?.some(c=>c.name==='plus-two-step-'+kind&&c.pass&&c.details?.stageOne&&c.details?.stageTwo&&c.details?.confirm&&c.details?.cancelled)))deny('plusAcceptance','UNVERIFIED_TWO_STEP:'+width);
+  if(accept&&(accept.originalFunctionsExecuted!==0||accept.hiddenRequests?.length!==0||accept.errors?.length!==0||accept.beforeDispose?.storage?.length!==0||accept.beforeDispose?.mapStarts!==1||accept.beforeDispose?.requests?.length!==3||accept.beforeDispose.requests.some(p=>p.result?.status!=='HOLD'||p.result?.changed!==false)||accept.disposed?.status?.mapCount!==0||accept.disposed?.listeners?.length!==0||Object.values(accept.disposed?.status?.resources||{missing:1}).some(n=>n!==0)))deny('plusAcceptance','UNSAFE_INDEPENDENT_ACCEPTANCE:'+width);
+  if(!diag||diag.checks?.length!==3||policy.kinds.some(kind=>!diag.checks?.some(c=>c.name==='plus-normal-tap-'+kind&&typeof c.pass==='boolean'&&c.details?.classes?.length===2&&c.details.classes[1]?.includes('open'))))deny('referenceDiagnostics','UNAPPROVED_OR_MISSING_DIAGNOSTIC:'+width);
+  const result=results.find(r=>r.viewport.width===width);if(result?.scenes?.length!==52||new Set(result?.scenes?.map(s=>s.name)).size!==52)deny('comparison','156_SCENES_NOT_MEASURED:'+width);
+ }
  for(const [group,names]of Object.entries(required)){
   const missing=widths.flatMap(width=>{const r=results.find(r=>r.viewport.width===width);return names.filter(name=>!r?.scenes?.some(s=>s.name===name&&s.status==='PASS')).map(scene=>({width,scene}));});
   const unverified=widths.flatMap(width=>{const r=results.find(r=>r.viewport.width===width);return requiredOperations[group].filter(name=>!r?.operations?.some(c=>c.name===name&&c.pass)).map(operation=>({width,operation}));});
@@ -25,5 +35,5 @@ function evaluate({comparison,regression,auditTests,isolation},expectedFingerpri
  if(auditTests?.status!=='PASS'||auditTests?.tests!==17||auditTests?.passed!==17||auditTests?.failed!==0||auditTests?.skipped!==0||isolation?.status!=='PASS')deny('audit','AUDIT_NOT_PASSED');
  return{partA:blockers.length?'HOLD':'PASS',partB:'NOT_STARTED',progress:'85% / Phase 1 HOLD',deployed:false,fingerprint:expectedFingerprint,groups,blockers,measured:{originalFunctionsExecuted:results.map(r=>({width:r.viewport.width,count:r.originalFunctionsExecuted})),legacyStorageAccesses:results.map(r=>({width:r.viewport.width,count:r.candidateChecks?.storage?.length})),unprovenFunctionsAllowed:isolation?.unprovenFunctionsAllowed,regressionPassed:regression?.passed,auditPassed:auditTests?.passed},safariRealDevice:'NOT_TESTED'};
 }
-function run(){const read=name=>{try{return JSON.parse(fs.readFileSync(path.join(__dirname,name+'.json'),'utf8'));}catch{return null;}};const result=evaluate({comparison:read('ui-runtime-comparison'),regression:read('regression-result'),auditTests:read('audit-test-result'),isolation:read('isolation-audit')},fingerprint());fs.writeFileSync(path.join(__dirname,'part-a-status.json'),JSON.stringify(result,null,2)+'\n');console.log(JSON.stringify(result));return result;}
+function run(){const read=name=>{try{return JSON.parse(fs.readFileSync(path.join(__dirname,name+'.json'),'utf8'));}catch{return null;}};const result=evaluate({comparison:read('ui-runtime-comparison'),regression:read('regression-result'),auditTests:read('audit-test-result'),isolation:read('isolation-audit'),plusAcceptance:read('plus-acceptance'),referenceDiagnostics:read('reference-plus-diagnostic')},fingerprint());fs.writeFileSync(path.join(__dirname,'part-a-status.json'),JSON.stringify(result,null,2)+'\n');console.log(JSON.stringify(result));return result;}
 module.exports={evaluate,run};if(require.main===module)process.exitCode=run().partA==='PASS'?0:2;

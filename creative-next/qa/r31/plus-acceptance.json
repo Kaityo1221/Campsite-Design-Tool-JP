@@ -1,0 +1,1668 @@
+{
+  "fingerprint": "f206ea51801e3a74e69cf7156a6fff803422ebe5af57a500fcb4d1a2ecae75ff",
+  "policyId": "R31-PLUS-2STEP-2026-10-11",
+  "status": "PASS",
+  "forceClicksUsed": 0,
+  "independentContexts": true,
+  "results": [
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "status": "PASS",
+      "checks": [
+        {
+          "name": "plus-two-step-new-pokestop",
+          "pass": true,
+          "details": {
+            "stageOne": true,
+            "stageTwo": true,
+            "confirm": true,
+            "cancelled": true,
+            "opened": {
+              "status": {
+                "mode": "PART_A_VIEW_ONLY",
+                "dataConnected": false,
+                "stopped": false,
+                "mapCount": 1,
+                "proposals": 0,
+                "resources": {
+                  "listeners": 48,
+                  "timers": 0,
+                  "rafs": 0,
+                  "animations": 0,
+                  "observers": 0,
+                  "owned": 30
+                },
+                "camera": {
+                  "center": [
+                    35.6811957124181,
+                    139.76710081100467
+                  ],
+                  "zoom": 16
+                },
+                "ui": {
+                  "hand": "right",
+                  "menu": true,
+                  "mode": null,
+                  "layer": "new-pokestop",
+                  "radius": 50,
+                  "selected": null,
+                  "dragged": false,
+                  "tool": "",
+                  "aerial": false,
+                  "areaVisible": false,
+                  "visibleLayers": {
+                    "existing-pokestop": true,
+                    "existing-gym": true,
+                    "existing-power": true,
+                    "new-pokestop": true,
+                    "new-gym": true,
+                    "new-power": true
+                  },
+                  "circleRadii": []
+                },
+                "areaPreview": {
+                  "points": [],
+                  "closing": false
+                },
+                "preview": null
+              },
+              "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}",
+              "requests": 0,
+              "bubbles": [
+                "new-pokestop",
+                "new-gym",
+                "new-power"
+              ],
+              "bar": false
+            },
+            "selected": {
+              "status": {
+                "mode": "PART_A_VIEW_ONLY",
+                "dataConnected": false,
+                "stopped": false,
+                "mapCount": 1,
+                "proposals": 0,
+                "resources": {
+                  "listeners": 59,
+                  "timers": 1,
+                  "rafs": 0,
+                  "animations": 0,
+                  "observers": 0,
+                  "owned": 34
+                },
+                "camera": {
+                  "center": [
+                    35.6811957124181,
+                    139.76710081100467
+                  ],
+                  "zoom": 16
+                },
+                "ui": {
+                  "hand": "right",
+                  "menu": false,
+                  "mode": "add",
+                  "layer": "new-pokestop",
+                  "radius": 50,
+                  "selected": null,
+                  "dragged": false,
+                  "tool": "",
+                  "aerial": false,
+                  "areaVisible": false,
+                  "visibleLayers": {
+                    "existing-pokestop": true,
+                    "existing-gym": true,
+                    "existing-power": true,
+                    "new-pokestop": true,
+                    "new-gym": true,
+                    "new-power": true
+                  },
+                  "circleRadii": []
+                },
+                "areaPreview": {
+                  "points": [],
+                  "closing": false
+                },
+                "preview": {
+                  "radius": 50,
+                  "position": {
+                    "lat": 35.6811957124181,
+                    "lng": 139.76710081100467
+                  }
+                }
+              },
+              "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}",
+              "requests": 0,
+              "bar": true
+            },
+            "held": {
+              "requests": 1,
+              "last": {
+                "action": {
+                  "type": "add",
+                  "kind": "new-pokestop",
+                  "position": {
+                    "lat": 35.6811957124181,
+                    "lng": 139.76710081100467
+                  },
+                  "requestId": "r31-ui-1"
+                },
+                "result": {
+                  "status": "HOLD",
+                  "changed": false,
+                  "reason": "PART_A_DATA_DISCONNECTED"
+                }
+              },
+              "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}"
+            }
+          }
+        },
+        {
+          "name": "plus-two-step-new-gym",
+          "pass": true,
+          "details": {
+            "stageOne": true,
+            "stageTwo": true,
+            "confirm": true,
+            "cancelled": true,
+            "opened": {
+              "status": {
+                "mode": "PART_A_VIEW_ONLY",
+                "dataConnected": false,
+                "stopped": false,
+                "mapCount": 1,
+                "proposals": 1,
+                "resources": {
+                  "listeners": 48,
+                  "timers": 2,
+                  "rafs": 0,
+                  "animations": 0,
+                  "observers": 0,
+                  "owned": 30
+                },
+                "camera": {
+                  "center": [
+                    35.6811957124181,
+                    139.76710081100467
+                  ],
+                  "zoom": 16
+                },
+                "ui": {
+                  "hand": "right",
+                  "menu": true,
+                  "mode": null,
+                  "layer": "new-pokestop",
+                  "radius": 50,
+                  "selected": null,
+                  "dragged": false,
+                  "tool": "",
+                  "aerial": false,
+                  "areaVisible": false,
+                  "visibleLayers": {
+                    "existing-pokestop": true,
+                    "existing-gym": true,
+                    "existing-power": true,
+                    "new-pokestop": true,
+                    "new-gym": true,
+                    "new-power": true
+                  },
+                  "circleRadii": []
+                },
+                "areaPreview": {
+                  "points": [],
+                  "closing": false
+                },
+                "preview": null
+              },
+              "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}",
+              "requests": 1,
+              "bubbles": [
+                "new-pokestop",
+                "new-gym",
+                "new-power"
+              ],
+              "bar": false
+            },
+            "selected": {
+              "status": {
+                "mode": "PART_A_VIEW_ONLY",
+                "dataConnected": false,
+                "stopped": false,
+                "mapCount": 1,
+                "proposals": 1,
+                "resources": {
+                  "listeners": 59,
+                  "timers": 2,
+                  "rafs": 0,
+                  "animations": 0,
+                  "observers": 0,
+                  "owned": 34
+                },
+                "camera": {
+                  "center": [
+                    35.6811957124181,
+                    139.76710081100467
+                  ],
+                  "zoom": 16
+                },
+                "ui": {
+                  "hand": "right",
+                  "menu": false,
+                  "mode": "add",
+                  "layer": "new-gym",
+                  "radius": 50,
+                  "selected": null,
+                  "dragged": false,
+                  "tool": "",
+                  "aerial": false,
+                  "areaVisible": false,
+                  "visibleLayers": {
+                    "existing-pokestop": true,
+                    "existing-gym": true,
+                    "existing-power": true,
+                    "new-pokestop": true,
+                    "new-gym": true,
+                    "new-power": true
+                  },
+                  "circleRadii": []
+                },
+                "areaPreview": {
+                  "points": [],
+                  "closing": false
+                },
+                "preview": {
+                  "radius": 50,
+                  "position": {
+                    "lat": 35.6811957124181,
+                    "lng": 139.76710081100467
+                  }
+                }
+              },
+              "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}",
+              "requests": 1,
+              "bar": true
+            },
+            "held": {
+              "requests": 2,
+              "last": {
+                "action": {
+                  "type": "add",
+                  "kind": "new-gym",
+                  "position": {
+                    "lat": 35.6811957124181,
+                    "lng": 139.76710081100467
+                  },
+                  "requestId": "r31-ui-2"
+                },
+                "result": {
+                  "status": "HOLD",
+                  "changed": false,
+                  "reason": "PART_A_DATA_DISCONNECTED"
+                }
+              },
+              "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}"
+            }
+          }
+        },
+        {
+          "name": "plus-two-step-new-power",
+          "pass": true,
+          "details": {
+            "stageOne": true,
+            "stageTwo": true,
+            "confirm": true,
+            "cancelled": true,
+            "opened": {
+              "status": {
+                "mode": "PART_A_VIEW_ONLY",
+                "dataConnected": false,
+                "stopped": false,
+                "mapCount": 1,
+                "proposals": 2,
+                "resources": {
+                  "listeners": 48,
+                  "timers": 3,
+                  "rafs": 0,
+                  "animations": 0,
+                  "observers": 0,
+                  "owned": 30
+                },
+                "camera": {
+                  "center": [
+                    35.6811957124181,
+                    139.76710081100467
+                  ],
+                  "zoom": 16
+                },
+                "ui": {
+                  "hand": "right",
+                  "menu": true,
+                  "mode": null,
+                  "layer": "new-gym",
+                  "radius": 50,
+                  "selected": null,
+                  "dragged": false,
+                  "tool": "",
+                  "aerial": false,
+                  "areaVisible": false,
+                  "visibleLayers": {
+                    "existing-pokestop": true,
+                    "existing-gym": true,
+                    "existing-power": true,
+                    "new-pokestop": true,
+                    "new-gym": true,
+                    "new-power": true
+                  },
+                  "circleRadii": []
+                },
+                "areaPreview": {
+                  "points": [],
+                  "closing": false
+                },
+                "preview": null
+              },
+              "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}",
+              "requests": 2,
+              "bubbles": [
+                "new-pokestop",
+                "new-gym",
+                "new-power"
+              ],
+              "bar": false
+            },
+            "selected": {
+              "status": {
+                "mode": "PART_A_VIEW_ONLY",
+                "dataConnected": false,
+                "stopped": false,
+                "mapCount": 1,
+                "proposals": 2,
+                "resources": {
+                  "listeners": 59,
+                  "timers": 4,
+                  "rafs": 0,
+                  "animations": 0,
+                  "observers": 0,
+                  "owned": 34
+                },
+                "camera": {
+                  "center": [
+                    35.6811957124181,
+                    139.76710081100467
+                  ],
+                  "zoom": 16
+                },
+                "ui": {
+                  "hand": "right",
+                  "menu": false,
+                  "mode": "add",
+                  "layer": "new-power",
+                  "radius": 50,
+                  "selected": null,
+                  "dragged": false,
+                  "tool": "",
+                  "aerial": false,
+                  "areaVisible": false,
+                  "visibleLayers": {
+                    "existing-pokestop": true,
+                    "existing-gym": true,
+                    "existing-power": true,
+                    "new-pokestop": true,
+                    "new-gym": true,
+                    "new-power": true
+                  },
+                  "circleRadii": []
+                },
+                "areaPreview": {
+                  "points": [],
+                  "closing": false
+                },
+                "preview": {
+                  "radius": 50,
+                  "position": {
+                    "lat": 35.6811957124181,
+                    "lng": 139.76710081100467
+                  }
+                }
+              },
+              "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}",
+              "requests": 2,
+              "bar": true
+            },
+            "held": {
+              "requests": 3,
+              "last": {
+                "action": {
+                  "type": "add",
+                  "kind": "new-power",
+                  "position": {
+                    "lat": 35.6811957124181,
+                    "lng": 139.76710081100467
+                  },
+                  "requestId": "r31-ui-3"
+                },
+                "result": {
+                  "status": "HOLD",
+                  "changed": false,
+                  "reason": "PART_A_DATA_DISCONNECTED"
+                }
+              },
+              "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}"
+            }
+          }
+        }
+      ],
+      "safe": true,
+      "beforeDispose": {
+        "storage": [],
+        "mapStarts": 1,
+        "requests": [
+          {
+            "action": {
+              "type": "add",
+              "kind": "new-pokestop",
+              "position": {
+                "lat": 35.6811957124181,
+                "lng": 139.76710081100467
+              },
+              "requestId": "r31-ui-1"
+            },
+            "result": {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "PART_A_DATA_DISCONNECTED"
+            }
+          },
+          {
+            "action": {
+              "type": "add",
+              "kind": "new-gym",
+              "position": {
+                "lat": 35.6811957124181,
+                "lng": 139.76710081100467
+              },
+              "requestId": "r31-ui-2"
+            },
+            "result": {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "PART_A_DATA_DISCONNECTED"
+            }
+          },
+          {
+            "action": {
+              "type": "add",
+              "kind": "new-power",
+              "position": {
+                "lat": 35.6811957124181,
+                "lng": 139.76710081100467
+              },
+              "requestId": "r31-ui-3"
+            },
+            "result": {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "PART_A_DATA_DISCONNECTED"
+            }
+          }
+        ]
+      },
+      "originalFunctionsExecuted": 0,
+      "hiddenRequests": [],
+      "disposed": {
+        "status": {
+          "mode": "PART_A_VIEW_ONLY",
+          "dataConnected": false,
+          "stopped": true,
+          "mapCount": 0,
+          "proposals": 3,
+          "resources": {
+            "listeners": 0,
+            "timers": 0,
+            "rafs": 0,
+            "animations": 0,
+            "observers": 0,
+            "owned": 0
+          },
+          "camera": null,
+          "ui": {
+            "hand": "right",
+            "menu": false,
+            "mode": null,
+            "layer": "new-power",
+            "radius": 50,
+            "selected": null,
+            "dragged": false,
+            "tool": "",
+            "aerial": false,
+            "areaVisible": false,
+            "visibleLayers": {
+              "existing-pokestop": true,
+              "existing-gym": true,
+              "existing-power": true,
+              "new-pokestop": true,
+              "new-gym": true,
+              "new-power": true
+            },
+            "circleRadii": []
+          },
+          "areaPreview": {
+            "points": [],
+            "closing": false
+          },
+          "preview": null
+        },
+        "listeners": []
+      },
+      "errors": []
+    },
+    {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "status": "PASS",
+      "checks": [
+        {
+          "name": "plus-two-step-new-pokestop",
+          "pass": true,
+          "details": {
+            "stageOne": true,
+            "stageTwo": true,
+            "confirm": true,
+            "cancelled": true,
+            "opened": {
+              "status": {
+                "mode": "PART_A_VIEW_ONLY",
+                "dataConnected": false,
+                "stopped": false,
+                "mapCount": 1,
+                "proposals": 0,
+                "resources": {
+                  "listeners": 48,
+                  "timers": 0,
+                  "rafs": 0,
+                  "animations": 0,
+                  "observers": 0,
+                  "owned": 30
+                },
+                "camera": {
+                  "center": [
+                    35.6811957124181,
+                    139.7670900821686
+                  ],
+                  "zoom": 16
+                },
+                "ui": {
+                  "hand": "right",
+                  "menu": true,
+                  "mode": null,
+                  "layer": "new-pokestop",
+                  "radius": 50,
+                  "selected": null,
+                  "dragged": false,
+                  "tool": "",
+                  "aerial": false,
+                  "areaVisible": false,
+                  "visibleLayers": {
+                    "existing-pokestop": true,
+                    "existing-gym": true,
+                    "existing-power": true,
+                    "new-pokestop": true,
+                    "new-gym": true,
+                    "new-power": true
+                  },
+                  "circleRadii": []
+                },
+                "areaPreview": {
+                  "points": [],
+                  "closing": false
+                },
+                "preview": null
+              },
+              "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}",
+              "requests": 0,
+              "bubbles": [
+                "new-pokestop",
+                "new-gym",
+                "new-power"
+              ],
+              "bar": false
+            },
+            "selected": {
+              "status": {
+                "mode": "PART_A_VIEW_ONLY",
+                "dataConnected": false,
+                "stopped": false,
+                "mapCount": 1,
+                "proposals": 0,
+                "resources": {
+                  "listeners": 59,
+                  "timers": 1,
+                  "rafs": 0,
+                  "animations": 0,
+                  "observers": 0,
+                  "owned": 34
+                },
+                "camera": {
+                  "center": [
+                    35.6811957124181,
+                    139.7670900821686
+                  ],
+                  "zoom": 16
+                },
+                "ui": {
+                  "hand": "right",
+                  "menu": false,
+                  "mode": "add",
+                  "layer": "new-pokestop",
+                  "radius": 50,
+                  "selected": null,
+                  "dragged": false,
+                  "tool": "",
+                  "aerial": false,
+                  "areaVisible": false,
+                  "visibleLayers": {
+                    "existing-pokestop": true,
+                    "existing-gym": true,
+                    "existing-power": true,
+                    "new-pokestop": true,
+                    "new-gym": true,
+                    "new-power": true
+                  },
+                  "circleRadii": []
+                },
+                "areaPreview": {
+                  "points": [],
+                  "closing": false
+                },
+                "preview": {
+                  "radius": 50,
+                  "position": {
+                    "lat": 35.6811957124181,
+                    "lng": 139.7670900821686
+                  }
+                }
+              },
+              "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}",
+              "requests": 0,
+              "bar": true
+            },
+            "held": {
+              "requests": 1,
+              "last": {
+                "action": {
+                  "type": "add",
+                  "kind": "new-pokestop",
+                  "position": {
+                    "lat": 35.6811957124181,
+                    "lng": 139.7670900821686
+                  },
+                  "requestId": "r31-ui-1"
+                },
+                "result": {
+                  "status": "HOLD",
+                  "changed": false,
+                  "reason": "PART_A_DATA_DISCONNECTED"
+                }
+              },
+              "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}"
+            }
+          }
+        },
+        {
+          "name": "plus-two-step-new-gym",
+          "pass": true,
+          "details": {
+            "stageOne": true,
+            "stageTwo": true,
+            "confirm": true,
+            "cancelled": true,
+            "opened": {
+              "status": {
+                "mode": "PART_A_VIEW_ONLY",
+                "dataConnected": false,
+                "stopped": false,
+                "mapCount": 1,
+                "proposals": 1,
+                "resources": {
+                  "listeners": 48,
+                  "timers": 2,
+                  "rafs": 0,
+                  "animations": 0,
+                  "observers": 0,
+                  "owned": 30
+                },
+                "camera": {
+                  "center": [
+                    35.6811957124181,
+                    139.7670900821686
+                  ],
+                  "zoom": 16
+                },
+                "ui": {
+                  "hand": "right",
+                  "menu": true,
+                  "mode": null,
+                  "layer": "new-pokestop",
+                  "radius": 50,
+                  "selected": null,
+                  "dragged": false,
+                  "tool": "",
+                  "aerial": false,
+                  "areaVisible": false,
+                  "visibleLayers": {
+                    "existing-pokestop": true,
+                    "existing-gym": true,
+                    "existing-power": true,
+                    "new-pokestop": true,
+                    "new-gym": true,
+                    "new-power": true
+                  },
+                  "circleRadii": []
+                },
+                "areaPreview": {
+                  "points": [],
+                  "closing": false
+                },
+                "preview": null
+              },
+              "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}",
+              "requests": 1,
+              "bubbles": [
+                "new-pokestop",
+                "new-gym",
+                "new-power"
+              ],
+              "bar": false
+            },
+            "selected": {
+              "status": {
+                "mode": "PART_A_VIEW_ONLY",
+                "dataConnected": false,
+                "stopped": false,
+                "mapCount": 1,
+                "proposals": 1,
+                "resources": {
+                  "listeners": 59,
+                  "timers": 3,
+                  "rafs": 0,
+                  "animations": 0,
+                  "observers": 0,
+                  "owned": 34
+                },
+                "camera": {
+                  "center": [
+                    35.6811957124181,
+                    139.7670900821686
+                  ],
+                  "zoom": 16
+                },
+                "ui": {
+                  "hand": "right",
+                  "menu": false,
+                  "mode": "add",
+                  "layer": "new-gym",
+                  "radius": 50,
+                  "selected": null,
+                  "dragged": false,
+                  "tool": "",
+                  "aerial": false,
+                  "areaVisible": false,
+                  "visibleLayers": {
+                    "existing-pokestop": true,
+                    "existing-gym": true,
+                    "existing-power": true,
+                    "new-pokestop": true,
+                    "new-gym": true,
+                    "new-power": true
+                  },
+                  "circleRadii": []
+                },
+                "areaPreview": {
+                  "points": [],
+                  "closing": false
+                },
+                "preview": {
+                  "radius": 50,
+                  "position": {
+                    "lat": 35.6811957124181,
+                    "lng": 139.7670900821686
+                  }
+                }
+              },
+              "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}",
+              "requests": 1,
+              "bar": true
+            },
+            "held": {
+              "requests": 2,
+              "last": {
+                "action": {
+                  "type": "add",
+                  "kind": "new-gym",
+                  "position": {
+                    "lat": 35.6811957124181,
+                    "lng": 139.7670900821686
+                  },
+                  "requestId": "r31-ui-2"
+                },
+                "result": {
+                  "status": "HOLD",
+                  "changed": false,
+                  "reason": "PART_A_DATA_DISCONNECTED"
+                }
+              },
+              "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}"
+            }
+          }
+        },
+        {
+          "name": "plus-two-step-new-power",
+          "pass": true,
+          "details": {
+            "stageOne": true,
+            "stageTwo": true,
+            "confirm": true,
+            "cancelled": true,
+            "opened": {
+              "status": {
+                "mode": "PART_A_VIEW_ONLY",
+                "dataConnected": false,
+                "stopped": false,
+                "mapCount": 1,
+                "proposals": 2,
+                "resources": {
+                  "listeners": 48,
+                  "timers": 3,
+                  "rafs": 0,
+                  "animations": 0,
+                  "observers": 0,
+                  "owned": 30
+                },
+                "camera": {
+                  "center": [
+                    35.6811957124181,
+                    139.7670900821686
+                  ],
+                  "zoom": 16
+                },
+                "ui": {
+                  "hand": "right",
+                  "menu": true,
+                  "mode": null,
+                  "layer": "new-gym",
+                  "radius": 50,
+                  "selected": null,
+                  "dragged": false,
+                  "tool": "",
+                  "aerial": false,
+                  "areaVisible": false,
+                  "visibleLayers": {
+                    "existing-pokestop": true,
+                    "existing-gym": true,
+                    "existing-power": true,
+                    "new-pokestop": true,
+                    "new-gym": true,
+                    "new-power": true
+                  },
+                  "circleRadii": []
+                },
+                "areaPreview": {
+                  "points": [],
+                  "closing": false
+                },
+                "preview": null
+              },
+              "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}",
+              "requests": 2,
+              "bubbles": [
+                "new-pokestop",
+                "new-gym",
+                "new-power"
+              ],
+              "bar": false
+            },
+            "selected": {
+              "status": {
+                "mode": "PART_A_VIEW_ONLY",
+                "dataConnected": false,
+                "stopped": false,
+                "mapCount": 1,
+                "proposals": 2,
+                "resources": {
+                  "listeners": 59,
+                  "timers": 3,
+                  "rafs": 0,
+                  "animations": 0,
+                  "observers": 0,
+                  "owned": 34
+                },
+                "camera": {
+                  "center": [
+                    35.6811957124181,
+                    139.7670900821686
+                  ],
+                  "zoom": 16
+                },
+                "ui": {
+                  "hand": "right",
+                  "menu": false,
+                  "mode": "add",
+                  "layer": "new-power",
+                  "radius": 50,
+                  "selected": null,
+                  "dragged": false,
+                  "tool": "",
+                  "aerial": false,
+                  "areaVisible": false,
+                  "visibleLayers": {
+                    "existing-pokestop": true,
+                    "existing-gym": true,
+                    "existing-power": true,
+                    "new-pokestop": true,
+                    "new-gym": true,
+                    "new-power": true
+                  },
+                  "circleRadii": []
+                },
+                "areaPreview": {
+                  "points": [],
+                  "closing": false
+                },
+                "preview": {
+                  "radius": 50,
+                  "position": {
+                    "lat": 35.6811957124181,
+                    "lng": 139.7670900821686
+                  }
+                }
+              },
+              "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}",
+              "requests": 2,
+              "bar": true
+            },
+            "held": {
+              "requests": 3,
+              "last": {
+                "action": {
+                  "type": "add",
+                  "kind": "new-power",
+                  "position": {
+                    "lat": 35.6811957124181,
+                    "lng": 139.7670900821686
+                  },
+                  "requestId": "r31-ui-3"
+                },
+                "result": {
+                  "status": "HOLD",
+                  "changed": false,
+                  "reason": "PART_A_DATA_DISCONNECTED"
+                }
+              },
+              "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}"
+            }
+          }
+        }
+      ],
+      "safe": true,
+      "beforeDispose": {
+        "storage": [],
+        "mapStarts": 1,
+        "requests": [
+          {
+            "action": {
+              "type": "add",
+              "kind": "new-pokestop",
+              "position": {
+                "lat": 35.6811957124181,
+                "lng": 139.7670900821686
+              },
+              "requestId": "r31-ui-1"
+            },
+            "result": {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "PART_A_DATA_DISCONNECTED"
+            }
+          },
+          {
+            "action": {
+              "type": "add",
+              "kind": "new-gym",
+              "position": {
+                "lat": 35.6811957124181,
+                "lng": 139.7670900821686
+              },
+              "requestId": "r31-ui-2"
+            },
+            "result": {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "PART_A_DATA_DISCONNECTED"
+            }
+          },
+          {
+            "action": {
+              "type": "add",
+              "kind": "new-power",
+              "position": {
+                "lat": 35.6811957124181,
+                "lng": 139.7670900821686
+              },
+              "requestId": "r31-ui-3"
+            },
+            "result": {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "PART_A_DATA_DISCONNECTED"
+            }
+          }
+        ]
+      },
+      "originalFunctionsExecuted": 0,
+      "hiddenRequests": [],
+      "disposed": {
+        "status": {
+          "mode": "PART_A_VIEW_ONLY",
+          "dataConnected": false,
+          "stopped": true,
+          "mapCount": 0,
+          "proposals": 3,
+          "resources": {
+            "listeners": 0,
+            "timers": 0,
+            "rafs": 0,
+            "animations": 0,
+            "observers": 0,
+            "owned": 0
+          },
+          "camera": null,
+          "ui": {
+            "hand": "right",
+            "menu": false,
+            "mode": null,
+            "layer": "new-power",
+            "radius": 50,
+            "selected": null,
+            "dragged": false,
+            "tool": "",
+            "aerial": false,
+            "areaVisible": false,
+            "visibleLayers": {
+              "existing-pokestop": true,
+              "existing-gym": true,
+              "existing-power": true,
+              "new-pokestop": true,
+              "new-gym": true,
+              "new-power": true
+            },
+            "circleRadii": []
+          },
+          "areaPreview": {
+            "points": [],
+            "closing": false
+          },
+          "preview": null
+        },
+        "listeners": []
+      },
+      "errors": []
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "status": "PASS",
+      "checks": [
+        {
+          "name": "plus-two-step-new-pokestop",
+          "pass": true,
+          "details": {
+            "stageOne": true,
+            "stageTwo": true,
+            "confirm": true,
+            "cancelled": true,
+            "opened": {
+              "status": {
+                "mode": "PART_A_VIEW_ONLY",
+                "dataConnected": false,
+                "stopped": false,
+                "mapCount": 1,
+                "proposals": 0,
+                "resources": {
+                  "listeners": 48,
+                  "timers": 0,
+                  "rafs": 0,
+                  "animations": 0,
+                  "observers": 0,
+                  "owned": 30
+                },
+                "camera": {
+                  "center": [
+                    35.6811957124181,
+                    139.76710081100467
+                  ],
+                  "zoom": 16
+                },
+                "ui": {
+                  "hand": "right",
+                  "menu": true,
+                  "mode": null,
+                  "layer": "new-pokestop",
+                  "radius": 50,
+                  "selected": null,
+                  "dragged": false,
+                  "tool": "",
+                  "aerial": false,
+                  "areaVisible": false,
+                  "visibleLayers": {
+                    "existing-pokestop": true,
+                    "existing-gym": true,
+                    "existing-power": true,
+                    "new-pokestop": true,
+                    "new-gym": true,
+                    "new-power": true
+                  },
+                  "circleRadii": []
+                },
+                "areaPreview": {
+                  "points": [],
+                  "closing": false
+                },
+                "preview": null
+              },
+              "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}",
+              "requests": 0,
+              "bubbles": [
+                "new-pokestop",
+                "new-gym",
+                "new-power"
+              ],
+              "bar": false
+            },
+            "selected": {
+              "status": {
+                "mode": "PART_A_VIEW_ONLY",
+                "dataConnected": false,
+                "stopped": false,
+                "mapCount": 1,
+                "proposals": 0,
+                "resources": {
+                  "listeners": 59,
+                  "timers": 1,
+                  "rafs": 0,
+                  "animations": 0,
+                  "observers": 0,
+                  "owned": 34
+                },
+                "camera": {
+                  "center": [
+                    35.6811957124181,
+                    139.76710081100467
+                  ],
+                  "zoom": 16
+                },
+                "ui": {
+                  "hand": "right",
+                  "menu": false,
+                  "mode": "add",
+                  "layer": "new-pokestop",
+                  "radius": 50,
+                  "selected": null,
+                  "dragged": false,
+                  "tool": "",
+                  "aerial": false,
+                  "areaVisible": false,
+                  "visibleLayers": {
+                    "existing-pokestop": true,
+                    "existing-gym": true,
+                    "existing-power": true,
+                    "new-pokestop": true,
+                    "new-gym": true,
+                    "new-power": true
+                  },
+                  "circleRadii": []
+                },
+                "areaPreview": {
+                  "points": [],
+                  "closing": false
+                },
+                "preview": {
+                  "radius": 50,
+                  "position": {
+                    "lat": 35.6811957124181,
+                    "lng": 139.76710081100467
+                  }
+                }
+              },
+              "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}",
+              "requests": 0,
+              "bar": true
+            },
+            "held": {
+              "requests": 1,
+              "last": {
+                "action": {
+                  "type": "add",
+                  "kind": "new-pokestop",
+                  "position": {
+                    "lat": 35.6811957124181,
+                    "lng": 139.76710081100467
+                  },
+                  "requestId": "r31-ui-1"
+                },
+                "result": {
+                  "status": "HOLD",
+                  "changed": false,
+                  "reason": "PART_A_DATA_DISCONNECTED"
+                }
+              },
+              "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}"
+            }
+          }
+        },
+        {
+          "name": "plus-two-step-new-gym",
+          "pass": true,
+          "details": {
+            "stageOne": true,
+            "stageTwo": true,
+            "confirm": true,
+            "cancelled": true,
+            "opened": {
+              "status": {
+                "mode": "PART_A_VIEW_ONLY",
+                "dataConnected": false,
+                "stopped": false,
+                "mapCount": 1,
+                "proposals": 1,
+                "resources": {
+                  "listeners": 48,
+                  "timers": 2,
+                  "rafs": 0,
+                  "animations": 0,
+                  "observers": 0,
+                  "owned": 30
+                },
+                "camera": {
+                  "center": [
+                    35.6811957124181,
+                    139.76710081100467
+                  ],
+                  "zoom": 16
+                },
+                "ui": {
+                  "hand": "right",
+                  "menu": true,
+                  "mode": null,
+                  "layer": "new-pokestop",
+                  "radius": 50,
+                  "selected": null,
+                  "dragged": false,
+                  "tool": "",
+                  "aerial": false,
+                  "areaVisible": false,
+                  "visibleLayers": {
+                    "existing-pokestop": true,
+                    "existing-gym": true,
+                    "existing-power": true,
+                    "new-pokestop": true,
+                    "new-gym": true,
+                    "new-power": true
+                  },
+                  "circleRadii": []
+                },
+                "areaPreview": {
+                  "points": [],
+                  "closing": false
+                },
+                "preview": null
+              },
+              "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}",
+              "requests": 1,
+              "bubbles": [
+                "new-pokestop",
+                "new-gym",
+                "new-power"
+              ],
+              "bar": false
+            },
+            "selected": {
+              "status": {
+                "mode": "PART_A_VIEW_ONLY",
+                "dataConnected": false,
+                "stopped": false,
+                "mapCount": 1,
+                "proposals": 1,
+                "resources": {
+                  "listeners": 59,
+                  "timers": 3,
+                  "rafs": 0,
+                  "animations": 0,
+                  "observers": 0,
+                  "owned": 34
+                },
+                "camera": {
+                  "center": [
+                    35.6811957124181,
+                    139.76710081100467
+                  ],
+                  "zoom": 16
+                },
+                "ui": {
+                  "hand": "right",
+                  "menu": false,
+                  "mode": "add",
+                  "layer": "new-gym",
+                  "radius": 50,
+                  "selected": null,
+                  "dragged": false,
+                  "tool": "",
+                  "aerial": false,
+                  "areaVisible": false,
+                  "visibleLayers": {
+                    "existing-pokestop": true,
+                    "existing-gym": true,
+                    "existing-power": true,
+                    "new-pokestop": true,
+                    "new-gym": true,
+                    "new-power": true
+                  },
+                  "circleRadii": []
+                },
+                "areaPreview": {
+                  "points": [],
+                  "closing": false
+                },
+                "preview": {
+                  "radius": 50,
+                  "position": {
+                    "lat": 35.6811957124181,
+                    "lng": 139.76710081100467
+                  }
+                }
+              },
+              "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}",
+              "requests": 1,
+              "bar": true
+            },
+            "held": {
+              "requests": 2,
+              "last": {
+                "action": {
+                  "type": "add",
+                  "kind": "new-gym",
+                  "position": {
+                    "lat": 35.6811957124181,
+                    "lng": 139.76710081100467
+                  },
+                  "requestId": "r31-ui-2"
+                },
+                "result": {
+                  "status": "HOLD",
+                  "changed": false,
+                  "reason": "PART_A_DATA_DISCONNECTED"
+                }
+              },
+              "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}"
+            }
+          }
+        },
+        {
+          "name": "plus-two-step-new-power",
+          "pass": true,
+          "details": {
+            "stageOne": true,
+            "stageTwo": true,
+            "confirm": true,
+            "cancelled": true,
+            "opened": {
+              "status": {
+                "mode": "PART_A_VIEW_ONLY",
+                "dataConnected": false,
+                "stopped": false,
+                "mapCount": 1,
+                "proposals": 2,
+                "resources": {
+                  "listeners": 48,
+                  "timers": 3,
+                  "rafs": 0,
+                  "animations": 0,
+                  "observers": 0,
+                  "owned": 30
+                },
+                "camera": {
+                  "center": [
+                    35.6811957124181,
+                    139.76710081100467
+                  ],
+                  "zoom": 16
+                },
+                "ui": {
+                  "hand": "right",
+                  "menu": true,
+                  "mode": null,
+                  "layer": "new-gym",
+                  "radius": 50,
+                  "selected": null,
+                  "dragged": false,
+                  "tool": "",
+                  "aerial": false,
+                  "areaVisible": false,
+                  "visibleLayers": {
+                    "existing-pokestop": true,
+                    "existing-gym": true,
+                    "existing-power": true,
+                    "new-pokestop": true,
+                    "new-gym": true,
+                    "new-power": true
+                  },
+                  "circleRadii": []
+                },
+                "areaPreview": {
+                  "points": [],
+                  "closing": false
+                },
+                "preview": null
+              },
+              "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}",
+              "requests": 2,
+              "bubbles": [
+                "new-pokestop",
+                "new-gym",
+                "new-power"
+              ],
+              "bar": false
+            },
+            "selected": {
+              "status": {
+                "mode": "PART_A_VIEW_ONLY",
+                "dataConnected": false,
+                "stopped": false,
+                "mapCount": 1,
+                "proposals": 2,
+                "resources": {
+                  "listeners": 59,
+                  "timers": 3,
+                  "rafs": 0,
+                  "animations": 0,
+                  "observers": 0,
+                  "owned": 34
+                },
+                "camera": {
+                  "center": [
+                    35.6811957124181,
+                    139.76710081100467
+                  ],
+                  "zoom": 16
+                },
+                "ui": {
+                  "hand": "right",
+                  "menu": false,
+                  "mode": "add",
+                  "layer": "new-power",
+                  "radius": 50,
+                  "selected": null,
+                  "dragged": false,
+                  "tool": "",
+                  "aerial": false,
+                  "areaVisible": false,
+                  "visibleLayers": {
+                    "existing-pokestop": true,
+                    "existing-gym": true,
+                    "existing-power": true,
+                    "new-pokestop": true,
+                    "new-gym": true,
+                    "new-power": true
+                  },
+                  "circleRadii": []
+                },
+                "areaPreview": {
+                  "points": [],
+                  "closing": false
+                },
+                "preview": {
+                  "radius": 50,
+                  "position": {
+                    "lat": 35.6811957124181,
+                    "lng": 139.76710081100467
+                  }
+                }
+              },
+              "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}",
+              "requests": 2,
+              "bar": true
+            },
+            "held": {
+              "requests": 3,
+              "last": {
+                "action": {
+                  "type": "add",
+                  "kind": "new-power",
+                  "position": {
+                    "lat": 35.6811957124181,
+                    "lng": 139.76710081100467
+                  },
+                  "requestId": "r31-ui-3"
+                },
+                "result": {
+                  "status": "HOLD",
+                  "changed": false,
+                  "reason": "PART_A_DATA_DISCONNECTED"
+                }
+              },
+              "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}"
+            }
+          }
+        }
+      ],
+      "safe": true,
+      "beforeDispose": {
+        "storage": [],
+        "mapStarts": 1,
+        "requests": [
+          {
+            "action": {
+              "type": "add",
+              "kind": "new-pokestop",
+              "position": {
+                "lat": 35.6811957124181,
+                "lng": 139.76710081100467
+              },
+              "requestId": "r31-ui-1"
+            },
+            "result": {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "PART_A_DATA_DISCONNECTED"
+            }
+          },
+          {
+            "action": {
+              "type": "add",
+              "kind": "new-gym",
+              "position": {
+                "lat": 35.6811957124181,
+                "lng": 139.76710081100467
+              },
+              "requestId": "r31-ui-2"
+            },
+            "result": {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "PART_A_DATA_DISCONNECTED"
+            }
+          },
+          {
+            "action": {
+              "type": "add",
+              "kind": "new-power",
+              "position": {
+                "lat": 35.6811957124181,
+                "lng": 139.76710081100467
+              },
+              "requestId": "r31-ui-3"
+            },
+            "result": {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "PART_A_DATA_DISCONNECTED"
+            }
+          }
+        ]
+      },
+      "originalFunctionsExecuted": 0,
+      "hiddenRequests": [],
+      "disposed": {
+        "status": {
+          "mode": "PART_A_VIEW_ONLY",
+          "dataConnected": false,
+          "stopped": true,
+          "mapCount": 0,
+          "proposals": 3,
+          "resources": {
+            "listeners": 0,
+            "timers": 0,
+            "rafs": 0,
+            "animations": 0,
+            "observers": 0,
+            "owned": 0
+          },
+          "camera": null,
+          "ui": {
+            "hand": "right",
+            "menu": false,
+            "mode": null,
+            "layer": "new-power",
+            "radius": 50,
+            "selected": null,
+            "dragged": false,
+            "tool": "",
+            "aerial": false,
+            "areaVisible": false,
+            "visibleLayers": {
+              "existing-pokestop": true,
+              "existing-gym": true,
+              "existing-power": true,
+              "new-pokestop": true,
+              "new-gym": true,
+              "new-power": true
+            },
+            "circleRadii": []
+          },
+          "areaPreview": {
+            "points": [],
+            "closing": false
+          },
+          "preview": null
+        },
+        "listeners": []
+      },
+      "errors": []
+    }
+  ]
+}

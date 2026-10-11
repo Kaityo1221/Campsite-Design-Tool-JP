@@ -35,3 +35,9 @@ QA依存: jszip3.10.1, @xmldom/xmldom0.9.8, acorn8.15.0, leaflet1.9.4, pngjs7.0.
 参照の#saveと手動workspace保存は現行で非表示。退役したcmOpenSaveMenuには未定義cmKmzExported依存があるため復活させず、現行standaloneメニューとchooserだけを継承する。
 
 参照側の通常touchで「＋」のpointerupがメニューを開いた直後、合成clickがPowerSpotへ入る問題を記録している。r31はtouchではclick時に開くことで二重入力を防ぐ。この操作差は未承認としてHOLDする。テスト継続用の通常UIリセットは失敗結果をPASSへ変えない。原本・main・旧previewへ修正しない。Safari実機未検証。詳細と最新CIはR31_PART_A_COMPLETION_REPORT.md。
+
+## 最終判定の仕様追加（2026-10-11）
+
+＋の二重イベント防止だけをPO承認済みの操作例外として検査する。R31_PART_A_SPECIFICATION.mdとR31_OPERATION_DIFFERENCES.mdを参照。旧HOLD記録と9 FAILは保持し、独立＋受入および全7グループを現在fingerprintで再測定する。PART A PASSでもPart B/保存/配信は停止し、進捗85% / Phase 1 HOLDを維持する。
+
+最終再測定の結果はR31_PART_A_FINAL_VERDICT.mdを参照。過去のHOLD記述は当時の記録であり、進捗85% / Phase 1 HOLDとPART A表示受入判定を区別する。

@@ -43,6 +43,9 @@ jobs:
             creative-next/qa/r31/ui-extraction-manifest.json
             creative-next/qa/r31/functional-groups.json
             creative-next/qa/r31/ui-runtime-comparison.json
+            creative-next/qa/r31/plus-acceptance.json
+            creative-next/qa/r31/reference-plus-diagnostic.json
+            creative-next/qa/r31/reference-plus-diagnostic-baseline.json
             creative-next/qa/r31/part-a-status.json
             creative-next/qa/r31/isolation-audit.json
             creative-next/qa/r31/regression-result.json

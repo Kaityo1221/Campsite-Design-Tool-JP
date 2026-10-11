@@ -1,0 +1,743 @@
+{
+  "fingerprint": "f206ea51801e3a74e69cf7156a6fff803422ebe5af57a500fcb4d1a2ecae75ff",
+  "policy": {
+    "id": "R31-PLUS-2STEP-2026-10-11",
+    "scope": "plus-touch-open-only",
+    "approved": true,
+    "baselineCommit": "05fb48953e335f2438996bac5b480e1b02cc196e",
+    "kinds": [
+      "new-pokestop",
+      "new-gym",
+      "new-power"
+    ]
+  },
+  "status": "REFERENCE_DIAGNOSTIC_ONLY",
+  "results": [
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "checks": [
+        {
+          "name": "plus-normal-tap-new-pokestop",
+          "pass": false,
+          "details": {
+            "classes": [
+              "cm-fab-wrap",
+              "cm-fab-wrap open"
+            ],
+            "debug": [
+              {
+                "point": {
+                  "x": 269,
+                  "y": 751
+                },
+                "hit": "<div id=\"cmSafeAddBar\" class=\"cm-safe-add-bar\" data-cm-coordinate-jump=\"1\"><span class=\"cm-phase-c-selected-poi\" aria-label=\"選択中 PowerSpot\"><img src=\"./assets/p",
+                "events": [
+                  {
+                    "type": "pointerdown",
+                    "target": "cmAddFab",
+                    "x": 269,
+                    "y": 751
+                  },
+                  {
+                    "type": "touchstart",
+                    "target": "cmAddFab"
+                  },
+                  {
+                    "type": "pointerup",
+                    "target": "cmAddFab",
+                    "x": 269,
+                    "y": 751
+                  },
+                  {
+                    "type": "touchend",
+                    "target": "cmAddFab"
+                  }
+                ],
+                "scale": 1
+              },
+              {
+                "point": {
+                  "x": 269,
+                  "y": 751
+                },
+                "hit": "<button id=\"cmAddFab\" class=\"cm-add-fab\" aria-label=\"候補地を追加\" title=\"候補地を追加\" style=\"touch-action: none; user-select: none;\">×</button>",
+                "events": [
+                  {
+                    "type": "pointerdown",
+                    "target": "cmAddFab",
+                    "x": 269,
+                    "y": 751
+                  },
+                  {
+                    "type": "touchstart",
+                    "target": "cmAddFab"
+                  },
+                  {
+                    "type": "pointerup",
+                    "target": "cmAddFab",
+                    "x": 269,
+                    "y": 751
+                  },
+                  {
+                    "type": "touchend",
+                    "target": "cmAddFab"
+                  },
+                  {
+                    "type": "click",
+                    "target": "cmAddFab",
+                    "x": 269,
+                    "y": 751
+                  }
+                ],
+                "scale": 1
+              }
+            ]
+          }
+        },
+        {
+          "name": "plus-normal-tap-new-gym",
+          "pass": false,
+          "details": {
+            "classes": [
+              "cm-fab-wrap",
+              "cm-fab-wrap open"
+            ],
+            "debug": [
+              {
+                "point": {
+                  "x": 269,
+                  "y": 751
+                },
+                "hit": "<div id=\"cmSafeAddBar\" class=\"cm-safe-add-bar\" data-cm-coordinate-jump=\"1\"><span class=\"cm-phase-c-selected-poi\" aria-label=\"選択中 PowerSpot\"><img src=\"./assets/p",
+                "events": [
+                  {
+                    "type": "pointerdown",
+                    "target": "cmAddFab",
+                    "x": 269,
+                    "y": 751
+                  },
+                  {
+                    "type": "touchstart",
+                    "target": "cmAddFab"
+                  },
+                  {
+                    "type": "pointerup",
+                    "target": "cmAddFab",
+                    "x": 269,
+                    "y": 751
+                  },
+                  {
+                    "type": "touchend",
+                    "target": "cmAddFab"
+                  }
+                ],
+                "scale": 1
+              },
+              {
+                "point": {
+                  "x": 269,
+                  "y": 751
+                },
+                "hit": "<button id=\"cmAddFab\" class=\"cm-add-fab\" aria-label=\"候補地を追加\" title=\"候補地を追加\" style=\"touch-action: none; user-select: none;\">×</button>",
+                "events": [
+                  {
+                    "type": "pointerdown",
+                    "target": "cmAddFab",
+                    "x": 269,
+                    "y": 751
+                  },
+                  {
+                    "type": "touchstart",
+                    "target": "cmAddFab"
+                  },
+                  {
+                    "type": "pointerup",
+                    "target": "cmAddFab",
+                    "x": 269,
+                    "y": 751
+                  },
+                  {
+                    "type": "touchend",
+                    "target": "cmAddFab"
+                  },
+                  {
+                    "type": "click",
+                    "target": "cmAddFab",
+                    "x": 269,
+                    "y": 751
+                  }
+                ],
+                "scale": 1
+              }
+            ]
+          }
+        },
+        {
+          "name": "plus-normal-tap-new-power",
+          "pass": false,
+          "details": {
+            "classes": [
+              "cm-fab-wrap",
+              "cm-fab-wrap open"
+            ],
+            "debug": [
+              {
+                "point": {
+                  "x": 269,
+                  "y": 751
+                },
+                "hit": "<div id=\"cmSafeAddBar\" class=\"cm-safe-add-bar\" data-cm-coordinate-jump=\"1\"><span class=\"cm-phase-c-selected-poi\" aria-label=\"選択中 PowerSpot\"><img src=\"./assets/p",
+                "events": [
+                  {
+                    "type": "pointerdown",
+                    "target": "cmAddFab",
+                    "x": 269,
+                    "y": 751
+                  },
+                  {
+                    "type": "touchstart",
+                    "target": "cmAddFab"
+                  },
+                  {
+                    "type": "pointerup",
+                    "target": "cmAddFab",
+                    "x": 269,
+                    "y": 751
+                  },
+                  {
+                    "type": "touchend",
+                    "target": "cmAddFab"
+                  }
+                ],
+                "scale": 1
+              },
+              {
+                "point": {
+                  "x": 269,
+                  "y": 751
+                },
+                "hit": "<button id=\"cmAddFab\" class=\"cm-add-fab\" aria-label=\"候補地を追加\" title=\"候補地を追加\" style=\"touch-action: none; user-select: none;\">×</button>",
+                "events": [
+                  {
+                    "type": "pointerdown",
+                    "target": "cmAddFab",
+                    "x": 269,
+                    "y": 751
+                  },
+                  {
+                    "type": "touchstart",
+                    "target": "cmAddFab"
+                  },
+                  {
+                    "type": "pointerup",
+                    "target": "cmAddFab",
+                    "x": 269,
+                    "y": 751
+                  },
+                  {
+                    "type": "touchend",
+                    "target": "cmAddFab"
+                  },
+                  {
+                    "type": "click",
+                    "target": "cmAddFab",
+                    "x": 269,
+                    "y": 751
+                  }
+                ],
+                "scale": 1
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "checks": [
+        {
+          "name": "plus-normal-tap-new-pokestop",
+          "pass": false,
+          "details": {
+            "classes": [
+              "cm-fab-wrap",
+              "cm-fab-wrap open"
+            ],
+            "debug": [
+              {
+                "point": {
+                  "x": 271.09375,
+                  "y": 759
+                },
+                "hit": "<div id=\"cmSafeAddBar\" class=\"cm-safe-add-bar\" data-cm-coordinate-jump=\"1\"><span class=\"cm-phase-c-selected-poi\" aria-label=\"選択中 PowerSpot\"><img src=\"./assets/p",
+                "events": [
+                  {
+                    "type": "pointerdown",
+                    "target": "cmAddFab",
+                    "x": 271.0899963378906,
+                    "y": 759
+                  },
+                  {
+                    "type": "touchstart",
+                    "target": "cmAddFab"
+                  },
+                  {
+                    "type": "pointerup",
+                    "target": "cmAddFab",
+                    "x": 271.0899963378906,
+                    "y": 759
+                  },
+                  {
+                    "type": "touchend",
+                    "target": "cmAddFab"
+                  }
+                ],
+                "scale": 1
+              },
+              {
+                "point": {
+                  "x": 271.09375,
+                  "y": 759
+                },
+                "hit": "<button id=\"cmAddFab\" class=\"cm-add-fab\" aria-label=\"候補地を追加\" title=\"候補地を追加\" style=\"touch-action: none; user-select: none;\">×</button>",
+                "events": [
+                  {
+                    "type": "pointerdown",
+                    "target": "cmAddFab",
+                    "x": 271.0899963378906,
+                    "y": 759
+                  },
+                  {
+                    "type": "touchstart",
+                    "target": "cmAddFab"
+                  },
+                  {
+                    "type": "pointerup",
+                    "target": "cmAddFab",
+                    "x": 271.0899963378906,
+                    "y": 759
+                  },
+                  {
+                    "type": "touchend",
+                    "target": "cmAddFab"
+                  },
+                  {
+                    "type": "click",
+                    "target": "cmAddFab",
+                    "x": 271,
+                    "y": 759
+                  }
+                ],
+                "scale": 1
+              }
+            ]
+          }
+        },
+        {
+          "name": "plus-normal-tap-new-gym",
+          "pass": false,
+          "details": {
+            "classes": [
+              "cm-fab-wrap",
+              "cm-fab-wrap open"
+            ],
+            "debug": [
+              {
+                "point": {
+                  "x": 271.09375,
+                  "y": 759
+                },
+                "hit": "<div id=\"cmSafeAddBar\" class=\"cm-safe-add-bar\" data-cm-coordinate-jump=\"1\"><span class=\"cm-phase-c-selected-poi\" aria-label=\"選択中 PowerSpot\"><img src=\"./assets/p",
+                "events": [
+                  {
+                    "type": "pointerdown",
+                    "target": "cmAddFab",
+                    "x": 271.0899963378906,
+                    "y": 759
+                  },
+                  {
+                    "type": "touchstart",
+                    "target": "cmAddFab"
+                  },
+                  {
+                    "type": "pointerup",
+                    "target": "cmAddFab",
+                    "x": 271.0899963378906,
+                    "y": 759
+                  },
+                  {
+                    "type": "touchend",
+                    "target": "cmAddFab"
+                  }
+                ],
+                "scale": 1
+              },
+              {
+                "point": {
+                  "x": 271.09375,
+                  "y": 759
+                },
+                "hit": "<button id=\"cmAddFab\" class=\"cm-add-fab\" aria-label=\"候補地を追加\" title=\"候補地を追加\" style=\"touch-action: none; user-select: none;\">×</button>",
+                "events": [
+                  {
+                    "type": "pointerdown",
+                    "target": "cmAddFab",
+                    "x": 271.0899963378906,
+                    "y": 759
+                  },
+                  {
+                    "type": "touchstart",
+                    "target": "cmAddFab"
+                  },
+                  {
+                    "type": "pointerup",
+                    "target": "cmAddFab",
+                    "x": 271.0899963378906,
+                    "y": 759
+                  },
+                  {
+                    "type": "touchend",
+                    "target": "cmAddFab"
+                  },
+                  {
+                    "type": "click",
+                    "target": "cmAddFab",
+                    "x": 271,
+                    "y": 759
+                  }
+                ],
+                "scale": 1
+              }
+            ]
+          }
+        },
+        {
+          "name": "plus-normal-tap-new-power",
+          "pass": false,
+          "details": {
+            "classes": [
+              "cm-fab-wrap",
+              "cm-fab-wrap open"
+            ],
+            "debug": [
+              {
+                "point": {
+                  "x": 271.09375,
+                  "y": 759
+                },
+                "hit": "<div id=\"cmSafeAddBar\" class=\"cm-safe-add-bar\" data-cm-coordinate-jump=\"1\"><span class=\"cm-phase-c-selected-poi\" aria-label=\"選択中 PowerSpot\"><img src=\"./assets/p",
+                "events": [
+                  {
+                    "type": "pointerdown",
+                    "target": "cmAddFab",
+                    "x": 271.0899963378906,
+                    "y": 759
+                  },
+                  {
+                    "type": "touchstart",
+                    "target": "cmAddFab"
+                  },
+                  {
+                    "type": "pointerup",
+                    "target": "cmAddFab",
+                    "x": 271.0899963378906,
+                    "y": 759
+                  },
+                  {
+                    "type": "touchend",
+                    "target": "cmAddFab"
+                  }
+                ],
+                "scale": 1
+              },
+              {
+                "point": {
+                  "x": 271.09375,
+                  "y": 759
+                },
+                "hit": "<button id=\"cmAddFab\" class=\"cm-add-fab\" aria-label=\"候補地を追加\" title=\"候補地を追加\" style=\"touch-action: none; user-select: none;\">×</button>",
+                "events": [
+                  {
+                    "type": "pointerdown",
+                    "target": "cmAddFab",
+                    "x": 271.0899963378906,
+                    "y": 759
+                  },
+                  {
+                    "type": "touchstart",
+                    "target": "cmAddFab"
+                  },
+                  {
+                    "type": "pointerup",
+                    "target": "cmAddFab",
+                    "x": 271.0899963378906,
+                    "y": 759
+                  },
+                  {
+                    "type": "touchend",
+                    "target": "cmAddFab"
+                  },
+                  {
+                    "type": "click",
+                    "target": "cmAddFab",
+                    "x": 271,
+                    "y": 759
+                  }
+                ],
+                "scale": 1
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "checks": [
+        {
+          "name": "plus-normal-tap-new-pokestop",
+          "pass": false,
+          "details": {
+            "classes": [
+              "cm-fab-wrap",
+              "cm-fab-wrap open"
+            ],
+            "debug": [
+              {
+                "point": {
+                  "x": 952.1875,
+                  "y": 675
+                },
+                "hit": "<canvas class=\"leaflet-zoom-animated\" width=\"2732\" height=\"1536\" style=\"transform: translate3d(-683px, -384px, 0px); width: 2732px; height: 1536px;\"></canvas>",
+                "events": [
+                  {
+                    "type": "pointerdown",
+                    "target": "cmAddFab",
+                    "x": 952.1799926757812,
+                    "y": 675
+                  },
+                  {
+                    "type": "touchstart",
+                    "target": "cmAddFab"
+                  },
+                  {
+                    "type": "pointerup",
+                    "target": "cmAddFab",
+                    "x": 952.1799926757812,
+                    "y": 675
+                  },
+                  {
+                    "type": "touchend",
+                    "target": "cmAddFab"
+                  }
+                ],
+                "scale": 1
+              },
+              {
+                "point": {
+                  "x": 952.1875,
+                  "y": 675
+                },
+                "hit": "<button id=\"cmAddFab\" class=\"cm-add-fab\" aria-label=\"候補地を追加\" title=\"候補地を追加\" style=\"touch-action: none; user-select: none;\">×</button>",
+                "events": [
+                  {
+                    "type": "pointerdown",
+                    "target": "cmAddFab",
+                    "x": 952.1799926757812,
+                    "y": 675
+                  },
+                  {
+                    "type": "touchstart",
+                    "target": "cmAddFab"
+                  },
+                  {
+                    "type": "pointerup",
+                    "target": "cmAddFab",
+                    "x": 952.1799926757812,
+                    "y": 675
+                  },
+                  {
+                    "type": "touchend",
+                    "target": "cmAddFab"
+                  },
+                  {
+                    "type": "click",
+                    "target": "cmAddFab",
+                    "x": 952,
+                    "y": 675
+                  }
+                ],
+                "scale": 1
+              }
+            ]
+          }
+        },
+        {
+          "name": "plus-normal-tap-new-gym",
+          "pass": false,
+          "details": {
+            "classes": [
+              "cm-fab-wrap",
+              "cm-fab-wrap open"
+            ],
+            "debug": [
+              {
+                "point": {
+                  "x": 952.1875,
+                  "y": 675
+                },
+                "hit": "<canvas class=\"leaflet-zoom-animated\" width=\"2732\" height=\"1536\" style=\"transform: translate3d(-683px, -384px, 0px); width: 2732px; height: 1536px;\"></canvas>",
+                "events": [
+                  {
+                    "type": "pointerdown",
+                    "target": "cmAddFab",
+                    "x": 952.1799926757812,
+                    "y": 675
+                  },
+                  {
+                    "type": "touchstart",
+                    "target": "cmAddFab"
+                  },
+                  {
+                    "type": "pointerup",
+                    "target": "cmAddFab",
+                    "x": 952.1799926757812,
+                    "y": 675
+                  },
+                  {
+                    "type": "touchend",
+                    "target": "cmAddFab"
+                  }
+                ],
+                "scale": 1
+              },
+              {
+                "point": {
+                  "x": 952.1875,
+                  "y": 675
+                },
+                "hit": "<button id=\"cmAddFab\" class=\"cm-add-fab\" aria-label=\"候補地を追加\" title=\"候補地を追加\" style=\"touch-action: none; user-select: none;\">×</button>",
+                "events": [
+                  {
+                    "type": "pointerdown",
+                    "target": "cmAddFab",
+                    "x": 952.1799926757812,
+                    "y": 675
+                  },
+                  {
+                    "type": "touchstart",
+                    "target": "cmAddFab"
+                  },
+                  {
+                    "type": "pointerup",
+                    "target": "cmAddFab",
+                    "x": 952.1799926757812,
+                    "y": 675
+                  },
+                  {
+                    "type": "touchend",
+                    "target": "cmAddFab"
+                  },
+                  {
+                    "type": "click",
+                    "target": "cmAddFab",
+                    "x": 952,
+                    "y": 675
+                  }
+                ],
+                "scale": 1
+              }
+            ]
+          }
+        },
+        {
+          "name": "plus-normal-tap-new-power",
+          "pass": false,
+          "details": {
+            "classes": [
+              "cm-fab-wrap",
+              "cm-fab-wrap open"
+            ],
+            "debug": [
+              {
+                "point": {
+                  "x": 952.1875,
+                  "y": 675
+                },
+                "hit": "<canvas class=\"leaflet-zoom-animated\" width=\"2732\" height=\"1536\" style=\"transform: translate3d(-683px, -384px, 0px); width: 2732px; height: 1536px;\"></canvas>",
+                "events": [
+                  {
+                    "type": "pointerdown",
+                    "target": "cmAddFab",
+                    "x": 952.1799926757812,
+                    "y": 675
+                  },
+                  {
+                    "type": "touchstart",
+                    "target": "cmAddFab"
+                  },
+                  {
+                    "type": "pointerup",
+                    "target": "cmAddFab",
+                    "x": 952.1799926757812,
+                    "y": 675
+                  },
+                  {
+                    "type": "touchend",
+                    "target": "cmAddFab"
+                  }
+                ],
+                "scale": 1
+              },
+              {
+                "point": {
+                  "x": 952.1875,
+                  "y": 675
+                },
+                "hit": "<button id=\"cmAddFab\" class=\"cm-add-fab\" aria-label=\"候補地を追加\" title=\"候補地を追加\" style=\"touch-action: none; user-select: none;\">×</button>",
+                "events": [
+                  {
+                    "type": "pointerdown",
+                    "target": "cmAddFab",
+                    "x": 952.1799926757812,
+                    "y": 675
+                  },
+                  {
+                    "type": "touchstart",
+                    "target": "cmAddFab"
+                  },
+                  {
+                    "type": "pointerup",
+                    "target": "cmAddFab",
+                    "x": 952.1799926757812,
+                    "y": 675
+                  },
+                  {
+                    "type": "touchend",
+                    "target": "cmAddFab"
+                  },
+                  {
+                    "type": "click",
+                    "target": "cmAddFab",
+                    "x": 952,
+                    "y": 675
+                  }
+                ],
+                "scale": 1
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

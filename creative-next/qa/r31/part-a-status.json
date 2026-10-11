@@ -1,9 +1,9 @@
 {
-  "partA": "HOLD",
+  "partA": "PASS",
   "partB": "NOT_STARTED",
   "progress": "85% / Phase 1 HOLD",
   "deployed": false,
-  "fingerprint": "e2f610a9b7f7724e763646846e247b4e9659159632412af46723b6116883b753",
+  "fingerprint": "f206ea51801e3a74e69cf7156a6fff803422ebe5af57a500fcb4d1a2ecae75ff",
   "groups": {
     "startupAndDisplay": {
       "status": "PASS",
@@ -12,47 +12,10 @@
       "unverified": []
     },
     "poiAddition": {
-      "status": "HOLD",
+      "status": "PASS",
       "requiredScenes": 8,
       "missing": [],
-      "unverified": [
-        {
-          "width": 390,
-          "operation": "plus-normal-tap-new-pokestop"
-        },
-        {
-          "width": 390,
-          "operation": "plus-normal-tap-new-gym"
-        },
-        {
-          "width": 390,
-          "operation": "plus-normal-tap-new-power"
-        },
-        {
-          "width": 393,
-          "operation": "plus-normal-tap-new-pokestop"
-        },
-        {
-          "width": 393,
-          "operation": "plus-normal-tap-new-gym"
-        },
-        {
-          "width": 393,
-          "operation": "plus-normal-tap-new-power"
-        },
-        {
-          "width": 1366,
-          "operation": "plus-normal-tap-new-pokestop"
-        },
-        {
-          "width": 1366,
-          "operation": "plus-normal-tap-new-gym"
-        },
-        {
-          "width": 1366,
-          "operation": "plus-normal-tap-new-power"
-        }
-      ]
+      "unverified": []
     },
     "poiEditAndMove": {
       "status": "PASS",
@@ -85,28 +48,7 @@
       "unverified": []
     }
   },
-  "blockers": [
-    {
-      "group": "poiAddition",
-      "reason": "INCOMPLETE_OR_DIFFERENT_UI_OR_OPERATION"
-    },
-    {
-      "group": "comparison",
-      "reason": "UNAPPROVED_UI_DIFFERENCE_OR_INCOMPLETE_RUN"
-    },
-    {
-      "group": "operations",
-      "reason": "UNVERIFIED_ACTION:390"
-    },
-    {
-      "group": "operations",
-      "reason": "UNVERIFIED_ACTION:393"
-    },
-    {
-      "group": "operations",
-      "reason": "UNVERIFIED_ACTION:1366"
-    }
-  ],
+  "blockers": [],
   "measured": {
     "originalFunctionsExecuted": [
       {

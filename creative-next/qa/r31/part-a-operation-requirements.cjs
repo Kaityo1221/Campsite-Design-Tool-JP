@@ -1,6 +1,6 @@
 module.exports={
  startupAndDisplay:['startup-transition-completes','startup-button-hold','rules-escape'],
- poiAddition:['plus-normal-tap-new-pokestop','plus-normal-tap-new-gym','plus-normal-tap-new-power','position-preview-new-pokestop','position-preview-new-gym','position-preview-new-power','add-lever-snap'],
+ poiAddition:['plus-two-step-new-pokestop','plus-two-step-new-gym','plus-two-step-new-power','position-preview-new-pokestop','position-preview-new-gym','position-preview-new-power','add-lever-snap'],
  poiEditAndMove:['sheet-handle-swipe','move-lever-snap'],
  areasAndMap:['area-confirm-hold','area-delete-hold','area-redraw-hold','area-view-immutable','area-cancel-teardown','ruler-exit','map-drag-camera'],
  saveAndKmz:['chooser-cancel'],

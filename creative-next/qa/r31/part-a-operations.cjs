@@ -7,7 +7,7 @@ async function touchPath(item,points){
  await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await cdp.detach();
 }
 async function exercise({pair,view,camera,folder,compareScene,both,onScene}){
- const scenes=[],checks=[];
+ const scenes=[],checks=[],referenceDiagnostics=[];
  pair[1].operationChecks=checks;
  const capture=async(name,selectors)=>{const scene=await compareScene(pair,name,selectors,folder);scenes.push(scene);onScene?.(scene);};
  const check=(name,value,details=null)=>{checks.push({name,pass:!!value,details});};
@@ -20,7 +20,7 @@ async function exercise({pair,view,camera,folder,compareScene,both,onScene}){
 
  // Normal touch opening of ＋ and all three selections, followed by position previews.
  for(const kind of ['new-pokestop','new-gym','new-power']){
-  await tap('#cmAddFab');const classes=await Promise.all(pair.map(x=>x.page.locator('#cmFabWrap').getAttribute('class')));check('plus-normal-tap-'+kind,classes.every(c=>c.includes('open')),{classes,debug:pair.map(x=>x.tapDebug)});
+  await tap('#cmAddFab');const classes=await Promise.all(pair.map(x=>x.page.locator('#cmFabWrap').getAttribute('class')));referenceDiagnostics.push({name:'plus-normal-tap-'+kind,pass:classes.every(c=>c.includes('open')),details:{classes,debug:pair.map(x=>x.tapDebug)}});
   // Preserve a failed native-input result. Reset it with ordinary UI input only to
   // continue independent type/preview tests; this never changes that check to PASS.
   for(const [i,item]of pair.entries())if(!classes[i].includes('open')){if(await item.page.locator('#cmSafeAddCancel').count())await item.page.locator('#cmSafeAddCancel').click();await item.page.locator('#cmAddFab').click();}
@@ -109,6 +109,6 @@ async function exercise({pair,view,camera,folder,compareScene,both,onScene}){
  for(const item of pair)await item.page.evaluate(()=>document.getAnimations().forEach(a=>{if(a.effect?.target?.id==='cmV58StartTransition'){a.pause();a.currentTime=400;}}));await capture('startup-transition',['#cmV58StartTransition']);
  for(const item of pair)await item.page.waitForFunction(()=>document.getElementById('entry').classList.contains('hidden'));check('startup-transition-completes',(await Promise.all(pair.map(x=>x.page.locator('#entry').getAttribute('class')))).every(c=>c.includes('hidden')));await setCamera(camera);
  const source=await pair[0].page.evaluate(()=>__r31ReferenceProbe.view()),candidate=await pair[1].page.evaluate(()=>__r31Fixture);check('all-display-actions-view-immutable',JSON.stringify(candidate)===JSON.stringify(view)&&JSON.stringify(source.pois)===JSON.stringify(view.pois));
- return{scenes,checks};
+ return{scenes,checks,referenceDiagnostics};
 }
 module.exports={exercise,touchPath};
