@@ -96,6 +96,28 @@ const r27html=r26html
  .replace('</head>',r27Style+'</head>');
 if(!r27html.includes('id="cmNextR27PopupTapGuard"')||!r27html.includes('./r27-poi-editor.mjs')||!r27html.includes('./r27-ios-tap-guard.js'))throw Error('R27_GENERATION_MISSING');
 fs.writeFileSync(path.join(r27,'index.html'),r27html);
+// r28: POI sheet visual rules are extracted from the actual production v6 patch,
+// rather than recreating their layout with a new design. Only new POIs are editable.
+const r28=path.join(root,'creative-next/original-ui-r28');
+fs.mkdirSync(r28,{recursive:true});
+const v6=fs.readFileSync(path.join(root,'creative/runtime/creative-patches-v6-intuitive.js'),'utf8');
+const sheetBegin=v6.indexOf('.cm-sheet{'),sheetEnd=v6.indexOf('.cm-list,',sheetBegin);
+if(sheetBegin<0||sheetEnd<sheetBegin)throw Error('R28_SOURCE_SHEET_CSS_NOT_FOUND');
+const sourceSheetCss=v6.slice(sheetBegin,sheetEnd);
+if(!sourceSheetCss.includes('.cm-sheet-handle')||!sourceSheetCss.includes('.cm-type-picker'))
+ throw Error('R28_SOURCE_SHEET_CSS_INCOMPLETE');
+const r28Style='<style id="cmNextR28OriginalSheetStyle">'+sourceSheetCss+
+'.cm-existing-readonly{margin-top:10px;font-size:12px;color:#756650}' +
+'.cm-sheet button{touch-action:none!important;-webkit-user-select:none!important;user-select:none!important;-webkit-touch-callout:none!important}' +
+'</style>';
+const r28html=r26html
+ .replace('./r26-ios-tap-guard.js','./r28-ios-tap-guard.js')
+ .replace('./r25-map-controls.mjs','./r28-poi-editor.mjs')
+ .replace('</head>',r28Style+'</head>');
+if(!r28html.includes('id="cmNextR28OriginalSheetStyle"')||!r28html.includes('./r28-poi-editor.mjs'))
+ throw Error('R28_GENERATION_MISSING');
+fs.writeFileSync(path.join(r28,'index.html'),r28html);
+
 
 
 if(/<script\b/i.test(html))throw Error('Runtime script escaped snapshot');
