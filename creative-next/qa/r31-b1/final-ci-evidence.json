@@ -1,0 +1,3368 @@
+{
+  "sourceCommit": "937e00cf15d97528cfbb7e6966b9b602b3c10daa",
+  "b1CI": {
+    "url": "https://github.com/Kaityo1221/Campsite-Design-Tool-JP/actions/runs/38175029950",
+    "attempt": 2,
+    "conclusion": "success"
+  },
+  "partACI": {
+    "url": "https://github.com/Kaityo1221/Campsite-Design-Tool-JP/actions/runs/38175029888",
+    "conclusion": "success"
+  },
+  "gate": {
+    "status": "PASS",
+    "fingerprint": "10dbce16800ef64531a278752625c6a9f0fda80ed209f857fcf91a45e18bf61a",
+    "stable": true,
+    "unit": {
+      "status": "PASS",
+      "passed": 6,
+      "exitCode": 0
+    },
+    "browser": "PASS",
+    "ui": "PASS",
+    "partAFreeze": {
+      "sourceCommit": "109a1b0a6a66dc95ae88de72091f45a3fb611aab",
+      "evidenceHead": "f271cf82d13bcf0b5fe01069cc3a8d0c3318967b",
+      "ci": "https://github.com/Kaityo1221/Campsite-Design-Tool-JP/actions/runs/38149500935",
+      "fingerprint": "f206ea51801e3a74e69cf7156a6fff803422ebe5af57a500fcb4d1a2ecae75ff",
+      "files": [
+        {
+          "file": "creative-next/original-ui-r31/index.html",
+          "sha256": "10bea1f581e239b69d6ce0e00893c30500c16445f82dac37bfbd07ce0b57ab73"
+        },
+        {
+          "file": "creative-next/original-ui-r31/source-templates.mjs",
+          "sha256": "4ce7094ce850bc9b39dcfa7681143bc2bfd5dfd194652966fed66ccc6cfbb60b"
+        },
+        {
+          "file": "creative-next/original-ui-r31/ui-runtime.mjs",
+          "sha256": "bd6f779ee5cabb2eba7cde57744cd792e1896f3c34e9961dc1eee1dab3bc4fc5"
+        },
+        {
+          "file": "creative-next/qa/r31/part-a-final-ci-evidence.json",
+          "sha256": "6e19998024a53561932783ae8102ad353494e4a7c217767cb5d5006b4da21915"
+        },
+        {
+          "file": "creative-next/R31_PART_A_FINAL_VERDICT.md",
+          "sha256": "14738e91e51ddcfa4b1cc43abbc00e7af68d1c46d4bd5a4a8f948e5b290aa3ae"
+        },
+        {
+          "file": ".github/workflows/creative-next-r31-audit.yml",
+          "sha256": "84e5173fce4caedbe9dac0806ecd95d84d3d43a4816f696a745f0111e950ba3f"
+        },
+        {
+          "file": "creative-next/phase-1b/integration/isolated-editor-session.mjs",
+          "sha256": "6090b58692608090539178c1c353d7739e9fcf800f098c1bc03ab94aad1766b6"
+        },
+        {
+          "file": "creative-next/phase-1a/core/poi-store.mjs",
+          "sha256": "f1ce760f9e5f02884f7b026f6eea040ebc5be66594965e1501060e67a6ee68d3"
+        },
+        {
+          "file": "creative-next/integration/creative-next-command-boundary.mjs",
+          "sha256": "d148e0f0074db743d611578ed5f7594569ecafbe7cf16873a0cd2c4fe8787361"
+        },
+        {
+          "file": "creative-next/integration/creative-ui-read-follower.mjs",
+          "sha256": "3202c03d0d96a9cd8ab3a36cff29c74b55202c02e33b1337072bc597704bff57"
+        },
+        {
+          "file": "creative-next/phase-1a/core/history.mjs",
+          "sha256": "bc576df701a726cbef33bb09de710b286daf0b13c2976b97b5b76946428dce3a"
+        },
+        {
+          "file": "creative-next/phase-1a/core/poi-commands.mjs",
+          "sha256": "f0458c44ab5d507f99c96360b634e5aeb3ddd0df35e82e7115a096c8410fe445"
+        },
+        {
+          "file": "creative-next/phase-1a/core/poi-id.mjs",
+          "sha256": "2c632c97e2e75e8e61e09962dfe7cd7de47eea7f4b43c84821904558ae7b2184"
+        },
+        {
+          "file": "creative-next/phase-1a/core/poi-limits.mjs",
+          "sha256": "b71b776937a1945e0aa1330073e67889ef00cd2a56132200934525d709745709"
+        },
+        {
+          "file": "creative-next/phase-1a/core/poi-model.mjs",
+          "sha256": "02b2a509503e39364e8241014fc755ae1938b9072d60b9ce3cc5d8c9b9945633"
+        },
+        {
+          "file": "creative-next/phase-1b/core/activity-areas.mjs",
+          "sha256": "bcfdd9907613d757f136863ea092cebc0b0bdbaf3b8c4a4f6838d250086e40b2"
+        },
+        {
+          "file": "creative-next/phase-1b/core/create-new-kmz.mjs",
+          "sha256": "65375b4b1d0e88913517914f73496e5b54d6ac34f9bd4d9c761421c2286bc4e6"
+        },
+        {
+          "file": "creative-next/phase-1b/core/dependent-circles.mjs",
+          "sha256": "1ef693ff65bc1c31ed06a1b660960ab32ba802c8368c5dd8fc4d19999ca12aa2"
+        },
+        {
+          "file": "creative-next/phase-1b/core/diagnose-kmz-candidate.mjs",
+          "sha256": "864b1ef5f507385fdf5064439b5b4d63660a622e4cdc193c1611b68596a0e39a"
+        },
+        {
+          "file": "creative-next/phase-1b/core/export-kmz.mjs",
+          "sha256": "77ed51bd0ad025be291115a6d45717fd726e93d42536f36cc5dcfd8890d72878"
+        },
+        {
+          "file": "creative-next/phase-1b/core/journal-save.mjs",
+          "sha256": "1286d40ce990895ac9becd3ef8b445d757252817a68ed9f0214ce117c848da65"
+        },
+        {
+          "file": "creative-next/phase-1b/core/legacy-kasai-convert.mjs",
+          "sha256": "df6947d73adc2f2c7a27fd8092e9e3a09da664245758eda3aa45582e9b7c5351"
+        },
+        {
+          "file": "creative-next/phase-1b/core/legacy-shape-audit.mjs",
+          "sha256": "092479c689031bc34bc0a46a65afb0e2ecefe21c3f2174cd4551f51f25852fcb"
+        },
+        {
+          "file": "creative-next/phase-1b/core/stage-kmz.mjs",
+          "sha256": "e32bb6aacad2060073c5509497fd8c7ef18a9f24416a34aac09e21f1da233cc1"
+        },
+        {
+          "file": "creative-next/phase-1b/integration/legacy-poi-preview.mjs",
+          "sha256": "9a90dee07da01a0e6964294d0270a15d24bd8fdfdb98a9d30275e0c0b2ecc530"
+        },
+        {
+          "file": "creative-next/phase-1b/integration/phase1a-fresh-bridge.mjs",
+          "sha256": "783f865919eb17e764c9fd40b8432fde20bdf7a73d167c7c6948941036bad85a"
+        },
+        {
+          "file": "creative-next/integration/creative-next-original-leaflet-overlay.mjs",
+          "sha256": "513e4e19d73c7a92a0d07caa12fc1882fd50006ffbdf764ed5ca48b1599deae5"
+        },
+        {
+          "file": "creative-next/integration/creative-next-original-new-poi-sheet.mjs",
+          "sha256": "5186e6e72983d19cea195044d765bd5aa5a0ba19a9ab9b9dceeb8d7c2e5aa841"
+        },
+        {
+          "file": "creative-next/integration/creative-next-original-poi-popup.mjs",
+          "sha256": "3a42beede3a0fe02630479538e8502c6c5113c8802a9033321dd1ee759ee0d24"
+        },
+        {
+          "file": "creative-next/integration/exclusive-creative-control.mjs",
+          "sha256": "fdedb92ed60c70c3da8abfa88960a4e12582ec3d2f93c410564883be26f80832"
+        },
+        {
+          "file": "creative-next/integration/original-file-review.mjs",
+          "sha256": "07644db87c8f2beb3d1cff6f648c086ee891218afe00e9f295b68fd16eea47df"
+        },
+        {
+          "file": "creative-next/integration/original-layer-counts.mjs",
+          "sha256": "8f97db11f9d7889eb845806a732aa5a3723a15d8d7dbccd001a0932d9ea74f0e"
+        },
+        {
+          "file": "creative-next/integration/original-optional-circles-r30.mjs",
+          "sha256": "cbd36eaa9c277912028eda2bca62536a4b3189b0af8c716de34bc417eff7bc7f"
+        },
+        {
+          "file": "creative-next/integration/original-placement-r30.mjs",
+          "sha256": "b8ed635bab0836d2a517c90a92ee563872ff42ee0495464ec072b79fc1019a22"
+        },
+        {
+          "file": "creative-next/integration/original-ui-buttons-fixture.mjs",
+          "sha256": "3d1f75223f6a7b5b64ec1de9c3b8e78bb603a184cc4d6dc5d27121b052e76c4f"
+        },
+        {
+          "file": "creative-next/integration/real-engine-original-ui.mjs",
+          "sha256": "235c0a67d7d96a5d67b6d5de0d6f6cc08a0230491e9e19626ab1b28b5d2a5d47"
+        }
+      ]
+    },
+    "partB1Only": true,
+    "partB2": "NOT_STARTED",
+    "partB3": "NOT_STARTED",
+    "partB4": "NOT_STARTED",
+    "storageEnabled": false,
+    "deployed": false,
+    "progress": "85% / Phase 1 HOLD",
+    "safariRealDevice": "NOT_TESTED"
+  },
+  "browser": {
+    "status": "PASS",
+    "forceClicksUsed": 0,
+    "syntheticOnly": true,
+    "results": [
+      {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "status": "PASS",
+        "flow": "add edit move undo redo change-kind delete undo",
+        "originalFunctionsExecuted": 0,
+        "editCancelUnchanged": true,
+        "renderFault": {
+          "adapter": {
+            "stopped": false,
+            "fault": true,
+            "refreshes": 10,
+            "pendingEdits": 0,
+            "sessionCount": 1,
+            "listeners": 3,
+            "history": {
+              "undo": 6,
+              "redo": 0
+            }
+          },
+          "message": "HOLD：変更済みですが描画を確認できません",
+          "history": {
+            "undo": 6,
+            "redo": 0
+          }
+        },
+        "protection": {
+          "ui": {
+            "mode": "PART_B1_POI_ONLY",
+            "dataConnected": true,
+            "stopped": false,
+            "mapCount": 1,
+            "proposals": 10,
+            "resources": {
+              "listeners": 48,
+              "timers": 13,
+              "rafs": 0,
+              "animations": 0,
+              "observers": 0,
+              "owned": 30
+            },
+            "camera": {
+              "center": [
+                35.691,
+                139.771
+              ],
+              "zoom": 17
+            },
+            "ui": {
+              "hand": "right",
+              "menu": false,
+              "mode": null,
+              "layer": "new-pokestop",
+              "radius": 50,
+              "selected": null,
+              "dragged": false,
+              "tool": "",
+              "aerial": false,
+              "areaVisible": false,
+              "visibleLayers": {
+                "existing-pokestop": true,
+                "existing-gym": true,
+                "existing-power": true,
+                "new-pokestop": true,
+                "new-gym": true,
+                "new-power": true
+              },
+              "circleRadii": [
+                50
+              ]
+            },
+            "areaPreview": {
+              "points": [],
+              "closing": false
+            },
+            "preview": null
+          },
+          "duplicate": {
+            "status": "HOLD",
+            "changed": false,
+            "reason": "ALREADY_HANDLED"
+          },
+          "unchanged": true,
+          "existing": true,
+          "denied": [
+            {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "EXISTING_OR_UNKNOWN_POI_READ_ONLY"
+            },
+            {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "EXISTING_OR_UNKNOWN_POI_READ_ONLY"
+            },
+            {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "EXISTING_OR_UNKNOWN_POI_READ_ONLY"
+            },
+            {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "EXISTING_OR_UNKNOWN_POI_READ_ONLY"
+            }
+          ],
+          "scope": [
+            {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "B1_SCOPE"
+            },
+            {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "B1_SCOPE"
+            },
+            {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "B1_SCOPE"
+            },
+            {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "B1_SCOPE"
+            },
+            {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "B1_SCOPE"
+            }
+          ],
+          "storage": [],
+          "mapStarts": 1,
+          "history": {
+            "undo": 5,
+            "redo": 0
+          },
+          "markers": 2,
+          "adapter": {
+            "stopped": false,
+            "fault": false,
+            "refreshes": 10,
+            "pendingEdits": 0,
+            "sessionCount": 1,
+            "listeners": 3,
+            "history": {
+              "undo": 5,
+              "redo": 0
+            }
+          }
+        },
+        "disposed": {
+          "ui": {
+            "mode": "PART_A_VIEW_ONLY",
+            "dataConnected": false,
+            "stopped": true,
+            "mapCount": 0,
+            "proposals": 12,
+            "resources": {
+              "listeners": 0,
+              "timers": 0,
+              "rafs": 0,
+              "animations": 0,
+              "observers": 0,
+              "owned": 0
+            },
+            "camera": null,
+            "ui": {
+              "hand": "right",
+              "menu": false,
+              "mode": null,
+              "layer": "new-pokestop",
+              "radius": 50,
+              "selected": null,
+              "dragged": false,
+              "tool": "",
+              "aerial": false,
+              "areaVisible": false,
+              "visibleLayers": {
+                "existing-pokestop": true,
+                "existing-gym": true,
+                "existing-power": true,
+                "new-pokestop": true,
+                "new-gym": true,
+                "new-power": true
+              },
+              "circleRadii": [
+                50
+              ]
+            },
+            "areaPreview": {
+              "points": [],
+              "closing": false
+            },
+            "preview": null
+          },
+          "adapter": {
+            "stopped": true,
+            "fault": true,
+            "refreshes": 10,
+            "pendingEdits": 0,
+            "sessionCount": 0,
+            "listeners": 0
+          },
+          "listeners": []
+        },
+        "errors": []
+      },
+      {
+        "viewport": {
+          "width": 393,
+          "height": 852
+        },
+        "status": "PASS",
+        "flow": "add edit move undo redo change-kind delete undo",
+        "originalFunctionsExecuted": 0,
+        "editCancelUnchanged": true,
+        "renderFault": {
+          "adapter": {
+            "stopped": false,
+            "fault": true,
+            "refreshes": 10,
+            "pendingEdits": 0,
+            "sessionCount": 1,
+            "listeners": 3,
+            "history": {
+              "undo": 6,
+              "redo": 0
+            }
+          },
+          "message": "HOLD：変更済みですが描画を確認できません",
+          "history": {
+            "undo": 6,
+            "redo": 0
+          }
+        },
+        "protection": {
+          "ui": {
+            "mode": "PART_B1_POI_ONLY",
+            "dataConnected": true,
+            "stopped": false,
+            "mapCount": 1,
+            "proposals": 10,
+            "resources": {
+              "listeners": 48,
+              "timers": 13,
+              "rafs": 0,
+              "animations": 0,
+              "observers": 0,
+              "owned": 30
+            },
+            "camera": {
+              "center": [
+                35.691,
+                139.771
+              ],
+              "zoom": 17
+            },
+            "ui": {
+              "hand": "right",
+              "menu": false,
+              "mode": null,
+              "layer": "new-pokestop",
+              "radius": 50,
+              "selected": null,
+              "dragged": false,
+              "tool": "",
+              "aerial": false,
+              "areaVisible": false,
+              "visibleLayers": {
+                "existing-pokestop": true,
+                "existing-gym": true,
+                "existing-power": true,
+                "new-pokestop": true,
+                "new-gym": true,
+                "new-power": true
+              },
+              "circleRadii": [
+                50
+              ]
+            },
+            "areaPreview": {
+              "points": [],
+              "closing": false
+            },
+            "preview": null
+          },
+          "duplicate": {
+            "status": "HOLD",
+            "changed": false,
+            "reason": "ALREADY_HANDLED"
+          },
+          "unchanged": true,
+          "existing": true,
+          "denied": [
+            {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "EXISTING_OR_UNKNOWN_POI_READ_ONLY"
+            },
+            {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "EXISTING_OR_UNKNOWN_POI_READ_ONLY"
+            },
+            {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "EXISTING_OR_UNKNOWN_POI_READ_ONLY"
+            },
+            {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "EXISTING_OR_UNKNOWN_POI_READ_ONLY"
+            }
+          ],
+          "scope": [
+            {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "B1_SCOPE"
+            },
+            {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "B1_SCOPE"
+            },
+            {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "B1_SCOPE"
+            },
+            {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "B1_SCOPE"
+            },
+            {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "B1_SCOPE"
+            }
+          ],
+          "storage": [],
+          "mapStarts": 1,
+          "history": {
+            "undo": 5,
+            "redo": 0
+          },
+          "markers": 2,
+          "adapter": {
+            "stopped": false,
+            "fault": false,
+            "refreshes": 10,
+            "pendingEdits": 0,
+            "sessionCount": 1,
+            "listeners": 3,
+            "history": {
+              "undo": 5,
+              "redo": 0
+            }
+          }
+        },
+        "disposed": {
+          "ui": {
+            "mode": "PART_A_VIEW_ONLY",
+            "dataConnected": false,
+            "stopped": true,
+            "mapCount": 0,
+            "proposals": 12,
+            "resources": {
+              "listeners": 0,
+              "timers": 0,
+              "rafs": 0,
+              "animations": 0,
+              "observers": 0,
+              "owned": 0
+            },
+            "camera": null,
+            "ui": {
+              "hand": "right",
+              "menu": false,
+              "mode": null,
+              "layer": "new-pokestop",
+              "radius": 50,
+              "selected": null,
+              "dragged": false,
+              "tool": "",
+              "aerial": false,
+              "areaVisible": false,
+              "visibleLayers": {
+                "existing-pokestop": true,
+                "existing-gym": true,
+                "existing-power": true,
+                "new-pokestop": true,
+                "new-gym": true,
+                "new-power": true
+              },
+              "circleRadii": [
+                50
+              ]
+            },
+            "areaPreview": {
+              "points": [],
+              "closing": false
+            },
+            "preview": null
+          },
+          "adapter": {
+            "stopped": true,
+            "fault": true,
+            "refreshes": 10,
+            "pendingEdits": 0,
+            "sessionCount": 0,
+            "listeners": 0
+          },
+          "listeners": []
+        },
+        "errors": []
+      },
+      {
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "status": "PASS",
+        "flow": "add edit move undo redo change-kind delete undo",
+        "originalFunctionsExecuted": 0,
+        "editCancelUnchanged": true,
+        "renderFault": {
+          "adapter": {
+            "stopped": false,
+            "fault": true,
+            "refreshes": 10,
+            "pendingEdits": 0,
+            "sessionCount": 1,
+            "listeners": 3,
+            "history": {
+              "undo": 6,
+              "redo": 0
+            }
+          },
+          "message": "HOLD：変更済みですが描画を確認できません",
+          "history": {
+            "undo": 6,
+            "redo": 0
+          }
+        },
+        "protection": {
+          "ui": {
+            "mode": "PART_B1_POI_ONLY",
+            "dataConnected": true,
+            "stopped": false,
+            "mapCount": 1,
+            "proposals": 10,
+            "resources": {
+              "listeners": 48,
+              "timers": 13,
+              "rafs": 0,
+              "animations": 0,
+              "observers": 0,
+              "owned": 30
+            },
+            "camera": {
+              "center": [
+                35.691,
+                139.771
+              ],
+              "zoom": 17
+            },
+            "ui": {
+              "hand": "right",
+              "menu": false,
+              "mode": null,
+              "layer": "new-pokestop",
+              "radius": 50,
+              "selected": null,
+              "dragged": false,
+              "tool": "",
+              "aerial": false,
+              "areaVisible": false,
+              "visibleLayers": {
+                "existing-pokestop": true,
+                "existing-gym": true,
+                "existing-power": true,
+                "new-pokestop": true,
+                "new-gym": true,
+                "new-power": true
+              },
+              "circleRadii": [
+                50
+              ]
+            },
+            "areaPreview": {
+              "points": [],
+              "closing": false
+            },
+            "preview": null
+          },
+          "duplicate": {
+            "status": "HOLD",
+            "changed": false,
+            "reason": "ALREADY_HANDLED"
+          },
+          "unchanged": true,
+          "existing": true,
+          "denied": [
+            {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "EXISTING_OR_UNKNOWN_POI_READ_ONLY"
+            },
+            {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "EXISTING_OR_UNKNOWN_POI_READ_ONLY"
+            },
+            {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "EXISTING_OR_UNKNOWN_POI_READ_ONLY"
+            },
+            {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "EXISTING_OR_UNKNOWN_POI_READ_ONLY"
+            }
+          ],
+          "scope": [
+            {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "B1_SCOPE"
+            },
+            {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "B1_SCOPE"
+            },
+            {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "B1_SCOPE"
+            },
+            {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "B1_SCOPE"
+            },
+            {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "B1_SCOPE"
+            }
+          ],
+          "storage": [],
+          "mapStarts": 1,
+          "history": {
+            "undo": 5,
+            "redo": 0
+          },
+          "markers": 2,
+          "adapter": {
+            "stopped": false,
+            "fault": false,
+            "refreshes": 10,
+            "pendingEdits": 0,
+            "sessionCount": 1,
+            "listeners": 3,
+            "history": {
+              "undo": 5,
+              "redo": 0
+            }
+          }
+        },
+        "disposed": {
+          "ui": {
+            "mode": "PART_A_VIEW_ONLY",
+            "dataConnected": false,
+            "stopped": true,
+            "mapCount": 0,
+            "proposals": 12,
+            "resources": {
+              "listeners": 0,
+              "timers": 0,
+              "rafs": 0,
+              "animations": 0,
+              "observers": 0,
+              "owned": 0
+            },
+            "camera": null,
+            "ui": {
+              "hand": "right",
+              "menu": false,
+              "mode": null,
+              "layer": "new-pokestop",
+              "radius": 50,
+              "selected": null,
+              "dragged": false,
+              "tool": "",
+              "aerial": false,
+              "areaVisible": false,
+              "visibleLayers": {
+                "existing-pokestop": true,
+                "existing-gym": true,
+                "existing-power": true,
+                "new-pokestop": true,
+                "new-gym": true,
+                "new-power": true
+              },
+              "circleRadii": [
+                50
+              ]
+            },
+            "areaPreview": {
+              "points": [],
+              "closing": false
+            },
+            "preview": null
+          },
+          "adapter": {
+            "stopped": true,
+            "fault": true,
+            "refreshes": 10,
+            "pendingEdits": 0,
+            "sessionCount": 0,
+            "listeners": 0
+          },
+          "listeners": []
+        },
+        "errors": []
+      }
+    ]
+  },
+  "ui": {
+    "status": "PASS",
+    "b1DerivedSha256": "2e829851263ea43109cc5ce2d38a56fdc7472941382623b257d496e2d05d5764",
+    "partAMode": "frozen presentation; B1 commands disabled for Part A HOLD fixtures",
+    "scenes": [
+      {
+        "width": 390,
+        "status": "PASS",
+        "passed": 52,
+        "total": 52,
+        "operations": [
+          {
+            "name": "rules-escape",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "position-preview-new-pokestop",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "position-preview-new-gym",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "position-preview-new-power",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "add-lever-snap",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "lever-cancel-restores-surface",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "coordinate-apply-close",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "coordinate-confirm-hold",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "list-swipe-page",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "list-close",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "coordinate-copy-value",
+            "pass": true,
+            "details": [
+              [
+                "35.6840000"
+              ],
+              [
+                "35.6840000"
+              ]
+            ]
+          },
+          {
+            "name": "chooser-cancel",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "area-confirm-hold",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "area-cancel-teardown",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "area-delete-hold",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "area-view-immutable",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "area-redraw-hold",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "ruler-exit",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "sheet-handle-swipe",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "move-lever-snap",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "fab-drag-no-menu",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "map-drag-camera",
+            "pass": true,
+            "details": [
+              {
+                "center": [
+                  35.682764354753225,
+                  139.76104974746707
+                ],
+                "zoom": 16
+              },
+              {
+                "center": [
+                  35.682764354753225,
+                  139.76104974746707
+                ],
+                "zoom": 16
+              }
+            ]
+          },
+          {
+            "name": "map-double-click-zoom",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "map-double-tap-zoom",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "map-pinch-zoom",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "addition-animation-cleanup",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "startup-button-hold",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "startup-transition-completes",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "all-display-actions-view-immutable",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "plus-two-step-new-pokestop",
+            "pass": true,
+            "details": {
+              "stageOne": true,
+              "stageTwo": true,
+              "confirm": true,
+              "cancelled": true,
+              "opened": {
+                "status": {
+                  "mode": "PART_A_VIEW_ONLY",
+                  "dataConnected": false,
+                  "stopped": false,
+                  "mapCount": 1,
+                  "proposals": 0,
+                  "resources": {
+                    "listeners": 48,
+                    "timers": 0,
+                    "rafs": 0,
+                    "animations": 0,
+                    "observers": 0,
+                    "owned": 30
+                  },
+                  "camera": {
+                    "center": [
+                      35.6811957124181,
+                      139.76710081100467
+                    ],
+                    "zoom": 16
+                  },
+                  "ui": {
+                    "hand": "right",
+                    "menu": true,
+                    "mode": null,
+                    "layer": "new-pokestop",
+                    "radius": 50,
+                    "selected": null,
+                    "dragged": false,
+                    "tool": "",
+                    "aerial": false,
+                    "areaVisible": false,
+                    "visibleLayers": {
+                      "existing-pokestop": true,
+                      "existing-gym": true,
+                      "existing-power": true,
+                      "new-pokestop": true,
+                      "new-gym": true,
+                      "new-power": true
+                    },
+                    "circleRadii": []
+                  },
+                  "areaPreview": {
+                    "points": [],
+                    "closing": false
+                  },
+                  "preview": null
+                },
+                "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}",
+                "requests": 0,
+                "bubbles": [
+                  "new-pokestop",
+                  "new-gym",
+                  "new-power"
+                ],
+                "bar": false
+              },
+              "selected": {
+                "status": {
+                  "mode": "PART_A_VIEW_ONLY",
+                  "dataConnected": false,
+                  "stopped": false,
+                  "mapCount": 1,
+                  "proposals": 0,
+                  "resources": {
+                    "listeners": 59,
+                    "timers": 1,
+                    "rafs": 0,
+                    "animations": 0,
+                    "observers": 0,
+                    "owned": 34
+                  },
+                  "camera": {
+                    "center": [
+                      35.6811957124181,
+                      139.76710081100467
+                    ],
+                    "zoom": 16
+                  },
+                  "ui": {
+                    "hand": "right",
+                    "menu": false,
+                    "mode": "add",
+                    "layer": "new-pokestop",
+                    "radius": 50,
+                    "selected": null,
+                    "dragged": false,
+                    "tool": "",
+                    "aerial": false,
+                    "areaVisible": false,
+                    "visibleLayers": {
+                      "existing-pokestop": true,
+                      "existing-gym": true,
+                      "existing-power": true,
+                      "new-pokestop": true,
+                      "new-gym": true,
+                      "new-power": true
+                    },
+                    "circleRadii": []
+                  },
+                  "areaPreview": {
+                    "points": [],
+                    "closing": false
+                  },
+                  "preview": {
+                    "radius": 50,
+                    "position": {
+                      "lat": 35.6811957124181,
+                      "lng": 139.76710081100467
+                    }
+                  }
+                },
+                "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}",
+                "requests": 0,
+                "bar": true
+              },
+              "held": {
+                "requests": 1,
+                "last": {
+                  "action": {
+                    "type": "add",
+                    "kind": "new-pokestop",
+                    "position": {
+                      "lat": 35.6811957124181,
+                      "lng": 139.76710081100467
+                    },
+                    "requestId": "r31-ui-1"
+                  },
+                  "result": {
+                    "status": "HOLD",
+                    "changed": false,
+                    "reason": "PART_A_DATA_DISCONNECTED"
+                  }
+                },
+                "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}"
+              }
+            }
+          },
+          {
+            "name": "plus-two-step-new-gym",
+            "pass": true,
+            "details": {
+              "stageOne": true,
+              "stageTwo": true,
+              "confirm": true,
+              "cancelled": true,
+              "opened": {
+                "status": {
+                  "mode": "PART_A_VIEW_ONLY",
+                  "dataConnected": false,
+                  "stopped": false,
+                  "mapCount": 1,
+                  "proposals": 1,
+                  "resources": {
+                    "listeners": 48,
+                    "timers": 2,
+                    "rafs": 0,
+                    "animations": 0,
+                    "observers": 0,
+                    "owned": 30
+                  },
+                  "camera": {
+                    "center": [
+                      35.6811957124181,
+                      139.76710081100467
+                    ],
+                    "zoom": 16
+                  },
+                  "ui": {
+                    "hand": "right",
+                    "menu": true,
+                    "mode": null,
+                    "layer": "new-pokestop",
+                    "radius": 50,
+                    "selected": null,
+                    "dragged": false,
+                    "tool": "",
+                    "aerial": false,
+                    "areaVisible": false,
+                    "visibleLayers": {
+                      "existing-pokestop": true,
+                      "existing-gym": true,
+                      "existing-power": true,
+                      "new-pokestop": true,
+                      "new-gym": true,
+                      "new-power": true
+                    },
+                    "circleRadii": []
+                  },
+                  "areaPreview": {
+                    "points": [],
+                    "closing": false
+                  },
+                  "preview": null
+                },
+                "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}",
+                "requests": 1,
+                "bubbles": [
+                  "new-pokestop",
+                  "new-gym",
+                  "new-power"
+                ],
+                "bar": false
+              },
+              "selected": {
+                "status": {
+                  "mode": "PART_A_VIEW_ONLY",
+                  "dataConnected": false,
+                  "stopped": false,
+                  "mapCount": 1,
+                  "proposals": 1,
+                  "resources": {
+                    "listeners": 59,
+                    "timers": 3,
+                    "rafs": 0,
+                    "animations": 0,
+                    "observers": 0,
+                    "owned": 34
+                  },
+                  "camera": {
+                    "center": [
+                      35.6811957124181,
+                      139.76710081100467
+                    ],
+                    "zoom": 16
+                  },
+                  "ui": {
+                    "hand": "right",
+                    "menu": false,
+                    "mode": "add",
+                    "layer": "new-gym",
+                    "radius": 50,
+                    "selected": null,
+                    "dragged": false,
+                    "tool": "",
+                    "aerial": false,
+                    "areaVisible": false,
+                    "visibleLayers": {
+                      "existing-pokestop": true,
+                      "existing-gym": true,
+                      "existing-power": true,
+                      "new-pokestop": true,
+                      "new-gym": true,
+                      "new-power": true
+                    },
+                    "circleRadii": []
+                  },
+                  "areaPreview": {
+                    "points": [],
+                    "closing": false
+                  },
+                  "preview": {
+                    "radius": 50,
+                    "position": {
+                      "lat": 35.6811957124181,
+                      "lng": 139.76710081100467
+                    }
+                  }
+                },
+                "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}",
+                "requests": 1,
+                "bar": true
+              },
+              "held": {
+                "requests": 2,
+                "last": {
+                  "action": {
+                    "type": "add",
+                    "kind": "new-gym",
+                    "position": {
+                      "lat": 35.6811957124181,
+                      "lng": 139.76710081100467
+                    },
+                    "requestId": "r31-ui-2"
+                  },
+                  "result": {
+                    "status": "HOLD",
+                    "changed": false,
+                    "reason": "PART_A_DATA_DISCONNECTED"
+                  }
+                },
+                "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}"
+              }
+            }
+          },
+          {
+            "name": "plus-two-step-new-power",
+            "pass": true,
+            "details": {
+              "stageOne": true,
+              "stageTwo": true,
+              "confirm": true,
+              "cancelled": true,
+              "opened": {
+                "status": {
+                  "mode": "PART_A_VIEW_ONLY",
+                  "dataConnected": false,
+                  "stopped": false,
+                  "mapCount": 1,
+                  "proposals": 2,
+                  "resources": {
+                    "listeners": 48,
+                    "timers": 3,
+                    "rafs": 0,
+                    "animations": 0,
+                    "observers": 0,
+                    "owned": 30
+                  },
+                  "camera": {
+                    "center": [
+                      35.6811957124181,
+                      139.76710081100467
+                    ],
+                    "zoom": 16
+                  },
+                  "ui": {
+                    "hand": "right",
+                    "menu": true,
+                    "mode": null,
+                    "layer": "new-gym",
+                    "radius": 50,
+                    "selected": null,
+                    "dragged": false,
+                    "tool": "",
+                    "aerial": false,
+                    "areaVisible": false,
+                    "visibleLayers": {
+                      "existing-pokestop": true,
+                      "existing-gym": true,
+                      "existing-power": true,
+                      "new-pokestop": true,
+                      "new-gym": true,
+                      "new-power": true
+                    },
+                    "circleRadii": []
+                  },
+                  "areaPreview": {
+                    "points": [],
+                    "closing": false
+                  },
+                  "preview": null
+                },
+                "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}",
+                "requests": 2,
+                "bubbles": [
+                  "new-pokestop",
+                  "new-gym",
+                  "new-power"
+                ],
+                "bar": false
+              },
+              "selected": {
+                "status": {
+                  "mode": "PART_A_VIEW_ONLY",
+                  "dataConnected": false,
+                  "stopped": false,
+                  "mapCount": 1,
+                  "proposals": 2,
+                  "resources": {
+                    "listeners": 59,
+                    "timers": 3,
+                    "rafs": 0,
+                    "animations": 0,
+                    "observers": 0,
+                    "owned": 34
+                  },
+                  "camera": {
+                    "center": [
+                      35.6811957124181,
+                      139.76710081100467
+                    ],
+                    "zoom": 16
+                  },
+                  "ui": {
+                    "hand": "right",
+                    "menu": false,
+                    "mode": "add",
+                    "layer": "new-power",
+                    "radius": 50,
+                    "selected": null,
+                    "dragged": false,
+                    "tool": "",
+                    "aerial": false,
+                    "areaVisible": false,
+                    "visibleLayers": {
+                      "existing-pokestop": true,
+                      "existing-gym": true,
+                      "existing-power": true,
+                      "new-pokestop": true,
+                      "new-gym": true,
+                      "new-power": true
+                    },
+                    "circleRadii": []
+                  },
+                  "areaPreview": {
+                    "points": [],
+                    "closing": false
+                  },
+                  "preview": {
+                    "radius": 50,
+                    "position": {
+                      "lat": 35.6811957124181,
+                      "lng": 139.76710081100467
+                    }
+                  }
+                },
+                "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}",
+                "requests": 2,
+                "bar": true
+              },
+              "held": {
+                "requests": 3,
+                "last": {
+                  "action": {
+                    "type": "add",
+                    "kind": "new-power",
+                    "position": {
+                      "lat": 35.6811957124181,
+                      "lng": 139.76710081100467
+                    },
+                    "requestId": "r31-ui-3"
+                  },
+                  "result": {
+                    "status": "HOLD",
+                    "changed": false,
+                    "reason": "PART_A_DATA_DISCONNECTED"
+                  }
+                },
+                "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "width": 393,
+        "status": "PASS",
+        "passed": 52,
+        "total": 52,
+        "operations": [
+          {
+            "name": "rules-escape",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "position-preview-new-pokestop",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "position-preview-new-gym",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "position-preview-new-power",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "add-lever-snap",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "lever-cancel-restores-surface",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "coordinate-apply-close",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "coordinate-confirm-hold",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "list-swipe-page",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "list-close",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "coordinate-copy-value",
+            "pass": true,
+            "details": [
+              [
+                "35.6840000"
+              ],
+              [
+                "35.6840000"
+              ]
+            ]
+          },
+          {
+            "name": "chooser-cancel",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "area-confirm-hold",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "area-cancel-teardown",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "area-delete-hold",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "area-view-immutable",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "area-redraw-hold",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "ruler-exit",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "sheet-handle-swipe",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "move-lever-snap",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "fab-drag-no-menu",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "map-drag-camera",
+            "pass": true,
+            "details": [
+              {
+                "center": [
+                  35.682764354753225,
+                  139.76106047630313
+                ],
+                "zoom": 16
+              },
+              {
+                "center": [
+                  35.682764354753225,
+                  139.76106047630313
+                ],
+                "zoom": 16
+              }
+            ]
+          },
+          {
+            "name": "map-double-click-zoom",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "map-double-tap-zoom",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "map-pinch-zoom",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "addition-animation-cleanup",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "startup-button-hold",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "startup-transition-completes",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "all-display-actions-view-immutable",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "plus-two-step-new-pokestop",
+            "pass": true,
+            "details": {
+              "stageOne": true,
+              "stageTwo": true,
+              "confirm": true,
+              "cancelled": true,
+              "opened": {
+                "status": {
+                  "mode": "PART_A_VIEW_ONLY",
+                  "dataConnected": false,
+                  "stopped": false,
+                  "mapCount": 1,
+                  "proposals": 0,
+                  "resources": {
+                    "listeners": 48,
+                    "timers": 0,
+                    "rafs": 0,
+                    "animations": 0,
+                    "observers": 0,
+                    "owned": 30
+                  },
+                  "camera": {
+                    "center": [
+                      35.6811957124181,
+                      139.7670900821686
+                    ],
+                    "zoom": 16
+                  },
+                  "ui": {
+                    "hand": "right",
+                    "menu": true,
+                    "mode": null,
+                    "layer": "new-pokestop",
+                    "radius": 50,
+                    "selected": null,
+                    "dragged": false,
+                    "tool": "",
+                    "aerial": false,
+                    "areaVisible": false,
+                    "visibleLayers": {
+                      "existing-pokestop": true,
+                      "existing-gym": true,
+                      "existing-power": true,
+                      "new-pokestop": true,
+                      "new-gym": true,
+                      "new-power": true
+                    },
+                    "circleRadii": []
+                  },
+                  "areaPreview": {
+                    "points": [],
+                    "closing": false
+                  },
+                  "preview": null
+                },
+                "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}",
+                "requests": 0,
+                "bubbles": [
+                  "new-pokestop",
+                  "new-gym",
+                  "new-power"
+                ],
+                "bar": false
+              },
+              "selected": {
+                "status": {
+                  "mode": "PART_A_VIEW_ONLY",
+                  "dataConnected": false,
+                  "stopped": false,
+                  "mapCount": 1,
+                  "proposals": 0,
+                  "resources": {
+                    "listeners": 59,
+                    "timers": 1,
+                    "rafs": 0,
+                    "animations": 0,
+                    "observers": 0,
+                    "owned": 34
+                  },
+                  "camera": {
+                    "center": [
+                      35.6811957124181,
+                      139.7670900821686
+                    ],
+                    "zoom": 16
+                  },
+                  "ui": {
+                    "hand": "right",
+                    "menu": false,
+                    "mode": "add",
+                    "layer": "new-pokestop",
+                    "radius": 50,
+                    "selected": null,
+                    "dragged": false,
+                    "tool": "",
+                    "aerial": false,
+                    "areaVisible": false,
+                    "visibleLayers": {
+                      "existing-pokestop": true,
+                      "existing-gym": true,
+                      "existing-power": true,
+                      "new-pokestop": true,
+                      "new-gym": true,
+                      "new-power": true
+                    },
+                    "circleRadii": []
+                  },
+                  "areaPreview": {
+                    "points": [],
+                    "closing": false
+                  },
+                  "preview": {
+                    "radius": 50,
+                    "position": {
+                      "lat": 35.6811957124181,
+                      "lng": 139.7670900821686
+                    }
+                  }
+                },
+                "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}",
+                "requests": 0,
+                "bar": true
+              },
+              "held": {
+                "requests": 1,
+                "last": {
+                  "action": {
+                    "type": "add",
+                    "kind": "new-pokestop",
+                    "position": {
+                      "lat": 35.6811957124181,
+                      "lng": 139.7670900821686
+                    },
+                    "requestId": "r31-ui-1"
+                  },
+                  "result": {
+                    "status": "HOLD",
+                    "changed": false,
+                    "reason": "PART_A_DATA_DISCONNECTED"
+                  }
+                },
+                "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}"
+              }
+            }
+          },
+          {
+            "name": "plus-two-step-new-gym",
+            "pass": true,
+            "details": {
+              "stageOne": true,
+              "stageTwo": true,
+              "confirm": true,
+              "cancelled": true,
+              "opened": {
+                "status": {
+                  "mode": "PART_A_VIEW_ONLY",
+                  "dataConnected": false,
+                  "stopped": false,
+                  "mapCount": 1,
+                  "proposals": 1,
+                  "resources": {
+                    "listeners": 48,
+                    "timers": 2,
+                    "rafs": 0,
+                    "animations": 0,
+                    "observers": 0,
+                    "owned": 30
+                  },
+                  "camera": {
+                    "center": [
+                      35.6811957124181,
+                      139.7670900821686
+                    ],
+                    "zoom": 16
+                  },
+                  "ui": {
+                    "hand": "right",
+                    "menu": true,
+                    "mode": null,
+                    "layer": "new-pokestop",
+                    "radius": 50,
+                    "selected": null,
+                    "dragged": false,
+                    "tool": "",
+                    "aerial": false,
+                    "areaVisible": false,
+                    "visibleLayers": {
+                      "existing-pokestop": true,
+                      "existing-gym": true,
+                      "existing-power": true,
+                      "new-pokestop": true,
+                      "new-gym": true,
+                      "new-power": true
+                    },
+                    "circleRadii": []
+                  },
+                  "areaPreview": {
+                    "points": [],
+                    "closing": false
+                  },
+                  "preview": null
+                },
+                "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}",
+                "requests": 1,
+                "bubbles": [
+                  "new-pokestop",
+                  "new-gym",
+                  "new-power"
+                ],
+                "bar": false
+              },
+              "selected": {
+                "status": {
+                  "mode": "PART_A_VIEW_ONLY",
+                  "dataConnected": false,
+                  "stopped": false,
+                  "mapCount": 1,
+                  "proposals": 1,
+                  "resources": {
+                    "listeners": 59,
+                    "timers": 3,
+                    "rafs": 0,
+                    "animations": 0,
+                    "observers": 0,
+                    "owned": 34
+                  },
+                  "camera": {
+                    "center": [
+                      35.6811957124181,
+                      139.7670900821686
+                    ],
+                    "zoom": 16
+                  },
+                  "ui": {
+                    "hand": "right",
+                    "menu": false,
+                    "mode": "add",
+                    "layer": "new-gym",
+                    "radius": 50,
+                    "selected": null,
+                    "dragged": false,
+                    "tool": "",
+                    "aerial": false,
+                    "areaVisible": false,
+                    "visibleLayers": {
+                      "existing-pokestop": true,
+                      "existing-gym": true,
+                      "existing-power": true,
+                      "new-pokestop": true,
+                      "new-gym": true,
+                      "new-power": true
+                    },
+                    "circleRadii": []
+                  },
+                  "areaPreview": {
+                    "points": [],
+                    "closing": false
+                  },
+                  "preview": {
+                    "radius": 50,
+                    "position": {
+                      "lat": 35.6811957124181,
+                      "lng": 139.7670900821686
+                    }
+                  }
+                },
+                "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}",
+                "requests": 1,
+                "bar": true
+              },
+              "held": {
+                "requests": 2,
+                "last": {
+                  "action": {
+                    "type": "add",
+                    "kind": "new-gym",
+                    "position": {
+                      "lat": 35.6811957124181,
+                      "lng": 139.7670900821686
+                    },
+                    "requestId": "r31-ui-2"
+                  },
+                  "result": {
+                    "status": "HOLD",
+                    "changed": false,
+                    "reason": "PART_A_DATA_DISCONNECTED"
+                  }
+                },
+                "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}"
+              }
+            }
+          },
+          {
+            "name": "plus-two-step-new-power",
+            "pass": true,
+            "details": {
+              "stageOne": true,
+              "stageTwo": true,
+              "confirm": true,
+              "cancelled": true,
+              "opened": {
+                "status": {
+                  "mode": "PART_A_VIEW_ONLY",
+                  "dataConnected": false,
+                  "stopped": false,
+                  "mapCount": 1,
+                  "proposals": 2,
+                  "resources": {
+                    "listeners": 48,
+                    "timers": 3,
+                    "rafs": 0,
+                    "animations": 0,
+                    "observers": 0,
+                    "owned": 30
+                  },
+                  "camera": {
+                    "center": [
+                      35.6811957124181,
+                      139.7670900821686
+                    ],
+                    "zoom": 16
+                  },
+                  "ui": {
+                    "hand": "right",
+                    "menu": true,
+                    "mode": null,
+                    "layer": "new-gym",
+                    "radius": 50,
+                    "selected": null,
+                    "dragged": false,
+                    "tool": "",
+                    "aerial": false,
+                    "areaVisible": false,
+                    "visibleLayers": {
+                      "existing-pokestop": true,
+                      "existing-gym": true,
+                      "existing-power": true,
+                      "new-pokestop": true,
+                      "new-gym": true,
+                      "new-power": true
+                    },
+                    "circleRadii": []
+                  },
+                  "areaPreview": {
+                    "points": [],
+                    "closing": false
+                  },
+                  "preview": null
+                },
+                "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}",
+                "requests": 2,
+                "bubbles": [
+                  "new-pokestop",
+                  "new-gym",
+                  "new-power"
+                ],
+                "bar": false
+              },
+              "selected": {
+                "status": {
+                  "mode": "PART_A_VIEW_ONLY",
+                  "dataConnected": false,
+                  "stopped": false,
+                  "mapCount": 1,
+                  "proposals": 2,
+                  "resources": {
+                    "listeners": 59,
+                    "timers": 3,
+                    "rafs": 0,
+                    "animations": 0,
+                    "observers": 0,
+                    "owned": 34
+                  },
+                  "camera": {
+                    "center": [
+                      35.6811957124181,
+                      139.7670900821686
+                    ],
+                    "zoom": 16
+                  },
+                  "ui": {
+                    "hand": "right",
+                    "menu": false,
+                    "mode": "add",
+                    "layer": "new-power",
+                    "radius": 50,
+                    "selected": null,
+                    "dragged": false,
+                    "tool": "",
+                    "aerial": false,
+                    "areaVisible": false,
+                    "visibleLayers": {
+                      "existing-pokestop": true,
+                      "existing-gym": true,
+                      "existing-power": true,
+                      "new-pokestop": true,
+                      "new-gym": true,
+                      "new-power": true
+                    },
+                    "circleRadii": []
+                  },
+                  "areaPreview": {
+                    "points": [],
+                    "closing": false
+                  },
+                  "preview": {
+                    "radius": 50,
+                    "position": {
+                      "lat": 35.6811957124181,
+                      "lng": 139.7670900821686
+                    }
+                  }
+                },
+                "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}",
+                "requests": 2,
+                "bar": true
+              },
+              "held": {
+                "requests": 3,
+                "last": {
+                  "action": {
+                    "type": "add",
+                    "kind": "new-power",
+                    "position": {
+                      "lat": 35.6811957124181,
+                      "lng": 139.7670900821686
+                    },
+                    "requestId": "r31-ui-3"
+                  },
+                  "result": {
+                    "status": "HOLD",
+                    "changed": false,
+                    "reason": "PART_A_DATA_DISCONNECTED"
+                  }
+                },
+                "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "width": 1366,
+        "status": "PASS",
+        "passed": 52,
+        "total": 52,
+        "operations": [
+          {
+            "name": "rules-escape",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "position-preview-new-pokestop",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "position-preview-new-gym",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "position-preview-new-power",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "add-lever-snap",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "lever-cancel-restores-surface",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "coordinate-apply-close",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "coordinate-confirm-hold",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "list-swipe-page",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "list-close",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "coordinate-copy-value",
+            "pass": true,
+            "details": [
+              [
+                "35.6840000"
+              ],
+              [
+                "35.6840000"
+              ]
+            ]
+          },
+          {
+            "name": "chooser-cancel",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "area-confirm-hold",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "area-cancel-teardown",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "area-delete-hold",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "area-view-immutable",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "area-redraw-hold",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "ruler-exit",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "sheet-handle-swipe",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "move-lever-snap",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "fab-drag-no-menu",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "map-drag-camera",
+            "pass": true,
+            "details": [
+              {
+                "center": [
+                  35.68238091169698,
+                  139.76153254508975
+                ],
+                "zoom": 17
+              },
+              {
+                "center": [
+                  35.68238091169698,
+                  139.76153254508975
+                ],
+                "zoom": 17
+              }
+            ]
+          },
+          {
+            "name": "map-double-click-zoom",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "map-double-tap-zoom",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "map-pinch-zoom",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "addition-animation-cleanup",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "startup-button-hold",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "startup-transition-completes",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "all-display-actions-view-immutable",
+            "pass": true,
+            "details": null
+          },
+          {
+            "name": "plus-two-step-new-pokestop",
+            "pass": true,
+            "details": {
+              "stageOne": true,
+              "stageTwo": true,
+              "confirm": true,
+              "cancelled": true,
+              "opened": {
+                "status": {
+                  "mode": "PART_A_VIEW_ONLY",
+                  "dataConnected": false,
+                  "stopped": false,
+                  "mapCount": 1,
+                  "proposals": 0,
+                  "resources": {
+                    "listeners": 48,
+                    "timers": 0,
+                    "rafs": 0,
+                    "animations": 0,
+                    "observers": 0,
+                    "owned": 30
+                  },
+                  "camera": {
+                    "center": [
+                      35.6811957124181,
+                      139.76710081100467
+                    ],
+                    "zoom": 16
+                  },
+                  "ui": {
+                    "hand": "right",
+                    "menu": true,
+                    "mode": null,
+                    "layer": "new-pokestop",
+                    "radius": 50,
+                    "selected": null,
+                    "dragged": false,
+                    "tool": "",
+                    "aerial": false,
+                    "areaVisible": false,
+                    "visibleLayers": {
+                      "existing-pokestop": true,
+                      "existing-gym": true,
+                      "existing-power": true,
+                      "new-pokestop": true,
+                      "new-gym": true,
+                      "new-power": true
+                    },
+                    "circleRadii": []
+                  },
+                  "areaPreview": {
+                    "points": [],
+                    "closing": false
+                  },
+                  "preview": null
+                },
+                "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}",
+                "requests": 0,
+                "bubbles": [
+                  "new-pokestop",
+                  "new-gym",
+                  "new-power"
+                ],
+                "bar": false
+              },
+              "selected": {
+                "status": {
+                  "mode": "PART_A_VIEW_ONLY",
+                  "dataConnected": false,
+                  "stopped": false,
+                  "mapCount": 1,
+                  "proposals": 0,
+                  "resources": {
+                    "listeners": 59,
+                    "timers": 1,
+                    "rafs": 0,
+                    "animations": 0,
+                    "observers": 0,
+                    "owned": 34
+                  },
+                  "camera": {
+                    "center": [
+                      35.6811957124181,
+                      139.76710081100467
+                    ],
+                    "zoom": 16
+                  },
+                  "ui": {
+                    "hand": "right",
+                    "menu": false,
+                    "mode": "add",
+                    "layer": "new-pokestop",
+                    "radius": 50,
+                    "selected": null,
+                    "dragged": false,
+                    "tool": "",
+                    "aerial": false,
+                    "areaVisible": false,
+                    "visibleLayers": {
+                      "existing-pokestop": true,
+                      "existing-gym": true,
+                      "existing-power": true,
+                      "new-pokestop": true,
+                      "new-gym": true,
+                      "new-power": true
+                    },
+                    "circleRadii": []
+                  },
+                  "areaPreview": {
+                    "points": [],
+                    "closing": false
+                  },
+                  "preview": {
+                    "radius": 50,
+                    "position": {
+                      "lat": 35.6811957124181,
+                      "lng": 139.76710081100467
+                    }
+                  }
+                },
+                "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}",
+                "requests": 0,
+                "bar": true
+              },
+              "held": {
+                "requests": 1,
+                "last": {
+                  "action": {
+                    "type": "add",
+                    "kind": "new-pokestop",
+                    "position": {
+                      "lat": 35.6811957124181,
+                      "lng": 139.76710081100467
+                    },
+                    "requestId": "r31-ui-1"
+                  },
+                  "result": {
+                    "status": "HOLD",
+                    "changed": false,
+                    "reason": "PART_A_DATA_DISCONNECTED"
+                  }
+                },
+                "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}"
+              }
+            }
+          },
+          {
+            "name": "plus-two-step-new-gym",
+            "pass": true,
+            "details": {
+              "stageOne": true,
+              "stageTwo": true,
+              "confirm": true,
+              "cancelled": true,
+              "opened": {
+                "status": {
+                  "mode": "PART_A_VIEW_ONLY",
+                  "dataConnected": false,
+                  "stopped": false,
+                  "mapCount": 1,
+                  "proposals": 1,
+                  "resources": {
+                    "listeners": 48,
+                    "timers": 2,
+                    "rafs": 0,
+                    "animations": 0,
+                    "observers": 0,
+                    "owned": 30
+                  },
+                  "camera": {
+                    "center": [
+                      35.6811957124181,
+                      139.76710081100467
+                    ],
+                    "zoom": 16
+                  },
+                  "ui": {
+                    "hand": "right",
+                    "menu": true,
+                    "mode": null,
+                    "layer": "new-pokestop",
+                    "radius": 50,
+                    "selected": null,
+                    "dragged": false,
+                    "tool": "",
+                    "aerial": false,
+                    "areaVisible": false,
+                    "visibleLayers": {
+                      "existing-pokestop": true,
+                      "existing-gym": true,
+                      "existing-power": true,
+                      "new-pokestop": true,
+                      "new-gym": true,
+                      "new-power": true
+                    },
+                    "circleRadii": []
+                  },
+                  "areaPreview": {
+                    "points": [],
+                    "closing": false
+                  },
+                  "preview": null
+                },
+                "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}",
+                "requests": 1,
+                "bubbles": [
+                  "new-pokestop",
+                  "new-gym",
+                  "new-power"
+                ],
+                "bar": false
+              },
+              "selected": {
+                "status": {
+                  "mode": "PART_A_VIEW_ONLY",
+                  "dataConnected": false,
+                  "stopped": false,
+                  "mapCount": 1,
+                  "proposals": 1,
+                  "resources": {
+                    "listeners": 59,
+                    "timers": 3,
+                    "rafs": 0,
+                    "animations": 0,
+                    "observers": 0,
+                    "owned": 34
+                  },
+                  "camera": {
+                    "center": [
+                      35.6811957124181,
+                      139.76710081100467
+                    ],
+                    "zoom": 16
+                  },
+                  "ui": {
+                    "hand": "right",
+                    "menu": false,
+                    "mode": "add",
+                    "layer": "new-gym",
+                    "radius": 50,
+                    "selected": null,
+                    "dragged": false,
+                    "tool": "",
+                    "aerial": false,
+                    "areaVisible": false,
+                    "visibleLayers": {
+                      "existing-pokestop": true,
+                      "existing-gym": true,
+                      "existing-power": true,
+                      "new-pokestop": true,
+                      "new-gym": true,
+                      "new-power": true
+                    },
+                    "circleRadii": []
+                  },
+                  "areaPreview": {
+                    "points": [],
+                    "closing": false
+                  },
+                  "preview": {
+                    "radius": 50,
+                    "position": {
+                      "lat": 35.6811957124181,
+                      "lng": 139.76710081100467
+                    }
+                  }
+                },
+                "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}",
+                "requests": 1,
+                "bar": true
+              },
+              "held": {
+                "requests": 2,
+                "last": {
+                  "action": {
+                    "type": "add",
+                    "kind": "new-gym",
+                    "position": {
+                      "lat": 35.6811957124181,
+                      "lng": 139.76710081100467
+                    },
+                    "requestId": "r31-ui-2"
+                  },
+                  "result": {
+                    "status": "HOLD",
+                    "changed": false,
+                    "reason": "PART_A_DATA_DISCONNECTED"
+                  }
+                },
+                "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}"
+              }
+            }
+          },
+          {
+            "name": "plus-two-step-new-power",
+            "pass": true,
+            "details": {
+              "stageOne": true,
+              "stageTwo": true,
+              "confirm": true,
+              "cancelled": true,
+              "opened": {
+                "status": {
+                  "mode": "PART_A_VIEW_ONLY",
+                  "dataConnected": false,
+                  "stopped": false,
+                  "mapCount": 1,
+                  "proposals": 2,
+                  "resources": {
+                    "listeners": 48,
+                    "timers": 3,
+                    "rafs": 0,
+                    "animations": 0,
+                    "observers": 0,
+                    "owned": 30
+                  },
+                  "camera": {
+                    "center": [
+                      35.6811957124181,
+                      139.76710081100467
+                    ],
+                    "zoom": 16
+                  },
+                  "ui": {
+                    "hand": "right",
+                    "menu": true,
+                    "mode": null,
+                    "layer": "new-gym",
+                    "radius": 50,
+                    "selected": null,
+                    "dragged": false,
+                    "tool": "",
+                    "aerial": false,
+                    "areaVisible": false,
+                    "visibleLayers": {
+                      "existing-pokestop": true,
+                      "existing-gym": true,
+                      "existing-power": true,
+                      "new-pokestop": true,
+                      "new-gym": true,
+                      "new-power": true
+                    },
+                    "circleRadii": []
+                  },
+                  "areaPreview": {
+                    "points": [],
+                    "closing": false
+                  },
+                  "preview": null
+                },
+                "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}",
+                "requests": 2,
+                "bubbles": [
+                  "new-pokestop",
+                  "new-gym",
+                  "new-power"
+                ],
+                "bar": false
+              },
+              "selected": {
+                "status": {
+                  "mode": "PART_A_VIEW_ONLY",
+                  "dataConnected": false,
+                  "stopped": false,
+                  "mapCount": 1,
+                  "proposals": 2,
+                  "resources": {
+                    "listeners": 59,
+                    "timers": 3,
+                    "rafs": 0,
+                    "animations": 0,
+                    "observers": 0,
+                    "owned": 34
+                  },
+                  "camera": {
+                    "center": [
+                      35.6811957124181,
+                      139.76710081100467
+                    ],
+                    "zoom": 16
+                  },
+                  "ui": {
+                    "hand": "right",
+                    "menu": false,
+                    "mode": "add",
+                    "layer": "new-power",
+                    "radius": 50,
+                    "selected": null,
+                    "dragged": false,
+                    "tool": "",
+                    "aerial": false,
+                    "areaVisible": false,
+                    "visibleLayers": {
+                      "existing-pokestop": true,
+                      "existing-gym": true,
+                      "existing-power": true,
+                      "new-pokestop": true,
+                      "new-gym": true,
+                      "new-power": true
+                    },
+                    "circleRadii": []
+                  },
+                  "areaPreview": {
+                    "points": [],
+                    "closing": false
+                  },
+                  "preview": {
+                    "radius": 50,
+                    "position": {
+                      "lat": 35.6811957124181,
+                      "lng": 139.76710081100467
+                    }
+                  }
+                },
+                "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}",
+                "requests": 2,
+                "bar": true
+              },
+              "held": {
+                "requests": 3,
+                "last": {
+                  "action": {
+                    "type": "add",
+                    "kind": "new-power",
+                    "position": {
+                      "lat": 35.6811957124181,
+                      "lng": 139.76710081100467
+                    },
+                    "requestId": "r31-ui-3"
+                  },
+                  "result": {
+                    "status": "HOLD",
+                    "changed": false,
+                    "reason": "PART_A_DATA_DISCONNECTED"
+                  }
+                },
+                "view": "{\"pois\":[],\"circles\":[],\"areas\":[],\"history\":{\"undo\":0,\"redo\":0}}"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "groups": {
+      "startupAndDisplay": {
+        "status": "PASS",
+        "requiredScenes": 8,
+        "missing": [],
+        "unverified": []
+      },
+      "poiAddition": {
+        "status": "PASS",
+        "requiredScenes": 8,
+        "missing": [],
+        "unverified": []
+      },
+      "poiEditAndMove": {
+        "status": "PASS",
+        "requiredScenes": 6,
+        "missing": [],
+        "unverified": []
+      },
+      "areasAndMap": {
+        "status": "PASS",
+        "requiredScenes": 16,
+        "missing": [],
+        "unverified": []
+      },
+      "saveAndKmz": {
+        "status": "PASS",
+        "requiredScenes": 3,
+        "missing": [],
+        "unverified": []
+      },
+      "listCoordinatesAuxiliary": {
+        "status": "PASS",
+        "requiredScenes": 8,
+        "missing": [],
+        "unverified": []
+      },
+      "animationsAndGestures": {
+        "status": "PASS",
+        "requiredScenes": 6,
+        "missing": [],
+        "unverified": []
+      }
+    },
+    "regression": {
+      "fingerprint": "f206ea51801e3a74e69cf7156a6fff803422ebe5af57a500fcb4d1a2ecae75ff",
+      "status": "PASS",
+      "exitCode": 0,
+      "tests": 333,
+      "passed": 333,
+      "failed": 0,
+      "skipped": 0
+    },
+    "audit": {
+      "fingerprint": "f206ea51801e3a74e69cf7156a6fff803422ebe5af57a500fcb4d1a2ecae75ff",
+      "status": "PASS",
+      "exitCode": 0,
+      "tests": 17,
+      "passed": 17,
+      "failed": 0,
+      "skipped": 0
+    },
+    "plus": {
+      "status": "PASS",
+      "passed": 9
+    },
+    "partAStatus": {
+      "partA": "PASS",
+      "partB": "NOT_STARTED",
+      "progress": "85% / Phase 1 HOLD",
+      "deployed": false,
+      "fingerprint": "f206ea51801e3a74e69cf7156a6fff803422ebe5af57a500fcb4d1a2ecae75ff",
+      "groups": {
+        "startupAndDisplay": {
+          "status": "PASS",
+          "requiredScenes": 8,
+          "missing": [],
+          "unverified": []
+        },
+        "poiAddition": {
+          "status": "PASS",
+          "requiredScenes": 8,
+          "missing": [],
+          "unverified": []
+        },
+        "poiEditAndMove": {
+          "status": "PASS",
+          "requiredScenes": 6,
+          "missing": [],
+          "unverified": []
+        },
+        "areasAndMap": {
+          "status": "PASS",
+          "requiredScenes": 16,
+          "missing": [],
+          "unverified": []
+        },
+        "saveAndKmz": {
+          "status": "PASS",
+          "requiredScenes": 3,
+          "missing": [],
+          "unverified": []
+        },
+        "listCoordinatesAuxiliary": {
+          "status": "PASS",
+          "requiredScenes": 8,
+          "missing": [],
+          "unverified": []
+        },
+        "animationsAndGestures": {
+          "status": "PASS",
+          "requiredScenes": 6,
+          "missing": [],
+          "unverified": []
+        }
+      },
+      "blockers": [],
+      "measured": {
+        "originalFunctionsExecuted": [
+          {
+            "width": 390,
+            "count": 0
+          },
+          {
+            "width": 393,
+            "count": 0
+          },
+          {
+            "width": 1366,
+            "count": 0
+          }
+        ],
+        "legacyStorageAccesses": [
+          {
+            "width": 390,
+            "count": 0
+          },
+          {
+            "width": 393,
+            "count": 0
+          },
+          {
+            "width": 1366,
+            "count": 0
+          }
+        ],
+        "unprovenFunctionsAllowed": 0,
+        "regressionPassed": 333,
+        "auditPassed": 17
+      },
+      "safariRealDevice": "NOT_TESTED"
+    }
+  },
+  "firstAttempt": {
+    "attempt": 1,
+    "conclusion": "failure",
+    "status": "HOLD",
+    "failedScenes": [
+      {
+        "width": 390,
+        "name": "fab-tap-after-drag",
+        "status": "FAIL",
+        "differences": [
+          {
+            "selector": "#cmFabWrap",
+            "reference": [
+              {
+                "tag": "DIV",
+                "count": 1,
+                "id": "cmFabWrap",
+                "classes": "cm-fab-wrap open",
+                "text": null,
+                "box": {
+                  "x": 8,
+                  "y": 222,
+                  "width": 48,
+                  "height": 48
+                },
+                "styles": {
+                  "display": "block",
+                  "position": "fixed",
+                  "fontSize": "16px",
+                  "fontFamily": "-apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+                  "fontWeight": "400",
+                  "color": "rgb(56, 45, 29)",
+                  "background": "rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box",
+                  "border": "0px none rgb(56, 45, 29)",
+                  "borderRadius": "0px",
+                  "zIndex": "1450",
+                  "touchAction": "auto",
+                  "transform": "none",
+                  "opacity": "1",
+                  "animationName": "none"
+                },
+                "structure": [
+                  {
+                    "tag": "BUTTON",
+                    "id": "cmAddFab",
+                    "classes": "cm-add-fab",
+                    "text": "×",
+                    "value": "",
+                    "maxLength": null,
+                    "box": "{\"x\":8,\"y\":222,\"width\":48,\"height\":48,\"top\":222,\"right\":56,\"bottom\":270,\"left\":8}",
+                    "attributes": {},
+                    "styles": {
+                      "fontFamily": "-apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+                      "fontSize": "30px",
+                      "transform": "none",
+                      "filter": "none",
+                      "outline": "rgb(255, 255, 255) none 0px",
+                      "background": "rgba(0, 0, 0, 0) linear-gradient(rgb(255, 154, 46) 0%, rgb(255, 132, 24) 100%) repeat scroll 0% 0% / auto padding-box border-box",
+                      "width": "48px",
+                      "height": "48px",
+                      "objectFit": "fill"
+                    }
+                  },
+                  {
+                    "tag": "BUTTON",
+                    "id": "",
+                    "classes": "cm-bubble",
+                    "text": null,
+                    "value": "",
+                    "maxLength": null,
+                    "box": "{\"x\":-37,\"y\":177,\"width\":40,\"height\":40,\"top\":177,\"right\":3,\"bottom\":217,\"left\":-37}",
+                    "attributes": {},
+                    "styles": {
+                      "fontFamily": "-apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+                      "fontSize": "16px",
+                      "transform": "matrix(1, 0, 0, 1, -49, -49)",
+                      "filter": "none",
+                      "outline": "rgb(0, 0, 0) none 0px",
+                      "background": "rgba(255, 255, 255, 0.94) none repeat scroll 0% 0% / auto padding-box border-box",
+                      "width": "40px",
+                      "height": "40px",
+                      "objectFit": "fill"
+                    }
+                  },
+                  {
+                    "tag": "IMG",
+                    "id": "",
+                    "classes": "",
+                    "text": "",
+                    "value": null,
+                    "maxLength": null,
+                    "box": "{\"x\":-31.5,\"y\":182.5,\"width\":29,\"height\":29,\"top\":182.5,\"right\":-2.5,\"bottom\":211.5,\"left\":-31.5}",
+                    "attributes": {},
+                    "styles": {
+                      "fontFamily": "-apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+                      "fontSize": "16px",
+                      "transform": "none",
+                      "filter": "none",
+                      "outline": "rgb(0, 0, 0) none 0px",
+                      "background": "rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box",
+                      "width": "29px",
+                      "height": "29px",
+                      "objectFit": "contain"
+                    }
+                  },
+                  {
+                    "tag": "BUTTON",
+                    "id": "",
+                    "classes": "cm-bubble",
+                    "text": null,
+                    "value": "",
+                    "maxLength": null,
+                    "box": "{\"x\":12,\"y\":160,\"width\":40,\"height\":40,\"top\":160,\"right\":52,\"bottom\":200,\"left\":12}",
+                    "attributes": {},
+                    "styles": {
+                      "fontFamily": "-apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+                      "fontSize": "16px",
+                      "transform": "matrix(1, 0, 0, 1, 0, -66)",
+                      "filter": "none",
+                      "outline": "rgb(0, 0, 0) none 0px",
+                      "background": "rgba(255, 255, 255, 0.94) none repeat scroll 0% 0% / auto padding-box border-box",
+                      "width": "40px",
+                      "height": "40px",
+                      "objectFit": "fill"
+                    }
+                  },
+                  {
+                    "tag": "IMG",
+                    "id": "",
+                    "classes": "",
+                    "text": "",
+                    "value": null,
+                    "maxLength": null,
+                    "box": "{\"x\":17.5,\"y\":165.5,\"width\":29,\"height\":29,\"top\":165.5,\"right\":46.5,\"bottom\":194.5,\"left\":17.5}",
+                    "attributes": {},
+                    "styles": {
+                      "fontFamily": "-apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+                      "fontSize": "16px",
+                      "transform": "none",
+                      "filter": "none",
+                      "outline": "rgb(0, 0, 0) none 0px",
+                      "background": "rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box",
+                      "width": "29px",
+                      "height": "29px",
+                      "objectFit": "contain"
+                    }
+                  },
+                  {
+                    "tag": "BUTTON",
+                    "id": "",
+                    "classes": "cm-bubble",
+                    "text": null,
+                    "value": "",
+                    "maxLength": null,
+                    "box": "{\"x\":61,\"y\":177,\"width\":40,\"height\":40,\"top\":177,\"right\":101,\"bottom\":217,\"left\":61}",
+                    "attributes": {},
+                    "styles": {
+                      "fontFamily": "-apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+                      "fontSize": "16px",
+                      "transform": "matrix(1, 0, 0, 1, 49, -49)",
+                      "filter": "none",
+                      "outline": "rgb(0, 0, 0) none 0px",
+                      "background": "rgba(255, 255, 255, 0.94) none repeat scroll 0% 0% / auto padding-box border-box",
+                      "width": "40px",
+                      "height": "40px",
+                      "objectFit": "fill"
+                    }
+                  },
+                  {
+                    "tag": "IMG",
+                    "id": "",
+                    "classes": "",
+                    "text": "",
+                    "value": null,
+                    "maxLength": null,
+                    "box": "{\"x\":66.5,\"y\":182.5,\"width\":29,\"height\":29,\"top\":182.5,\"right\":95.5,\"bottom\":211.5,\"left\":66.5}",
+                    "attributes": {},
+                    "styles": {
+                      "fontFamily": "-apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+                      "fontSize": "16px",
+                      "transform": "none",
+                      "filter": "none",
+                      "outline": "rgb(0, 0, 0) none 0px",
+                      "background": "rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box",
+                      "width": "29px",
+                      "height": "29px",
+                      "objectFit": "contain"
+                    }
+                  },
+                  {
+                    "tag": "DIV",
+                    "id": "cmSelectedType",
+                    "classes": "cm-selected-type",
+                    "text": null,
+                    "value": null,
+                    "maxLength": null,
+                    "box": "{\"x\":0,\"y\":0,\"width\":0,\"height\":0,\"top\":0,\"right\":0,\"bottom\":0,\"left\":0}",
+                    "attributes": {},
+                    "styles": {
+                      "fontFamily": "-apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+                      "fontSize": "16px",
+                      "transform": "none",
+                      "filter": "none",
+                      "outline": "rgb(56, 45, 29) none 0px",
+                      "background": "rgb(255, 255, 255) none repeat scroll 0% 0% / auto padding-box border-box",
+                      "width": "22px",
+                      "height": "22px",
+                      "objectFit": "fill"
+                    }
+                  },
+                  {
+                    "tag": "IMG",
+                    "id": "",
+                    "classes": "",
+                    "text": "",
+                    "value": null,
+                    "maxLength": null,
+                    "box": "{\"x\":0,\"y\":0,\"width\":0,\"height\":0,\"top\":0,\"right\":0,\"bottom\":0,\"left\":0}",
+                    "attributes": {},
+                    "styles": {
+                      "fontFamily": "-apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+                      "fontSize": "16px",
+                      "transform": "none",
+                      "filter": "none",
+                      "outline": "rgb(56, 45, 29) none 0px",
+                      "background": "rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box",
+                      "width": "18px",
+                      "height": "18px",
+                      "objectFit": "contain"
+                    }
+                  }
+                ]
+              }
+            ],
+            "candidate": [
+              {
+                "tag": "DIV",
+                "count": 1,
+                "id": "cmFabWrap",
+                "classes": "cm-fab-wrap open",
+                "text": null,
+                "box": {
+                  "x": 8,
+                  "y": 222,
+                  "width": 48,
+                  "height": 48
+                },
+                "styles": {
+                  "display": "block",
+                  "position": "fixed",
+                  "fontSize": "16px",
+                  "fontFamily": "-apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+                  "fontWeight": "400",
+                  "color": "rgb(56, 45, 29)",
+                  "background": "rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box",
+                  "border": "0px none rgb(56, 45, 29)",
+                  "borderRadius": "0px",
+                  "zIndex": "1450",
+                  "touchAction": "auto",
+                  "transform": "none",
+                  "opacity": "1",
+                  "animationName": "none"
+                },
+                "structure": [
+                  {
+                    "tag": "BUTTON",
+                    "id": "cmAddFab",
+                    "classes": "cm-add-fab",
+                    "text": "×",
+                    "value": "",
+                    "maxLength": null,
+                    "box": "{\"x\":8,\"y\":222,\"width\":48,\"height\":48,\"top\":222,\"right\":56,\"bottom\":270,\"left\":8}",
+                    "attributes": {},
+                    "styles": {
+                      "fontFamily": "-apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+                      "fontSize": "30px",
+                      "transform": "none",
+                      "filter": "none",
+                      "outline": "rgb(255, 255, 255) none 0px",
+                      "background": "rgba(0, 0, 0, 0) linear-gradient(rgb(255, 154, 46) 0%, rgb(255, 132, 24) 100%) repeat scroll 0% 0% / auto padding-box border-box",
+                      "width": "48px",
+                      "height": "48px",
+                      "objectFit": "fill"
+                    }
+                  },
+                  {
+                    "tag": "BUTTON",
+                    "id": "",
+                    "classes": "cm-bubble",
+                    "text": null,
+                    "value": "",
+                    "maxLength": null,
+                    "box": "{\"x\":-36.99813461303711,\"y\":177.00186157226562,\"width\":39.999534606933594,\"height\":39.999542236328125,\"top\":177.00186157226562,\"right\":3.0013999938964844,\"bottom\":217.00140380859375,\"left\":-36.99813461303711}",
+                    "attributes": {},
+                    "styles": {
+                      "fontFamily": "-apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+                      "fontSize": "16px",
+                      "transform": "matrix(0.999988, 0, 0, 0.999988, -48.9984, -48.9984)",
+                      "filter": "none",
+                      "outline": "rgb(0, 0, 0) none 0px",
+                      "background": "rgba(255, 255, 255, 0.94) none repeat scroll 0% 0% / auto padding-box border-box",
+                      "width": "40px",
+                      "height": "40px",
+                      "objectFit": "fill"
+                    }
+                  },
+                  {
+                    "tag": "IMG",
+                    "id": "",
+                    "classes": "",
+                    "text": "",
+                    "value": null,
+                    "maxLength": null,
+                    "box": "{\"x\":-31.498199462890625,\"y\":182.50180053710938,\"width\":28.99966049194336,\"height\":28.999664306640625,\"top\":182.50180053710938,\"right\":-2.4985389709472656,\"bottom\":211.50146484375,\"left\":-31.498199462890625}",
+                    "attributes": {},
+                    "styles": {
+                      "fontFamily": "-apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+                      "fontSize": "16px",
+                      "transform": "none",
+                      "filter": "none",
+                      "outline": "rgb(0, 0, 0) none 0px",
+                      "background": "rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box",
+                      "width": "29px",
+                      "height": "29px",
+                      "objectFit": "contain"
+                    }
+                  },
+                  {
+                    "tag": "BUTTON",
+                    "id": "",
+                    "classes": "cm-bubble",
+                    "text": null,
+                    "value": "",
+                    "maxLength": null,
+                    "box": "{\"x\":12.000232696533203,\"y\":160.00242614746094,\"width\":39.999534606933594,\"height\":39.99952697753906,\"top\":160.00242614746094,\"right\":51.9997673034668,\"bottom\":200.001953125,\"left\":12.000232696533203}",
+                    "attributes": {},
+                    "styles": {
+                      "fontFamily": "-apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+                      "fontSize": "16px",
+                      "transform": "matrix(0.999988, 0, 0, 0.999988, 0, -65.9978)",
+                      "filter": "none",
+                      "outline": "rgb(0, 0, 0) none 0px",
+                      "background": "rgba(255, 255, 255, 0.94) none repeat scroll 0% 0% / auto padding-box border-box",
+                      "width": "40px",
+                      "height": "40px",
+                      "objectFit": "fill"
+                    }
+                  },
+                  {
+                    "tag": "IMG",
+                    "id": "",
+                    "classes": "",
+                    "text": "",
+                    "value": null,
+                    "maxLength": null,
+                    "box": "{\"x\":17.500167846679688,\"y\":165.5023651123047,\"width\":28.99966049194336,\"height\":28.999649047851562,\"top\":165.5023651123047,\"right\":46.49982833862305,\"bottom\":194.50201416015625,\"left\":17.500167846679688}",
+                    "attributes": {},
+                    "styles": {
+                      "fontFamily": "-apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+                      "fontSize": "16px",
+                      "transform": "none",
+                      "filter": "none",
+                      "outline": "rgb(0, 0, 0) none 0px",
+                      "background": "rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box",
+                      "width": "29px",
+                      "height": "29px",
+                      "objectFit": "contain"
+                    }
+                  },
+                  {
+                    "tag": "BUTTON",
+                    "id": "",
+                    "classes": "cm-bubble",
+                    "text": null,
+                    "value": "",
+                    "maxLength": null,
+                    "box": "{\"x\":60.998600006103516,\"y\":177.00186157226562,\"width\":39.99953842163086,\"height\":39.999542236328125,\"top\":177.00186157226562,\"right\":100.99813842773438,\"bottom\":217.00140380859375,\"left\":60.998600006103516}",
+                    "attributes": {},
+                    "styles": {
+                      "fontFamily": "-apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+                      "fontSize": "16px",
+                      "transform": "matrix(0.999988, 0, 0, 0.999988, 48.9984, -48.9984)",
+                      "filter": "none",
+                      "outline": "rgb(0, 0, 0) none 0px",
+                      "background": "rgba(255, 255, 255, 0.94) none repeat scroll 0% 0% / auto padding-box border-box",
+                      "width": "40px",
+                      "height": "40px",
+                      "objectFit": "fill"
+                    }
+                  },
+                  {
+                    "tag": "IMG",
+                    "id": "",
+                    "classes": "",
+                    "text": "",
+                    "value": null,
+                    "maxLength": null,
+                    "box": "{\"x\":66.49853515625,\"y\":182.50180053710938,\"width\":28.999664306640625,\"height\":28.999664306640625,\"top\":182.50180053710938,\"right\":95.49819946289062,\"bottom\":211.50146484375,\"left\":66.49853515625}",
+                    "attributes": {},
+                    "styles": {
+                      "fontFamily": "-apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+                      "fontSize": "16px",
+                      "transform": "none",
+                      "filter": "none",
+                      "outline": "rgb(0, 0, 0) none 0px",
+                      "background": "rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box",
+                      "width": "29px",
+                      "height": "29px",
+                      "objectFit": "contain"
+                    }
+                  },
+                  {
+                    "tag": "DIV",
+                    "id": "cmSelectedType",
+                    "classes": "cm-selected-type",
+                    "text": null,
+                    "value": null,
+                    "maxLength": null,
+                    "box": "{\"x\":0,\"y\":0,\"width\":0,\"height\":0,\"top\":0,\"right\":0,\"bottom\":0,\"left\":0}",
+                    "attributes": {},
+                    "styles": {
+                      "fontFamily": "-apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+                      "fontSize": "16px",
+                      "transform": "none",
+                      "filter": "none",
+                      "outline": "rgb(56, 45, 29) none 0px",
+                      "background": "rgb(255, 255, 255) none repeat scroll 0% 0% / auto padding-box border-box",
+                      "width": "22px",
+                      "height": "22px",
+                      "objectFit": "fill"
+                    }
+                  },
+                  {
+                    "tag": "IMG",
+                    "id": "",
+                    "classes": "",
+                    "text": "",
+                    "value": null,
+                    "maxLength": null,
+                    "box": "{\"x\":0,\"y\":0,\"width\":0,\"height\":0,\"top\":0,\"right\":0,\"bottom\":0,\"left\":0}",
+                    "attributes": {},
+                    "styles": {
+                      "fontFamily": "-apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+                      "fontSize": "16px",
+                      "transform": "none",
+                      "filter": "none",
+                      "outline": "rgb(56, 45, 29) none 0px",
+                      "background": "rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box",
+                      "width": "18px",
+                      "height": "18px",
+                      "objectFit": "contain"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "pixels": [
+          {
+            "selector": "#cmFabWrap",
+            "same": true,
+            "differentPixels": 0,
+            "totalPixels": 2304
+          }
+        ],
+        "state": [
+          {
+            "camera": {
+              "center": [
+                35.68199746679798,
+                139.7619938850403
+              ],
+              "zoom": 16
+            },
+            "mapVisible": true,
+            "focus": "<button id=\"cmAddFab\" class=\"cm-add-fab\" aria-label=\"候補地を追加\" data-drag-ready=\"1\" style=\"touch-action: none; user-select: none;\" data-cm-v45-bound=\"1\" title=\"候補地を追加\" data-cm-v46-hint=\"1\">×</button>",
+            "scroll": [
+              0,
+              0
+            ],
+            "fonts": "loaded"
+          },
+          {
+            "camera": {
+              "center": [
+                35.68199746679798,
+                139.7619938850403
+              ],
+              "zoom": 16
+            },
+            "mapVisible": true,
+            "focus": "<button id=\"cmAddFab\" class=\"cm-add-fab\" aria-label=\"候補地を追加\" title=\"候補地を追加\" style=\"touch-action: none; user-select: none;\">×</button>",
+            "scroll": [
+              0,
+              0
+            ],
+            "fonts": "loaded"
+          }
+        ],
+        "notifications": [
+          {
+            "text": "位置調整をキャンセルしました",
+            "opacity": "0.010287"
+          },
+          {
+            "text": "位置調整をキャンセルしました",
+            "opacity": "0.0454834"
+          }
+        ]
+      }
+    ],
+    "explanation": "390px fab-tap-after-drag measured candidate at CSS transition endpoint before completion (transform scale 0.999988); reference complete. Pixel difference zero. Failure retained. Full gates rerun at same source commit with unchanged tests, waits, thresholds and application code.",
+    "codeOrThresholdChanged": false
+  },
+  "otherExistingWorkflowFailures": [
+    {
+      "run": 38175028302,
+      "workflow": "preview-poi-controls-layout-v2-once.yml",
+      "jobs": 0
+    },
+    {
+      "run": 38175028977,
+      "workflow": "preview-poi-controls-layout-once.yml",
+      "jobs": 0
+    }
+  ],
+  "safariRealDevice": "NOT_TESTED",
+  "progress": "85% / Phase 1 HOLD",
+  "partB2": "NOT_STARTED",
+  "partB3": "NOT_STARTED",
+  "partB4": "NOT_STARTED",
+  "storageEnabled": false,
+  "deployed": false
+}

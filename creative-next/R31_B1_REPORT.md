@@ -1,6 +1,6 @@
 # Creative Next r31 PART B1（2026-10-12）
 
-ローカル全ゲートPASS。実装はここで停止し、リモートCI結果を追記する。進捗85% / Phase 1 HOLD。B2/B3/B4、保存・復元、公開配信、main反映は未実施。iPhone Safari実機未検証。
+B1はローカル・リモート専用CIの全ゲートPASS。実装はここで停止する。進捗85% / Phase 1 HOLD。B2/B3/B4、保存・復元、公開配信、main反映は未実施。iPhone Safari実機未検証。
 
 ## 凍結基準
 
@@ -38,7 +38,14 @@ UI派生SHA: 2e829851263ea43109cc5ce2d38a56fdc7472941382623b257d496e2d05d5764
 
 ## CIとコミット
 
-検証ソースcommit・CI URL・最終結果はリモート完了後追記する。ローカルPASSをCI PASSに流用しない。
+検証ソースcommit: 937e00cf15d97528cfbb7e6966b9b602b3c10daa（codex/original-ui-r31へpush済み）。
+
+- [B1専用CI run 38175029950 / attempt 2](https://github.com/Kaityo1221/Campsite-Design-Tool-JP/actions/runs/38175029950/attempts/2): SUCCESS。unit6、実編集3幅、UI156/156、＋9/9、回帰333/333、監査17/17、7グループPASS。成果物のsource fingerprintはローカルと一致。
+- [凍結PART A専用CI run 38175029888](https://github.com/Kaityo1221/Campsite-Design-Tool-JP/actions/runs/38175029888): SUCCESS。
+- B1 attempt 1は390px fab-tap-after-dragのDOM比較でHOLD。展開CSS transitionの終端直前（scale 0.999988、位置約0.002px）の測定差。画像差0でもFAILを保持。同一commit・同一code・同一テスト/待機/判定値の全ゲート再実行でattempt 2はPASS。初回FAILと最終CI実測はqa/r31-b1/final-ci-evidence.jsonに別保存。アニメーション終端の測定タイミング依存は残課題。
+- 既存のpreview-poi-controls-layout-v2-once.yml / preview-poi-controls-layout-once.ymlはjob未開始のfailure（run38175028302/38175028977）。本変更で修正していないため、repository全CIが緑とは報告しない。
+
+最終CI証跡commitはこの検証済みソースへの報告書/JSON追記だけ。アプリ・検査codeは変更しない。
 
 ## 残課題・停止範囲
 
