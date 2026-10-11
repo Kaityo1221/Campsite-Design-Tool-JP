@@ -8,7 +8,7 @@ export function installOriginalButtonsFixture(doc, session, refresh){
  const installed=controls.map((element,i)=>replaceWithExclusiveCreativeControl({
   element,dispatch:action=>dispatch.dispatch(action),makeAction:()=>({type:i===0?'undo':'redo'})
  }));
- const sync=()=>{const state=session.state();for(const x of installed)x.element.disabled=!(state.hasActive&&!state.recoveredFallback)};
+ const sync=()=>{const state=session.state();installed.forEach((x,i)=>{x.element.disabled=!(state.hasActive&&!state.recoveredFallback&&Number(i===0?state.history?.undo:state.history?.redo)>0)})};
  sync();
  return {sync,dispose:()=>{dispatch.stop();for(const x of installed)x.dispose()}};
 }
