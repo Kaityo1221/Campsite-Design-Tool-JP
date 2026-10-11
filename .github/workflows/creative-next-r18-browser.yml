@@ -1,0 +1,28 @@
+name: Creative Next r18 Real Engine Browser
+on:
+  push:
+    branches: [feature/creative-next-ui-exact-parity-20261010]
+    paths:
+      - 'creative-next/original-ui-r18/**'
+      - 'creative-next/qa/build-original-ui-snapshot.cjs'
+      - 'creative-next/qa/original-ui-r18-e2e.py'
+      - '.github/workflows/creative-next-r18-browser.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  r18-browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install playwright==1.56.0
+      - run: python -m playwright install --with-deps chromium
+      - run: node creative-next/qa/current-creative-ui-source-parity.cjs
+      - run: node creative-next/qa/build-original-ui-snapshot.cjs
+      - run: python creative-next/qa/original-ui-r18-e2e.py
