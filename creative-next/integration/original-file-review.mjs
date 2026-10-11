@@ -1,9 +1,9 @@
 import {createRealEngineOriginalUI} from '../integration/real-engine-original-ui.mjs';
 // Isolated r19: reuse original entryFile/startButton, no legacy scripts or browser storage.
-export function attachOriginalFileReview({document,JSZip,DOMParser,XMLSerializer,confirmReview=()=>false,onResult=()=>{}}={}){
+export function attachOriginalFileReview({document,JSZip,DOMParser,XMLSerializer,confirmReview=()=>false,onResult=()=>{},onRefresh=()=>{}}={}){
  const input=document.getElementById('entryFile'),start=document.getElementById('startButton'),state=document.getElementById('entryState'),name=document.getElementById('entryFileName');
  if(!input||!start||!state||!name)throw Error('ORIGINAL_ENTRY_MISSING');
- const ui=createRealEngineOriginalUI({document,JSZip,DOMParser,XMLSerializer});
+ const ui=createRealEngineOriginalUI({document,JSZip,DOMParser,XMLSerializer,onRefresh});
  let prepared=false,busy=false,disposed=false;
  let editorReady=false;
  input.disabled=false;start.disabled=true;
