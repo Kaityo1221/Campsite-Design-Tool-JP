@@ -37,5 +37,9 @@ html=html.replace('</head>','<meta name="robots" content="noindex,nofollow,noarc
 const out=path.join(root,'creative-next/exact-ui-snapshot');
 fs.mkdirSync(out,{recursive:true});
 fs.writeFileSync(path.join(out,'index.html'),html);
+const interactive=path.join(root,'creative-next/original-ui-r17');
+fs.mkdirSync(interactive,{recursive:true});
+fs.writeFileSync(path.join(interactive,'index.html'),html.replace('</body>','<script type="module" src="./r17-undo-redo.mjs"></script></body>'));
+
 if(/<script\b/i.test(html))throw Error('Runtime script escaped snapshot');
 console.log('PASS: production source snapshot',names.length,'patches, scripts stripped, original visual CSS retained');
