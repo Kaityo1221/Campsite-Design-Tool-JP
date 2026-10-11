@@ -48,5 +48,8 @@ fs.writeFileSync(path.join(r18,'index.html'),html.replace('</body>','<script src
 const r19=path.join(root,'creative-next/original-ui-r19');
 fs.mkdirSync(r19,{recursive:true});
 fs.writeFileSync(path.join(r19,'index.html'),html.replace('</body>','<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script><script type="module" src="./r19-file-review.mjs"></script></body>'));
+const r20=path.join(root,'creative-next/original-ui-r20');
+fs.mkdirSync(r20,{recursive:true});
+fs.writeFileSync(path.join(r20,'index.html'),html.replace('</body>','<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script type="module" src="./r20-readonly-map.mjs"></script></body>'));
 if(/<script\b/i.test(html))throw Error('Runtime script escaped snapshot');
 console.log('PASS: production source snapshot',names.length,'patches, scripts stripped, original visual CSS retained');
