@@ -3,7 +3,7 @@
   "partB": "NOT_STARTED",
   "progress": "85% / Phase 1 HOLD",
   "deployed": false,
-  "fingerprint": "f706ea3bfdee1129d273efc45ab6de68f368dae93ebb989674f28694312aa350",
+  "fingerprint": "651a41292eb4e93c3d76379ffb4e2964f53e77f0972462d72c8c70806d13e495",
   "groups": {
     "startupAndDisplay": {
       "status": "PASS",

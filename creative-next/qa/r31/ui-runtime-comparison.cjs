@@ -89,6 +89,23 @@ function pixelDifference(a,b){
 }
 async function compareScene(pair,name,selectors,folder){
  await Promise.all(pair.map(x=>x.page.waitForTimeout(300)));
+ // Smooth card scrolling changes the active dot again mid-scroll, restarting its
+ // width/color transition. A fixed delay can sample different phases on CI even
+ // when the eventual screenshot is identical. Wait for actual scroll quiescence
+ // and all finite panel transitions to finish before reading either DOM or pixels.
+ if(selectors.includes('#cmV60RulesPanel'))await Promise.all(pair.map(x=>x.page.evaluate(async()=>{
+  const panel=document.getElementById('cmV60RulesPanel'),track=document.getElementById('cmV60RulesTrack');
+  if(panel.hidden)return;
+  const deadline=performance.now()+3500;let last=track.scrollLeft,quietSince=performance.now();
+  while(performance.now()<deadline){
+   const now=performance.now(),position=track.scrollLeft;
+   const moving=panel.getAnimations({subtree:true}).some(a=>a.effect?.getTiming().iterations!==Infinity&&a.playState==='running');
+   if(position!==last||moving){last=position;quietSince=now;}
+   else if(now-quietSince>=100)return;
+   await new Promise(resolve=>setTimeout(resolve,32));
+  }
+  throw Error('RULES_SCROLL_OR_TRANSITION_DID_NOT_SETTLE');
+ })));
  const notifications=await Promise.all(pair.map(x=>x.page.evaluate(()=>({text:document.getElementById('status').textContent,opacity:getComputedStyle(document.getElementById('status')).opacity}))));
  // Translucent layer panels overlap transient notifications. Capture their steady
  // frame after BOTH real fade transitions finish, and retain the preceding text/phase.

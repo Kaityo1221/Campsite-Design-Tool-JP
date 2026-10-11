@@ -8,7 +8,7 @@
 
 | 対象 | 確認した原因と対応 | 最終Edge結果 |
 | --- | --- | --- |
-| ルール3幅 | 現行既定unified表示と旧Leafletアイコンの違いが半透明パネルの背後に出ていた。現行アイコンの純表示式を抽出して新runtimeで描画。PCの2枚目は未継承の取消通知も影響し、文言・実フェード完了を照合した | 全カード一致 |
+| ルール3幅 | 現行既定unified表示と旧Leafletアイコンの違いが半透明パネルの背後に出ていた。現行アイコンの純表示式を抽出して新runtimeで描画。PCの2枚目は未継承の取消通知も影響し、文言・実フェード完了を照合した。追加Linux検査ではsmooth scrollによるactive dot再選択でCSS遷移が再開し、固定300msでは幅・色の途中位相がずれた。実scroll停止と有限CSS遷移完了を待ってDOM/画像を同じ完了状態で読む | 全カード一致 |
 | 移動393px | 286.6m対287.8mを再現。Leafletの短いpanで中心が画素単位に丸められ、中心経度がずれていた。カメラ復元をreset:trueで行う | 一致 |
 | 移動1366px | 初期fitBoundsのzoomアニメーションがカメラ復元後に遅れて中心を上書き。初期配置をanimate:falseにし、参照invalidateSize完了を実条件で待つ | 一致 |
 | Gym追加バー・保存メニュー・新規シート | DOM・子要素寸法・CSS・font状態は一致。要素ごとの撮影による再描画を排し、1回の全画面画像から同じ領域を切り出して比較。初期通知/半透明パネルの比較時点も揃えた | 全幅一致 |
@@ -17,15 +17,15 @@
 
 ## 2. 7機能グループ
 
-| グループ | 実測ゲート | 実装・検査 |
-| --- | --- | --- |
-| 起動・表示設定 | PASS | 8必須場面、操作証拠と3幅を検査 |
-| POI追加 | HOLD | 8必須場面、操作証拠と3幅を検査 |
-| POI編集・移動 | PASS | 6必須場面、操作証拠と3幅を検査 |
-| 活動範囲・地図 | PASS | 16必須場面、操作証拠と3幅を検査 |
-| 保存・KMZ UI | PASS | 3必須場面、操作証拠と3幅を検査 |
-| 一覧・座標・補助 | PASS | 8必須場面、操作証拠と3幅を検査 |
-| 演出・ジェスチャー | PASS | 6必須場面、操作証拠と3幅を検査 |
+| グループ | Edge | Linux CI | 実装・検査 |
+| --- | --- | --- | --- |
+| 起動・表示設定 | PASS | 未検証 | 8必須場面、操作証拠と3幅を検査 |
+| POI追加 | HOLD | 未検証 | 8必須場面、操作証拠と3幅を検査 |
+| POI編集・移動 | PASS | 未検証 | 6必須場面、操作証拠と3幅を検査 |
+| 活動範囲・地図 | PASS | 未検証 | 16必須場面、操作証拠と3幅を検査 |
+| 保存・KMZ UI | PASS | 未検証 | 3必須場面、操作証拠と3幅を検査 |
+| 一覧・座標・補助 | PASS | 未検証 | 8必須場面、操作証拠と3幅を検査 |
+| 演出・ジェスチャー | PASS | 未検証 | 6必須場面、操作証拠と3幅を検査 |
 
 活動範囲作成/確定/取消/削除/描き直し、draft頂点・undo/redo、物差し、背景切替、距離円、レイヤー操作を表示状態として分離。現行standalone保存メニュー、出力先chooser、一覧folder/tab、座標カード/コピーを追加。起動、FAB drag、lever snap/cancel、handle swipe、marker、double tap/pinch、star演出と解除を実装。
 
@@ -107,6 +107,8 @@ Linux Chromium CIは最終提出時に実測結果を追記する。
 
 既存333件: 333 PASS / 0 FAIL / 0 SKIP。追加を含むr31監査: 17 PASS / 0 FAIL / 0 SKIP。原本freeze PASS。既存engine/回帰テストに追加変更なし。
 
+
+
 ## 6. 旧処理の隔離
 
 369/369旧定義を全件deny。未証明176定義の実行許可0。32表示式をallowlist化し、SHA/由来/入力/置換をmanifestに記録して再静的検査。旧IIFE/保存/編集/履歴/renderer moduleは出力しない。動的import、eval/Function、文字列timer、未承認global計算call経路を拒否する。
@@ -122,7 +124,7 @@ Linux Chromium CIは最終提出時に実測結果を追記する。
 ## 8. ソース・CI
 
 - ソースSHA: この報告と同じソースコミット
-- fingerprint: f706ea3bfdee1129d273efc45ab6de68f368dae93ebb989674f28694312aa350
+- fingerprint: 651a41292eb4e93c3d76379ffb4e2964f53e77f0972462d72c8c70806d13e495
 - CI: push後に専用CIを実行し、最終提出報告へ追記する。
 - 詳細: qa/r31/ui-runtime-comparison.json、part-a-status.json、regression-result.json、audit-test-result.json、isolation-audit.json。CI artifactはr31-part-a-measured-evidence。
 
