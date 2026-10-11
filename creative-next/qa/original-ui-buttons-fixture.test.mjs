@@ -12,11 +12,14 @@ class FakeElement{
 const nodes={undo:new FakeElement('undo'),redo:new FakeElement('redo')};
 const parent={nodes};for(const el of Object.values(nodes))el.parentNode=parent;
 let ready=false,undo=0,redo=0,redraw=0;
-const session={state:()=>({hasActive:ready,recoveredFallback:false}),command(){},commandArea(){},
- undo:()=>{undo++;return {ok:true,changed:true}},redo:()=>{redo++;return {ok:true,changed:true}}};
-const fixture=installOriginalButtonsFixture({getElementById:id=>nodes[id]},session,()=>redraw++);
+const history={undo:1,redo:0};
+const session={state:()=>({hasActive:ready,recoveredFallback:false,history:{...history}}),command(){},commandArea(){},
+ undo:()=>{undo++;history.undo=0;history.redo=1;return {ok:true,changed:true}},redo:()=>{redo++;history.undo=1;history.redo=0;return {ok:true,changed:true}}};
+const fixture=installOriginalButtonsFixture({getElementById:id=>nodes[id]},session,()=>{redraw++;fixture.sync()});
 parent.nodes.undo.click();assert.equal(undo,0);
-ready=true;fixture.sync();parent.nodes.undo.click();parent.nodes.redo.click();
+ready=true;fixture.sync();assert.equal(parent.nodes.redo.disabled,true);
+parent.nodes.undo.click();assert.equal(parent.nodes.undo.disabled,true);assert.equal(parent.nodes.redo.disabled,false);
+parent.nodes.redo.click();assert.equal(parent.nodes.redo.disabled,true);
 assert.equal(undo,1);assert.equal(redo,1);assert.equal(redraw,2);
 fixture.dispose();parent.nodes.undo.click();assert.equal(undo,1);
 console.log('PASS original UI fixture: disabled before editor, exclusive events, teardown');

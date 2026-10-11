@@ -26,10 +26,14 @@ assert.equal(prepared.status,'REVIEW');
 assert.equal(root.nodes.undo.disabled,true);
 assert.equal(factory.accept({confirmed:false}).applied,false);
 assert.equal(factory.accept({confirmed:true}).applied,true);
-assert.equal(root.nodes.undo.disabled,false);
+// Import establishes a baseline, not an edit to undo.
+assert.deepEqual(engine.state().history,{undo:0,redo:0});
+assert.equal(root.nodes.undo.disabled,true);assert.equal(root.nodes.redo.disabled,true);
 assert.equal(factory.edit({type:'edit',id:'src-1',patch:{memo:'変更'}},{confirmed:true}).changed,true);
 assert.equal(engine.state().records[0].memo,'変更');
+assert.equal(root.nodes.undo.disabled,false);assert.equal(root.nodes.redo.disabled,true);
 root.nodes.undo.click();
+assert.equal(root.nodes.undo.disabled,true);assert.equal(root.nodes.redo.disabled,false);
 assert.equal(engine.state().records[0].memo,'初期');
 root.nodes.redo.click();
 assert.equal(engine.state().records[0].memo,'変更');

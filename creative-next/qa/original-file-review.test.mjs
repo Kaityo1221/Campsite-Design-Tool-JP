@@ -4,8 +4,8 @@ import {DOMParser,XMLSerializer} from '@xmldom/xmldom';
 import {createFreshV1Kmz} from '../phase-1b/core/create-new-kmz.mjs';
 import {attachOriginalFileReview} from '../integration/original-file-review.mjs';
 class Control {
- constructor(id){this.id=id;this.dataset={};this.disabled=true;this.parentNode=null;this.handlers=new Map();this.files=[];this.textContent='';}
- cloneNode(){const n=new Control(this.id);n.disabled=this.disabled;return n}
+ constructor(id){this.id=id;this.dataset={};this.disabled=true;this.parentNode=null;this.handlers=new Map();this.files=[];this.textContent='';this.classList={values:new Set(),add(k){this.values.add(k)},remove(k){this.values.delete(k)},toggle(k,on){if(on??!this.values.has(k))this.values.add(k);else this.values.delete(k)}};}
+ cloneNode(){const n=new Control(this.id);n.disabled=this.disabled;n.classList.values=new Set(this.classList.values);return n}
  removeAttribute(){}
  addEventListener(type,fn){this.handlers.set(type,[...(this.handlers.get(type)||[]),fn])}
  removeEventListener(type,fn){this.handlers.set(type,(this.handlers.get(type)||[]).filter(x=>x!==fn))}
@@ -23,6 +23,8 @@ const controller=attachOriginalFileReview({document:{getElementById:id=>nodes[id
 assert.equal(root.nodes.startButton.disabled,true);
 root.nodes.entryFile.files=[{name:'test.kmz',arrayBuffer:async()=>kmz.buffer.slice(kmz.byteOffset,kmz.byteOffset+kmz.byteLength)}];
 await root.nodes.entryFile.fire('change');
+// The native change handler starts async preparation; wait for its observable completion.
+for(let attempt=0;root.nodes.startButton.disabled&&attempt<200;attempt++)await new Promise(resolve=>setTimeout(resolve,5));
 assert.equal(root.nodes.startButton.disabled,false);
 assert.equal(controller.engine.state().hasActive,false);
 await root.nodes.startButton.fire('click');

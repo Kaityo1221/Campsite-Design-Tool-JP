@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {attachCreativeNextOverlay} from '../integration/creative-next-original-leaflet-overlay.mjs';
 const layers=new Set(),made=[];
-const map={removeLayer(l){layers.delete(l);l.removed=true}};
+const map={hasLayer:l=>layers.has(l),removeLayer(l){layers.delete(l);l.removed=true}};
 const leaf=(kind,at,opt)=>{const v={kind,at,opt,removed:false,moved:0,
  addTo(){layers.add(this);made.push(this);return this},
  setLatLng(next){this.at=next;this.moved++;return this}};return v};
