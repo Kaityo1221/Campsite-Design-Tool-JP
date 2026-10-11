@@ -131,6 +131,19 @@ if(!r29html.includes('id="cmNextR28OriginalSheetStyle"')||
 fs.writeFileSync(path.join(r29,'index.html'),r29html);
 
 
+// r30: restore original dynamic plus-FAB and base-v7 crosshair placement only
+// in the isolated controller, not in visual HTML/CSS or legacy runtime scripts.
+const r30=path.join(root,'creative-next/original-ui-r30');
+fs.mkdirSync(r30,{recursive:true});
+const r30html=r29html
+ .replace('./r29-ios-tap-guard.js','./r30-ios-tap-guard.js')
+ .replace('./r29-poi-editor.mjs','./r30-poi-editor.mjs');
+if(!r30html.includes('id="cmNextR28OriginalSheetStyle"')||
+   !r30html.includes('./r30-poi-editor.mjs')||!r30html.includes('./r30-ios-tap-guard.js'))
+ throw Error('R30_EXACT_VISUAL_BUILD_FAILED');
+fs.writeFileSync(path.join(r30,'index.html'),r30html);
+
+
 
 
 if(/<script\b/i.test(html))throw Error('Runtime script escaped snapshot');
