@@ -61,8 +61,8 @@ test('closing after name and memo inputs records only one undoable edit command'
 test('moving a new POI commits draft first, then enters map move tool',()=>{
  const h=harness();h.sheet.show('n1');
  byId(h.panel,'cmName').value='移動テスト';
- const move=find(h.panel,x=>x.textContent==='移動'&&x.tagName==='button');
- move.click();assert.equal(h.commands.length,1);assert.deepEqual(h.moves,['n1']);assert.equal(h.panel.removed,true);
+ const panel=h.panel,move=find(panel,x=>x.textContent==='移動'&&x.tagName==='button');
+ move.click();assert.equal(h.commands.length,1);assert.deepEqual(h.moves,['n1']);assert.equal(panel.removed,true);
 });
 test('kind change and deletion stay exclusively on new POI commands',()=>{
  const h=harness();h.sheet.show('n1');
