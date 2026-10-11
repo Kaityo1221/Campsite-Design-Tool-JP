@@ -1,43 +1,63 @@
-name: Creative Next r31 source isolation audit
+name: Creative Next r31 resume gates
 on:
   push:
     branches: [codex/original-ui-r31]
-    paths: ['creative-next/qa/r31/**', 'creative-next/R31_*', '.github/workflows/creative-next-r31-audit.yml']
+    paths:
+      - 'creative-next/qa/**'
+      - 'creative-next/original-ui-r31/**'
+      - 'creative-next/R31_*'
+      - '.github/workflows/creative-next-r31-audit.yml'
   workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: r31-resume-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
-  audit:
+  regression:
     if: github.ref == 'refs/heads/codex/original-ui-r31'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Install isolated QA dependencies
-        run: npm install --prefix creative-next --no-save --no-package-lock --ignore-scripts jszip@3.10.1 @xmldom/xmldom@0.9.8 acorn@8.15.0 playwright@1.56.0
-      - name: Verify audit safeguards and frozen sources
-        run: node --test creative-next/qa/r31/source-audit.test.cjs
-      - name: Run unchanged engine and integration regression
+      - name: Install QA dependencies
+        run: npm install --prefix creative-next --no-save --no-package-lock --ignore-scripts jszip@3.10.1 @xmldom/xmldom@0.9.8 acorn@8.15.0
+      - name: Unchanged engine and repaired mock regressions
         run: node --test creative-next/phase-1a/tests/poi-core.test.mjs creative-next/phase-1b/test/*.test.mjs creative-next/qa/*.test.mjs creative-next/qa/*.test.cjs
-      - name: Inventory UI and unsafe legacy dependencies (HOLD fails this gate)
-        if: always()
-        run: node creative-next/qa/r31/source-audit.cjs
-      - name: Install isolated Chromium
-        if: always()
+      - name: Frozen sources, historical deny policy and template extraction
+        run: node --test creative-next/qa/r31/source-audit.test.cjs creative-next/qa/r31/source-ui-compiler.test.cjs
+  part-a:
+    needs: regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install isolated UI QA dependencies
+        run: npm install --prefix creative-next --no-save --no-package-lock --ignore-scripts jszip@3.10.1 @xmldom/xmldom@0.9.8 acorn@8.15.0 leaflet@1.9.4 pngjs@7.0.0 playwright@1.56.0
+      - name: Classify all historical definitions
+        run: node creative-next/qa/r31/functional-groups.cjs
+      - name: Install Chromium
         run: creative-next/node_modules/.bin/playwright install --with-deps chromium
-      - name: Diagnose production UI versus unchanged r30 (not r31 acceptance)
+      - name: Compare source-derived r31 runtime with production UI
+        run: node creative-next/qa/r31/ui-runtime-comparison.cjs
+      - name: Full Part A completion gate (HOLD prevents Part B)
         if: always()
-        run: node creative-next/qa/r31/browser-diagnostic.cjs
-      - name: Preserve synthetic audit evidence
+        run: node creative-next/qa/r31/part-a-status.cjs
+      - name: Preserve synthetic evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: r31-hold-audit
+          name: r31-resume-hold-evidence
           path: |
-            creative-next/qa/r31/source-inventory.json
-            creative-next/qa/r31/browser-diagnostic.json
-            creative-next/qa/r31/artifacts/*.png
-# No preview build, publishing credentials, Pages upload, or deployment step.
+            creative-next/qa/r31/ui-extraction-manifest.json
+            creative-next/qa/r31/functional-groups.json
+            creative-next/qa/r31/ui-runtime-comparison.json
+            creative-next/qa/r31/part-a-status.json
+            creative-next/qa/r31/artifacts/resume/**/*.png
+# No deployment job, Pages upload, publishing credentials, or Part B wiring.

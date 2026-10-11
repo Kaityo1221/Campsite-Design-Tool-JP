@@ -1,0 +1,42 @@
+{
+  "partA": "HOLD",
+  "partB": "NOT_STARTED",
+  "progress": "85% / Phase 1 HOLD",
+  "deployed": false,
+  "focusedComparison": "HOLD",
+  "groups": {
+    "startupAndDisplay": "FOCUSED_COMPARISON",
+    "poiAddition": "FOCUSED_COMPARISON",
+    "poiEditAndMove": "FOCUSED_COMPARISON",
+    "areasAndMap": "HOLD_ACTIVITY_TOOLS_NOT_SEPARATED",
+    "saveAndKmz": "HOLD_CHOOSER_AND_FULL_MENU_PATHS_NOT_SEPARATED",
+    "listCoordinatesAuxiliary": "HOLD_LIST_COORDINATE_CARD_GROUP_NOT_SEPARATED",
+    "animationsAndGestures": "HOLD_FULL_ANIMATION_GESTURE_MATRIX_NOT_TESTED"
+  },
+  "originalFunctionsExecuted": 0,
+  "unprovenFunctionsRemaining": 176,
+  "unprovenFunctionsAllowed": 0,
+  "blockers": [
+    {
+      "group": "focusedComparison",
+      "reason": "HOLD_DOM_OR_PIXEL_DIFFERENCES"
+    },
+    {
+      "group": "areasAndMap",
+      "reason": "HOLD_ACTIVITY_TOOLS_NOT_SEPARATED"
+    },
+    {
+      "group": "saveAndKmz",
+      "reason": "HOLD_CHOOSER_AND_FULL_MENU_PATHS_NOT_SEPARATED"
+    },
+    {
+      "group": "listCoordinatesAuxiliary",
+      "reason": "HOLD_LIST_COORDINATE_CARD_GROUP_NOT_SEPARATED"
+    },
+    {
+      "group": "animationsAndGestures",
+      "reason": "HOLD_FULL_ANIMATION_GESTURE_MATRIX_NOT_TESTED"
+    }
+  ],
+  "safariRealDevice": "NOT_TESTED"
+}

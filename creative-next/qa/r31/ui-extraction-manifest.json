@@ -1,0 +1,345 @@
+{
+  "patchCount": 65,
+  "patchOrder": [
+    "creative-patches-v2.js",
+    "creative-patches-v3.js",
+    "creative-patches-v4.js",
+    "creative-patches-v5-design-check.js",
+    "creative-patches-v6-intuitive.js",
+    "creative-patches-v9-return-main.js",
+    "creative-patches-v10-save-labels.js",
+    "creative-patches-v13-draggable-fab.js",
+    "creative-patches-v14-layer-tap-layout.js",
+    "creative-patches-v18-preview-crosshair.js",
+    "creative-patches-v19-persistent-crosshair.js",
+    "creative-patches-v20-radius-gauge-save-return.js",
+    "creative-patches-v21-radius-swipe.js",
+    "creative-patches-v23-add-mode-close.js",
+    "creative-patches-v24-confirm-vertical-radius.js",
+    "creative-patches-v25-radius-handle-no-preview.js",
+    "creative-patches-v26-compact-radius-bar.js",
+    "creative-patches-v27-dot-handle-bar.js",
+    "creative-patches-v28-lever-handle.js",
+    "creative-patches-v29-lever-notches.js",
+    "creative-patches-v30-lever-gesture-lock.js",
+    "creative-patches-v32-poi-move-isolated.js",
+    "creative-patches-v33-action-wiring.js",
+    "creative-patches-v34-placement-core.js",
+    "creative-patches-v35-nearest-poi-warning.js",
+    "creative-patches-v36-compact-move-bar.js",
+    "creative-patches-v37-bottom-dock.js",
+    "creative-patches-v38-circle-layer-import.js",
+    "creative-patches-v39-layer-panel-top.js",
+    "creative-patches-v40-recent-filename.js",
+    "creative-patches-v41-save-output-wiring.js",
+    "creative-patches-v42-save-button-hardbind.js",
+    "creative-patches-v43-save-standalone.js",
+    "creative-patches-v44-lab-update-3-lines.js",
+    "creative-patches-v45-unified-map-ui.js",
+    "creative-patches-v46-field-feedback-polish.js",
+    "creative-patches-v48-comet-a-arc.js",
+    "creative-patches-v49-remove-add-text.js",
+    "creative-patches-v50-add-crosshair-cleanup.js",
+    "creative-patches-v51-coordinate-jump.js",
+    "creative-patches-v52-existing-new-placement.js",
+    "creative-patches-v53-new-poi-auto-memo.js",
+    "creative-patches-v54-coordinate-memo-reason.js",
+    "creative-patches-v55-unified-visible.js",
+    "creative-patches-v56-unified-interaction.js",
+    "creative-patches-v57-dev-default-unified.js",
+    "creative-patches-v58-new-entry-current-map.js",
+    "creative-patches-v59-help-button.js",
+    "creative-patches-v60-rules-carousel.js",
+    "creative-patches-v61-saved-session-hint.js",
+    "creative-patches-v62-remove-locate.js",
+    "creative-patches-v63-remove-workspace-save.js",
+    "creative-patches-v64-google-form-coordinates.js",
+    "creative-patches-v65-download-label.js",
+    "creative-patches-v66-activity-range-label.js",
+    "creative-patches-v67-activity-range-wording.js",
+    "creative-patches-v68-activity-range-delete-history.js",
+    "creative-patches-v69-spacing-reason-flow.js",
+    "creative-patches-v70-unified-move-feedback.js",
+    "creative-patches-v71-memo-sheet-download-fixes.js",
+    "creative-patches-v73-production-visual-fixes.js",
+    "creative-patches-v74-tools-phase-b.js",
+    "creative-patches-v75-poi-add-phase-c.js",
+    "creative-patches-v76-radius-reference-ui.js",
+    "creative-patches-v77-phase-e-ux.js"
+  ],
+  "documentSha256": "5368169fea955a283616e509f38a309b4df2061bc2b42e99e86bd817e4bf647b",
+  "originalFunctionsExecuted": 0,
+  "unprovenFunctionsAllowed": 0,
+  "legacyScriptsEmitted": 0,
+  "types": {
+    "new-pokestop": {
+      "label": "PokéStop",
+      "icon": "./assets/pokestop.png"
+    },
+    "new-gym": {
+      "label": "Gym",
+      "icon": "./assets/gym.png"
+    },
+    "new-power": {
+      "label": "PowerSpot",
+      "icon": "./assets/powerspot.png"
+    }
+  },
+  "descriptors": {
+    "coordinateButton": {
+      "tag": "button",
+      "properties": {
+        "type": "button",
+        "className": "cm-coordinate-trigger",
+        "textContent": "座標"
+      },
+      "attributes": {
+        "aria-label": "座標を入力して位置を合わせる"
+      },
+      "sourceFunction": "cmV51CoordinateJumpRuntime.bindBar"
+    },
+    "cmInstallFab": {
+      "tag": "div",
+      "properties": {
+        "id": "cmFabWrap",
+        "className": "cm-fab-wrap"
+      },
+      "attributes": {},
+      "sourceFunction": "cmInstallFab"
+    },
+    "cmSafeAddDotElement": {
+      "tag": "div",
+      "properties": {
+        "id": "cmSafeAddDot"
+      },
+      "attributes": {},
+      "sourceFunction": "cmSafeAddDotElement"
+    },
+    "cmMoveCrosshairElement": {
+      "tag": "div",
+      "properties": {
+        "id": "cmMoveCrosshair"
+      },
+      "attributes": {
+        "aria-hidden": "true"
+      },
+      "sourceFunction": "cmMoveCrosshairElement"
+    },
+    "cmSafeEnsureNearestWarning": {
+      "tag": "div",
+      "properties": {
+        "id": "cmSafeNearestWarning",
+        "className": "cm-safe-nearest-warning"
+      },
+      "attributes": {
+        "aria-live": "polite"
+      },
+      "sourceFunction": "cmSafeEnsureNearestWarning"
+    },
+    "cmInstallCount": {
+      "tag": "button",
+      "properties": {
+        "id": "cmCount",
+        "className": "cm-count",
+        "type": "button"
+      },
+      "attributes": {},
+      "sourceFunction": "cmInstallCount"
+    },
+    "cmInstallStandaloneSave": {
+      "tag": "button",
+      "properties": {
+        "id": "cmStandaloneSaveButton",
+        "type": "button",
+        "textContent": "💾",
+        "title": "保存・出力"
+      },
+      "attributes": {
+        "aria-label": "保存・出力"
+      },
+      "sourceFunction": "cmInstallStandaloneSave"
+    }
+  },
+  "dynamicStyles": [
+    {
+      "id": "cmStyle",
+      "sourceFunction": "cmAddStyle",
+      "sha256": "43a69f562da8ff141c00e5e3a28155e524aca249e81002e3ce644d6d415a67f3"
+    },
+    {
+      "id": "cmLayerTapStyle",
+      "sourceFunction": "cmInstallLayerTapStyle",
+      "sha256": "7da7e995d7cf46d58c3b0f0e99b2e67f807581db6462fe019aad815d4176f45c"
+    }
+  ],
+  "templates": [
+    {
+      "name": "fab",
+      "sourceFunction": "cmInstallFab",
+      "expressionSha256": "db252d62c7204caf288d9cfb210e2f3a4b310c8f6b4c7e107b7cdc0b94859ed5",
+      "parameters": [
+        "cmTypeInfo"
+      ],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "existingSheet",
+      "sourceFunction": "cmOpenRecord",
+      "expressionSha256": "fd37c4aeab27029fc9ef23f377bb8bc38aa30e125a684363897cd80e022ed99b",
+      "parameters": [
+        "r",
+        "typeLabel"
+      ],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "newSheet",
+      "sourceFunction": "cmOpenRecord",
+      "expressionSha256": "246d6336e90551e6bcc448d430510509f5a7a0101e0c9cc4ef71bf3931ce0a5b",
+      "parameters": [
+        "r",
+        "typeLabel",
+        "warn",
+        "cmTypeInfo"
+      ],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "moveBar",
+      "sourceFunction": "cmInstallMoveUi",
+      "expressionSha256": "fe0d0b8fc784ebbe7ba0e2b807868418777910f340cefc90af808fa9f738b8bc",
+      "parameters": [],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "addBarTail",
+      "sourceFunction": "cmSafeInstallAddBar",
+      "expressionSha256": "999a30e52cd3564b1e639a72226dcf4c3068bc4ceb38b589449792356f47111a",
+      "parameters": [],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "selectedPoi",
+      "sourceFunction": "cmPhaseCSelectedPoiHtml",
+      "expressionSha256": "075ae756cad067703a1f6d440e23114e111f2f408d783c3603cd39d0dbcb5073",
+      "parameters": [
+        "meta"
+      ],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "saveMenu",
+      "sourceFunction": "cmOpenSaveMenu",
+      "expressionSha256": "160d41a6ff6f5421d1a349420d0d7a3145f308781019062bd910a3e95f6bc21d",
+      "parameters": [
+        "cmKmzExported"
+      ],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "standaloneSave",
+      "sourceFunction": "cmOpenStandaloneSave",
+      "expressionSha256": "97070f042f1b343cf0868640db405efe1fedf9def0ae4ac0ba5d2278b2bc0b6c",
+      "parameters": [],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "list",
+      "sourceFunction": "cmOpenList",
+      "expressionSha256": "12246e83a2ebbf621c82e5c1424377557c5fae71fa702b06ca0e300224a502fd",
+      "parameters": [],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "coords",
+      "sourceFunction": "cmOpenCoords",
+      "expressionSha256": "a62c8d92385b404aed26a27d514062900f292e13ded8586ae07ff13cb1e2d20e",
+      "parameters": [],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "rules",
+      "sourceFunction": "cmV60RulesCarouselRuntime",
+      "expressionSha256": "71d451e4041b358c14692b28759a80172e0ae04ec88c515a2cf5745929dfa174",
+      "parameters": [],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "newIconOptions",
+      "sourceFunction": "recordIcon",
+      "expressionSha256": "ae557cbd3ff81c3d33ec57b40ef5ce5a0e014bd212ba1b2d488079d70eb7215f",
+      "parameters": [
+        "iconUrl"
+      ],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "existingIconOptions",
+      "sourceFunction": "recordIcon",
+      "expressionSha256": "e4bf18e47b8459b0cb6dd3ebc3401403eed176bca37dff72bcbe2d65ec6f638c",
+      "parameters": [
+        "shape"
+      ],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "activityRule",
+      "sourceFunction": "cmV77ActivityRuleInstall",
+      "expressionSha256": "d8717046c6b6a626c078ce3565161a1c82f71f57832e5c42b9427e6ff0fb7e3c",
+      "parameters": [],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "addCircleOptions",
+      "sourceFunction": "cmSafeEnsureAddCircle",
+      "expressionSha256": "b4d047030c595456ea8624cfaf16546000d8b81cb21685cf62816c728f30b7a8",
+      "parameters": [
+        "cmSafeAddRadius",
+        "circleRenderer"
+      ],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "moveCircleOptions",
+      "sourceFunction": "cmBeginMove",
+      "expressionSha256": "c88b13902a92ed3adaa6eca43358739418bd001383903fa39fa62beaf62d81db",
+      "parameters": [
+        "circleRenderer"
+      ],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "coordinatePanel",
+      "sourceFunction": "cmV51CoordinateJumpRuntime.ensurePanel",
+      "expressionSha256": "d1199bbf4708a1ffa259bb0e25bad614403fe54c32878d5d26c7547a2ab48e4c",
+      "parameters": [],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "leverOffset",
+      "sourceFunction": "cmSafeLeverOffset",
+      "expressionSha256": "3331380683b7e4757460fa4d81f98a7126f1271a766b9fddeb3b26223ceebdbd",
+      "parameters": [
+        "r"
+      ],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "addDot",
+      "sourceFunction": "cmSafeAddDotElement",
+      "expressionSha256": "04dc142bb9bf3cf1cb0abc547b759e626731021ca1505935c04ca659854bca05",
+      "parameters": [],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    },
+    {
+      "name": "moveCrosshair",
+      "sourceFunction": "cmMoveCrosshairElement",
+      "expressionSha256": "40c3fb55965fe8aee495b2871d87a241ccbbe60d7990b6ad8bbaee2d5f111d7e",
+      "parameters": [],
+      "policy": "Pure presentation expression, no assignment/mutation, no legacy/global capability, whitelisted calls only"
+    }
+  ],
+  "runtimeMode": "PART_A_VIEW_ONLY",
+  "partB": "NOT_CONNECTED",
+  "completeGate": "HOLD_UNTIL_FULL_RUNTIME_COMPARISON"
+}

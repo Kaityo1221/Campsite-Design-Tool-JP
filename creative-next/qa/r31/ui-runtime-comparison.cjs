@@ -1,0 +1,195 @@
+// Actual production-reference vs r31 presentation runtime, fully offline synthetic contexts.
+// This is PART A UI testing: r31 receives a read-only synthetic view, never a Next Session.
+const fs=require('node:fs'),path=require('node:path');
+const {chromium}=require('playwright'),{PNG}=require('pngjs');
+const {ROOT,assemble,scripts}=require('./production-source.cjs');
+const {build}=require('./source-ui-compiler.cjs');
+const FIXED_TILE=(()=>{const p=new PNG({width:256,height:256});for(let i=0;i<p.data.length;i+=4){p.data[i]=230;p.data[i+1]=236;p.data[i+2]=234;p.data[i+3]=255;}return PNG.sync.write(p);})();
+const FOCUS={
+ entry:['.entry-title','.entry-copy','.filebar','#leftHand','#rightHand','#startButton','#resumeButton','#cmRecent','#cmV58StartTransition'],
+ map:['#back','#mapToggle','#layerButton','#toolbox','#cmStandaloneSaveButton','#cmCount','#cmAddFab'],
+ plus:['#cmFabWrap','.cm-bubble','#cmSelectedType'],
+ add:['#cmSafeAddBar','#cmSafeAddDot','#cmSafeAddLever','#cmSafeAddConfirm','#cmSafeAddCancel'],
+ sheet:['.cm-sheet','#cmName','#cmMemo','#cmMove','#cmType','#cmDelete'],
+ move:['#cmMoveBar','#cmMoveCrosshair','#cmMoveLever','#cmMoveConfirm','#cmMoveCancel'],
+ help:['#cmV59HelpButton','#cmV60RulesPanel','#cmV60RulesTrack','#cmV60RulesDots'],
+ save:['#cmStandaloneSaveButton','#cmStandaloneSaveMenu','#cmStandaloneKmz','#cmStandaloneCoords']
+};
+const read=file=>fs.readFileSync(file,'utf8').replace(/\r\n/g,'\n');
+const mime=file=>({'.js':'application/javascript','.mjs':'application/javascript','.html':'text/html','.css':'text/css','.png':'image/png','.webp':'image/webp'}[path.extname(file)]||'application/octet-stream');
+function instrumentReference(html){
+ const core=scripts(html).find(s=>s.id==='production-core'),end=core.code.lastIndexOf('})();');
+ if(end<0)throw Error('REFERENCE_PROBE_TARGET_MISSING');
+ const probe="window.__r31ReferenceProbe={view:()=>({pois:records.filter(r=>!r.deleted).map(r=>({id:r.id,role:cmIsNew(r)?'new':'existing',kind:r.layer.includes('gym')?'gym':r.layer.includes('power')?'power':'pokestop',title:r.title||'',memo:r.memo||'',lat:r.latlng[0],lng:r.latlng[1],deleted:false})),circles:[],areas:polygons.filter(p=>!p.deleted).map(p=>({id:p.id,points:p.points})),history:{undo:undoStack.length,redo:redoStack.length}}),openSheet:id=>cmOpenRecord(records.find(r=>r.id===id)),setHand:h=>setHand(h),camera:()=>({center:[map.getCenter().lat,map.getCenter().lng],zoom:map.getZoom()})};\n";
+ return html.replace(core.code,core.code.slice(0,end)+probe+core.code.slice(end));
+}
+async function contextFor(browser,viewport,kind,reference){
+ const context=await browser.newContext({viewport,isMobile:viewport.width<500,hasTouch:viewport.width<500,serviceWorkers:'block'});
+ await context.addInitScript(({referenceOnly})=>{
+  const accesses=[],make=()=>{const data=new Map();return{getItem(k){accesses.push(['get',k]);return data.get(k)??null;},setItem(k,v){accesses.push(['set',k]);data.set(k,String(v));},removeItem(k){accesses.push(['remove',k]);data.delete(k);},clear(){accesses.push(['clear']);data.clear();},key(i){return [...data.keys()][i]??null;},get length(){return data.size;}};};
+  Object.defineProperty(window,'localStorage',{value:make()});Object.defineProperty(window,'sessionStorage',{value:make()});
+  window.__r31Storage=accesses;window.__r31Requests=[];
+  // Reference-only initial saved-state fixture is EMPTY; suppress the two legacy autosave intervals.
+  if(referenceOnly){const nativeInterval=window.setInterval.bind(window);window.setInterval=(fn,ms,...args)=>['snapshot','cmPersistCurrent'].includes(fn?.name)?0:nativeInterval(fn,ms,...args);}
+  Object.defineProperty(navigator,'geolocation',{value:{getCurrentPosition(_,fail){fail?.({code:1});},watchPosition(){return 0;},clearWatch(){}}});
+ },{referenceOnly:kind==='reference'});
+ const trace=[];
+ await context.route('**/*',async route=>{
+  const url=new URL(route.request().url());trace.push(url.href);
+  let file;
+  if(url.hostname==='r31.invalid'){
+   if(kind==='reference'&&url.pathname==='/creative/index.html')return route.fulfill({status:200,contentType:'text/html',body:reference});
+   file=path.resolve(ROOT,'.'+decodeURIComponent(url.pathname));
+   if(!file.startsWith(ROOT+path.sep))return route.abort();
+   if(kind==='candidate'&&url.pathname.includes('/creative/runtime/'))return route.abort();
+  }else if(url.hostname==='cdnjs.cloudflare.com'&&url.pathname.endsWith('/jszip.min.js'))file=require.resolve('jszip/dist/jszip.min.js');
+  else if(url.hostname==='unpkg.com'&&/leaflet@1.9.4\/dist\/(leaflet.js|leaflet.css)$/.test(url.pathname))file=path.join(path.dirname(require.resolve('leaflet')),url.pathname.split('/').pop());
+  if(file&&fs.existsSync(file)&&fs.statSync(file).isFile())return route.fulfill({status:200,contentType:mime(file),body:/\.(?:js|mjs|html|css)$/.test(file)?read(file):fs.readFileSync(file)});
+  if(/tile\.openstreetmap|arcgisonline|maps\.google\.com/.test(url.hostname))return route.fulfill({status:200,contentType:'image/png',body:FIXED_TILE});
+  return route.abort();
+ });
+ const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('dialog',d=>d.accept());
+ await page.goto(kind==='reference'?'https://r31.invalid/creative/index.html':'https://r31.invalid/creative-next/original-ui-r31/index.html',{waitUntil:'load'});
+ if(kind==='candidate')await page.waitForFunction(()=>Boolean(window.creativeR31));
+ await page.waitForTimeout(150);
+ return{context,page,errors,trace};
+}
+async function snapshot(page,selectors){
+ return page.evaluate(selectors=>Object.fromEntries(selectors.map(selector=>{
+  const nodes=[...document.querySelectorAll(selector)];
+  const describe=n=>{
+   const r=n.getBoundingClientRect(),s=getComputedStyle(n);
+   const structure=[...n.querySelectorAll('*')].map(x=>({tag:x.tagName,id:x.id,classes:x.className,
+    text:x.children.length?null:x.textContent,value:x.value??null,maxLength:x.maxLength??null}));
+   return{tag:n.tagName,count:nodes.length,id:n.id,classes:n.className,text:n.children.length?null:n.textContent,
+    box:Object.fromEntries(['x','y','width','height'].map(k=>[k,Math.round(r[k]*100)/100])),
+    styles:Object.fromEntries(['display','position','fontSize','fontFamily','fontWeight','color','background','border','borderRadius','zIndex','touchAction','transform','opacity','animationName'].map(k=>[k,s[k]])),structure};
+  };
+  return[selector,nodes.map(describe)];
+ })),selectors);
+}
+function pixelDifference(a,b){
+ const x=PNG.sync.read(a),y=PNG.sync.read(b);
+ if(x.width!==y.width||x.height!==y.height)return{same:false,dimensions:[x.width,x.height,y.width,y.height],differentPixels:null};
+ let count=0;
+ for(let i=0;i<x.data.length;i+=4)if([0,1,2,3].some(k=>Math.abs(x.data[i+k]-y.data[i+k])>2))count++;
+ return{same:count===0,differentPixels:count,totalPixels:x.width*x.height};
+}
+async function compareScene(pair,name,selectors,folder){
+ await Promise.all(pair.map(x=>x.page.waitForTimeout(300)));
+ // Lock variable animation phase for image comparison; transition/gesture behavior has separate checks.
+ for(const x of pair)await x.page.evaluate(()=>document.getAnimations().forEach(a=>{if(a.effect?.getTiming().iterations===Infinity){a.pause();a.currentTime=0;}}));
+ const snapshots=await Promise.all(pair.map(x=>snapshot(x.page,selectors))),differences=[];
+ for(const selector of selectors)if(JSON.stringify(snapshots[0][selector])!==JSON.stringify(snapshots[1][selector]))
+  differences.push({selector,reference:snapshots[0][selector],candidate:snapshots[1][selector]});
+ const pixels=[];
+ for(const selector of selectors){
+  const locators=pair.map(x=>x.page.locator(selector).first());
+  if(await locators[0].count()&&await locators[1].count()&&await locators[0].isVisible()&&await locators[1].isVisible()){
+   const buffers=[];for(let i=0;i<pair.length;i++){await pair[i].page.bringToFront();buffers.push(await locators[i].screenshot({animations:'disabled'}));}
+   const diff=pixelDifference(...buffers);pixels.push({selector,...diff});
+   if(!diff.same){const safe=selector.replace(/[^\w]/g,'_');fs.writeFileSync(path.join(folder,name+'-'+safe+'-reference.png'),buffers[0]);fs.writeFileSync(path.join(folder,name+'-'+safe+'-r31.png'),buffers[1]);}
+  }
+ }
+ return{name,status:differences.length||pixels.some(p=>!p.same)?'FAIL':'PASS',differences,pixels};
+}
+async function run(){
+ await build();
+ const {html}=await assemble(),reference=instrumentReference(html);
+ const {createFreshV1Kmz}=await import('../../phase-1b/core/create-new-kmz.mjs');
+ const {DOMParser,XMLSerializer}=require('@xmldom/xmldom'),JSZip=require('jszip');
+ const bytes=(await createFreshV1Kmz({records:[
+  {id:'r31-old',role:'existing',kind:'pokestop',title:'既存 PokéStop',memo:'',lat:35.68,lng:139.76,deleted:false},
+  {id:'r31-new',role:'new',kind:'gym',title:'Gym 1',memo:'',lat:35.684,lng:139.764,deleted:false}
+ ],activityAreas:[]},{JSZip,DOMParser,XMLSerializer})).bytes;
+ const browser=await chromium.launch({channel:process.env.R31_BROWSER_CHANNEL||undefined,headless:true}),results=[];
+ const root=path.join(__dirname,'artifacts','resume');fs.mkdirSync(root,{recursive:true});
+ try{
+  for(const viewport of [{width:390,height:844},{width:393,height:852},{width:1366,height:768}]){
+   const pair=[],scenes=[],actionErrors=[],folder=path.join(root,String(viewport.width));fs.mkdirSync(folder,{recursive:true});
+   try{
+    pair.push(await contextFor(browser,viewport,'reference',reference));pair.push(await contextFor(browser,viewport,'candidate',reference));
+    const both=async(selector)=>{for(const x of pair)await x.page.locator(selector).click({timeout:3000});};
+    const capture=(name,focus)=>compareScene(pair,name,FOCUS[focus],folder).then(x=>scenes.push(x));
+    await capture('entry-right','entry');
+    // Production v58 hides handedness controls; test the display-setting boundary without force-clicking hidden controls.
+    await pair[0].page.evaluate(()=>__r31ReferenceProbe.setHand('left'));await pair[1].page.evaluate(()=>creativeR31.setHand('left'));await capture('entry-left','entry');
+    await pair[0].page.evaluate(()=>__r31ReferenceProbe.setHand('right'));await pair[1].page.evaluate(()=>creativeR31.setHand('right'));
+    await pair[0].page.locator('#entryFile').setInputFiles({name:'r31-synthetic.kmz',mimeType:'application/vnd.google-earth.kmz',buffer:Buffer.from(bytes)});
+    await pair[0].page.locator('#startButton').click();
+    await pair[0].page.waitForFunction(()=>document.getElementById('entry').classList.contains('hidden'),{timeout:15000});
+    await pair[0].page.waitForTimeout(200); // wait for source beginEditor map.invalidateSize(50)
+    const view=await pair[0].page.evaluate(()=>window.__r31ReferenceProbe.view());
+    const before=JSON.stringify(view),camera=await pair[0].page.evaluate(()=>__r31ReferenceProbe.camera());
+    await pair[1].page.evaluate(view=>{
+     const frozen=JSON.parse(JSON.stringify(view));window.__r31Fixture=frozen;
+     creativeR31.onRequest((action,result)=>window.__r31Requests.push({action,result}));
+     creativeR31.setViewReader(()=>window.__r31Fixture);creativeR31.showMap();
+    },view);
+    await pair[1].page.evaluate(camera=>creativeR31.setCamera(camera),camera);
+    await capture('map-right','map');
+    await both('#cmAddFab');await capture('plus-open','plus');
+    for(const kind of ['new-pokestop','new-power']){
+     for(const x of pair)await x.page.locator('.cm-bubble[data-layer="'+kind+'"]').click({timeout:3000});
+     await capture('add-'+kind,'add');await both('#cmSafeAddCancel');await both('#cmAddFab');
+    }
+    for(const x of pair)await x.page.locator('.cm-bubble[data-layer="new-gym"]').click({timeout:3000});
+    await capture('add-gym','add');await both('#cmSafeAddCancel');
+    await both('#cmV59HelpButton');await capture('rules-open','help');await both('#cmV60RulesClose');
+    await both('#cmStandaloneSaveButton');await capture('save-open','save');await both('#cmStandaloneClose');
+    const fresh=view.pois.find(p=>p.role==='new'),old=view.pois.find(p=>p.role==='existing');
+    if(!fresh||!old)throw Error('REFERENCE_ROLE_FIXTURE_INVALID');
+    await pair[0].page.evaluate(id=>__r31ReferenceProbe.openSheet(id),fresh.id);
+    await pair[1].page.evaluate(id=>creativeR31.openSheet(id),fresh.id);
+    await capture('new-sheet','sheet');
+    await both('#cmMove');await capture('move-new','move');await both('#cmMoveCancel');
+    await pair[0].page.evaluate(id=>__r31ReferenceProbe.openSheet(id),old.id);
+    await pair[1].page.evaluate(id=>creativeR31.openSheet(id),old.id);
+    const existingReadOnly=await pair[1].page.locator('.cm-sheet input,.cm-sheet textarea,#cmMove,#cmDelete,#cmType').count()===0;
+    await capture('existing-sheet','sheet');await both('.cm-sheet-close');
+    // Exercise disconnected data requests with ordinary clicks, after visual comparisons.
+    const duplicateMountRejected=await pair[1].page.evaluate(async()=>{
+     const {mountCreativeUi}=await import('/creative-next/original-ui-r31/ui-runtime.mjs');
+     try{mountCreativeUi();return false;}catch(e){return e.message==='UI_ALREADY_MOUNTED';}
+    });
+    if(!duplicateMountRejected)throw Error('DUPLICATE_UI_OWNER_NOT_REJECTED');
+    await pair[1].page.locator('#cmAddFab').click();
+    await pair[1].page.locator('.cm-bubble[data-layer="new-pokestop"]').click();
+    await pair[1].page.locator('#cmSafeAddConfirm').click();await pair[1].page.locator('#cmSafeAddCancel').click();
+    await pair[1].page.evaluate(id=>creativeR31.openSheet(id),fresh.id);
+    await pair[1].page.locator('#cmName').fill('Synthetic proposed title');
+    await pair[1].page.locator('#cmMemo').fill('Synthetic proposed memo');
+    await pair[1].page.locator('#cmDelete').click();
+    await pair[1].page.locator('#cmMove').click();await pair[1].page.locator('#cmMoveConfirm').click();await pair[1].page.locator('#cmMoveCancel').click();
+    // KMZ remains a denied request, with no generated file or persistence.
+
+    await pair[1].page.locator('#cmStandaloneSaveButton').click();
+    await pair[1].page.locator('#cmStandaloneKmz').click();
+    const candidateChecks=await pair[1].page.evaluate(()=>({status:creativeR31.status(),storage:__r31Storage,
+     proposals:__r31Requests,fixture:JSON.stringify(__r31Fixture)}));
+    if(candidateChecks.fixture!==before)throw Error('UI_MUTATED_READ_VIEW');
+    if(candidateChecks.proposals.length<6||candidateChecks.proposals.some(p=>p.result.status!=='HOLD'||p.result.changed!==false))throw Error('DATA_REQUEST_ESCAPED_HOLD');
+    if(candidateChecks.status.mapCount!==1)throw Error('SINGLE_UI_MAP_VIOLATION');
+    const markup=await pair[1].page.content();
+    const hiddenLegacyRequests=pair[1].trace.filter(u=>u.includes('/creative/runtime/'));
+    await pair[1].page.evaluate(()=>creativeR31.dispose());
+    const disposed=await pair[1].page.evaluate(()=>({status:creativeR31.status(),ownedControls:document.querySelectorAll('#cmFabWrap,#cmV59HelpButton,#cmV60RulesPanel,#cmStandaloneSaveButton,.cm-sheet').length}));
+    results.push({viewport,status:scenes.every(s=>s.status==='PASS')&&pair.every(x=>x.errors.length===0)&&candidateChecks.storage.length===0&&hiddenLegacyRequests.length===0&&existingReadOnly&&disposed.ownedControls===0?'PASS':'HOLD',
+     scenes,actionErrors,existingReadOnly,duplicateMountRejected,candidateChecks:{...candidateChecks,fixture:undefined},hiddenLegacyRequests,disposed,errors:pair.map(x=>x.errors),
+     renderedMode:'read-only synthetic view; no r31 data import or editor Session'});
+   }catch(error){
+    actionErrors.push(error.message.slice(0,2400));
+    results.push({viewport,status:'HOLD',scenes,actionErrors,errors:pair.map(x=>x.errors)});
+   }finally{for(const x of pair)await x.context.close();}
+  }
+ }finally{await browser.close();}
+ const report={status:results.every(x=>x.status==='PASS')?'PASS':'HOLD',
+  partA:'HOLD',partB:'NOT_STARTED',scope:'Focused source UI groups; full activity/coordinate/animation/gesture gates incomplete',
+  browser:'Chromium engine; Edge channel if configured',safariRealDevice:'NOT_TESTED',forceClicksUsed:0,referenceAutosaveIntervals:'two legacy save intervals suppressed for fixed EMPTY initial saved-state fixture',
+  fixture:'synthetic NEW_V1; reference memory storage; candidate read-only view and HOLD requests',results};
+ fs.writeFileSync(path.join(__dirname,'ui-runtime-comparison.json'),JSON.stringify(report,null,2)+'\n');
+ console.log(JSON.stringify({status:report.status,partA:report.partA,results:results.map(x=>({width:x.viewport.width,status:x.status,actions:x.actionErrors,scenes:x.scenes.map(s=>({name:s.name,status:s.status,dom:s.differences.length,pixels:s.pixels.filter(p=>!p.same).length}))}))}));
+ return report;
+}
+module.exports={run,pixelDifference,instrumentReference};
+if(require.main===module)run().then(r=>{process.exitCode=r.status==='PASS'?0:2;}).catch(e=>{console.error(e);process.exitCode=1;});

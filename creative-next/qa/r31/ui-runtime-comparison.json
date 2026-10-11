@@ -1,0 +1,2142 @@
+{
+  "status": "HOLD",
+  "partA": "HOLD",
+  "partB": "NOT_STARTED",
+  "scope": "Focused source UI groups; full activity/coordinate/animation/gesture gates incomplete",
+  "browser": "Chromium engine; Edge channel if configured",
+  "safariRealDevice": "NOT_TESTED",
+  "forceClicksUsed": 0,
+  "referenceAutosaveIntervals": "two legacy save intervals suppressed for fixed EMPTY initial saved-state fixture",
+  "fixture": "synthetic NEW_V1; reference memory storage; candidate read-only view and HOLD requests",
+  "results": [
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "status": "HOLD",
+      "scenes": [
+        {
+          "name": "entry-right",
+          "status": "PASS",
+          "differences": [],
+          "pixels": [
+            {
+              "selector": ".entry-title",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 33630
+            },
+            {
+              "selector": ".entry-copy",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 12744
+            },
+            {
+              "selector": ".filebar",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 19470
+            },
+            {
+              "selector": "#startButton",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 20886
+            }
+          ]
+        },
+        {
+          "name": "entry-left",
+          "status": "PASS",
+          "differences": [],
+          "pixels": [
+            {
+              "selector": ".entry-title",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 33630
+            },
+            {
+              "selector": ".entry-copy",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 12744
+            },
+            {
+              "selector": ".filebar",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 19470
+            },
+            {
+              "selector": "#startButton",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 20886
+            }
+          ]
+        },
+        {
+          "name": "map-right",
+          "status": "PASS",
+          "differences": [],
+          "pixels": [
+            {
+              "selector": "#back",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 2546
+            },
+            {
+              "selector": "#mapToggle",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 3952
+            },
+            {
+              "selector": "#layerButton",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 3572
+            },
+            {
+              "selector": "#toolbox",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 2116
+            },
+            {
+              "selector": "#cmStandaloneSaveButton",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 1936
+            },
+            {
+              "selector": "#cmCount",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 984
+            },
+            {
+              "selector": "#cmAddFab",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 2304
+            }
+          ]
+        },
+        {
+          "name": "plus-open",
+          "status": "PASS",
+          "differences": [],
+          "pixels": [
+            {
+              "selector": "#cmFabWrap",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 2304
+            },
+            {
+              "selector": ".cm-bubble",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 1600
+            }
+          ]
+        },
+        {
+          "name": "add-new-pokestop",
+          "status": "PASS",
+          "differences": [],
+          "pixels": [
+            {
+              "selector": "#cmSafeAddBar",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 30690
+            },
+            {
+              "selector": "#cmSafeAddDot",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 324
+            },
+            {
+              "selector": "#cmSafeAddLever",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 4480
+            },
+            {
+              "selector": "#cmSafeAddConfirm",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 1568
+            },
+            {
+              "selector": "#cmSafeAddCancel",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 1156
+            }
+          ]
+        },
+        {
+          "name": "add-new-power",
+          "status": "PASS",
+          "differences": [],
+          "pixels": [
+            {
+              "selector": "#cmSafeAddBar",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 30690
+            },
+            {
+              "selector": "#cmSafeAddDot",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 324
+            },
+            {
+              "selector": "#cmSafeAddLever",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 4480
+            },
+            {
+              "selector": "#cmSafeAddConfirm",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 1568
+            },
+            {
+              "selector": "#cmSafeAddCancel",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 1156
+            }
+          ]
+        },
+        {
+          "name": "add-gym",
+          "status": "FAIL",
+          "differences": [],
+          "pixels": [
+            {
+              "selector": "#cmSafeAddBar",
+              "same": false,
+              "differentPixels": 286,
+              "totalPixels": 30690
+            },
+            {
+              "selector": "#cmSafeAddDot",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 324
+            },
+            {
+              "selector": "#cmSafeAddLever",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 4480
+            },
+            {
+              "selector": "#cmSafeAddConfirm",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 1568
+            },
+            {
+              "selector": "#cmSafeAddCancel",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 1156
+            }
+          ]
+        },
+        {
+          "name": "rules-open",
+          "status": "FAIL",
+          "differences": [],
+          "pixels": [
+            {
+              "selector": "#cmV60RulesPanel",
+              "same": false,
+              "differentPixels": 578,
+              "totalPixels": 155160
+            },
+            {
+              "selector": "#cmV60RulesTrack",
+              "same": false,
+              "differentPixels": 34,
+              "totalPixels": 124942
+            },
+            {
+              "selector": "#cmV60RulesDots",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 8592
+            }
+          ]
+        },
+        {
+          "name": "save-open",
+          "status": "FAIL",
+          "differences": [],
+          "pixels": [
+            {
+              "selector": "#cmStandaloneSaveButton",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 1936
+            },
+            {
+              "selector": "#cmStandaloneSaveMenu",
+              "same": false,
+              "differentPixels": 5,
+              "totalPixels": 43680
+            },
+            {
+              "selector": "#cmStandaloneKmz",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 10736
+            },
+            {
+              "selector": "#cmStandaloneCoords",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 12200
+            }
+          ]
+        },
+        {
+          "name": "new-sheet",
+          "status": "FAIL",
+          "differences": [],
+          "pixels": [
+            {
+              "selector": ".cm-sheet",
+              "same": false,
+              "differentPixels": 7,
+              "totalPixels": 118170
+            },
+            {
+              "selector": "#cmName",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 15204
+            },
+            {
+              "selector": "#cmMemo",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 24616
+            },
+            {
+              "selector": "#cmMove",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 5104
+            },
+            {
+              "selector": "#cmType",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 5104
+            },
+            {
+              "selector": "#cmDelete",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 5104
+            }
+          ]
+        },
+        {
+          "name": "move-new",
+          "status": "PASS",
+          "differences": [],
+          "pixels": [
+            {
+              "selector": "#cmMoveBar",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 27528
+            },
+            {
+              "selector": "#cmMoveCrosshair",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 2916
+            },
+            {
+              "selector": "#cmMoveLever",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 4480
+            },
+            {
+              "selector": "#cmMoveConfirm",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 2072
+            },
+            {
+              "selector": "#cmMoveCancel",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 400
+            }
+          ]
+        },
+        {
+          "name": "existing-sheet",
+          "status": "PASS",
+          "differences": [],
+          "pixels": [
+            {
+              "selector": ".cm-sheet",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 42510
+            }
+          ]
+        }
+      ],
+      "actionErrors": [],
+      "existingReadOnly": true,
+      "duplicateMountRejected": true,
+      "candidateChecks": {
+        "status": {
+          "mode": "PART_A_VIEW_ONLY",
+          "dataConnected": false,
+          "stopped": false,
+          "mapCount": 1,
+          "proposals": 6,
+          "ui": {
+            "hand": "right",
+            "menu": false,
+            "mode": null,
+            "layer": "new-pokestop",
+            "radius": 50,
+            "selected": "4ecacefc-08df-4c63-b204-947642986a10",
+            "dragged": false
+          },
+          "preview": null
+        },
+        "storage": [],
+        "proposals": [
+          {
+            "action": {
+              "type": "add",
+              "kind": "new-pokestop",
+              "position": {
+                "lat": 35.68199746679798,
+                "lng": 139.7619938850403
+              },
+              "requestId": "r31-ui-1"
+            },
+            "result": {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "PART_A_DATA_DISCONNECTED"
+            }
+          },
+          {
+            "action": {
+              "type": "edit",
+              "id": "4ecacefc-08df-4c63-b204-947642986a10",
+              "patch": {
+                "title": "Synthetic proposed title"
+              },
+              "requestId": "r31-ui-2"
+            },
+            "result": {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "PART_A_DATA_DISCONNECTED"
+            }
+          },
+          {
+            "action": {
+              "type": "edit",
+              "id": "4ecacefc-08df-4c63-b204-947642986a10",
+              "patch": {
+                "memo": "Synthetic proposed memo"
+              },
+              "requestId": "r31-ui-3"
+            },
+            "result": {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "PART_A_DATA_DISCONNECTED"
+            }
+          },
+          {
+            "action": {
+              "type": "delete",
+              "id": "4ecacefc-08df-4c63-b204-947642986a10",
+              "requestId": "r31-ui-4"
+            },
+            "result": {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "PART_A_DATA_DISCONNECTED"
+            }
+          },
+          {
+            "action": {
+              "type": "move",
+              "id": "4ecacefc-08df-4c63-b204-947642986a10",
+              "position": {
+                "lat": 35.68199746679798,
+                "lng": 139.7619938850403
+              },
+              "requestId": "r31-ui-5"
+            },
+            "result": {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "PART_A_DATA_DISCONNECTED"
+            }
+          },
+          {
+            "action": {
+              "type": "exportKmz",
+              "requestId": "r31-ui-6"
+            },
+            "result": {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "PART_A_DATA_DISCONNECTED"
+            }
+          }
+        ]
+      },
+      "hiddenLegacyRequests": [],
+      "disposed": {
+        "status": {
+          "mode": "PART_A_VIEW_ONLY",
+          "dataConnected": false,
+          "stopped": true,
+          "mapCount": 0,
+          "proposals": 6,
+          "ui": {
+            "hand": "right",
+            "menu": false,
+            "mode": null,
+            "layer": "new-pokestop",
+            "radius": 50,
+            "selected": null,
+            "dragged": false
+          },
+          "preview": null
+        },
+        "ownedControls": 0
+      },
+      "errors": [
+        [],
+        []
+      ],
+      "renderedMode": "read-only synthetic view; no r31 data import or editor Session"
+    },
+    {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "status": "HOLD",
+      "scenes": [
+        {
+          "name": "entry-right",
+          "status": "PASS",
+          "differences": [],
+          "pixels": [
+            {
+              "selector": ".entry-title",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 34272
+            },
+            {
+              "selector": ".entry-copy",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 12852
+            },
+            {
+              "selector": ".filebar",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 19635
+            },
+            {
+              "selector": "#startButton",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 21063
+            }
+          ]
+        },
+        {
+          "name": "entry-left",
+          "status": "PASS",
+          "differences": [],
+          "pixels": [
+            {
+              "selector": ".entry-title",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 34272
+            },
+            {
+              "selector": ".entry-copy",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 12852
+            },
+            {
+              "selector": ".filebar",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 19635
+            },
+            {
+              "selector": "#startButton",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 21063
+            }
+          ]
+        },
+        {
+          "name": "map-right",
+          "status": "PASS",
+          "differences": [],
+          "pixels": [
+            {
+              "selector": "#back",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 2546
+            },
+            {
+              "selector": "#mapToggle",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 3952
+            },
+            {
+              "selector": "#layerButton",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 3572
+            },
+            {
+              "selector": "#toolbox",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 2116
+            },
+            {
+              "selector": "#cmStandaloneSaveButton",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 1936
+            },
+            {
+              "selector": "#cmCount",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 984
+            },
+            {
+              "selector": "#cmAddFab",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 2352
+            }
+          ]
+        },
+        {
+          "name": "plus-open",
+          "status": "PASS",
+          "differences": [],
+          "pixels": [
+            {
+              "selector": "#cmFabWrap",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 2352
+            },
+            {
+              "selector": ".cm-bubble",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 1640
+            }
+          ]
+        },
+        {
+          "name": "add-new-pokestop",
+          "status": "PASS",
+          "differences": [],
+          "pixels": [
+            {
+              "selector": "#cmSafeAddBar",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 30783
+            },
+            {
+              "selector": "#cmSafeAddDot",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 342
+            },
+            {
+              "selector": "#cmSafeAddLever",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 4550
+            },
+            {
+              "selector": "#cmSafeAddConfirm",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 1596
+            },
+            {
+              "selector": "#cmSafeAddCancel",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 1190
+            }
+          ]
+        },
+        {
+          "name": "add-new-power",
+          "status": "PASS",
+          "differences": [],
+          "pixels": [
+            {
+              "selector": "#cmSafeAddBar",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 30783
+            },
+            {
+              "selector": "#cmSafeAddDot",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 342
+            },
+            {
+              "selector": "#cmSafeAddLever",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 4550
+            },
+            {
+              "selector": "#cmSafeAddConfirm",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 1596
+            },
+            {
+              "selector": "#cmSafeAddCancel",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 1190
+            }
+          ]
+        },
+        {
+          "name": "add-gym",
+          "status": "FAIL",
+          "differences": [],
+          "pixels": [
+            {
+              "selector": "#cmSafeAddBar",
+              "same": false,
+              "differentPixels": 285,
+              "totalPixels": 30783
+            },
+            {
+              "selector": "#cmSafeAddDot",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 342
+            },
+            {
+              "selector": "#cmSafeAddLever",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 4550
+            },
+            {
+              "selector": "#cmSafeAddConfirm",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 1596
+            },
+            {
+              "selector": "#cmSafeAddCancel",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 1190
+            }
+          ]
+        },
+        {
+          "name": "rules-open",
+          "status": "FAIL",
+          "differences": [],
+          "pixels": [
+            {
+              "selector": "#cmV60RulesPanel",
+              "same": false,
+              "differentPixels": 578,
+              "totalPixels": 155591
+            },
+            {
+              "selector": "#cmV60RulesTrack",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 125291
+            },
+            {
+              "selector": "#cmV60RulesDots",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 8616
+            }
+          ]
+        },
+        {
+          "name": "save-open",
+          "status": "PASS",
+          "differences": [],
+          "pixels": [
+            {
+              "selector": "#cmStandaloneSaveButton",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 1936
+            },
+            {
+              "selector": "#cmStandaloneSaveMenu",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 43680
+            },
+            {
+              "selector": "#cmStandaloneKmz",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 10736
+            },
+            {
+              "selector": "#cmStandaloneCoords",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 12200
+            }
+          ]
+        },
+        {
+          "name": "new-sheet",
+          "status": "PASS",
+          "differences": [],
+          "pixels": [
+            {
+              "selector": ".cm-sheet",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 119079
+            },
+            {
+              "selector": "#cmName",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 15330
+            },
+            {
+              "selector": "#cmMemo",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 24820
+            },
+            {
+              "selector": "#cmMove",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 5148
+            },
+            {
+              "selector": "#cmType",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 5148
+            },
+            {
+              "selector": "#cmDelete",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 5148
+            }
+          ]
+        },
+        {
+          "name": "move-new",
+          "status": "FAIL",
+          "differences": [
+            {
+              "selector": "#cmMoveBar",
+              "reference": [
+                {
+                  "tag": "DIV",
+                  "count": 1,
+                  "id": "cmMoveBar",
+                  "classes": "cm-move-bar",
+                  "text": null,
+                  "box": {
+                    "x": 10.5,
+                    "y": 772,
+                    "width": 372,
+                    "height": 74
+                  },
+                  "styles": {
+                    "display": "grid",
+                    "position": "fixed",
+                    "fontSize": "16px",
+                    "fontFamily": "-apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+                    "fontWeight": "400",
+                    "color": "rgb(56, 45, 29)",
+                    "background": "rgba(255, 255, 255, 0.08) none repeat scroll 0% 0% / auto padding-box border-box",
+                    "border": "1px solid rgba(255, 255, 255, 0.18)",
+                    "borderRadius": "22px",
+                    "zIndex": "1800",
+                    "touchAction": "auto",
+                    "transform": "matrix(1, 0, 0, 1, -186, 0)",
+                    "opacity": "1",
+                    "animationName": "none"
+                  },
+                  "structure": [
+                    {
+                      "tag": "BUTTON",
+                      "id": "cmMoveLever",
+                      "classes": "cm-move-lever",
+                      "text": null,
+                      "value": "",
+                      "maxLength": null
+                    },
+                    {
+                      "tag": "SPAN",
+                      "id": "",
+                      "classes": "cm-move-labels",
+                      "text": null,
+                      "value": null,
+                      "maxLength": null
+                    },
+                    {
+                      "tag": "I",
+                      "id": "",
+                      "classes": "",
+                      "text": "50",
+                      "value": null,
+                      "maxLength": null
+                    },
+                    {
+                      "tag": "I",
+                      "id": "",
+                      "classes": "",
+                      "text": "40",
+                      "value": null,
+                      "maxLength": null
+                    },
+                    {
+                      "tag": "I",
+                      "id": "",
+                      "classes": "",
+                      "text": "30",
+                      "value": null,
+                      "maxLength": null
+                    },
+                    {
+                      "tag": "SPAN",
+                      "id": "",
+                      "classes": "cm-move-track",
+                      "text": "",
+                      "value": null,
+                      "maxLength": null
+                    },
+                    {
+                      "tag": "SPAN",
+                      "id": "cmMoveLeverKnob",
+                      "classes": "cm-move-knob",
+                      "text": "",
+                      "value": null,
+                      "maxLength": null
+                    },
+                    {
+                      "tag": "STRONG",
+                      "id": "cmMoveRadiusValue",
+                      "classes": "",
+                      "text": "50m",
+                      "value": null,
+                      "maxLength": null
+                    },
+                    {
+                      "tag": "SPAN",
+                      "id": "cmMoveNearest",
+                      "classes": "cm-move-nearest safe",
+                      "text": "✓ 最短POI 286.6m",
+                      "value": null,
+                      "maxLength": null
+                    },
+                    {
+                      "tag": "BUTTON",
+                      "id": "cmMoveConfirm",
+                      "classes": "cm-move-confirm",
+                      "text": "移動確定",
+                      "value": "",
+                      "maxLength": null
+                    },
+                    {
+                      "tag": "BUTTON",
+                      "id": "cmMoveCancel",
+                      "classes": "cm-move-cancel",
+                      "text": "×",
+                      "value": "",
+                      "maxLength": null
+                    },
+                    {
+                      "tag": "BUTTON",
+                      "id": "",
+                      "classes": "cm-coordinate-trigger",
+                      "text": "座標",
+                      "value": "",
+                      "maxLength": null
+                    }
+                  ]
+                }
+              ],
+              "candidate": [
+                {
+                  "tag": "DIV",
+                  "count": 1,
+                  "id": "cmMoveBar",
+                  "classes": "cm-move-bar",
+                  "text": null,
+                  "box": {
+                    "x": 10.5,
+                    "y": 772,
+                    "width": 372,
+                    "height": 74
+                  },
+                  "styles": {
+                    "display": "grid",
+                    "position": "fixed",
+                    "fontSize": "16px",
+                    "fontFamily": "-apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+                    "fontWeight": "400",
+                    "color": "rgb(56, 45, 29)",
+                    "background": "rgba(255, 255, 255, 0.08) none repeat scroll 0% 0% / auto padding-box border-box",
+                    "border": "1px solid rgba(255, 255, 255, 0.18)",
+                    "borderRadius": "22px",
+                    "zIndex": "1800",
+                    "touchAction": "auto",
+                    "transform": "matrix(1, 0, 0, 1, -186, 0)",
+                    "opacity": "1",
+                    "animationName": "none"
+                  },
+                  "structure": [
+                    {
+                      "tag": "BUTTON",
+                      "id": "cmMoveLever",
+                      "classes": "cm-move-lever",
+                      "text": null,
+                      "value": "",
+                      "maxLength": null
+                    },
+                    {
+                      "tag": "SPAN",
+                      "id": "",
+                      "classes": "cm-move-labels",
+                      "text": null,
+                      "value": null,
+                      "maxLength": null
+                    },
+                    {
+                      "tag": "I",
+                      "id": "",
+                      "classes": "",
+                      "text": "50",
+                      "value": null,
+                      "maxLength": null
+                    },
+                    {
+                      "tag": "I",
+                      "id": "",
+                      "classes": "",
+                      "text": "40",
+                      "value": null,
+                      "maxLength": null
+                    },
+                    {
+                      "tag": "I",
+                      "id": "",
+                      "classes": "",
+                      "text": "30",
+                      "value": null,
+                      "maxLength": null
+                    },
+                    {
+                      "tag": "SPAN",
+                      "id": "",
+                      "classes": "cm-move-track",
+                      "text": "",
+                      "value": null,
+                      "maxLength": null
+                    },
+                    {
+                      "tag": "SPAN",
+                      "id": "cmMoveLeverKnob",
+                      "classes": "cm-move-knob",
+                      "text": "",
+                      "value": null,
+                      "maxLength": null
+                    },
+                    {
+                      "tag": "STRONG",
+                      "id": "cmMoveRadiusValue",
+                      "classes": "",
+                      "text": "50m",
+                      "value": null,
+                      "maxLength": null
+                    },
+                    {
+                      "tag": "SPAN",
+                      "id": "cmMoveNearest",
+                      "classes": "cm-move-nearest safe",
+                      "text": "✓ 最短POI 287.8m",
+                      "value": null,
+                      "maxLength": null
+                    },
+                    {
+                      "tag": "BUTTON",
+                      "id": "cmMoveConfirm",
+                      "classes": "cm-move-confirm",
+                      "text": "移動確定",
+                      "value": "",
+                      "maxLength": null
+                    },
+                    {
+                      "tag": "BUTTON",
+                      "id": "cmMoveCancel",
+                      "classes": "cm-move-cancel",
+                      "text": "×",
+                      "value": "",
+                      "maxLength": null
+                    },
+                    {
+                      "tag": "BUTTON",
+                      "id": "",
+                      "classes": "cm-coordinate-trigger",
+                      "text": "座標",
+                      "value": "",
+                      "maxLength": null
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "pixels": [
+            {
+              "selector": "#cmMoveBar",
+              "same": false,
+              "differentPixels": 91,
+              "totalPixels": 27602
+            },
+            {
+              "selector": "#cmMoveCrosshair",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 2970
+            },
+            {
+              "selector": "#cmMoveLever",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 4550
+            },
+            {
+              "selector": "#cmMoveConfirm",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 2100
+            },
+            {
+              "selector": "#cmMoveCancel",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 420
+            }
+          ]
+        },
+        {
+          "name": "existing-sheet",
+          "status": "PASS",
+          "differences": [],
+          "pixels": [
+            {
+              "selector": ".cm-sheet",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 42837
+            }
+          ]
+        }
+      ],
+      "actionErrors": [],
+      "existingReadOnly": true,
+      "duplicateMountRejected": true,
+      "candidateChecks": {
+        "status": {
+          "mode": "PART_A_VIEW_ONLY",
+          "dataConnected": false,
+          "stopped": false,
+          "mapCount": 1,
+          "proposals": 6,
+          "ui": {
+            "hand": "right",
+            "menu": false,
+            "mode": null,
+            "layer": "new-pokestop",
+            "radius": 50,
+            "selected": "397cb5de-5ae0-46e8-92c1-840f9ec5dc73",
+            "dragged": false
+          },
+          "preview": null
+        },
+        "storage": [],
+        "proposals": [
+          {
+            "action": {
+              "type": "add",
+              "kind": "new-pokestop",
+              "position": {
+                "lat": 35.68199746679798,
+                "lng": 139.7620260715485
+              },
+              "requestId": "r31-ui-1"
+            },
+            "result": {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "PART_A_DATA_DISCONNECTED"
+            }
+          },
+          {
+            "action": {
+              "type": "edit",
+              "id": "397cb5de-5ae0-46e8-92c1-840f9ec5dc73",
+              "patch": {
+                "title": "Synthetic proposed title"
+              },
+              "requestId": "r31-ui-2"
+            },
+            "result": {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "PART_A_DATA_DISCONNECTED"
+            }
+          },
+          {
+            "action": {
+              "type": "edit",
+              "id": "397cb5de-5ae0-46e8-92c1-840f9ec5dc73",
+              "patch": {
+                "memo": "Synthetic proposed memo"
+              },
+              "requestId": "r31-ui-3"
+            },
+            "result": {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "PART_A_DATA_DISCONNECTED"
+            }
+          },
+          {
+            "action": {
+              "type": "delete",
+              "id": "397cb5de-5ae0-46e8-92c1-840f9ec5dc73",
+              "requestId": "r31-ui-4"
+            },
+            "result": {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "PART_A_DATA_DISCONNECTED"
+            }
+          },
+          {
+            "action": {
+              "type": "move",
+              "id": "397cb5de-5ae0-46e8-92c1-840f9ec5dc73",
+              "position": {
+                "lat": 35.68199746679798,
+                "lng": 139.7620260715485
+              },
+              "requestId": "r31-ui-5"
+            },
+            "result": {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "PART_A_DATA_DISCONNECTED"
+            }
+          },
+          {
+            "action": {
+              "type": "exportKmz",
+              "requestId": "r31-ui-6"
+            },
+            "result": {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "PART_A_DATA_DISCONNECTED"
+            }
+          }
+        ]
+      },
+      "hiddenLegacyRequests": [],
+      "disposed": {
+        "status": {
+          "mode": "PART_A_VIEW_ONLY",
+          "dataConnected": false,
+          "stopped": true,
+          "mapCount": 0,
+          "proposals": 6,
+          "ui": {
+            "hand": "right",
+            "menu": false,
+            "mode": null,
+            "layer": "new-pokestop",
+            "radius": 50,
+            "selected": null,
+            "dragged": false
+          },
+          "preview": null
+        },
+        "ownedControls": 0
+      },
+      "errors": [
+        [],
+        []
+      ],
+      "renderedMode": "read-only synthetic view; no r31 data import or editor Session"
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "status": "HOLD",
+      "scenes": [
+        {
+          "name": "entry-right",
+          "status": "PASS",
+          "differences": [],
+          "pixels": [
+            {
+              "selector": ".entry-title",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 45108
+            },
+            {
+              "selector": ".entry-copy",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 32220
+            },
+            {
+              "selector": ".filebar",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 34100
+            },
+            {
+              "selector": "#startButton",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 36580
+            }
+          ]
+        },
+        {
+          "name": "entry-left",
+          "status": "PASS",
+          "differences": [],
+          "pixels": [
+            {
+              "selector": ".entry-title",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 45108
+            },
+            {
+              "selector": ".entry-copy",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 32220
+            },
+            {
+              "selector": ".filebar",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 34100
+            },
+            {
+              "selector": "#startButton",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 36580
+            }
+          ]
+        },
+        {
+          "name": "map-right",
+          "status": "PASS",
+          "differences": [],
+          "pixels": [
+            {
+              "selector": "#back",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 2546
+            },
+            {
+              "selector": "#mapToggle",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 3952
+            },
+            {
+              "selector": "#layerButton",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 3572
+            },
+            {
+              "selector": "#toolbox",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 2116
+            },
+            {
+              "selector": "#cmStandaloneSaveButton",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 1936
+            },
+            {
+              "selector": "#cmCount",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 984
+            },
+            {
+              "selector": "#cmAddFab",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 2352
+            }
+          ]
+        },
+        {
+          "name": "plus-open",
+          "status": "PASS",
+          "differences": [],
+          "pixels": [
+            {
+              "selector": "#cmFabWrap",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 2352
+            },
+            {
+              "selector": ".cm-bubble",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 1640
+            }
+          ]
+        },
+        {
+          "name": "add-new-pokestop",
+          "status": "PASS",
+          "differences": [],
+          "pixels": [
+            {
+              "selector": "#cmSafeAddBar",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 30690
+            },
+            {
+              "selector": "#cmSafeAddDot",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 324
+            },
+            {
+              "selector": "#cmSafeAddLever",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 4480
+            },
+            {
+              "selector": "#cmSafeAddConfirm",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 1568
+            },
+            {
+              "selector": "#cmSafeAddCancel",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 1156
+            }
+          ]
+        },
+        {
+          "name": "add-new-power",
+          "status": "PASS",
+          "differences": [],
+          "pixels": [
+            {
+              "selector": "#cmSafeAddBar",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 30690
+            },
+            {
+              "selector": "#cmSafeAddDot",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 324
+            },
+            {
+              "selector": "#cmSafeAddLever",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 4480
+            },
+            {
+              "selector": "#cmSafeAddConfirm",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 1568
+            },
+            {
+              "selector": "#cmSafeAddCancel",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 1156
+            }
+          ]
+        },
+        {
+          "name": "add-gym",
+          "status": "FAIL",
+          "differences": [],
+          "pixels": [
+            {
+              "selector": "#cmSafeAddBar",
+              "same": false,
+              "differentPixels": 289,
+              "totalPixels": 30690
+            },
+            {
+              "selector": "#cmSafeAddDot",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 324
+            },
+            {
+              "selector": "#cmSafeAddLever",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 4480
+            },
+            {
+              "selector": "#cmSafeAddConfirm",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 1568
+            },
+            {
+              "selector": "#cmSafeAddCancel",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 1156
+            }
+          ]
+        },
+        {
+          "name": "rules-open",
+          "status": "FAIL",
+          "differences": [],
+          "pixels": [
+            {
+              "selector": "#cmV60RulesPanel",
+              "same": false,
+              "differentPixels": 1354,
+              "totalPixels": 155160
+            },
+            {
+              "selector": "#cmV60RulesTrack",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 124942
+            },
+            {
+              "selector": "#cmV60RulesDots",
+              "same": false,
+              "differentPixels": 45,
+              "totalPixels": 8592
+            }
+          ]
+        },
+        {
+          "name": "save-open",
+          "status": "PASS",
+          "differences": [],
+          "pixels": [
+            {
+              "selector": "#cmStandaloneSaveButton",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 1936
+            },
+            {
+              "selector": "#cmStandaloneSaveMenu",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 43680
+            },
+            {
+              "selector": "#cmStandaloneKmz",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 10736
+            },
+            {
+              "selector": "#cmStandaloneCoords",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 12200
+            }
+          ]
+        },
+        {
+          "name": "new-sheet",
+          "status": "FAIL",
+          "differences": [],
+          "pixels": [
+            {
+              "selector": ".cm-sheet",
+              "same": false,
+              "differentPixels": 13,
+              "totalPixels": 413898
+            },
+            {
+              "selector": "#cmName",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 56196
+            },
+            {
+              "selector": "#cmMemo",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 90984
+            },
+            {
+              "selector": "#cmMove",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 19404
+            },
+            {
+              "selector": "#cmType",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 19448
+            },
+            {
+              "selector": "#cmDelete",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 19404
+            }
+          ]
+        },
+        {
+          "name": "move-new",
+          "status": "FAIL",
+          "differences": [
+            {
+              "selector": "#cmMoveBar",
+              "reference": [
+                {
+                  "tag": "DIV",
+                  "count": 1,
+                  "id": "cmMoveBar",
+                  "classes": "cm-move-bar",
+                  "text": null,
+                  "box": {
+                    "x": 497,
+                    "y": 688,
+                    "width": 372,
+                    "height": 74
+                  },
+                  "styles": {
+                    "display": "grid",
+                    "position": "fixed",
+                    "fontSize": "16px",
+                    "fontFamily": "-apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+                    "fontWeight": "400",
+                    "color": "rgb(56, 45, 29)",
+                    "background": "rgba(255, 255, 255, 0.08) none repeat scroll 0% 0% / auto padding-box border-box",
+                    "border": "1px solid rgba(255, 255, 255, 0.18)",
+                    "borderRadius": "22px",
+                    "zIndex": "1800",
+                    "touchAction": "auto",
+                    "transform": "matrix(1, 0, 0, 1, -186, 0)",
+                    "opacity": "1",
+                    "animationName": "none"
+                  },
+                  "structure": [
+                    {
+                      "tag": "BUTTON",
+                      "id": "cmMoveLever",
+                      "classes": "cm-move-lever",
+                      "text": null,
+                      "value": "",
+                      "maxLength": null
+                    },
+                    {
+                      "tag": "SPAN",
+                      "id": "",
+                      "classes": "cm-move-labels",
+                      "text": null,
+                      "value": null,
+                      "maxLength": null
+                    },
+                    {
+                      "tag": "I",
+                      "id": "",
+                      "classes": "",
+                      "text": "50",
+                      "value": null,
+                      "maxLength": null
+                    },
+                    {
+                      "tag": "I",
+                      "id": "",
+                      "classes": "",
+                      "text": "40",
+                      "value": null,
+                      "maxLength": null
+                    },
+                    {
+                      "tag": "I",
+                      "id": "",
+                      "classes": "",
+                      "text": "30",
+                      "value": null,
+                      "maxLength": null
+                    },
+                    {
+                      "tag": "SPAN",
+                      "id": "",
+                      "classes": "cm-move-track",
+                      "text": "",
+                      "value": null,
+                      "maxLength": null
+                    },
+                    {
+                      "tag": "SPAN",
+                      "id": "cmMoveLeverKnob",
+                      "classes": "cm-move-knob",
+                      "text": "",
+                      "value": null,
+                      "maxLength": null
+                    },
+                    {
+                      "tag": "STRONG",
+                      "id": "cmMoveRadiusValue",
+                      "classes": "",
+                      "text": "50m",
+                      "value": null,
+                      "maxLength": null
+                    },
+                    {
+                      "tag": "SPAN",
+                      "id": "cmMoveNearest",
+                      "classes": "cm-move-nearest safe",
+                      "text": "✓ 最短POI 286.6m",
+                      "value": null,
+                      "maxLength": null
+                    },
+                    {
+                      "tag": "BUTTON",
+                      "id": "cmMoveConfirm",
+                      "classes": "cm-move-confirm",
+                      "text": "移動確定",
+                      "value": "",
+                      "maxLength": null
+                    },
+                    {
+                      "tag": "BUTTON",
+                      "id": "cmMoveCancel",
+                      "classes": "cm-move-cancel",
+                      "text": "×",
+                      "value": "",
+                      "maxLength": null
+                    },
+                    {
+                      "tag": "BUTTON",
+                      "id": "",
+                      "classes": "cm-coordinate-trigger",
+                      "text": "座標",
+                      "value": "",
+                      "maxLength": null
+                    }
+                  ]
+                }
+              ],
+              "candidate": [
+                {
+                  "tag": "DIV",
+                  "count": 1,
+                  "id": "cmMoveBar",
+                  "classes": "cm-move-bar",
+                  "text": null,
+                  "box": {
+                    "x": 497,
+                    "y": 688,
+                    "width": 372,
+                    "height": 74
+                  },
+                  "styles": {
+                    "display": "grid",
+                    "position": "fixed",
+                    "fontSize": "16px",
+                    "fontFamily": "-apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+                    "fontWeight": "400",
+                    "color": "rgb(56, 45, 29)",
+                    "background": "rgba(255, 255, 255, 0.08) none repeat scroll 0% 0% / auto padding-box border-box",
+                    "border": "1px solid rgba(255, 255, 255, 0.18)",
+                    "borderRadius": "22px",
+                    "zIndex": "1800",
+                    "touchAction": "auto",
+                    "transform": "matrix(1, 0, 0, 1, -186, 0)",
+                    "opacity": "1",
+                    "animationName": "none"
+                  },
+                  "structure": [
+                    {
+                      "tag": "BUTTON",
+                      "id": "cmMoveLever",
+                      "classes": "cm-move-lever",
+                      "text": null,
+                      "value": "",
+                      "maxLength": null
+                    },
+                    {
+                      "tag": "SPAN",
+                      "id": "",
+                      "classes": "cm-move-labels",
+                      "text": null,
+                      "value": null,
+                      "maxLength": null
+                    },
+                    {
+                      "tag": "I",
+                      "id": "",
+                      "classes": "",
+                      "text": "50",
+                      "value": null,
+                      "maxLength": null
+                    },
+                    {
+                      "tag": "I",
+                      "id": "",
+                      "classes": "",
+                      "text": "40",
+                      "value": null,
+                      "maxLength": null
+                    },
+                    {
+                      "tag": "I",
+                      "id": "",
+                      "classes": "",
+                      "text": "30",
+                      "value": null,
+                      "maxLength": null
+                    },
+                    {
+                      "tag": "SPAN",
+                      "id": "",
+                      "classes": "cm-move-track",
+                      "text": "",
+                      "value": null,
+                      "maxLength": null
+                    },
+                    {
+                      "tag": "SPAN",
+                      "id": "cmMoveLeverKnob",
+                      "classes": "cm-move-knob",
+                      "text": "",
+                      "value": null,
+                      "maxLength": null
+                    },
+                    {
+                      "tag": "STRONG",
+                      "id": "cmMoveRadiusValue",
+                      "classes": "",
+                      "text": "50m",
+                      "value": null,
+                      "maxLength": null
+                    },
+                    {
+                      "tag": "SPAN",
+                      "id": "cmMoveNearest",
+                      "classes": "cm-move-nearest safe",
+                      "text": "✓ 最短POI 286.5m",
+                      "value": null,
+                      "maxLength": null
+                    },
+                    {
+                      "tag": "BUTTON",
+                      "id": "cmMoveConfirm",
+                      "classes": "cm-move-confirm",
+                      "text": "移動確定",
+                      "value": "",
+                      "maxLength": null
+                    },
+                    {
+                      "tag": "BUTTON",
+                      "id": "cmMoveCancel",
+                      "classes": "cm-move-cancel",
+                      "text": "×",
+                      "value": "",
+                      "maxLength": null
+                    },
+                    {
+                      "tag": "BUTTON",
+                      "id": "",
+                      "classes": "cm-coordinate-trigger",
+                      "text": "座標",
+                      "value": "",
+                      "maxLength": null
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "pixels": [
+            {
+              "selector": "#cmMoveBar",
+              "same": false,
+              "differentPixels": 40,
+              "totalPixels": 27528
+            },
+            {
+              "selector": "#cmMoveCrosshair",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 2916
+            },
+            {
+              "selector": "#cmMoveLever",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 4480
+            },
+            {
+              "selector": "#cmMoveConfirm",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 2072
+            },
+            {
+              "selector": "#cmMoveCancel",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 400
+            }
+          ]
+        },
+        {
+          "name": "existing-sheet",
+          "status": "PASS",
+          "differences": [],
+          "pixels": [
+            {
+              "selector": ".cm-sheet",
+              "same": true,
+              "differentPixels": 0,
+              "totalPixels": 148894
+            }
+          ]
+        }
+      ],
+      "actionErrors": [],
+      "existingReadOnly": true,
+      "duplicateMountRejected": true,
+      "candidateChecks": {
+        "status": {
+          "mode": "PART_A_VIEW_ONLY",
+          "dataConnected": false,
+          "stopped": false,
+          "mapCount": 1,
+          "proposals": 6,
+          "ui": {
+            "hand": "right",
+            "menu": false,
+            "mode": null,
+            "layer": "new-pokestop",
+            "radius": 50,
+            "selected": "74eee611-7813-42c5-960d-9780f531b2c4",
+            "dragged": false
+          },
+          "preview": null
+        },
+        "storage": [],
+        "proposals": [
+          {
+            "action": {
+              "type": "add",
+              "kind": "new-pokestop",
+              "position": {
+                "lat": 35.682000025066294,
+                "lng": 139.76200000000006
+              },
+              "requestId": "r31-ui-1"
+            },
+            "result": {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "PART_A_DATA_DISCONNECTED"
+            }
+          },
+          {
+            "action": {
+              "type": "edit",
+              "id": "74eee611-7813-42c5-960d-9780f531b2c4",
+              "patch": {
+                "title": "Synthetic proposed title"
+              },
+              "requestId": "r31-ui-2"
+            },
+            "result": {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "PART_A_DATA_DISCONNECTED"
+            }
+          },
+          {
+            "action": {
+              "type": "edit",
+              "id": "74eee611-7813-42c5-960d-9780f531b2c4",
+              "patch": {
+                "memo": "Synthetic proposed memo"
+              },
+              "requestId": "r31-ui-3"
+            },
+            "result": {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "PART_A_DATA_DISCONNECTED"
+            }
+          },
+          {
+            "action": {
+              "type": "delete",
+              "id": "74eee611-7813-42c5-960d-9780f531b2c4",
+              "requestId": "r31-ui-4"
+            },
+            "result": {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "PART_A_DATA_DISCONNECTED"
+            }
+          },
+          {
+            "action": {
+              "type": "move",
+              "id": "74eee611-7813-42c5-960d-9780f531b2c4",
+              "position": {
+                "lat": 35.682000025066294,
+                "lng": 139.76200000000006
+              },
+              "requestId": "r31-ui-5"
+            },
+            "result": {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "PART_A_DATA_DISCONNECTED"
+            }
+          },
+          {
+            "action": {
+              "type": "exportKmz",
+              "requestId": "r31-ui-6"
+            },
+            "result": {
+              "status": "HOLD",
+              "changed": false,
+              "reason": "PART_A_DATA_DISCONNECTED"
+            }
+          }
+        ]
+      },
+      "hiddenLegacyRequests": [],
+      "disposed": {
+        "status": {
+          "mode": "PART_A_VIEW_ONLY",
+          "dataConnected": false,
+          "stopped": true,
+          "mapCount": 0,
+          "proposals": 6,
+          "ui": {
+            "hand": "right",
+            "menu": false,
+            "mode": null,
+            "layer": "new-pokestop",
+            "radius": 50,
+            "selected": null,
+            "dragged": false
+          },
+          "preview": null
+        },
+        "ownedControls": 0
+      },
+      "errors": [
+        [],
+        []
+      ],
+      "renderedMode": "read-only synthetic view; no r31 data import or editor Session"
+    }
+  ]
+}
