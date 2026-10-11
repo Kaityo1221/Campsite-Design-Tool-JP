@@ -19,13 +19,13 @@
 
 | グループ | Edge | Linux CI | 実装・検査 |
 | --- | --- | --- | --- |
-| 起動・表示設定 | PASS | 未検証 | 8必須場面、操作証拠と3幅を検査 |
-| POI追加 | HOLD | 未検証 | 8必須場面、操作証拠と3幅を検査 |
-| POI編集・移動 | PASS | 未検証 | 6必須場面、操作証拠と3幅を検査 |
-| 活動範囲・地図 | PASS | 未検証 | 16必須場面、操作証拠と3幅を検査 |
-| 保存・KMZ UI | PASS | 未検証 | 3必須場面、操作証拠と3幅を検査 |
-| 一覧・座標・補助 | PASS | 未検証 | 8必須場面、操作証拠と3幅を検査 |
-| 演出・ジェスチャー | PASS | 未検証 | 6必須場面、操作証拠と3幅を検査 |
+| 起動・表示設定 | PASS | PASS | 8必須場面、操作証拠と3幅を検査 |
+| POI追加 | HOLD | HOLD | 8必須場面、操作証拠と3幅を検査 |
+| POI編集・移動 | PASS | PASS | 6必須場面、操作証拠と3幅を検査 |
+| 活動範囲・地図 | PASS | PASS | 16必須場面、操作証拠と3幅を検査 |
+| 保存・KMZ UI | PASS | PASS | 3必須場面、操作証拠と3幅を検査 |
+| 一覧・座標・補助 | PASS | PASS | 8必須場面、操作証拠と3幅を検査 |
+| 演出・ジェスチャー | PASS | PASS | 6必須場面、操作証拠と3幅を検査 |
 
 活動範囲作成/確定/取消/削除/描き直し、draft頂点・undo/redo、物差し、背景切替、距離円、レイヤー操作を表示状態として分離。現行standalone保存メニュー、出力先chooser、一覧folder/tab、座標カード/コピーを追加。起動、FAB drag、lever snap/cancel、handle swipe、marker、double tap/pinch、star演出と解除を実装。
 
@@ -101,13 +101,21 @@ Windows Edge 155.0.4283.45、Playwright 1.56.0。新規context、合成NEW_V1、
 
 操作のFAIL9件はすべて参照側の通常touch「＋」誤選択。pointerupがメニューを先に開き、続く合成clickが重なったPowerSpotへ入る。r31ではtouch時の開閉をclickで行い二重入力を防止したが、現行原本との操作差は未承認のためHOLD。後続テストを続ける通常UIリセットは、このFAILをPASSに変更していない。
 
-Linux Chromium CIは最終提出時に実測結果を追記する。
+Linux Chromium CI 141.0.7390.37:
+
+| 幅 | DOM/画像場面PASS | 操作項目PASS |
+| --- | --- | --- |
+| 390px | 52/52 | 29/32 |
+| 393px | 52/52 | 29/32 |
+| 1366px | 52/52 | 29/32 |
+
+CI Part A: HOLD。
 
 ## 5. 既存回帰
 
 既存333件: 333 PASS / 0 FAIL / 0 SKIP。追加を含むr31監査: 17 PASS / 0 FAIL / 0 SKIP。原本freeze PASS。既存engine/回帰テストに追加変更なし。
 
-
+Linux CIも既存333件、監査17件PASS。CI測定fingerprintとローカル測定fingerprintの一致を確認した。
 
 ## 6. 旧処理の隔離
 
@@ -115,17 +123,21 @@ Linux Chromium CIは最終提出時に実測結果を追記する。
 
 各幅でcandidateのprecise coverageによる旧関数実行0、旧runtime/engine request0、storageアクセス0、L.map生成1（重複mount拒否）、既存編集要素0、pageerror0。48件のデータ要求は全件HOLD/changed:false、view不変。dispose後のmap/owned DOM/listener/timer/raf/animationは0、独立EventTarget監視も0。元関数を個別移植・安全化したという主張ではない。
 
+Linux CIの各幅も旧関数実行数 0/0/0、旧保存アクセス数 0/0/0、map生成数 1/1/1。全48データ要求のHOLD/changed:false: PASS。全幅のdispose後資源/独立listener 0: PASS。CI隔離静的監査: PASS。
+
 ## 7. PART A判定
 
 **HOLD**。固定HOLDを撤廃し、全グループの場面と操作、現在のソースfingerprint、回帰、監査、coverage/保存/単一所有/readonly/解除の実測から判定。どれか欠落・古い・FAILならHOLD。成功fixtureがPASSできることと、違反fixtureがHOLDになることを監査で確認。
 
 残る障害は参照「＋」touchの誤選択とr31で防止した操作との差。原本の修正禁止と未承認差0条件があるため、修正方針または差の承認をPO/ChatGPTで判断するまでPASSにしない。
 
+専用CI全体はHOLDゲートによってfailureになる。画面比較・回帰・隔離の成功だけでCIやPART AをPASSとは報告しない。
+
 ## 8. ソース・CI
 
-- ソースSHA: この報告と同じソースコミット
-- fingerprint: 651a41292eb4e93c3d76379ffb4e2964f53e77f0972462d72c8c70806d13e495
-- CI: push後に専用CIを実行し、最終提出報告へ追記する。
+- ソースSHA: 05fb48953e335f2438996bac5b480e1b02cc196e
+- fingerprint: e2f610a9b7f7724e763646846e247b4e9659159632412af46723b6116883b753
+- CI: https://github.com/Kaityo1221/Campsite-Design-Tool-JP/actions/runs/38148075025
 - 詳細: qa/r31/ui-runtime-comparison.json、part-a-status.json、regression-result.json、audit-test-result.json、isolation-audit.json。CI artifactはr31-part-a-measured-evidence。
 
 ## 9. PART B前の残課題
