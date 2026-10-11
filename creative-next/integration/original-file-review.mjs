@@ -7,10 +7,12 @@ export function attachOriginalFileReview({document,JSZip,DOMParser,XMLSerializer
  let prepared=false,busy=false,disposed=false;
  let editorReady=false;
  input.disabled=false;start.disabled=true;
- // Input and start are cloned before binding, removing direct old handlers.
- const fileClone=input.cloneNode(true);fileClone.disabled=false;input.replaceWith(fileClone);
- const startClone=start.cloneNode(true);startClone.disabled=true;start.replaceWith(startClone);
- // Keep bound nodes in local scope, never touch legacy runtime.
+ // The r20 snapshot already removed ALL legacy scripts/handlers.
+ // Preserve the original native file input for iOS Safari. Cloning it can break the file activation path.
+ const fileClone=input;
+ const startClone=start;
+ fileClone.removeAttribute('disabled');
+ startClone.disabled=true;
  const onChange=()=>changeFile(fileClone);
  async function changeFile(el){
   if(disposed||busy||editorReady)return;prepared=false;startClone.disabled=true;
