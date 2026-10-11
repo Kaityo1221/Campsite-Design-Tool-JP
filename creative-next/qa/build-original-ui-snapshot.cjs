@@ -51,5 +51,12 @@ fs.writeFileSync(path.join(r19,'index.html'),html.replace('</body>','<script src
 const r20=path.join(root,'creative-next/original-ui-r20');
 fs.mkdirSync(r20,{recursive:true});
 fs.writeFileSync(path.join(r20,'index.html'),html.replace('</body>','<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script type="module" src="./r20-readonly-map.mjs"></script></body>'));
+// r22 iOS: native picker must be enabled BEFORE any module/CND load.
+const r22=path.join(root,'creative-next/original-ui-r22');
+fs.mkdirSync(r22,{recursive:true});
+let native=html.replace(/(<input\\b[^>]*\\bid=["']entryFile["'][^>]*?)\\sdisabled(?=[\\s>])/i,'$1');
+if(native===html||!/<input\\b[^>]*\\bid=["']entryFile["'][^>]*>/i.test(native))throw Error('Original native file picker was not found');
+native=native.replace('</body>','<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script type="module" src="./r22-readonly-map.mjs"></script></body>');
+fs.writeFileSync(path.join(r22,'index.html'),native);
 if(/<script\b/i.test(html))throw Error('Runtime script escaped snapshot');
 console.log('PASS: production source snapshot',names.length,'patches, scripts stripped, original visual CSS retained');
