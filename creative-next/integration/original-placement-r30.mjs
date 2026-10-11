@@ -7,7 +7,7 @@ const TYPES=Object.freeze([
  Object.freeze({key:'new-gym',kind:'gym',label:'Gym',icon:'../assets/gym.png'}),
  Object.freeze({key:'new-power',kind:'power',label:'PowerSpot',icon:'../assets/powerspot.png'})
 ]);
-export function createOriginalPlacementR30({document,map,L,session,onChanged,onMessage,onMoved}={}){
+export function createOriginalPlacementR30({document,map,L,session,onChanged,onMessage,onMoved,onPlacementStart}={}){
  if(!document?.body||!map?.on||!map?.getCenter||!L?.circle||!L?.marker||!L?.divIcon||
     typeof session?.state!=='function'||typeof session?.command!=='function'||typeof onChanged!=='function')
    throw new TypeError('Original placement controller needs isolated editor and Leaflet map');
@@ -90,6 +90,7 @@ export function createOriginalPlacementR30({document,map,L,session,onChanged,onM
   if(mode==='move'&&(!poi||poi.role!=='new')){message('既存POIは移動できません');return false;}
   cancelPlacement();
   menuOpen=false;
+  onPlacementStart?.();
   if(poi)map.setView([poi.lat,poi.lng],map.getZoom(),{animate:false});
   const center=map.getCenter(),parts=circlesAt(center);
   const marker=L.marker(center,{icon:icon(),pane:'placement',interactive:false,zIndexOffset:2400}).addTo(map);
