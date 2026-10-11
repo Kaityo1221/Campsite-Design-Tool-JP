@@ -22,7 +22,7 @@ export function createWorkspace({JSZip,DOMParser,XMLSerializer,cryptoProvider=gl
  const safeStorage=storage?scopedStorage(storage):null;
  const journal=safeStorage?createCreativeSaveJournal({storage:safeStorage,namespace:NAMESPACE,subtle:cryptoProvider?.subtle,locks,requireLock:true}):null;
  // Exactly one engine Session. Its journal is used for verified resume only.
- const engine=createIsolatedEditorSession({...deps,storage:safeStorage,namespace:NAMESPACE,locks,requireSaveLock:true});
+ let engine=createIsolatedEditorSession({...deps,storage:safeStorage,namespace:NAMESPACE,locks,requireSaveLock:true});
  let stopped=false,busy=false,generation=0,candidate=null,source=null,originals=null,revision=null,lastSaved=null;
  const revived=new Set();
  const live=()=>{if(stopped)fail('WORKSPACE_STOPPED');};
@@ -85,7 +85,7 @@ export function createWorkspace({JSZip,DOMParser,XMLSerializer,cryptoProvider=gl
  }
  // B2 sees a verified baseline revision; persistence versions are owned here.
  // Saving never changes editing state or invalidates B2's external-change guard.
- const session=Object.freeze({state(){const s=engine.state();return {...s,revision:null};},command:(v,o)=>edit('command',v,o),commandArea:(v,o)=>edit('commandArea',v,o),undo:()=>edit('undo'),redo:()=>edit('redo')});
+ const session=Object.freeze({state(){live();const s=engine.state();return {...s,revision:null};},command:(v,o)=>edit('command',v,o),commandArea:(v,o)=>edit('commandArea',v,o),undo:()=>edit('undo'),redo:()=>edit('redo')});
  async function exclusive(fn){idle();if(!journal)fail('SAVE_UNAVAILABLE');if(!locks?.request)fail('SAVE_LOCK_UNAVAILABLE');busy=true;
   try{return await locks.request(NAMESPACE+':save-lock',{mode:'exclusive'},fn);}finally{busy=false;}
  }
@@ -121,7 +121,7 @@ export function createWorkspace({JSZip,DOMParser,XMLSerializer,cryptoProvider=gl
   });
  }
  return Object.freeze({session,prepare,discardPending,acceptPrepared,exportKmz,saveDraft,inspectDraft,resumeDraft,
-  status:()=>({stopped,busy,revision,hasCandidate:!!candidate,sessionCount:stopped?0:1,history:engine.state().history}),
-  dispose(){if(busy)fail('WORKSPACE_BUSY');if(stopped)return;stopped=true;generation++;candidate=null;source=null;originals=null;lastSaved=null;revived.clear();engine.discardPending();}
+  status:()=>({stopped,busy,revision,hasCandidate:!!candidate,sessionCount:stopped?0:1,history:engine?.state().history??null}),
+  dispose(){if(busy)fail('WORKSPACE_BUSY');if(stopped)return;stopped=true;generation++;candidate=null;source=null;originals=null;lastSaved=null;revived.clear();engine.discardPending();engine=null;}
  });
 }
