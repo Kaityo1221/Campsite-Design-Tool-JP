@@ -1,0 +1,22 @@
+name: Creative Next r19 Original File Review
+on:
+  push:
+    branches: [feature/creative-next-ui-exact-parity-20261010]
+    paths:
+      - 'creative-next/integration/original-file-review.mjs'
+      - 'creative-next/qa/original-file-review.test.mjs'
+      - '.github/workflows/creative-next-r19-file-review.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  file-review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save jszip@3.10.1 @xmldom/xmldom@0.9.8
+      - run: node creative-next/qa/current-creative-ui-source-parity.cjs
+      - run: node creative-next/qa/original-file-review.test.mjs
