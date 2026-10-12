@@ -37,6 +37,9 @@ jobs:
           node --check creative-next/phase-1b/integration/isolated-editor-session.mjs
       - name: Atomic redraw and safe KMZ tests
         run: node --test creative-next/qa/r31-review-7/review.test.mjs
+      - name: Original engine and B1/B2 compatibility regression
+        run: |
+          node --test creative-next/qa/r31-b2/adapter.test.mjs creative-next/qa/r31-b2/b1-compatible.test.mjs creative-next/qa/r31-b3-b4/workspace.test.mjs creative-next/phase-1b/test/stage-kmz.test.mjs creative-next/phase-1b/test/export-kmz.test.mjs creative-next/phase-1b/test/legacy-reversed-circle.test.mjs creative-next/phase-1b/test/legacy-kasai-convert.test.mjs creative-next/phase-1b/test/dependent-circles.test.mjs creative-next/phase-1b/test/activity-membership.test.mjs creative-next/phase-1b/test/journal-save.test.mjs creative-next/phase-1b/test/journal-web-locks.test.mjs creative-next/phase-1b/test/journal-explicit-recovery.test.mjs creative-next/phase-1b/test/isolated-editor-session.test.mjs
       - name: Install headless Chromium
         run: creative-next/node_modules/.bin/playwright install --with-deps chromium
       - name: iPhone-size browser interaction tests
