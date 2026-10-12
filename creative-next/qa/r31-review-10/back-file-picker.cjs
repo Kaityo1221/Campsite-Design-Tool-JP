@@ -16,17 +16,17 @@ async function run(){
    await context.route('**/*',async route=>{
     const u=new URL(route.request().url());let file=null;
     if(u.hostname==='r31.invalid')file=path.resolve(ROOT,'.'+decodeURIComponent(u.pathname));
-    else if(u.hostname==='unpkg.com'&&/leaflet@1.9.4\\/dist\\/(leaflet.js|leaflet.css)$/.test(u.pathname))
+    else if(u.hostname==='unpkg.com'&&u.pathname.includes('/leaflet@1.9.4/dist/')&&(u.pathname.endsWith('/leaflet.js')||u.pathname.endsWith('/leaflet.css')))
      file=path.join(path.dirname(require.resolve('leaflet')),path.basename(u.pathname));
-    else if(u.hostname==='maps.google.com'&&/\\/(blue|yellow|purple)-dot.png$/.test(u.pathname))
+    else if(u.hostname==='maps.google.com'&&['blue-dot.png','yellow-dot.png','purple-dot.png'].some(x=>u.pathname.endsWith('/'+x)))
      file=path.join(ROOT,'creative-next/qa/r31/fixtures/blue-dot.png');
     if(file&&file.startsWith(ROOT+path.sep)&&fs.existsSync(file)&&fs.statSync(file).isFile()){
      let body=fs.readFileSync(file);
      if(u.pathname.endsWith('/leaflet.js'))
-      body=Buffer.concat([body,Buffer.from("\\n;(()=>{const f=L.map;L.map=(...a)=>{__starts++;return f(...a);}})();")]);
+      body=Buffer.concat([body,Buffer.from('\n;(()=>{const f=L.map;L.map=(...a)=>{__starts++;return f(...a);}})();')]);
      return route.fulfill({status:200,contentType:mime(file),body});
     }
-    if(/tile\\.openstreetmap|arcgisonline/.test(u.hostname))
+    if(u.hostname.includes('tile.openstreetmap')||u.hostname.includes('arcgisonline'))
      return route.fulfill({status:200,contentType:'image/png',body:fs.readFileSync(path.join(ROOT,'creative-next/qa/r31/fixtures/blue-dot.png'))});
     return route.abort();
    });
