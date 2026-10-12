@@ -194,7 +194,7 @@ async function run(){
       const p=w.session.state().records.find(r=>r.role==='new');
       return w.session.command({type:'delete',id:p.id},{confirmed:true});
     });
-    assert.equal(deletion.changed,true);
+    assert.equal(deletion.changed,true,JSON.stringify(deletion));
     await page.locator('#lab-save').tap();
     await page.waitForFunction(()=>document.getElementById('lab-status').textContent.includes('R31_LAB_DELETED_POI_HOLD'));
     assert.equal(await page.evaluate(()=>__r31ProjectSaveLabStatus().revision),2);
