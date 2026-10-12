@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><title>X01 IndexedDB save LAB (synthetic only)</title></head>
+<body><p>X01 isolation TEST only. No production access.</p>
+<script src="../node_modules/jszip/dist/jszip.min.js"></script>
+<script type="module">
+import {planDesignPolygonSaveLab} from '../contracts/design-polygon-save-channel-lab.mjs';
+import {createFreshV1Kmz} from '../phase-1b/core/create-new-kmz.mjs';
+import {createX01IndexedDbSaveLab} from '../contracts/x01-indexeddb-save-lab.mjs';
+const point=(i,n)=>[35.001+0.0003*Math.sin(2*Math.PI*i/n),139.001+0.0003*Math.cos(2*Math.PI*i/n)];
+const ring=n=>Array.from({length:n},(_,i)=>point(i,n));
+const polygon=[[35,139],[35,139.002],[35.002,139.002],[35.002,139]];
+const ids={expectedProjectId:'browser-project',expectedHandoffId:'handoff:browser'};
+function project(){
+ return {
+  schemaVersion:'1.0',source:'bridge',projectId:ids.expectedProjectId,polygon,
+  meta:{projectContract:'campsiteProject.v1',bridgeHandoffId:ids.expectedHandoffId},
+  selectedPois:[{guid:'existing'}],
+  currentPois:[
+   {id:'existing',guid:'existing',role:'existing',gameEntity:'POKESTOP',title:'Existing',lat:35.001,lng:139.001},
+   {id:'new',role:'added',gameEntity:'GYM',title:'New',lat:35.0011,lng:139.0011}
+  ],addedPois:[{id:'new'}],deletedPois:[],edits:[],
+  wayfarerObservation:{
+   snapshotId:'browser-obs',observedAt:'2026-10-12T00:00:00Z',polygon,
+   acquisition:{coverageComplete:true,bufferMeters:200},
+   zones:{
+    interior:[{guid:'existing',poiKind:'POKESTOP',gameEntity:'POKESTOP',gameStatus:'ACTIVE',lat:35.001,lng:139.001}],
+    reference100:[{guid:'external',poiKind:'GYM',gameEntity:'GYM',gameStatus:'ACTIVE',lat:35.001,lng:138.9998}],
+    reserve200:[{guid:'reserve',poiKind:'NOT_IN_GAME',gameEntity:'POWERSPOT',gameStatus:'INACTIVE',referenceKind:'INACTIVE_POWERSPOT',lat:35.001,lng:138.9986}]
+   }
+  },
+  futureFields:{preserve:['unknown',42]}
+ };
+}
+const records=[
+ {id:'kmz-existing',role:'existing',guid:'existing',kind:'pokestop',title:'Existing',memo:'Old',lat:35.001,lng:139.001},
+ {id:'new',role:'new',kind:'gym',title:'New',memo:'Candidate',lat:35.0011,lng:139.0011}
+];
+const makeStore=dbName=>createX01IndexedDbSaveLab({indexedDB,dbName,JSZip:window.JSZip,DOMParser,cryptoProvider:crypto});
+async function build(areas=1){
+ const p=project(),shapes=[
+  {kind:'activity-area',id:'long-area',points:ring(31),deleted:false},
+  ...Array.from({length:Math.max(0,areas-1)},(_,i)=>({kind:'activity-area',id:'additional-'+i,points:ring(4+i),deleted:false})),
+  {kind:'project-design-polygon',projectId:ids.expectedProjectId,handoffId:ids.expectedHandoffId,basePolygon:polygon,points:polygon,deleted:false}
+ ];
+ const plan=planDesignPolygonSaveLab({project:p,...ids,expectedBasePolygon:polygon,geometryObjects:shapes});
+ const {bytes}=await createFreshV1Kmz({records,activityAreas:plan.activityAreas},{JSZip:window.JSZip,DOMParser,XMLSerializer,documentName:'Synthetic Browser'});
+ return {plan,kmzBytes:bytes};
+}
+function summary(row){if(!row)return null;return {
+ status:row.status,revision:row.revision,productionReady:row.productionReady,
+ projectPolygon:row.project.polygon,acquisitionPolygon:row.project.wayfarerObservation.polygon,
+ areaCounts:row.activityAreas.map(x=>x.points.length),
+ referenceGuids:row.project.wayfarerObservation.zones.reference100.map(x=>x.guid),
+ reserveStatuses:row.project.wayfarerObservation.zones.reserve200.map(x=>x.gameStatus),
+ unknown:row.project.futureFields,
+ kmzBytesLength:row.kmzBytes.length
+};}
+window.X01_BROWSER_LAB={
+ async save(dbName,revision=0,areas=1){
+  const data=await build(areas);
+  return await makeStore(dbName).save({...data,...ids,expectedRevision:revision});
+ },
+ async read(dbName){return summary(await makeStore(dbName).read(ids));},
+ async saveError(dbName,revision=0,areas=1){
+  try{return {unexpected:await this.save(dbName,revision,areas)};}
+  catch(e){return {code:e?.code||'UNKNOWN'};}
+ },
+ async mutate(dbName,what){
+  const db=await new Promise((resolve,reject)=>{const q=indexedDB.open(dbName,1);q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error);});
+  try{
+   await new Promise((resolve,reject)=>{
+    const tx=db.transaction('verified-pairs','readwrite');
+    const st=tx.objectStore('verified-pairs');
+    const key=JSON.stringify([ids.expectedProjectId,ids.expectedHandoffId]);
+    const req=st.get(key);
+    req.onsuccess=()=>{const r=req.result;if(what==='kmz')r.kmzBytes[7]^=5;else if(what==='area')r.manifest.activityAreasJson='[]';st.put(r)};
+    tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
+   });
+  }finally{db.close();}
+ },
+ async readError(dbName){try{return {unexpected:await makeStore(dbName).read(ids)}}catch(e){return {code:e?.code||'UNKNOWN'}}}
+};
+document.body.dataset.ready='yes';
+</script>
+</body></html>
