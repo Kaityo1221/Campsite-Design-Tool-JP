@@ -6,7 +6,7 @@ const {chromium}=require(path.join(ROOT,'node_modules/playwright'));
 const JSZip=require('jszip');
 const {DOMParser,XMLSerializer}=require('@xmldom/xmldom');
 const mime=p=>({'.mjs':'application/javascript','.js':'application/javascript','.css':'text/css','.html':'text/html','.png':'image/png'}[path.extname(p)]||'application/octet-stream');
-const URL='https://r31.invalid/creative-next/qa/r31-project-save-lab/index.html';
+const ENTRY_URL='https://r31.invalid/creative-next/qa/r31-project-save-lab/index.html';
 const base='campsite-creative-next-x01-idb-lab-r31-save-ui-20261012';
 const expectedPolygon=[[35.7,139.8],[35.7,139.802],[35.702,139.802],[35.702,139.8]];
 const project=()=>({
@@ -53,7 +53,7 @@ async function run(){
    const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
    const decisions=[];page.on('dialog',d=>{decisions.push(d.message());d.accept();});
    try{
-    await page.goto(URL);
+    await page.goto(ENTRY_URL);
     await page.waitForFunction(()=>!!document.querySelector('#r31-frame')?.contentWindow?.creativeR31Workspace);
     await page.locator('#lab-open').tap();
     await page.locator('#lab-project').setInputFiles({name:'synthetic-project.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(project()))});
