@@ -117,6 +117,29 @@ export function createR31SessionIndexedDbLab({workspace,store,JSZip,DOMParser,
    return {status:'LAB_R31_STARTED',productionReady:false,sessionCount:1};
   }finally{busy=false;}
  }
+ async function attachLive({project:sourceProject,kmzBytes,revision:restoreRevision=0,
+  expectedProjectId:p,expectedHandoffId:h,confirmed=false}={}){
+  ready();if(project)fail('R31_LAB_ALREADY_ATTACHED');
+  if(confirmed!==true)fail('R31_LAB_CONFIRM_REQUIRED');
+  const state=ensureReady(workspace);
+  if(state.history?.undo!==0||state.history?.redo!==0)fail('R31_LAB_ATTACH_AFTER_EDIT_HOLD');
+  busy=true;
+  try{
+   // The confirmed r31 UI has already accepted this archive.
+   // Reverify the exact source pair before binding any independent save capability.
+   const {stageKmlInput}=await import('../phase-1b/core/stage-kmz.mjs');
+   const {sourceActivityAreas}=await import('../phase-1b/core/activity-areas.mjs');
+   const stage=await stageKmlInput(kmzBytes,{JSZip,DOMParser});
+   if(stage.errors?.length)fail('R31_LAB_INPUT_KMZ');
+   const activityAreas=sourceActivityAreas(stage);
+   await createLinkedPairLab({project:sourceProject,activityAreas,kmzBytes,
+    expectedProjectId:p,expectedHandoffId:h,JSZip,DOMParser,cryptoProvider});
+   if(!same(state.records,workspace.session.state().records)||!same(state.areas,workspace.session.state().areas))
+    fail('R31_LAB_SESSION_CHANGED');
+   return attach({project:sourceProject,activityAreas,revision:restoreRevision,
+    expectedProjectId:p,expectedHandoffId:h});
+  }finally{busy=false;}
+ }
  async function save({confirmed=false}={}){
   ready();if(confirmed!==true)fail('R31_LAB_CONFIRM_REQUIRED');
   if(!project)fail('R31_LAB_NOT_ATTACHED');
@@ -164,7 +187,7 @@ export function createR31SessionIndexedDbLab({workspace,store,JSZip,DOMParser,
     areaCount:workspace.session.state().areas.length});
   }finally{busy=false;}
  }
- return Object.freeze({start,save,reopen,status:()=>({stopped,busy,attached:!!project,revision,productionReady:false,
+ return Object.freeze({start,attachLive,save,reopen,status:()=>({stopped,busy,attached:!!project,revision,productionReady:false,
   sessionCount:stopped?0:workspace.status().sessionCount}),
   dispose(){if(busy)fail('R31_LAB_BUSY');stopped=true;project=null;revision=null;}
  });
