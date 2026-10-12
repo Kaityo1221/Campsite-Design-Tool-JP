@@ -1,0 +1,43 @@
+name: Creative Next three-function synthetic E2E rehearsal
+on:
+  push:
+    branches:
+      - feature/creative-next-three-function-synthetic-e2e-20261012
+    paths:
+      - 'creative-next/contracts/**'
+      - 'creative-next/qa/x01-x04-*.test.mjs'
+      - 'creative-next/qa/three-function-synthetic-e2e.test.mjs'
+      - '.github/workflows/creative-next-three-function-synthetic-e2e.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  isolated-synthetic-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned synthetic-only archive dependencies
+        run: npm install --prefix creative-next --no-save --no-package-lock --ignore-scripts jszip@3.10.1 @xmldom/xmldom@0.9.8
+      - name: Parse modules
+        run: |
+          node --check creative-next/contracts/audit-x01-x04.mjs
+          node --check creative-next/contracts/linked-project-kmz-lab.mjs
+          node --check creative-next/qa/three-function-synthetic-e2e.test.mjs
+      - name: Actual-module synthetic Wayfarer to Creative to Campsite rehearsal
+        run: node --test creative-next/qa/three-function-synthetic-e2e.test.mjs
+      - name: Existing X01 X04 contract and linked pair regression
+        run: node --test creative-next/qa/x01-x04-contract-audit.test.mjs creative-next/qa/x01-x04-linked-pair.test.mjs
+      - name: Prior Wayfarer observed data and reserve logic regression
+        run: |
+          node scripts/check-wm3-observation-zone.mjs
+          node scripts/check-wm3b2d-pseudo-e2e.mjs
+          node scripts/check-wm4a-project-lifecycle.mjs
+          node scripts/check-wm5a-reserve-coverage.mjs
+          node scripts/check-wm5b-local-reclassification.mjs
+      - name: Creative NEW_V1 source and activity area regression
+        run: node --test creative-next/phase-1b/test/create-new-kmz.test.mjs creative-next/phase-1b/test/stage-kmz.test.mjs creative-next/phase-1b/test/activity-areas.test.mjs
+# Synthetic only. No production page, genuine Wayfarer service login, real device, or release.
