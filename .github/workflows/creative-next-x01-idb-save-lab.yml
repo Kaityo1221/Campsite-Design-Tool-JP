@@ -1,0 +1,45 @@
+name: Creative Next X01 isolated IndexedDB save lab
+on:
+  push:
+    branches:
+      - feature/creative-next-x01-isolated-idb-save-20261012
+    paths:
+      - 'creative-next/contracts/**'
+      - 'creative-next/qa/x01-indexeddb-save-lab.test.mjs'
+      - 'creative-next/qa/x01-idb-browser.spec.mjs'
+      - 'creative-next/qa/x01-idb-playwright.config.mjs'
+      - 'creative-next/qa/x01-idb-browser.html'
+      - '.github/workflows/creative-next-x01-idb-save-lab.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  isolated-idb:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install isolated test-only dependencies
+        run: |
+          npm install --prefix creative-next --no-save --no-package-lock --ignore-scripts jszip@3.10.1 @xmldom/xmldom@0.9.8 fake-indexeddb@6
+      - name: Syntax
+        run: |
+          node --check creative-next/contracts/x01-indexeddb-save-lab.mjs
+          node --check creative-next/qa/x01-indexeddb-save-lab.test.mjs
+      - name: IndexedDB synthetic transaction and corruption tests
+        run: node --test creative-next/qa/x01-indexeddb-save-lab.test.mjs
+      - name: Install Chromium browser test runtime
+        run: |
+          npm install --no-save --no-package-lock --ignore-scripts @playwright/test@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Actual browser IndexedDB reload, CAS and corruption tests
+        run: npx playwright test --config creative-next/qa/x01-idb-playwright.config.mjs
+      - name: Prior typed polygon and linked pair regressions
+        run: |
+          node --test creative-next/qa/x01-design-polygon-save-channel.test.mjs creative-next/qa/x01-x04-contract-audit.test.mjs creative-next/qa/x01-x04-linked-pair.test.mjs creative-next/qa/three-function-synthetic-e2e.test.mjs
+          node scripts/check-wm4a-project-lifecycle.mjs
+          node --test creative-next/phase-1b/test/activity-areas.test.mjs creative-next/phase-1b/test/create-new-kmz.test.mjs
+# Dedicated LAB scope only. No deployment or old save key modifications.
