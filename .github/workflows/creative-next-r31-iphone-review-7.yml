@@ -10,6 +10,9 @@ on:
       - 'creative-next/phase-1b/integration/isolated-editor-session.mjs'
       - 'creative-next/qa/r31-review-7/**'
       - '.github/workflows/creative-next-r31-iphone-review-7.yml'
+  pull_request:
+    branches:
+      - codex/original-ui-r31-b3-b4
   workflow_dispatch:
 permissions:
   contents: read
