@@ -141,3 +141,29 @@ test('r31 attach rejects mistaken source Project/POIs before activation',async()
  assert.equal(w.session.state().hasActive,false);
  app.dispose();w.dispose();
 });
+
+test('r31 Session mutation during awaited KMZ export is HOLD before any IndexedDB write',async()=>{
+ const x=await setup('session-mutated-mid-save');
+ let intercepted=0;
+ const racedWorkspace={
+  session:x.w.session,
+  status:()=>x.w.status(),
+  exportKmz:async()=>{
+   const archive=await x.w.exportKmz();
+   intercepted++;
+   const edit=x.w.session.command({type:'add',poi:{
+    role:'new',kind:'gym',title:'Mid-save mutation',memo:'race',lat:35.00125,lng:139.00125
+   }},{confirmed:true});
+   assert.equal(edit.changed,true);
+   return archive;
+  }
+ };
+ const guarded=createR31SessionIndexedDbLab({workspace:racedWorkspace,store:x.s,...deps});
+ try{
+  assert.equal((await guarded.attachLive({project:project(),kmzBytes:x.bytes,...ids,revision:0,confirmed:true})).status,'LAB_R31_ATTACHED');
+  await error(()=>guarded.save({confirmed:true}),'R31_LAB_SESSION_CHANGED');
+  assert.equal(intercepted,1);
+  assert.equal(x.w.session.state().records.length,2);
+  assert.equal(await x.s.read(ids),null,'no partial or stale bundle persisted');
+ }finally{guarded.dispose();x.app.dispose();x.w.dispose();}
+});
