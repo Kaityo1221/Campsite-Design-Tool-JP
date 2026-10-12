@@ -3,7 +3,9 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs'),path=require('node:path');
 const ROOT=path.resolve(__dirname,'../..');
 const SERVE_ROOT=process.env.R31_LAB_STATIC_ROOT?path.resolve(process.env.R31_LAB_STATIC_ROOT):ROOT;
-const {chromium}=require(path.join(ROOT,'node_modules/playwright'));
+const {chromium,webkit}=require(path.join(ROOT,'node_modules/playwright'));
+const ENGINE=process.env.R31_LAB_BROWSER||'chromium';
+if(!['chromium','webkit'].includes(ENGINE))throw Error('UNSUPPORTED_LAB_BROWSER');
 const JSZip=require('jszip');
 const {DOMParser,XMLSerializer}=require('@xmldom/xmldom');
 const mime=p=>({'.mjs':'application/javascript','.js':'application/javascript','.css':'text/css','.html':'text/html','.png':'image/png'}[path.extname(p)]||'application/octet-stream');
@@ -66,7 +68,7 @@ async function rejectImport(context,kmz,p,expected,{dismiss=false}={}){
  }finally{await probe.close();}
 }
 async function run(){
- const browser=await chromium.launch({headless:true});const result=[];
+ const browser=await (ENGINE==='webkit'?webkit:chromium).launch({headless:true});const result=[];
  const bytes=Buffer.from(await makeKmz());
  try{
   for(const viewport of [{width:390,height:844},{width:393,height:852}]){
@@ -259,6 +261,6 @@ async function run(){
    }finally{await context.close();}
   }
  }finally{await browser.close();}
- console.log(JSON.stringify({status:result.length===2?'PASS':'HOLD',results:result,safariRealDevice:'NOT_TESTED',productionReady:false}));
+ console.log(JSON.stringify({status:result.length===2?'PASS':'HOLD',browser:ENGINE,results:result,safariRealDevice:'NOT_TESTED',productionReady:false}));
 }
 if(require.main===module)run().catch(e=>{console.error(e);process.exitCode=1});
