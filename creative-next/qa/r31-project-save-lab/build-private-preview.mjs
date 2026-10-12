@@ -12,7 +12,13 @@ import {createRequire} from 'node:module';
 
 const repo=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../../..');
 const dest=path.resolve(process.argv[2]||'');
-if(!process.argv[2]||dest===repo||dest.startsWith(repo+path.sep)||
+// Vercel requires outputDirectory inside the checkout. Allow precisely one
+// clean, dedicated target and ONLY for a non-production preview build.
+// CI and other callers must continue building outside the repository.
+const allowedVercelTarget=dest===path.join(repo,'preview-dist')&&
+ process.env.VERCEL_ENV==='preview'&&process.env.VERCEL==='1';
+if(!process.argv[2]||dest===repo||
+   (dest.startsWith(repo+path.sep)&&!allowedVercelTarget)||
    dest===os.homedir()||dest===path.parse(dest).root)
  throw Error('PREVIEW_DESTINATION_OUTSIDE_REPOSITORY_REQUIRED');
 if(fs.existsSync(dest))throw Error('PREVIEW_DESTINATION_MUST_BE_NEW');
