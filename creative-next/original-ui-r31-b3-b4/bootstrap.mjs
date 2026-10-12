@@ -2,7 +2,7 @@ import {mountCreativeUi} from './ui-runtime.mjs';
 import {createWorkspace} from './workspace.mjs';
 import {connectB2} from './adapter-review.mjs';
 
-export function mountWorkspace({document:doc=globalThis.document,L=globalThis.L,JSZip=globalThis.JSZip,storage=null,locks=null,confirmEdit=()=>false,confirmRestore=()=>false,download=null}={}){
+export function mountWorkspace({document:doc=globalThis.document,L=globalThis.L,JSZip=globalThis.JSZip,storage=null,locks=null,confirmEdit=()=>false,confirmRestore=()=>false,download=null,onSwitchFile=null}={}){
  const win=doc.defaultView,id=n=>doc.getElementById(n);
  const workspace=createWorkspace({JSZip,DOMParser:win.DOMParser,XMLSerializer:win.XMLSerializer,cryptoProvider:win.crypto,storage,locks});
  let adapter=null,stopped=false,selectGeneration=0,controller=null,exportBusy=false,prepared=null,prepareGeneration=0;
@@ -11,8 +11,24 @@ export function mountWorkspace({document:doc=globalThis.document,L=globalThis.L,
 
  const entryMessage=text=>{id('entryState').textContent=text;};
  const startReady=ready=>{id('startButton').disabled=!ready;id('startButton').classList.toggle('ready',ready);};
- function connect(){adapter=connectB2({session:workspace.session,ui,document:doc,confirmEdit});id('entryFile').disabled=true;id('resumeButton').disabled=true;}
+ function connect(){adapter=connectB2({session:workspace.session,ui,document:doc,confirmEdit});id('entryFile').disabled=false;id('resumeButton').disabled=true;}
  async function onFile(file){
+  // #010: a return to the entry screen must allow a *different* KMZ to be chosen.
+  // Never feed a second input into an active Session. Explicitly confirm,
+  // dispose the old map/Session, and mount a fresh one before staging bytes.
+  if(adapter){
+   id('entryFile').value='';
+   if(!file){entryMessage('現在の編集はそのまま保持されています');return;}
+   if(typeof onSwitchFile!=='function'){entryMessage('HOLD：別のファイルは新しい画面で開いてください');return;}
+   if(exportBusy||workspace.status().busy||adapter.status().fault||adapter.status().pendingEdits){
+    entryMessage('HOLD：編集中の操作または保存処理を完了してください');return;
+   }
+   if(!win.confirm('現在の編集を終了して、新しいKMZ / KMLを開きますか？ 未保存の編集内容は失われます。元のKMZファイルや保存済みデータは上書きしません。')){
+    entryMessage('現在の編集を維持しました。「編集を続ける」で戻れます。');return;
+   }
+   try{onSwitchFile(file);}catch(e){if(!stopped)entryMessage('HOLD：'+(e.code||e.message));}
+   return;
+  }
   const ticket=++selectGeneration;controller?.abort();controller=new win.AbortController();startReady(false);
   id('entryFileName').textContent=file?.name||'未選択';
   if(!file){workspace.discardPending();entryMessage('KMZ / KMLを選択してください');return;}
@@ -86,7 +102,7 @@ export function mountWorkspace({document:doc=globalThis.document,L=globalThis.L,
  id('entryFile').accept='.kmz,.kml';entryMessage('KMZ / KMLを選択してください');
  // Explicit inspection of only this version's isolated journal. Never auto-resume.
  if(storage)workspace.inspectDraft().then(result=>{if(!stopped&&['READY','FALLBACK','CORRUPT'].includes(result.status)){id('resumeButton').style.setProperty('display','block','important');if(result.status!=='READY')entryMessage('HOLD：保存データ '+result.status+'。自動修復は行いません。');}}).catch(e=>{if(!stopped)entryMessage('HOLD：'+(e.code||e.message));});
- return Object.freeze({ui,workspace,status:()=>({adapter:adapter?.status()||null,workspace:workspace.status(),exportBusy,objectUrls:urls.size}),
+ return Object.freeze({ui,workspace,selectFile:onFile,status:()=>({adapter:adapter?.status()||null,workspace:workspace.status(),exportBusy,objectUrls:urls.size}),
   dispose(){if(stopped)return;if(exportBusy||workspace.status().busy)throw Error('WORKSPACE_BUSY');stopped=true;selectGeneration++;controller?.abort();adapter?adapter.dispose():ui.dispose();workspace.dispose();clearPrepared();for(const t of timers)win.clearTimeout(t);timers.clear();for(const url of urls)win.URL.revokeObjectURL(url);urls.clear();}
  });
 }
@@ -94,7 +110,19 @@ if(globalThis.document){
  // Packaged, frozen JSZip vendor; no network or old runtime import for file parsing.
  const script=document.createElement('script');script.src=new URL('../phase-2-preview/vendor/jszip.min.js',import.meta.url).href;
  script.onload=()=>{let storage=null;try{storage=globalThis.localStorage;}catch{}
-  globalThis.creativeR31Workspace=mountWorkspace({storage,locks:globalThis.navigator?.locks,confirmEdit:()=>confirm('名前・メモの変更を確定しますか？'),confirmRestore:()=>confirm('この画面専用の保存データを復元しますか？ 編集履歴は復元時に新しく開始します。')});globalThis.creativeR31=creativeR31Workspace.ui;
+  const options={storage,locks:globalThis.navigator?.locks,confirmEdit:()=>confirm('名前・メモの変更を確定しますか？'),confirmRestore:()=>confirm('この画面専用の保存データを復元しますか？ 編集履歴は復元時に新しく開始します。')};
+  let current=null;
+  function mountCurrent(){
+   const next=mountWorkspace({...options,onSwitchFile(file){
+    // Active Session replacement is denied; the old workspace is disposed
+    // *before* creating a new workspace, map or Undo/Redo timeline.
+    current.dispose();
+    const fresh=mountCurrent();
+    fresh.selectFile(file);
+   }});
+   current=next;globalThis.creativeR31Workspace=next;globalThis.creativeR31=next.ui;return next;
+  }
+  mountCurrent();
  };
  script.onerror=()=>{document.getElementById('entryState').textContent='HOLD：KMZライブラリを読み込めません';};document.head.append(script);
 }
