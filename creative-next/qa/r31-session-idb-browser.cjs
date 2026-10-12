@@ -5,7 +5,7 @@
  */
 const assert=require('node:assert/strict');
 const fs=require('node:fs'),path=require('node:path');
-const ROOT=path.resolve(__dirname,'../../..');
+const ROOT=path.resolve(__dirname,'../..');
 // Resolve the same root Playwright installation used by the CI browser installer.
 const {chromium}=require(path.join(ROOT,'node_modules/playwright'));
 const mime=p=>({'.mjs':'application/javascript','.js':'application/javascript','.css':'text/css','.html':'text/html','.png':'image/png'}[path.extname(p)]||'application/octet-stream');
