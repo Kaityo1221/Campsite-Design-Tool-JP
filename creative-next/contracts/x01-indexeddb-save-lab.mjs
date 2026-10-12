@@ -151,11 +151,12 @@ export function createX01IndexedDbSaveLab({indexedDB=globalThis.indexedDB,dbName
   // A commit is not an acknowledged save until the new complete bundle is
   // read back and cryptographically verified. No unsafe auto-repair or rollback.
   const verified=await read({expectedProjectId,expectedHandoffId});
-  if(!verified||verified.revision!==row.revision||!rowMatches(row,{
-    key:row.key,kind:row.kind,version:row.version,revision:verified.revision,
-    projectId:verified.project.projectId,handoffId:verified.project.meta.bridgeHandoffId,
-    manifest:pair.manifest,kmzBytes:verified.kmzBytes
-  }))stop('IDB_LAB_READBACK_HOLD');
+  if(!verified||verified.revision!==row.revision||
+    JSON.stringify(verified.project)!==pair.manifest.projectJson||
+    JSON.stringify(verified.activityAreas)!==pair.manifest.activityAreasJson||
+    !(verified.kmzBytes instanceof Uint8Array)||verified.kmzBytes.length!==row.kmzBytes.length||
+    verified.kmzBytes.some((byte,index)=>byte!==row.kmzBytes[index]))
+    stop('IDB_LAB_READBACK_HOLD');
   return Object.freeze({status:'LAB_IDB_SAVE_VERIFIED',productionReady:false,revision:verified.revision});
  };
  return Object.freeze({dbName,productionReady:false,save,read});
