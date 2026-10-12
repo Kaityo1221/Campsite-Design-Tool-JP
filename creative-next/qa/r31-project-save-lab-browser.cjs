@@ -263,4 +263,5 @@ async function run(){
  }finally{await browser.close();}
  console.log(JSON.stringify({status:result.length===2?'PASS':'HOLD',browser:ENGINE,results:result,safariRealDevice:'NOT_TESTED',productionReady:false}));
 }
+module.exports={project,makeKmz};
 if(require.main===module)run().catch(e=>{console.error(e);process.exitCode=1});
