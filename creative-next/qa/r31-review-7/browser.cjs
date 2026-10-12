@@ -58,6 +58,7 @@ async function run(){
    });
    await page.locator('#cmStandaloneKmz').tap();
    assert.equal(await page.locator('#cmV73SaveChooser button').count(),3);
+   await page.waitForFunction(()=>document.getElementById('cmR31ChooseDestination')?.disabled===false);
    assert.equal(await page.locator('#cmR31ChooseDestination').isDisabled(),false);
    assert.equal(await page.locator('#cmR31Download').isDisabled(),false);
    const beforeShare=await page.evaluate(()=>creativeR31Workspace.workspace.session.state());
