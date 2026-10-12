@@ -62,7 +62,7 @@ test('cancelled/invalid redraw does not modify the single Session or timeline',a
  x.adapter.dispose();x.w.dispose();
 });
 test('ambiguous output folder is never guessed or merged: append to unique new folder',async()=>{
- const x=await start({area:false,duplicateFolder:true}),before=x.w.session.state();
+ const x=await start({area:false,duplicateFolder:true}),before=x.w.session.state(),originalSourceBytes=x.bytes.slice();
  assert.equal(x.run({type:'add',kind:'gym',position:{lat:35.704,lng:139.804}}).status,'APPLIED');
  const result=await x.w.exportKmz(),out=await JSZip.loadAsync(result.bytes);
  const xml=await out.file('doc.kml').async('string');
@@ -72,6 +72,6 @@ test('ambiguous output folder is never guessed or merged: append to unique new f
  const stage=await stageKmlInput(result.bytes,deps);
  assert.deepEqual(stage.errors,[]);
  assert.equal(x.w.session.state().records[0].title,before.records[0].title);
- assert.deepEqual(x.bytes,await fixture({area:false,duplicateFolder:true}));
+ assert.deepEqual(x.bytes,originalSourceBytes);
  x.adapter.dispose();x.w.dispose();
 });
