@@ -72,7 +72,7 @@ async function run(){
         const {stageKmlInput}=await import('/creative-next/phase-1b/core/stage-kmz.mjs');
         const win=document.querySelector('#r31-frame').contentWindow;
         const stage=await stageKmlInput(Uint8Array.from(payload),{JSZip:win.JSZip,DOMParser:win.DOMParser});
-        return stage.errors.map(({code})=>code);
+        return stage.errors.map(({code,message})=>({code,message}));
       },Array.from(bytes));
       throw Error(JSON.stringify({importDiagnostics,stageErrors,errors}));
     }
