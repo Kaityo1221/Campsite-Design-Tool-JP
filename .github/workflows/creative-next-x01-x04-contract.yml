@@ -1,0 +1,30 @@
+name: Creative Next X01 X04 read-only contract preflight
+on:
+  push:
+    branches:
+      - feature/creative-next-x01-x04-contract-audit-20261012
+    paths:
+      - 'creative-next/contracts/**'
+      - 'creative-next/qa/x01-x04-contract-audit.test.mjs'
+      - '.github/workflows/creative-next-x01-x04-contract.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Read-only audit syntax
+        run: |
+          node --check creative-next/contracts/audit-x01-x04.mjs
+          node --check creative-next/qa/x01-x04-contract-audit.test.mjs
+      - name: Synthetic X01 X04 contract tests
+        run: node --test creative-next/qa/x01-x04-contract-audit.test.mjs
+      - name: Existing WM4A project lifecycle regression
+        run: node scripts/check-wm4a-project-lifecycle.mjs
+# Design audit only: no deploy, no production storage, no project migration and no real KMZ.
