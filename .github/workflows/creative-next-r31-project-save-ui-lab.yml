@@ -51,4 +51,22 @@ jobs:
         run: |
           node --test creative-next/qa/x01-x04-contract-audit.test.mjs creative-next/qa/x01-x04-linked-pair.test.mjs creative-next/qa/three-function-synthetic-e2e.test.mjs
           node scripts/check-wm4a-project-lifecycle.mjs
+  webkit-mobile-lab:
+    # WebKit simulator on macOS, NOT a native iPhone Safari device test.
+    runs-on: macos-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned WebKit and isolated LAB dependencies
+        run: |
+          npm install --prefix creative-next --no-save --no-package-lock --ignore-scripts jszip@3.10.1 @xmldom/xmldom@0.9.8 fake-indexeddb@6
+          npm install --no-save --no-package-lock --ignore-scripts playwright@1.55.0 leaflet@1.9.4
+          node ./node_modules/playwright/cli.js install webkit
+      - name: Build allowlisted static preview and test mobile WebKit
+        run: |
+          node creative-next/qa/r31-project-save-lab/build-private-preview.mjs "$RUNNER_TEMP/r31-webkit-preview"
+          R31_LAB_STATIC_ROOT="$RUNNER_TEMP/r31-webkit-preview" R31_LAB_BROWSER=webkit node creative-next/qa/r31-project-save-lab-browser.cjs
 # No deploy, no release, no production namespace or approved r31 UI modifications.
