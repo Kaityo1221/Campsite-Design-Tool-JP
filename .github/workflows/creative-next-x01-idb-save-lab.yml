@@ -7,6 +7,7 @@ on:
       - 'creative-next/contracts/**'
       - 'creative-next/qa/x01-indexeddb-save-lab.test.mjs'
       - 'creative-next/qa/x01-idb-browser.spec.mjs'
+      - 'creative-next/qa/x01-idb-playwright.config.mjs'
       - 'creative-next/qa/x01-idb-browser.html'
       - '.github/workflows/creative-next-x01-idb-save-lab.yml'
   workflow_dispatch:
