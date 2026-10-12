@@ -69,7 +69,7 @@ async function run(){
    assert.deepEqual(await page.evaluate(()=>creativeR31Workspace.workspace.session.state().areas),baseline.areas);
    assert.equal(await page.evaluate(()=>creativeR31.status().ui.tool),'polygon');
    // The X control cancels only the draft. It may not delete the source area.
-   await page.locator('button', {hasText:'×'}).filter({visible:true}).last().tap();
+   await page.locator('#cmR31AreaCancel').tap();
    assert.deepEqual(await page.evaluate(()=>creativeR31Workspace.workspace.session.state().areas),baseline.areas);
    assert.equal(await page.evaluate(()=>creativeR31.status().ui.tool),'');
    await page.locator('#toolbox').tap();await page.locator('#toolMenu button[data-tool="polygon"]').tap();
