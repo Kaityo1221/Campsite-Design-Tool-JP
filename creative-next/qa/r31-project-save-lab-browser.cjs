@@ -70,6 +70,11 @@ async function rejectImport(context,kmz,p,expected,{dismiss=false}={}){
 async function run(){
  const browser=await (ENGINE==='webkit'?webkit:chromium).launch({headless:true});const result=[];
  const bytes=Buffer.from(await makeKmz());
+ if(process.env.R31_LAB_STATIC_ROOT){
+  const fixtures=path.join(SERVE_ROOT,'creative-next/qa/r31-project-save-lab/fixtures');
+  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(fixtures,'demo-only-project.json'),'utf8')),project());
+  assert.deepEqual(fs.readFileSync(path.join(fixtures,'demo-only-new-v1.kmz')),bytes);
+ }
  try{
   for(const viewport of [{width:390,height:844},{width:393,height:852}]){
    const context=await browser.newContext({viewport,isMobile:true,hasTouch:true,serviceWorkers:'block'}),errors=[];
