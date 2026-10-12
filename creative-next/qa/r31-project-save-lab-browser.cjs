@@ -67,6 +67,15 @@ async function run(){
       entry:document.getElementById('r31-frame').contentWindow.document.getElementById('entryState')?.textContent,
       attached:__r31ProjectSaveLabStatus().attached
     }));
+    if(importDiagnostics.kind==='error'){
+      const stageErrors=await page.evaluate(async payload=>{
+        const {stageKmlInput}=await import('/creative-next/phase-1b/core/stage-kmz.mjs');
+        const win=document.querySelector('#r31-frame').contentWindow;
+        const stage=await stageKmlInput(Uint8Array.from(payload),{JSZip:win.JSZip,DOMParser:win.DOMParser});
+        return stage.errors.map(({code})=>code);
+      },Array.from(bytes));
+      throw Error(JSON.stringify({importDiagnostics,stageErrors,errors}));
+    }
     assert.equal(importDiagnostics.kind,'ok',JSON.stringify({importDiagnostics,errors}));
     assert.equal(importDiagnostics.attached,true);
     const initial=await page.evaluate(()=>({
