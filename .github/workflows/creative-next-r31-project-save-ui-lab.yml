@@ -32,6 +32,17 @@ jobs:
           node --check creative-next/qa/r31-project-save-lab-browser.cjs
       - name: Browser r31 Project import-save-reopen with user confirmation
         run: node creative-next/qa/r31-project-save-lab-browser.cjs
+      - name: Build and browser-test deployable isolated preview snapshot
+        run: |
+          node creative-next/qa/r31-project-save-lab/build-private-preview.mjs "$RUNNER_TEMP/r31-project-save-private-preview"
+          R31_LAB_STATIC_ROOT="$RUNNER_TEMP/r31-project-save-private-preview" node creative-next/qa/r31-project-save-lab-browser.cjs
+      - name: Upload isolated preview package (artifact only; NO deploy)
+        uses: actions/upload-artifact@v4
+        with:
+          name: r31-private-preview-${{ github.run_id }}
+          path: ${{ runner.temp }}/r31-project-save-private-preview/
+          if-no-files-found: error
+          retention-days: 3
       - name: Real r31 Workspace and previous isolated IDB regressions
         run: |
           node --test creative-next/qa/r31-session-indexeddb-lab.test.mjs creative-next/qa/x01-indexeddb-save-lab.test.mjs creative-next/qa/x01-design-polygon-save-channel.test.mjs
