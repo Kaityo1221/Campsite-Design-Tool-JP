@@ -47,15 +47,48 @@ async function run(){
    await page.locator('#layerButton').tap();
    await page.locator('#cmStandaloneSaveButton').tap();
    assert.equal(await page.locator('#cmR31DraftSave').count(),0);
+   await page.evaluate(()=>{
+    window.__sharedKmz=[];
+    Object.defineProperty(navigator,'canShare',{configurable:true,value:({files})=>Array.isArray(files)&&files.length===1});
+    Object.defineProperty(navigator,'share',{configurable:true,value:async ({files,title})=>{
+     const file=files[0];window.__sharedKmz.push({name:file.name,size:file.size,type:file.type,
+      isFile:file instanceof File,title,activation:!!navigator.userActivation?.isActive,
+      bytes:(await file.arrayBuffer()).byteLength});
+    }});
+   });
    await page.locator('#cmStandaloneKmz').tap();
-   assert.equal(await page.locator('#cmV73SaveChooser button').count(),2);
-   assert.equal(await page.locator('#cmV73SaveChooser button', {hasText:'保存先を選ぶ'}).count(),0);
+   assert.equal(await page.locator('#cmV73SaveChooser button').count(),3);
+   await page.waitForFunction(()=>document.getElementById('cmR31ChooseDestination')?.disabled===false);
+   assert.equal(await page.locator('#cmR31ChooseDestination').isDisabled(),false);
+   assert.equal(await page.locator('#cmR31Download').isDisabled(),false);
+   const beforeShare=await page.evaluate(()=>creativeR31Workspace.workspace.session.state());
+   await page.locator('#cmR31ChooseDestination').tap();
+   await page.waitForFunction(()=>window.__sharedKmz.length===1);
+   const shared=await page.evaluate(()=>window.__sharedKmz[0]);
+   assert.equal(shared.name,'creative-next-r31-edited.kmz');
+   assert.equal(shared.type,'application/vnd.google-earth.kmz');
+   assert.equal(shared.isFile,true);
+   assert(shared.size>200);
+   assert.equal(shared.bytes,shared.size);
+   assert.equal(shared.activation,true,'Share API must start in a trusted click/tap gesture');
+   assert.deepEqual(await page.evaluate(()=>creativeR31Workspace.workspace.session.state()),beforeShare);
    const downloadEvent=page.waitForEvent('download');
-   await page.locator('#cmV73SaveChooser button', {hasText:'ダウンロード'}).tap();
+   await page.locator('#cmR31Download').tap();
    const download=await downloadEvent;assert.equal(download.suggestedFilename(),'creative-next-r31-edited.kmz');
    assert(fs.statSync(await download.path()).size>200);
+   // Close the save overlay before touching the toolbox beneath it.
+   await page.locator('#cmV73SaveChooser button').last().tap();
+   assert.equal(await page.locator('#cmV73SaveChooser').count(),0);
    await page.locator('#toolbox').tap();await page.locator('#toolMenu button[data-tool="ruler"]').tap();
    assert.equal(await page.evaluate(()=>creativeR31.status().ui.tool),'ruler');
+   assert.equal(await page.locator('#cmR31RulerExit').isVisible(),true,'Exit must be visible before first measurement');
+   const rulerInitial=await page.evaluate(()=>creativeR31Workspace.workspace.session.state());
+   await page.locator('#cmR31RulerExit').tap();
+   assert.equal(await page.evaluate(()=>creativeR31.status().ui.tool),'');
+   assert.equal(await page.locator('#cmR31RulerExit').count(),0);
+   assert.deepEqual(await page.evaluate(()=>creativeR31Workspace.workspace.session.state()),rulerInitial);
+   await page.locator('#toolbox').tap();await page.locator('#toolMenu button[data-tool="ruler"]').tap();
+   assert.equal(await page.locator('#cmR31RulerExit').isVisible(),true);
    await page.evaluate(()=>creativeR31.openSheet('original'));
    assert.equal(await page.locator('.cm-sheet').count(),1);
    // Simulate a true Leaflet POI click: marker should act as a ruler tap, not reopen the details.
@@ -64,7 +97,9 @@ async function run(){
    await page.locator('.leaflet-marker-icon.cm-engine-existing-icon').first().tap();
    assert.equal(await page.locator('.cm-sheet').count(),0);
    assert.equal(await page.evaluate(()=>creativeR31.status().ui.tool),'ruler');
-   await page.locator('#toolbox').tap();await page.locator('#toolMenu button[data-tool="ruler"]').tap();
+   await page.locator('#cmR31RulerExit').tap();
+   assert.equal(await page.locator('#cmR31RulerExit').count(),0);
+   assert.equal(await page.evaluate(()=>creativeR31.status().ui.tool),'');
    await page.locator('#toolbox').tap();await page.locator('#toolMenu button[data-tool="polygon"]').tap();
    await page.locator('button', {hasText:'描き直す'}).last().tap();
    assert.deepEqual(await page.evaluate(()=>creativeR31Workspace.workspace.session.state().areas),baseline.areas);

@@ -37,7 +37,6 @@ export function mountWorkspace({document:doc=globalThis.document,L=globalThis.L,
   if(uiState.ui.mode||uiState.ui.tool==='polygon'||adapter.status().pendingEdits)
    return {status:'HOLD',reason:'編集中の操作を確定または取消してください'};
   if(action.type==='draft')return workspace.saveDraft({confirmed:true});
-  if(action.type==='choose')return {status:'HOLD',reason:'原本の上書きを避けるためダウンロードしてください'};
   if(action.type==='prepare'){
    clearPrepared();const ticket=++prepareGeneration;exportBusy=true;
    try{
@@ -50,14 +49,29 @@ export function mountWorkspace({document:doc=globalThis.document,L=globalThis.L,
     return {status:'PREPARED'};
    }finally{exportBusy=false;}
   }
-  if(action.type!=='download')return {status:'HOLD',reason:'操作対象が不明です'};
-  if(!prepared)return {status:'HOLD',reason:'KMZを準備してからダウンロードしてください'};
+  if(action.type!=='download'&&action.type!=='choose')return {status:'HOLD',reason:'操作対象が不明です'};
+  if(!prepared)return {status:'HOLD',reason:'KMZを準備してから保存方法を選んでください'};
   if(JSON.stringify(workspace.session.state())!==prepared.state){
    clearPrepared();return {status:'HOLD',reason:'編集中のデータが変更されたため、KMZを再生成してください'};
   }
-  // This click executes synchronously in the Safari user gesture, without
-  // an awaited exporter step between the tap and anchor.click().
+  // Both actions start synchronously in the trusted user gesture, after KMZ
+  // validation has completed in a previous gesture. No source is overwritten.
   const current=prepared;
+  if(action.type==='choose'){
+   if(typeof win.navigator?.share!=='function'||typeof win.File!=='function')
+    return {status:'HOLD',reason:'このブラウザはファイル共有に未対応です。ダウンロードを使用してください'};
+   const file=new win.File([current.blob],current.filename,{type:'application/vnd.google-earth.kmz'});
+   if(typeof win.navigator.canShare==='function'&&!win.navigator.canShare({files:[file]}))
+    return {status:'HOLD',reason:'この端末はKMZファイルの共有に対応していません。ダウンロードを使用してください'};
+   try{
+    // Do not await anything before share(): Safari requires direct activation.
+    await win.navigator.share({files:[file],title:'KMZを保存'});
+    return {status:'SHARED'}; // Share completion does not prove a file was saved.
+   }catch(e){
+    if(e?.name==='AbortError')return {status:'CANCELLED'};
+    return {status:'HOLD',reason:'共有メニューを開けませんでした。ダウンロードを使用してください'};
+   }
+  }
   if(download)await download(current.blob,current.filename);
   else{
    const anchor=doc.createElement('a');anchor.href=current.url;anchor.download=current.filename;

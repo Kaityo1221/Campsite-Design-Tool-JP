@@ -29,7 +29,7 @@ export function mountCreativeUi({document:doc=globalThis.document,L=globalThis.L
   return JSON.parse(JSON.stringify({pois:supplied.pois||[],circles:supplied.circles||[],areas:supplied.areas||[],history:supplied.history||{undo:0,redo:0}}));
  }
  let holdTimer=null;
- async function fileAction(fn){try{const result=await fn();if(stopped)return;message(result?.status==='SAVED'?'下書きを保存しました':result?.status==='RESTORED'?'保存データを復元しました':result?.status==='DOWNLOADED'?'新しいKMZを出力しました':'HOLD：'+(result?.reason||result?.status||'操作を確認してください'),0);}catch(e){if(!stopped)message('HOLD：'+(e.code||e.message),0);}}
+ async function fileAction(fn){try{const result=await fn();if(stopped)return;message(result?.status==='SAVED'?'下書きを保存しました':result?.status==='RESTORED'?'保存データを復元しました':result?.status==='DOWNLOADED'?'新しいKMZを出力しました':result?.status==='SHARED'?'共有シートを終了しました。保存先は「ファイルに保存」で確認してください':result?.status==='CANCELLED'?'保存操作をキャンセルしました':'HOLD：'+(result?.reason||result?.status||'操作を確認してください'),0);}catch(e){if(!stopped)message('HOLD：'+(e.code||e.message),0);}}
  function message(text,ms=1300){const n=id('status');if(!n)return;if(holdTimer!==null){win.clearTimeout(holdTimer);timers.delete(holdTimer);holdTimer=null;}n.textContent=text;n.classList.remove('fade');return ms?later(()=>n.classList.add('fade'),ms):null;}
  function hold(action){
   if(stopped)return{status:'STOPPED',changed:false};
@@ -204,18 +204,21 @@ export function mountCreativeUi({document:doc=globalThis.document,L=globalThis.L
  }
  function openChooser(){
   closeSave();closeChooser();chooser=present('showSaveChooser','wrap');
-  const current=chooser,download=present('showSaveChooser','download'),close=present('showSaveChooser','close');
-  chooser.append(download,close);doc.body.append(chooser);doc.body.classList.add('cm-save-chooser-open');
+  const current=chooser,choose=present('showSaveChooser','choose'),download=present('showSaveChooser','download'),close=present('showSaveChooser','close');
+  choose.id='cmR31ChooseDestination';
+  download.id='cmR31Download';
+  chooser.append(choose,download,close);doc.body.append(chooser);doc.body.classList.add('cm-save-chooser-open');
   if(onSave){
-   download.disabled=true;download.textContent='KMZ準備中…';
+   choose.disabled=true;download.disabled=true;download.textContent='KMZ準備中…';
    Promise.resolve().then(()=>onSave({type:'prepare'})).then(result=>{
     if(stopped||chooser!==current)return;
     if(result?.status==='PREPARED'){
-     download.disabled=false;download.textContent='ダウンロード';
-     message('KMZの準備が完了しました。ダウンロードを押してください',2600);
+     choose.disabled=false;download.disabled=false;download.textContent='ダウンロード';
+     message('KMZの準備ができました。保存方法を選択してください',2600);
     }else message('HOLD：'+(result?.reason||result?.status||'KMZ出力できません'),0);
    }).catch(e=>{if(!stopped&&chooser===current)message('HOLD：'+(e.code||e.message),0);});
   }
+  listen(choose,'click',()=>onSave?fileAction(()=>onSave({type:'choose'})):hold({type:'save',destination:'choose'}));
   listen(download,'click',()=>onSave?fileAction(()=>onSave({type:'download'})):hold({type:'save',destination:'download'}));
   listen(close,'click',()=>{if(onSave)onSave({type:'cancel-prepared'});closeChooser();message('KMZ出力をキャンセルしました',1200);});
  }
@@ -255,8 +258,8 @@ export function mountCreativeUi({document:doc=globalThis.document,L=globalThis.L
  }
  function openAreaChoice(){if(!frame().areas.some(p=>!p.deleted)){beginArea();return;}clearTools();closePanels();areaMenu=present('openPolygonChoice','w');const draw=present('openPolygonChoice','a'),remove=present('openPolygonChoice','d'),cancel=present('openPolygonChoice','c');areaMenu.append(draw,remove,cancel);doc.body.append(areaMenu);listen(draw,'click',()=>{const a=frame().areas.filter(a=>!a.deleted);if(a.length!==1){message('HOLD：描き直す活動範囲を一意に選べません',2200);return;}beginArea(a[0]);});listen(remove,'click',beginAreaDelete);listen(cancel,'click',()=>{destroy(areaMenu);areaMenu=null;});}
  function beginAreaDelete(){clearTools();closePanels();ui.tool='area-delete';const stopDelete=create('button',{type:'button',textContent:'削除をキャンセル'});stopDelete.style.cssText='position:fixed;z-index:1950;bottom:calc(248px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);padding:12px 18px;border-radius:14px;border:2px solid #a68b4c;background:#fffdf7;color:#382d1d;font-weight:900';areaCancel=stopDelete;doc.body.append(stopDelete);listen(stopDelete,'click',()=>{clearTools();message('削除をキャンセルしました',1200);});for(const p of frame().areas.filter(p=>!p.deleted)){const layer=L.polygon(p.points,{pane:'polygon',color:'#d6453d',weight:4,fillColor:'#d6453d',fillOpacity:.10,interactive:true}).addTo(map);layer.on('click',e=>{L.DomEvent.stopPropagation(e);destroy(areaDelete);const w=present('showPolygonDeleteConfirm','w'),del=present('showPolygonDeleteConfirm','d'),back=present('showPolygonDeleteConfirm','b');areaDelete=w;deleteLayers.forEach(l=>l.setStyle({color:l===layer?'#d6453d':'#bf6b66',weight:l===layer?6:4,fillColor:'#d6453d',fillOpacity:l===layer?.18:.08}));w.append(del,back);doc.body.append(w);listen(del,'click',()=>{if(win.confirm('この活動範囲を削除しますか？'))hold({type:'area-delete',id:p.id});else message('削除をキャンセルしました',1200);});listen(back,'click',()=>{destroy(w);areaDelete=null;deleteLayers.forEach(l=>l.setStyle({color:'#d6453d',weight:4,fillColor:'#d6453d',fillOpacity:.10}));});});deleteLayers.push(layer);}message('削除する活動範囲を選択',0);}
- function beginRuler(){clearTools();cancelPlacement();closeSheet();closePanels();ui.tool='ruler';toolState();message('始点をクリック / タップしてください',0);}
- function rulerPoint(ll){if(!rulerLayers.length){rulerLayers.push(L.circleMarker(ll,{radius:6,color:'#263e73',fillColor:'#fff',fillOpacity:1,pane:'ruler'}).addTo(map));message('始点を設定しました。終点をクリック / タップしてください',0);return;}if(rulerLayers.length===1){rulerLayers.push(L.circleMarker(ll,{radius:6,color:'#263e73',fillColor:'#fff',fillOpacity:1,pane:'ruler'}).addTo(map));rulerLayers.push(L.polyline([rulerLayers[0].getLatLng(),ll],{color:'#344e84',weight:4,pane:'ruler'}).addTo(map));}else{rulerLayers[1].setLatLng(ll);rulerLayers[2].setLatLngs([rulerLayers[0].getLatLng(),ll]);}message('距離 '+map.distance(rulerLayers[0].getLatLng(),ll).toFixed(1)+'m',0);if(!rulerExit){rulerExit=present('beginRuler','exit');doc.body.append(rulerExit);listen(rulerExit,'click',()=>{clearTools();message('物差しを終了しました',1000);});}}
+ function beginRuler(){clearTools();cancelPlacement();closeSheet();closePanels();ui.tool='ruler';rulerExit=present('beginRuler','exit');rulerExit.id='cmR31RulerExit';rulerExit.setAttribute('aria-label','物差しをキャンセルして終了');doc.body.append(rulerExit);listen(rulerExit,'click',()=>{clearTools();message('物差しを終了しました',1000);});toolState();message('始点をクリック / タップしてください',0);}
+ function rulerPoint(ll){if(!rulerLayers.length){rulerLayers.push(L.circleMarker(ll,{radius:6,color:'#263e73',fillColor:'#fff',fillOpacity:1,pane:'ruler'}).addTo(map));message('始点を設定しました。終点をクリック / タップしてください',0);return;}if(rulerLayers.length===1){rulerLayers.push(L.circleMarker(ll,{radius:6,color:'#263e73',fillColor:'#fff',fillOpacity:1,pane:'ruler'}).addTo(map));rulerLayers.push(L.polyline([rulerLayers[0].getLatLng(),ll],{color:'#344e84',weight:4,pane:'ruler'}).addTo(map));}else{rulerLayers[1].setLatLng(ll);rulerLayers[2].setLatLngs([rulerLayers[0].getLatLng(),ll]);}message('距離 '+map.distance(rulerLayers[0].getLatLng(),ll).toFixed(1)+'m',0);}
  function renderLayers(){
   const root=id('layerRows');if(!root)return;for(const child of [...root.children])destroy(child);
   for(const [key,label]of source.layerDefs){

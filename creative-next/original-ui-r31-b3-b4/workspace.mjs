@@ -5,7 +5,7 @@ import {previewLegacyPoiStore} from '../phase-1b/integration/legacy-poi-preview.
 import {createIsolatedEditorSession} from '../phase-1b/integration/isolated-editor-session.mjs';
 import {createCreativeSaveJournal} from '../phase-1b/core/journal-save.mjs';
 
-export const NAMESPACE='campsite-creative-next-v1-r31-b3-b4';
+export const NAMESPACE='campsite-creative-next-v1-r31-review-8-9';
 const keys=new Set(['current','slot-a','slot-b'].map(s=>NAMESPACE+':'+s));
 const fail=code=>{const e=new Error(code);e.code=code;throw e;};
 const copy=x=>JSON.parse(JSON.stringify(x));
