@@ -76,6 +76,9 @@ async function run(){
    await page.locator('#cmR31Download').tap();
    const download=await downloadEvent;assert.equal(download.suggestedFilename(),'creative-next-r31-edited.kmz');
    assert(fs.statSync(await download.path()).size>200);
+   // Close the save overlay before touching the toolbox beneath it.
+   await page.locator('#cmV73SaveChooser button').last().tap();
+   assert.equal(await page.locator('#cmV73SaveChooser').count(),0);
    await page.locator('#toolbox').tap();await page.locator('#toolMenu button[data-tool="ruler"]').tap();
    assert.equal(await page.evaluate(()=>creativeR31.status().ui.tool),'ruler');
    assert.equal(await page.locator('#cmR31RulerExit').isVisible(),true,'Exit must be visible before first measurement');
