@@ -30,6 +30,12 @@ jobs:
           node --check creative-next/qa/x01-indexeddb-save-lab.test.mjs
       - name: IndexedDB synthetic transaction and corruption tests
         run: node --test creative-next/qa/x01-indexeddb-save-lab.test.mjs
+      - name: Install Chromium browser test runtime
+        run: |
+          npm install --no-save --no-package-lock --ignore-scripts @playwright/test@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Actual browser IndexedDB reload, CAS and corruption tests
+        run: npx playwright test --config creative-next/qa/x01-idb-playwright.config.mjs
       - name: Prior typed polygon and linked pair regressions
         run: |
           node --test creative-next/qa/x01-design-polygon-save-channel.test.mjs creative-next/qa/x01-x04-contract-audit.test.mjs creative-next/qa/x01-x04-linked-pair.test.mjs creative-next/qa/three-function-synthetic-e2e.test.mjs
