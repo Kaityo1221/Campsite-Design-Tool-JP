@@ -35,7 +35,7 @@ function project(){
 const activityAreas=()=>[{id:'area-alone',points:ring(31)},{id:'area-512',points:ring(512)}];
 const records=()=>[
  {id:'kmz-existing',guid:'wayfarer-existing',role:'existing',kind:'pokestop',title:'既存P',memo:'元の状態',lat:35.7,lng:139.8},
- {id:'new-local-1',guid:null,poiId:null,role:'new',kind:'gym',title:'追加G',memo:'現地で追加',lat:35.701,lng:139.801}
+ {id:'new-local-1',role:'new',kind:'gym',title:'追加G',memo:'現地で追加',lat:35.701,lng:139.801}
 ];
 async function fixture(){
  const areas=activityAreas();
