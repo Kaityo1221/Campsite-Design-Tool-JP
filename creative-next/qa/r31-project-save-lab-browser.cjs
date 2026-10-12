@@ -29,6 +29,41 @@ async function makeKmz(){
  return (await createFreshV1Kmz({records:[{id:'original-record',role:'existing',guid:'existing-guid',kind:'pokestop',title:'元のPOI',memo:'Original',lat:35.701,lng:139.801}],activityAreas:[]},
  {JSZip,DOMParser,XMLSerializer})).bytes;
 }
+// Reject invalid pairs before creating any r31 Session or changing test storage.
+async function rejectImport(context,kmz,p,expected,{dismiss=false}={}){
+ const probe=await context.newPage(),errors=[];
+ probe.on('pageerror',e=>errors.push(e.message));
+ probe.on('dialog',d=>dismiss?d.dismiss():d.accept());
+ try{
+  await probe.goto(ENTRY_URL);
+  await probe.waitForFunction(()=>!!document.querySelector('#r31-frame')?.contentWindow?.creativeR31Workspace);
+  await probe.locator('#lab-open').tap();
+  await probe.locator('#lab-project').setInputFiles({
+    name:'invalid-case-project.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(p))});
+  await probe.locator('#lab-kmz').setInputFiles({
+    name:'invalid-case.kmz',mimeType:'application/vnd.google-earth.kmz',buffer:kmz});
+  await probe.locator('#lab-import').tap();
+  await probe.waitForFunction(code=>document.getElementById('lab-status').textContent.includes(code),expected);
+  const state=await probe.evaluate(()=>{
+    const win=document.querySelector('#r31-frame').contentWindow;
+    return {active:win.creativeR31Workspace.workspace.session.state().hasActive,
+      linked:__r31ProjectSaveLabStatus().attached,
+      revision:__r31ProjectSaveLabStatus().revision,
+      saveEnabled:!document.getElementById('lab-save').disabled,
+      status:document.getElementById('lab-status').textContent,
+      old:localStorage.getItem('next-lab-creative-v7'),
+      journal:localStorage.getItem('campsite-creative-next-v1-r31-review-10:current')};
+  });
+  assert.equal(state.active,false,JSON.stringify(state));
+  assert.equal(state.linked,false);
+  assert.equal(state.revision,null);
+  assert.equal(state.saveEnabled,false);
+  assert.equal(state.old,'ORIGINAL');
+  assert.equal(state.journal,'R31_OLD_JOURNAL');
+  assert.deepEqual(errors,[]);
+  return expected;
+ }finally{await probe.close();}
+}
 async function run(){
  const browser=await chromium.launch({headless:true});const result=[];
  const bytes=Buffer.from(await makeKmz());
@@ -208,8 +243,18 @@ async function run(){
     assert.deepEqual(Buffer.from(inputBytes),bytes);
     assert.equal(await page.evaluate(()=>localStorage.getItem('next-lab-creative-v7')),'ORIGINAL');
     assert.equal(await page.evaluate(()=>localStorage.getItem('campsite-creative-next-v1-r31-review-10:current')),'R31_OLD_JOURNAL');
+    // Malformed or mismatched source data never activates an editor.
+    const corrupt=Buffer.from(bytes);corrupt[0]^=0xff;
+    await rejectImport(context,corrupt,project(),'LAB_KMZ_INVALID');
+    const mismatch=project();mismatch.currentPois[0].title='別の元POI';
+    await rejectImport(context,bytes,mismatch,'PAIR_POI_MISMATCH');
+    const incomplete=project();incomplete.wayfarerObservation.acquisition.coverageComplete=false;
+    await rejectImport(context,bytes,incomplete,'PAIR_PROJECT_PREFLIGHT_HOLD');
+    await rejectImport(context,bytes,project(),'開始をキャンセルしました',{dismiss:true});
+    assert.equal(await page.evaluate(()=>__r31ProjectSaveLabStatus().revision),2);
     result.push({viewport,status:'PASS',explicitConsent:true,saveAndReopen:true,legacyKeysIntact:true,
-      singleSession:true,wrongIdHold:true,wrongHandoffHold:true,cancelSaveReopen:true,staleRevisionHold:true,deletedPoiHold:true});
+      singleSession:true,wrongIdHold:true,wrongHandoffHold:true,cancelSaveReopen:true,staleRevisionHold:true,deletedPoiHold:true,
+      malformedKmzHold:true,poiMismatchHold:true,incompleteObservationHold:true,cancelImport:true});
    }finally{await context.close();}
   }
  }finally{await browser.close();}
