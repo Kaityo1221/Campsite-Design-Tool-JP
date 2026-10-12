@@ -60,10 +60,11 @@ async function run(){
    assert.equal(await page.locator('.cm-sheet').count(),1);
    // Simulate a true Leaflet POI click: marker should act as a ruler tap, not reopen the details.
    await page.evaluate(()=>{document.querySelector('.cm-sheet-close').click();});
-   await page.locator('.leaflet-marker-icon').first().tap();
+   await page.evaluate(()=>creativeR31.setCamera({center:[35.7,139.8],zoom:18}));
+   await page.locator('.leaflet-marker-icon.cm-engine-existing-icon').first().tap();
    assert.equal(await page.locator('.cm-sheet').count(),0);
    assert.equal(await page.evaluate(()=>creativeR31.status().ui.tool),'ruler');
-   await page.locator('#cmRulerExit').tap().catch(async()=>{await page.locator('#toolbox').tap();});
+   await page.locator('#toolbox').tap();await page.locator('#toolMenu button[data-tool="ruler"]').tap();
    await page.locator('#toolbox').tap();await page.locator('#toolMenu button[data-tool="polygon"]').tap();
    await page.locator('button', {hasText:'描き直す'}).last().tap();
    assert.deepEqual(await page.evaluate(()=>creativeR31Workspace.workspace.session.state().areas),baseline.areas);
