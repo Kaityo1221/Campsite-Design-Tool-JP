@@ -51,7 +51,7 @@ async function run(){
     return route.abort();
    });
    const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
-   const decisions=[];page.on('dialog',d=>{decisions.push(d.message());d.accept();});
+   let denyDialog=null;const decisions=[];page.on('dialog',d=>{decisions.push(d.message());if(denyDialog?.test(d.message())){denyDialog=null;d.dismiss();}else d.accept();});
    try{
     await page.goto(ENTRY_URL);
     await page.waitForFunction(()=>!!document.querySelector('#r31-frame')?.contentWindow?.creativeR31Workspace);
@@ -149,7 +149,63 @@ async function run(){
     assert.equal(restored.journal,'R31_OLD_JOURNAL');
     assert.equal(errors.length,0,errors.join(';'));
     assert(decisions.length>=3);
-    result.push({viewport,status:'PASS',explicitConsent:true,saveAndReopen:true,legacyKeysIntact:true,singleSession:true});
+    // UI negative cases: unknown IDs and cancellation must preserve the live Session.
+    await page.evaluate(()=>{window.__r31ProtectedSession=document.querySelector('#r31-frame').contentWindow.creativeR31Workspace});
+    await page.locator('#lab-project-id').fill('wrong-project');
+    await page.locator('#lab-reopen').tap();
+    await page.waitForFunction(()=>document.getElementById('lab-status').textContent.includes('LAB_SAVED_PROJECT_NOT_FOUND'));
+    assert.equal(await page.evaluate(()=>document.querySelector('#r31-frame').contentWindow.creativeR31Workspace===window.__r31ProtectedSession),true);
+    await page.locator('#lab-project-id').fill('r31-ui-lab-project');
+    await page.locator('#lab-handoff-id').fill('handoff:incorrect');
+    await page.locator('#lab-reopen').tap();
+    await page.waitForFunction(()=>document.getElementById('lab-status').textContent.includes('LAB_SAVED_PROJECT_NOT_FOUND'));
+    assert.equal(await page.evaluate(()=>document.querySelector('#r31-frame').contentWindow.creativeR31Workspace===window.__r31ProtectedSession),true);
+    await page.locator('#lab-handoff-id').fill('handoff:r31-ui-lab');
+    denyDialog=/検証済みの世代/;
+    await page.locator('#lab-reopen').tap();
+    await page.waitForFunction(()=>document.getElementById('lab-status').textContent.includes('再開をキャンセルしました'));
+    assert.equal(await page.evaluate(()=>document.querySelector('#r31-frame').contentWindow.creativeR31Workspace===window.__r31ProtectedSession),true);
+    denyDialog=/隔離IndexedDBへ保存/;
+    await page.locator('#lab-save').tap();
+    await page.waitForFunction(()=>document.getElementById('lab-status').textContent.includes('保存をキャンセルしました'));
+    assert.equal(await page.evaluate(()=>__r31ProjectSaveLabStatus().revision),1);
+    // A second live tab holds revision=1 while the first advances to revision=2.
+    const peer=await context.newPage();
+    peer.on('dialog',d=>d.accept());
+    try{
+      await peer.goto(ENTRY_URL);
+      await peer.waitForFunction(()=>!!document.querySelector('#r31-frame')?.contentWindow?.creativeR31Workspace);
+      await peer.locator('#lab-open').tap();
+      await peer.locator('#lab-project-id').fill('r31-ui-lab-project');
+      await peer.locator('#lab-handoff-id').fill('handoff:r31-ui-lab');
+      await peer.locator('#lab-reopen').tap();
+      await peer.waitForFunction(()=>document.getElementById('lab-status').textContent.includes('Undo/Redo履歴は新規開始です。'));
+      assert.equal(await peer.evaluate(()=>__r31ProjectSaveLabStatus().revision),1);
+      await page.locator('#lab-save').tap();
+      await page.waitForFunction(()=>__r31ProjectSaveLabStatus().revision===2);
+      await peer.locator('#lab-save').tap();
+      await peer.waitForFunction(()=>document.getElementById('lab-status').textContent.includes('IDB_LAB_REVISION_CONFLICT'));
+      assert.equal(await peer.evaluate(()=>__r31ProjectSaveLabStatus().revision),1);
+      assert.equal(await page.evaluate(()=>__r31ProjectSaveLabStatus().revision),2);
+    }finally{await peer.close();}
+    // Delete an already-saved new POI: tombstone representation is unapproved, so HOLD.
+    const deletion=await page.evaluate(()=>{
+      const w=document.querySelector('#r31-frame').contentWindow.creativeR31Workspace.workspace;
+      const p=w.session.state().records.find(r=>r.role==='new');
+      return w.session.command({type:'delete',id:p.id},{confirmed:true});
+    });
+    assert.equal(deletion.changed,true);
+    await page.locator('#lab-save').tap();
+    await page.waitForFunction(()=>document.getElementById('lab-status').textContent.includes('R31_LAB_DELETED_POI_HOLD'));
+    assert.equal(await page.evaluate(()=>__r31ProjectSaveLabStatus().revision),2);
+    assert.equal(await page.evaluate(()=>document.querySelector('#r31-frame').contentWindow.creativeR31Workspace.workspace.session.undo().changed),true);
+    // All original data and historical keys remain byte-identical despite rejected operations.
+    const inputBytes=await page.locator('#lab-kmz').evaluate(async input=>Array.from(new Uint8Array(await input.files[0].arrayBuffer())));
+    assert.deepEqual(Buffer.from(inputBytes),bytes);
+    assert.equal(await page.evaluate(()=>localStorage.getItem('next-lab-creative-v7')),'ORIGINAL');
+    assert.equal(await page.evaluate(()=>localStorage.getItem('campsite-creative-next-v1-r31-review-10:current')),'R31_OLD_JOURNAL');
+    result.push({viewport,status:'PASS',explicitConsent:true,saveAndReopen:true,legacyKeysIntact:true,
+      singleSession:true,wrongIdHold:true,wrongHandoffHold:true,cancelSaveReopen:true,staleRevisionHold:true,deletedPoiHold:true});
    }finally{await context.close();}
   }
  }finally{await browser.close();}
