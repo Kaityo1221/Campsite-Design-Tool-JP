@@ -119,8 +119,19 @@ async function run(){
     // Explicit reopen requires a fresh verified pair, destroys only the prior
     // test iframe Session, starts another one with the saved archive.
     await page.locator('#lab-reopen').tap();
-    await page.waitForFunction(()=>__r31ProjectSaveLabStatus().revision===1&&
-      document.querySelector('#r31-frame')?.contentWindow?.creativeR31Workspace?.workspace?.session?.state()?.records?.length===2);
+    // The old Session already has revision 1 and two POIs. Do not mistake it
+    // for the reopened Session while its asynchronous IDB verification runs.
+    await page.waitForFunction(()=>{
+      const status=document.getElementById('lab-status');
+      return status?.dataset.kind==='error' ||
+        (status?.dataset.kind==='ok' && status.textContent.includes('Undo/Redo履歴は新規開始です。') &&
+         !window.__r31ProjectSaveLabStatus?.().busy);
+    });
+    const reopenStatus=await page.evaluate(()=>({
+      kind:document.getElementById('lab-status').dataset.kind,
+      message:document.getElementById('lab-status').textContent
+    }));
+    assert.equal(reopenStatus.kind,'ok',JSON.stringify({reopenStatus,errors}));
     const restored=await page.evaluate(()=>{
      const inner=document.querySelector('#r31-frame').contentWindow;
      const r=inner.creativeR31Workspace.workspace.session.state();
