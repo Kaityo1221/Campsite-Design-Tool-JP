@@ -59,7 +59,16 @@ async function run(){
     await page.locator('#lab-project').setInputFiles({name:'synthetic-project.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(project()))});
     await page.locator('#lab-kmz').setInputFiles({name:'synthetic.kmz',mimeType:'application/vnd.google-earth.kmz',buffer:bytes});
     await page.locator('#lab-import').tap();
-    await page.waitForFunction(()=>window.__r31ProjectSaveLabStatus?.().attached);
+    await page.waitForFunction(()=>window.__r31ProjectSaveLabStatus?.().attached ||
+      document.getElementById('lab-status')?.dataset.kind==='error',null,{timeout:15000});
+    const importDiagnostics=await page.evaluate(()=>({
+      kind:document.getElementById('lab-status').dataset.kind,
+      message:document.getElementById('lab-status').textContent,
+      entry:document.getElementById('r31-frame').contentWindow.document.getElementById('entryState')?.textContent,
+      attached:__r31ProjectSaveLabStatus().attached
+    }));
+    assert.equal(importDiagnostics.kind,'ok',JSON.stringify({importDiagnostics,errors}));
+    assert.equal(importDiagnostics.attached,true);
     const initial=await page.evaluate(()=>({
      status:__r31ProjectSaveLabStatus(),
      active:document.querySelector('#r31-frame').contentWindow.creativeR31Workspace.workspace.session.state().hasActive
