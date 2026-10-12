@@ -190,9 +190,13 @@ async function run(){
     }finally{await peer.close();}
     // Delete an already-saved new POI: tombstone representation is unapproved, so HOLD.
     const deletion=await page.evaluate(()=>{
-      const w=document.querySelector('#r31-frame').contentWindow.creativeR31Workspace.workspace;
+      const inner=document.querySelector('#r31-frame').contentWindow;
+      const w=inner.creativeR31Workspace.workspace;
       const p=w.session.state().records.find(r=>r.role==='new');
-      return w.session.command({type:'delete',id:p.id},{confirmed:true});
+      // The engine rejects parent-realm command objects by design.
+      // Construct the command in its own frozen r31 iframe realm.
+      const command=inner.JSON.parse(JSON.stringify({type:'delete',id:p.id}));
+      return w.session.command(command,{confirmed:true});
     });
     assert.equal(deletion.changed,true,JSON.stringify(deletion));
     await page.locator('#lab-save').tap();
