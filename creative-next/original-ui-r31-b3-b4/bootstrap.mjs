@@ -1,6 +1,6 @@
 import {mountCreativeUi} from './ui-runtime.mjs';
 import {createWorkspace} from './workspace.mjs';
-import {connectB2} from '../original-ui-r31-b2/adapter.mjs';
+import {connectB2} from './adapter-review.mjs';
 
 export function mountWorkspace({document:doc=globalThis.document,L=globalThis.L,JSZip=globalThis.JSZip,storage=null,locks=null,confirmEdit=()=>false,confirmRestore=()=>false,download=null}={}){
  const win=doc.defaultView,id=n=>doc.getElementById(n);
