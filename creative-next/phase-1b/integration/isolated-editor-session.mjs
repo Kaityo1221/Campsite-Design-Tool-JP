@@ -11,7 +11,7 @@ import {previewLegacyPoiStore} from './legacy-poi-preview.mjs';
 import {exportNewV1Kmz,assertSafeKindEdit} from '../core/export-kmz.mjs';
 import {createCreativeSaveJournal} from '../core/journal-save.mjs';
 import {indexDependentCircles,circleOverlay,circleRingAt} from '../core/dependent-circles.mjs';
-import {sourceActivityAreas,planActivityChange,planActivityMembership,plannedAreaOperations,editableAreaGeometry} from '../core/activity-areas.mjs';
+import {sourceActivityAreas,planActivityChange,planActivityReplacement,planActivityMembership,plannedAreaOperations,editableAreaGeometry} from '../core/activity-areas.mjs';
 const PREFIX='campsite.creative.';
 function error(code,message){let e=new Error(message);e.code=code;return e;}
 function b64(bytes){let str='';for(let i=0;i<bytes.length;i+=32768)str+=String.fromCharCode(...bytes.subarray(i,i+32768));return btoa(str);}
@@ -125,7 +125,7 @@ export function createIsolatedEditorSession({JSZip,DOMParser,XMLSerializer,stora
   if(confirmed!==true)return {ok:true,changed:false,cancelled:true};
   if(recoveredFallback)throw error('SAVE_RECOVERY_REQUIRED','Fallback recovery is read-only');
   const membership=value?.type==='area-create'||value?.type==='area-remove';
-  const plan=membership?planActivityMembership(active.shapeAreas,value,{reservedIds:[...active.areaUsed]}):planActivityChange(active.shapeAreas,value);
+  const plan=membership?planActivityMembership(active.shapeAreas,value,{reservedIds:[...active.areaUsed]}):value?.type==='area-replace'?planActivityReplacement(active.shapeAreas,value):planActivityChange(active.shapeAreas,value);
   if(!plan.changed)return {ok:true,changed:false};
   // Fail before accepting edits to unsupported source structures or altitude modes.
   const isSource=areas(active.stage).some(a=>a.id===plan.id);

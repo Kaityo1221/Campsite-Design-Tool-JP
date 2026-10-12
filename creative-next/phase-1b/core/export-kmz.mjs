@@ -78,9 +78,25 @@ function existingFolder(doc,label){
   if(folders.length>1)stop('EXPORT_FOLDER_AMBIGUOUS','Repeated layer folder '+label);
   return folders[0]||null;
 }
+// New objects are additive only. If the source contains duplicate folder
+// labels, do NOT choose either folder or repair/merge the original. Create an
+// isolated new destination with a unique name, and reuse it for this export.
+const extraFolderForDoc=new WeakMap();
 function ensureFolder(xml,doc,label){
-  let f=existingFolder(doc,label);
-  if(!f){f=element(xml,doc,'Folder');element(xml,f,'name',label)}
+  const matching=direct(doc,'Folder').filter(f=>one(f,'name')?.textContent===label);
+  if(matching.length<=1){
+    if(matching.length===1)return matching[0];
+    const f=element(xml,doc,'Folder');element(xml,f,'name',label);return f;
+  }
+  let named=extraFolderForDoc.get(doc);
+  if(!named){named=new Map();extraFolderForDoc.set(doc,named);}
+  if(named.has(label))return named.get(label);
+  const used=new Set(direct(doc,'Folder').map(f=>one(f,'name')?.textContent));
+  const stem='Creative Next 追加 '+label;
+  let name=stem,n=1;
+  while(used.has(name))name=stem+' ('+(++n)+')';
+  const f=element(xml,doc,'Folder');element(xml,f,'name',name);
+  named.set(label,f);
   return f;
 }
 function legacyLayer(pm){

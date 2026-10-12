@@ -59,6 +59,17 @@ export function planActivityChange(areas,command){
  validateActivityPoints(after);
  return {kind:'area',id:command.id,before,after,changed:JSON.stringify(before)!==JSON.stringify(after)};
 }
+// Explicit, atomic replacement. The original area is retained until the new
+// polygon has been fully validated and the single Session command commits.
+export function planActivityReplacement(areas,command){
+ if(!Array.isArray(areas)||command?.type!=='area-replace'||typeof command.id!=='string')
+  stop('AREA_COMMAND','活動範囲の描き直し指定が不正です');
+ const original=areas.find(a=>a.id===command.id);
+ if(!original)stop('AREA_NOT_FOUND','描き直す活動範囲がありません');
+ const before=original.points.map(p=>[...p]);
+ const after=validateActivityPoints(command.points);
+ return {kind:'area',id:original.id,before,after,changed:JSON.stringify(before)!==JSON.stringify(after)};
+}
 export function plannedAreaEdits(source,active){
  if(!Array.isArray(source)||!Array.isArray(active)||source.length!==active.length)stop('AREA_SOURCE','活動範囲が削除・追加されました');
  const map=new Map();for(const a of active){if(!a||typeof a.id!=='string'||map.has(a.id))stop('AREA_ID','重複した活動範囲ID');map.set(a.id,a);}
