@@ -23,7 +23,9 @@ jobs:
         run: |
           npm install --prefix creative-next --no-save --no-package-lock --ignore-scripts jszip@3.10.1 @xmldom/xmldom@0.9.8 fake-indexeddb@6
           npm install --no-save --no-package-lock --ignore-scripts playwright@1.55.0 leaflet@1.9.4
-          node ./node_modules/playwright/cli.js install --with-deps chromium
+          # Do not run apt on hosted Ubuntu: the runner's package mirror stalled until timeout.
+          # First use the runner libraries; the browser E2E will report any missing library.
+          node ./node_modules/playwright/cli.js install chromium
       - name: Syntax + isolated LAB UI checks
         run: |
           node --check creative-next/qa/r31-project-save-lab/controller.mjs
