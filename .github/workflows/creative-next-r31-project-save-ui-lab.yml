@@ -1,0 +1,41 @@
+name: Creative Next r31 confirmed Project save UI LAB
+on:
+  push:
+    branches:
+      - feature/creative-next-r31-confirmed-project-save-ui-20261012
+    paths:
+      - 'creative-next/qa/r31-project-save-lab/**'
+      - 'creative-next/qa/r31-project-save-lab-browser.cjs'
+      - '.github/workflows/creative-next-r31-project-save-ui-lab.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  isolated-r31-ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned archive and browser dependencies
+        run: |
+          npm install --prefix creative-next --no-save --no-package-lock --ignore-scripts jszip@3.10.1 @xmldom/xmldom@0.9.8 fake-indexeddb@6
+          npm install --no-save --no-package-lock --ignore-scripts playwright@1.55.0 leaflet@1.9.4
+          node ./node_modules/playwright/cli.js install --with-deps chromium
+      - name: Syntax + isolated LAB UI checks
+        run: |
+          node --check creative-next/qa/r31-project-save-lab/controller.mjs
+          node --check creative-next/qa/r31-project-save-lab-browser.cjs
+      - name: Browser r31 Project import-save-reopen with user confirmation
+        run: node creative-next/qa/r31-project-save-lab-browser.cjs
+      - name: Real r31 Workspace and previous isolated IDB regressions
+        run: |
+          node --test creative-next/qa/r31-session-indexeddb-lab.test.mjs creative-next/qa/x01-indexeddb-save-lab.test.mjs creative-next/qa/x01-design-polygon-save-channel.test.mjs
+          node --test creative-next/qa/r31-b3-b4/workspace.test.mjs
+      - name: Wayfarer and Creative contract regression
+        run: |
+          node --test creative-next/qa/x01-x04-contract-audit.test.mjs creative-next/qa/x01-x04-linked-pair.test.mjs creative-next/qa/three-function-synthetic-e2e.test.mjs
+          node scripts/check-wm4a-project-lifecycle.mjs
+# No deploy, no release, no production namespace or approved r31 UI modifications.
