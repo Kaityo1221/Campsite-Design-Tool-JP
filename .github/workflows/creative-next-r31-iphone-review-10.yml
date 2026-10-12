@@ -1,0 +1,38 @@
+name: Creative Next r31 iPhone review 10
+on:
+  push:
+    branches:
+      - fix/creative-next-r31-iphone-review-10-20261012
+    paths:
+      - 'creative-next/original-ui-r31-b3-b4/**'
+      - 'creative-next/qa/r31-review-10/**'
+      - '.github/workflows/creative-next-r31-iphone-review-10.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned dependencies
+        run: npm install --prefix creative-next --no-save --no-package-lock --ignore-scripts jszip@3.10.1 @xmldom/xmldom@0.9.8 acorn@8.15.0 leaflet@1.9.4 pngjs@7.0.0 playwright@1.56.0
+      - name: Syntax checks
+        run: |
+          node --check creative-next/original-ui-r31-b3-b4/bootstrap.mjs
+          node --check creative-next/original-ui-r31-b3-b4/ui-runtime.mjs
+          node --check creative-next/qa/r31-review-10/back-file-picker.cjs
+      - name: Frozen B2 and safety regression
+        run: |
+          node --test creative-next/qa/r31-b2/adapter.test.mjs creative-next/qa/r31-b2/b1-compatible.test.mjs creative-next/qa/r31-b3-b4/workspace.test.mjs creative-next/qa/r31-review-7/review.test.mjs creative-next/phase-1b/test/stage-kmz.test.mjs creative-next/phase-1b/test/export-kmz.test.mjs creative-next/phase-1b/test/journal-save.test.mjs creative-next/phase-1b/test/journal-web-locks.test.mjs creative-next/phase-1b/test/isolated-editor-session.test.mjs
+      - name: Install Chromium
+        run: creative-next/node_modules/.bin/playwright install --with-deps chromium
+      - name: Regression #001-#009, mobile viewports
+        run: node creative-next/qa/r31-review-7/browser.cjs
+      - name: Regression #010 - return to file picker
+        run: node creative-next/qa/r31-review-10/back-file-picker.cjs
+# No deploy or change to main, old previews, or user data.
