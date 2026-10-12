@@ -12,7 +12,7 @@ on:
       - '.github/workflows/creative-next-r31-iphone-review-8-9.yml'
   pull_request:
     branches:
-      - codex/original-ui-r31-b3-b4
+      - fix/creative-next-r31-iphone-review-7-20261012
   workflow_dispatch:
 permissions:
   contents: read
