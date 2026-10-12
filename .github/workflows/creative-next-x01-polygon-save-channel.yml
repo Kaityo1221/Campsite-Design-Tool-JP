@@ -1,0 +1,36 @@
+name: Creative Next X01 polygon save channel lab
+on:
+  push:
+    branches:
+      - feature/creative-next-x01-polygon-save-channel-20261012
+    paths:
+      - 'creative-next/contracts/**'
+      - 'creative-next/qa/x01-design-polygon-save-channel.test.mjs'
+      - '.github/workflows/creative-next-x01-polygon-save-channel.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  typed-save-lab:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned synthetic dependencies
+        run: npm install --prefix creative-next --no-save --no-package-lock --ignore-scripts jszip@3.10.1 @xmldom/xmldom@0.9.8
+      - name: Syntax
+        run: |
+          node --check creative-next/contracts/design-polygon-save-channel-lab.mjs
+          node --check creative-next/qa/x01-design-polygon-save-channel.test.mjs
+      - name: X01 explicit-ownership save tests
+        run: node --test creative-next/qa/x01-design-polygon-save-channel.test.mjs
+      - name: Existing three-function, X01 X04 and linked pair tests
+        run: node --test creative-next/qa/three-function-synthetic-e2e.test.mjs creative-next/qa/x01-x04-contract-audit.test.mjs creative-next/qa/x01-x04-linked-pair.test.mjs
+      - name: Existing WM4A and area geometry regression
+        run: |
+          node scripts/check-wm4a-project-lifecycle.mjs
+          node --test creative-next/phase-1b/test/activity-areas.test.mjs creative-next/phase-1b/test/create-new-kmz.test.mjs
+# LAB only: main, production Creative, confirmed r31 UI, original KMZ and storage unchanged.
