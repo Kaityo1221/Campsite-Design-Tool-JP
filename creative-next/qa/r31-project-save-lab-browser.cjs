@@ -1,7 +1,7 @@
 /* Frozen r31 HTML in iframe + external LAB controls: actual Chromium integration. */
 const assert=require('node:assert/strict');
 const fs=require('node:fs'),path=require('node:path');
-const ROOT=path.resolve(__dirname,'../../..');
+const ROOT=path.resolve(__dirname,'../..');
 const {chromium}=require(path.join(ROOT,'node_modules/playwright'));
 const JSZip=require('jszip');
 const {DOMParser,XMLSerializer}=require('@xmldom/xmldom');
