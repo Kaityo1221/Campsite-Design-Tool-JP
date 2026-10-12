@@ -5,6 +5,7 @@ import JSZip from 'jszip';
 import {DOMParser,XMLSerializer} from '@xmldom/xmldom';
 import {webcrypto} from 'node:crypto';
 import {planDesignPolygonSaveLab} from '../contracts/design-polygon-save-channel-lab.mjs';
+import {createFreshV1Kmz} from '../phase-1b/core/create-new-kmz.mjs';
 import {createX01IndexedDbSaveLab} from '../contracts/x01-indexeddb-save-lab.mjs';
 const clone=x=>JSON.parse(JSON.stringify(x));
 const design=[[35,139],[35,139.002],[35.002,139.002],[35.002,139]];
