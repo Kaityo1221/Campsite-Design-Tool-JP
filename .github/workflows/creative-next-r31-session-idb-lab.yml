@@ -31,7 +31,7 @@ jobs:
       - name: Install Chromium browser test dependencies
         run: |
           npm install --no-save --no-package-lock --ignore-scripts playwright@1.55.0 leaflet@1.9.4
-          npx playwright install --with-deps chromium
+          node ./node_modules/playwright/cli.js install --with-deps chromium
       - name: Real r31 UI import/add/undo/redo through isolated IndexedDB
         run: node creative-next/qa/r31-session-idb-browser.cjs
       - name: X01 X04 prior regression
