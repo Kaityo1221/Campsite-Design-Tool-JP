@@ -51,10 +51,16 @@ function waitReady(){
  });
 }
 function deps(win){
- return {JSZip:win.JSZip,DOMParser:win.DOMParser,cryptoProvider:win.crypto};
+ // The frozen r31 JSZip lives in the iframe realm. JSZip must receive a typed
+ // array created in that realm; use a byte-for-byte copy without modifying r31.
+ const JSZip={loadAsync:bytes=>win.JSZip.loadAsync(win.Uint8Array.from(bytes))};
+ return {JSZip,DOMParser:globalThis.DOMParser,cryptoProvider:globalThis.crypto};
 }
 function storage(win){
- return createX01IndexedDbSaveLab({indexedDB:globalThis.indexedDB,dbName:LAB_DB,...deps(win)});
+ const base=createX01IndexedDbSaveLab({indexedDB:globalThis.indexedDB,dbName:LAB_DB,...deps(win)});
+ // r31 export bytes also originate in the iframe. The IndexedDB contract must
+ // receive a parent-realm byte copy so its strict input checks stay enabled.
+ return Object.freeze({...base,save:input=>base.save({...input,kmzBytes:Uint8Array.from(input.kmzBytes)})});
 }
 async function fileBytes(input,max){
  const file=input?.files?.[0];
