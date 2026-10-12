@@ -10,8 +10,10 @@ async function run(){
    const context=await browser.newContext({viewport,isMobile:true,hasTouch:true,serviceWorkers:'block'}),errors=[];
    await context.addInitScript(()=>{
     localStorage.setItem('next-lab-creative-v7','ORIGINAL');
+    localStorage.setItem('campsite-creative-next-v1-r31-review-8-9:current','OLD_PREVIEW_UNTOUCHED');
     window.__starts=0;
     window.__oldData=()=>localStorage.getItem('next-lab-creative-v7');
+    window.__oldPreviewData=()=>localStorage.getItem('campsite-creative-next-v1-r31-review-8-9:current');
    });
    await context.route('**/*',async route=>{
     const u=new URL(route.request().url());let file=null;
@@ -78,7 +80,7 @@ async function run(){
      newSessionCount:creativeR31Workspace.status().workspace.sessionCount,
      newHasActive:creativeR31Workspace.workspace.session.state().hasActive,
      filename:document.getElementById('entryFileName').textContent,
-     starts:__starts,oldData:__oldData()
+     starts:__starts,oldData:__oldData(),oldPreviewData:__oldPreviewData()
     }));
     assert.equal(state.oldStopped,true);
     assert.equal(state.oldMap,0);
@@ -87,6 +89,7 @@ async function run(){
     assert.equal(state.filename,'new.kmz');
     assert.equal(state.starts,2,'one map per workspace, sequentially');
     assert.equal(state.oldData,'ORIGINAL','legacy storage unchanged');
+    assert.equal(state.oldPreviewData,'OLD_PREVIEW_UNTOUCHED','prior r31 preview saved data unchanged');
 
     await page.locator('#startButton').tap();
     await page.waitForFunction(()=>document.getElementById('entry').classList.contains('hidden'));
