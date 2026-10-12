@@ -1,7 +1,7 @@
 # r31 Workspace/B2 ⇄ independent X-01/X-04 IndexedDB LAB
 
 **Date:** 2026-10-12 JST
-**Status:** DRAFT. r31 Session module test PASS; UI test is a separate gate.
+**Status:** DRAFT / isolated synthetic integration PASS (real r31 UI under Chromium viewport test PASS). **Production/UI-save release remains HOLD.**
 **Parent:** PR #366 X-01 IndexedDB prototype. The approved r31 UI branch and production `main` are unchanged.
 
 ## What was connected
@@ -36,6 +36,19 @@ Added `creative-next/contracts/r31-session-indexeddb-lab.mjs`, a new independent
 - confirmation required; deletions fail closed; stale revision collision fails; wrong initial Project identity fails before importing.
 
 The browser UI test `creative-next/qa/r31-session-idb-browser.cjs` uses 390px/393px Chromium viewport with actual frozen r31 map UI, real file input and buttons, **only** injecting the LAB adapter into the test page. The test does not deploy a preview, not authorize production, and is **not** iPhone Safari/Android physical-device verification.
+
+## Final isolated test evidence
+
+- [GitHub Actions 38212464496](https://github.com/Kaityo1221/Campsite-Design-Tool-JP/actions/runs/38212464496): **SUCCESS**, executed on implementation commit `c834369d8014926609693929b4e55fbb9b13aae8`.
+- New actual Workspace/B2/r31 Session/IDB roundtrip Node tests: **5/5 PASS**.
+- Actual frozen r31 HTML + map + UI file picker + Add + Undo/Redo + isolated IndexedDB and fresh UI file import: **390px 1/1 and 393px 1/1 PASS** on Chromium. The association with the project is injected via explicit `attachLive()` in the test; the user-facing Save button was not changed.
+- Prior X-01/X-04/IDB/three-feature regressions: **64/64 PASS**.
+- Frozen r31 workspace tests: **14/14 PASS**.
+- Existing NEW_V1 and activity-area tests: **25/25 PASS**.
+- WM4A saved-project lifecycle, both feature-patch and packaged test variants PASS.
+- Prior two failed browser runs were CI test harness path/dependency mismatches (module location and Playwright browser-revision installation); the final run uses the same Playwright CLI as the browser test and completed successfully.
+
+**Not PASS:** Real iOS Safari, Android browser, real Wayfarer service, cross-tab browser quit durability, r31's native Save action wired to the new IDB, production handoff, deletion persistence and Base/Local/Remote apply.
 
 ## Remaining next stages
 
