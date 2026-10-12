@@ -20,8 +20,9 @@ async function fixture({area=true,duplicateFolder=false}={}){
  const zip=await JSZip.loadAsync(bytes),file=zip.file('doc.kml');
  assert(file,'source KMZ must contain doc.kml');
  let xml=await file.async('string');
- assert.match(xml,/50m サークル/);
- xml=xml.replace('</Document>','<Folder><name>50m サークル</name></Folder></Document>');
+ // The fresh V1 fixture contains no distance-circle folder until a new POI is added.
+ // Insert two duplicate *empty* source folders to exercise ambiguous destinations.
+ xml=xml.replace('</Document>','<Folder><name>50m サークル</name></Folder><Folder><name>50m サークル</name></Folder></Document>');
  zip.file('doc.kml',xml);
  zip.file('retained/opaque.bin',new Uint8Array([0,255,37]));
  return zip.generateAsync({type:'uint8array'});
