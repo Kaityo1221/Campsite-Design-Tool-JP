@@ -147,7 +147,7 @@ test('X01: activity ID duplicates and unsupported deletion retain HOLD (no silen
 test('X01: project primary deletion and self intersection HOLD',()=>{
  const deleted=primary();deleted.deleted=true;
  requireHold(()=>planDesignPolygonSaveLab(props(makeProject(),[deleted])),'X01_PRIMARY_DELETION_FORBIDDEN');
- const crossing=primary([[35,139],[35.002,139.002],[35.002,139],[35,139.002]]);
+ const crossing=primary([[35,139],[35.002,139.002],[35.0002,139.0018],[35.002,139]]);
  requireHold(()=>planDesignPolygonSaveLab(props(makeProject(),[crossing])),'X01_PRIMARY_AREA_INTERSECTION');
 });
 test('X01: unsupported shape metadata and silent JSON loss are refused',()=>{
