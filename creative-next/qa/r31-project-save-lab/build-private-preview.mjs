@@ -8,6 +8,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
+import {createRequire} from 'node:module';
 
 const repo=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../../..');
 const dest=path.resolve(process.argv[2]||'');
@@ -63,18 +64,39 @@ for(const file of [...assets].sort()){
  fs.mkdirSync(path.dirname(target),{recursive:true});
  fs.copyFileSync(full,target);
 }
+// The pair is intentionally synthetic. Never put member or real Wayfarer
+// source data into a downloadable GitHub Actions artifact.
+const {project,makeKmz}=createRequire(import.meta.url)('../r31-project-save-lab-browser.cjs');
+const fixtureDir=path.join(dest,'creative-next/qa/r31-project-save-lab/fixtures');
+fs.mkdirSync(fixtureDir,{recursive:true});
+const demoProject=Buffer.from(JSON.stringify(project(),null,2)+'\n');
+const demoKmz=Buffer.from(await makeKmz());
+if(!demoKmz.length||!demoProject.length)throw Error('PREVIEW_SAMPLE_PAIR_EMPTY');
+fs.writeFileSync(path.join(fixtureDir,'demo-only-project.json'),demoProject);
+fs.writeFileSync(path.join(fixtureDir,'demo-only-new-v1.kmz'),demoKmz);
 const landing=`<!doctype html><html lang="ja"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow,noarchive">
-<meta http-equiv="refresh" content="0;url=./creative-next/qa/r31-project-save-lab/index.html">
-<title>Creative Next isolated LAB</title></head><body>
-<p>本番とは別の試験用サイトです。<a href="./creative-next/qa/r31-project-save-lab/index.html">隔離LABへ進む</a></p>
+<title>Creative Next | PRIVATE LAB</title>
+<style>html{font:16px -apple-system,BlinkMacSystemFont,sans-serif;background:#17130f;color:#fff8e7}
+body{margin:0 auto;padding:30px 18px;max-width:600px;line-height:1.6}
+h1{font-size:24px}a{display:block;margin:12px 0;padding:14px;background:#f7e5b4;color:#342719;
+text-align:center;font-weight:800;border-radius:12px;text-decoration:none}
+small{color:#ddd2b5}strong{color:#ffde85}</style>
+</head><body><h1>🧪 Creative Next 隔離プレビュー</h1>
+<p><strong>試験専用・本番保存ではありません。</strong> ここにあるデータは架空のPOIです。個人情報や本物のWayfarerデータをアップロードしないでください。</p>
+<p>① サンプルの2ファイルを端末の「ファイル」に保存し、② LABを開いてファイルを選択してください。</p>
+<a download="demo-only-project.json" href="./creative-next/qa/r31-project-save-lab/fixtures/demo-only-project.json">①-1 サンプルProject JSON</a>
+<a download="demo-only-new-v1.kmz" href="./creative-next/qa/r31-project-save-lab/fixtures/demo-only-new-v1.kmz">①-2 サンプルNEW_V1 KMZ</a>
+<a href="./creative-next/qa/r31-project-save-lab/index.html">② r31プロジェクト保存LABへ</a>
+<small>保存先はこの試験サイトのIndexedDBだけです。専用オリジンかつアクセス制限のあるテストサイトに配置してください。実機Safari未検証。</small>
 </body></html>`;
 fs.writeFileSync(path.join(dest,'index.html'),landing,'utf8');
 const manifest={
  kind:'r31-project-save-private-preview',productionReady:false,
  requiresDedicatedOrigin:true,requiresAccessProtection:true,autoDeploy:false,
  index:'creative-next/qa/r31-project-save-lab/index.html',
+ syntheticFixtures:[{path:'creative-next/qa/r31-project-save-lab/fixtures/demo-only-project.json',bytes:demoProject.length,sha256:sha(demoProject)},{path:'creative-next/qa/r31-project-save-lab/fixtures/demo-only-new-v1.kmz',bytes:demoKmz.length,sha256:sha(demoKmz)}],
  files:[...assets].sort().map(name=>({path:name,bytes:fs.statSync(source(name)).size,sha256:sha(fs.readFileSync(source(name)))}))
 };
 fs.writeFileSync(path.join(dest,'PREVIEW-MANIFEST.json'),JSON.stringify(manifest,null,2)+'\n','utf8');
