@@ -6,6 +6,7 @@ on:
     paths:
       - 'creative-next/contracts/**'
       - 'creative-next/qa/r31-session-indexeddb-lab.test.mjs'
+      - 'creative-next/qa/r31-session-idb-browser.cjs'
       - '.github/workflows/creative-next-r31-session-idb-lab.yml'
   workflow_dispatch:
 permissions:
@@ -27,6 +28,12 @@ jobs:
           node --check creative-next/qa/r31-session-indexeddb-lab.test.mjs
       - name: Actual r31 Workspace/B2 Session to IndexedDB and restore
         run: node --test creative-next/qa/r31-session-indexeddb-lab.test.mjs
+      - name: Install Chromium browser test dependencies
+        run: |
+          npm install --no-save --no-package-lock --ignore-scripts playwright@1.55.0 leaflet@1.9.4
+          npx playwright install --with-deps chromium
+      - name: Real r31 UI import/add/undo/redo through isolated IndexedDB
+        run: node creative-next/qa/r31-session-idb-browser.cjs
       - name: X01 X04 prior regression
         run: node --test creative-next/qa/x01-indexeddb-save-lab.test.mjs creative-next/qa/x01-design-polygon-save-channel.test.mjs creative-next/qa/x01-x04-contract-audit.test.mjs creative-next/qa/x01-x04-linked-pair.test.mjs creative-next/qa/three-function-synthetic-e2e.test.mjs
       - name: Existing r31 Session tests
