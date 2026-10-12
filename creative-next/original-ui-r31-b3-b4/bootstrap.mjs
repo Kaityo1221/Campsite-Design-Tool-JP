@@ -5,8 +5,10 @@ import {connectB2} from './adapter-review.mjs';
 export function mountWorkspace({document:doc=globalThis.document,L=globalThis.L,JSZip=globalThis.JSZip,storage=null,locks=null,confirmEdit=()=>false,confirmRestore=()=>false,download=null}={}){
  const win=doc.defaultView,id=n=>doc.getElementById(n);
  const workspace=createWorkspace({JSZip,DOMParser:win.DOMParser,XMLSerializer:win.XMLSerializer,cryptoProvider:win.crypto,storage,locks});
- let adapter=null,stopped=false,selectGeneration=0,controller=null,exportBusy=false;
+ let adapter=null,stopped=false,selectGeneration=0,controller=null,exportBusy=false,prepared=null,prepareGeneration=0;
  const urls=new Set(),timers=new Set();
+ function clearPrepared(){prepareGeneration++;if(prepared?.url){urls.delete(prepared.url);win.URL.revokeObjectURL(prepared.url);}prepared=null;}
+
  const entryMessage=text=>{id('entryState').textContent=text;};
  const startReady=ready=>{id('startButton').disabled=!ready;id('startButton').classList.toggle('ready',ready);};
  function connect(){adapter=connectB2({session:workspace.session,ui,document:doc,confirmEdit});id('entryFile').disabled=true;id('resumeButton').disabled=true;}
@@ -28,27 +30,50 @@ export function mountWorkspace({document:doc=globalThis.document,L=globalThis.L,
   entryMessage('HOLD：'+result.reason);return result;
  }
  async function onSave(action){
+  if(action?.type==='cancel-prepared'){clearPrepared();return {status:'CANCELLED'};}
   if(exportBusy||workspace.status().busy)return {status:'HOLD',reason:'処理中です'};
   if(!adapter||adapter.status().fault)return {status:'HOLD',reason:'編集状態の確認が必要です'};
-  const uiState=ui.status();if(uiState.ui.mode||uiState.ui.tool==='polygon'||adapter.status().pendingEdits)return {status:'HOLD',reason:'編集中の操作を確定または取消してください'};
+  const uiState=ui.status();
+  if(uiState.ui.mode||uiState.ui.tool==='polygon'||adapter.status().pendingEdits)
+   return {status:'HOLD',reason:'編集中の操作を確定または取消してください'};
   if(action.type==='draft')return workspace.saveDraft({confirmed:true});
-  // A file picker can replace the selected original. Offer only a new download.
-  if(action.type==='choose')return {status:'HOLD',reason:'原本の上書きを避けるため、ダウンロードを選択してください'};
-  exportBusy=true;
-  try{
-   const exported=await workspace.exportKmz();if(stopped)return {status:'HOLD'};
-   const blob=new win.Blob([exported.bytes],{type:'application/vnd.google-earth.kmz'});
-   if(download)await download(blob,'creative-next-r31-edited.kmz');
-   else{const url=win.URL.createObjectURL(blob);urls.add(url);const a=doc.createElement('a');a.href=url;a.download='creative-next-r31-edited.kmz';doc.body.append(a);a.click();a.remove();const t=win.setTimeout(()=>{urls.delete(url);win.URL.revokeObjectURL(url);timers.delete(t);},30000);timers.add(t);}
-   return {status:'DOWNLOADED'};
-  }finally{exportBusy=false;}
+  if(action.type==='choose')return {status:'HOLD',reason:'原本の上書きを避けるためダウンロードしてください'};
+  if(action.type==='prepare'){
+   clearPrepared();const ticket=++prepareGeneration;exportBusy=true;
+   try{
+    // Validate/round-trip the entire new archive *before* exposing a download.
+    const exported=await workspace.exportKmz();
+    if(stopped||ticket!==prepareGeneration)return {status:'HOLD',reason:'KMZの準備をキャンセルしました'};
+    const blob=new win.Blob([exported.bytes],{type:'application/vnd.google-earth.kmz'});
+    const url=win.URL.createObjectURL(blob);urls.add(url);
+    prepared={blob,url,filename:'creative-next-r31-edited.kmz',state:JSON.stringify(workspace.session.state())};
+    return {status:'PREPARED'};
+   }finally{exportBusy=false;}
+  }
+  if(action.type!=='download')return {status:'HOLD',reason:'操作対象が不明です'};
+  if(!prepared)return {status:'HOLD',reason:'KMZを準備してからダウンロードしてください'};
+  if(JSON.stringify(workspace.session.state())!==prepared.state){
+   clearPrepared();return {status:'HOLD',reason:'編集中のデータが変更されたため、KMZを再生成してください'};
+  }
+  // This click executes synchronously in the Safari user gesture, without
+  // an awaited exporter step between the tap and anchor.click().
+  const current=prepared;
+  if(download)await download(current.blob,current.filename);
+  else{
+   const anchor=doc.createElement('a');anchor.href=current.url;anchor.download=current.filename;
+   doc.body.append(anchor);anchor.click();anchor.remove();
+  }
+  const ticket=prepareGeneration;
+  const timer=win.setTimeout(()=>{timers.delete(timer);if(!stopped&&prepared===current&&ticket===prepareGeneration)clearPrepared();},60000);
+  timers.add(timer);
+  return {status:'DOWNLOADED'};
  }
  const ui=mountCreativeUi({document:doc,L,onFile,onStart,onResume,onSave});startReady(false);
  id('entryFile').accept='.kmz,.kml';entryMessage('KMZ / KMLを選択してください');
  // Explicit inspection of only this version's isolated journal. Never auto-resume.
  if(storage)workspace.inspectDraft().then(result=>{if(!stopped&&['READY','FALLBACK','CORRUPT'].includes(result.status)){id('resumeButton').style.setProperty('display','block','important');if(result.status!=='READY')entryMessage('HOLD：保存データ '+result.status+'。自動修復は行いません。');}}).catch(e=>{if(!stopped)entryMessage('HOLD：'+(e.code||e.message));});
  return Object.freeze({ui,workspace,status:()=>({adapter:adapter?.status()||null,workspace:workspace.status(),exportBusy,objectUrls:urls.size}),
-  dispose(){if(stopped)return;if(exportBusy||workspace.status().busy)throw Error('WORKSPACE_BUSY');stopped=true;selectGeneration++;controller?.abort();adapter?adapter.dispose():ui.dispose();workspace.dispose();for(const t of timers)win.clearTimeout(t);timers.clear();for(const url of urls)win.URL.revokeObjectURL(url);urls.clear();}
+  dispose(){if(stopped)return;if(exportBusy||workspace.status().busy)throw Error('WORKSPACE_BUSY');stopped=true;selectGeneration++;controller?.abort();adapter?adapter.dispose():ui.dispose();workspace.dispose();clearPrepared();for(const t of timerswin.clearTimeout(t);timers.clear();for(const url of urls)win.URL.revokeObjectURL(url);urls.clear();}
  });
 }
 if(globalThis.document){
