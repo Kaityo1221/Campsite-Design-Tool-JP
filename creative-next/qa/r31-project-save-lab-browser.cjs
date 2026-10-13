@@ -33,7 +33,7 @@ async function makeKmz(){
  {JSZip,DOMParser,XMLSerializer})).bytes;
 }
 // Reject invalid pairs before creating any r31 Session or changing test storage.
-async function rejectImport(context,kmz,p,expected,{dismiss=false}={}){
+async function rejectImport(context,kmz,p,expected,{dismiss=false,kmzName='invalid-case.kmz'}={}){
  const probe=await context.newPage(),errors=[];
  probe.on('pageerror',e=>errors.push(e.message));
  probe.on('dialog',d=>dismiss?d.dismiss():d.accept());
@@ -44,7 +44,7 @@ async function rejectImport(context,kmz,p,expected,{dismiss=false}={}){
   await probe.locator('#lab-project').setInputFiles({
     name:'invalid-case-project.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(p))});
   await probe.locator('#lab-kmz').setInputFiles({
-    name:'invalid-case.kmz',mimeType:'application/vnd.google-earth.kmz',buffer:kmz});
+    name:kmzName,mimeType:'application/vnd.google-earth.kmz',buffer:kmz});
   await probe.locator('#lab-import').tap();
   await probe.waitForFunction(code=>document.getElementById('lab-status').textContent.includes(code),expected);
   const state=await probe.evaluate(()=>{
@@ -98,6 +98,9 @@ async function run(){
    try{
     await page.goto(ENTRY_URL);
     await page.waitForFunction(()=>!!document.querySelector('#r31-frame')?.contentWindow?.creativeR31Workspace);
+    // iOS Files greys out .kmz when native accept filters are provided.
+    // Keep picker unrestricted, while the controller rejects wrong extensions/ZIPs.
+    assert.equal(await page.locator('#lab-kmz').getAttribute('accept'),null);
     await page.locator('#lab-open').tap();
     await page.locator('#lab-project').setInputFiles({name:'synthetic-project.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(project()))});
     await page.locator('#lab-kmz').setInputFiles({name:'synthetic.kmz',mimeType:'application/vnd.google-earth.kmz',buffer:bytes});
@@ -254,6 +257,7 @@ async function run(){
     // Malformed or mismatched source data never activates an editor.
     const corrupt=Buffer.from(bytes);corrupt[0]^=0xff;
     await rejectImport(context,corrupt,project(),'LAB_KMZ_INVALID');
+    await rejectImport(context,bytes,project(),'LAB_KMZ_EXTENSION_REQUIRED',{kmzName:'demo-only-new-v1.txt'});
     const mismatch=project();mismatch.currentPois[0].title='別の元POI';
     await rejectImport(context,bytes,mismatch,'PAIR_POI_MISMATCH');
     const incomplete=project();incomplete.wayfarerObservation.acquisition.coverageComplete=false;
