@@ -195,6 +195,35 @@ async function run(){
     assert.equal(restored.journal,'R31_OLD_JOURNAL');
     assert.equal(errors.length,0,errors.join(';'));
     assert(decisions.length>=3);
+    // Full top-level browser refresh: in-memory Session disappears, while only
+    // the user-confirmed isolated IndexedDB generation remains available.
+    const beforeHardReload=await page.evaluate(()=>document.querySelector('#r31-frame').contentWindow.creativeR31Workspace.workspace.session.state().records
+      .filter(p=>p.role==='new').map(p=>({id:p.id,kind:p.kind,title:p.title,lat:p.lat,lng:p.lng,deleted:p.deleted})));
+    assert.equal(beforeHardReload.length,1);
+    await page.reload();
+    await page.waitForFunction(()=>!!document.querySelector('#r31-frame')?.contentWindow?.creativeR31Workspace);
+    assert.equal(await page.evaluate(()=>window.__r31ProjectSaveLabStatus().attached),false);
+    assert.equal(await page.evaluate(()=>document.querySelector('#r31-frame').contentWindow.creativeR31Workspace.workspace.session.state().hasActive),false);
+    await page.locator('#lab-open').tap();
+    await page.locator('#lab-project-id').fill('r31-ui-lab-project');
+    await page.locator('#lab-handoff-id').fill('handoff:r31-ui-lab');
+    await page.locator('#lab-reopen').tap();
+    await page.waitForFunction(()=>document.getElementById('lab-status')?.textContent.includes('Undo/Redo履歴は新規開始です。'),null,{timeout:15000});
+    const afterHardReload=await page.evaluate(()=>{
+      const w=document.querySelector('#r31-frame').contentWindow.creativeR31Workspace.workspace;
+      const state=w.session.state();
+      return {pois:state.records.filter(p=>p.role==='new').map(p=>({id:p.id,kind:p.kind,title:p.title,lat:p.lat,lng:p.lng,deleted:p.deleted})),
+        history:state.history,sessionCount:w.status().sessionCount,revision:__r31ProjectSaveLabStatus().revision,
+        old:localStorage.getItem('next-lab-creative-v7'),
+        journal:localStorage.getItem('campsite-creative-next-v1-r31-review-10:current')};
+    });
+    assert.deepEqual(afterHardReload.pois,beforeHardReload);
+    assert.deepEqual(afterHardReload.history,{undo:0,redo:0});
+    assert.equal(afterHardReload.revision,1);
+    assert.equal(afterHardReload.sessionCount,1);
+    assert.equal(afterHardReload.old,'ORIGINAL');
+    assert.equal(afterHardReload.journal,'R31_OLD_JOURNAL');
+    assert.equal(errors.length,0,errors.join(';'));
     // UI negative cases: unknown IDs and cancellation must preserve the live Session.
     await page.evaluate(()=>{window.__r31ProtectedSession=document.querySelector('#r31-frame').contentWindow.creativeR31Workspace});
     await page.locator('#lab-project-id').fill('wrong-project');
@@ -264,7 +293,7 @@ async function run(){
     await rejectImport(context,bytes,incomplete,'PAIR_PROJECT_PREFLIGHT_HOLD');
     await rejectImport(context,bytes,project(),'開始をキャンセルしました',{dismiss:true});
     assert.equal(await page.evaluate(()=>__r31ProjectSaveLabStatus().revision),2);
-    result.push({viewport,status:'PASS',explicitConsent:true,saveAndReopen:true,legacyKeysIntact:true,
+    result.push({viewport,status:'PASS',explicitConsent:true,saveAndReopen:true,hardReloadReopen:true,legacyKeysIntact:true,
       singleSession:true,wrongIdHold:true,wrongHandoffHold:true,cancelSaveReopen:true,staleRevisionHold:true,deletedPoiHold:true,
       malformedKmzHold:true,poiMismatchHold:true,incompleteObservationHold:true,cancelImport:true});
    }finally{await context.close();}
