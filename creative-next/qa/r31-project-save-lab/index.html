@@ -30,7 +30,10 @@ button{min-height:40px;font:inherit;cursor:pointer}#lab-panel button{margin-top:
     <label for="lab-project">① 対応するProject JSONを選択</label>
     <input id="lab-project" type="file" accept=".json,application/json">
     <label for="lab-kmz">② 元のNEW_V1 KMZを選択</label>
-    <input id="lab-kmz" type="file" accept=".kmz,application/vnd.google-earth.kmz">
+    <!-- iOS Files sometimes greys out .kmz for accept=MIME/extension filters.
+         Leave picker unrestricted; controller strictly checks filename and ZIP contents. -->
+    <input id="lab-kmz" type="file">
+    <p>iPhoneでKMZがグレーになる対策として、ファイル形式の選択制限を解除しています。選択後にKMZ形式と内容を安全確認します。</p>
     <button id="lab-import" type="button">確認してr31で編集開始</button>
   </div>
   <div class="separate">
