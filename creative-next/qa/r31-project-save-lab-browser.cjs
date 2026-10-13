@@ -197,6 +197,8 @@ async function run(){
     assert(decisions.length>=3);
     // Full top-level browser refresh: in-memory Session disappears, while only
     // the user-confirmed isolated IndexedDB generation remains available.
+    const inputBytes=await page.locator('#lab-kmz').evaluate(async input=>Array.from(new Uint8Array(await input.files[0].arrayBuffer())));
+    assert.deepEqual(Buffer.from(inputBytes),bytes);
     const beforeHardReload=await page.evaluate(()=>document.querySelector('#r31-frame').contentWindow.creativeR31Workspace.workspace.session.state().records
       .filter(p=>p.role==='new').map(p=>({id:p.id,kind:p.kind,title:p.title,lat:p.lat,lng:p.lng,deleted:p.deleted})));
     assert.equal(beforeHardReload.length,1);
@@ -278,9 +280,9 @@ async function run(){
     await page.waitForFunction(()=>document.getElementById('lab-status').textContent.includes('R31_LAB_DELETED_POI_HOLD'));
     assert.equal(await page.evaluate(()=>__r31ProjectSaveLabStatus().revision),2);
     assert.equal(await page.evaluate(()=>document.querySelector('#r31-frame').contentWindow.creativeR31Workspace.workspace.session.undo().changed),true);
-    // All original data and historical keys remain byte-identical despite rejected operations.
-    const inputBytes=await page.locator('#lab-kmz').evaluate(async input=>Array.from(new Uint8Array(await input.files[0].arrayBuffer())));
-    assert.deepEqual(Buffer.from(inputBytes),bytes);
+    // Native file-input selection clears on full reload by browser design.
+    // The original KMZ bytes were verified before reload above; persisted
+    // project data and historic localStorage remain protected afterward.
     assert.equal(await page.evaluate(()=>localStorage.getItem('next-lab-creative-v7')),'ORIGINAL');
     assert.equal(await page.evaluate(()=>localStorage.getItem('campsite-creative-next-v1-r31-review-10:current')),'R31_OLD_JOURNAL');
     // Malformed or mismatched source data never activates an editor.
