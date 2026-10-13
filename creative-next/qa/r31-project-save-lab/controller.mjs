@@ -136,7 +136,13 @@ async function freshUi(){
 $('lab-import').addEventListener('click',()=>lock(async()=>{
  const win=await waitReady(),owner=win.creativeR31Workspace;
  if(link||owner.workspace.session.state().hasActive)fail('LAB_ACTIVE_SESSION_HOLD');
- const project=await projectFile(),bytes=await fileBytes($('lab-kmz'),8*1024*1024);
+ const project=await projectFile(),kmzFile=$('lab-kmz').files?.[0];
+ // On iPhone the native Files picker may disable .kmz when accept is present.
+ // The picker is intentionally unrestricted; reject all non-KMZ inputs here.
+ if(!kmzFile||!/\\.kmz$/i.test(kmzFile.name))fail('LAB_KMZ_EXTENSION_REQUIRED');
+ const bytes=await fileBytes($('lab-kmz'),8*1024*1024);
+ if(bytes.length<4||bytes[0]!==0x50||bytes[1]!==0x4b||
+   bytes[2]!==0x03||bytes[3]!==0x04)fail('LAB_KMZ_INVALID');
  setStatus('Projectと元KMZを検証しています…');
  await verifyPair(win,project,bytes);
  if(!window.confirm('Project JSONとKMZを紐づけて、r31の編集を開始しますか？ 元ファイルは変更しません。')){
