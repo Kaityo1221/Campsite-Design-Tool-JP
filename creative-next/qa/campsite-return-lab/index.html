@@ -22,13 +22,20 @@ a{color:#f2d17e}
 <p class="warning">🧪 PRIVATE LAB / 本番へは書き込みません</p>
 <h1>Campsite Project 帰還受信テスト</h1>
 <p>Creative Nextが保存した完全なProjectとNEW_V1 KMZを、<strong>同じ隔離サイトのIndexedDB</strong>から読み取り、整合性を再確認します。</p>
-<p class="muted">従来のBridge Receiverや実際のCampsite Project保存領域には転送しません。入力内容が不明・不正ならHOLDします。Project IDを自動で一覧表示することもしません。</p>
+<p class="muted">従来のBridge Receiverや実際のCampsite Project保存領域には転送しません。入力内容が不明・不正ならHOLDします。Project IDを自動で一覧表示することもしません。転送ZIPは暗号化されないため、架空データのみを使用してください。</p>
 <div class="panel">
 <label for="return-project-id">Project ID</label>
 <input id="return-project-id" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="r31-ui-lab-project">
 <label for="return-handoff-id">Handoff ID</label>
 <input id="return-handoff-id" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="handoff:r31-ui-lab">
-<button id="return-verify" type="button">🔍 ProjectとKMZを受信検証</button>
+<button id="return-verify" type="button">🔍 同じサイトの保存データを検証</button>
+<button id="return-download" type="button" hidden>📦 検証済みセットをダウンロード（LAB）</button>
+<hr>
+<p><strong>別のサイトから受け取る場合</strong></p>
+<p class="muted">ダウンロードしたLAB専用の転送ZIPをこの端末から選び、上と同じProject/Handoff IDで検証します。ファイルは外部へ送信しません。</p>
+<label for="return-file">ProjectとKMZを含むLAB転送セット（ZIP）</label>
+<input id="return-file" type="file">
+<button id="return-upload-verify" type="button">📦 ファイルから受信検証（読取専用）</button>
 <div id="return-status" role="status" aria-live="polite">未検証。識別IDを入力してください。</div>
 <div id="return-summary" hidden><h2>受信内容（読取専用）</h2><dl id="return-details"></dl>
 <p class="muted">形式変換や保存は行いません。古いBridge POI Receiverへの送信は未承認です。</p></div>
