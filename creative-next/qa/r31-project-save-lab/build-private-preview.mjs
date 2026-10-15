@@ -26,6 +26,8 @@ if(fs.existsSync(dest))throw Error('PREVIEW_DESTINATION_MUST_BE_NEW');
 const entries=[
  'creative-next/qa/r31-project-save-lab/index.html',
  'creative-next/qa/r31-project-save-lab/controller.mjs',
+ 'creative-next/qa/campsite-return-lab/index.html',
+ 'creative-next/qa/campsite-return-lab/controller.mjs',
  'creative-next/original-ui-r31-b3-b4/index.html',
  'creative-next/original-ui-r31-b3-b4/bootstrap.mjs',
  'creative-next/phase-2-preview/vendor/jszip.min.js',
@@ -95,6 +97,7 @@ small{color:#ddd2b5}strong{color:#ffde85}</style>
 <a download="demo-only-project.json" href="./creative-next/qa/r31-project-save-lab/fixtures/demo-only-project.json">①-1 サンプルProject JSON</a>
 <a download="demo-only-new-v1.kmz" href="./creative-next/qa/r31-project-save-lab/fixtures/demo-only-new-v1.kmz">①-2 サンプルNEW_V1 KMZ</a>
 <a href="./creative-next/qa/r31-project-save-lab/index.html">② r31プロジェクト保存LABへ</a>
+<a href="./creative-next/qa/campsite-return-lab/index.html">③ Campsite Project 帰還受信LAB（読取専用）</a>
 <small>保存先はこの試験サイトのIndexedDBだけです。専用オリジンかつアクセス制限のあるテストサイトに配置してください。実機Safari未検証。</small>
 </body></html>`;
 fs.writeFileSync(path.join(dest,'index.html'),landing,'utf8');
