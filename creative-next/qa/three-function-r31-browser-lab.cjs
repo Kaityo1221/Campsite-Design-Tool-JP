@@ -223,6 +223,9 @@ async function main(){
     assert.equal(returnState.items['外側100mの参照'],'1');
     assert.equal(returnState.items['予備100〜200m'],'1');
     assert.equal(returnState.items['従来Bridgeへの送信'],'HOLD（形式未承認）');
+    assert.equal(await page.locator('#return-distance-panel').isVisible(),true);
+    assert.match(await page.locator('#return-distance-details').textContent(),/DISTANCE_LIVE_IMPORT_NOT_APPROVED/);
+
     assert.equal(returnState.old,'THREE_FLOW_LEGACY_STAYS');
     assert.equal(returnState.journal,'THREE_FLOW_JOURNAL_STAYS');
     assert.equal(returnState.productionProject,null);
@@ -277,6 +280,8 @@ async function main(){
       assert.equal(received.items['設計範囲内の観測POI'],'1');
       assert.equal(received.items['外側100mの参照'],'1');
       assert.equal(received.items['予備100〜200m'],'1');
+      assert.equal(await recipient.locator('#return-distance-panel').isVisible(),true);
+      assert.match(await recipient.locator('#return-distance-details').textContent(),/HOLD（未承認）/);
       assert.equal(received.productionProject,null);
       assert.equal(received.senderDbExists,false,
         'receiving a portable bundle must not create or modify any IndexedDB');
@@ -290,6 +295,7 @@ async function main(){
      actualR31Ui:true,newPoiUi:true,isolatedIndexedDB:true,returnPairVerified:true,
      returnLabBrowserUiVerified:true,returnWrongHandoffHold:true,
      portableManualExport:true,crossOriginFileReceiver:true,crossOriginReceiverReadOnly:true,
+     strictDistancePreflightBrowser:true,
      productionReceiverUiTested:false,realWayfarer:false,productionReady:false});
    }finally{await ctx.close();}
   }
