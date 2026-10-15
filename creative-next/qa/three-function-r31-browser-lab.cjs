@@ -95,7 +95,7 @@ async function fromDatabase(page){
     req.onsuccess=()=>{
      const x=req.result;
      if(!x)return reject(new Error('NO_SAVED_PAIR'));
-     resolve({revision:x.revision,project:x.project,activityAreas:x.activityAreas,
+     resolve({revision:x.revision,manifest:x.manifest,
       kmzBytes:Array.from(x.kmzBytes)});
     };
     req.onerror=()=>reject(req.error);
@@ -160,7 +160,15 @@ async function main(){
      status:document.getElementById('lab-status').textContent,
      revision:__r31ProjectSaveLabStatus().revision}));
     assert.equal(ui.revision,1,ui.status);
-    const row=await fromDatabase(page);
+    const raw=await fromDatabase(page);
+    // The IDB schema deliberately stores the canonical linked-pair manifest,
+    // not unverified top-level project or activityAreas fields. Verify hashes
+    // and identities with the actual project/NEW_V1 contract before inspecting.
+    const verified=await reopenLinkedPairLab({...options,
+      pair:{manifest:raw.manifest,kmzBytes:Uint8Array.from(raw.kmzBytes)},
+      expectedProjectId:PROJECT_ID,expectedHandoffId:HANDOFF_ID});
+    const row={revision:raw.revision,project:verified.project,
+      activityAreas:verified.activityAreas,kmzBytes:raw.kmzBytes};
     assert.equal(row.revision,1);assert.equal(row.project.projectId,PROJECT_ID);
     assert.equal(row.project.meta.bridgeHandoffId,HANDOFF_ID);
     assert.deepEqual(row.project.wayfarerObservation,input.snapshot,
