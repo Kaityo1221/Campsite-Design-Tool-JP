@@ -14,6 +14,8 @@ on:
       - 'creative-next/qa/portable-return-bundle.test.mjs'
       - 'creative-next/contracts/campsite-distance-return-stage-lab.mjs'
       - 'creative-next/qa/campsite-distance-return-stage.test.mjs'
+      - 'creative-next/contracts/campsite-distance-math-preview-lab.mjs'
+      - 'creative-next/qa/campsite-distance-math-compat.test.mjs'
       - '.github/workflows/creative-next-r31-project-save-ui-lab.yml'
   workflow_dispatch:
 permissions:
@@ -45,10 +47,11 @@ jobs:
           node --check creative-next/contracts/campsite-return-receiver-lab.mjs
           node --check creative-next/contracts/portable-return-bundle-lab.mjs
           node --check creative-next/contracts/campsite-distance-return-stage-lab.mjs
+          node --check creative-next/contracts/campsite-distance-math-preview-lab.mjs
           node --check creative-next/qa/campsite-return-lab/controller.mjs
           node --check creative-next/qa/three-function-r31-browser-lab.cjs
           node creative-next/qa/three-function-r31-browser-lab.cjs
-          node --test creative-next/qa/campsite-return-receiver.test.mjs creative-next/qa/portable-return-bundle.test.mjs creative-next/qa/campsite-distance-return-stage.test.mjs
+          node --test creative-next/qa/campsite-return-receiver.test.mjs creative-next/qa/portable-return-bundle.test.mjs creative-next/qa/campsite-distance-return-stage.test.mjs creative-next/qa/campsite-distance-math-compat.test.mjs
       - name: Build and browser-test deployable isolated preview snapshot
         run: |
           node creative-next/qa/r31-project-save-lab/build-private-preview.mjs "$RUNNER_TEMP/r31-project-save-private-preview"
