@@ -1,57 +1,97 @@
 /*
- * Read-only Campsite Return UI: isolated r31 IndexedDB -> verified pair -> summary.
- * No writes, migrations, window postMessage, or legacy production receiver calls.
+ * Isolated read-only Campsite Return LAB.
+ * 1. Verified local r31 IndexedDB -> staged manual-download portable bundle.
+ * 2. Manual file select on a different origin -> verified read-only summary.
+ * No network upload/postMessage or production/session storage write.
  */
 import {createX01IndexedDbSaveLab} from '../../contracts/x01-indexeddb-save-lab.mjs';
 import {inspectCampsiteReturnLab} from '../../contracts/campsite-return-receiver-lab.mjs';
+import {createPortableReturnBundleLab,inspectPortableReturnBundleLab}
+ from '../../contracts/portable-return-bundle-lab.mjs';
 
 const dbName='campsite-creative-next-x01-idb-lab-r31-save-ui-20261012';
-const $=id=>document.getElementById(id);
+const $=id=>document.getElementById(id),maxArchive=16*1024*1024;
+let busy=false,staged=null;
+const hold=code=>{const e=new Error(code);e.code=code;throw e;};
 const status=(message,kind='neutral')=>{
  $('return-status').textContent=message;$('return-status').dataset.kind=kind;
 };
-const render=rows=>{
+function reset(){
+ staged=null;$('return-download').hidden=true;$('return-summary').hidden=true;
+}
+function render(rows){
  const detail=$('return-details');detail.replaceChildren();
  for(const [name,value] of rows){
   const dt=document.createElement('dt'),dd=document.createElement('dd');
   dt.textContent=name;dd.textContent=String(value);detail.append(dt,dd);
  }
  $('return-summary').hidden=false;
-};
-let busy=false;
-$('return-verify').addEventListener('click',async()=>{
+}
+function showVerified(ready,revision,suffix){
+ const r=ready.summary;
+ render([
+  ['保存世代',revision],['Project ID',r.projectId],['Handoff ID',r.handoffId],
+  ['Wayfarer Snapshot ID',r.snapshotId],['観測完了',r.coverageComplete?'Yes':'No'],
+  ['設計ポリゴン頂点',r.designPolygonVertices],['観測ポリゴン頂点',r.acquisitionPolygonVertices],
+  ['独立した活動エリア',r.activityAreaCount],['現在のPOI',r.currentPoiCount],
+  ['Creative追加POI',r.addedPoiCount],['設計範囲内の観測POI',r.interiorCount],
+  ['外側100mの参照',r.reference100Count],['予備100〜200m',r.reserve200Count],
+  ['従来Bridgeへの送信','HOLD（形式未承認）']
+ ]);
+ status('検証成功。世代 '+revision+'。'+suffix+'本番への保存・書換は行いません。','ok');
+}
+function options(){
+ const expectedProjectId=$('return-project-id').value.trim(),
+  expectedHandoffId=$('return-handoff-id').value.trim();
+ if(!expectedProjectId||!expectedHandoffId||expectedProjectId.length>128||
+    expectedHandoffId.length>128)hold('RETURN_IDS_REQUIRED');
+ if(!window.JSZip)hold('RETURN_JSZIP_UNAVAILABLE');
+ return {expectedProjectId,expectedHandoffId,JSZip:window.JSZip,DOMParser,
+  cryptoProvider:crypto};
+}
+async function locked(work){
  if(busy)return;
- $('return-summary').hidden=true;
- const expectedProjectId=$('return-project-id').value.trim();
- const expectedHandoffId=$('return-handoff-id').value.trim();
- if(!expectedProjectId||!expectedHandoffId){
-  status('HOLD：RETURN_IDS_REQUIRED。現在の保存データを変更しません。','error');return;
- }
- busy=true;$('return-verify').disabled=true;status('保存済みProject・KMZの整合性を検証しています…');
- try{
-  if(!window.JSZip)throw Object.assign(new Error('RETURN_JSZIP_UNAVAILABLE'),{code:'RETURN_JSZIP_UNAVAILABLE'});
-  const opts={expectedProjectId,expectedHandoffId,JSZip:window.JSZip,DOMParser,
-   cryptoProvider:crypto};
-  const store=createX01IndexedDbSaveLab({...opts,dbName});
-  const saved=await store.read({expectedProjectId,expectedHandoffId});
-  if(!saved)throw Object.assign(new Error('RETURN_SAVED_PROJECT_NOT_FOUND'),{code:'RETURN_SAVED_PROJECT_NOT_FOUND'});
-  const ready=await inspectCampsiteReturnLab({project:saved.project,
-   activityAreas:saved.activityAreas,kmzBytes:saved.kmzBytes,...opts});
-  if(ready.productionReady!==false||ready.writeAllowed!==false)
-   throw Object.assign(new Error('RETURN_WRITE_GATE'),{code:'RETURN_WRITE_GATE'});
-  const r=ready.summary;
-  render([
-   ['保存世代',saved.revision],['Project ID',r.projectId],['Handoff ID',r.handoffId],
-   ['Wayfarer Snapshot ID',r.snapshotId],['観測完了',r.coverageComplete?'Yes':'No'],
-   ['設計ポリゴン頂点',r.designPolygonVertices],['観測ポリゴン頂点',r.acquisitionPolygonVertices],
-   ['独立した活動エリア',r.activityAreaCount],['現在のPOI',r.currentPoiCount],
-   ['Creative追加POI',r.addedPoiCount],['設計範囲内の観測POI',r.interiorCount],
-   ['外側100mの参照',r.reference100Count],['予備100〜200m',r.reserve200Count],
-   ['従来Bridgeへの送信','HOLD（形式未承認）']
-  ]);
-  status('検証成功。世代 '+saved.revision+'。Project・NEW_V1 KMZは整合しています。保存・書換は行いません。','ok');
- }catch(e){
-  const code=String(e?.code||e?.message||'RETURN_UNKNOWN').slice(0,140);
-  status('HOLD：'+code+'。元データの自動修復・削除・上書きは行いません。','error');
- }finally{busy=false;$('return-verify').disabled=false;}
+ busy=true;$('return-verify').disabled=true;$('return-upload-verify').disabled=true;
+ reset();
+ try{await work();}
+ catch(e){
+  status('HOLD：'+String(e?.code||e?.message||'RETURN_UNKNOWN').slice(0,140)+
+   '。元データの自動修復・削除・上書きは行いません。','error');
+ }finally{busy=false;$('return-verify').disabled=false;$('return-upload-verify').disabled=false;}
+}
+$('return-verify').addEventListener('click',()=>locked(async()=>{
+ const opts=options();
+ status('隔離IndexedDBから保存済みProject・KMZを読み取って検証しています…');
+ const store=createX01IndexedDbSaveLab({...opts,dbName});
+ const saved=await store.read(opts);
+ if(!saved)hold('RETURN_SAVED_PROJECT_NOT_FOUND');
+ const ready=await inspectCampsiteReturnLab({project:saved.project,
+  activityAreas:saved.activityAreas,kmzBytes:saved.kmzBytes,...opts});
+ if(ready.productionReady!==false||ready.writeAllowed!==false)hold('RETURN_WRITE_GATE');
+ // Expensive crypto checks and ZIP creation happen before user asks for a
+ // download; the download click below stays synchronous for mobile Safari.
+ const bundle=await createPortableReturnBundleLab({project:saved.project,
+  activityAreas:saved.activityAreas,kmzBytes:saved.kmzBytes,revision:saved.revision,...opts});
+ staged=bundle.bytes;$('return-download').hidden=false;
+ showVerified(ready,saved.revision,'Project・NEW_V1 KMZは整合しています。');
+}));
+$('return-upload-verify').addEventListener('click',()=>locked(async()=>{
+ const opts=options(),file=$('return-file').files?.[0];
+ if(!file||!(/\.zip$/i).test(file.name)||file.size===0||file.size>maxArchive)
+  hold('PORTABLE_FILE_REQUIRED');
+ status('選択されたLAB転送セットのハッシュとProjectを検証しています…');
+ const bytes=new Uint8Array(await file.arrayBuffer());
+ const received=await inspectPortableReturnBundleLab({bytes,...opts});
+ if(received.productionReady!==false||received.writeAllowed!==false)hold('RETURN_WRITE_GATE');
+ showVerified(received,received.revision,'LAB転送ファイルのProjectとKMZは整合しています。');
+}));
+$('return-download').addEventListener('click',()=>{
+ if(busy||!staged)return;
+ const b=new Blob([staged],{type:'application/zip'});
+ const u=URL.createObjectURL(b);
+ const a=document.createElement('a');a.href=u;
+ a.download='campsite-return-test-only.zip';document.body.append(a);a.click();a.remove();
+ setTimeout(()=>URL.revokeObjectURL(u),30000);
 });
+window.__campsiteReturnLabStatus=()=>({busy,downloadPrepared:!!staged,
+ productionReady:false,writeAllowed:false});
