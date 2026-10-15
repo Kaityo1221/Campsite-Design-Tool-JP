@@ -6,6 +6,7 @@ on:
     paths:
       - 'creative-next/qa/r31-project-save-lab/**'
       - 'creative-next/qa/r31-project-save-lab-browser.cjs'
+      - 'creative-next/qa/three-function-r31-browser-lab.cjs'
       - '.github/workflows/creative-next-r31-project-save-ui-lab.yml'
   workflow_dispatch:
 permissions:
@@ -32,6 +33,10 @@ jobs:
           node --check creative-next/qa/r31-project-save-lab-browser.cjs
       - name: Browser r31 Project import-save-reopen with user confirmation
         run: node creative-next/qa/r31-project-save-lab-browser.cjs
+      - name: WM3 observation and Bridge exporter to live r31 browser and verified Project return LAB
+        run: |
+          node --check creative-next/qa/three-function-r31-browser-lab.cjs
+          node creative-next/qa/three-function-r31-browser-lab.cjs
       - name: Build and browser-test deployable isolated preview snapshot
         run: |
           node creative-next/qa/r31-project-save-lab/build-private-preview.mjs "$RUNNER_TEMP/r31-project-save-private-preview"
