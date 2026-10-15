@@ -6,6 +6,7 @@
  */
 import {createX01IndexedDbSaveLab} from '../../contracts/x01-indexeddb-save-lab.mjs';
 import {inspectCampsiteReturnLab} from '../../contracts/campsite-return-receiver-lab.mjs';
+import {inspectCampsiteDistanceReturnStageLab} from '../../contracts/campsite-distance-return-stage-lab.mjs';
 import {createPortableReturnBundleLab,inspectPortableReturnBundleLab}
  from '../../contracts/portable-return-bundle-lab.mjs';
 
@@ -18,6 +19,7 @@ const status=(message,kind='neutral')=>{
 };
 function reset(){
  staged=null;$('return-download').hidden=true;$('return-summary').hidden=true;
+ $('return-distance-panel').hidden=true;
 }
 function render(rows){
  const detail=$('return-details');detail.replaceChildren();
@@ -26,6 +28,24 @@ function render(rows){
   dt.textContent=name;dd.textContent=String(value);detail.append(dt,dd);
  }
  $('return-summary').hidden=false;
+}
+function showDistanceStage(stage){
+ const detail=$('return-distance-details');detail.replaceChildren();
+ const rows=[
+  ['確認済みPOI数',stage.summary.currentPoiCount],
+  ['追加したPOI',stage.summary.addedPoiCount],
+  ['設計ポリゴンの頂点',stage.summary.designPolygonVertices],
+  ['観測ポリゴンの頂点',stage.summary.acquisitionPolygonVertices],
+  ['独立した活動エリア数',stage.summary.independentActivityAreaCount],
+  ['距離再計算','必須'],
+  ['本番の距離チェックへ投入','HOLD（未承認）'],
+  ['判定',stage.reason]
+ ];
+ for(const [name,value] of rows){
+  const dt=document.createElement('dt'),dd=document.createElement('dd');
+  dt.textContent=name;dd.textContent=String(value);detail.append(dt,dd);
+ }
+ $('return-distance-panel').hidden=false;
 }
 function showVerified(ready,revision,suffix){
  const r=ready.summary;
@@ -72,8 +92,14 @@ $('return-verify').addEventListener('click',()=>locked(async()=>{
  // download; the download click below stays synchronous for mobile Safari.
  const bundle=await createPortableReturnBundleLab({project:saved.project,
   activityAreas:saved.activityAreas,kmzBytes:saved.kmzBytes,revision:saved.revision,...opts});
+ const distance=await inspectCampsiteDistanceReturnStageLab({
+  project:saved.project,activityAreas:saved.activityAreas,kmzBytes:saved.kmzBytes,...opts
+ });
+ if(distance.legacyDistanceCommitAllowed!==false||distance.writeAllowed!==false)
+  hold('DISTANCE_LIVE_WRITE_GATE');
  staged=bundle.bytes;$('return-download').hidden=false;
  showVerified(ready,saved.revision,'Project・NEW_V1 KMZは整合しています。');
+ showDistanceStage(distance);
 }));
 $('return-upload-verify').addEventListener('click',()=>locked(async()=>{
  const opts=options(),file=$('return-file').files?.[0];
@@ -83,7 +109,13 @@ $('return-upload-verify').addEventListener('click',()=>locked(async()=>{
  const bytes=new Uint8Array(await file.arrayBuffer());
  const received=await inspectPortableReturnBundleLab({bytes,...opts});
  if(received.productionReady!==false||received.writeAllowed!==false)hold('RETURN_WRITE_GATE');
+ const distance=await inspectCampsiteDistanceReturnStageLab({
+  project:received.project,activityAreas:received.activityAreas,kmzBytes:received.kmzBytes,...opts
+ });
+ if(distance.legacyDistanceCommitAllowed!==false||distance.writeAllowed!==false)
+  hold('DISTANCE_LIVE_WRITE_GATE');
  showVerified(received,received.revision,'LAB転送ファイルのProjectとKMZは整合しています。');
+ showDistanceStage(distance);
 }));
 $('return-download').addEventListener('click',()=>{
  if(busy||!staged)return;
