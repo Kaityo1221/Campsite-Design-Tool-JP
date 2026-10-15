@@ -11,6 +11,7 @@
 const assert=require('node:assert/strict');
 const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const ROOT=path.resolve(__dirname,'../..');
+const SERVE_ROOT=process.env.R31_LAB_STATIC_ROOT?path.resolve(process.env.R31_LAB_STATIC_ROOT):ROOT;
 const {chromium}=require(path.join(ROOT,'node_modules/playwright'));
 const JSZip=require('jszip');
 const {DOMParser,XMLSerializer}=require('@xmldom/xmldom');
@@ -72,10 +73,10 @@ function routeLocal(context){
  return context.route('**/*',async r=>{
   const u=new URL(r.request().url());
   let file=null;
-  if(u.hostname==='r31-three-function.invalid')file=path.resolve(ROOT,'.'+decodeURIComponent(u.pathname));
+  if(u.hostname==='r31-three-function.invalid')file=path.resolve(SERVE_ROOT,'.'+decodeURIComponent(u.pathname));
   else if(u.hostname==='unpkg.com'&&/leaflet@1.9.4\/dist\/(leaflet.js|leaflet.css)$/.test(u.pathname))
    file=path.join(path.dirname(require.resolve('leaflet')),path.basename(u.pathname));
-  if(file&&file.startsWith(ROOT+path.sep)&&fs.existsSync(file)&&fs.statSync(file).isFile())
+  if(file&&(file.startsWith(SERVE_ROOT+path.sep)||file.startsWith(ROOT+'/node_modules/'))&&fs.existsSync(file)&&fs.statSync(file).isFile())
    return r.fulfill({status:200,contentType:mime(file),body:fs.readFileSync(file)});
   if(u.hostname.includes('tile.openstreetmap')||u.hostname.includes('arcgisonline'))
    return r.fulfill({status:200,contentType:'image/png',body:fixtureImage});
