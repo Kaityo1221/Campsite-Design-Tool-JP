@@ -49,15 +49,17 @@ test('portable LAB: malformed ZIP, extra entries and corrupt manifest STOP',asyn
  const changed=await JSZip.loadAsync(packed.bytes);const document=JSON.parse(await changed.file('linked-pair.json').async('string'));
  document.manifest.projectJson=document.manifest.projectJson.replace('existing-guid','changed-guid');
  changed.file('linked-pair.json',JSON.stringify(document));
+ const alteredBytes=await changed.generateAsync({type:'uint8array'});
  await assert.rejects(()=>inspectPortableReturnBundleLab({
-  bytes:await changed.generateAsync({type:'uint8array'}),...a}),{code:'PAIR_INTEGRITY_MISMATCH'});
+  bytes:alteredBytes,...a}),{code:'PAIR_INTEGRITY_MISMATCH'});
 });
 test('portable LAB: altered KMZ refused and package creation rejects incomplete coverage',async()=>{
  const a=opts();
  const changed=await JSZip.loadAsync(packed.bytes);
  changed.file('creative-new-v1.kmz',new Uint8Array([80,75,3,4,0,0]));
+ const alteredBytes=await changed.generateAsync({type:'uint8array'});
  await assert.rejects(()=>inspectPortableReturnBundleLab({
-  bytes:await changed.generateAsync({type:'uint8array'}),...a}),{code:'PAIR_INTEGRITY_MISMATCH'});
+  bytes:alteredBytes,...a}),{code:'PAIR_INTEGRITY_MISMATCH'});
  const incomplete=opts();incomplete.project.wayfarerObservation.acquisition.coverageComplete=false;
  await assert.rejects(()=>createPortableReturnBundleLab(incomplete),e=>typeof e?.code==='string');
 });
