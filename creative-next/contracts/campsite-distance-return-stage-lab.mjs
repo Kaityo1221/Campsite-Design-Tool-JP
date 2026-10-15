@@ -13,7 +13,7 @@ const fail=code=>{const e=new Error(code);e.code=code;throw e;};
 const clone=x=>JSON.parse(JSON.stringify(x));
 const validId=s=>typeof s==='string'&&s.trim().length>0&&s.length<=128;
 
-function stageCurrentPois(project){
+export function stageCurrentPoisLab(project){
  // Existing bridge-distance-project.js falls back to selectedPois for an empty
  // currentPois. That resurrects deleted POIs. Never do this in the return path.
  if(!Array.isArray(project.currentPois))fail('DISTANCE_CURRENT_POIS_REQUIRED');
@@ -60,7 +60,7 @@ export async function inspectCampsiteDistanceReturnStageLab({
   project,activityAreas,kmzBytes,expectedProjectId,expectedHandoffId,
   JSZip,DOMParser,cryptoProvider
  });
- const p=pair.project,groups=stageCurrentPois(p);
+ const p=pair.project,groups=stageCurrentPoisLab(p);
  const poiCount=Object.values(groups).reduce((n,g)=>n+g.length,0);
  // The old distance runtime treats project.polygon as _activityPolygons.
  // An independent Creative area must never be silently replaced/ignored.
