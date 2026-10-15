@@ -74,6 +74,7 @@ function actualDistanceSandbox(stageInput){
    CampsitePoiSpacingPolicy:{targetMeters:50}},
   document:{getElementById:id=>id==='distanceResult'?distanceResult:null},
   Math,JSON,Date,Number,String,Map,Set,console,
+  File:class LabFakeFile{}, // Browser-global instanceof check, never upload.
   setWorkflowStep(){},getRiskAccordionHtml(warnings){output.mapWarnings=clone(warnings);return '';},
   renderSimpleDistanceMap(points,warnings){
    output.mapPoints=clone(points);output.mapWarnings=clone(warnings);
