@@ -10,6 +10,8 @@ on:
       - 'creative-next/qa/campsite-return-lab/**'
       - 'creative-next/qa/campsite-return-receiver.test.mjs'
       - 'creative-next/contracts/campsite-return-receiver-lab.mjs'
+      - 'creative-next/contracts/portable-return-bundle-lab.mjs'
+      - 'creative-next/qa/portable-return-bundle.test.mjs'
       - '.github/workflows/creative-next-r31-project-save-ui-lab.yml'
   workflow_dispatch:
 permissions:
@@ -39,10 +41,11 @@ jobs:
       - name: WM3 observation and Bridge exporter to live r31 browser and verified Project return LAB
         run: |
           node --check creative-next/contracts/campsite-return-receiver-lab.mjs
+          node --check creative-next/contracts/portable-return-bundle-lab.mjs
           node --check creative-next/qa/campsite-return-lab/controller.mjs
           node --check creative-next/qa/three-function-r31-browser-lab.cjs
           node creative-next/qa/three-function-r31-browser-lab.cjs
-          node --test creative-next/qa/campsite-return-receiver.test.mjs
+          node --test creative-next/qa/campsite-return-receiver.test.mjs creative-next/qa/portable-return-bundle.test.mjs
       - name: Build and browser-test deployable isolated preview snapshot
         run: |
           node creative-next/qa/r31-project-save-lab/build-private-preview.mjs "$RUNNER_TEMP/r31-project-save-private-preview"
