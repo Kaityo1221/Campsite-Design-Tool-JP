@@ -16,7 +16,7 @@ const JSZip=require('jszip');
 const {DOMParser,XMLSerializer}=require('@xmldom/xmldom');
 const {webcrypto}=require('node:crypto');
 const fixtureImage=fs.readFileSync(path.join(ROOT,'creative-next/qa/r31/fixtures/blue-dot.png'));
-const URL='https://r31-three-function.invalid/creative-next/qa/r31-project-save-lab/index.html';
+const ENTRY_URL='https://r31-three-function.invalid/creative-next/qa/r31-project-save-lab/index.html';
 const DB='campsite-creative-next-x01-idb-lab-r31-save-ui-20261012';
 const PROJECT_ID='r31-three-function-browser-lab';
 const HANDOFF_ID='handoff:three-function-browser-lab';
@@ -125,7 +125,7 @@ async function main(){
    const page=await ctx.newPage(),jsErrors=[];
    page.on('dialog',d=>d.accept());page.on('pageerror',e=>jsErrors.push(e.message));
    try{
-    await page.goto(URL);
+    await page.goto(ENTRY_URL);
     await page.waitForFunction(()=>!!document.querySelector('#r31-frame')?.contentWindow?.creativeR31Workspace);
     await page.locator('#lab-open').tap();
     await page.locator('#lab-project').setInputFiles({
