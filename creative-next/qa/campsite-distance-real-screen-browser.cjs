@@ -77,11 +77,15 @@ async function stage(){
 async function realScreen(browser,viewport,staged){
  const ctx=await browser.newContext({viewport});
  const tile=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4//8/AwAI/AL+XloPXwAAAABJRU5ErkJggg==','base64');
- await ctx.route('**/*',r=>/^https:\/\/(tile\.openstreetmap\.org|server\.arcgisonline\.com)\//.test(r.request().url())
-  ?r.fulfill({status:200,contentType:'image/png',body:tile}):r.abort());
+ await ctx.route('**/*',r=>{
+  if(r.request().url()==='https://campsite-distance-lab.invalid/screen')
+   return r.fulfill({status:200,contentType:'text/html',body:html});
+  return /^https:\/\/(tile\.openstreetmap\.org|server\.arcgisonline\.com)\//.test(r.request().url())
+   ?r.fulfill({status:200,contentType:'image/png',body:tile}):r.abort();
+ });
  const page=await ctx.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
  try{
-  await page.setContent(html);
+  await page.goto('https://campsite-distance-lab.invalid/screen');
   await page.addStyleTag({path:require.resolve('leaflet/dist/leaflet.css')});
   await page.addScriptTag({path:require.resolve('leaflet/dist/leaflet.js')});
   for(const file of ['js/distance-core.js','js/distance-poi.js','js/distance-render.js',
