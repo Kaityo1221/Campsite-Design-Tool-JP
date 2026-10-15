@@ -254,9 +254,9 @@ async function main(){
       },DB),false,'other origin must not contain the sender IndexedDB');
       await recipient.locator('#return-project-id').fill(PROJECT_ID);
       await recipient.locator('#return-handoff-id').fill(HANDOFF_ID);
-      await recipient.locator('#return-verify').tap();
-      await recipient.waitForFunction(()=>document.querySelector('#return-status')?.dataset.kind==='error');
-      assert.match(await recipient.locator('#return-status').textContent(),/RETURN_SAVED_PROJECT_NOT_FOUND/);
+      // Do not click the local-store read button on the recipient: opening an
+      // absent IndexedDB would create an empty schema, defeating the assertion
+      // that portable import itself never touches recipient storage.
       await recipient.locator('#return-file').setInputFiles({
         name:'campsite-return-test-only.zip',mimeType:'application/zip',buffer:transferred});
       // Distinct origin import from selected file (read-only, no prior database).
