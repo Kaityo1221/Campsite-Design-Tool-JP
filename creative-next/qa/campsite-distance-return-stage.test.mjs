@@ -5,7 +5,8 @@ import vm from 'node:vm';
 import {createRequire} from 'node:module';
 import {webcrypto} from 'node:crypto';
 import JSZip from 'jszip';
-import {DOMParser} from '@xmldom/xmldom';
+import {DOMParser,XMLSerializer} from '@xmldom/xmldom';
+import {createFreshV1Kmz} from '../phase-1b/core/create-new-kmz.mjs';
 import {inspectCampsiteDistanceReturnStageLab,stageCurrentPoisLab}
  from '../contracts/campsite-distance-return-stage-lab.mjs';
 
@@ -84,3 +85,26 @@ test('strict distance stage rejects ambiguous identity/entity/location without c
  const e=clone(source);e.currentPois.push(clone(e.currentPois[0]));assert.throws(()=>stageCurrentPoisLab(e),{code:'DISTANCE_POI_DUPLICATE'});
  assert.deepEqual(source,expected);
 });
+
+test('independent 31-vertex Creative activity area stays separate from 4-vertex design polygon',async()=>{
+ const base=optsForArea(),area={id:'area-independent-31',points:Array.from({length:31},(_,i)=>[
+  35.701+0.0004*Math.sin(i*2*Math.PI/31),139.801+0.0004*Math.cos(i*2*Math.PI/31)
+ ])};
+ const {bytes}=await createFreshV1Kmz({records:[{
+  id:'original-record',role:'existing',guid:'existing-guid',kind:'pokestop',
+  title:'元のPOI',memo:'Original',lat:35.701,lng:139.801
+ }],activityAreas:[area]},{JSZip,DOMParser,XMLSerializer,documentName:'return-distance-synthetic'});
+ const args={...base,kmzBytes:bytes,activityAreas:[area]};
+ const originalProject=clone(args.project),originalArea=clone(args.activityAreas);
+ const staged=await inspectCampsiteDistanceReturnStageLab(args);
+ assert.equal(staged.legacyActivityAreaConflict,true);
+ assert.equal(staged.reason,'DISTANCE_X01_ACTIVITY_AREA_MAPPING_HOLD');
+ assert.equal(staged.legacyDistanceCommitAllowed,false);
+ assert.deepEqual(staged.distanceInput.designPolygon,originalProject.polygon);
+ assert.deepEqual(staged.distanceInput.activityAreas,originalArea);
+ assert.equal(staged.distanceInput.activityAreas[0].points.length,31);
+ assert.equal(staged.summary.designPolygonVertices,4);
+ assert.deepEqual(args.project,originalProject);
+ assert.deepEqual(args.activityAreas,originalArea);
+});
+function optsForArea(){return options();}
