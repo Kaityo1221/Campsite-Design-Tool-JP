@@ -197,10 +197,47 @@ async function main(){
     assert.equal(back.productionReady,false);
     assert.deepEqual(back.project.wayfarerObservation,input.snapshot);
     assert.equal(back.project.addedPois.length,1);
+    // Genuine browser navigation from a live edited r31 Session into a
+    // separate dedicated Campsite Return UI on the SAME isolated origin.
+    // No legacy receiver or production Project key is written.
+    await page.goto('https://r31-three-function.invalid/creative-next/qa/campsite-return-lab/index.html');
+    await page.locator('#return-project-id').fill(PROJECT_ID);
+    await page.locator('#return-handoff-id').fill(HANDOFF_ID);
+    await page.locator('#return-verify').tap();
+    await page.waitForFunction(()=>document.querySelector('#return-status')?.dataset.kind==='ok'||
+      document.querySelector('#return-status')?.dataset.kind==='error');
+    const returnState=await page.evaluate(()=>({
+      kind:document.getElementById('return-status').dataset.kind,
+      message:document.getElementById('return-status').textContent,
+      items:Object.fromEntries([...document.querySelectorAll('#return-details dt')].map(dt=>[
+        dt.textContent,dt.nextElementSibling?.textContent
+      ])),
+      old:localStorage.getItem('next-lab-creative-v7'),
+      journal:localStorage.getItem('campsite-creative-next-v1-r31-review-10:current'),
+      productionProject:sessionStorage.getItem('campsiteProject.v1')
+    }));
+    assert.equal(returnState.kind,'ok',returnState.message);
+    assert.match(returnState.message,/世代 1/);
+    assert.equal(returnState.items['Creative追加POI'],'1');
+    assert.equal(returnState.items['外側100mの参照'],'1');
+    assert.equal(returnState.items['予備100〜200m'],'1');
+    assert.equal(returnState.items['従来Bridgeへの送信'],'HOLD（形式未承認）');
+    assert.equal(returnState.old,'THREE_FLOW_LEGACY_STAYS');
+    assert.equal(returnState.journal,'THREE_FLOW_JOURNAL_STAYS');
+    assert.equal(returnState.productionProject,null);
+    // Fail closed for a wrong Handoff, then read the original saved row again.
+    await page.locator('#return-handoff-id').fill('handoff:wrong-project');
+    await page.locator('#return-verify').tap();
+    await page.waitForFunction(()=>document.getElementById('return-status')?.dataset.kind==='error');
+    assert.match(await page.locator('#return-status').textContent(),/RETURN_SAVED_PROJECT_NOT_FOUND/);
+    await page.locator('#return-handoff-id').fill(HANDOFF_ID);
+    await page.locator('#return-verify').tap();
+    await page.waitForFunction(()=>document.getElementById('return-status')?.dataset.kind==='ok');
     assert.deepEqual(jsErrors,[]);
     results.push({viewport,status:'PASS',wayfarerPseudoRelay:true,bridgeExporter:true,
      actualR31Ui:true,newPoiUi:true,isolatedIndexedDB:true,returnPairVerified:true,
-     receiverUiTested:false,realWayfarer:false,productionReady:false});
+     returnLabBrowserUiVerified:true,returnWrongHandoffHold:true,
+     productionReceiverUiTested:false,realWayfarer:false,productionReady:false});
    }finally{await ctx.close();}
   }
  }finally{await browser.close();}
