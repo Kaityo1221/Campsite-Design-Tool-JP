@@ -225,6 +225,8 @@ async function main(){
     assert.equal(returnState.items['従来Bridgeへの送信'],'HOLD（形式未承認）');
     assert.equal(await page.locator('#return-distance-panel').isVisible(),true);
     assert.match(await page.locator('#return-distance-details').textContent(),/DISTANCE_LIVE_IMPORT_NOT_APPROVED/);
+    assert.match(await page.locator('#return-distance-details').textContent(),/LAB計算プレビュー/);
+    assert.match(await page.locator('#return-distance-details').textContent(),/外側100mの参照POIとの50m未満/);
 
     assert.equal(returnState.old,'THREE_FLOW_LEGACY_STAYS');
     assert.equal(returnState.journal,'THREE_FLOW_JOURNAL_STAYS');
@@ -282,6 +284,7 @@ async function main(){
       assert.equal(received.items['予備100〜200m'],'1');
       assert.equal(await recipient.locator('#return-distance-panel').isVisible(),true);
       assert.match(await recipient.locator('#return-distance-details').textContent(),/HOLD（未承認）/);
+      assert.match(await recipient.locator('#return-distance-details').textContent(),/LAB計算プレビュー/);
       assert.equal(received.productionProject,null);
       assert.equal(received.senderDbExists,false,
         'receiving a portable bundle must not create or modify any IndexedDB');
@@ -296,6 +299,7 @@ async function main(){
      returnLabBrowserUiVerified:true,returnWrongHandoffHold:true,
      portableManualExport:true,crossOriginFileReceiver:true,crossOriginReceiverReadOnly:true,
      strictDistancePreflightBrowser:true,
+     nonauthoritativeDistanceMathPreview:true,
      productionReceiverUiTested:false,realWayfarer:false,productionReady:false});
    }finally{await ctx.close();}
   }
