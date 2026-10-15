@@ -85,7 +85,7 @@ async function realScreen(browser,viewport,staged){
   await page.addStyleTag({path:require.resolve('leaflet/dist/leaflet.css')});
   await page.addScriptTag({path:require.resolve('leaflet/dist/leaflet.js')});
   for(const file of ['js/distance-core.js','js/distance-poi.js','js/distance-render.js',
-   'js/distance-score.js','js/distance.js','js/distance-map.js'])
+   'js/distance-file.js','js/distance-score.js','js/distance.js','js/distance-map.js'])
    await page.addScriptTag({content:read(file)});
   await page.evaluate(d=>{
    window._layerPoints=d.groups;window._activityPolygons=d.areas.map(x=>x.points);
