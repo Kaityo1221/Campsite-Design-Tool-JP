@@ -48,6 +48,9 @@ test('return staging uses genuine legacy Distance POI grouping without coercion'
 
 test('real Distance currently restores selectedPois after a zero-length currentPois; staging refuses',()=>{
  const p=clone(expected);p.currentPois=[];
+ // The generic starter fixture's selectedPois is GUID-only. Use a valid
+ // complete saved selection to demonstrate the real resurrection hazard.
+ p.selectedPois=[clone(expected.currentPois[0])];
  const legacyGroups=clone(legacy.buildLayerPoints(p));
  assert.equal(legacyGroups['既存 PokéStop'].length,1,
   'baseline hazard documented: old selected POI may reappear');
