@@ -7,6 +7,7 @@
 import {createX01IndexedDbSaveLab} from '../../contracts/x01-indexeddb-save-lab.mjs';
 import {inspectCampsiteReturnLab} from '../../contracts/campsite-return-receiver-lab.mjs';
 import {inspectCampsiteDistanceReturnStageLab} from '../../contracts/campsite-distance-return-stage-lab.mjs';
+import {previewDistanceCalculationLab} from '../../contracts/campsite-distance-math-preview-lab.mjs';
 import {createPortableReturnBundleLab,inspectPortableReturnBundleLab}
  from '../../contracts/portable-return-bundle-lab.mjs';
 
@@ -29,7 +30,7 @@ function render(rows){
  }
  $('return-summary').hidden=false;
 }
-function showDistanceStage(stage){
+function showDistanceStage(stage,preview){
  const detail=$('return-distance-details');detail.replaceChildren();
  const rows=[
   ['確認済みPOI数',stage.summary.currentPoiCount],
@@ -37,6 +38,13 @@ function showDistanceStage(stage){
   ['設計ポリゴンの頂点',stage.summary.designPolygonVertices],
   ['観測ポリゴンの頂点',stage.summary.acquisitionPolygonVertices],
   ['独立した活動エリア数',stage.summary.independentActivityAreaCount],
+  ['50m未満（編集対象POI同士）',preview.summary.under50],
+  ['20m未満（密集）',preview.summary.dense],
+  ['20〜30m（滞留）',preview.summary.stay],
+  ['30〜50m（参考）',preview.summary.light],
+  ['外側100mの参照POIとの50m未満',preview.summary.externalReferenceUnder50],
+  ['地図用活動エリア（独立）',preview.mapPreview.activityPolygons.length],
+  ['計算結果の扱い','LAB計算プレビュー（本番判定ではありません）'],
   ['距離再計算','必須'],
   ['本番の距離チェックへ投入','HOLD（未承認）'],
   ['判定',stage.reason]
@@ -99,7 +107,11 @@ $('return-verify').addEventListener('click',()=>locked(async()=>{
   hold('DISTANCE_LIVE_WRITE_GATE');
  staged=bundle.bytes;$('return-download').hidden=false;
  showVerified(ready,saved.revision,'Project・NEW_V1 KMZは整合しています。');
- showDistanceStage(distance);
+ const math=previewDistanceCalculationLab(distance,{
+  referencePois:ready.project.wayfarerObservation.zones.reference100
+ });
+ if(math.productionReady!==false||math.writeAllowed!==false)hold('DISTANCE_MATH_WRITE_GATE');
+ showDistanceStage(distance,math);
 }));
 $('return-upload-verify').addEventListener('click',()=>locked(async()=>{
  const opts=options(),file=$('return-file').files?.[0];
@@ -115,7 +127,11 @@ $('return-upload-verify').addEventListener('click',()=>locked(async()=>{
  if(distance.legacyDistanceCommitAllowed!==false||distance.writeAllowed!==false)
   hold('DISTANCE_LIVE_WRITE_GATE');
  showVerified(received,received.revision,'LAB転送ファイルのProjectとKMZは整合しています。');
- showDistanceStage(distance);
+ const math=previewDistanceCalculationLab(distance,{
+  referencePois:received.project.wayfarerObservation.zones.reference100
+ });
+ if(math.productionReady!==false||math.writeAllowed!==false)hold('DISTANCE_MATH_WRITE_GATE');
+ showDistanceStage(distance,math);
 }));
 $('return-download').addEventListener('click',()=>{
  if(busy||!staged)return;
