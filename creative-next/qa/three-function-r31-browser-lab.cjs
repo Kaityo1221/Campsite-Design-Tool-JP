@@ -73,7 +73,7 @@ function routeLocal(context){
  return context.route('**/*',async r=>{
   const u=new URL(r.request().url());
   let file=null;
-  if(u.hostname==='r31-three-function.invalid')file=path.resolve(SERVE_ROOT,'.'+decodeURIComponent(u.pathname));
+  if(['r31-three-function.invalid','r31-recipient.invalid'].includes(u.hostname))file=path.resolve(SERVE_ROOT,'.'+decodeURIComponent(u.pathname));
   else if(u.hostname==='unpkg.com'&&/leaflet@1.9.4\/dist\/(leaflet.js|leaflet.css)$/.test(u.pathname))
    file=path.join(path.dirname(require.resolve('leaflet')),path.basename(u.pathname));
   if(file&&(file.startsWith(SERVE_ROOT+path.sep)||file.startsWith(ROOT+'/node_modules/'))&&fs.existsSync(file)&&fs.statSync(file).isFile())
@@ -234,10 +234,62 @@ async function main(){
     await page.locator('#return-handoff-id').fill(HANDOFF_ID);
     await page.locator('#return-verify').tap();
     await page.waitForFunction(()=>document.getElementById('return-status')?.dataset.kind==='ok');
+    // Explicit user download; nothing is sent over network. The receiving
+    // browser has a DIFFERENT HTTP origin and no sender IndexedDB access.
+    assert.equal(await page.locator('#return-download').isVisible(),true);
+    const pendingDownload=page.waitForEvent('download');
+    await page.locator('#return-download').tap();
+    const downloaded=await pendingDownload;
+    assert.equal(downloaded.suggestedFilename(),'campsite-return-test-only.zip');
+    const chunks=[];
+    for await(const chunk of await downloaded.createReadStream())chunks.push(chunk);
+    const transferred=Buffer.concat(chunks);
+    assert(transferred.length>100);
+    const recipient=await ctx.newPage();
+    try{
+      await recipient.goto('https://r31-recipient.invalid/creative-next/qa/campsite-return-lab/index.html');
+      assert.equal(await recipient.evaluate(async db=>{
+        const names=await indexedDB.databases();
+        return names.some(x=>x.name===db);
+      },DB),false,'other origin must not contain the sender IndexedDB');
+      await recipient.locator('#return-project-id').fill(PROJECT_ID);
+      await recipient.locator('#return-handoff-id').fill(HANDOFF_ID);
+      await recipient.locator('#return-verify').tap();
+      await recipient.waitForFunction(()=>document.querySelector('#return-status')?.dataset.kind==='error');
+      assert.match(await recipient.locator('#return-status').textContent(),/RETURN_SAVED_PROJECT_NOT_FOUND/);
+      await recipient.locator('#return-file').setInputFiles({
+        name:'campsite-return-test-only.zip',mimeType:'application/zip',buffer:transferred});
+      // Distinct origin import from selected file (read-only, no prior database).
+      await recipient.locator('#return-upload-verify').tap();
+      await recipient.waitForFunction(()=>document.querySelector('#return-status')?.dataset.kind==='ok'||
+        document.querySelector('#return-status')?.dataset.kind==='error');
+      const received=await recipient.evaluate(async db=>({
+        message:document.getElementById('return-status').textContent,
+        kind:document.getElementById('return-status').dataset.kind,
+        items:Object.fromEntries([...document.querySelectorAll('#return-details dt')]
+         .map(dt=>[dt.textContent,dt.nextElementSibling?.textContent])),
+        productionProject:sessionStorage.getItem('campsiteProject.v1'),
+        senderDbExists:(await indexedDB.databases()).some(x=>x.name===db)
+      }),DB);
+      assert.equal(received.kind,'ok',received.message);
+      assert.equal(received.items['Creative追加POI'],'1');
+      assert.equal(received.items['保存世代'],'1');
+      assert.equal(received.items['設計範囲内の観測POI'],'1');
+      assert.equal(received.items['外側100mの参照'],'1');
+      assert.equal(received.items['予備100〜200m'],'1');
+      assert.equal(received.productionProject,null);
+      assert.equal(received.senderDbExists,false,
+        'receiving a portable bundle must not create or modify any IndexedDB');
+      await recipient.locator('#return-handoff-id').fill('handoff:wrong');
+      await recipient.locator('#return-upload-verify').tap();
+      await recipient.waitForFunction(()=>document.querySelector('#return-status')?.dataset.kind==='error');
+      assert.match(await recipient.locator('#return-status').textContent(),/PORTABLE_IDENTITY_MISMATCH/);
+    }finally{await recipient.close();}
     assert.deepEqual(jsErrors,[]);
     results.push({viewport,status:'PASS',wayfarerPseudoRelay:true,bridgeExporter:true,
      actualR31Ui:true,newPoiUi:true,isolatedIndexedDB:true,returnPairVerified:true,
      returnLabBrowserUiVerified:true,returnWrongHandoffHold:true,
+     portableManualExport:true,crossOriginFileReceiver:true,crossOriginReceiverReadOnly:true,
      productionReceiverUiTested:false,realWayfarer:false,productionReady:false});
    }finally{await ctx.close();}
   }
