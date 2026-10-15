@@ -42,9 +42,9 @@ const project={
  wayfarerObservation:{
   snapshotId:'snapshot:distance-synthetic',observedAt:'2026-10-15T00:00:00Z',
   polygon:poly,acquisition:{coverageComplete:true,bufferMeters:200},
-  zones:{interior:[{guid:'wayfarer-a',lat:35.701,lng:139.801,gameEntity:'POKESTOP',gameStatus:'ACTIVE'}],
-  reference100:[{guid:'external-ref',lat:35.70112,lng:139.80112,gameEntity:'GYM',gameStatus:'ACTIVE'}],
-  reserve200:[{guid:'hidden-reserve',lat:35.7028,lng:139.8028,gameEntity:'POWERSPOT',gameStatus:'INACTIVE'}]}
+  zones:{interior:[{guid:'wayfarer-a',lat:35.701,lng:139.801,poiKind:'POKESTOP',gameEntity:'POKESTOP',gameStatus:'ACTIVE'}],
+  reference100:[{guid:'external-ref',lat:35.70112,lng:139.80112,poiKind:'GYM',gameEntity:'GYM',gameStatus:'ACTIVE'}],
+  reserve200:[{guid:'hidden-reserve',lat:35.7028,lng:139.8028,poiKind:'POWERSPOT',gameEntity:'POWERSPOT',gameStatus:'INACTIVE',referenceKind:'INACTIVE_POWERSPOT'}]}
  }
 };
 const original=clone(project);
