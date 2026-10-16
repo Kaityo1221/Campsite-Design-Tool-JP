@@ -49,3 +49,14 @@ A separate test-only matrix now verifies **zero, one, and two** independently id
 The manual portable ZIP intentionally carries no signature, sender secret, trusted certificate, signed-origin attestation, or server authentication. The contract now explicitly marks `transportAuthenticated:false` and `producerIdentityVerified:false`. Matching manifest SHA-256 checksums do not prove who assembled a ZIP or establish higher-trust provenance; do not treat matching Handoff ID as authentication. Formal X-04 must decide authorized principals and trusted origin binding before deployment.
 
 **Release still HOLD:** no automatic polygon promotion, no real Distance call or Project save, no source trust upgrade, no format approval or migration. All experiments use synthesized data only.
+
+## X-01/X-04 generation transition dry run, Phase 1 HOLD (2026-10-16 JST)
+
+New isolated module `creative-next/contracts/x01-x04-transition-gate-lab.mjs` does **not** open storage or touch any real Distance UI. It emits a non-writable proposal only.
+
+- X-01: require the operator to explicitly supply the complete, ordered list of activity-area IDs, including an explicit empty list if there are none. Omitted, duplicated or unrecognized IDs block the dry run. Preserve the design polygon and observation polygon in their own typed fields; never populate `_activityPolygons` or approve one/many area runtime mapping.
+- X-04: verify the complete current canonical Project+KMZ pair, compare an expected revision and all three canonical SHA-256 fingerprints, and verify the proposed next pair. A stale writer or changed base content fails closed. A rollback preview additionally requires a separately verified older source revision and matching candidate hashes; **no storage mutation or rollback occurs**. New revisions are proposals only.
+- Changes to the Wayfarer observation or the design polygon remain HOLD until WM-7 and X-01 are approved. The LAB transport remains unauthenticated, even after hashes match. A provisional successful review is **not** a commit authorization.
+- New tests `creative-next/qa/x01-x04-generation-transition.test.mjs` run in CI beside the existing boundary matrix, with synthetic data only.
+
+Formal X-01 area semantics, X-04 authorized sender / signed transfer, real multi-generation transactional persistence and rollback remain intentionally unimplemented. This adds executable safety gates, not an approved production contract.
