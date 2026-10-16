@@ -20,8 +20,8 @@ const area={id:'explicit-31',points:Array.from({length:31},(_,i)=>[
 const from=async()=>{
  const p=project();
  const {bytes:kmzBytes}=await createFreshV1Kmz({
-  records:[{id:'existing',role:'existing',guid:'existing-guid',kind:'pokestop',
-   title:'Synthetic Existing',lat:35.701,lng:139.801}],
+  records:[{id:'original-record',role:'existing',guid:'existing-guid',kind:'pokestop',
+   title:'元のPOI',memo:'Original',lat:35.701,lng:139.801}],
   activityAreas:[area]
  },{JSZip,DOMParser,XMLSerializer,documentName:'isolated-receive'});
  return {p,kmzBytes};
