@@ -70,12 +70,20 @@ async function rejectImport(context,kmz,p,expected,{dismiss=false,kmzName='inval
 async function run(){
  const browser=await (ENGINE==='webkit'?webkit:chromium).launch({headless:true});const result=[];
  const bytes=Buffer.from(await makeKmz());
- if(process.env.R31_LAB_STATIC_ROOT){
-  const fixtures=path.join(SERVE_ROOT,'creative-next/qa/r31-project-save-lab/fixtures');
-  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(fixtures,'demo-only-project.json'),'utf8')),project());
-  assert.deepEqual(fs.readFileSync(path.join(fixtures,'demo-only-new-v1.kmz')),bytes);
- }
  try{
+  if(process.env.R31_LAB_STATIC_ROOT){
+   const fixtures=path.join(SERVE_ROOT,'creative-next/qa/r31-project-save-lab/fixtures');
+   assert.deepEqual(JSON.parse(fs.readFileSync(path.join(fixtures,'demo-only-project.json'),'utf8')),project());
+   // ZIP entry timestamps can differ across host/timezone/second; compare
+   // canonical KML payload, not volatile ZIP DOS timestamps.
+   const built=await JSZip.loadAsync(bytes);
+   const sample=await JSZip.loadAsync(fs.readFileSync(path.join(fixtures,'demo-only-new-v1.kmz')));
+   assert.deepEqual(Object.keys(built.files).sort(),Object.keys(sample.files).sort());
+   for(const name of Object.keys(built.files)){
+    assert.deepEqual(await built.file(name).async('uint8array'),
+      await sample.file(name).async('uint8array'),'fixture KML contents: '+name);
+   }
+  }
   for(const viewport of [{width:390,height:844},{width:393,height:852}]){
    const context=await browser.newContext({viewport,isMobile:true,hasTouch:true,serviceWorkers:'block'}),errors=[];
    await context.addInitScript(()=>{

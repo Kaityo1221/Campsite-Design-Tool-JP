@@ -14,6 +14,15 @@ import {createPortableReturnBundleLab,inspectPortableReturnBundleLab}
 const dbName='campsite-creative-next-x01-idb-lab-r31-save-ui-20261012';
 const $=id=>document.getElementById(id),maxArchive=16*1024*1024;
 let busy=false,staged=null;
+const sources=['return-project-id','return-handoff-id','return-file'];
+// Never leave a verified download visible after the source or typed identity
+// changes. Browser-origin IDB rows are scoped by exact Project/Handoff IDs.
+for(const name of sources){
+ $(name).addEventListener(name==='return-file'?'change':'input',()=>{
+  if(busy)return;
+  reset();status('入力が変更されました。保存データまたはZIPの検証をやり直してください。');
+ });
+}
 const hold=code=>{const e=new Error(code);e.code=code;throw e;};
 const status=(message,kind='neutral')=>{
  $('return-status').textContent=message;$('return-status').dataset.kind=kind;
@@ -79,13 +88,17 @@ function options(){
 }
 async function locked(work){
  if(busy)return;
- busy=true;$('return-verify').disabled=true;$('return-upload-verify').disabled=true;
+ busy=true;
+ for(const name of ['return-verify','return-upload-verify',...sources])$(name).disabled=true;
  reset();
  try{await work();}
  catch(e){
   status('HOLD：'+String(e?.code||e?.message||'RETURN_UNKNOWN').slice(0,140)+
    '。元データの自動修復・削除・上書きは行いません。','error');
- }finally{busy=false;$('return-verify').disabled=false;$('return-upload-verify').disabled=false;}
+ }finally{
+  busy=false;
+  for(const name of ['return-verify','return-upload-verify',...sources])$(name).disabled=false;
+ }
 }
 $('return-verify').addEventListener('click',()=>locked(async()=>{
  const opts=options();
@@ -105,13 +118,15 @@ $('return-verify').addEventListener('click',()=>locked(async()=>{
  });
  if(distance.legacyDistanceCommitAllowed!==false||distance.writeAllowed!==false)
   hold('DISTANCE_LIVE_WRITE_GATE');
- staged=bundle.bytes;$('return-download').hidden=false;
- showVerified(ready,saved.revision,'Project・NEW_V1 KMZは整合しています。');
  const math=previewDistanceCalculationLab(distance,{
   referencePois:ready.project.wayfarerObservation.zones.reference100
  });
  if(math.productionReady!==false||math.writeAllowed!==false)hold('DISTANCE_MATH_WRITE_GATE');
+ showVerified(ready,saved.revision,'Project・NEW_V1 KMZは整合しています。');
  showDistanceStage(distance,math);
+ staged={bytes:new Uint8Array(bundle.bytes),
+  projectId:opts.expectedProjectId,handoffId:opts.expectedHandoffId};
+ $('return-download').hidden=false;
 }));
 $('return-upload-verify').addEventListener('click',()=>locked(async()=>{
  const opts=options(),file=$('return-file').files?.[0];
@@ -134,8 +149,9 @@ $('return-upload-verify').addEventListener('click',()=>locked(async()=>{
  showDistanceStage(distance,math);
 }));
 $('return-download').addEventListener('click',()=>{
- if(busy||!staged)return;
- const b=new Blob([staged],{type:'application/zip'});
+ if(busy||!staged||$('return-project-id').value.trim()!==staged.projectId||
+   $('return-handoff-id').value.trim()!==staged.handoffId)return;
+ const b=new Blob([staged.bytes],{type:'application/zip'});
  const u=URL.createObjectURL(b);
  const a=document.createElement('a');a.href=u;
  a.download='campsite-return-test-only.zip';document.body.append(a);a.click();a.remove();

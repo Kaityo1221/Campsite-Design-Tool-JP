@@ -40,3 +40,9 @@ A release is **not** complete when a synthetic LAB smoke test passes. Completion
 ## Current next action
 
 Record the full-round-trip WebKit simulator result for `e8a5d3cf` / `5ec6f1e8` separately. Fix LAB regressions until Chromium and WebKit both pass the **single-file** return. Then use the full workflow to prepare the versioned X-01/X-04 review candidates **without approving them**. Only after those decisions may an actual feature-gated Campsite receiver be implemented.
+
+## Step 1 closure reliability (2026-10-16, Draft LAB only)
+
+- Safari/WebKit CI defect: preview builder and browser harness generated semantically identical synthetic KMZ archives with different ZIP timestamps, causing a false binary mismatch before `try/finally`. The harness now compares exact decompressed archive-entry bytes and guarantees browser close when fixture validation fails. The ZIP/Project **application** integrity checks remain strict and are not bypassed.
+- Return page invalidates a prepared manual ZIP as soon as Project ID, Handoff ID or source file changes. While verifying it locks the source fields. No download is shown until the complete canonical return, typed Distance staging **and** distance preview pass. A final click-time identity check also blocks stale prepared data.
+- The three-function browser E2E asserts that changing Handoff ID hides the prepared download and re-verifying restores it. This is synthetic isolated parity testing, never approval of source authenticity or live legacy Distance integration.

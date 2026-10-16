@@ -238,12 +238,16 @@ async function main(){
     assert.equal(returnState.productionProject,null);
     // Fail closed for a wrong Handoff, then read the original saved row again.
     await page.locator('#return-handoff-id').fill('handoff:wrong-project');
+    assert.equal(await page.locator('#return-download').isVisible(),false,
+      'return download must invalidate on changed identity');
     await page.locator('#return-verify').tap();
     await page.waitForFunction(()=>document.getElementById('return-status')?.dataset.kind==='error');
     assert.match(await page.locator('#return-status').textContent(),/RETURN_SAVED_PROJECT_NOT_FOUND/);
     await page.locator('#return-handoff-id').fill(HANDOFF_ID);
     await page.locator('#return-verify').tap();
     await page.waitForFunction(()=>document.getElementById('return-status')?.dataset.kind==='ok');
+    assert.equal(await page.locator('#return-download').isVisible(),true,
+      'valid source must re-enable download after re-verification');
     // Explicit user download; nothing is sent over network. The receiving
     // browser has a DIFFERENT HTTP origin and no sender IndexedDB access.
     assert.equal(await page.locator('#return-download').isVisible(),true);
@@ -493,6 +497,7 @@ async function main(){
      successorPairRoundTripVerified:true,receiverRevisionUnchanged:true,
      cancelledConfirmationProtected:true,singleZipReeditVerified:true,
      singleZipWrongIdHeld:true,singleZipCancelProtected:true,
+     staleReturnDownloadInvalidated:true,
      productionReceiverUiTested:false,realWayfarer:false,productionReady:false});
    }finally{await ctx.close();}
   }
