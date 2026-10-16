@@ -31,6 +31,12 @@ dt{color:#bac8d9}dd{margin:0;font-weight:800}
 <p class="muted">既存データがあれば上書きしません。新規保存は確認画面で明示的に承認してください。編集・正式距離判定への反映は行いません。</p></div>
 <button id="accept-create" hidden>② 確認して隔離保存（本番には反映しません）</button>
 <button id="accept-reopen">③ 隔離保存データを再開・照合</button>
+<div id="accept-reedit" hidden>
+<h2>④ Creativeで再編集する（手動LAB）</h2>
+<p class="muted">再開検証後だけ2ファイルをダウンロードできます。元の保存データは保持されます。Creative Nextの隔離LABへ手動で読み込んでください。</p>
+<button id="accept-project-download">検証済みProject JSONを保存</button>
+<button id="accept-kmz-download">検証済みNEW_V1 KMZを保存</button>
+</div>
 <div id="accept-status" role="status" aria-live="polite">未検証。Project ID・Handoff ID・ZIPを指定してください。</div>
 </div>
 <p class="muted">保存世代1の再読込と二重タブ競合を確認する試験です。これは正式なCampsite受信・再編集UIではありません。実際のWayfarerデータや個人情報は使用しないでください。</p>
