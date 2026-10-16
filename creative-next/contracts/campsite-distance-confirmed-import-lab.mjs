@@ -54,6 +54,7 @@ export function createCampsiteDistanceConfirmedImportLab({
    sourceRevision:received.revision,existingRevision:pending.existingRevision,
    canCreate:pending.existingRevision===0,
    productionReady:false,writeAllowed:false,
+   transportAuthenticated:false,producerIdentityVerified:false,
    summary:stage.summary,distanceSummary:preview.summary
   });
  };

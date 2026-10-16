@@ -26,6 +26,7 @@ function display(row){
  const items=[
  ['送信元保存世代',row.sourceRevision??'再開'],
  ['受信先保存世代',row.existingRevision??row.revision??0],
+ ['転送元の認証','未認証（整合性と送信者の証明は別）'],
  ['現在のPOI',row.summary.currentPoiCount],
  ['Creative追加POI',row.summary.addedPoiCount],
  ['設計ポリゴン頂点',row.summary.designPolygonVertices],

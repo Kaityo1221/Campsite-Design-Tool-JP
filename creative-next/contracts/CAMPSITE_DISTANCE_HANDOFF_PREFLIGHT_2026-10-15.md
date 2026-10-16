@@ -41,3 +41,11 @@ The separate `creative-next/qa/campsite-return-lab/` read-only UI now shows an a
 - Do not merge PR #368 or modify production/main/frozen r31 while any gate is unapproved.
 
 **No implementation in this LAB constitutes production Project import approval.**
+
+## X-01 / X-04 safety matrix after round-trip LAB (2026-10-16, unapproved)
+
+A separate test-only matrix now verifies **zero, one, and two** independently identified Creative activity polygons against a separate design polygon and historical acquisition polygon. These three channels are kept byte-equivalent through NEW_V1 pair verification and read-only Distance staging. The existing Distance source still overloads `_activityPolygons` with the design polygon. In the unapproved adapter, **all three cardinalities remain blocked for live import**; counts 1 and 2 additionally report `DISTANCE_X01_ACTIVITY_AREA_MAPPING_HOLD`.
+
+The manual portable ZIP intentionally carries no signature, sender secret, trusted certificate, signed-origin attestation, or server authentication. The contract now explicitly marks `transportAuthenticated:false` and `producerIdentityVerified:false`. Matching manifest SHA-256 checksums do not prove who assembled a ZIP or establish higher-trust provenance; do not treat matching Handoff ID as authentication. Formal X-04 must decide authorized principals and trusted origin binding before deployment.
+
+**Release still HOLD:** no automatic polygon promotion, no real Distance call or Project save, no source trust upgrade, no format approval or migration. All experiments use synthesized data only.

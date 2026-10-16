@@ -22,7 +22,7 @@ a{color:#f2d17e}
 <p class="warning">🧪 PRIVATE LAB / 本番へは書き込みません</p>
 <h1>Campsite Project 帰還受信テスト</h1>
 <p>Creative Nextが保存した完全なProjectとNEW_V1 KMZを、<strong>同じ隔離サイトのIndexedDB</strong>から読み取り、整合性を再確認します。</p>
-<p class="muted">従来のBridge Receiverや実際のCampsite Project保存領域には転送しません。入力内容が不明・不正ならHOLDします。Project IDを自動で一覧表示することもしません。転送ZIPは暗号化されないため、架空データのみを使用してください。</p>
+<p class="muted">従来のBridge Receiverや実際のCampsite Project保存領域には転送しません。入力内容が不明・不正ならHOLDします。Project IDを自動で一覧表示することもしません。転送ZIPは暗号化・送信者認証されません。SHA-256で整合性を確認できても送信者の真正性は証明されないため、架空データのみを使用してください。</p>
 <div class="panel">
 <label for="return-project-id">Project ID</label>
 <input id="return-project-id" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="r31-ui-lab-project">

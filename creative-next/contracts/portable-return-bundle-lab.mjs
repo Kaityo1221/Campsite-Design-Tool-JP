@@ -63,7 +63,8 @@ export async function createPortableReturnBundleLab({
   compressionOptions:{level:6},streamFiles:false});
  checkedArchive(bytes);
  return Object.freeze({status:'LAB_PORTABLE_RETURN_CREATED',productionReady:false,
-  writeAllowed:false,revision,bytes:new Uint8Array(bytes)});
+  writeAllowed:false,transportAuthenticated:false,producerIdentityVerified:false,
+  revision,bytes:new Uint8Array(bytes)});
 }
 export async function inspectPortableReturnBundleLab({
  bytes,expectedProjectId,expectedHandoffId,
@@ -92,6 +93,7 @@ export async function inspectPortableReturnBundleLab({
   activityAreas:verified.activityAreas,kmzBytes:verified.kmzBytes,
   expectedProjectId,expectedHandoffId,...d});
  return Object.freeze({status:'LAB_PORTABLE_RETURN_VERIFIED',productionReady:false,
-  writeAllowed:false,revision:envelope.revision,summary:ready.summary,
+  writeAllowed:false,transportAuthenticated:false,producerIdentityVerified:false,
+  revision:envelope.revision,summary:ready.summary,
   project:ready.project,activityAreas:ready.activityAreas,kmzBytes:ready.kmzBytes});
 }
