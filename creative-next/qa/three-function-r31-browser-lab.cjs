@@ -292,6 +292,59 @@ async function main(){
       await recipient.locator('#return-upload-verify').tap();
       await recipient.waitForFunction(()=>document.querySelector('#return-status')?.dataset.kind==='error');
       assert.match(await recipient.locator('#return-status').textContent(),/PORTABLE_IDENTITY_MISMATCH/);
+      // The user-mediated Project/NEW_V1 bundle now goes to the *new*
+      // isolated confirmation UI. Two actual tabs inspect the same absent
+      // recipient revision; transactional CAS must reject the second save.
+      const ACCEPT_URL='https://r31-recipient.invalid/creative-next/qa/campsite-distance-import-lab/index.html';
+      const enter=async(tab)=>{
+        await tab.goto(ACCEPT_URL);
+        await tab.locator('#accept-project').fill(PROJECT_ID);
+        await tab.locator('#accept-handoff').fill(HANDOFF_ID);
+        await tab.locator('#accept-file').setInputFiles({
+         name:'campsite-return-test-only.zip',mimeType:'application/zip',buffer:transferred});
+        await tab.locator('#accept-inspect').tap();
+        await tab.waitForFunction(()=>document.querySelector('#accept-status')?.dataset.kind==='ok'||
+          document.querySelector('#accept-status')?.dataset.kind==='error');
+        assert.equal(await tab.locator('#accept-create').isVisible(),true,
+          await tab.locator('#accept-status').textContent());
+        assert.match(await tab.locator('#accept-details').textContent(),/Creative追加POI/);
+      };
+      await enter(recipient);
+      const stale=await ctx.newPage();
+      try{
+        await enter(stale);
+        recipient.on('dialog',d=>d.accept());
+        stale.on('dialog',d=>d.accept());
+        await recipient.locator('#accept-create').tap();
+        await recipient.waitForFunction(()=>document.querySelector('#accept-status')?.textContent.includes('隔離保存成功'));
+        assert.match(await recipient.locator('#accept-status').textContent(),/世代 1/);
+        await stale.locator('#accept-create').tap();
+        await stale.waitForFunction(()=>document.querySelector('#accept-status')?.dataset.kind==='error');
+        assert.match(await stale.locator('#accept-status').textContent(),/IDB_LAB_REVISION_CONFLICT/);
+        await stale.reload();
+        await stale.locator('#accept-project').fill(PROJECT_ID);
+        await stale.locator('#accept-handoff').fill(HANDOFF_ID);
+        await stale.locator('#accept-reopen').tap();
+        await stale.waitForFunction(()=>document.querySelector('#accept-status')?.textContent.includes('再読込・照合しました'));
+        assert.match(await stale.locator('#accept-status').textContent(),/世代 1/);
+        const remains=await stale.evaluate(async()=>{
+          const dbs=await indexedDB.databases();
+          return {production:sessionStorage.getItem('campsiteProject.v1'),
+            recipientDbExists:dbs.some(x=>x.name==='campsite-creative-next-x01-idb-lab-distance-receiver-20261016'),
+            old:localStorage.getItem('next-lab-creative-v7'),
+            journal:localStorage.getItem('campsite-creative-next-v1-r31-review-10:current')};
+        });
+        assert.equal(remains.production,null);
+        assert.equal(remains.recipientDbExists,true);
+        assert.equal(remains.old,'THREE_FLOW_LEGACY_STAYS');
+        assert.equal(remains.journal,'THREE_FLOW_JOURNAL_STAYS');
+        // Existing receiver Project must never be silently overwritten.
+        await enter(recipient);
+        assert.fail('Second confirmation unexpectedly allowed an existing Project');
+      }catch(e){
+        // Only expected prior-target HOLD should be allowed at the tail.
+        if(e?.message!=='Second confirmation unexpectedly allowed an existing Project')throw e;
+      }finally{await stale.close();}
     }finally{await recipient.close();}
     assert.deepEqual(jsErrors,[]);
     results.push({viewport,status:'PASS',wayfarerPseudoRelay:true,bridgeExporter:true,
