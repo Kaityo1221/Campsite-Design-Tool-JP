@@ -37,6 +37,17 @@ button{min-height:40px;font:inherit;cursor:pointer}#lab-panel button{margin-top:
     <button id="lab-import" type="button">確認してr31で編集開始</button>
   </div>
   <div class="separate">
+    <h1>📦 Campsiteから再編集（検証済みLAB ZIP）</h1>
+    <p>2ファイルの代わりにLAB専用ZIPを1つ選びます。転送元は未認証のため架空データ専用です。</p>
+    <label for="lab-zip-project-id">受信するProject ID</label>
+    <input id="lab-zip-project-id" type="text" autocomplete="off" spellcheck="false">
+    <label for="lab-zip-handoff-id">受信するHandoff ID</label>
+    <input id="lab-zip-handoff-id" type="text" autocomplete="off" spellcheck="false">
+    <label for="lab-zip-file">再編集LAB専用ZIP</label>
+    <input id="lab-zip-file" type="file">
+    <button id="lab-zip-import" type="button">ZIPを検証してr31で再編集開始</button>
+  </div>
+  <div class="separate">
     <button id="lab-save" type="button" disabled>変更をプロジェクトに保存</button>
     <p>保存先はこの試験ページ専用のIndexedDBです。元のKMZは上書きしません。削除済みPOIなど未対応データは安全停止します。</p>
   </div>
@@ -50,5 +61,6 @@ button{min-height:40px;font:inherit;cursor:pointer}#lab-panel button{margin-top:
   <div id="lab-status" role="status" aria-live="polite" data-kind="neutral">Project JSONとNEW_V1 KMZを使って開始できます。</div>
   <button id="lab-close" type="button">閉じる</button>
 </section>
+<script src="../../phase-2-preview/vendor/jszip.min.js"></script>
 <script type="module" src="./controller.mjs"></script>
 </body></html>

@@ -370,6 +370,15 @@ async function main(){
         };
         const reeditJson=await downloadFromStale('#accept-project-download');
         const reeditKmz=await downloadFromStale('#accept-kmz-download');
+        const reeditZip=await downloadFromStale('#accept-portable-download');
+        assert.equal(reeditZip.name,'distance-reedit-test-only.zip');
+        const {inspectPortableReturnBundleLab:verifyZip}=await import('../contracts/portable-return-bundle-lab.mjs');
+        const zipVerified=await verifyZip({...options,bytes:new Uint8Array(reeditZip.bytes),
+         expectedProjectId:PROJECT_ID,expectedHandoffId:HANDOFF_ID});
+        assert.deepEqual(zipVerified.project,row.project);
+        assert.deepEqual(zipVerified.activityAreas,row.activityAreas);
+        assert.deepEqual(Buffer.from(zipVerified.kmzBytes),Buffer.from(row.kmzBytes));
+        assert.equal(zipVerified.transportAuthenticated,false);
         assert.equal(reeditJson.name,'distance-reedit-project.json');
         assert.equal(reeditKmz.name,'distance-reedit-new-v1.kmz');
         const json=JSON.parse(reeditJson.bytes.toString('utf8'));
@@ -378,16 +387,31 @@ async function main(){
         assert.deepEqual(json,row.project,'downloaded Project must retain every field');
         assert.deepEqual(reeditKmz.bytes,Buffer.from(row.kmzBytes),'NEW_V1 KMZ must be byte-equivalent');
         const editPage=await ctx.newPage();
-        editPage.on('dialog',d=>d.accept());
+        let cancelZipOnce=true;
+        editPage.on('dialog',d=>{
+         if(cancelZipOnce&&d.message().includes('LAB ZIP')){cancelZipOnce=false;d.dismiss();}
+         else d.accept();
+        });
         try{
          await editPage.goto('https://r31-recipient.invalid/creative-next/qa/r31-project-save-lab/index.html');
          await editPage.waitForFunction(()=>!!document.querySelector('#r31-frame')?.contentWindow?.creativeR31Workspace);
          await editPage.locator('#lab-open').tap();
-         await editPage.locator('#lab-project').setInputFiles({
-          name:reeditJson.name,mimeType:'application/json',buffer:reeditJson.bytes});
-         await editPage.locator('#lab-kmz').setInputFiles({
-          name:reeditKmz.name,mimeType:'application/vnd.google-earth.kmz',buffer:reeditKmz.bytes});
-         await editPage.locator('#lab-import').tap();
+         await editPage.locator('#lab-zip-project-id').fill(PROJECT_ID);
+         await editPage.locator('#lab-zip-handoff-id').fill('handoff:bad');
+         await editPage.locator('#lab-zip-file').setInputFiles({
+          name:reeditZip.name,mimeType:'application/zip',buffer:reeditZip.bytes});
+         await editPage.locator('#lab-zip-import').tap();
+         await editPage.waitForFunction(()=>document.querySelector('#lab-status')?.dataset.kind==='error');
+         assert.match(await editPage.locator('#lab-status').textContent(),/PORTABLE_IDENTITY_MISMATCH/);
+         assert.equal(await editPage.evaluate(()=>document.querySelector('#r31-frame')
+          .contentWindow.creativeR31Workspace.workspace.session.state().hasActive),false);
+         await editPage.locator('#lab-zip-handoff-id').fill(HANDOFF_ID);
+         await editPage.locator('#lab-zip-import').tap();
+         await editPage.waitForFunction(()=>document.querySelector('#lab-status')
+          ?.textContent.includes('再編集をキャンセルしました'));
+         assert.equal(await editPage.evaluate(()=>document.querySelector('#r31-frame')
+          .contentWindow.creativeR31Workspace.workspace.session.state().hasActive),false);
+         await editPage.locator('#lab-zip-import').tap();
          await editPage.waitForFunction(()=>__r31ProjectSaveLabStatus?.().attached||
           document.getElementById('lab-status')?.dataset.kind==='error');
          const returned=await editPage.evaluate(()=>({
@@ -467,7 +491,8 @@ async function main(){
      strictDistancePreflightBrowser:true,
      nonauthoritativeDistanceMathPreview:true,reeditDownloadsVerified:true,
      successorPairRoundTripVerified:true,receiverRevisionUnchanged:true,
-     cancelledConfirmationProtected:true,
+     cancelledConfirmationProtected:true,singleZipReeditVerified:true,
+     singleZipWrongIdHeld:true,singleZipCancelProtected:true,
      productionReceiverUiTested:false,realWayfarer:false,productionReady:false});
    }finally{await ctx.close();}
   }

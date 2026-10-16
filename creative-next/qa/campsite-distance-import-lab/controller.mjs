@@ -1,5 +1,7 @@
 import {createCampsiteDistanceConfirmedImportLab}
  from '../../contracts/campsite-distance-confirmed-import-lab.mjs';
+import {createPortableReturnBundleLab}
+ from '../../contracts/portable-return-bundle-lab.mjs';
 const $=id=>document.getElementById(id);
 const api=createCampsiteDistanceConfirmedImportLab({
  JSZip:window.JSZip,DOMParser,cryptoProvider:crypto
@@ -83,7 +85,17 @@ $('accept-reopen').addEventListener('click',()=>locked(async()=>{
  reset();status('隔離保存データを再読込して検証中…');
  const row=await api.reopen(getIds());
  display(row);
- exportReady={project:row.project,kmzBytes:new Uint8Array(row.kmzBytes),...getIds()};
+ // Bundle preparation is read-only. A failed check never exposes half-verified files.
+ const ids=getIds();
+ const transfer=await createPortableReturnBundleLab({
+  project:row.project,activityAreas:row.activityAreas,
+  kmzBytes:row.kmzBytes,revision:row.revision,...ids,
+  JSZip:window.JSZip,DOMParser,cryptoProvider:crypto
+ });
+ if(transfer.productionReady!==false||transfer.writeAllowed!==false||
+   transfer.transportAuthenticated!==false)stop('DISTANCE_REEDIT_ZIP_UNSAFE');
+ exportReady={project:row.project,kmzBytes:new Uint8Array(row.kmzBytes),
+  portableBytes:new Uint8Array(transfer.bytes),...ids};
  $('accept-reedit').hidden=false;
  status('隔離保存済みの世代 '+row.revision+
   ' を再読込・照合しました。再編集用2ファイルを手動で保存できます。','ok');
@@ -105,6 +117,11 @@ $('accept-kmz-download').addEventListener('click',()=>{
  if(!exportReady)return;
  directDownload(exportReady.kmzBytes,'distance-reedit-new-v1.kmz',
   'application/vnd.google-earth.kmz');
+});
+$('accept-portable-download').addEventListener('click',()=>{
+ if(!exportReady)return;
+ directDownload(exportReady.portableBytes,'distance-reedit-test-only.zip',
+  'application/zip');
 });
 window.__distanceImportLabStatus=()=>({
  busy,pending:!!pending,productionReady:false,dbName:api.dbName

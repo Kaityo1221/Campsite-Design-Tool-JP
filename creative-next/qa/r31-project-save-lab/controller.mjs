@@ -8,6 +8,7 @@ import {sourceActivityAreas} from '../../phase-1b/core/activity-areas.mjs';
 import {createLinkedPairLab} from '../../contracts/linked-project-kmz-lab.mjs';
 import {createX01IndexedDbSaveLab} from '../../contracts/x01-indexeddb-save-lab.mjs';
 import {createR31SessionIndexedDbLab} from '../../contracts/r31-session-indexeddb-lab.mjs';
+import {inspectPortableReturnBundleLab} from '../../contracts/portable-return-bundle-lab.mjs';
 
 const LAB_DB='campsite-creative-next-x01-idb-lab-r31-save-ui-20261012';
 const doc=document,$=id=>doc.getElementById(id),frame=$('r31-frame');
@@ -20,6 +21,7 @@ const setStatus=(text,kind='neutral')=>{
 };
 function controls(){
  $('lab-import').disabled=busy;
+ $('lab-zip-import').disabled=busy;
  $('lab-reopen').disabled=busy;
  $('lab-save').disabled=busy||!link?.status().attached;
 }
@@ -151,6 +153,38 @@ $('lab-import').addEventListener('click',()=>lock(async()=>{
  await inUiStart(win,bytes,$('lab-kmz').files[0].name||'source.kmz');
  await bind(win,project,bytes,0);
  setStatus('検証済みProjectをr31の単一Sessionに紐づけました。編集後「変更をプロジェクトに保存」を押してください。','ok');
+}));
+$('lab-zip-import').addEventListener('click',()=>lock(async()=>{
+ const win=await waitReady(),owner=win.creativeR31Workspace;
+ if(link||owner.workspace.session.state().hasActive)fail('LAB_ACTIVE_SESSION_HOLD');
+ const expectedProjectId=$('lab-zip-project-id').value.trim(),
+  expectedHandoffId=$('lab-zip-handoff-id').value.trim();
+ if(!id(expectedProjectId)||!id(expectedHandoffId))fail('LAB_ZIP_IDS_REQUIRED');
+ const incoming=$('lab-zip-file').files?.[0];
+ if(!incoming||!/\.zip$/i.test(incoming.name))fail('LAB_ZIP_EXTENSION_REQUIRED');
+ const bytes=await fileBytes($('lab-zip-file'),16*1024*1024);
+ if(!window.JSZip)fail('LAB_ZIP_PARSER_UNAVAILABLE');
+ setStatus('Campsite再編集ZIPのProject・KMZ・署名されていない送信元情報を検証中…');
+ const read=await inspectPortableReturnBundleLab({
+  bytes,expectedProjectId,expectedHandoffId,
+  JSZip:window.JSZip,DOMParser:globalThis.DOMParser,cryptoProvider:globalThis.crypto
+ });
+ if(read.productionReady!==false||read.writeAllowed!==false||
+    read.transportAuthenticated!==false||read.producerIdentityVerified!==false)
+  fail('LAB_ZIP_AUTH_GATE');
+ // Reject a parallel saved Project before starting an editor with revision 0.
+ const existing=await storage(win).read({expectedProjectId,expectedHandoffId});
+ if(existing)fail('LAB_ZIP_EXISTING_USE_REOPEN');
+ const kmzBytes=Uint8Array.from(read.kmzBytes);
+ const areas=await verifyPair(win,read.project,kmzBytes);
+ if(JSON.stringify(areas)!==JSON.stringify(read.activityAreas))
+  fail('LAB_ZIP_ACTIVITY_AREA_MISMATCH');
+ if(!window.confirm('検証済みLAB ZIPから新しいr31 Sessionで再編集しますか？\\n送信元は未認証です。本番保存は行いません。')){
+  setStatus('再編集をキャンセルしました。既存データは保持されています。');return;
+ }
+ await inUiStart(win,kmzBytes,'distance-reedit-new-v1.kmz');
+ await bind(win,read.project,kmzBytes,0);
+ setStatus('LAB ZIPの照合成功。新しいr31 Sessionで再編集できます。保存先は隔離領域のみです。','ok');
 }));
 $('lab-save').addEventListener('click',()=>lock(async()=>{
  const owner=safeEditorState();

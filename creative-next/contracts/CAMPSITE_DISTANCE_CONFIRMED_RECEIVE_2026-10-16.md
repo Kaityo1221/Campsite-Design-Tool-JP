@@ -41,3 +41,11 @@ Do not merge to `main`, overwrite `campsiteProject.v1`, or deploy any LAB as a p
 8. Browser checks include Wayfarer observation zones, selected and source POIs, unknown future fields, design polygon, activity-area equality, archive bytes, and IDs. A separate Node fixture covers a 31-vertex independent area through a new isolated successor store. Neither browser automation nor macOS WebKit simulation is a physical iPhone or Android pass.
 
 **HOLD unchanged:** X-01/X-04 unapproved, actual Campsite receiver unconnected, official Distance write blocked, no r31 approved UI/main/release changes.
+
+## Completion-focused: one-file Campsite to Creative re-edit (LAB, unapproved)
+
+After a verified recipient reopen, the operator may now download a **single** `distance-reedit-test-only.zip` in addition to the original two-file method. The ZIP is freshly constructed from the verified isolated Project, independent activity areas and NEW_V1 KMZ. It remains an unauthenticated, experimental v0 transfer with the same hash/identity rules.
+
+The *separate* Creative r31 parent LAB accepts this ZIP only with explicit Project/Handoff ID input, full bundle and NEW_V1 pair checks, preservation of independent area geometry, and user confirmation. If the same Project was previously saved in that Creative LAB origin, it requires the existing verified reopen route instead of accepting a fresh revision-zero Session. Wrong Handoff and cancellation cannot start a Session. Approved r31 iframe implementation and legacy Project keys are not changed.
+
+The full browser integration validates both unchanged manual JSON/KMZ downloads and the new one-ZIP import, deliberate wrong ID, cancelled consent, genuine r31 editing, new isolated Project+KMZ save and byte-for-byte protection of the Campsite received generation. Both Chromium and WebKit use the same synthetic scripted flow. Physical devices, official transport and deployment remain HOLD.
