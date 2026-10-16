@@ -9,6 +9,8 @@ import {createFreshV1Kmz} from '../phase-1b/core/create-new-kmz.mjs';
 import {createPortableReturnBundleLab} from '../contracts/portable-return-bundle-lab.mjs';
 import {createCampsiteDistanceConfirmedImportLab}
  from '../contracts/campsite-distance-confirmed-import-lab.mjs';
+import {previewX01AreaSelectionLab}
+ from '../contracts/x01-x04-transition-gate-lab.mjs';
 
 const {project}=createRequire(import.meta.url)('./r31-project-save-lab-browser.cjs');
 const clone=x=>JSON.parse(JSON.stringify(x));
@@ -43,6 +45,19 @@ test('explicit verify + cancel + retry + isolated save + readback, preserves unk
  assert.equal(ready.status,'DISTANCE_LAB_AWAIT_EXPLICIT_CONFIRMATION');
  assert.equal(ready.sourceRevision,3);assert.equal(ready.existingRevision,0);
  assert.equal(ready.summary.independentActivityAreaCount,1);
+ assert.equal(ready.x01Stage.productionReady,false);
+ assert.equal(ready.x01Stage.writeAllowed,false);
+ assert.deepEqual(ready.x01Stage.distanceInput.activityAreas,[area]);
+ assert.deepEqual(ready.x01Stage.distanceInput.designPolygon,x.p.polygon);
+ assert.deepEqual(ready.x01Stage.distanceInput.acquisitionPolygon,
+   x.p.wayfarerObservation.polygon);
+ const review=previewX01AreaSelectionLab({
+  distanceStage:ready.x01Stage,selectedActivityAreaIds:['explicit-31']
+ });
+ assert.equal(review.approvedMapping,false);
+ assert.equal(review.writeAllowed,false);
+ assert.deepEqual(review.proposedActivityAreas,[area]);
+ assert.equal(review.proposedActivityAreas[0].points.length,31);
  await reject(()=>a.confirmCreate({ticket:ready.ticket,confirmed:false}),'DISTANCE_IMPORT_CONSENT_REQUIRED');
  const saved=await a.confirmCreate({ticket:ready.ticket,confirmed:true});
  assert.equal(saved.revision,1);assert.equal(saved.productionProjectWritten,false);
@@ -53,6 +68,8 @@ test('explicit verify + cancel + retry + isolated save + readback, preserves unk
  assert.equal(b.summary.designPolygonVertices,4);
  assert.equal(b.summary.independentActivityAreaCount,1);
  assert.equal(b.productionReady,false);
+ assert.equal(b.x01Stage.productionReady,false);
+ assert.deepEqual(b.x01Stage.distanceInput.activityAreas,[area]);
  assert.deepEqual(x.p,source);
 });
 test('two tabs verify first, only one creates; no stale overwrite, no destructive rollback',async()=>{

@@ -55,7 +55,9 @@ export function createCampsiteDistanceConfirmedImportLab({
    canCreate:pending.existingRevision===0,
    productionReady:false,writeAllowed:false,
    transportAuthenticated:false,producerIdentityVerified:false,
-   summary:stage.summary,distanceSummary:preview.summary
+   summary:stage.summary,distanceSummary:preview.summary,
+   // Read-only, verified snapshot. This is NOT a mapping grant.
+   x01Stage:stage
   });
  };
  const confirmCreate=async({ticket,confirmed}={})=>{
@@ -90,6 +92,7 @@ export function createCampsiteDistanceConfirmedImportLab({
    project:row.project,activityAreas:row.activityAreas,
    kmzBytes:new Uint8Array(row.kmzBytes),
    summary:stage.summary,distanceSummary:preview.summary,
+   x01Stage:stage,
    productionReady:false,writeAllowed:false
   });
  };

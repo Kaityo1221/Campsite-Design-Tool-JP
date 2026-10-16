@@ -40,3 +40,7 @@ Production migration/import: NOT APPROVED
 Phase 1: HOLD
 
 Continue only in isolation until explicit approval. Do not merge #368 or alter main, approved r31, live legacy Distance or current production project key.
+
+## 2026-10-17: X-01 interactive review LAB, not a mapping approval
+
+The isolated Campsite receiving page now makes three typed channels visible after a fully verified source pair: design polygon vertex count, immutable Wayfarer acquisition polygon vertex count and each independent Creative activity-area ID/vertex count. A separate review action requires every activity-area checkbox explicitly checked, or a positive "0 areas" acknowledgement for the empty case. No implicit "first polygon" substitution, no binding to legacy `_activityPolygons`, no saving a geometry mapping and no Distance calculation result. Review is invalidated when Project/Handoff/file inputs change. The candidate result always has `approvedMapping:false`, `writeAllowed:false`, `legacyDistanceCommitAllowed:false`. Synthetic 31-vertex and 0/1/many coverage is exercised in existing Node tests; the actual receiver browser test now covers the zero-area explicit choice and invalidation. This is an operator visibility aid so the X-01 owner can decide among candidates; it is not an official Distance runtime adapter.

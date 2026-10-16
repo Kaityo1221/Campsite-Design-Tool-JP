@@ -7,6 +7,12 @@ body{max-width:650px;margin:auto;padding:20px 14px;line-height:1.6}
 h1{font-size:23px}button,input{font:inherit;box-sizing:border-box}
 label{display:block;font-size:14px;margin:12px 0 5px;font-weight:800}
 input{width:100%;min-height:46px;padding:10px;border:1px solid #73879e;border-radius:9px;background:white;color:#161e2c}
+#accept-x01 input[type=checkbox]{width:auto;min-height:0;margin:0 9px 0 0;accent-color:#ffe196}
+#accept-x01 label{font-weight:500;display:flex;align-items:center;gap:4px;overflow-wrap:anywhere}
+#accept-x01{border:1px solid #6a8197;border-radius:12px;padding:13px;margin:14px 0;background:#202d40}
+#accept-x01-status{padding:9px;border-radius:8px;background:#354055;white-space:pre-wrap;overflow-wrap:anywhere}
+#accept-x01-status[data-kind=error]{background:#5b272b}
+#accept-x01-status[data-kind=ok]{background:#1c5739}
 button{min-height:49px;width:100%;padding:11px;margin-top:13px;background:#ffe196;border:0;border-radius:10px;color:#261d09;font-weight:850}
 button:disabled{opacity:.4}
 .panel{background:#222d3f;border-radius:15px;padding:16px;margin:16px 0}
@@ -30,6 +36,15 @@ dt{color:#bac8d9}dd{margin:0;font-weight:800}
 <button id="accept-inspect">① 受信データを検証</button>
 <div id="accept-summary" hidden><h2>受信前の確認</h2><dl id="accept-details"></dl>
 <p class="muted">既存データがあれば上書きしません。新規保存は確認画面で明示的に承認してください。編集・正式距離判定への反映は行いません。</p></div>
+<div id="accept-x01" hidden>
+<h2>🗺 X-01 範囲の独立性を確認（読取専用）</h2>
+<p class="muted">設計範囲・Wayfarer観測範囲・Creative活動エリアは別データです。活動エリアを設計範囲で補完しません。全活動エリアを明示して候補の整合性を確認できますが、Distanceへの正式反映は常にHOLDです。</p>
+<dl id="accept-x01-details"></dl>
+<div id="accept-x01-choices"></div>
+<label id="accept-x01-zero-label" hidden><input id="accept-x01-zero" type="checkbox"> 活動エリア0件を明示的に確認する</label>
+<button id="accept-x01-review" type="button">選択した活動エリアの対応候補を確認（保存しません）</button>
+<div id="accept-x01-status" role="status" aria-live="polite">未確認。活動エリアの全件を選択してください。</div>
+</div>
 <button id="accept-create" hidden>② 確認して隔離保存（本番には反映しません）</button>
 <button id="accept-reopen">③ 隔離保存データを再開・照合</button>
 <div id="accept-reedit" hidden>

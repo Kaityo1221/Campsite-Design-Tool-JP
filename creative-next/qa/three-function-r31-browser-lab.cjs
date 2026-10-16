@@ -317,6 +317,19 @@ async function main(){
         assert.equal(await tab.locator('#accept-create').isVisible(),true,
           await tab.locator('#accept-status').textContent());
         assert.match(await tab.locator('#accept-details').textContent(),/Creative追加POI/);
+        assert.equal(await tab.locator('#accept-x01').isVisible(),true);
+        assert.equal(await tab.locator('#accept-x01-choices input[type=checkbox]').count(),0);
+        assert.equal(await tab.locator('#accept-x01-zero-label').isVisible(),true);
+        await tab.locator('#accept-x01-review').tap();
+        assert.match(await tab.locator('#accept-x01-status').textContent(),
+          /X01_ZERO_EXPLICIT_CONFIRM_REQUIRED/);
+        assert.equal(await tab.evaluate(()=>__distanceImportLabStatus().x01Reviewed),false);
+        await tab.locator('#accept-x01-zero').check();
+        await tab.locator('#accept-x01-review').tap();
+        assert.match(await tab.locator('#accept-x01-status').textContent(),
+          /0件.*HOLD/);
+        assert.equal(await tab.evaluate(()=>__distanceImportLabStatus().x01Reviewed),true);
+        assert.equal(await tab.evaluate(()=>sessionStorage.getItem('campsiteProject.v1')),null);
       };
       await enter(recipient);
       const stale=await ctx.newPage();
@@ -356,6 +369,8 @@ async function main(){
         assert.equal(remains.journal,'THREE_FLOW_JOURNAL_STAYS');
         await stale.locator('#accept-handoff').fill('handoff:wrong');
         assert.equal(await stale.locator('#accept-reedit').isVisible(),false);
+        assert.equal(await stale.locator('#accept-x01').isVisible(),false);
+        assert.equal(await stale.evaluate(()=>__distanceImportLabStatus().x01StageReady),false);
         await stale.locator('#accept-handoff').fill(HANDOFF_ID);
         await stale.locator('#accept-reopen').tap();
         await stale.waitForFunction(()=>document.getElementById('accept-status')
@@ -497,7 +512,7 @@ async function main(){
      successorPairRoundTripVerified:true,receiverRevisionUnchanged:true,
      cancelledConfirmationProtected:true,singleZipReeditVerified:true,
      singleZipWrongIdHeld:true,singleZipCancelProtected:true,
-     staleReturnDownloadInvalidated:true,
+     staleReturnDownloadInvalidated:true,x01TypedZeroReviewVerified:true,
      productionReceiverUiTested:false,realWayfarer:false,productionReady:false});
    }finally{await ctx.close();}
   }

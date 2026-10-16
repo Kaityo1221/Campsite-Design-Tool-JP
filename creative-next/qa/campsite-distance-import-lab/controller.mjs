@@ -2,11 +2,81 @@ import {createCampsiteDistanceConfirmedImportLab}
  from '../../contracts/campsite-distance-confirmed-import-lab.mjs';
 import {createPortableReturnBundleLab}
  from '../../contracts/portable-return-bundle-lab.mjs';
+import {previewX01AreaSelectionLab}
+ from '../../contracts/x01-x04-transition-gate-lab.mjs';
 const $=id=>document.getElementById(id);
 const api=createCampsiteDistanceConfirmedImportLab({
  JSZip:window.JSZip,DOMParser,cryptoProvider:crypto
 });
-let pending=null,busy=false,exportReady=null;
+let pending=null,busy=false,exportReady=null,geometryStage=null,x01Reviewed=false;
+const geometryStatus=(message,kind='neutral')=>{
+ $('accept-x01-status').dataset.kind=kind;$('accept-x01-status').textContent=message;
+};
+function clearGeometry(){
+ geometryStage=null;x01Reviewed=false;
+ $('accept-x01').hidden=true;$('accept-x01-details').replaceChildren();
+ $('accept-x01-choices').replaceChildren();
+ $('accept-x01-zero').checked=false;
+ $('accept-x01-zero-label').hidden=true;
+ geometryStatus('未確認。活動エリアの全件を選択してください。');
+}
+function showGeometry(stage){
+ if(stage?.status!=='LAB_DISTANCE_INPUT_STAGED_READ_ONLY'||stage.productionReady!==false||
+   stage.writeAllowed!==false||stage.legacyDistanceCommitAllowed!==false)
+  stop('X01_REVIEW_STAGE_REQUIRED');
+ geometryStage=stage;x01Reviewed=false;
+ const d=stage.distanceInput;
+ const rows=[
+  ['設計ポリゴン','独立（'+d.designPolygon.length+'頂点）'],
+  ['Wayfarer観測ポリゴン','履歴（'+d.acquisitionPolygon.length+'頂点）'],
+  ['Creative活動エリア',d.activityAreas.length+'件（独立）'],
+  ['正式Distance対応','未承認・保存しない']
+ ];
+ const dl=$('accept-x01-details');dl.replaceChildren();
+ for(const [name,value] of rows){
+  const dt=document.createElement('dt'),dd=document.createElement('dd');
+  dt.textContent=name;dd.textContent=value;dl.append(dt,dd);
+ }
+ const group=$('accept-x01-choices');group.replaceChildren();
+ for(const area of d.activityAreas){
+  const label=document.createElement('label'),checkbox=document.createElement('input');
+  checkbox.type='checkbox';checkbox.value=area.id;checkbox.dataset.x01Area='yes';
+  const span=document.createElement('span');
+  span.textContent=area.id+'（'+area.points.length+'頂点）';
+  label.append(checkbox,span);group.append(label);
+ }
+ $('accept-x01-zero-label').hidden=d.activityAreas.length!==0;
+ $('accept-x01-zero').checked=false;
+ geometryStatus('未確認。全活動エリアを選択してください。');
+ $('accept-x01').hidden=false;
+}
+$('accept-x01-choices').addEventListener('change',()=>{
+ x01Reviewed=false;geometryStatus('選択内容を変更しました。確認をやり直してください。');
+});
+$('accept-x01-zero').addEventListener('change',()=>{
+ x01Reviewed=false;geometryStatus('0件の確認状態を変更しました。確認をやり直してください。');
+});
+$('accept-x01-review').addEventListener('click',()=>{
+ if(busy||!geometryStage)return;
+ try{
+  const areas=geometryStage.distanceInput.activityAreas;
+  if(areas.length===0&&!$('accept-x01-zero').checked)stop('X01_ZERO_EXPLICIT_CONFIRM_REQUIRED');
+  const ids=[...document.querySelectorAll('[data-x01-area="yes"]:checked')].map(x=>x.value);
+  const result=previewX01AreaSelectionLab({
+   distanceStage:geometryStage,selectedActivityAreaIds:ids
+  });
+  if(result.writeAllowed!==false||result.approvedMapping!==false||
+    result.legacyDistanceCommitAllowed!==false)stop('X01_REVIEW_WRITE_GATE');
+  x01Reviewed=true;
+  geometryStatus('照合済み：活動エリア '+result.mappedAreaIds.length+
+   '件、設計範囲 '+result.designPolygon.length+
+   '頂点、観測履歴 '+result.acquisitionPolygon.length+
+   '頂点。X-01正式マッピングは未承認（HOLD）。','ok');
+ }catch(e){x01Reviewed=false;
+  geometryStatus('HOLD：'+String(e?.code||e?.message||'X01_REVIEW_UNKNOWN').slice(0,100)+
+   '。既存データは変更しません。','error');
+ }
+});
 const getIds=()=>({expectedProjectId:$('accept-project').value.trim(),
  expectedHandoffId:$('accept-handoff').value.trim()});
 const stop=code=>{const e=new Error(code);e.code=code;throw e;};
@@ -15,7 +85,7 @@ const status=(message,kind='neutral')=>{
 };
 function reset(){
  pending=null;exportReady=null;$('accept-summary').hidden=true;$('accept-create').hidden=true;
- $('accept-reedit').hidden=true;
+ $('accept-reedit').hidden=true;clearGeometry();
 }
 // Invalidate previously verified exports whenever their source identity changes.
 for(const id of ['accept-project','accept-handoff','accept-file']){
@@ -65,7 +135,7 @@ $('accept-inspect').addEventListener('click',()=>locked(async()=>{
   stop('DISTANCE_LAB_ZIP_REQUIRED');
  status('Project・NEW_V1 KMZ・距離チェック入力を検証中…');
  const row=await api.prepare({...ids,bytes:new Uint8Array(await file.arrayBuffer())});
- display(row);pending=row;
+ display(row);showGeometry(row.x01Stage);pending=row;
  $('accept-create').hidden=!row.canCreate;
  status(row.canCreate?'検証成功。受信先は空です。確認後に隔離保存できます。':
   'HOLD：DISTANCE_IMPORT_EXISTING_PROTECTED。受信先には既存の世代があり、上書きしません。',row.canCreate?'ok':'error');
@@ -84,7 +154,7 @@ $('accept-create').addEventListener('click',()=>{
 $('accept-reopen').addEventListener('click',()=>locked(async()=>{
  reset();status('隔離保存データを再読込して検証中…');
  const row=await api.reopen(getIds());
- display(row);
+ display(row);showGeometry(row.x01Stage);
  // Bundle preparation is read-only. A failed check never exposes half-verified files.
  const ids=getIds();
  const transfer=await createPortableReturnBundleLab({
@@ -124,5 +194,6 @@ $('accept-portable-download').addEventListener('click',()=>{
   'application/zip');
 });
 window.__distanceImportLabStatus=()=>({
- busy,pending:!!pending,productionReady:false,dbName:api.dbName
+ busy,pending:!!pending,x01Reviewed,
+ x01StageReady:!!geometryStage,productionReady:false,dbName:api.dbName
 });
