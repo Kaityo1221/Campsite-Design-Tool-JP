@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>Creative Next r31 | プロジェクト保存 LAB</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#302a21;background:#17130f}
+#r31-frame{position:absolute;inset:0;width:100%;height:100%;border:0}
+#lab-open{position:absolute;right:8px;top:calc(166px + env(safe-area-inset-top));z-index:2;border:1px solid #a38b5b;border-radius:10px;background:#fff8e7;color:#302a21;font-weight:800;font-size:12px;padding:10px;box-shadow:0 2px 10px #0004}
+#lab-panel{position:absolute;z-index:3;right:8px;top:calc(208px + env(safe-area-inset-top));width:min(365px,calc(100vw - 16px));max-height:calc(100dvh - 226px - env(safe-area-inset-top));overflow:auto;border:1px solid #a38b5b;border-radius:15px;box-shadow:0 12px 35px #0006;background:#fffaf0;padding:14px}
+#lab-panel[hidden]{display:none}h1{font-size:16px;margin:0 0 6px}p{font-size:11px;line-height:1.55;margin:4px 0 10px}
+label{display:block;font-size:12px;font-weight:750;margin:10px 0 4px}input{width:100%;max-width:100%;min-height:38px;padding:7px;border:1px solid #9d8b6e;border-radius:8px;background:white;font:inherit;font-size:12px}
+button{min-height:40px;font:inherit;cursor:pointer}#lab-panel button{margin-top:8px;width:100%;padding:9px;border-radius:9px;border:1px solid #887149;font-size:13px;font-weight:800;background:#f5dfaa;color:#342719}
+#lab-panel button:disabled{cursor:wait;opacity:.5}.separate{margin-top:14px;border-top:1px solid #d4c9b7;padding-top:8px}
+#lab-status{white-space:pre-wrap;word-break:break-word;min-height:32px;margin-top:9px;padding:9px;border-radius:8px;background:#eee8df;font-size:12px;line-height:1.55}
+#lab-status[data-kind="error"]{color:#8c2323;background:#fff0e9}#lab-status[data-kind="ok"]{color:#28643d;background:#e9f4e8}
+#lab-close{background:white!important}
+@media(max-width:520px){#lab-open{top:calc(210px + env(safe-area-inset-top));font-size:11px}#lab-panel{top:calc(254px + env(safe-area-inset-top));max-height:calc(100dvh - 268px - env(safe-area-inset-top))}}
+</style>
+</head>
+<body>
+<iframe id="r31-frame" title="Creative Next r31 確定版" src="../../original-ui-r31-b3-b4/index.html"></iframe>
+<button type="button" id="lab-open" aria-controls="lab-panel" aria-expanded="false">🧪 プロジェクト保存 LAB</button>
+<section id="lab-panel" role="region" aria-label="隔離プロジェクト保存" hidden>
+  <h1>🧪 プロジェクト保存テスト</h1>
+  <p>これは試験用の保存画面です。KMZ出力は従来のr31画面で行います。正式なプロジェクト保存形式ではありません。</p>
+  <div id="lab-new">
+    <label for="lab-project">① 対応するProject JSONを選択</label>
+    <input id="lab-project" type="file" accept=".json,application/json">
+    <label for="lab-kmz">② 元のNEW_V1 KMZを選択</label>
+    <!-- iOS Files sometimes greys out .kmz for accept=MIME/extension filters.
+         Leave picker unrestricted; controller strictly checks filename and ZIP contents. -->
+    <input id="lab-kmz" type="file">
+    <p>iPhoneでKMZがグレーになる対策として、ファイル形式の選択制限を解除しています。選択後にKMZ形式と内容を安全確認します。</p>
+    <button id="lab-import" type="button">確認してr31で編集開始</button>
+  </div>
+  <div class="separate">
+    <h1>📦 Campsiteから再編集（検証済みLAB ZIP）</h1>
+    <p>2ファイルの代わりにLAB専用ZIPを1つ選びます。転送元は未認証のため架空データ専用です。</p>
+    <label for="lab-zip-project-id">受信するProject ID</label>
+    <input id="lab-zip-project-id" type="text" autocomplete="off" spellcheck="false">
+    <label for="lab-zip-handoff-id">受信するHandoff ID</label>
+    <input id="lab-zip-handoff-id" type="text" autocomplete="off" spellcheck="false">
+    <label for="lab-zip-file">再編集LAB専用ZIP</label>
+    <input id="lab-zip-file" type="file">
+    <button id="lab-zip-import" type="button">ZIPを検証してr31で再編集開始</button>
+  </div>
+  <div class="separate">
+    <button id="lab-save" type="button" disabled>変更をプロジェクトに保存</button>
+    <p>保存先はこの試験ページ専用のIndexedDBです。元のKMZは上書きしません。削除済みPOIなど未対応データは安全停止します。</p>
+  </div>
+  <div class="separate">
+    <label for="lab-project-id">再開するプロジェクトID</label>
+    <input id="lab-project-id" type="text" autocomplete="off" spellcheck="false" placeholder="Project ID">
+    <label for="lab-handoff-id">再開するHandoff ID</label>
+    <input id="lab-handoff-id" type="text" autocomplete="off" spellcheck="false" placeholder="Handoff ID">
+    <button id="lab-reopen" type="button">保存済みプロジェクトから再開</button>
+  </div>
+  <div id="lab-status" role="status" aria-live="polite" data-kind="neutral">Project JSONとNEW_V1 KMZを使って開始できます。</div>
+  <button id="lab-close" type="button">閉じる</button>
+</section>
+<script src="../../phase-2-preview/vendor/jszip.min.js"></script>
+<script type="module" src="./controller.mjs"></script>
+</body></html>

@@ -1,0 +1,115 @@
+name: Creative Next r31 confirmed Project save UI LAB
+on:
+  pull_request:
+    branches:
+      - feature/creative-next-r31-session-idb-lab-20261012
+    paths:
+      - 'creative-next/qa/r31-project-save-lab/**'
+      - 'creative-next/qa/r31-project-save-lab-browser.cjs'
+      - 'creative-next/qa/three-function-r31-browser-lab.cjs'
+      - 'creative-next/qa/campsite-return-lab/**'
+      - 'creative-next/qa/campsite-return-receiver.test.mjs'
+      - 'creative-next/contracts/campsite-return-receiver-lab.mjs'
+      - 'creative-next/contracts/portable-return-bundle-lab.mjs'
+      - 'creative-next/qa/portable-return-bundle.test.mjs'
+      - 'creative-next/contracts/campsite-distance-return-stage-lab.mjs'
+      - 'creative-next/qa/campsite-distance-return-stage.test.mjs'
+      - 'creative-next/contracts/campsite-distance-math-preview-lab.mjs'
+      - 'creative-next/qa/campsite-distance-math-compat.test.mjs'
+      - 'creative-next/qa/campsite-distance-real-screen-browser.cjs'
+      - 'creative-next/contracts/campsite-distance-confirmed-import-lab.mjs'
+      - 'creative-next/qa/campsite-distance-confirmed-import.test.mjs'
+      - 'creative-next/qa/x01-x04-boundary-matrix.test.mjs'
+      - 'creative-next/qa/x01-x04-generation-transition.test.mjs'
+      - 'creative-next/contracts/x01-distance-adapter-candidate-lab.mjs'
+      - 'creative-next/qa/x04-signed-attestation-candidate.test.mjs'
+      - 'creative-next/contracts/x04-signed-attestation-candidate-lab.mjs'
+      - 'creative-next/contracts/x04-commit-authority-boundary-lab.mjs'
+      - 'creative-next/qa/x04-commit-authority-boundary.test.mjs'
+      - 'creative-next/contracts/X04_AUTHORITY_PERSISTENCE_BOUNDARY_HOLD_2026-10-17.md'
+      - 'creative-next/contracts/X01_X04_APPROVAL_CANDIDATES_2026-10-17.md'
+      - 'creative-next/contracts/x01-x04-transition-gate-lab.mjs'
+      - 'creative-next/qa/campsite-distance-import-lab/**'
+      - '.github/workflows/creative-next-r31-project-save-ui-lab.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  isolated-r31-ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned archive and browser dependencies
+        run: |
+          npm install --prefix creative-next --no-save --no-package-lock --ignore-scripts jszip@3.10.1 @xmldom/xmldom@0.9.8 fake-indexeddb@6
+          npm install --no-save --no-package-lock --ignore-scripts playwright@1.55.0 leaflet@1.9.4
+          # Do not run apt on hosted Ubuntu: the runner's package mirror stalled until timeout.
+          # First use the runner libraries; the browser E2E will report any missing library.
+          node ./node_modules/playwright/cli.js install chromium
+      - name: Syntax + isolated LAB UI checks
+        run: |
+          node --check creative-next/qa/r31-project-save-lab/controller.mjs
+          node --check creative-next/qa/r31-project-save-lab-browser.cjs
+      - name: Browser r31 Project import-save-reopen with user confirmation
+        run: node creative-next/qa/r31-project-save-lab-browser.cjs
+      - name: WM3 observation and Bridge exporter to live r31 browser and verified Project return LAB
+        run: |
+          node --check creative-next/contracts/campsite-return-receiver-lab.mjs
+          node --check creative-next/contracts/portable-return-bundle-lab.mjs
+          node --check creative-next/contracts/campsite-distance-return-stage-lab.mjs
+          node --check creative-next/contracts/campsite-distance-math-preview-lab.mjs
+          node --check creative-next/contracts/campsite-distance-confirmed-import-lab.mjs
+          node --check creative-next/qa/campsite-distance-import-lab/controller.mjs
+          node --check creative-next/qa/campsite-return-lab/controller.mjs
+          node --check creative-next/qa/three-function-r31-browser-lab.cjs
+          node creative-next/qa/three-function-r31-browser-lab.cjs
+          node --test creative-next/qa/campsite-return-receiver.test.mjs creative-next/qa/portable-return-bundle.test.mjs creative-next/qa/campsite-distance-return-stage.test.mjs creative-next/qa/campsite-distance-math-compat.test.mjs
+          node --test creative-next/qa/campsite-distance-confirmed-import.test.mjs creative-next/qa/x01-x04-boundary-matrix.test.mjs creative-next/qa/x01-x04-generation-transition.test.mjs creative-next/qa/x04-signed-attestation-candidate.test.mjs
+          node --check creative-next/contracts/x04-commit-authority-boundary-lab.mjs
+          node --test creative-next/qa/x04-commit-authority-boundary.test.mjs
+          node --check creative-next/qa/campsite-distance-real-screen-browser.cjs
+          node creative-next/qa/campsite-distance-real-screen-browser.cjs
+      - name: Build and browser-test deployable isolated preview snapshot
+        run: |
+          node creative-next/qa/r31-project-save-lab/build-private-preview.mjs "$RUNNER_TEMP/r31-project-save-private-preview"
+          R31_LAB_STATIC_ROOT="$RUNNER_TEMP/r31-project-save-private-preview" node creative-next/qa/r31-project-save-lab-browser.cjs
+          R31_LAB_STATIC_ROOT="$RUNNER_TEMP/r31-project-save-private-preview" node creative-next/qa/three-function-r31-browser-lab.cjs
+      - name: Upload isolated preview package (artifact only; NO deploy)
+        uses: actions/upload-artifact@v4
+        with:
+          name: r31-private-preview-${{ github.run_id }}
+          path: ${{ runner.temp }}/r31-project-save-private-preview/
+          if-no-files-found: error
+          retention-days: 3
+      - name: Real r31 Workspace and previous isolated IDB regressions
+        run: |
+          node --test creative-next/qa/r31-session-indexeddb-lab.test.mjs creative-next/qa/x01-indexeddb-save-lab.test.mjs creative-next/qa/x01-design-polygon-save-channel.test.mjs
+          node --test creative-next/qa/r31-b3-b4/workspace.test.mjs
+      - name: Wayfarer and Creative contract regression
+        run: |
+          node --test creative-next/qa/x01-x04-contract-audit.test.mjs creative-next/qa/x01-x04-linked-pair.test.mjs creative-next/qa/three-function-synthetic-e2e.test.mjs
+          node scripts/check-wm4a-project-lifecycle.mjs
+  webkit-mobile-lab:
+    # WebKit simulator on macOS, NOT a native iPhone Safari device test.
+    runs-on: macos-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned WebKit and isolated LAB dependencies
+        run: |
+          npm install --prefix creative-next --no-save --no-package-lock --ignore-scripts jszip@3.10.1 @xmldom/xmldom@0.9.8 fake-indexeddb@6
+          npm install --no-save --no-package-lock --ignore-scripts playwright@1.55.0 leaflet@1.9.4
+          node ./node_modules/playwright/cli.js install webkit
+      - name: Build allowlisted static preview and test mobile WebKit
+        run: |
+          node creative-next/qa/r31-project-save-lab/build-private-preview.mjs "$RUNNER_TEMP/r31-webkit-preview"
+          R31_LAB_STATIC_ROOT="$RUNNER_TEMP/r31-webkit-preview" R31_LAB_BROWSER=webkit node creative-next/qa/r31-project-save-lab-browser.cjs
+          R31_LAB_STATIC_ROOT="$RUNNER_TEMP/r31-webkit-preview" R31_LAB_BROWSER=webkit node creative-next/qa/three-function-r31-browser-lab.cjs
+# No deploy, no release, no production namespace or approved r31 UI modifications.

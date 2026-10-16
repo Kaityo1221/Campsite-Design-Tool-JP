@@ -1,0 +1,18 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "npm install --no-save --no-package-lock --ignore-scripts jszip@3.10.1 @xmldom/xmldom@0.9.8 playwright@1.55.0",
+  "buildCommand": "node -e \"if(process.env.VERCEL_ENV!=='preview')process.exit(1)\" && node creative-next/qa/r31-project-save-lab/build-private-preview.mjs preview-dist",
+  "outputDirectory": "preview-dist",
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow, noarchive"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ja"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>Campsite Project 帰還受信 LAB</title>
+<style>
+html{font:16px -apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN",sans-serif;background:#16130e;color:#f9f4e9}
+body{margin:0 auto;padding:24px 16px 40px;max-width:640px;line-height:1.55}
+h1{font-size:23px;line-height:1.35}h2{font-size:18px}
+.warning{color:#f6ce78;font-weight:800}.muted{color:#c8bdab;font-size:13px}
+.panel{background:#fdf7e9;border-radius:20px;padding:18px;color:#2b241c}
+label{display:block;font-size:14px;font-weight:800;margin-top:15px}
+input{box-sizing:border-box;width:100%;min-height:50px;padding:12px;margin-top:5px;font-size:16px;border:1px solid #ac9475;border-radius:10px}
+button{width:100%;padding:16px;min-height:50px;margin-top:18px;border:0;border-radius:12px;background:#f5d887;color:#342515;font-size:16px;font-weight:900}
+#return-status{white-space:pre-wrap;overflow-wrap:anywhere;margin-top:15px;border-radius:12px;padding:12px;background:#ebe5da;font-weight:700}
+#return-status[data-kind="ok"]{background:#dbefdc;color:#125327}
+#return-status[data-kind="error"]{background:#fee1db;color:#8b211d}
+dl{display:grid;grid-template-columns:1fr auto;gap:8px;font-size:14px}
+dt{color:#655543}dd{margin:0;font-weight:800;text-align:right}
+a{color:#f2d17e}
+</style></head><body>
+<p class="warning">🧪 PRIVATE LAB / 本番へは書き込みません</p>
+<h1>Campsite Project 帰還受信テスト</h1>
+<p>Creative Nextが保存した完全なProjectとNEW_V1 KMZを、<strong>同じ隔離サイトのIndexedDB</strong>から読み取り、整合性を再確認します。</p>
+<p class="muted">従来のBridge Receiverや実際のCampsite Project保存領域には転送しません。入力内容が不明・不正ならHOLDします。Project IDを自動で一覧表示することもしません。転送ZIPは暗号化・送信者認証されません。SHA-256で整合性を確認できても送信者の真正性は証明されないため、架空データのみを使用してください。</p>
+<div class="panel">
+<label for="return-project-id">Project ID</label>
+<input id="return-project-id" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="r31-ui-lab-project">
+<label for="return-handoff-id">Handoff ID</label>
+<input id="return-handoff-id" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="handoff:r31-ui-lab">
+<button id="return-verify" type="button">🔍 同じサイトの保存データを検証</button>
+<button id="return-download" type="button" hidden>📦 検証済みセットをダウンロード（LAB）</button>
+<hr>
+<p><strong>別のサイトから受け取る場合</strong></p>
+<p class="muted">ダウンロードしたLAB専用の転送ZIPをこの端末から選び、上と同じProject/Handoff IDで検証します。ファイルは外部へ送信しません。</p>
+<label for="return-file">ProjectとKMZを含むLAB転送セット（ZIP）</label>
+<input id="return-file" type="file">
+<button id="return-upload-verify" type="button">📦 ファイルから受信検証（読取専用）</button>
+<div id="return-status" role="status" aria-live="polite">未検証。識別IDを入力してください。</div>
+<div id="return-summary" hidden><h2>受信内容（読取専用）</h2><dl id="return-details"></dl>
+<p class="muted">形式変換や保存は行いません。古いBridge POI Receiverへの送信は未承認です。</p></div>
+<div id="return-distance-panel" hidden>
+<h2>📏 距離チェックへ渡す前の確認</h2>
+<dl id="return-distance-details"></dl>
+<p class="muted">これは読取専用のデータ監査です。距離チェックの計算・本番への引継ぎ・保存はしません。</p>
+</div>
+</div>
+<p><a href="../r31-project-save-lab/index.html">← Creative Next 編集LABへ戻る</a></p>
+<script src="../../phase-2-preview/vendor/jszip.min.js"></script>
+<script type="module" src="./controller.mjs"></script>
+</body></html>
