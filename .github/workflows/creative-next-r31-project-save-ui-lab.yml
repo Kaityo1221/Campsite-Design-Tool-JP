@@ -21,6 +21,9 @@ on:
       - 'creative-next/qa/campsite-distance-confirmed-import.test.mjs'
       - 'creative-next/qa/x01-x04-boundary-matrix.test.mjs'
       - 'creative-next/qa/x01-x04-generation-transition.test.mjs'
+      - 'creative-next/qa/x04-signed-attestation-candidate.test.mjs'
+      - 'creative-next/contracts/x04-signed-attestation-candidate-lab.mjs'
+      - 'creative-next/contracts/X01_X04_APPROVAL_CANDIDATES_2026-10-17.md'
       - 'creative-next/contracts/x01-x04-transition-gate-lab.mjs'
       - 'creative-next/qa/campsite-distance-import-lab/**'
       - '.github/workflows/creative-next-r31-project-save-ui-lab.yml'
@@ -61,7 +64,7 @@ jobs:
           node --check creative-next/qa/three-function-r31-browser-lab.cjs
           node creative-next/qa/three-function-r31-browser-lab.cjs
           node --test creative-next/qa/campsite-return-receiver.test.mjs creative-next/qa/portable-return-bundle.test.mjs creative-next/qa/campsite-distance-return-stage.test.mjs creative-next/qa/campsite-distance-math-compat.test.mjs
-          node --test creative-next/qa/campsite-distance-confirmed-import.test.mjs creative-next/qa/x01-x04-boundary-matrix.test.mjs creative-next/qa/x01-x04-generation-transition.test.mjs
+          node --test creative-next/qa/campsite-distance-confirmed-import.test.mjs creative-next/qa/x01-x04-boundary-matrix.test.mjs creative-next/qa/x01-x04-generation-transition.test.mjs creative-next/qa/x04-signed-attestation-candidate.test.mjs
           node --check creative-next/qa/campsite-distance-real-screen-browser.cjs
           node creative-next/qa/campsite-distance-real-screen-browser.cjs
       - name: Build and browser-test deployable isolated preview snapshot
