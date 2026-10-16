@@ -15,6 +15,13 @@ function reset(){
  pending=null;exportReady=null;$('accept-summary').hidden=true;$('accept-create').hidden=true;
  $('accept-reedit').hidden=true;
 }
+// Invalidate previously verified exports whenever their source identity changes.
+for(const id of ['accept-project','accept-handoff','accept-file']){
+ $(id).addEventListener(id==='accept-file'?'change':'input',()=>{
+  if(busy)return;
+  reset();status('入力が変更されました。受信検証または保存データ再開をやり直してください。');
+ });
+}
 function display(row){
  const items=[
  ['送信元保存世代',row.sourceRevision??'再開'],
@@ -37,13 +44,15 @@ function display(row){
 }
 async function locked(work){
  if(busy)return;
- busy=true;for(const id of ['accept-inspect','accept-create','accept-reopen'])
+ busy=true;for(const id of ['accept-inspect','accept-create','accept-reopen',
+  'accept-project','accept-handoff','accept-file'])
   $(id).disabled=true;
  try{await work();}catch(e){
   reset();status('HOLD：'+String(e?.code||e?.message||'DISTANCE_UNKNOWN').slice(0,130)+
    '。自動上書き・修復・削除はしません。','error');
  }finally{
-  busy=false;for(const id of ['accept-inspect','accept-create','accept-reopen'])
+  busy=false;for(const id of ['accept-inspect','accept-create','accept-reopen',
+   'accept-project','accept-handoff','accept-file'])
    $(id).disabled=false;
  }
 }
@@ -73,13 +82,14 @@ $('accept-reopen').addEventListener('click',()=>locked(async()=>{
  reset();status('隔離保存データを再読込して検証中…');
  const row=await api.reopen(getIds());
  display(row);
- exportReady={project:row.project,kmzBytes:new Uint8Array(row.kmzBytes)};
+ exportReady={project:row.project,kmzBytes:new Uint8Array(row.kmzBytes),...getIds()};
  $('accept-reedit').hidden=false;
  status('隔離保存済みの世代 '+row.revision+
   ' を再読込・照合しました。再編集用2ファイルを手動で保存できます。','ok');
 }));
 function directDownload(data,name,type){
- if(!exportReady||busy)return;
+ if(!exportReady||busy||getIds().expectedProjectId!==exportReady.expectedProjectId||
+   getIds().expectedHandoffId!==exportReady.expectedHandoffId)return;
  const blob=new Blob([data],{type}),url=URL.createObjectURL(blob);
  const a=document.createElement('a');
  a.href=url;a.download=name;document.body.append(a);a.click();a.remove();
@@ -87,7 +97,7 @@ function directDownload(data,name,type){
 }
 $('accept-project-download').addEventListener('click',()=>{
  if(!exportReady)return;
- directDownload(JSON.stringify(exportReady.project,null,2)+'\\n',
+ directDownload(JSON.stringify(exportReady.project,null,2)+'\n',
   'distance-reedit-project.json','application/json');
 });
 $('accept-kmz-download').addEventListener('click',()=>{

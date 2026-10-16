@@ -19,6 +19,7 @@ const {webcrypto}=require('node:crypto');
 const fixtureImage=fs.readFileSync(path.join(ROOT,'creative-next/qa/r31/fixtures/blue-dot.png'));
 const ENTRY_URL='https://r31-three-function.invalid/creative-next/qa/r31-project-save-lab/index.html';
 const DB='campsite-creative-next-x01-idb-lab-r31-save-ui-20261012';
+const RECEIVE_DB='campsite-creative-next-x01-idb-lab-distance-receiver-20261016';
 const PROJECT_ID='r31-three-function-browser-lab';
 const HANDOFF_ID='handoff:three-function-browser-lab';
 const clone=v=>JSON.parse(JSON.stringify(v));
@@ -83,7 +84,7 @@ function routeLocal(context){
   return r.abort();
  });
 }
-async function fromDatabase(page){
+async function fromDatabase(page,dbName=DB){
  return page.evaluate(async ({dbName,projectId,handoffId})=>{
   const db=await new Promise((resolve,reject)=>{
    const req=indexedDB.open(dbName);
@@ -102,11 +103,13 @@ async function fromDatabase(page){
     req.onerror=()=>reject(req.error);
    });
   }finally{db.close();}
- },{dbName:DB,projectId:PROJECT_ID,handoffId:HANDOFF_ID});
+ },{dbName,projectId:PROJECT_ID,handoffId:HANDOFF_ID});
 }
 async function main(){
- const [{createLinkedPairLab,reopenLinkedPairLab},input]=await Promise.all([
-  import('../contracts/linked-project-kmz-lab.mjs'),makeObservedInput()]);
+ const [{createLinkedPairLab,reopenLinkedPairLab},
+  {createPortableReturnBundleLab,inspectPortableReturnBundleLab},input]=await Promise.all([
+  import('../contracts/linked-project-kmz-lab.mjs'),
+  import('../contracts/portable-return-bundle-lab.mjs'),makeObservedInput()]);
  const cryptoProvider=webcrypto,options={JSZip,DOMParser,cryptoProvider};
  // Confirm that the WM3-derived synthetic pair is independently valid.
  const original=await createLinkedPairLab({...options,project:input.project,
@@ -313,8 +316,15 @@ async function main(){
       const stale=await ctx.newPage();
       try{
         await enter(stale);
-        recipient.on('dialog',d=>d.accept());
+        let cancelOnce=true;
+        recipient.on('dialog',d=>{
+         if(cancelOnce){cancelOnce=false;d.dismiss();}
+         else d.accept();
+        });
         stale.on('dialog',d=>d.accept());
+        await recipient.locator('#accept-create').tap();
+        assert.match(await recipient.locator('#accept-status').textContent(),/保存をキャンセルしました/);
+        assert.equal(await recipient.locator('#accept-create').isVisible(),true);
         await recipient.locator('#accept-create').tap();
         await recipient.waitForFunction(()=>document.querySelector('#accept-status')?.textContent.includes('隔離保存成功'));
         assert.match(await recipient.locator('#accept-status').textContent(),/世代 1/);
@@ -338,6 +348,13 @@ async function main(){
         assert.equal(remains.recipientDbExists,true);
         assert.equal(remains.old,'THREE_FLOW_LEGACY_STAYS');
         assert.equal(remains.journal,'THREE_FLOW_JOURNAL_STAYS');
+        await stale.locator('#accept-handoff').fill('handoff:wrong');
+        assert.equal(await stale.locator('#accept-reedit').isVisible(),false);
+        await stale.locator('#accept-handoff').fill(HANDOFF_ID);
+        await stale.locator('#accept-reopen').tap();
+        await stale.waitForFunction(()=>document.getElementById('accept-status')
+         ?.textContent.includes('再読込・照合しました'));
+        const receiptBefore=await fromDatabase(stale,RECEIVE_DB);
         // After explicit verified reopen, export the original complete
         // Project+NEW_V1 pair back to the genuine frozen r31 editing screen.
         // The receiving Project row remains read-only and is not replaced.
@@ -356,6 +373,8 @@ async function main(){
         const json=JSON.parse(reeditJson.bytes.toString('utf8'));
         assert.equal(json.projectId,PROJECT_ID);
         assert.equal(json.currentPois.length,2);
+        assert.deepEqual(json,row.project,'downloaded Project must retain every field');
+        assert.deepEqual(reeditKmz.bytes,Buffer.from(row.kmzBytes),'NEW_V1 KMZ must be byte-equivalent');
         const editPage=await ctx.newPage();
         editPage.on('dialog',d=>d.accept());
         try{
@@ -369,10 +388,14 @@ async function main(){
          await editPage.locator('#lab-import').tap();
          await editPage.waitForFunction(()=>__r31ProjectSaveLabStatus?.().attached||
           document.getElementById('lab-status')?.dataset.kind==='error');
-         const returnedRecords=await editPage.evaluate(()=>document.querySelector('#r31-frame')
-          .contentWindow.creativeR31Workspace.workspace.session.state().records);
-         assert.equal(returnedRecords.length,2,
-          await editPage.locator('#lab-status').textContent());
+         const returned=await editPage.evaluate(()=>({
+          kind:document.querySelector('#lab-status').dataset.kind,
+          records:document.querySelector('#r31-frame')
+           .contentWindow.creativeR31Workspace.workspace.session.state().records
+         }));
+         assert.equal(returned.kind,'ok',await editPage.locator('#lab-status').textContent());
+         assert.equal(returned.records.length,2);
+         assert.equal(returned.records.some(x=>x.guid==='outer'||x.guid==='reserve'),false);
          await editPage.locator('#lab-close').tap();
          const returnR31=editPage.frameLocator('#r31-frame');
          await returnR31.locator('#cmAddFab').tap();
@@ -380,6 +403,38 @@ async function main(){
          await returnR31.locator('#cmSafeAddConfirm').tap();
          await editPage.waitForFunction(()=>document.querySelector('#r31-frame')
           .contentWindow.creativeR31Workspace.workspace.session.state().records.length===3);
+         await editPage.locator('#lab-open').tap();
+         await editPage.locator('#lab-save').tap();
+         await editPage.waitForFunction(()=>__r31ProjectSaveLabStatus?.().revision===1||
+          document.querySelector('#lab-status')?.dataset.kind==='error');
+         assert.equal(await editPage.evaluate(()=>__r31ProjectSaveLabStatus().revision),1,
+          await editPage.locator('#lab-status').textContent());
+         // Re-editing produces a new verified linked pair on the LAB-only Creative origin.
+         const nextRaw=await fromDatabase(editPage);
+         const successor=await reopenLinkedPairLab({...options,
+          pair:{manifest:nextRaw.manifest,kmzBytes:Uint8Array.from(nextRaw.kmzBytes)},
+          expectedProjectId:PROJECT_ID,expectedHandoffId:HANDOFF_ID});
+         assert.equal(nextRaw.revision,1);
+         assert.equal(successor.project.currentPois.length,3);
+         assert.equal(successor.project.addedPois.length,2);
+         assert.deepEqual(successor.project.wayfarerObservation,input.snapshot);
+         assert.deepEqual(successor.project.polygon,row.project.polygon);
+         assert.deepEqual(successor.project.sourcePois,row.project.sourcePois);
+         assert.deepEqual(successor.project.selectedPois,row.project.selectedPois);
+         assert.deepEqual(successor.project.edits,row.project.edits);
+         assert.deepEqual(successor.project.syntheticUnknownFuture,row.project.syntheticUnknownFuture);
+         assert.deepEqual(successor.activityAreas,row.activityAreas);
+         assert.equal(successor.project.currentPois.some(x=>x.guid==='outer'||x.guid==='reserve'),false);
+         const nextExport=await createPortableReturnBundleLab({...options,
+          project:successor.project,activityAreas:successor.activityAreas,
+          kmzBytes:successor.kmzBytes,revision:nextRaw.revision,
+          expectedProjectId:PROJECT_ID,expectedHandoffId:HANDOFF_ID});
+         const checked=await inspectPortableReturnBundleLab({...options,
+          bytes:nextExport.bytes,expectedProjectId:PROJECT_ID,expectedHandoffId:HANDOFF_ID});
+         assert.deepEqual(checked.project,successor.project);
+         assert.deepEqual(checked.activityAreas,successor.activityAreas);
+         assert.deepEqual(Buffer.from(checked.kmzBytes),Buffer.from(successor.kmzBytes));
+         assert.equal(checked.productionReady,false);
         }finally{await editPage.close();}
         // Re-editing a separate verified Session cannot silently change
         // the confirmed Campsite receiver's source generation.
@@ -387,6 +442,8 @@ async function main(){
         await stale.waitForFunction(()=>document.getElementById('accept-status')
          ?.textContent.includes('再読込・照合しました'));
         assert.match(await stale.locator('#accept-status').textContent(),/世代 1/);
+        assert.deepEqual(await fromDatabase(stale,RECEIVE_DB),receiptBefore,
+         'Campsite-received source generation remains byte-exact');
         // An already accepted Project must remain protected from even an
         // explicit second attempted import. No destructive rollback needed.
         await recipient.goto(ACCEPT_URL);
@@ -406,7 +463,9 @@ async function main(){
      returnLabBrowserUiVerified:true,returnWrongHandoffHold:true,
      portableManualExport:true,crossOriginFileReceiver:true,crossOriginReceiverReadOnly:true,
      strictDistancePreflightBrowser:true,
-     nonauthoritativeDistanceMathPreview:true,
+     nonauthoritativeDistanceMathPreview:true,reeditDownloadsVerified:true,
+     successorPairRoundTripVerified:true,receiverRevisionUnchanged:true,
+     cancelledConfirmationProtected:true,
      productionReceiverUiTested:false,realWayfarer:false,productionReady:false});
    }finally{await ctx.close();}
   }

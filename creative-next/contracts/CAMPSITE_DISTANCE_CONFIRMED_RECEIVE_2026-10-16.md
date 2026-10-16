@@ -33,3 +33,11 @@ Date: 2026-10-16 JST. Repo `Kaityo1221/Campsite-Design-Tool-JP`, PR #368 Draft.
 X-01 polygon ownership and zero/one/many independent activity-area mapping approval; X-04 official versioned portable/authenticated cross-origin format; security and user-permission review; atomic and reversible real Project import including multi-generation rollback and stale-tab conflicts; actual distance scoring/analytics policy and reference100 treatment; test edit→distance→return-to-Creative changes against real, not synthetic, app workflows; WebKit/iPhone/Android device parity and full release authorization.
 
 Do not merge to `main`, overwrite `campsiteProject.v1`, or deploy any LAB as a production feature.
+
+## Return to Creative Next re-edit (LAB only)
+
+6. **④ Creativeで再編集する（手動LAB）** provides verified Project JSON and original NEW_V1 KMZ download only after a successful reopen. The JSON file has valid trailing whitespace, never literal backslash-n bytes. Changing either identity or selected ZIP hides exports pending re-verification; controls are locked during verification.
+7. Explicitly import both files into the separate confirmed r31 Creative Next LAB UI. After a new POI edit, an independent Creative LAB save creates a new cryptographically verified linked pair; another experimental portable return ZIP can be built and re-opened. The original Campsite receiving IndexedDB generation must stay byte-equivalent. The browser flow also checks declined save consent and stale-tab CAS.
+8. Browser checks include Wayfarer observation zones, selected and source POIs, unknown future fields, design polygon, activity-area equality, archive bytes, and IDs. A separate Node fixture covers a 31-vertex independent area through a new isolated successor store. Neither browser automation nor macOS WebKit simulation is a physical iPhone or Android pass.
+
+**HOLD unchanged:** X-01/X-04 unapproved, actual Campsite receiver unconnected, official Distance write blocked, no r31 approved UI/main/release changes.

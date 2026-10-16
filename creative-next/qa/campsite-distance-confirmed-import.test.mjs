@@ -100,7 +100,19 @@ test('readback enables a non-destructive next-edit candidate without silently co
   revision:4,...ids,...deps
  });
  assert(paired.bytes.length>0);
+ const later=api('rework-successor');
+ const next=await later.prepare({bytes:paired.bytes,...ids});
+ assert.equal(next.sourceRevision,4);
+ assert.equal(next.canCreate,true);
+ await later.confirmCreate({ticket:next.ticket,confirmed:true});
+ const advanced=await later.reopen(ids);
+ assert.equal(advanced.revision,1);
+ assert.deepEqual(advanced.project,newProject);
+ assert.deepEqual(advanced.activityAreas,[area]);
+ assert.deepEqual(advanced.kmzBytes,old.kmzBytes);
+ assert.deepEqual(advanced.project.wayfarerObservation,x.p.wayfarerObservation);
  const retained=await api('rework').reopen(ids);
  assert.deepEqual(retained.project,x.p);
+ assert.deepEqual(retained.activityAreas,[area]);
  assert.equal(retained.revision,1);
 });
