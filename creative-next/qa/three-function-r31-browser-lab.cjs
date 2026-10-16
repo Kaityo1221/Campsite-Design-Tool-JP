@@ -338,6 +338,55 @@ async function main(){
         assert.equal(remains.recipientDbExists,true);
         assert.equal(remains.old,'THREE_FLOW_LEGACY_STAYS');
         assert.equal(remains.journal,'THREE_FLOW_JOURNAL_STAYS');
+        // After explicit verified reopen, export the original complete
+        // Project+NEW_V1 pair back to the genuine frozen r31 editing screen.
+        // The receiving Project row remains read-only and is not replaced.
+        assert.equal(await stale.locator('#accept-reedit').isVisible(),true);
+        const downloadFromStale=async(selector)=>{
+         const promise=stale.waitForEvent('download');
+         await stale.locator(selector).tap();
+         const file=await promise,chunks=[];
+         for await(const part of await file.createReadStream())chunks.push(part);
+         return {name:file.suggestedFilename(),bytes:Buffer.concat(chunks)};
+        };
+        const reeditJson=await downloadFromStale('#accept-project-download');
+        const reeditKmz=await downloadFromStale('#accept-kmz-download');
+        assert.equal(reeditJson.name,'distance-reedit-project.json');
+        assert.equal(reeditKmz.name,'distance-reedit-new-v1.kmz');
+        const json=JSON.parse(reeditJson.bytes.toString('utf8'));
+        assert.equal(json.projectId,PROJECT_ID);
+        assert.equal(json.currentPois.length,2);
+        const editPage=await ctx.newPage();
+        editPage.on('dialog',d=>d.accept());
+        try{
+         await editPage.goto('https://r31-recipient.invalid/creative-next/qa/r31-project-save-lab/index.html');
+         await editPage.waitForFunction(()=>!!document.querySelector('#r31-frame')?.contentWindow?.creativeR31Workspace);
+         await editPage.locator('#lab-open').tap();
+         await editPage.locator('#lab-project').setInputFiles({
+          name:reeditJson.name,mimeType:'application/json',buffer:reeditJson.bytes});
+         await editPage.locator('#lab-kmz').setInputFiles({
+          name:reeditKmz.name,mimeType:'application/vnd.google-earth.kmz',buffer:reeditKmz.bytes});
+         await editPage.locator('#lab-import').tap();
+         await editPage.waitForFunction(()=>__r31ProjectSaveLabStatus?.().attached||
+          document.getElementById('lab-status')?.dataset.kind==='error');
+         const returnedRecords=await editPage.evaluate(()=>document.querySelector('#r31-frame')
+          .contentWindow.creativeR31Workspace.workspace.session.state().records);
+         assert.equal(returnedRecords.length,2,
+          await editPage.locator('#lab-status').textContent());
+         await editPage.locator('#lab-close').tap();
+         const returnR31=editPage.frameLocator('#r31-frame');
+         await returnR31.locator('#cmAddFab').tap();
+         await returnR31.locator('.cm-bubble[data-layer="new-gym"]').tap();
+         await returnR31.locator('#cmSafeAddConfirm').tap();
+         await editPage.waitForFunction(()=>document.querySelector('#r31-frame')
+          .contentWindow.creativeR31Workspace.workspace.session.state().records.length===3);
+        }finally{await editPage.close();}
+        // Re-editing a separate verified Session cannot silently change
+        // the confirmed Campsite receiver's source generation.
+        await stale.locator('#accept-reopen').tap();
+        await stale.waitForFunction(()=>document.getElementById('accept-status')
+         ?.textContent.includes('再読込・照合しました'));
+        assert.match(await stale.locator('#accept-status').textContent(),/世代 1/);
         // An already accepted Project must remain protected from even an
         // explicit second attempted import. No destructive rollback needed.
         await recipient.goto(ACCEPT_URL);
