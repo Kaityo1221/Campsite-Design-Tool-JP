@@ -4,7 +4,7 @@ const $=id=>document.getElementById(id);
 const api=createCampsiteDistanceConfirmedImportLab({
  JSZip:window.JSZip,DOMParser,cryptoProvider:crypto
 });
-let pending=null,busy=false;
+let pending=null,busy=false,exportReady=null;
 const getIds=()=>({expectedProjectId:$('accept-project').value.trim(),
  expectedHandoffId:$('accept-handoff').value.trim()});
 const stop=code=>{const e=new Error(code);e.code=code;throw e;};
@@ -12,7 +12,8 @@ const status=(message,kind='neutral')=>{
  $('accept-status').dataset.kind=kind;$('accept-status').textContent=message;
 };
 function reset(){
- pending=null;$('accept-summary').hidden=true;$('accept-create').hidden=true;
+ pending=null;exportReady=null;$('accept-summary').hidden=true;$('accept-create').hidden=true;
+ $('accept-reedit').hidden=true;
 }
 function display(row){
  const items=[
@@ -71,9 +72,29 @@ $('accept-create').addEventListener('click',()=>{
 $('accept-reopen').addEventListener('click',()=>locked(async()=>{
  reset();status('隔離保存データを再読込して検証中…');
  const row=await api.reopen(getIds());
- display(row);status('隔離保存済みの世代 '+row.revision+
-  ' を再読込・照合しました。本番データは未変更です。','ok');
+ display(row);
+ exportReady={project:row.project,kmzBytes:new Uint8Array(row.kmzBytes)};
+ $('accept-reedit').hidden=false;
+ status('隔離保存済みの世代 '+row.revision+
+  ' を再読込・照合しました。再編集用2ファイルを手動で保存できます。','ok');
 }));
+function directDownload(data,name,type){
+ if(!exportReady||busy)return;
+ const blob=new Blob([data],{type}),url=URL.createObjectURL(blob);
+ const a=document.createElement('a');
+ a.href=url;a.download=name;document.body.append(a);a.click();a.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),30000);
+}
+$('accept-project-download').addEventListener('click',()=>{
+ if(!exportReady)return;
+ directDownload(JSON.stringify(exportReady.project,null,2)+'\\n',
+  'distance-reedit-project.json','application/json');
+});
+$('accept-kmz-download').addEventListener('click',()=>{
+ if(!exportReady)return;
+ directDownload(exportReady.kmzBytes,'distance-reedit-new-v1.kmz',
+  'application/vnd.google-earth.kmz');
+});
 window.__distanceImportLabStatus=()=>({
  busy,pending:!!pending,productionReady:false,dbName:api.dbName
 });
