@@ -338,12 +338,17 @@ async function main(){
         assert.equal(remains.recipientDbExists,true);
         assert.equal(remains.old,'THREE_FLOW_LEGACY_STAYS');
         assert.equal(remains.journal,'THREE_FLOW_JOURNAL_STAYS');
-        // Existing receiver Project must never be silently overwritten.
-        await enter(recipient);
-        assert.fail('Second confirmation unexpectedly allowed an existing Project');
-      }catch(e){
-        // Only expected prior-target HOLD should be allowed at the tail.
-        if(e?.message!=='Second confirmation unexpectedly allowed an existing Project')throw e;
+        // An already accepted Project must remain protected from even an
+        // explicit second attempted import. No destructive rollback needed.
+        await recipient.goto(ACCEPT_URL);
+        await recipient.locator('#accept-project').fill(PROJECT_ID);
+        await recipient.locator('#accept-handoff').fill(HANDOFF_ID);
+        await recipient.locator('#accept-file').setInputFiles({
+         name:'campsite-return-test-only.zip',mimeType:'application/zip',buffer:transferred});
+        await recipient.locator('#accept-inspect').tap();
+        await recipient.waitForFunction(()=>document.querySelector('#accept-status')?.dataset.kind==='error');
+        assert.match(await recipient.locator('#accept-status').textContent(),/DISTANCE_IMPORT_EXISTING_PROTECTED/);
+        assert.equal(await recipient.locator('#accept-create').isVisible(),false);
       }finally{await stale.close();}
     }finally{await recipient.close();}
     assert.deepEqual(jsErrors,[]);
