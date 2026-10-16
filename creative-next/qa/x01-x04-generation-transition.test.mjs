@@ -125,8 +125,9 @@ test('X-04 explicit older rollback candidate reviewed, but cannot commit/rollbac
  assert.equal(output.writeAllowed,false);
  const corrupted=candidate(ancestor);
  corrupted.project.future.notes='not the rollback source';
+ const currentFingerprint=await fp(current);
  await assert.rejects(()=>previewX04GenerationTransitionLab({
-  current,candidate:corrupted,baseRevision:3,baseFingerprint:await fp(current),
+  current,candidate:corrupted,baseRevision:3,baseFingerprint:currentFingerprint,
   operation:'ROLLBACK',rollbackSource:ancestor,confirmed:true,...ids(current),...deps
  }),{code:'X04_ROLLBACK_SOURCE_MISMATCH'});
 });
