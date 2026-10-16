@@ -102,4 +102,5 @@ jobs:
         run: |
           node creative-next/qa/r31-project-save-lab/build-private-preview.mjs "$RUNNER_TEMP/r31-webkit-preview"
           R31_LAB_STATIC_ROOT="$RUNNER_TEMP/r31-webkit-preview" R31_LAB_BROWSER=webkit node creative-next/qa/r31-project-save-lab-browser.cjs
+          R31_LAB_STATIC_ROOT="$RUNNER_TEMP/r31-webkit-preview" R31_LAB_BROWSER=webkit node creative-next/qa/three-function-r31-browser-lab.cjs
 # No deploy, no release, no production namespace or approved r31 UI modifications.

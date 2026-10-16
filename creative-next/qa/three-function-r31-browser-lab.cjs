@@ -12,7 +12,9 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const ROOT=path.resolve(__dirname,'../..');
 const SERVE_ROOT=process.env.R31_LAB_STATIC_ROOT?path.resolve(process.env.R31_LAB_STATIC_ROOT):ROOT;
-const {chromium}=require(path.join(ROOT,'node_modules/playwright'));
+const {chromium,webkit}=require(path.join(ROOT,'node_modules/playwright'));
+const ENGINE=process.env.R31_LAB_BROWSER||'chromium';
+if(!['chromium','webkit'].includes(ENGINE))throw Error('R31_BROWSER_UNSUPPORTED');
 const JSZip=require('jszip');
 const {DOMParser,XMLSerializer}=require('@xmldom/xmldom');
 const {webcrypto}=require('node:crypto');
@@ -116,7 +118,7 @@ async function main(){
   activityAreas:[],kmzBytes:new Uint8Array(input.bytes),
   expectedProjectId:PROJECT_ID,expectedHandoffId:HANDOFF_ID});
  assert.equal(original.productionReady,false);
- const browser=await chromium.launch({headless:true});
+ const browser=await (ENGINE==='webkit'?webkit:chromium).launch({headless:true});
  const results=[];
  try{
   for(const viewport of [{width:390,height:844},{width:393,height:852}]){
@@ -470,6 +472,6 @@ async function main(){
    }finally{await ctx.close();}
   }
  }finally{await browser.close();}
- console.log(JSON.stringify({status:'PASS',results,phase:'HOLD',productionReady:false}));
+ console.log(JSON.stringify({status:'PASS',browser:ENGINE,results,phase:'HOLD',safariRealDevice:'NOT_TESTED',productionReady:false}));
 }
 main().catch(e=>{console.error(e);process.exitCode=1;});

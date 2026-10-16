@@ -60,3 +60,7 @@ New isolated module `creative-next/contracts/x01-x04-transition-gate-lab.mjs` do
 - New tests `creative-next/qa/x01-x04-generation-transition.test.mjs` run in CI beside the existing boundary matrix, with synthetic data only.
 
 Formal X-01 area semantics, X-04 authorized sender / signed transfer, real multi-generation transactional persistence and rollback remain intentionally unimplemented. This adds executable safety gates, not an approved production contract.
+
+## WebKit browser parity expansion (LAB only; 2026-10-16)
+
+Run the same synthetic three-function browser flow using the macOS Playwright WebKit engine at 390×844 and 393×852, in addition to the existing separate r31 Project save UI test. It must verify the actual frozen r31 iframe, manual portable download into a distinct receiver origin, create-only consent, CAS conflict, readback, Project and NEW_V1 re-download, re-import, new POI edit and separate successor pair, original receipt protection. No live Wayfarer collector, physical iPhone Safari, Android or production runtime is implied. The expanded job remains within the same protected non-deployed preview in CI.
