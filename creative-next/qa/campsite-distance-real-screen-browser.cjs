@@ -53,10 +53,12 @@ const records=[
 ];
 async function stage(){
  const [{createFreshV1Kmz},{createPortableReturnBundleLab,inspectPortableReturnBundleLab},
- {inspectCampsiteDistanceReturnStageLab}]=await Promise.all([
+ {inspectCampsiteDistanceReturnStageLab},
+ {compileX01TypedDistanceCandidateLab}]=await Promise.all([
   import('../phase-1b/core/create-new-kmz.mjs'),
   import('../contracts/portable-return-bundle-lab.mjs'),
-  import('../contracts/campsite-distance-return-stage-lab.mjs')
+  import('../contracts/campsite-distance-return-stage-lab.mjs'),
+  import('../contracts/x01-distance-adapter-candidate-lab.mjs')
  ]);
  const {bytes}=await createFreshV1Kmz({records,activityAreas:[area]},
   {JSZip,DOMParser,XMLSerializer,documentName:'RealCampsiteScreenLAB'});
@@ -72,7 +74,15 @@ async function stage(){
  assert.equal(result.legacyDistanceCommitAllowed,false);
  assert.equal(result.legacyActivityAreaConflict,true);
  assert.equal(result.summary.currentPoiCount,3);
- return result;
+ const typed=compileX01TypedDistanceCandidateLab({
+  distanceStage:result,selectedActivityAreaIds:[area.id],confirmed:true
+ });
+ assert.equal(typed.approvedMapping,false);
+ assert.equal(typed.distancePreview.dataOnlyNotRuntimeBinding,true);
+ assert.deepEqual(typed.distancePreview.activityAreaIds,['creative-31']);
+ assert.deepEqual(typed.distancePreview.designPolygon,project.polygon);
+ assert.deepEqual(typed.distancePreview.acquisitionPolygon,project.wayfarerObservation.polygon);
+ return typed;
 }
 async function realScreen(browser,viewport,staged){
  const ctx=await browser.newContext({viewport});
@@ -98,7 +108,7 @@ async function realScreen(browser,viewport,staged){
    window.setWorkflowStep=()=>{};
    window.sendDistanceCheckAnalytics=()=>{window.__intercepted=(window.__intercepted||0)+1};
    window.uploadCampsiteFile=()=>{throw Error('LAB_MUST_NOT_UPLOAD')};
-  },{groups:staged.distanceInput.groups,areas:staged.distanceInput.activityAreas});
+  },{groups:staged.distancePreview.layerPoints,areas:staged.originalActivityAreas});
   await page.evaluate(()=>runDistanceCheck());
   await page.waitForFunction(()=>distanceLeafletMap!==null&&
    distancePolygonLayerGroup?.getLayers().length===1&&
@@ -132,7 +142,8 @@ async function realScreen(browser,viewport,staged){
   assert.deepEqual(errors,[]);
   return {viewport,status:'PASS',actualCampsiteDistanceHtml:true,actualCampsiteDistanceCode:true,
    actualLeaflet:true,poiMarkers:3,warningLines:3,
-   activityAreaVertices:31,referenceOrReservePromoted:false,
+   activityAreaVertices:31,typedX01DataOnlyCandidate:true,
+   referenceOrReservePromoted:false,
    analyticsIntercepted:true,storageWrites:false,productionReady:false};
  }finally{await ctx.close()}
 }

@@ -21,6 +21,7 @@ on:
       - 'creative-next/qa/campsite-distance-confirmed-import.test.mjs'
       - 'creative-next/qa/x01-x04-boundary-matrix.test.mjs'
       - 'creative-next/qa/x01-x04-generation-transition.test.mjs'
+      - 'creative-next/contracts/x01-distance-adapter-candidate-lab.mjs'
       - 'creative-next/qa/x04-signed-attestation-candidate.test.mjs'
       - 'creative-next/contracts/x04-signed-attestation-candidate-lab.mjs'
       - 'creative-next/contracts/X01_X04_APPROVAL_CANDIDATES_2026-10-17.md'
