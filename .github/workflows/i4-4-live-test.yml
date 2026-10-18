@@ -1,0 +1,22 @@
+name: I4-4 Live TEST
+on:
+  pull_request:
+    paths:
+      - 'lab/i4-4-live-test.js'
+      - 'lab/i4-4-iphone-test-shortcut.js'
+      - 'scripts/check-i4-4-live-test.mjs'
+      - 'bridge-pc/wayfarer-acquisition-engine.js'
+      - '.github/workflows/i4-4-live-test.yml'
+  workflow_dispatch:
+jobs:
+  isolated-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Common acquisition and isolated iPhone test
+        run: |
+          node scripts/check-iphone-i4-acquisition-plan.mjs
+          node scripts/check-i4-4-live-test.mjs
