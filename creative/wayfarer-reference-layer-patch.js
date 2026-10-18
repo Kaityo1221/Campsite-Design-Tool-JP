@@ -81,6 +81,18 @@ setTimeout(()=>{try{map.on('click',cmWm6CloseReferencePanel)}catch(_){}},0);
       out = out.replace(wm6ActivationBody, wm6ActivationReplacement);
     }
 
+    // Keep Wayfarer-observed inactive Power Spots in a clearly non-editable KMZ folder.
+    // The Bridge Project owns this observation; records/currentPois are never changed.
+    const kmzExportNeedle = 'const kml=buildMyMapsKml();let zip;';
+    const kmzExportNew = 'const kml=cmWm7ExportInactiveReferences(buildMyMapsKml());let zip;';
+    if (out.includes(kmzExportNeedle) && !out.includes(kmzExportNew)) {
+      out = out.replace(kmzExportNeedle, kmzExportNew);
+    }
+    const parseNeedle = "[...doc.getElementsByTagNameNS('*','Placemark')].forEach(pm=>{let geometryHandled=false;";
+    const parseGuard = "[...doc.getElementsByTagNameNS('*','Placemark')].forEach(pm=>{if([...pm.getElementsByTagNameNS('*','Data')].some(d=>d.getAttribute('name')==='campsite-reference-only'&&String(d.textContent||'').trim().toLowerCase()==='true'))return;let geometryHandled=false;";
+    if (out.includes(parseNeedle) && !out.includes(parseGuard)) {
+      out = out.replace(parseNeedle, parseGuard);
+    }
     if (!out.includes('cmWm3cReferenceRuntime')) {
       const coreStart = out.indexOf("(()=>{'use strict';");
       const coreEnd = coreStart >= 0 ? out.indexOf('})();\n</script>', coreStart) : -1;
@@ -107,6 +119,50 @@ const cmWm3cBaseScene=cmCandidateShadowScene;
 let cmWm3cReferenceState={ready:false,display:0,reserve:0,suppressed:0,invalid:0,lastError:'',localCanUse:false,localReason:'',coverageReason:'',currentPolygon:[]};
 function cmWm3cSetReferenceState(next){cmWm3cReferenceState=next;return next}
 function cmWm3cReadProject(){try{const project=JSON.parse(sessionStorage.getItem('campsiteProject.v1')||'null');return project&&project.source==='bridge'?project:null}catch(_){return null}}
+/* WM-7: export visible inactive observation references, never editable records or hidden reserve. */
+function cmWm7ExportInactiveReferences(kml){
+  const project=cmWm3cReadProject();
+  const observation=project?.wayfarerObservation;
+  if(!observation)return kml;
+  const currentPolygon=cmWm5bCurrentCreativePolygon();
+  const derived=cmWm5bDerivedObservation(observation,currentPolygon);
+  if(!derived?.local?.canUseLocal){
+    throw new Error('Wayfarer観察範囲が現在の設計範囲に対応していません。再観察後にKMZを保存してください。');
+  }
+  const adapted=window.bridgeMapLab_adaptWayfarerObservation(derived.observation,records||[]);
+  const inactive=adapted.displayPois.filter(p=>p.renderKind==='INACTIVE_POWERSPOT');
+  if(!inactive.length)return kml;
+  const xml=new DOMParser().parseFromString(kml,'application/xml');
+  if(xml.getElementsByTagName('parsererror').length)throw new Error('KMZ生成時のKML解析に失敗しました');
+  const doc=xml.getElementsByTagNameNS('*','Document')[0];
+  if(!doc)throw new Error('KMZ生成時にDocumentが見つかりません');
+  const folder=makeEl(xml,'Folder');
+  folder.appendChild(makeEl(xml,'name','Wayfarer 非アクティブPower Spot（参照専用）'));
+  for(const poi of inactive){
+    const pm=makeEl(xml,'Placemark');
+    pm.appendChild(makeEl(xml,'name',poi.title||'Inactive Power Spot'));
+    pm.appendChild(makeEl(xml,'styleUrl','#creative-existing-power'));
+    const extended=makeEl(xml,'ExtendedData');
+    for(const [key,value] of [
+      ['campsite-reference-only','true'],
+      ['campsite-reference-kind','INACTIVE_POWERSPOT'],
+      ['campsite-observation-zone',poi.observationZone],
+      ['campsite-wayfarer-guid',poi.guid]
+    ]){
+      const data=makeEl(xml,'Data');
+      data.setAttribute('name',key);
+      data.appendChild(makeEl(xml,'value',String(value||'')));
+      extended.appendChild(data);
+    }
+    pm.appendChild(extended);
+    const point=makeEl(xml,'Point');
+    point.appendChild(makeEl(xml,'coordinates',poi.lng.toFixed(7)+','+poi.lat.toFixed(7)+',0'));
+    pm.appendChild(point);
+    folder.appendChild(pm);
+  }
+  doc.appendChild(folder);
+  return new XMLSerializer().serializeToString(xml);
+}
 function cmWm5bCurrentCreativePolygon(){
   try{
     const active=(polygons||[]).find(p=>p&&p.deleted!==true&&Array.isArray(p.points)&&p.points.length>=3);
