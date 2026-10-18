@@ -6,12 +6,14 @@ on:
       - 'dist/bridge-shortcut/1.0.0/**'
       - 'js/bridge-shortcut/shortcut-launcher.js'
       - 'scripts/check-bridge-display-ownership.mjs'
+      - 'scripts/check-iphone-i4-probe.mjs'
       - '.github/workflows/bridge-iphone-check.yml'
   pull_request:
     paths:
       - 'dist/bridge-shortcut/1.0.0/**'
       - 'js/bridge-shortcut/shortcut-launcher.js'
       - 'scripts/check-bridge-display-ownership.mjs'
+      - 'scripts/check-iphone-i4-probe.mjs'
       - '.github/workflows/bridge-iphone-check.yml'
   workflow_dispatch:
 
@@ -35,3 +37,6 @@ jobs:
           node --check js/bridge-shortcut/shortcut-launcher.js
           node --check dist/bridge-shortcut/1.0.0/runtime.part-09.iphone-wfmm-color-policy.js
           node --check scripts/check-bridge-display-ownership.mjs
+
+      - name: I4-3 isolated diagnostic checks
+        run: node scripts/check-iphone-i4-probe.mjs
