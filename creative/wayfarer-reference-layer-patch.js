@@ -220,7 +220,9 @@ function cmWm3cReferenceScene(){
   const geometry=window.bridgeMapLab_buildWayfarerReferenceGeometry(adapted.displayPois);
   const scene=window.bridgeMapLab_buildWayfarerReferenceScene(geometry);
   cmWm3cSetReferenceState({ready:true,display:adapted.counts.display,reserve:adapted.counts.reserve200,suppressed:adapted.counts.suppressedByEditableGuid,invalid:adapted.counts.invalid,lastError:'',localCanUse:true,localReason:String(derived.local.reason||''),coverageReason:String(derived.local.coverage?.reason||''),currentPolygon});
-  return scene;
+  // Reference markers stay visible; their 50m guides follow the same toggle as editable POI.
+  if(cmCandidateShadowDisplayState().radii.includes(50))return scene;
+  return Object.freeze({items:Object.freeze(scene.items.filter(item=>item.layerKey!=='circle-50'))});
 }
 cmCandidateShadowScene=function(){
   const baseScene=cmWm3cBaseScene();

@@ -20,6 +20,9 @@ const fixture = `<html><head><script src="./runtime/map-engine/map-renderer.js?v
 const records=[{guid:'editable-1',layer:'existing-pokestop',latlng:[35.001,139.001]}];
 const polygons=[{id:'activity-1',deleted:false,points:[[35,139],[35,139.002],[35.002,139.002],[35.002,139]]}];
 function cmCandidateShadowSignature(){return '{}'}
+let circle50Visible=true;
+function cmCandidateShadowDisplayState(){return {radii:circle50Visible?[50,40,30]:[40,30]}}
+window.__setCircle50Visible=value=>{circle50Visible=value};
 function cmCandidateShadowScene(){return Object.freeze({items:Object.freeze([{key:'marker:poi:editable-1',ownerKey:'poi:editable-1',origin:'existing',renderKind:'POKESTOP',layerKey:'marker',geometry:{type:'point',lat:35.001,lng:139.001}}])})}
 window.__wm5bSetPolygon=points=>{polygons[0].points=points;polygons[0].deleted=false};
 })();
@@ -82,6 +85,13 @@ const merged = window.__cmWayfarerReference.getScene();
 assert.equal(merged.items.filter(item => item.origin === 'reference' && item.layerKey === 'marker').length, 2, 'Only non-duplicate INTERIOR/REFERENCE_100 POIs should render');
 assert.ok(!merged.items.some(item => String(item.ownerKey).includes('reserve-1')), 'RESERVE_200 must stay hidden');
 assert.ok(!merged.items.some(item => item.key === 'marker:reference:editable-1'), 'Editable GUID must suppress observation duplicate');
+assert.equal(merged.items.filter(item => item.layerKey === 'circle-50').length, 2);
+window.__setCircle50Visible(false);
+const hidden = window.__cmWayfarerReference.getScene();
+assert.equal(hidden.items.filter(item => item.layerKey === 'circle-50').length, 0);
+assert.deepEqual(hidden.items.filter(item => item.layerKey === 'marker'), merged.items.filter(item => item.layerKey === 'marker'));
+window.__setCircle50Visible(true);
+assert.deepEqual(window.__cmWayfarerReference.getScene(), merged);
 const state = window.__cmWayfarerReference.getState();
 assert.equal(state.display, 2);
 assert.equal(state.reserve, 1);
