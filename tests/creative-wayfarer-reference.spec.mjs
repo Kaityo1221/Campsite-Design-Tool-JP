@@ -381,7 +381,7 @@ test('Inactive Wayfarer observation: visible read-only KMZ references, reserve e
   const exportButton=page.locator('#cmStandaloneKmz');
   await expect(exportButton).toBeVisible();
   await exportButton.click();
-  const downloadBtn=page.locator('button[title="通常ダウンロード"]');
+  const downloadBtn=page.locator('button[title="ダウンロード"]');
   await expect(downloadBtn).toBeVisible({timeout:10000});
   const downloadPromise=page.waitForEvent('download');
   await downloadBtn.click();
