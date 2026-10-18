@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import fs from 'node:fs';
+import JSZip from 'jszip';
 
 const leafletJs = fs.readFileSync('node_modules/leaflet/dist/leaflet.js', 'utf8');
 const leafletCss = fs.readFileSync('node_modules/leaflet/dist/leaflet.css', 'utf8');
@@ -354,3 +355,47 @@ test('WM-6B selected candidate keeps Reference warning outside editable records'
 });
 
 
+
+test('Inactive Wayfarer observation: visible read-only KMZ references, reserve excluded, editable records unchanged', async ({ page }) => {
+  const seed = structuredClone(project);
+  const inactive = Array.from({length:100}, (_,i) => ({
+    guid:'inactive-observation-'+i,
+    title:'Inactive Observation '+i,
+    lat:i<50 ? 35.6812+(i%10)*0.00011 : i<90 ? 35.68335 : 35.68435,
+    lng:139.7672+(i%20)*0.00007,
+    poiKind:'NOT_IN_GAME', gameEntity:'POWERSPOT',
+    gameStatus:'INACTIVE', referenceKind:'INACTIVE_POWERSPOT'
+  }));
+  seed.wayfarerObservation.zones.interior.push(...inactive.slice(0,50));
+  seed.wayfarerObservation.zones.reference100.push(...inactive.slice(50,90));
+  seed.wayfarerObservation.zones.reserve200.push(...inactive.slice(90));
+  await installRoutes(page,seed);
+  await page.goto('/creative/index.html?campsiteProject=bridge');
+  await expect.poll(()=>page.evaluate(()=>window.CampsiteCreativeProject?.count||0)).toBe(2);
+  await expect.poll(()=>page.evaluate(()=>window.__cmWayfarerReference?.getState?.().display)).toBe(92);
+  const before=await workspaceSnapshot(page);
+  expect(before).toHaveLength(2);
+
+  // v43 standalone Save menu is the actual visible Creative export entry.
+  await page.locator('#cmStandaloneSaveButton').click();
+  const exportButton=page.locator('#cmStandaloneKmz');
+  await expect(exportButton).toBeVisible();
+  await exportButton.click();
+  const downloadBtn=page.locator('button[title="ダウンロード"]');
+  await expect(downloadBtn).toBeVisible({timeout:10000});
+  const downloadPromise=page.waitForEvent('download');
+  await downloadBtn.click();
+  const download=await downloadPromise;
+  const zip=await JSZip.loadAsync(fs.readFileSync(await download.path()));
+  const kmlFile=Object.keys(zip.files).find(name=>/\.kml$/i.test(name));
+  expect(kmlFile).toBeTruthy();
+  const kml=await zip.file(kmlFile).async('string');
+  expect(kml).toContain('Wayfarer 非アクティブPower Spot（参照専用）');
+  expect((kml.match(/name="campsite-reference-only"/g)||[])).toHaveLength(90);
+  expect((kml.match(/name="campsite-observation-zone"/g)||[])).toHaveLength(90);
+  expect(kml).toContain('inactive-observation-0');
+  expect(kml).toContain('inactive-observation-89');
+  expect(kml).not.toContain('inactive-observation-90');
+  expect(kml).not.toContain('inactive-observation-99');
+  expect(await workspaceSnapshot(page)).toEqual(before);
+});

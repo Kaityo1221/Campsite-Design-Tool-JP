@@ -24,7 +24,8 @@
     <span>Gym</span><strong id="gym">0</strong>
     <span>Power Spot</span><strong id="powerspot">0</strong>
     <span>Not in Game（参照）</span><strong id="notInGame">0</strong>
-    <span>Inactive Power Spot（参照）</span><strong id="inactivePowerSpot">0</strong>
+    <span>Inactive Power Spot（参照・観察含む）</span><strong id="inactivePowerSpot">0</strong>
+    <span>うち200m予備（非表示）</span><strong id="inactivePowerReserve">0</strong>
     <span>スポンサー</span><strong id="sponsored">0</strong>
     <span>SMR</span><strong id="smr">0</strong>
   </div>
@@ -41,6 +42,7 @@
   <button id="continueBtn" type="button">🏕 内容を確認してCampsite Design Toolへ進む</button>
   <button id="clearBtn" type="button">受信データを消去</button>
 </div></div>
+<script src="js/bridge-observation-inactive.js?v=1"></script>
 <script>
 (() => {
   'use strict';
@@ -278,6 +280,7 @@
     const handoffId = resolveHandoffId(payload);
     const c = counts(pois);
     const rc = referenceCounts(referencePois);
+    const observedInactive = window.CampsiteBridgeInactiveObservation?.collect?.(payload) || null;
     $('total').textContent = c.total;
     $('pokestop').textContent = c.pokestop;
     $('gym').textContent = c.gym;
@@ -285,7 +288,9 @@
     const notInGameEl = $('notInGame');
     const inactivePowerSpotEl = $('inactivePowerSpot');
     if (notInGameEl) notInGameEl.textContent = rc.notInGame;
-    if (inactivePowerSpotEl) inactivePowerSpotEl.textContent = rc.inactivePowerSpot;
+    if (inactivePowerSpotEl) inactivePowerSpotEl.textContent = observedInactive?.count ?? rc.inactivePowerSpot;
+    const reserveEl = $('inactivePowerReserve');
+    if (reserveEl) reserveEl.textContent = observedInactive?.reserveCount ?? 0;
     $('sponsored').textContent = c.sponsored;
     $('smr').textContent = c.smr;
 

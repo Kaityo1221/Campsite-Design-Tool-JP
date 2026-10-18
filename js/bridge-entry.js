@@ -57,17 +57,19 @@
   }
 
   function receivedCounts() {
-    const referencePois = Array.isArray(adapter?.referencePois) ? adapter.referencePois : [];
-    const inactivePowerSpots = referencePois.filter(poi =>
-      String(poi?.referenceKind || '').trim().toUpperCase() === 'INACTIVE_POWERSPOT'
-    );
+    const inactive = window.CampsiteBridgeInactiveObservation?.collect?.(adapter) || {
+      count: (Array.isArray(adapter?.referencePois) ? adapter.referencePois : [])
+        .filter(poi => poi?.referenceKind === 'INACTIVE_POWERSPOT').length,
+      reserveCount: 0
+    };
 
     const result = {
-      total: adapter.pois.length + inactivePowerSpots.length,
+      total: adapter.pois.length + inactive.count,
       pokestop: 0,
       gym: 0,
       powerspot: 0,
-      inactivePowerSpot: inactivePowerSpots.length,
+      inactivePowerSpot: inactive.count,
+      inactiveReserve: inactive.reserveCount,
       sponsored: 0,
       smr: 0
     };
@@ -120,6 +122,7 @@
           <div class="bridge-count"><span>Gym</span><b>${c.gym.toLocaleString('ja-JP')}</b></div>
           <div class="bridge-count"><span>Power Spot</span><b>${c.powerspot.toLocaleString('ja-JP')}</b></div>
           <div class="bridge-count"><span>Inactive Power Spot</span><b>${c.inactivePowerSpot.toLocaleString('ja-JP')}</b></div>
+          <div class="bridge-count"><span>うち200m予備（地図非表示）</span><b>${c.inactiveReserve.toLocaleString('ja-JP')}</b></div>
           <div class="bridge-count"><span>Sponsor</span><b>${c.sponsored.toLocaleString('ja-JP')}</b></div>
           <div class="bridge-count"><span>SMR</span><b>${c.smr.toLocaleString('ja-JP')}</b></div>
         </div>

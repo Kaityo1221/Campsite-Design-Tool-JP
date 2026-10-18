@@ -58,6 +58,9 @@ on:
       - 'js/bridge-wayfarer-deck-compat.js'
       - 'js/bridge-reference-visuals.js'
       - 'js/bridge-inactive-review.js'
+      - 'js/bridge-observation-inactive.js'
+      - 'js/bridge-entry.js'
+      - 'scripts/check-bridge-observation-inactive.mjs'
       - 'js/bridge-next-flow.js'
       - 'js/bridge-selection.js'
       - 'bridge-gateway.html'
@@ -115,6 +118,9 @@ on:
       - 'js/bridge-wayfarer-deck-compat.js'
       - 'js/bridge-reference-visuals.js'
       - 'js/bridge-inactive-review.js'
+      - 'js/bridge-observation-inactive.js'
+      - 'js/bridge-entry.js'
+      - 'scripts/check-bridge-observation-inactive.mjs'
       - 'js/bridge-next-flow.js'
       - 'js/bridge-selection.js'
       - 'bridge-gateway.html'
@@ -150,6 +156,7 @@ jobs:
 
       - name: POI v1.1 regression locks
         run: |
+          node scripts/check-bridge-observation-inactive.mjs
           node scripts/check-bridge-kwajalein-regression.mjs
           node scripts/check-bridge-receiver-routing.mjs
           node scripts/check-bridge-kwajalein-creative-e2e.mjs

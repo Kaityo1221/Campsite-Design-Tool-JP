@@ -111,4 +111,16 @@ assert.equal(outsideState.coverageReason, 'OUTSIDE_RESERVE');
 listeners.get('campsite:wayfarer-observation-saved')?.({});
 assert.equal(refreshCount, 1, 'Observation save event must trigger keyed renderer refresh');
 
+const exportFixture=fixture.replace(
+  'const records=',
+  "function exportKmz(){const kml=buildMyMapsKml();let zip;}function parseReferenceInput(doc){[...doc.getElementsByTagNameNS('*','Placemark')].forEach(pm=>{let geometryHandled=false;});}const records="
+);
+const exportPatched=patchWindow.applyCreativeWayfarerReferenceLayerPatch(exportFixture);
+assert.ok(exportPatched.includes('const kml=cmWm7ExportInactiveReferences(buildMyMapsKml());let zip;'), 'Creative export must include observed inactive KMZ references');
+assert.ok(exportPatched.includes("d.getAttribute('name')==='campsite-reference-only'"), 'Creative KMZ import must skip reference-only points');
+assert.ok(exportPatched.includes('function cmWm7ExportInactiveReferences(kml)'), 'Export implementation must be injected into Creative runtime');
+assert.ok(exportPatched.includes("p.renderKind==='INACTIVE_POWERSPOT'"), 'Only inactive Power Spots may be exported as read-only references');
+const exportCore=exportPatched.slice(exportPatched.indexOf("(()=>{'use strict';"),exportPatched.indexOf('</script>',exportPatched.indexOf("(()=>{'use strict';")));
+new vm.Script(exportCore,{filename:'wm-inactive-kmz-generated-core.js'});
+
 console.log('WM-3C-4 Creative Reference Integration: PASS');
