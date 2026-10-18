@@ -376,11 +376,11 @@ test('Inactive Wayfarer observation: visible read-only KMZ references, reserve e
   const before=await workspaceSnapshot(page);
   expect(before).toHaveLength(2);
 
-  // The legacy save control is not always visible in the new PC dock;
-  // exercise the existing export event wiring independently of its placement.
-  await page.locator('#save').dispatchEvent('click');
-  await expect(page.locator('#cmKmz')).toHaveCount(1);
-  await page.locator('#cmKmz').dispatchEvent('click');
+  // v43 standalone Save menu is the actual visible Creative export entry.
+  await page.locator('#cmStandaloneSaveButton').click();
+  const exportButton=page.locator('#cmStandaloneKmz');
+  await expect(exportButton).toBeVisible();
+  await exportButton.click();
   const downloadBtn=page.locator('button[title="通常ダウンロード"]');
   await expect(downloadBtn).toBeVisible({timeout:10000});
   const downloadPromise=page.waitForEvent('download');
