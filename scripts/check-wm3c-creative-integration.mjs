@@ -119,7 +119,7 @@ const exportPatched=patchWindow.applyCreativeWayfarerReferenceLayerPatch(exportF
 assert.ok(exportPatched.includes('const kml=cmWm7ExportInactiveReferences(buildMyMapsKml());let zip;'), 'Creative export must include observed inactive KMZ references');
 assert.ok(exportPatched.includes("d.getAttribute('name')==='campsite-reference-only'"), 'Creative KMZ import must skip reference-only points');
 assert.ok(exportPatched.includes('function cmWm7ExportInactiveReferences(kml)'), 'Export implementation must be injected into Creative runtime');
-assert.ok(exportPatched.includes("poi.renderKind==='INACTIVE_POWERSPOT'"), 'Only inactive Power Spots may be exported as read-only references');
+assert.ok(exportPatched.includes("p.renderKind==='INACTIVE_POWERSPOT'"), 'Only inactive Power Spots may be exported as read-only references');
 const exportCore=exportPatched.slice(exportPatched.indexOf("(()=>{'use strict';"),exportPatched.indexOf('</script>',exportPatched.indexOf("(()=>{'use strict';")));
 new vm.Script(exportCore,{filename:'wm-inactive-kmz-generated-core.js'});
 
