@@ -38,7 +38,7 @@ function harness(options={}) {
     setZoom:()=>{viewRestore++;},
     fitBounds(bounds) {
       requests++;
-      const bodyText=failFirst && !invalidSent ? '<html>unauthorized</html>' : JSON.stringify(fixture);
+      const bodyText=failFirst && !invalidSent ? '<html>unauthorized</html>' : JSON.stringify(options.empty ? { results:[{pois:[]}] } : fixture);
       if(failFirst && !invalidSent) invalidSent=true;
       const url='https://wayfarer.scopely.com/api/v1/vault/mapview/gcs?ne=('
         +bounds.north+','+bounds.east+')&sw=('+bounds.south+','+bounds.west+')&cellLevel=14';
@@ -99,6 +99,12 @@ for(const key of ['engineVersion','acquisitionBounds','geometryCoverageComplete'
 assert.equal(ok.counts().viewRestore,2,'map view must be restored');
 assert.equal(JSON.stringify(result).includes('sourceGameObjects'),false,'do not retain raw source POIs');
 assert.equal(ok.events.filter(e=>e.type==='postMessage'&&e.data?.type==='WAYFARER_OBSERVATION').at(-1).data.observation.canProceed,false);
+
+const empty=harness({empty:true});
+await empty.window.CampsiteBridgeAndroidN4Acquisition.acquire(polygon);
+const emptyObservation=empty.window.CampsiteBridgeAndroidN4Acquisition.getObservation();
+assert.equal(emptyObservation.visibleTotal,0,'empty source should not fabricate POIs');
+assert.equal(emptyObservation.canProceed,false,'empty observation must block sending');
 
 const fail=harness({failFirst:true});
 await assert.rejects(()=>fail.window.CampsiteBridgeAndroidN4Acquisition.acquire(polygon),/全タイル/);
