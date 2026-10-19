@@ -55,7 +55,7 @@ function harness(options={}) {
   };
   // Make postMessage and event dispatch independent from browser APIs.
   const window={
-    setTimeout,clearTimeout,
+    setTimeout:(fn,ms)=>setTimeout(fn,Math.min(ms,300)),clearTimeout,
     addEventListener(type,cb){if(!handlers.has(type))handlers.set(type,[]);handlers.get(type).push(cb);},
     removeEventListener(type,cb){handlers.set(type,(handlers.get(type)||[]).filter(x=>x!==cb));},
     dispatchEvent(event){events.push(event);for(const cb of handlers.get(event.type)||[])cb(event);return true;},
