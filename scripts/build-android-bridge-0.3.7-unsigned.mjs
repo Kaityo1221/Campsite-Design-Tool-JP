@@ -14,6 +14,7 @@ const EXTRA = [
   ['bridge-android-n4/panel-polygon-adapter.js', 'panel-polygon-adapter.js'],
   ['bridge-android-n4/panel-ui-adapter.js', 'panel-ui-adapter.js'],
   ['bridge-android-n4/wayfarer-acquisition-coordinator.js', 'wayfarer-acquisition-coordinator.js'],
+  ['bridge-android-n4/interior-poi-export.js', 'interior-poi-export.js'],
   ['bridge-pc/wayfarer-polygon-controller.js', 'wayfarer-polygon-controller.js'],
   ['bridge-pc/polygon-ui.js', 'polygon-ui.js'],
   ['bridge-pc/wayfarer-observation-zone.js', 'wayfarer-observation-zone.js'],
@@ -35,10 +36,10 @@ try {
     let ui = fs.readFileSync(uiPath, 'utf8');
     ui = ui.replace("  let pendingMapView = null;", "  let pendingMapView = null;\n  let wayfarerObservation = null;");
     ui = ui.replace("    if (data.type === 'GCS_RESPONSE') {", "    if (data.type === 'WAYFARER_OBSERVATION') {\n      wayfarerObservation = data.observation && typeof data.observation === 'object' ? JSON.parse(JSON.stringify(data.observation)) : null;\n      return;\n    }\n\n    if (data.type === 'GCS_RESPONSE') {");
-    ui = ui.replace("    const pois = makeSendPois();", `    if (!wayfarerObservation || wayfarerObservation.canProceed !== true) {\n      clearSendState();\n      sendWorkflowActive = false;\n      setSendStatus(wayfarerObservation?.acquisition?.coverageStatus === 'unverified' ? 'POIの取得元データの完全性を検証できません。送信は停止されています。' : '設計範囲のPOI取得が完了していません。再観察してください。', 'error', 'error');\n      return;\n    }\n    const interiorGuids = new Set((wayfarerObservation?.zones?.interior || []).map(poi => String(poi?.guid || poi?.poiId || '')).filter(Boolean));\n    const pois = makeSendPois().filter(poi => interiorGuids.has(String(poi.guid)));`);
+    ui = ui.replace("    const pois = makeSendPois();", `    if (!wayfarerObservation || wayfarerObservation.canProceed !== true) {\n      clearSendState();\n      sendWorkflowActive = false;\n      setSendStatus(wayfarerObservation?.acquisition?.coverageStatus === 'unverified' ? 'POIの取得元データの完全性を検証できません。送信は停止されています。' : '設計範囲のPOI取得が完了していません。再観察してください。', 'error', 'error');\n      return;\n    }\n    const pois = window.CampsiteBridgeAndroidN4InteriorExporter?.fromObservation?.(wayfarerObservation) || [];`);
     ui = ui.replace("      selectedBounds,\n      pois", "      selectedBounds,\n      pois,\n      wayfarerObservation: JSON.parse(JSON.stringify(wayfarerObservation))");
     if (!ui.includes("wayfarerObservation: JSON.parse(JSON.stringify(wayfarerObservation))")) throw new Error('N4-G Observation payload injection failed');
-    if (!ui.includes("makeSendPois().filter(poi => interiorGuids.has(String(poi.guid)))")) throw new Error('N4-G INTERIOR POI filter injection failed');
+    if (!ui.includes("CampsiteBridgeAndroidN4InteriorExporter?.fromObservation?.(wayfarerObservation)")) throw new Error('N4-G full Observation interior export injection failed');
     fs.writeFileSync(uiPath, ui);
   }
 
@@ -74,6 +75,7 @@ try {
     'bridge-core.js',
     'polygon-ui.js',
     'panel-polygon-adapter.js',
+    'interior-poi-export.js',
     'bridge-ui.js',
     'panel-ui-adapter.js'
   ];
@@ -81,7 +83,7 @@ try {
 
   for (const file of [...page.js, ...isolated.js]) execFileSync(process.execPath, ['--check', path.join(work, file)], { stdio: 'inherit' });
 
-  const files = ['bridge-ui.css','manifest.json','bridge-core.js','page-hook.js','wayfarer-map-adapter.js','wayfarer-observation-zone.js','wayfarer-acquisition-engine.js','wayfarer-polygon-controller.js','poi-parser.js','poi-classifier.js','wayfarer-acquisition-coordinator.js','polygon-ui.js','panel-polygon-adapter.js','bridge-ui.js','panel-ui-adapter.js'];
+  const files = ['bridge-ui.css','manifest.json','bridge-core.js','page-hook.js','wayfarer-map-adapter.js','wayfarer-observation-zone.js','wayfarer-acquisition-engine.js','wayfarer-polygon-controller.js','poi-parser.js','poi-classifier.js','wayfarer-acquisition-coordinator.js','polygon-ui.js','panel-polygon-adapter.js','interior-poi-export.js','bridge-ui.js','panel-ui-adapter.js'];
   fs.rmSync(OUTPUT_XPI, { force: true });
   execFileSync('zip', ['-q','-9',path.resolve(OUTPUT_XPI),...files], { cwd: work });
   const data = fs.readFileSync(OUTPUT_XPI);
