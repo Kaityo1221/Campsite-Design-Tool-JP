@@ -1,0 +1,52 @@
+name: Noah N4 Device QA Package (UNSIGNED HOLD)
+
+on:
+  pull_request:
+    branches:
+      - feature/n4i-gcs-evidence-receiver-e2e-20261019
+    paths:
+      - 'scripts/build-n4-android-qa-unsigned.mjs'
+      - 'scripts/check-n4-android-qa-package.mjs'
+      - 'docs/n4-android-device-qa-guide-2026-10-19.md'
+      - '.github/workflows/noah-n4-device-qa-package.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  prepare-unsigned-qa:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check N4 source and test-kit syntax
+        run: |
+          node --check scripts/build-n4-android-qa-unsigned.mjs
+          node --check scripts/check-n4-android-qa-package.mjs
+          node --check bridge-android-n4/wayfarer-acquisition-coordinator.js
+      - name: Verify same source + independent unsigned QA ID
+        run: node scripts/check-n4-android-qa-package.mjs
+      - name: Verify Android N4 existing safety and data contracts
+        run: |
+          node scripts/check-n4h-android-safety.mjs
+          node scripts/check-n4i-gcs-inspector.mjs
+          node scripts/check-n4g-android-receiver-handoff.mjs
+          node scripts/check-n4-android-final-regression.mjs
+      - name: Reconfirm signed public Android 0.3.5 immutable
+        run: |
+          echo 'f5c7d300c6cdd82758f88f651116c1b7af42863ef03e80f8ac89e39afa0fa7b7  downloads/campsite-bridge-android-0.3.5.xpi' | sha256sum -c -
+      - name: Upload UNSIGNED pre-signing QA bundle ONLY
+        uses: actions/upload-artifact@v4
+        with:
+          name: n4-android-qa-unsigned-0.3.7
+          retention-days: 7
+          if-no-files-found: error
+          path: |
+            downloads/campsite-bridge-android-n4-qa-0.3.7-unsigned.xpi
+            downloads/campsite-bridge-android-n4-qa-0.3.7-unsigned.sha256
+            docs/n4-android-device-qa-guide-2026-10-19.md
