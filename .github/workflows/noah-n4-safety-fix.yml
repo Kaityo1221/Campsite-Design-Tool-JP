@@ -1,0 +1,42 @@
+name: Noah Android N4 Safe Acquisition Fix (isolated)
+
+on:
+  pull_request:
+    branches:
+      - feature/n4-android-pc-parity
+    paths:
+      - 'bridge-android-n4/**'
+      - 'scripts/build-android-bridge-0.3.7-unsigned.mjs'
+      - 'scripts/check-n4*.mjs'
+      - '.github/workflows/noah-n4-safety-fix.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  n4-safety-candidate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Syntax checks
+        run: |
+          node --check bridge-android-n4/wayfarer-acquisition-coordinator.js
+          node --check scripts/build-android-bridge-0.3.7-unsigned.mjs
+          node --check scripts/check-n4h-android-safety.mjs
+          node --check scripts/check-n4f-android-observation.mjs
+      - name: Real PC parser/zone/engine synthetic tile E2E
+        run: node scripts/check-n4h-android-safety.mjs
+      - name: N4 existing packaging and contract regressions
+        run: |
+          node scripts/check-n4e-android-acquisition-wiring.mjs
+          node scripts/check-n4e-android-gcs-boundary.mjs
+          node scripts/check-n4f-android-observation.mjs
+          node scripts/check-n4g-android-receiver-handoff.mjs
+          node scripts/check-n4-android-final-regression.mjs
+      - name: Public signed Android XPI is not modified
+        run: |
+          printf '%s  %s\n' 'f5c7d300c6cdd82758f88f651116c1b7af42863ef03e80f8ac89e39afa0fa7b7' 'downloads/campsite-bridge-android-0.3.5.xpi' | sha256sum -c -

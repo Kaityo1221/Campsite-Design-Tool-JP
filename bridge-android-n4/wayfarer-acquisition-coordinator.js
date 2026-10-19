@@ -9,12 +9,14 @@
   const OBSERVATION_EVENT = 'campsite-bridge-android-n4:observation';
   const BUFFER_METERS = 200;
   const CELL_LEVEL = 14;
+  const MAX_TILE_METERS = 500;
+  const MAX_TILES = 64; // Conservative Android safety bound, independent of PC geometry rules.
   const TIMEOUT_MS = 12000;
 
   let running = false;
+  let polygonRevision = 0;
   let lastCompletedSignature = '';
   let lastResult = null;
-  let latestPois = [];
   let lastObservation = null;
 
   function clone(value) { return JSON.parse(JSON.stringify(value)); }
@@ -24,14 +26,32 @@
     try { window.dispatchEvent(new CustomEvent(ACQUISITION_STATE_EVENT, { detail: JSON.stringify(detail) })); } catch (_) {}
   }
 
-  function buildObservation(points, acquisition) {
-    if (lastObservation) return lastObservation;
+  function publishObservation(observation) {
+    try { window.dispatchEvent(new CustomEvent(OBSERVATION_EVENT, {
+      detail: JSON.stringify(observation)
+    })); } catch (_) {}
+    try { window.postMessage({
+      source: PAGE_CHANNEL, type: 'WAYFARER_OBSERVATION',
+      observation: observation ? clone(observation) : null
+    }, location.origin); } catch (_) {}
+  }
+
+  function clearObservation() {
+    lastObservation = null;
+    lastResult = null;
+    // Prevent the ISOLATED sender from using a stale successful snapshot.
+    publishObservation(null);
+  }
+
+  function buildObservation(points, acquisition, allClassifiedPois) {
     const zoneApi = window.CampsiteWayfarerObservationZone;
     if (!zoneApi?.classifyPois) throw new Error('Wayfarer Observation Zone is unavailable.');
-    const classified = zoneApi.classifyPois(points, latestPois);
+    const classified = zoneApi.classifyPois(points, allClassifiedPois);
     const observedAt = String(acquisition?.observedAt || new Date().toISOString());
     const snapshotId = 'wfobs-' + observedAt.replace(/[^0-9]/g, '') + '-' + Math.random().toString(36).slice(2, 10);
+    const metadata = acquisition?.acquisition || {};
     lastObservation = Object.freeze({
+      version: VERSION,
       snapshotId,
       observedAt,
       polygon: classified.polygon,
@@ -41,11 +61,10 @@
       retainedTotal: classified.retainedTotal,
       excludedCount: classified.excludedCount,
       outsideCount: classified.outsideCount,
-      canProceed: acquisition?.coverageComplete === true,
-      acquisition: Object.freeze({ bufferMeters: BUFFER_METERS, cellLevel: CELL_LEVEL, coverageComplete: acquisition?.coverageComplete === true })
+      canProceed: metadata.coverageComplete === true && classified.visibleTotal > 0,
+      acquisition: Object.freeze(clone(metadata))
     });
-    try { window.dispatchEvent(new CustomEvent(OBSERVATION_EVENT, { detail: JSON.stringify(lastObservation) })); } catch (_) {}
-    try { window.postMessage({ source: PAGE_CHANNEL, type: 'WAYFARER_OBSERVATION', observation: clone(lastObservation) }, location.origin); } catch (_) {}
+    publishObservation(lastObservation);
     return lastObservation;
   }
 
@@ -83,8 +102,22 @@
         if (data.source !== PAGE_CHANNEL || data.type !== 'GCS_RESPONSE') return;
         const bounds = parseBoundsFromUrl(data.url);
         if (!covers(tile, bounds)) return;
+        // A covering URL proves which map request was observed, not GCS source completeness.
+        const bodyText = String(data.bodyText || '');
+        let body;
+        try { body = JSON.parse(bodyText); }
+        catch (_) {
+          cleanup();
+          reject(new Error('Wayfarer GCS response is not valid JSON.'));
+          return;
+        }
+        if (!body || typeof body !== 'object' || Array.isArray(body)) {
+          cleanup();
+          reject(new Error('Wayfarer GCS response is not a supported JSON object.'));
+          return;
+        }
         cleanup();
-        resolve({ url: String(data.url || ''), capturedAt: String(data.capturedAt || ''), bodyText: String(data.bodyText || '') });
+        resolve({ body, url: String(data.url || ''), capturedAt: String(data.capturedAt || '') });
       };
       const cleanup = () => {
         window.removeEventListener('message', onMessage);
@@ -111,15 +144,27 @@
   }
 
   async function acquire(points) {
-    if (running) return null;
+    if (running) throw new Error('An observation is already running.');
     const engine = window.CampsiteWayfarerAcquisitionEngine;
     const mapAdapter = window.CampsiteBridgeWayfarerMapAdapter;
+    const parser = window.CampsiteBridgePoiParser;
+    const classifier = window.CampsiteBridgePoiClassifier;
     if (!engine?.createPlan || !engine?.executePlan) throw new Error('Wayfarer Acquisition Engine is unavailable.');
+    if (!parser?.parsePayload || !classifier?.run) {
+      throw new Error('PC-compatible POI normalization modules are unavailable.');
+    }
     const map = mapAdapter?.findMap?.(document);
-    if (!map) throw new Error('Wayfarer Map is unavailable.');
-
+    if (!map?.fitBounds) throw new Error('Wayfarer Map acquisition control is unavailable.');
+    if (!Array.isArray(points) || points.length < 3 || points.length > 30) {
+      throw new Error('Design polygon must have 3 to 30 vertices.');
+    }
     const polygon = points.map(point => ({ lat: Number(point[0]), lng: Number(point[1]) }));
-    const plan = engine.createPlan(polygon, { bufferMeters: BUFFER_METERS, cellLevel: CELL_LEVEL });
+    const plan = engine.createPlan(polygon, {
+      bufferMeters: BUFFER_METERS, maxTileMeters: MAX_TILE_METERS, cellLevel: CELL_LEVEL
+    });
+    if (!plan.tiles?.length || plan.tiles.length > MAX_TILES) {
+      throw new Error('取得範囲が大きすぎます。設計範囲を小さくしてください。');
+    }
     const center = map.getCenter?.();
     const originalView = {
       center: center ? {
@@ -130,26 +175,70 @@
     };
 
     running = true;
+    const revision = polygonRevision;
+    clearObservation();
     emit({ status: 'running', bufferMeters: plan.bufferMeters, cellLevel: plan.cellLevel, tileCount: plan.tiles.length });
     try {
-      const result = await engine.executePlan(plan, tile => requestTile(map, tile), {
-        responseVerifier(payload, tile) {
-          return Boolean(payload?.bodyText && covers(tile, parseBoundsFromUrl(payload?.url)));
-        }
+      const execution = await engine.executePlan(plan, tile => requestTile(map, tile), {
+        // Bounds/HTTP/JSON merely establish transport. GCS source completeness
+        // has not been verified; returning true here would mislabel partial data.
+        responseVerifier: () => null
       });
-      lastResult = Object.freeze({ ...result, observedAt: new Date().toISOString() });
-      emit({
-        status: result.coverageComplete ? 'complete' : 'incomplete',
+      if (revision !== polygonRevision) throw new Error('設計範囲が変わりました。最新の範囲で再観察してください。');
+      const observedAt = new Date().toISOString();
+      const acquisition = Object.freeze({
+        engineVersion: String(execution.version || engine.version || ''),
         bufferMeters: plan.bufferMeters,
+        referenceMeters: 100,
+        reserveMeters: 200,
         cellLevel: plan.cellLevel,
+        acquisitionBounds: clone(plan.acquisitionBounds || null),
         tileCount: plan.tiles.length,
-        coverageComplete: result.coverageComplete,
-        transportComplete: result.transportComplete,
-        sourceComplete: result.sourceComplete
+        geometryCoverageComplete: execution.geometryCoverageComplete === true,
+        transportComplete: execution.transportComplete === true,
+        sourceComplete: execution.sourceComplete === true ? true : (execution.sourceComplete === false ? false : null),
+        coverageComplete: execution.coverageComplete === true,
+        coverageStatus: String(execution.coverageStatus || 'unverified')
       });
-      if (!result.coverageComplete) throw new Error('200m acquisition coverage is incomplete.');
-      await new Promise(resolve => window.setTimeout(resolve, 180));
-      buildObservation(points, lastResult);
+
+      if (!acquisition.transportComplete || !acquisition.geometryCoverageComplete) {
+        emit({ status: 'incomplete', ...acquisition });
+        throw new Error('200mの全タイルを取得できませんでした。再試行してください。');
+      }
+
+      // Each tile contributes raw GCS JSON, not the latest on-screen SYNC_STATE.
+      // PC parser deduplicates by GUID across the whole acquisition envelope.
+      const parsed = parser.parsePayload({ payloads: execution.payloads.map(item => item.body) });
+      const classified = classifier.run(parsed);
+      if (parsed.failedCount > 0) {
+        emit({ status: 'unverified', ...acquisition, invalidPoiCount: parsed.failedCount });
+        throw new Error('POI正規化に失敗したデータがあり、結果を確定できません。');
+      }
+
+      lastResult = Object.freeze({
+        observedAt,
+        acquisition,
+        parserStats: Object.freeze({
+          sourceCount: parsed.sourceCount,
+          parsedCount: parsed.parsedCount,
+          duplicateCount: parsed.duplicateCount,
+          failedCount: parsed.failedCount
+        }),
+        // Keep no raw GCS bodies in retained state.
+        classifiedCount: classified.pois.length
+      });
+      const observation = buildObservation(points, lastResult, classified.pois);
+      emit({
+        status: observation.canProceed ? 'complete' :
+          acquisition.coverageStatus === 'unverified' ? 'unverified' : 'incomplete',
+        ...acquisition,
+        visibleTotal: observation.visibleTotal,
+        retainedTotal: observation.retainedTotal,
+        canProceed: observation.canProceed,
+        message: acquisition.sourceComplete !== true
+          ? 'POIを取得しましたが、データの完全性を確認できないためCampsiteへの送信を停止しました。'
+          : ''
+      });
       return lastResult;
     } finally {
       restoreView(map, originalView);
@@ -160,27 +249,28 @@
   window.addEventListener(POLYGON_STATE_EVENT, event => {
     let state = null;
     try { state = JSON.parse(String(event?.detail || '{}')); } catch (_) { return; }
-    if (state?.completed !== true || state?.active === true || !Array.isArray(state?.points) || state.points.length < 3) return;
+    if (state?.active === true) {
+      polygonRevision++;
+      if (lastObservation) clearObservation();
+      lastCompletedSignature = '';
+      return;
+    }
+    if (state?.completed !== true || !Array.isArray(state?.points) || state.points.length < 3) return;
     const signature = JSON.stringify(state.points);
-    if (signature === lastCompletedSignature) return;
+    if (running || signature === lastCompletedSignature) return;
     lastCompletedSignature = signature;
-    lastObservation = null;
     acquire(state.points).catch(error => {
+      lastCompletedSignature = '';
+      clearObservation();
       emit({ status: 'error', error: String(error?.message || error || 'acquisition failed') });
     });
-  });
-
-  window.addEventListener('message', event => {
-    if (event.source !== window) return;
-    const data = event.data || {};
-    if (data.source !== UI_CHANNEL || data.type !== 'SYNC_STATE' || !Array.isArray(data.pois)) return;
-    latestPois = data.pois.filter(poi => poi?.guid).map(poi => ({ ...poi }));
   });
 
   window.CampsiteBridgeAndroidN4Acquisition = Object.freeze({
     version: VERSION,
     bufferMeters: BUFFER_METERS,
     cellLevel: CELL_LEVEL,
+    maxTileMeters: MAX_TILE_METERS,
     parseBoundsFromUrl,
     covers,
     acquire,
