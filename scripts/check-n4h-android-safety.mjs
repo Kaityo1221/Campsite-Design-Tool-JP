@@ -100,6 +100,25 @@ assert.equal(ok.counts().viewRestore,2,'map view must be restored');
 assert.equal(JSON.stringify(result).includes('sourceGameObjects'),false,'do not retain raw source POIs');
 assert.equal(ok.events.filter(e=>e.type==='postMessage'&&e.data?.type==='WAYFARER_OBSERVATION').at(-1).data.observation.canProceed,false);
 
+// The ISOLATED Receiver exporter must follow full Observation interior,
+// never the last visible UI viewport, and never include inactive references.
+const isolatedWindow={};
+vm.runInNewContext(fs.readFileSync('bridge-android-n4/interior-poi-export.js','utf8'),
+  {window:isolatedWindow});
+const fromObservation=isolatedWindow.CampsiteBridgeAndroidN4InteriorExporter.fromObservation;
+assert.equal(fromObservation(obs).length,0,'an unverified snapshot must not produce editable sender POIs');
+const futureVerified={
+  ...obs,canProceed:true,acquisition:{...obs.acquisition,coverageComplete:true},
+  zones:{...obs.zones,interior:[...obs.zones.interior,...obs.zones.interior]}
+};
+const editable=fromObservation(futureVerified);
+assert.equal(editable.length,1,'only one distinct active INTERIOR stop is editable');
+assert.equal(editable[0].guid,'active-1');
+assert.equal(editable[0].gameEntity,'POKESTOP');
+assert.equal(editable[0].gameStatus,'ACTIVE');
+assert.equal(fromObservation({...futureVerified,canProceed:false}).length,0);
+assert.equal(fromObservation({...futureVerified,acquisition:{coverageComplete:false}}).length,0);
+
 const empty=harness({empty:true});
 await empty.window.CampsiteBridgeAndroidN4Acquisition.acquire(polygon);
 const emptyObservation=empty.window.CampsiteBridgeAndroidN4Acquisition.getObservation();
