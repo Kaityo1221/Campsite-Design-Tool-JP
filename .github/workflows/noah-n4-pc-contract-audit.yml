@@ -1,0 +1,27 @@
+name: Noah Android N4 PC Contract Audit (HOLD evidence)
+
+on:
+  pull_request:
+    branches:
+      - feature/n4-android-pc-parity
+    paths:
+      - 'docs/n4-pc-contract-delta-audit-2026-10-19.md'
+      - 'scripts/audit-n4-pc-contract-delta.mjs'
+      - '.github/workflows/noah-n4-pc-contract-audit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit-only:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Syntax check
+        run: node --check scripts/audit-n4-pc-contract-delta.mjs
+      - name: Reproduce source gaps (expected HOLD)
+        run: node scripts/audit-n4-pc-contract-delta.mjs
