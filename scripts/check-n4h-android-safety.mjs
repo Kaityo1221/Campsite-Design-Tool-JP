@@ -48,7 +48,7 @@ function harness(options={}) {
             active:true,completed:false,points:polygon
           });
         }
-        dispatch('message',null,{source:window,type:'GCS_RESPONSE',
+        dispatch('message',null,{source:window,
           data:{source:'CAMPSITE_BRIDGE_ANDROID_M24_PAGE',type:'GCS_RESPONSE',url,bodyText}});
       });
     }
