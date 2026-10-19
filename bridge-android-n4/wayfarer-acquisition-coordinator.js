@@ -36,11 +36,25 @@
     }, location.origin); } catch (_) {}
   }
 
+  function publishSourceSummary(summary) {
+    // Anonymous, schema-only diagnostic. Never post raw GCS, GUIDs, coordinates, URLs or credentials.
+    const safe = summary ? {
+      schemaStatus: 'structural-only',
+      sourceComplete: null,
+      tileCount: Number(summary.tileCount || 0),
+      rawPoiCount: summary.tiles.reduce((sum, item) => sum + Number(item.rawPoiCount || 0), 0),
+      poiArrayCount: summary.tiles.reduce((sum, item) => sum + Number(item.poiArrayCount || 0), 0),
+      reason: 'SOURCE_COMPLETENESS_UNVERIFIED'
+    } : null;
+    try { window.postMessage({source: PAGE_CHANNEL, type: 'N4_SOURCE_SUMMARY', summary: safe}, location.origin); } catch (_) {}
+  }
+
   function clearObservation() {
     lastObservation = null;
     lastResult = null;
     // Prevent the ISOLATED sender from using a stale successful snapshot.
     publishObservation(null);
+    publishSourceSummary(null);
   }
 
   function buildObservation(points, acquisition, allClassifiedPois) {
@@ -116,8 +130,20 @@
           reject(new Error('Wayfarer GCS response is not a supported JSON object.'));
           return;
         }
+        const inspect = window.CampsiteBridgeAndroidN4GcsInspector?.inspect;
+        if (typeof inspect !== 'function') {
+          cleanup();
+          reject(new Error('GCS response inspector is unavailable.'));
+          return;
+        }
+        const evidence = inspect(body);
+        if (!evidence.valid) {
+          cleanup();
+          reject(new Error('GCS response cannot be verified: ' + evidence.reason));
+          return;
+        }
         cleanup();
-        resolve({ body, url: String(data.url || ''), capturedAt: String(data.capturedAt || '') });
+        resolve({ body, evidence, url: String(data.url || ''), capturedAt: String(data.capturedAt || '') });
       };
       const cleanup = () => {
         window.removeEventListener('message', onMessage);
@@ -208,6 +234,15 @@
 
       // Each tile contributes raw GCS JSON, not the latest on-screen SYNC_STATE.
       // PC parser deduplicates by GUID across the whole acquisition envelope.
+      const evidence = execution.payloads.map((item, index) => ({
+        tileOrdinal: index + 1,
+        poiArrayCount: Number(item.evidence?.poiArrayCount || 0),
+        rawPoiCount: Number(item.evidence?.rawPoiCount || 0),
+        reason: String(item.evidence?.reason || 'MISSING_EVIDENCE')
+      }));
+      if (evidence.length !== plan.tiles.length || evidence.some(item => item.poiArrayCount < 1)) {
+        throw new Error('GCS応答の形式が未検証のため、結果を確定できません。');
+      }
       const parsed = parser.parsePayload({ payloads: execution.payloads.map(item => item.body) });
       const classified = classifier.run(parsed);
       if (parsed.failedCount > 0) {
@@ -224,10 +259,17 @@
           duplicateCount: parsed.duplicateCount,
           failedCount: parsed.failedCount
         }),
-        // Keep no raw GCS bodies in retained state.
-        classifiedCount: classified.pois.length
+        // Keep no raw GCS bodies, source URL, GUIDs, coordinates or credentials.
+        classifiedCount: classified.pois.length,
+        sourceEvidence: Object.freeze({
+          schemaStatus: 'structural-only',
+          sourceComplete: null,
+          tileCount: evidence.length,
+          tiles: Object.freeze(evidence.map(item => Object.freeze(item)))
+        })
       });
       const observation = buildObservation(points, lastResult, classified.pois);
+      publishSourceSummary(lastResult.sourceEvidence);
       emit({
         status: observation.canProceed ? 'complete' :
           acquisition.coverageStatus === 'unverified' ? 'unverified' : 'incomplete',

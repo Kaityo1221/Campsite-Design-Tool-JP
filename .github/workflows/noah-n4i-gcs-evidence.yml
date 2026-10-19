@@ -1,0 +1,50 @@
+name: Noah N4-I GCS Evidence and Receiver E2E (HOLD)
+
+on:
+  pull_request:
+    branches:
+      - fix/n4-acquisition-fail-closed-20261019
+    paths:
+      - 'bridge-android-n4/**'
+      - 'scripts/build-android-bridge-0.3.7-unsigned.mjs'
+      - 'scripts/check-n4h-android-safety.mjs'
+      - 'scripts/check-n4i-*.mjs'
+      - '.github/workflows/noah-n4i-gcs-evidence.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  n4i-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Pin 2026-10-18 Receiver reference
+        run: |
+          git fetch origin main
+          git cat-file -e 0e73b4984fc3719f1a4ee08c35854d8f76ff3397^{commit}
+      - name: Syntax-check isolated candidate
+        run: |
+          node --check bridge-android-n4/gcs-response-inspector.js
+          node --check bridge-android-n4/wayfarer-acquisition-coordinator.js
+          node --check scripts/check-n4i-gcs-inspector.mjs
+          node --check scripts/check-n4i-pinned-receiver-project-e2e.mjs
+      - name: Verify malformed/partial GCS shapes fail closed
+        run: node scripts/check-n4i-gcs-inspector.mjs
+      - name: Regression of real PC engines and synthetic tiles
+        run: node scripts/check-n4h-android-safety.mjs
+      - name: Android synthetic Receiver -> Adapter -> Project
+        run: node scripts/check-n4i-pinned-receiver-project-e2e.mjs
+      - name: Packaged Android 0.3.7 and existing protocol regression
+        run: |
+          node scripts/check-n4g-android-receiver-handoff.mjs
+          node scripts/check-n4-android-final-regression.mjs
+      - name: Preserve signed public Android 0.3.5 byte for byte
+        run: |
+          echo 'f5c7d300c6cdd82758f88f651116c1b7af42863ef03e80f8ac89e39afa0fa7b7  downloads/campsite-bridge-android-0.3.5.xpi' | sha256sum -c -
