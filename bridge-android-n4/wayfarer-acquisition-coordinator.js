@@ -14,6 +14,7 @@
   const TIMEOUT_MS = 12000;
 
   let running = false;
+  let polygonRevision = 0;
   let lastCompletedSignature = '';
   let lastResult = null;
   let lastObservation = null;
@@ -174,6 +175,7 @@
     };
 
     running = true;
+    const revision = polygonRevision;
     clearObservation();
     emit({ status: 'running', bufferMeters: plan.bufferMeters, cellLevel: plan.cellLevel, tileCount: plan.tiles.length });
     try {
@@ -182,6 +184,7 @@
         // has not been verified; returning true here would mislabel partial data.
         responseVerifier: () => null
       });
+      if (revision !== polygonRevision) throw new Error('設計範囲が変わりました。最新の範囲で再観察してください。');
       const observedAt = new Date().toISOString();
       const acquisition = Object.freeze({
         engineVersion: String(execution.version || engine.version || ''),
@@ -247,7 +250,8 @@
     let state = null;
     try { state = JSON.parse(String(event?.detail || '{}')); } catch (_) { return; }
     if (state?.active === true) {
-      if (!running && lastObservation) clearObservation();
+      polygonRevision++;
+      if (lastObservation) clearObservation();
       lastCompletedSignature = '';
       return;
     }
