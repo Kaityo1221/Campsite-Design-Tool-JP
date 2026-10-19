@@ -36,11 +36,25 @@
     }, location.origin); } catch (_) {}
   }
 
+  function publishSourceSummary(summary) {
+    // Anonymous, schema-only diagnostic. Never post raw GCS, GUIDs, coordinates, URLs or credentials.
+    const safe = summary ? {
+      schemaStatus: 'structural-only',
+      sourceComplete: null,
+      tileCount: Number(summary.tileCount || 0),
+      rawPoiCount: summary.tiles.reduce((sum, item) => sum + Number(item.rawPoiCount || 0), 0),
+      poiArrayCount: summary.tiles.reduce((sum, item) => sum + Number(item.poiArrayCount || 0), 0),
+      reason: 'SOURCE_COMPLETENESS_UNVERIFIED'
+    } : null;
+    try { window.postMessage({source: PAGE_CHANNEL, type: 'N4_SOURCE_SUMMARY', summary: safe}, location.origin); } catch (_) {}
+  }
+
   function clearObservation() {
     lastObservation = null;
     lastResult = null;
     // Prevent the ISOLATED sender from using a stale successful snapshot.
     publishObservation(null);
+    publishSourceSummary(null);
   }
 
   function buildObservation(points, acquisition, allClassifiedPois) {
@@ -255,6 +269,7 @@
         })
       });
       const observation = buildObservation(points, lastResult, classified.pois);
+      publishSourceSummary(lastResult.sourceEvidence);
       emit({
         status: observation.canProceed ? 'complete' :
           acquisition.coverageStatus === 'unverified' ? 'unverified' : 'incomplete',
