@@ -9,6 +9,7 @@ const files = [
   'bridge-pc/poi-parser.js',
   'bridge-pc/poi-classifier.js',
   'bridge-pc/wayfarer-observation-zone.js',
+  'bridge-android-n4/gcs-response-inspector.js',
   'bridge-android-n4/wayfarer-acquisition-coordinator.js'
 ];
 
@@ -90,6 +91,11 @@ assert.equal(obs.counts.reference100.gym,1);
 assert.equal(obs.counts.reserve200.inactivePowerSpot,1);
 assert.equal(obs.excludedCount,1,'unrelated NOT_IN_GAME should be excluded');
 assert.equal(result.parserStats.parsedCount,5,'all-tile GUID dedup');
+assert.equal(result.sourceEvidence.schemaStatus,'structural-only');
+assert.equal(result.sourceEvidence.sourceComplete,null);
+assert.equal(result.sourceEvidence.tileCount,ok.counts().requests);
+assert.ok(result.sourceEvidence.tiles.every(x=>x.poiArrayCount>0));
+assert.equal(JSON.stringify(result.sourceEvidence).includes('active-1'),false,'sourceEvidence must not expose GUID');
 assert.ok(result.parserStats.duplicateCount>0,'multiple tile payloads should dedup');
 assert.equal(obs.acquisition.tileCount,ok.counts().requests);
 for(const key of ['engineVersion','acquisitionBounds','geometryCoverageComplete',
