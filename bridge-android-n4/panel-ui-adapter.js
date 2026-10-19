@@ -10,6 +10,7 @@
   let mounted = false;
   let sendState = 'idle';
   let sendObserver = null;
+  let sourceSummary = null;
 
   function send(action) {
     window.dispatchEvent(new CustomEvent(PANEL_COMMAND_EVENT, {
@@ -51,6 +52,48 @@
     return ui;
   }
 
+  function appendEvidence(ui) {
+    if (!sourceSummary) return;
+    const wrap = document.createElement('div');
+    wrap.dataset.n4Evidence = '1';
+    wrap.style.cssText = 'padding:8px;margin-bottom:8px;border:1px solid rgba(255,255,255,.2);border-radius:9px;font-size:12px;line-height:1.5';
+    const count = Number(sourceSummary.rawPoiCount || 0);
+    const tiles = Number(sourceSummary.tileCount || 0);
+    const label = document.createElement('div');
+    label.textContent = '🧪 GCS診断：' + tiles + 'タイル／生POI ' + count + '件（全件保証は未確認・送信停止）';
+    const copy = document.createElement('button');
+    copy.type='button';
+    copy.textContent='📋 匿名診断をコピー';
+    copy.style.cssText='margin-top:6px;padding:6px 9px;border:1px solid currentColor;border-radius:8px;background:transparent;color:inherit;font:inherit';
+    copy.addEventListener('click', async () => {
+      try {
+        if (!navigator.clipboard?.writeText) throw new Error('NO_CLIPBOARD');
+        await navigator.clipboard.writeText(JSON.stringify(sourceSummary, null, 2));
+        copy.textContent='✅ コピーしました';
+      } catch (_) {
+        copy.textContent='コピーできません。上の診断値を控えてください';
+      }
+    });
+    wrap.append(label,copy);
+    ui.append(wrap);
+  }
+
+  window.addEventListener('message', event => {
+    if (event.source !== window || event.origin !== location.origin) return;
+    const data = event.data || {};
+    if (data.source !== 'CAMPSITE_BRIDGE_ANDROID_M24_PAGE' ||
+        data.type !== 'N4_SOURCE_SUMMARY') return;
+    // Take whitelisted scalars only, never the raw postMessage object.
+    const d=data.summary;
+    sourceSummary = d?.schemaStatus === 'structural-only' ? Object.freeze({
+      schemaStatus:'structural-only', sourceComplete:null,
+      tileCount:Number(d.tileCount || 0),rawPoiCount:Number(d.rawPoiCount || 0),
+      poiArrayCount:Number(d.poiArrayCount || 0),
+      reason:'SOURCE_COMPLETENESS_UNVERIFIED'
+    }) : null;
+    if (latest) render(latest);
+  });
+
   function render(detail) {
     latest = detail;
     const ui = ensureUi();
@@ -60,6 +103,7 @@
     const ready = detail?.ready === true;
     const confirmed = detail?.sessionRangeConfirmed === true;
     ui.replaceChildren();
+    appendEvidence(ui);
 
     const status = document.createElement('div');
     status.style.cssText = 'font-weight:800;line-height:1.35';
