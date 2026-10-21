@@ -1,0 +1,23 @@
+name: Noah N4 Standalone Setup QA (HOLD)
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - bridge-setup-n4.html
+      - scripts/check-n4-standalone-qa-setup.mjs
+      - .github/workflows/noah-n4-standalone-setup-qa.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-standalone-qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: N4 standalone setup safety
+        run: node scripts/check-n4-standalone-qa-setup.mjs
+      - name: No release
+        run: echo 'QA Draft HOLD - no merge or production publishing'
