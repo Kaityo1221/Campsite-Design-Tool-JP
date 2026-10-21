@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>Campsite Noah | Android N4 QA 0.3.7 セットアップ</title>
+<style>
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#091522;color:#f2f8ff;font:15px/1.7 -apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif}.page{width:min(720px,calc(100% - 28px));margin:auto;padding:30px 0 60px}header{text-align:center;padding:12px 0 20px}h1{font-size:clamp(26px,7vw,36px);margin:8px 0 4px}header p{color:#b5c9da;margin:0}.version{font-size:48px;line-height:1.3;font-weight:950;color:#69ecc4}.chip{display:inline-block;border:1px solid #477767;padding:3px 12px;border-radius:20px;color:#aaffdf;font-size:12px}.card{border:1px solid #33495f;border-radius:20px;margin:15px 0;padding:18px;background:#122436}h2{margin:0 0 8px;font-size:20px}h3{font-size:15px;margin:12px 0 4px}p,li{color:#d0deea}li{margin:5px 0}.step{font-size:12px;color:#99defb;margin-right:9px}.notice{border:1px solid #8b6c45;background:#372a21;border-radius:12px;padding:12px;margin:10px 0;color:#ffe4ba}.danger{border-color:#924f58;background:#3d252e;color:#ffe5e8}.button{display:block;text-align:center;padding:13px 12px;margin-top:12px;text-decoration:none;border-radius:12px;background:#bcffd9;color:#082820;font-weight:900}.button.alt{background:#173e53;color:#e3f5ff;border:1px solid #4c7794}.muted{font-size:12px;color:#adc0d1;overflow-wrap:anywhere}.check{display:flex;gap:9px;padding:8px 0;border-bottom:1px solid #304358}.check input{flex:none;width:20px;height:20px;accent-color:#65dca9}textarea{width:100%;background:#06111b;border:1px solid #4c7794;color:#f6fff9;border-radius:9px;padding:11px;min-height:160px}button{cursor:pointer;width:100%;border:1px solid #668ba3;background:#21465f;color:#fff;font:inherit;font-weight:800;border-radius:11px;padding:10px}.footer{text-align:center;font-size:12px;color:#90a9bd}
+</style>
+</head>
+<body><main class="page">
+<header><div>🏕️ CAMPSITE NOAH / ANDROID N4</div><h1>Bridge セットアップ</h1><span class="chip">テスター専用</span><div class="version">0.3.7</div><p>Mozilla署名済みQA版をメインに検証します</p></header>
+<div class="notice danger"><strong>正式公開版ではありません。</strong> GCS全件完全性が未検証のため、正式な「Campsiteへ送る」は停止します。D10（Creativeへの実機E2E）は実施しないでください。</div>
+<section class="card"><h2><span class="step">STEP 0</span>既存0.3.5を無効化</h2>
+<p>0.3.5をすでに使っている場合は、先に<strong>無効化</strong>します。削除はしません。インストールしていなければスキップできます。</p>
+<ol><li>Android Firefoxのメニュー「︙」→「拡張機能」を開く。</li><li>管理画面から<strong>Campsite Bridge（0.3.5）</strong>を選ぶ。</li><li>「有効」を<strong>OFF</strong>にする。</li><li>Wayfarer Mapを再読み込みする。</li></ol>
+<div class="notice">0.3.5とQA 0.3.7は別アドオンです。<strong>同じWayfarerページでは両方を同時に有効にしないでください。</strong></div></section>
+<section class="card"><h2><span class="step">STEP 1</span>QA 0.3.7を追加</h2>
+<p>このページと署名済みXPIが同じフォルダにある配布キットから開いてください。</p>
+<a class="button" href="./campsite-bridge-android-n4-qa-0.3.7-signed.xpi" download>📦 署名済みQA 0.3.7を保存</a>
+<p class="muted">SHA-256: d6d545b2a8234cc39daeeaa380f20417af782d252145754d7f7f188c72cd3ec2</p>
+<ol><li>Firefox「設定」→「Firefoxについて」を開く。</li><li>Firefoxロゴを素早く5回タップ。</li><li>設定に戻り「ファイルから拡張機能をインストール」を選ぶ。</li><li>保存した署名済みXPIを指定して追加。</li><li>プライベートブラウジング許可は不要。</li></ol>
+<p class="muted">アドオン名に「UNSIGNED」と残っていますが、QA作成時の表示名です。XPIはMozilla署名後のものを使用します。</p></section>
+<section class="card"><h2><span class="step">STEP 2</span>Wayfarer Mapを開く</h2>
+<p>0.3.5を無効化した状態で、N4パネルが動くか確認してください。</p><a class="button alt" href="https://wayfarer.scopely.com/new/mapview" target="_blank" rel="noopener noreferrer">🗺️ Wayfarer Mapを開く</a></section>
+<section class="card"><h2><span class="step">STEP 3</span>テスト記録</h2>
+<div id="checks">
+<label class="check"><input data-check="D01" type="checkbox">D01：QA版がインストールできた</label>
+<label class="check"><input data-check="D02" type="checkbox">D02：Wayfarer MapでN4パネル表示</label>
+<label class="check"><input data-check="D03" type="checkbox">D03：ポリゴン作成・編集・確定</label>
+<label class="check"><input data-check="D04" type="checkbox">D04：＋200m・500mタイル取得</label>
+<label class="check"><input data-check="D05" type="checkbox">D05：匿名GCS診断表示</label>
+<label class="check"><input data-check="D06" type="checkbox">D06：不完全応答の安全停止</label>
+<label class="check"><input data-check="D07" type="checkbox">D07：Inactive Power Spotは参照専用</label>
+<label class="check"><input data-check="D08" type="checkbox">D08：未検証データの送信停止</label>
+<label class="check"><input data-check="D09" type="checkbox">D09：再試行・古い観察の破棄</label>
+</div>
+<p class="muted">D10：BLOCKED（GCS完全性未確認）。チェックは成功した項目のみ。未チェックは未実施または未合格です。</p>
+<textarea id="report" readonly aria-label="QA検査報告"></textarea>
+<button id="copy" type="button">📋 匿名テスト報告をコピー</button>
+<p class="muted">Cookie・認証トークン・GUID・座標・GCS本文・個人情報は共有しないでください。N4匿名診断の集計のみ共有可。</p></section>
+<section class="card"><h2><span class="step">STEP 4</span>テスト終了後の切り戻し</h2>
+<ol><li>Firefoxの「拡張機能」を開く。</li><li><strong>N4 QA 0.3.7</strong>を<strong>OFF</strong>にする。</li><li>既存の<strong>Campsite Bridge 0.3.5</strong>を<strong>ON</strong>に戻す。</li><li>Wayfarer Mapを再読み込みする。</li></ol><div class="notice">QA版の削除は不要です。元の0.3.5も削除しません。</div></section>
+<p class="footer">Android N4 QA 0.3.7 / Phase 1 HOLD。一般向け0.3.5・本番フロー不変。</p>
+</main>
+<script>
+(()=>{'use strict';const boxes=[...document.querySelectorAll('[data-check]')],report=document.querySelector('#report');function refresh(){report.value=['Android N4 QA 0.3.7',...boxes.map(b=>b.dataset.check+': '+(b.checked?'PASS':'NOT TESTED / FAIL')),'D10: BLOCKED','GCS sourceComplete: 未検証','本番送信: 停止'].join('\n')}boxes.forEach(b=>b.addEventListener('change',refresh));document.querySelector('#copy').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(report.value)}catch(e){report.select()}});refresh()})();
+</script>
+</body></html>
