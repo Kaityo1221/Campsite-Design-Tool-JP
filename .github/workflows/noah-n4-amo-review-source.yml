@@ -1,0 +1,43 @@
+name: Noah N4 AMO Reviewer Source (UNLISTED HOLD)
+
+on:
+  pull_request:
+    branches:
+      - qa/n4-android-device-testkit-20261019
+    paths:
+      - 'scripts/build-n4-android-amo-review-source.mjs'
+      - '.github/workflows/noah-n4-amo-review-source.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-for-review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout isolated QA branch
+        uses: actions/checkout@v4
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check reviewer source pack script
+        run: node --check scripts/build-n4-android-amo-review-source.mjs
+      - name: Build source and verify unsigned QA package
+        run: node scripts/build-n4-android-amo-review-source.mjs
+      - name: Verify archive contains required source and reviewer README
+        run: |
+          unzip -tqq downloads/campsite-noah-n4-qa-0.3.7-AMO-source.zip
+          unzip -Z1 downloads/campsite-noah-n4-qa-0.3.7-AMO-source.zip | grep -F 'README-AMO-REVIEW.md'
+          unzip -Z1 downloads/campsite-noah-n4-qa-0.3.7-AMO-source.zip | grep -F 'scripts/build-n4-android-qa-unsigned.mjs'
+          unzip -Z1 downloads/campsite-noah-n4-qa-0.3.7-AMO-source.zip | grep -F 'review-baseline-0.3.4-extracted/'
+      - name: Verify production signed Android 0.3.5 immutable
+        run: echo 'f5c7d300c6cdd82758f88f651116c1b7af42863ef03e80f8ac89e39afa0fa7b7  downloads/campsite-bridge-android-0.3.5.xpi' | sha256sum -c -
+      - name: Store reviewer source ZIP only (not the extension)
+        uses: actions/upload-artifact@v4
+        with:
+          name: n4-android-qa-0.3.7-amo-review-source
+          retention-days: 7
+          if-no-files-found: error
+          path: downloads/campsite-noah-n4-qa-0.3.7-AMO-source.zip
