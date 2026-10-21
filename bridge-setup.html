@@ -52,12 +52,13 @@
   <section class="card flow" data-device-panel="android" hidden>
     <div class="flow-head"><span class="icon">🤖</span><div><h2>Android</h2><p>FirefoxへCampsite Bridge拡張機能を導入します。</p></div></div>
     <div class="flow-inner">
-      <span class="availability">Mozilla署名済み</span>
+      <span class="availability">Android N4 テスト専用 / 正式送信HOLD</span>
       <span id="androidVersion" class="version" style="margin-left:6px">N4 TEST / 0.3.7</span>
       <p id="androidXpiChecksum" class="checksum" hidden></p>
+      <div class="step"><span class="step-no">STEP 0</span><h3>既存Campsite Bridge 0.3.5を無効化</h3><p>すでに0.3.5を使っている場合、先にFirefoxの「︙」→「拡張機能」→「管理」→「Campsite Bridge」で「有効」をOFFにします。<strong>削除は不要</strong>です。0.3.5を入れていない人はこの操作を飛ばしてください。</p><p style="margin-top:8px"><strong>重要：</strong>0.3.5とQA版0.3.7は別IDです。Wayfarer Mapで同時に動かすと競合するため、必ず0.3.5を無効化し、Wayfarer Mapを再読み込みしてください。</p></div><div class="arrow">↓</div>
       <div class="step" style="margin-top:12px"><span class="step-no">STEP 1</span><h3>Firefoxを準備</h3><p><strong>Firefoxをインストール済みの方は、そのままSTEP 2へ進んでください。</strong> 未導入の場合のみ、下のボタンからFirefoxを入手してください。</p><a id="androidFirefoxLink" class="link-btn" target="_blank" rel="noopener">Firefoxを入手する</a></div>
       <div class="arrow">↓</div>
-      <div class="step"><span class="step-no">STEP 2</span><h3>Campsite Bridge 0.3.7を導入</h3><p>Mozilla署名済みの <strong>0.3.7 .xpi</strong> をAndroid端末へ保存してからFirefoxで導入します。</p><a id="androidExtensionLink" class="link-btn">Campsite Bridge 0.3.7を導入</a><div class="xpi-guide" id="androidXpiSteps"><strong>署名済みXPIをFirefoxへ追加</strong><ol><li>Campsite Bridge <strong>0.3.7</strong> の <strong>.xpi</strong> を端末に保存</li><li>Firefoxで「設定」→「Firefoxについて」を開く</li><li>Firefoxロゴを素早く5回タップ</li><li>左上の「←」で設定画面へ戻る</li><li>「ファイルから拡張機能をインストール」をタップ</li><li>保存した <strong>.xpi</strong> を選ぶ</li><li>確認画面では「プライベートブラウジングモードで拡張機能の実行を許可する」に<strong>チェックを入れず</strong>、そのまま「追加」をタップ</li></ol><p style="margin-top:10px">※「追加」が灰色の場合は、少し待つと押せるようになります。</p></div></div>
+      <div class="step"><span class="step-no">STEP 2</span><h3>Campsite Bridge 0.3.7を導入</h3><p>会長から配布された <strong>QA専用IDのMozilla署名済み0.3.7 .xpi</strong> をAndroidへ保存して導入します。公開版と同じIDの別の0.3.7を使わないでください。</p><a id="androidExtensionLink" class="link-btn">Campsite Bridge 0.3.7を導入</a><div class="xpi-guide" id="androidXpiSteps"><strong>署名済みXPIをFirefoxへ追加</strong><ol><li>QA専用 <strong>0.3.7署名済み .xpi</strong> を端末に保存</li><li>Firefoxで「設定」→「Firefoxについて」を開く</li><li>Firefoxロゴを素早く5回タップ</li><li>左上の「←」で設定画面へ戻る</li><li>「ファイルから拡張機能をインストール」をタップ</li><li>保存した <strong>.xpi</strong> を選ぶ</li><li>確認画面では「プライベートブラウジングモードで拡張機能の実行を許可する」に<strong>チェックを入れず</strong>、そのまま「追加」をタップ</li></ol><p style="margin-top:10px">※「追加」が灰色の場合は、少し待つと押せるようになります。</p></div></div>
       <div class="arrow">↓</div>
       <div class="step"><span class="step-no">STEP 3</span><h3>FirefoxでWayfarer Mapを開く</h3><p>WayfarerのMap画面を開きます。「🌉 Bridge」が表示されれば導入成功です。</p><a id="androidWayfarerLink" class="link-btn" target="_blank" rel="noopener">FirefoxでWayfarer Mapを開く</a></div>
       <div class="arrow">↓</div>
@@ -69,9 +70,9 @@
       <div class="arrow">↓</div>
       <div class="step"><span class="step-no">STEP 7</span><h3>範囲編集も確認</h3><p>Bridgeの「📐 範囲を編集」から編集へ戻れることを確認し、必要なら調整してもう一度「範囲を確定」してください。</p></div>
       <div class="arrow">↓</div>
-      <div class="step"><span class="step-no">STEP 8</span><h3>「🌉 Campsiteへ送信！」</h3><p>送信ボタンを押してCampsiteへ進みます。POI取得がまだ完了していない場合は、少し待ってから再送信してください。</p></div>
+      <div class="step"><span class="step-no">STEP 8</span><h3>🧪 安全停止を確認</h3><p>GCSの全件完全性がまだ検証されていないため、正式Projectへの送信は停止する仕様です。送信成功扱いやCreativeへの遷移を期待せず、匿名GCS診断・参照POI・再試行の挙動を確認してください。認証情報やGCSの生データは共有しないでください。</p></div>
       <div class="arrow">↓</div>
-      <div class="step complete"><span class="step-no">STEP 9</span><h3>Creative Modeまで確認</h3><p>Campsite側で活動範囲が引き継がれ、Creative Modeへ進めれば完了です。Wayfarer Map上にBridge独自のPOIマーカーが増えていないことも確認してください。</p></div>
+      <div class="step complete"><span class="step-no">STEP 9</span><h3>実機結果を報告</h3><p>D01〜D09のPASS・FAILと匿名GCS診断だけを共有します。Wayfarer Map上にBridge独自のPOIマーカーが増えていないことも確認してください。<strong>D10（Receiver→Creativeの正式E2E）はBLOCKEDです。</strong></p></div><div class="arrow">↓</div><div class="step"><span class="step-no">STEP 10</span><h3>0.3.7を無効化して0.3.5へ戻す</h3><p>Firefoxの「拡張機能」でQA 0.3.7をOFFにして、既存Campsite Bridge 0.3.5をONへ戻し、Wayfarer Mapを再読み込みしてください。0.3.5をもともと使っていなければ再有効化は不要です。</p></div>
     </div>
   </section>
 
