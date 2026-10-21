@@ -1,6 +1,7 @@
 // Static QA-only setup gates. This intentionally does not alter production.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { execFileSync } from 'node:child_process';
 const page=fs.readFileSync('bridge-setup-n4-qa.html','utf8');
 const production=fs.readFileSync('js/bridge-setup-config.js','utf8');
 assert.match(page,/<div class="version">0\.3\.7<\/div>/);
@@ -15,4 +16,7 @@ assert.match(page,/campsite-bridge-android-n4-qa-0\.3\.7-signed\.xpi/);
 assert.ok(production.includes("androidRuntimeVersion: '0.3.7'") || production.includes("androidRuntimeVersion: '0.3.5'"), 'staging config must keep supported Android version');
 assert.ok(production.includes("androidExtensionUrl: './downloads/campsite-bridge-android-0.3.7.xpi'") || production.includes("androidExtensionUrl: './downloads/campsite-bridge-android-0.3.5.xpi'"), 'staging link unexpected');
 assert.ok(!page.includes('sourceComplete=true'), 'do not claim verified source completeness');
+const stagedXpi = 'downloads/campsite-bridge-android-0.3.7.xpi';
+const stagedManifest=JSON.parse(execFileSync('unzip',['-p',stagedXpi,'manifest.json'],{encoding:'utf8'}));
+console.log('Existing staged 0.3.7 XPI addon id:',stagedManifest.browser_specific_settings?.gecko?.id);
 console.log('N4 QA 0.3.7 setup content gates PASS. Signed XPI hosting NOT checked by this static test.');
