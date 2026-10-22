@@ -1,0 +1,28 @@
+name: N4 QA Mozilla Signed File Source Check (No Publish)
+on:
+  push:
+    branches: [feature/n4-simplify-setup-signed-download-20261023]
+    paths: [.github/workflows/n4-test-signed-source.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check-signed-source:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch candidate AMO signed XPI, fail closed
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --max-time 25 --retry 1 \
+            'https://addons.mozilla.org/firefox/downloads/file/5148826/e1b5148234d54543a591-0.3.7.xpi' \
+            --output /tmp/n4-qa-signed.xpi
+          echo 'd6d545b2a8234cc39daeeaa380f20417af782d252145754d7f7f188c72cd3ec2  /tmp/n4-qa-signed.xpi' | sha256sum -c -
+          unzip -tqq /tmp/n4-qa-signed.xpi
+          unzip -p /tmp/n4-qa-signed.xpi manifest.json | node -e "
+            let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{
+              const m=JSON.parse(s);
+              if(m.version!=='0.3.7'||m.browser_specific_settings?.gecko?.id!=='campsite-bridge-android-n4-qa@local')process.exit(1);
+              console.log('QA addon ID and version verified');
+            })"
+          echo 'Source reachable and verified. No file uploaded, no commit, no deployment.'
