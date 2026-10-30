@@ -136,7 +136,9 @@ jobs:
             'runtime.part-06zz.iphone-network-recovery.js'
             'runtime.part-07.js'
             'runtime.part-08a.iphone-page-world-host.js'
+            'runtime.part-08aa.iphone-i4-probe-host.js'
             'runtime.part-08.iphone-activity-area-ui.js'
+            'runtime.part-08b.iphone-i4-probe-ui.js'
             'runtime.part-09.iphone-wfmm-color-policy.js'
           )
 
@@ -150,6 +152,7 @@ jobs:
 
           node --check "$versioned"
           node scripts/check-iphone-page-world-host.mjs
+          node scripts/check-iphone-i4-probe.mjs
           cp "$versioned" "$latest"
 
           cat > "$out_dir/latest.json" <<EOF
