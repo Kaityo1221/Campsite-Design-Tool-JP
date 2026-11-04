@@ -1,0 +1,49 @@
+name: Noah PC Canonical Reference Gate
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'docs/noah-pc-reference-baseline-2026-10-19.md'
+      - 'scripts/check-noah-pc-reference-baseline.mjs'
+      - '.github/workflows/noah-pc-reference-baseline.yml'
+      - 'bridge-pc/**'
+      - 'bridge-receiver.html'
+      - 'bridge-gateway.html'
+      - 'js/bridge-next-flow.js'
+      - 'js/bridge-observation-inactive.js'
+      - 'creative/wayfarer-reference-layer-patch.js'
+      - 'creative/bridge-project-patch.js'
+      - 'creative/runtime/map-engine/wayfarer-*.js'
+      - 'docs/bridge-project-contract-v1.md'
+      - 'docs/wayfarer-observe-flow-spec-v1.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pc-canonical-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR contents
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Syntax-check baseline guard
+        run: node --check scripts/check-noah-pc-reference-baseline.mjs
+      - name: Enforce PC canonical static invariants
+        run: node scripts/check-noah-pc-reference-baseline.mjs
+      - name: Run existing PC and October 18 behavior regressions
+        run: |
+          node scripts/check-pc-bridge-spec.mjs
+          node scripts/check-wayfarer-acquisition-engine.mjs
+          node scripts/check-wm3-observation-zone.mjs
+          node scripts/check-wm3-observe-controller.mjs
+          node scripts/check-bridge-v1-export.mjs
+          node scripts/check-bridge-observation-inactive.mjs
+          node scripts/check-wm5a-reserve-coverage.mjs
+          node scripts/check-wm5b-local-reclassification.mjs
+          node scripts/check-wm6b-reference-distance.mjs
